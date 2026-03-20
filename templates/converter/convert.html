@@ -6,27 +6,34 @@
 <section class="min-h-screen pt-24 sm:pt-32 pb-12 sm:pb-20 relative">
     <!-- Background -->
     <div class="absolute inset-0 bg-gradient-to-b from-surface-50 via-white to-surface-50"></div>
-    <div class="absolute top-1/3 left-[10%] sm:left-1/5 w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-brand-100/10 rounded-full blur-[80px] sm:blur-[100px]"></div>
-    <div class="absolute bottom-1/4 right-[10%] sm:right-1/4 w-[250px] sm:w-[400px] h-[250px] sm:h-[400px] bg-purple-100/10 rounded-full blur-[80px] sm:blur-[100px]"></div>
-    
+    <div
+        class="absolute top-1/3 left-[10%] sm:left-1/5 w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-brand-100/10 rounded-full blur-[80px] sm:blur-[100px]">
+    </div>
+    <div
+        class="absolute bottom-1/4 right-[10%] sm:right-1/4 w-[250px] sm:w-[400px] h-[250px] sm:h-[400px] bg-purple-100/10 rounded-full blur-[80px] sm:blur-[100px]">
+    </div>
+
     <div class="relative z-10 max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
-        
+
         <!-- Breadcrumb -->
         <nav class="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm mb-6 sm:mb-10">
-            <a href="{% url 'converter:home' %}" class="text-surface-400 hover:text-brand-600 transition-colors flex items-center gap-1 sm:gap-1.5">
+            <a href="{% url 'converter:home' %}"
+                class="text-surface-400 hover:text-brand-600 transition-colors flex items-center gap-1 sm:gap-1.5">
                 <i data-lucide="home" class="w-3 h-3 sm:w-3.5 sm:h-3.5"></i>
                 Home
             </a>
             <i data-lucide="chevron-right" class="w-3 h-3 sm:w-3.5 sm:h-3.5 text-surface-300"></i>
-            <a href="{% url 'converter:home' %}#tools" class="text-surface-400 hover:text-brand-600 transition-colors">Tools</a>
+            <a href="{% url 'converter:home' %}#tools"
+                class="text-surface-400 hover:text-brand-600 transition-colors">Tools</a>
             <i data-lucide="chevron-right" class="w-3 h-3 sm:w-3.5 sm:h-3.5 text-surface-300"></i>
             <span class="text-surface-700 font-medium truncate">{{ tool.title }}</span>
         </nav>
-        
+
         <!-- Tool Header -->
         <div class="mb-6 sm:mb-10">
             <div class="flex items-center gap-3 sm:gap-4 mb-3 sm:mb-4">
-                <div class="w-11 h-11 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-br {{ tool.gradient }} flex items-center justify-center shadow-xl flex-shrink-0" style="box-shadow: 0 10px 28px -4px {{ tool.color }}35;">
+                <div class="w-11 h-11 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-br {{ tool.gradient }} flex items-center justify-center shadow-xl flex-shrink-0"
+                    style="box-shadow: 0 10px 28px -4px {{ tool.color }}35;">
                     <i data-lucide="{{ tool.icon }}" class="w-5 h-5 sm:w-7 sm:h-7 text-white"></i>
                 </div>
                 <div class="min-w-0">
@@ -35,50 +42,56 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- ═══════════════ UPLOAD CARD ═══════════════ -->
         <div class="rounded-xl sm:rounded-2xl bg-white border border-surface-100 p-4 sm:p-6 md:p-8 shadow-card">
-            
+
             <!-- Drag & Drop Zone -->
-            <div id="drop-zone" 
-                 class="relative rounded-xl border-2 border-dashed border-surface-200 hover:border-brand-300 transition-all duration-300 p-6 sm:p-8 md:p-14 text-center cursor-pointer group"
-                 data-accept="{{ tool.accept }}">
-                
+            <div id="drop-zone"
+                class="relative rounded-xl border-2 border-dashed border-surface-200 hover:border-brand-300 transition-all duration-300 p-6 sm:p-8 md:p-14 text-center cursor-pointer group"
+                data-accept="{{ tool.accept }}">
+
                 <!-- Default State -->
                 <div id="upload-default" class="space-y-3">
-                    <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl bg-surface-50 border border-surface-100 flex items-center justify-center mx-auto group-hover:bg-brand-50 group-hover:border-brand-200 group-hover:scale-105 transition-all duration-300">
-                        <i data-lucide="cloud-upload" class="w-6 h-6 sm:w-8 sm:h-8 text-surface-300 group-hover:text-brand-500 transition-colors"></i>
+                    <div
+                        class="w-14 h-14 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl bg-surface-50 border border-surface-100 flex items-center justify-center mx-auto group-hover:bg-brand-50 group-hover:border-brand-200 group-hover:scale-105 transition-all duration-300">
+                        <i data-lucide="cloud-upload"
+                            class="w-6 h-6 sm:w-8 sm:h-8 text-surface-300 group-hover:text-brand-500 transition-colors"></i>
                     </div>
                     <div>
                         <p class="text-sm sm:text-base font-semibold text-surface-700 mb-1">
-                            Drop your file here, or <span class="text-brand-600 underline underline-offset-4 decoration-brand-200">browse</span>
+                            Drop your file here, or <span
+                                class="text-brand-600 underline underline-offset-4 decoration-brand-200">browse</span>
                         </p>
                         <p class="text-[10px] sm:text-xs text-surface-400">
                             Max 50MB&nbsp;&nbsp;•&nbsp;&nbsp;Accepted: <span class="text-surface-500 font-medium">{{ tool.accept }}</span>
                         </p>
                     </div>
                 </div>
-                
+
                 <!-- File Selected State -->
                 <div id="file-selected" class="hidden">
                     <div class="flex items-center justify-center gap-3 sm:gap-4">
-                        <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-brand-50 border border-brand-100 flex items-center justify-center flex-shrink-0">
+                        <div
+                            class="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-brand-50 border border-brand-100 flex items-center justify-center flex-shrink-0">
                             <i data-lucide="file-check-2" class="w-5 h-5 sm:w-6 sm:h-6 text-brand-600"></i>
                         </div>
                         <div class="text-left min-w-0">
                             <p id="file-name" class="text-surface-800 font-semibold text-sm sm:text-base truncate"></p>
                             <p id="file-size" class="text-[10px] sm:text-xs text-surface-400 mt-0.5"></p>
                         </div>
-                        <button id="remove-file-btn" class="p-1.5 sm:p-2 rounded-lg hover:bg-red-50 text-surface-300 hover:text-red-500 transition-all flex-shrink-0" title="Remove file">
+                        <button id="remove-file-btn"
+                            class="p-1.5 sm:p-2 rounded-lg hover:bg-red-50 text-surface-300 hover:text-red-500 transition-all flex-shrink-0"
+                            title="Remove file">
                             <i data-lucide="x" class="w-4 h-4"></i>
                         </button>
                     </div>
                 </div>
-                
+
                 <!-- Hidden file input -->
                 <input type="file" id="file-input" class="hidden" accept="{{ tool.accept }}">
             </div>
-            
+
             <!-- Image format selector (only for PDF to Image) -->
             {% if tool_slug == 'pdf-to-image' %}
             <div class="mt-4 sm:mt-5 flex items-center justify-center gap-3">
@@ -86,74 +99,81 @@
                 <div class="flex gap-1.5">
                     <label class="cursor-pointer">
                         <input type="radio" name="image_format" value="png" checked class="hidden peer">
-                        <span class="px-3 sm:px-3.5 py-1.5 rounded-lg text-xs font-semibold border border-surface-200 peer-checked:border-brand-500 peer-checked:bg-brand-50 peer-checked:text-brand-700 text-surface-400 hover:text-surface-600 hover:border-surface-300 transition-all">
+                        <span
+                            class="px-3 sm:px-3.5 py-1.5 rounded-lg text-xs font-semibold border border-surface-200 peer-checked:border-brand-500 peer-checked:bg-brand-50 peer-checked:text-brand-700 text-surface-400 hover:text-surface-600 hover:border-surface-300 transition-all">
                             PNG
                         </span>
                     </label>
                     <label class="cursor-pointer">
                         <input type="radio" name="image_format" value="jpg" class="hidden peer">
-                        <span class="px-3 sm:px-3.5 py-1.5 rounded-lg text-xs font-semibold border border-surface-200 peer-checked:border-brand-500 peer-checked:bg-brand-50 peer-checked:text-brand-700 text-surface-400 hover:text-surface-600 hover:border-surface-300 transition-all">
+                        <span
+                            class="px-3 sm:px-3.5 py-1.5 rounded-lg text-xs font-semibold border border-surface-200 peer-checked:border-brand-500 peer-checked:bg-brand-50 peer-checked:text-brand-700 text-surface-400 hover:text-surface-600 hover:border-surface-300 transition-all">
                             JPG
                         </span>
                     </label>
                 </div>
             </div>
             {% endif %}
-            
+
             <!-- Convert Button -->
-            <button id="convert-btn" 
-                    disabled
-                    class="w-full mt-5 sm:mt-6 py-3 sm:py-3.5 rounded-xl bg-gradient-to-r {{ tool.gradient }} text-white font-semibold text-sm disabled:opacity-25 disabled:cursor-not-allowed hover:opacity-90 transition-all shadow-lg disabled:shadow-none hover:shadow-xl hover:-translate-y-px disabled:hover:translate-y-0 active:translate-y-0 flex items-center justify-center gap-2.5">
+            <button id="convert-btn" disabled
+                class="w-full mt-5 sm:mt-6 py-3 sm:py-3.5 rounded-xl bg-gradient-to-r {{ tool.gradient }} text-white font-semibold text-sm disabled:opacity-25 disabled:cursor-not-allowed hover:opacity-90 transition-all shadow-lg disabled:shadow-none hover:shadow-xl hover:-translate-y-px disabled:hover:translate-y-0 active:translate-y-0 flex items-center justify-center gap-2.5">
                 <i data-lucide="wand-2" class="w-4 h-4"></i>
                 Convert Now
             </button>
-            
+
             <!-- ═══════════════ PROGRESS STATE ═══════════════ -->
             <div id="progress-section" class="hidden mt-5 sm:mt-6">
-                <div class="flex items-center gap-3 sm:gap-4 py-4 sm:py-6 px-3 sm:px-4 rounded-xl bg-surface-50 border border-surface-100">
+                <div
+                    class="flex items-center gap-3 sm:gap-4 py-4 sm:py-6 px-3 sm:px-4 rounded-xl bg-surface-50 border border-surface-100">
                     <div class="relative flex-shrink-0">
-                        <div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full border-[3px] border-surface-200 border-t-brand-500 animate-spin"></div>
+                        <div
+                            class="w-8 h-8 sm:w-10 sm:h-10 rounded-full border-[3px] border-surface-200 border-t-brand-500 animate-spin">
+                        </div>
                     </div>
                     <div class="min-w-0">
                         <p class="text-surface-800 font-semibold text-xs sm:text-sm">Converting your file…</p>
                         <p class="text-[10px] sm:text-xs text-surface-400 mt-0.5">This may take a moment</p>
                     </div>
                 </div>
-                
+
                 <div class="w-full h-1 rounded-full bg-surface-100 overflow-hidden mt-3">
                     <div class="h-full bg-gradient-to-r {{ tool.gradient }} rounded-full animate-progress-bar"></div>
                 </div>
             </div>
-            
+
             <!-- ═══════════════ SUCCESS STATE ═══════════════ -->
             <div id="success-section" class="hidden mt-5 sm:mt-6">
-                <div class="text-center py-5 sm:py-6 px-3 sm:px-4 rounded-xl bg-emerald-50/50 border border-emerald-100">
-                    <div class="w-12 h-12 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-emerald-100 flex items-center justify-center mx-auto mb-3 sm:mb-4 animate-success-pop">
+                <div
+                    class="text-center py-5 sm:py-6 px-3 sm:px-4 rounded-xl bg-emerald-50/50 border border-emerald-100">
+                    <div
+                        class="w-12 h-12 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-emerald-100 flex items-center justify-center mx-auto mb-3 sm:mb-4 animate-success-pop">
                         <i data-lucide="check-circle-2" class="w-6 h-6 sm:w-7 sm:h-7 text-emerald-600"></i>
                     </div>
                     <h3 class="text-base sm:text-lg font-bold text-surface-900 mb-1">Conversion Complete</h3>
                     <p class="text-surface-500 text-xs sm:text-sm mb-4 sm:mb-5">Your file is ready to download.</p>
-                    
+
                     <div class="flex flex-col xs:flex-row gap-2.5 justify-center">
-                        <a id="download-btn" href="#" 
-                           class="inline-flex items-center justify-center gap-2 px-5 sm:px-7 py-2.5 sm:py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-semibold text-xs sm:text-sm hover:from-emerald-400 hover:to-emerald-500 transition-all shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 hover:-translate-y-px active:translate-y-0">
+                        <a id="download-btn" href="#"
+                            class="inline-flex items-center justify-center gap-2 px-5 sm:px-7 py-2.5 sm:py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-semibold text-xs sm:text-sm hover:from-emerald-400 hover:to-emerald-500 transition-all shadow-lg shadow-emerald-500/20 hover:shadow-emerald-500/30 hover:-translate-y-px active:translate-y-0">
                             <i data-lucide="download" class="w-4 h-4"></i>
                             Download File
                         </a>
-                        <button id="convert-another-btn" 
-                                class="inline-flex items-center justify-center gap-2 px-5 sm:px-7 py-2.5 sm:py-3 rounded-xl bg-white border border-surface-200 text-surface-600 font-semibold text-xs sm:text-sm hover:bg-surface-50 hover:border-surface-300 transition-all">
+                        <button id="convert-another-btn"
+                            class="inline-flex items-center justify-center gap-2 px-5 sm:px-7 py-2.5 sm:py-3 rounded-xl bg-white border border-surface-200 text-surface-600 font-semibold text-xs sm:text-sm hover:bg-surface-50 hover:border-surface-300 transition-all">
                             <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>
                             Convert Another
                         </button>
                     </div>
                 </div>
             </div>
-            
+
             <!-- ═══════════════ ERROR STATE ═══════════════ -->
             <div id="error-section" class="hidden mt-5 sm:mt-6">
                 <div class="p-3 sm:p-4 rounded-xl bg-red-50 border border-red-100">
                     <div class="flex items-start gap-2.5 sm:gap-3">
-                        <div class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-red-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <div
+                            class="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-red-100 flex items-center justify-center flex-shrink-0 mt-0.5">
                             <i data-lucide="alert-triangle" class="w-4 h-4 text-red-500"></i>
                         </div>
                         <div class="min-w-0">
@@ -164,7 +184,7 @@
                 </div>
             </div>
         </div>
-        
+
         <!-- Trust note -->
         <div class="mt-4 sm:mt-5 flex items-center justify-center gap-2 text-[10px] sm:text-xs text-surface-400">
             <i data-lucide="shield" class="w-3 h-3 sm:w-3.5 sm:h-3.5"></i>
@@ -180,11 +200,11 @@
     // ═══════════════════════════════════════════════════════
     // Conversion Page JavaScript
     // ═══════════════════════════════════════════════════════
-    
+
     const TOOL_SLUG = '{{ tool_slug }}';
     const CONVERT_URL = '{% url "converter:convert_file" tool_slug %}';
     const CSRF_TOKEN = '{{ csrf_token }}';
-    
+
     // DOM Elements
     const dropZone = document.getElementById('drop-zone');
     const fileInput = document.getElementById('file-input');
@@ -200,59 +220,59 @@
     const errorMessage = document.getElementById('error-message');
     const downloadBtn = document.getElementById('download-btn');
     const convertAnotherBtn = document.getElementById('convert-another-btn');
-    
+
     let selectedFile = null;
-    
+
     // ─── Drag & Drop ──────────────────────────────────────
     dropZone.addEventListener('click', (e) => {
         if (e.target.closest('#remove-file-btn')) return;
         fileInput.click();
     });
-    
+
     dropZone.addEventListener('dragover', (e) => {
         e.preventDefault();
         e.stopPropagation();
         dropZone.classList.add('border-brand-400', 'bg-brand-50/30');
     });
-    
+
     dropZone.addEventListener('dragleave', (e) => {
         e.preventDefault();
         e.stopPropagation();
         dropZone.classList.remove('border-brand-400', 'bg-brand-50/30');
     });
-    
+
     dropZone.addEventListener('drop', (e) => {
         e.preventDefault();
         e.stopPropagation();
         dropZone.classList.remove('border-brand-400', 'bg-brand-50/30');
-        
+
         const files = e.dataTransfer.files;
         if (files.length > 0) {
             handleFile(files[0]);
         }
     });
-    
+
     fileInput.addEventListener('change', (e) => {
         if (e.target.files.length > 0) {
             handleFile(e.target.files[0]);
         }
     });
-    
+
     // ─── File Handling ────────────────────────────────────
     function handleFile(file) {
         const accept = dropZone.dataset.accept.split(',').map(s => s.trim().toLowerCase());
         const ext = '.' + file.name.split('.').pop().toLowerCase();
-        
+
         if (!accept.includes(ext)) {
             showError(`Invalid file type "${ext}". Accepted: ${accept.join(', ')}`);
             return;
         }
-        
+
         if (file.size > 52428800) {
             showError('File exceeds the 50MB size limit.');
             return;
         }
-        
+
         selectedFile = file;
         fileName.textContent = file.name;
         fileSize.textContent = formatFileSize(file.size);
@@ -262,7 +282,7 @@
         errorSection.classList.add('hidden');
         lucide.createIcons();
     }
-    
+
     function formatFileSize(bytes) {
         if (bytes === 0) return '0 Bytes';
         const k = 1024;
@@ -270,12 +290,12 @@
         const i = Math.floor(Math.log(bytes) / Math.log(k));
         return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
     }
-    
+
     removeFileBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         resetUpload();
     });
-    
+
     function resetUpload() {
         selectedFile = null;
         fileInput.value = '';
@@ -288,62 +308,62 @@
         convertBtn.classList.remove('hidden');
         lucide.createIcons();
     }
-    
+
     convertAnotherBtn.addEventListener('click', () => resetUpload());
-    
+
     // ─── Conversion ───────────────────────────────────────
     convertBtn.addEventListener('click', async () => {
         if (!selectedFile) return;
-        
+
         convertBtn.classList.add('hidden');
         progressSection.classList.remove('hidden');
         successSection.classList.add('hidden');
         errorSection.classList.add('hidden');
-        
+
         const formData = new FormData();
         formData.append('file', selectedFile);
         formData.append('csrfmiddlewaretoken', CSRF_TOKEN);
-        
+
         if (TOOL_SLUG === 'pdf-to-image') {
             const format = document.querySelector('input[name="image_format"]:checked');
             if (format) formData.append('image_format', format.value);
         }
-        
+
         try {
             const response = await fetch(CONVERT_URL, {
                 method: 'POST',
                 body: formData,
             });
-            
+
             if (!response.ok) {
                 const data = await response.json();
                 throw new Error(data.error || 'Conversion failed. Please try again.');
             }
-            
+
             const disposition = response.headers.get('Content-Disposition');
             let outputFilename = 'converted_file';
             if (disposition) {
                 const match = disposition.match(/filename="(.+?)"/);
                 if (match) outputFilename = match[1];
             }
-            
+
             const blob = await response.blob();
             const url = window.URL.createObjectURL(blob);
-            
+
             downloadBtn.href = url;
             downloadBtn.download = outputFilename;
-            
+
             progressSection.classList.add('hidden');
             successSection.classList.remove('hidden');
             lucide.createIcons();
-            
+
         } catch (err) {
             showError(err.message);
             progressSection.classList.add('hidden');
             convertBtn.classList.remove('hidden');
         }
     });
-    
+
     function showError(message) {
         errorMessage.textContent = message;
         errorSection.classList.remove('hidden');

@@ -1903,3 +1903,481 @@ def ocr_pdf(input_path, original_name):
     pdf.close()
     return output_path
 
+
+# ═══════════════════════════════════════════════════════════════
+# 17. ROTATE PDF
+# ═══════════════════════════════════════════════════════════════
+def rotate_pdf(input_path, original_name, rotation_angle=90, page_selection='all'):
+    """Rotate pages of a PDF by a specified angle.
+
+    rotation_angle: 90, 180, or 270 degrees clockwise
+    page_selection: 'all' or comma-separated page numbers like '1,3,5-7'
+    """
+    import fitz
+
+    output_path = get_output_path(original_name, 'pdf')
+    base_name = Path(original_name).stem
+    output_path = os.path.join(
+        os.path.dirname(output_path), f"{base_name}_rotated.pdf"
+    )
+
+    # Validate rotation angle
+    rotation_angle = int(rotation_angle)
+    if rotation_angle not in [90, 180, 270]:
+        raise Exception("Rotation angle must be 90, 180, or 270 degrees.")
+
+    pdf = fitz.open(input_path)
+    total_pages = len(pdf)
+
+    # Determine which pages to rotate
+    if page_selection == 'all' or not page_selection.strip():
+        pages_to_rotate = set(range(total_pages))
+    else:
+        pages_to_rotate = set()
+        for part in page_selection.split(','):
+            part = part.strip()
+            if '-' in part:
+                start, end = part.split('-', 1)
+                for p in range(int(start.strip()), int(end.strip()) + 1):
+                    if 1 <= p <= total_pages:
+                        pages_to_rotate.add(p - 1)
+            else:
+                p = int(part.strip())
+                if 1 <= p <= total_pages:
+                    pages_to_rotate.add(p - 1)
+
+    if not pages_to_rotate:
+        raise Exception("No valid pages specified for rotation.")
+
+    for page_idx in pages_to_rotate:
+        page = pdf[page_idx]
+        page.set_rotation(page.rotation + rotation_angle)
+
+    pdf.save(output_path, garbage=4, deflate=True)
+    pdf.close()
+    return output_path
+
+
+# ═══════════════════════════════════════════════════════════════
+# 18. ADD WATERMARK TO PDF
+# ═══════════════════════════════════════════════════════════════
+def add_watermark(input_path, original_name, watermark_text='CONFIDENTIAL',
+                  opacity=0.15, font_size=60, rotation=45, color='#888888'):
+    """Add a text watermark ON TOP of the existing content of every page.
+
+    The watermark is inserted as an overlay with configurable opacity
+    so it appears over text but remains semi-transparent.
+
+    watermark_text: the text to display as watermark
+    opacity: 0.0 (invisible) to 1.0 (fully opaque)
+    font_size: size of the watermark text
+    rotation: angle of the watermark text in degrees
+    color: hex color string for the watermark
+    """
+    import fitz
+
+    output_path = get_output_path(original_name, 'pdf')
+    base_name = Path(original_name).stem
+    output_path = os.path.join(
+        os.path.dirname(output_path), f"{base_name}_watermarked.pdf"
+    )
+
+    # Parse hex color to RGB (0-1 range)
+    color_hex = color.lstrip('#')
+    if len(color_hex) == 6:
+        r = int(color_hex[0:2], 16) / 255.0
+        g = int(color_hex[2:4], 16) / 255.0
+        b = int(color_hex[4:6], 16) / 255.0
+    else:
+        r, g, b = 0.5, 0.5, 0.5
+
+    opacity = float(opacity)
+    opacity = max(0.01, min(1.0, opacity))
+    font_size = int(font_size)
+    rotation = float(rotation)
+
+    pdf = fitz.open(input_path)
+
+    for page in pdf:
+        rect = page.rect
+        cx = rect.width / 2
+        cy = rect.height / 2
+
+        # === Insert watermark ON TOP of content using overlay=True ===
+        text_point = fitz.Point(cx, cy)
+
+        # Build rotation morph around center of page
+        morph = (text_point, fitz.Matrix(rotation))
+
+        # Estimate horizontal offset to roughly center the text
+        text_width_est = len(watermark_text) * font_size * 0.3
+        insert_point = fitz.Point(cx - text_width_est / 2, cy)
+
+        try:
+            page.insert_text(
+                insert_point,
+                watermark_text,
+                fontsize=font_size,
+                color=(r, g, b),
+                overlay=True,        # <-- ON TOP of existing content
+                morph=morph,
+                render_mode=0,
+            )
+        except Exception:
+            # Fallback: insert without rotation, still on top
+            page.insert_text(
+                insert_point,
+                watermark_text,
+                fontsize=font_size,
+                color=(r, g, b),
+                overlay=True,        # <-- ON TOP of existing content
+                render_mode=0,
+            )
+
+        # Apply opacity via PDF ExtGState in the content stream.
+        # overlay=True appends, so the watermark is the LAST content stream.
+        try:
+            xref_list = page.get_contents()
+            if xref_list:
+                # The overlay content is the last stream (overlay=True appends)
+                overlay_xref = xref_list[-1]
+                stream = pdf.xref_stream(overlay_xref)
+                if stream:
+                    # Prepend graphics state operator for opacity
+                    opacity_cmd = f"/GS_WM gs\n".encode()
+                    new_stream = opacity_cmd + stream
+                    pdf.update_stream(overlay_xref, new_stream)
+
+                    # Register the ExtGState in the page's resources
+                    gs_xref = pdf.new_xref()
+                    pdf.update_object(gs_xref, f"<< /Type /ExtGState /ca {opacity} /CA {opacity} >>")
+                    # Add to page resources
+                    res = page.obj  # page dictionary
+                    if not res.get("Resources"):
+                        page.clean_contents()
+                        res = page.obj
+                    resources = res["Resources"]
+                    if not resources.get("ExtGState"):
+                        resources["ExtGState"] = pdf.new_xref()
+                        pdf.update_object(resources["ExtGState"].xref, "<< >>")
+                    ext_gs = resources["ExtGState"]
+                    ext_gs["GS_WM"] = pdf.make_indirect(gs_xref)
+        except Exception:
+            pass  # If opacity injection fails, the watermark is still placed on top
+
+    pdf.save(output_path, garbage=4, deflate=True)
+    pdf.close()
+    return output_path
+
+
+# ═══════════════════════════════════════════════════════════════
+# 19. REMOVE WATERMARK FROM PDF
+# ═══════════════════════════════════════════════════════════════
+def remove_watermark(input_path, original_name):
+    """Remove watermarks from a PDF using multiple strategies.
+
+    Handles both annotation-based and content-stream-embedded watermarks.
+    Does NOT use redaction (which fills areas with white).
+
+    Strategies:
+    1. Remove watermark-type annotations (FreeText, Stamp, etc.)
+    2. Detect and remove overlay content streams that contain watermark text
+    3. Strip watermark XObject references appearing on every page
+    4. Remove content streams that use transparency ExtGState
+    """
+    import fitz
+    import re
+
+    output_path = get_output_path(original_name, 'pdf')
+    base_name = Path(original_name).stem
+    output_path = os.path.join(
+        os.path.dirname(output_path), f"{base_name}_no_watermark.pdf"
+    )
+
+    pdf = fitz.open(input_path)
+    total_pages = len(pdf)
+
+    # ── Pre-scan: Identify ExtGState resources with low opacity ──
+    # These are used by watermark overlays (including our add_watermark)
+    def get_watermark_gs_names(page):
+        """Find ExtGState names that have opacity < 0.5 (likely watermark)."""
+        wm_gs = set()
+        try:
+            res = page.obj.get("Resources")
+            if res:
+                ext_gs = res.get("ExtGState")
+                if ext_gs:
+                    for key in ext_gs.keys():
+                        try:
+                            gs_obj = ext_gs[key]
+                            # Check both fill (/ca) and stroke (/CA) opacity
+                            ca = None
+                            CA = None
+                            gs_str = str(pdf.xref_object(gs_obj.xref))
+                            ca_match = re.search(r'/ca\s+([\d.]+)', gs_str)
+                            CA_match = re.search(r'/CA\s+([\d.]+)', gs_str)
+                            if ca_match:
+                                ca = float(ca_match.group(1))
+                            if CA_match:
+                                CA = float(CA_match.group(1))
+                            if (ca is not None and ca < 0.5) or (CA is not None and CA < 0.5):
+                                wm_gs.add(key)
+                        except Exception:
+                            pass
+        except Exception:
+            pass
+        return wm_gs
+
+    # ── Pre-scan: Collect XObject names that appear on EVERY page ──
+    xobj_counts = {}
+    for page in pdf:
+        try:
+            xref_list = page.get_contents()
+            for xref in xref_list:
+                stream = pdf.xref_stream(xref)
+                if stream:
+                    text = stream.decode('latin-1', errors='ignore')
+                    matches = re.findall(r'/(\w+)\s+Do\b', text)
+                    seen = set()
+                    for m in matches:
+                        if m not in seen:
+                            seen.add(m)
+                            xobj_counts[m] = xobj_counts.get(m, 0) + 1
+        except Exception:
+            pass
+
+    watermark_xobjs = set()
+    if total_pages > 1:
+        for name, count in xobj_counts.items():
+            if count == total_pages:
+                watermark_xobjs.add(name)
+
+    # Common watermark text keywords (case-insensitive match)
+    WM_KEYWORDS = [
+        'CONFIDENTIAL', 'DRAFT', 'SAMPLE', 'WATERMARK', 'COPY',
+        'DO NOT COPY', 'UNOFFICIAL', 'VOID', 'PREVIEW', 'SPECIMEN',
+        'NOT FOR DISTRIBUTION', 'RESTRICTED', 'TOP SECRET', 'DUPLICATE',
+    ]
+
+    def is_watermark_stream(stream_text, wm_gs_names):
+        """Heuristic: determine if a content stream is a watermark overlay."""
+        # Check 1: Contains a transparency ExtGState reference
+        has_transparency = False
+        for gs_name in wm_gs_names:
+            if f'/{gs_name} gs' in stream_text or f'/{gs_name}\n' in stream_text:
+                has_transparency = True
+                break
+
+        # Also check for our specific /GS_WM gs marker
+        if '/GS_WM gs' in stream_text or '/GS_WM ' in stream_text:
+            has_transparency = True
+
+        # Check 2: Contains very few BT/ET blocks (watermarks are usually 1 text block)
+        bt_count = stream_text.count('BT')
+        et_count = stream_text.count('ET')
+        few_text_blocks = (bt_count <= 2 and et_count <= 2 and bt_count >= 1)
+
+        # Check 3: Contains known watermark keywords
+        upper_text = stream_text.upper()
+        has_keyword = any(kw in upper_text for kw in WM_KEYWORDS)
+
+        # Check 4: Has a rotation matrix (Tm with sin/cos components) — common in watermarks
+        has_rotation = bool(re.search(r'[\d.-]+\s+[\d.-]+\s+[\d.-]+\s+[\d.-]+\s+[\d.-]+\s+[\d.-]+\s+Tm', stream_text))
+
+        # Decision logic:
+        # - If it has transparency + few text blocks: very likely watermark
+        # - If it has transparency + keyword: definitely watermark
+        # - If it has keyword + rotation + few text blocks: likely watermark
+        if has_transparency and has_keyword:
+            return True
+        if has_transparency and few_text_blocks:
+            return True
+        if has_keyword and has_rotation and few_text_blocks:
+            return True
+
+        return False
+
+    for page in pdf:
+        # ── Step 1: Remove watermark-type annotations ──
+        annots_to_delete = []
+        try:
+            for annot in page.annots():
+                annot_type = annot.type[0]
+                if annot_type in [2, 13, 25, 27]:
+                    annots_to_delete.append(annot)
+                elif annot.opacity is not None and annot.opacity < 0.5:
+                    annots_to_delete.append(annot)
+        except Exception:
+            pass
+
+        for annot in annots_to_delete:
+            try:
+                page.delete_annot(annot)
+            except Exception:
+                pass
+
+        # ── Step 2: Identify and remove watermark content streams ──
+        wm_gs_names = get_watermark_gs_names(page)
+
+        try:
+            xref_list = page.get_contents()
+            if not xref_list:
+                continue
+
+            streams_to_clear = []
+
+            for idx, xref in enumerate(xref_list):
+                stream = pdf.xref_stream(xref)
+                if not stream:
+                    continue
+
+                text = stream.decode('latin-1', errors='ignore')
+
+                # Strategy A: Check if this entire stream is a watermark overlay
+                if is_watermark_stream(text, wm_gs_names):
+                    streams_to_clear.append(xref)
+                    continue
+
+                # Strategy B: Remove watermark XObject references
+                modified = False
+                if watermark_xobjs:
+                    for wm_name in watermark_xobjs:
+                        pattern = f'/{wm_name} Do'
+                        if pattern in text:
+                            text = text.replace(pattern, '')
+                            modified = True
+
+                # Strategy C: Remove /GS_WM gs references
+                wm_gs_re = re.compile(r'/GS_WM\s+gs\b')
+                if wm_gs_re.search(text):
+                    text = wm_gs_re.sub('', text)
+                    modified = True
+
+                if modified:
+                    pdf.update_stream(xref, text.encode('latin-1'))
+
+            # Clear watermark-only streams (replace with empty)
+            for xref in streams_to_clear:
+                pdf.update_stream(xref, b' ')
+
+        except Exception:
+            pass
+
+        # ── Step 3: Clean up the page content ──
+        try:
+            page.clean_contents()
+        except Exception:
+            pass
+
+    pdf.save(output_path, garbage=4, deflate=True, clean=True)
+    pdf.close()
+    return output_path
+
+
+# ═══════════════════════════════════════════════════════════════
+# 20. CROP PDF
+# ═══════════════════════════════════════════════════════════════
+def crop_pdf(input_path, original_name, crop_mode='auto',
+             top=0, bottom=0, left=0, right=0):
+    """Crop pages of a PDF.
+
+    crop_mode:
+      'auto'   — automatically detect and remove white margins
+      'manual' — crop by specified margins (in points, 1 inch = 72 points)
+
+    top, bottom, left, right: margins to crop (in points) for manual mode
+    """
+    import fitz
+
+    output_path = get_output_path(original_name, 'pdf')
+    base_name = Path(original_name).stem
+    output_path = os.path.join(
+        os.path.dirname(output_path), f"{base_name}_cropped.pdf"
+    )
+
+    pdf = fitz.open(input_path)
+
+    for page in pdf:
+        rect = page.rect
+
+        if crop_mode == 'auto':
+            # Auto-crop: detect content boundaries
+            # Render page to find actual content area
+            try:
+                # Get all text and image bounding boxes
+                text_blocks = page.get_text("blocks")
+                images = page.get_image_info()
+                drawings = page.get_drawings()
+
+                if not text_blocks and not images and not drawings:
+                    continue  # Skip blank pages
+
+                min_x = rect.width
+                min_y = rect.height
+                max_x = 0
+                max_y = 0
+
+                # Check text blocks
+                for block in text_blocks:
+                    x0, y0, x1, y1 = block[:4]
+                    min_x = min(min_x, x0)
+                    min_y = min(min_y, y0)
+                    max_x = max(max_x, x1)
+                    max_y = max(max_y, y1)
+
+                # Check images
+                for img in images:
+                    bbox = img.get("bbox", None)
+                    if bbox:
+                        min_x = min(min_x, bbox[0])
+                        min_y = min(min_y, bbox[1])
+                        max_x = max(max_x, bbox[2])
+                        max_y = max(max_y, bbox[3])
+
+                # Check drawings
+                for drawing in drawings:
+                    drect = drawing.get("rect", None)
+                    if drect:
+                        min_x = min(min_x, drect.x0)
+                        min_y = min(min_y, drect.y0)
+                        max_x = max(max_x, drect.x1)
+                        max_y = max(max_y, drect.y1)
+
+                if max_x > min_x and max_y > min_y:
+                    # Add a small margin (10 points ≈ 3.5mm)
+                    margin = 10
+                    crop_rect = fitz.Rect(
+                        max(0, min_x - margin),
+                        max(0, min_y - margin),
+                        min(rect.width, max_x + margin),
+                        min(rect.height, max_y + margin),
+                    )
+                    page.set_cropbox(crop_rect)
+            except Exception:
+                continue  # Skip page if auto-crop fails
+
+        elif crop_mode == 'manual':
+            # Manual crop using specified margins
+            top_val = float(top)
+            bottom_val = float(bottom)
+            left_val = float(left)
+            right_val = float(right)
+
+            crop_rect = fitz.Rect(
+                rect.x0 + left_val,
+                rect.y0 + top_val,
+                rect.x1 - right_val,
+                rect.y1 - bottom_val,
+            )
+
+            # Validate the crop rectangle
+            if crop_rect.width > 10 and crop_rect.height > 10:
+                page.set_cropbox(crop_rect)
+            else:
+                raise Exception(
+                    "Crop margins are too large. The resulting page would be too small."
+                )
+
+    pdf.save(output_path, garbage=4, deflate=True)
+    pdf.close()
+    return output_path

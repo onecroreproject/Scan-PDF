@@ -27,6 +27,10 @@ from .utils import (
     organize_pdf,
     repair_pdf,
     ocr_pdf,
+    rotate_pdf,
+    add_watermark,
+    remove_watermark,
+    crop_pdf,
 )
 
 
@@ -209,6 +213,50 @@ TOOLS = {
         'gradient': 'from-teal-500 to-teal-700',
         'category': 'pdf-tools',
     },
+    'rotate-pdf': {
+        'title': 'Rotate PDF',
+        'description': 'Rotate all or specific pages of your PDF by 90°, 180°, or 270°.',
+        'icon': 'rotate-cw',
+        'accept': '.pdf',
+        'allowed_extensions': ['.pdf'],
+        'converter': None,
+        'color': '#6366f1',
+        'gradient': 'from-indigo-500 to-indigo-700',
+        'category': 'pdf-tools',
+    },
+    'add-watermark': {
+        'title': 'Add Watermark',
+        'description': 'Overlay a custom text watermark on every page of your PDF.',
+        'icon': 'stamp',
+        'accept': '.pdf',
+        'allowed_extensions': ['.pdf'],
+        'converter': None,
+        'color': '#0ea5e9',
+        'gradient': 'from-sky-500 to-sky-700',
+        'category': 'pdf-tools',
+    },
+    'remove-watermark': {
+        'title': 'Remove Watermark',
+        'description': 'Attempt to detect and remove watermarks from your PDF.',
+        'icon': 'eraser',
+        'accept': '.pdf',
+        'allowed_extensions': ['.pdf'],
+        'converter': remove_watermark,
+        'color': '#f43f5e',
+        'gradient': 'from-rose-500 to-rose-700',
+        'category': 'pdf-tools',
+    },
+    'crop-pdf': {
+        'title': 'Crop PDF',
+        'description': 'Crop whitespace or set custom margins to resize your PDF pages.',
+        'icon': 'crop',
+        'accept': '.pdf',
+        'allowed_extensions': ['.pdf'],
+        'converter': None,
+        'color': '#84cc16',
+        'gradient': 'from-lime-500 to-lime-700',
+        'category': 'pdf-tools',
+    },
 }
 
 
@@ -240,6 +288,12 @@ def convert_page(request, tool_slug):
         template = 'converter/extract_pages.html'
     elif tool_slug == 'organize-pdf':
         template = 'converter/organize_pdf.html'
+    elif tool_slug == 'rotate-pdf':
+        template = 'converter/rotate_pdf.html'
+    elif tool_slug == 'add-watermark':
+        template = 'converter/add_watermark.html'
+    elif tool_slug == 'crop-pdf':
+        template = 'converter/crop_pdf.html'
     else:
         template = 'converter/convert.html'
 
@@ -395,6 +449,104 @@ def convert_file(request, tool_slug):
             return response
         except Exception as e:
             return JsonResponse({'error': f'Organize PDF failed: {str(e)}'}, status=500)
+
+    # ── Rotate PDF ──
+    if tool_slug == 'rotate-pdf':
+        if 'file' not in request.FILES:
+            return JsonResponse({'error': 'No file was uploaded.'}, status=400)
+
+        uploaded_file = request.FILES['file']
+        rotation_angle = request.POST.get('rotation_angle', '90')
+        page_selection = request.POST.get('page_selection', 'all')
+
+        try:
+            input_path = save_uploaded_file(uploaded_file)
+            output_path = rotate_pdf(input_path, uploaded_file.name, rotation_angle, page_selection)
+
+            try:
+                os.remove(input_path)
+            except OSError:
+                pass
+
+            response = FileResponse(open(output_path, 'rb'), content_type='application/pdf')
+            output_filename = os.path.basename(output_path)
+            response['Content-Disposition'] = f'attachment; filename="{output_filename}"'
+            return response
+        except Exception as e:
+            return JsonResponse({'error': f'Rotate PDF failed: {str(e)}'}, status=500)
+
+    # ── Add Watermark ──
+    if tool_slug == 'add-watermark':
+        if 'file' not in request.FILES:
+            return JsonResponse({'error': 'No file was uploaded.'}, status=400)
+
+        uploaded_file = request.FILES['file']
+        watermark_text = request.POST.get('watermark_text', 'CONFIDENTIAL')
+        opacity = request.POST.get('opacity', '0.15')
+        font_size = request.POST.get('font_size', '60')
+        rotation = request.POST.get('rotation', '45')
+        color = request.POST.get('color', '#888888')
+
+        if not watermark_text.strip():
+            return JsonResponse({'error': 'Please enter watermark text.'}, status=400)
+
+        try:
+            input_path = save_uploaded_file(uploaded_file)
+            output_path = add_watermark(
+                input_path, uploaded_file.name,
+                watermark_text=watermark_text,
+                opacity=opacity,
+                font_size=font_size,
+                rotation=rotation,
+                color=color,
+            )
+
+            try:
+                os.remove(input_path)
+            except OSError:
+                pass
+
+            response = FileResponse(open(output_path, 'rb'), content_type='application/pdf')
+            output_filename = os.path.basename(output_path)
+            response['Content-Disposition'] = f'attachment; filename="{output_filename}"'
+            return response
+        except Exception as e:
+            return JsonResponse({'error': f'Add watermark failed: {str(e)}'}, status=500)
+
+    # ── Crop PDF ──
+    if tool_slug == 'crop-pdf':
+        if 'file' not in request.FILES:
+            return JsonResponse({'error': 'No file was uploaded.'}, status=400)
+
+        uploaded_file = request.FILES['file']
+        crop_mode = request.POST.get('crop_mode', 'auto')
+        crop_top = request.POST.get('crop_top', '0')
+        crop_bottom = request.POST.get('crop_bottom', '0')
+        crop_left = request.POST.get('crop_left', '0')
+        crop_right = request.POST.get('crop_right', '0')
+
+        try:
+            input_path = save_uploaded_file(uploaded_file)
+            output_path = crop_pdf(
+                input_path, uploaded_file.name,
+                crop_mode=crop_mode,
+                top=crop_top,
+                bottom=crop_bottom,
+                left=crop_left,
+                right=crop_right,
+            )
+
+            try:
+                os.remove(input_path)
+            except OSError:
+                pass
+
+            response = FileResponse(open(output_path, 'rb'), content_type='application/pdf')
+            output_filename = os.path.basename(output_path)
+            response['Content-Disposition'] = f'attachment; filename="{output_filename}"'
+            return response
+        except Exception as e:
+            return JsonResponse({'error': f'Crop PDF failed: {str(e)}'}, status=500)
 
     # ── Standard single-file conversion ──
     if 'file' not in request.FILES:
