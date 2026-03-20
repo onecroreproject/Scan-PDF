@@ -1654,3 +1654,252 @@ def remove_pdf_pages(input_path, original_name, pages_to_remove):
     pdf.close()
     return output_path
 
+
+
+# ═══════════════════════════════════════════════════════════════
+# 13. EXTRACT PAGES FROM PDF
+# ═══════════════════════════════════════════════════════════════
+def extract_pdf_pages(input_path, original_name, pages_to_extract):
+    """Extract specified pages from a PDF into a new PDF.
+
+    pages_to_extract: comma-separated string like '1,3,5-7'
+    """
+    import fitz
+
+    output_path = get_output_path(original_name, 'pdf')
+    base_name = Path(original_name).stem
+    output_path = os.path.join(
+        os.path.dirname(output_path), f"{base_name}_extracted.pdf"
+    )
+
+    pdf = fitz.open(input_path)
+    total_pages = len(pdf)
+
+    # Parse pages to extract (1-indexed input → 0-indexed)
+    extract_list = []
+    for part in pages_to_extract.split(','):
+        part = part.strip()
+        if '-' in part:
+            start, end = part.split('-', 1)
+            for p in range(int(start.strip()), int(end.strip()) + 1):
+                if 1 <= p <= total_pages:
+                    extract_list.append(p - 1)
+        else:
+            p = int(part.strip())
+            if 1 <= p <= total_pages:
+                extract_list.append(p - 1)
+
+    if not extract_list:
+        raise Exception("No valid pages specified for extraction.")
+
+    # Remove duplicates while preserving order
+    seen = set()
+    ordered = []
+    for p in extract_list:
+        if p not in seen:
+            seen.add(p)
+            ordered.append(p)
+
+    new_pdf = fitz.open()
+    for page_idx in ordered:
+        new_pdf.insert_pdf(pdf, from_page=page_idx, to_page=page_idx)
+
+    new_pdf.save(output_path)
+    new_pdf.close()
+    pdf.close()
+    return output_path
+
+
+# ═══════════════════════════════════════════════════════════════
+# 14. ORGANIZE (REORDER) PDF PAGES
+# ═══════════════════════════════════════════════════════════════
+def organize_pdf(input_path, original_name, page_order):
+    """Reorder pages of a PDF based on user-specified order.
+
+    page_order: comma-separated string like '3,1,2,5,4'
+    """
+    import fitz
+
+    output_path = get_output_path(original_name, 'pdf')
+    base_name = Path(original_name).stem
+    output_path = os.path.join(
+        os.path.dirname(output_path), f"{base_name}_organized.pdf"
+    )
+
+    pdf = fitz.open(input_path)
+    total_pages = len(pdf)
+
+    # Parse the desired page order
+    new_order = []
+    for part in page_order.split(','):
+        part = part.strip()
+        if '-' in part:
+            start, end = part.split('-', 1)
+            for p in range(int(start.strip()), int(end.strip()) + 1):
+                if 1 <= p <= total_pages:
+                    new_order.append(p - 1)
+        else:
+            p = int(part.strip())
+            if 1 <= p <= total_pages:
+                new_order.append(p - 1)
+
+    if not new_order:
+        raise Exception("No valid page order specified.")
+
+    new_pdf = fitz.open()
+    for page_idx in new_order:
+        new_pdf.insert_pdf(pdf, from_page=page_idx, to_page=page_idx)
+
+    new_pdf.save(output_path)
+    new_pdf.close()
+    pdf.close()
+    return output_path
+
+
+# ═══════════════════════════════════════════════════════════════
+# 15. REPAIR PDF
+# ═══════════════════════════════════════════════════════════════
+def repair_pdf(input_path, original_name):
+    """Attempt to repair a corrupted or broken PDF.
+
+    Opens the PDF with PyMuPDF's error-recovery mode, cleans up
+    internal structures, removes garbage, and saves a repaired copy.
+    """
+    import fitz
+
+    output_path = get_output_path(original_name, 'pdf')
+    base_name = Path(original_name).stem
+    output_path = os.path.join(
+        os.path.dirname(output_path), f"{base_name}_repaired.pdf"
+    )
+
+    try:
+        # Open with repair flag
+        pdf = fitz.open(input_path)
+    except Exception:
+        # If normal open fails, try reading as bytes and opening
+        with open(input_path, 'rb') as f:
+            raw_data = f.read()
+        pdf = fitz.open(stream=raw_data, filetype="pdf")
+
+    # Re-save with aggressive garbage collection and cleaning
+    pdf.save(
+        output_path,
+        garbage=4,        # maximum garbage collection
+        deflate=True,     # compress streams
+        clean=True,       # clean and sanitize content
+    )
+    pdf.close()
+    return output_path
+
+
+# ═══════════════════════════════════════════════════════════════
+# 16. OCR PDF (Scanned PDF → Searchable PDF)
+# ═══════════════════════════════════════════════════════════════
+def ocr_pdf(input_path, original_name):
+    """Convert a scanned/image-based PDF to a searchable PDF using OCR.
+
+    Uses pdf2image to render pages, pytesseract for OCR,
+    then rebuilds a searchable PDF with text overlay.
+    """
+    import fitz
+
+    output_path = get_output_path(original_name, 'pdf')
+    base_name = Path(original_name).stem
+    output_path = os.path.join(
+        os.path.dirname(output_path), f"{base_name}_ocr.pdf"
+    )
+
+    try:
+        import pytesseract
+        from PIL import Image
+    except ImportError:
+        raise Exception(
+            "OCR requires pytesseract and Pillow. "
+            "Please install: pip install pytesseract Pillow"
+        )
+
+    # Check if Tesseract is available
+    try:
+        pytesseract.get_tesseract_version()
+    except Exception:
+        raise Exception(
+            "Tesseract OCR engine is not installed or not found in PATH. "
+            "Please install Tesseract: https://github.com/tesseract-ocr/tesseract"
+        )
+
+    pdf = fitz.open(input_path)
+    output_pdf = fitz.open()
+
+    for page_idx in range(len(pdf)):
+        page = pdf[page_idx]
+        # Render page to high-res image for OCR
+        zoom = 2.0  # 2x for better OCR accuracy
+        mat = fitz.Matrix(zoom, zoom)
+        pix = page.get_pixmap(matrix=mat)
+
+        # Convert pixmap to PIL Image
+        img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
+
+        # Run OCR to get text with positions
+        ocr_data = pytesseract.image_to_data(
+            img, output_type=pytesseract.Output.DICT
+        )
+
+        # Create a new page with same dimensions as original
+        rect = page.rect
+        new_page = output_pdf.new_page(
+            width=rect.width, height=rect.height
+        )
+
+        # Insert the original page image as background
+        pix_original = page.get_pixmap(matrix=fitz.Matrix(1, 1))
+        img_original = Image.frombytes(
+            "RGB", [pix_original.width, pix_original.height],
+            pix_original.samples
+        )
+        img_buf = io.BytesIO()
+        img_original.save(img_buf, format='PNG')
+        img_buf.seek(0)
+        new_page.insert_image(rect, stream=img_buf.getvalue())
+
+        # Overlay invisible text for searchability
+        scale_x = rect.width / pix.width
+        scale_y = rect.height / pix.height
+
+        n_boxes = len(ocr_data['text'])
+        for i in range(n_boxes):
+            text = ocr_data['text'][i].strip()
+            if not text:
+                continue
+
+            conf = int(ocr_data['conf'][i]) if ocr_data['conf'][i] != '-1' else 0
+            if conf < 30:
+                continue
+
+            x = ocr_data['left'][i] * scale_x
+            y = ocr_data['top'][i] * scale_y
+            w = ocr_data['width'][i] * scale_x
+            h = ocr_data['height'][i] * scale_y
+
+            # Calculate font size to fit the bounding box
+            font_size = max(h * 0.8, 4)
+
+            # Insert invisible text (very small opacity for searchability)
+            text_point = fitz.Point(x, y + h * 0.85)
+            try:
+                new_page.insert_text(
+                    text_point,
+                    text,
+                    fontsize=font_size,
+                    color=(1, 1, 1),       # white = invisible on white bg
+                    render_mode=3,         # invisible text mode
+                )
+            except Exception:
+                continue
+
+    output_pdf.save(output_path)
+    output_pdf.close()
+    pdf.close()
+    return output_path
+

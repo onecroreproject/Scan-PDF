@@ -11,6 +11,12 @@ SECRET_KEY = 'django-insecure-change-this-in-production-x9$k2m!q@w3e4r5t6y7u8i9o
 DEBUG = True
 
 ALLOWED_HOSTS = ['*']
+ALLOWED_HOSTS = ['scanpdf.co.in', 'www.scanpdf.co.in']
+ 
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+
+
 
 INSTALLED_APPS = [
     'django.contrib.admin',

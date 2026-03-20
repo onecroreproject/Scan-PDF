@@ -23,6 +23,10 @@ from .utils import (
     split_pdf,
     compress_pdf,
     remove_pdf_pages,
+    extract_pdf_pages,
+    organize_pdf,
+    repair_pdf,
+    ocr_pdf,
 )
 
 
@@ -161,6 +165,50 @@ TOOLS = {
         'gradient': 'from-orange-500 to-orange-700',
         'category': 'pdf-tools',
     },
+    'extract-pages': {
+        'title': 'Extract Pages',
+        'description': 'Pull specific pages out of a PDF into a new file.',
+        'icon': 'file-output',
+        'accept': '.pdf',
+        'allowed_extensions': ['.pdf'],
+        'converter': None,
+        'color': '#0891b2',
+        'gradient': 'from-cyan-500 to-cyan-700',
+        'category': 'pdf-tools',
+    },
+    'organize-pdf': {
+        'title': 'Organize PDF',
+        'description': 'Reorder and rearrange the pages of your PDF effortlessly.',
+        'icon': 'arrow-up-down',
+        'accept': '.pdf',
+        'allowed_extensions': ['.pdf'],
+        'converter': None,
+        'color': '#7c3aed',
+        'gradient': 'from-violet-500 to-violet-700',
+        'category': 'pdf-tools',
+    },
+    'repair-pdf': {
+        'title': 'Repair PDF',
+        'description': 'Fix corrupted or broken PDF files and recover content.',
+        'icon': 'wrench',
+        'accept': '.pdf',
+        'allowed_extensions': ['.pdf'],
+        'converter': repair_pdf,
+        'color': '#b91c1c',
+        'gradient': 'from-rose-500 to-rose-700',
+        'category': 'pdf-tools',
+    },
+    'ocr-pdf': {
+        'title': 'OCR PDF',
+        'description': 'Convert scanned PDFs into searchable, selectable text.',
+        'icon': 'scan-text',
+        'accept': '.pdf',
+        'allowed_extensions': ['.pdf'],
+        'converter': ocr_pdf,
+        'color': '#0d9488',
+        'gradient': 'from-teal-500 to-teal-700',
+        'category': 'pdf-tools',
+    },
 }
 
 
@@ -168,7 +216,7 @@ def home(request):
     """Render the home page with all available tools."""
     context = {
         'tools': TOOLS,
-        'page_title': 'All-in-One File Converter',
+        'page_title': 'ScanPDF — Scan Smart. Share Fast.',
     }
     return render(request, 'converter/home.html', context)
 
@@ -188,6 +236,10 @@ def convert_page(request, tool_slug):
         template = 'converter/split.html'
     elif tool_slug == 'remove-pages':
         template = 'converter/remove_pages.html'
+    elif tool_slug == 'extract-pages':
+        template = 'converter/extract_pages.html'
+    elif tool_slug == 'organize-pdf':
+        template = 'converter/organize_pdf.html'
     else:
         template = 'converter/convert.html'
 
@@ -195,7 +247,7 @@ def convert_page(request, tool_slug):
         'tool': tool,
         'tool_slug': tool_slug,
         'form': form,
-        'page_title': f'{tool["title"]} - All-in-One Converter',
+        'page_title': f'{tool["title"]} — ScanPDF',
     }
     return render(request, template, context)
 
@@ -289,6 +341,60 @@ def convert_file(request, tool_slug):
             return response
         except Exception as e:
             return JsonResponse({'error': f'Remove pages failed: {str(e)}'}, status=500)
+
+    # ── Extract Pages ──
+    if tool_slug == 'extract-pages':
+        if 'file' not in request.FILES:
+            return JsonResponse({'error': 'No file was uploaded.'}, status=400)
+
+        uploaded_file = request.FILES['file']
+        pages_to_extract = request.POST.get('pages_to_extract', '')
+
+        if not pages_to_extract.strip():
+            return JsonResponse({'error': 'Please specify which pages to extract.'}, status=400)
+
+        try:
+            input_path = save_uploaded_file(uploaded_file)
+            output_path = extract_pdf_pages(input_path, uploaded_file.name, pages_to_extract)
+
+            try:
+                os.remove(input_path)
+            except OSError:
+                pass
+
+            response = FileResponse(open(output_path, 'rb'), content_type='application/pdf')
+            output_filename = os.path.basename(output_path)
+            response['Content-Disposition'] = f'attachment; filename="{output_filename}"'
+            return response
+        except Exception as e:
+            return JsonResponse({'error': f'Extract pages failed: {str(e)}'}, status=500)
+
+    # ── Organize PDF ──
+    if tool_slug == 'organize-pdf':
+        if 'file' not in request.FILES:
+            return JsonResponse({'error': 'No file was uploaded.'}, status=400)
+
+        uploaded_file = request.FILES['file']
+        page_order = request.POST.get('page_order', '')
+
+        if not page_order.strip():
+            return JsonResponse({'error': 'Please specify the desired page order.'}, status=400)
+
+        try:
+            input_path = save_uploaded_file(uploaded_file)
+            output_path = organize_pdf(input_path, uploaded_file.name, page_order)
+
+            try:
+                os.remove(input_path)
+            except OSError:
+                pass
+
+            response = FileResponse(open(output_path, 'rb'), content_type='application/pdf')
+            output_filename = os.path.basename(output_path)
+            response['Content-Disposition'] = f'attachment; filename="{output_filename}"'
+            return response
+        except Exception as e:
+            return JsonResponse({'error': f'Organize PDF failed: {str(e)}'}, status=500)
 
     # ── Standard single-file conversion ──
     if 'file' not in request.FILES:

@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════
-   ConvertPro — Professional Light Theme
+   ScanPDF — Scan Smart. Share Fast.
    Custom styles & animations to supplement Tailwind CSS
    ═══════════════════════════════════════════════════════════ */
 
@@ -93,6 +93,8 @@ html {
 
 body {
     text-rendering: optimizeLegibility;
+    /* Prevent horizontal overflow on mobile */
+    overflow-x: hidden;
 }
 
 /* ─── Navbar ───────────────────────────────────────────── */
@@ -157,6 +159,10 @@ body {
 .tool-card:nth-child(10) { animation-delay: 0.40s; }
 .tool-card:nth-child(11) { animation-delay: 0.44s; }
 .tool-card:nth-child(12) { animation-delay: 0.48s; }
+.tool-card:nth-child(13) { animation-delay: 0.52s; }
+.tool-card:nth-child(14) { animation-delay: 0.56s; }
+.tool-card:nth-child(15) { animation-delay: 0.60s; }
+.tool-card:nth-child(16) { animation-delay: 0.64s; }
 
 /* ─── Focus ────────────────────────────────────────────── */
 
@@ -166,16 +172,33 @@ body {
     border-radius: 4px;
 }
 
-/* ─── Responsive ───────────────────────────────────────── */
+/* ─── Mobile Responsive Overrides ──────────────────────── */
 
 @media (max-width: 640px) {
     #hero h1 {
-        font-size: 2.75rem;
-        line-height: 1.05;
+        font-size: 2.25rem;
+        line-height: 1.1;
     }
 
     .tool-card {
         animation-delay: 0s !important;
+    }
+
+    /* Better touch targets on mobile */
+    button, a {
+        -webkit-tap-highlight-color: rgba(99, 102, 241, 0.08);
+    }
+
+    /* Prevent horizontal scroll */
+    section {
+        overflow-x: hidden;
+    }
+}
+
+@media (max-width: 475px) {
+    #hero h1 {
+        font-size: 2rem;
+        line-height: 1.12;
     }
 }
 
@@ -196,4 +219,15 @@ body {
 
 a, button {
     transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ─── Safe areas for notched phones ────────────────────── */
+
+@supports (padding: env(safe-area-inset-bottom)) {
+    footer {
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+    #navbar {
+        padding-top: env(safe-area-inset-top);
+    }
 }

@@ -1,0 +1,218 @@
+{% extends 'converter/base.html' %}
+{% load static %}
+
+{% block content %}
+
+<section class="min-h-screen pt-32 pb-20 relative">
+    <div class="absolute inset-0 bg-gradient-to-b from-surface-50 via-white to-surface-50"></div>
+    <div
+        class="absolute top-1/3 left-[10%] sm:left-1/5 w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-cyan-100/10 rounded-full blur-[80px] sm:blur-[100px]">
+    </div>
+
+    <div class="relative z-10 max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+        <nav class="flex items-center gap-1.5 sm:gap-2 text-xs sm:text-sm mb-6 sm:mb-10">
+            <a href="{% url 'converter:home' %}"
+                class="text-surface-400 hover:text-brand-600 transition-colors flex items-center gap-1"><i
+                    data-lucide="home" class="w-3 h-3 sm:w-3.5 sm:h-3.5"></i>Home</a>
+            <i data-lucide="chevron-right" class="w-3 h-3 sm:w-3.5 sm:h-3.5 text-surface-300"></i>
+            <span class="text-surface-700 font-medium">{{ tool.title }}</span>
+        </nav>
+
+        <div class="mb-6 sm:mb-10">
+            <div class="flex items-center gap-3 sm:gap-4 mb-3">
+                <div
+                    class="w-11 h-11 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-br {{ tool.gradient }} flex items-center justify-center shadow-xl flex-shrink-0">
+                    <i data-lucide="{{ tool.icon }}" class="w-5 h-5 sm:w-7 sm:h-7 text-white"></i>
+                </div>
+                <div class="min-w-0">
+                    <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-surface-900 tracking-tight">{{ tool.title
+                        }}</h1>
+                    <p class="text-surface-500 text-xs sm:text-sm mt-0.5">{{ tool.description }}</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="rounded-xl sm:rounded-2xl bg-white border border-surface-100 p-4 sm:p-6 md:p-8 shadow-card">
+            <!-- Upload Zone -->
+            <div id="drop-zone"
+                class="relative rounded-xl border-2 border-dashed border-surface-200 hover:border-brand-300 transition-all p-6 sm:p-10 text-center cursor-pointer group">
+                <div id="upload-default" class="space-y-3">
+                    <div
+                        class="w-14 h-14 sm:w-16 sm:h-16 rounded-xl bg-surface-50 border border-surface-100 flex items-center justify-center mx-auto group-hover:bg-brand-50 group-hover:border-brand-200 transition-all">
+                        <i data-lucide="cloud-upload"
+                            class="w-6 h-6 sm:w-8 sm:h-8 text-surface-300 group-hover:text-brand-500 transition-colors"></i>
+                    </div>
+                    <p class="text-sm sm:text-base font-semibold text-surface-700">Drop your PDF here, or <span
+                            class="text-brand-600 underline">browse</span></p>
+                    <p class="text-[10px] sm:text-xs text-surface-400">Max 50MB • PDF only</p>
+                </div>
+                <div id="file-selected" class="hidden">
+                    <div class="flex items-center justify-center gap-3">
+                        <div
+                            class="w-10 h-10 sm:w-12 sm:h-12 rounded-xl bg-brand-50 border border-brand-100 flex items-center justify-center flex-shrink-0">
+                            <i data-lucide="file-check-2" class="w-5 h-5 sm:w-6 sm:h-6 text-brand-600"></i>
+                        </div>
+                        <div class="text-left min-w-0">
+                            <p id="file-name" class="text-surface-800 font-semibold text-sm truncate"></p>
+                            <p id="file-size" class="text-[10px] sm:text-xs text-surface-400"></p>
+                        </div>
+                        <button id="remove-file-btn"
+                            class="p-1.5 rounded-lg hover:bg-red-50 text-surface-300 hover:text-red-500 transition-all flex-shrink-0">
+                            <i data-lucide="x" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                </div>
+                <input type="file" id="file-input" class="hidden" accept=".pdf">
+            </div>
+
+            <!-- Pages Input -->
+            <div id="pages-config" class="hidden mt-5">
+                <label class="block text-sm font-semibold text-surface-700 mb-2">Pages to Extract</label>
+                <input type="text" id="pages-input" placeholder="e.g. 1, 3, 5-8, 12"
+                    class="w-full px-4 py-3 rounded-xl border border-surface-200 focus:border-brand-400 focus:ring-2 focus:ring-brand-100 text-sm outline-none transition-all">
+                <p class="text-[10px] sm:text-xs text-surface-400 mt-1.5">Enter page numbers and ranges separated by
+                    commas.</p>
+            </div>
+
+            <!-- Convert Button -->
+            <button id="convert-btn" disabled
+                class="w-full mt-5 py-3 sm:py-3.5 rounded-xl bg-gradient-to-r {{ tool.gradient }} text-white font-semibold text-sm disabled:opacity-25 disabled:cursor-not-allowed hover:opacity-90 transition-all shadow-lg disabled:shadow-none flex items-center justify-center gap-2">
+                <i data-lucide="wand-2" class="w-4 h-4"></i>Extract Pages
+            </button>
+
+            <!-- Progress -->
+            <div id="progress-section" class="hidden mt-5">
+                <div class="flex items-center gap-3 py-4 px-4 rounded-xl bg-surface-50 border border-surface-100">
+                    <div
+                        class="w-8 h-8 sm:w-10 sm:h-10 rounded-full border-[3px] border-surface-200 border-t-brand-500 animate-spin">
+                    </div>
+                    <div>
+                        <p class="text-surface-800 font-semibold text-xs sm:text-sm">Extracting pages…</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Success -->
+            <div id="success-section" class="hidden mt-5">
+                <div class="text-center py-5 px-4 rounded-xl bg-emerald-50/50 border border-emerald-100">
+                    <div
+                        class="w-12 h-12 rounded-xl bg-emerald-100 flex items-center justify-center mx-auto mb-3 animate-success-pop">
+                        <i data-lucide="check-circle-2" class="w-6 h-6 text-emerald-600"></i>
+                    </div>
+                    <h3 class="text-base font-bold text-surface-900 mb-1">Pages Extracted!</h3>
+                    <p class="text-surface-500 text-xs sm:text-sm mb-4">Your new PDF is ready.</p>
+                    <div class="flex flex-col xs:flex-row gap-2.5 justify-center">
+                        <a id="download-btn" href="#"
+                            class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-semibold text-xs sm:text-sm shadow-lg">
+                            <i data-lucide="download" class="w-4 h-4"></i>Download
+                        </a>
+                        <button id="convert-another-btn"
+                            class="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-white border border-surface-200 text-surface-600 font-semibold text-xs sm:text-sm">
+                            <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i>Extract Another
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Error -->
+            <div id="error-section" class="hidden mt-5">
+                <div class="p-3 rounded-xl bg-red-50 border border-red-100 flex items-start gap-2.5">
+                    <div class="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center flex-shrink-0"><i
+                            data-lucide="alert-triangle" class="w-4 h-4 text-red-500"></i></div>
+                    <div>
+                        <h4 class="font-semibold text-red-700 text-xs">Failed</h4>
+                        <p id="error-message" class="text-[10px] sm:text-xs text-red-500"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    const CONVERT_URL = '{% url "converter:convert_file" tool_slug %}';
+    const CSRF_TOKEN = '{{ csrf_token }}';
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('file-input');
+    const uploadDefault = document.getElementById('upload-default');
+    const fileSelected = document.getElementById('file-selected');
+    const fileName = document.getElementById('file-name');
+    const fileSize = document.getElementById('file-size');
+    const removeFileBtn = document.getElementById('remove-file-btn');
+    const convertBtn = document.getElementById('convert-btn');
+    const pagesConfig = document.getElementById('pages-config');
+    const pagesInput = document.getElementById('pages-input');
+    let selectedFile = null;
+
+    dropZone.addEventListener('click', e => { if (!e.target.closest('#remove-file-btn')) fileInput.click(); });
+    dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('border-brand-400', 'bg-brand-50/30'); });
+    dropZone.addEventListener('dragleave', e => { e.preventDefault(); dropZone.classList.remove('border-brand-400', 'bg-brand-50/30'); });
+    dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('border-brand-400', 'bg-brand-50/30'); if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]); });
+    fileInput.addEventListener('change', e => { if (e.target.files.length) handleFile(e.target.files[0]); });
+
+    function handleFile(file) {
+        if (!file.name.toLowerCase().endsWith('.pdf')) { showError('Only PDF files are accepted.'); return; }
+        if (file.size > 52428800) { showError('File exceeds 50MB limit.'); return; }
+        selectedFile = file;
+        fileName.textContent = file.name;
+        fileSize.textContent = (file.size / 1024 / 1024).toFixed(2) + ' MB';
+        uploadDefault.classList.add('hidden');
+        fileSelected.classList.remove('hidden');
+        pagesConfig.classList.remove('hidden');
+        convertBtn.disabled = false;
+        document.getElementById('error-section').classList.add('hidden');
+        lucide.createIcons();
+    }
+
+    removeFileBtn.addEventListener('click', e => { e.stopPropagation(); resetUpload(); });
+    document.getElementById('convert-another-btn').addEventListener('click', () => resetUpload());
+
+    function resetUpload() {
+        selectedFile = null; fileInput.value = '';
+        uploadDefault.classList.remove('hidden'); fileSelected.classList.add('hidden');
+        pagesConfig.classList.add('hidden'); pagesInput.value = '';
+        convertBtn.disabled = true; convertBtn.classList.remove('hidden');
+        document.getElementById('progress-section').classList.add('hidden');
+        document.getElementById('success-section').classList.add('hidden');
+        document.getElementById('error-section').classList.add('hidden');
+        lucide.createIcons();
+    }
+
+    convertBtn.addEventListener('click', async () => {
+        if (!selectedFile || !pagesInput.value.trim()) { showError('Please enter the pages to extract.'); return; }
+        convertBtn.classList.add('hidden');
+        document.getElementById('progress-section').classList.remove('hidden');
+        const formData = new FormData();
+        formData.append('file', selectedFile);
+        formData.append('pages_to_extract', pagesInput.value.trim());
+        formData.append('csrfmiddlewaretoken', CSRF_TOKEN);
+        try {
+            const res = await fetch(CONVERT_URL, { method: 'POST', body: formData });
+            if (!res.ok) { const d = await res.json(); throw new Error(d.error || 'Failed'); }
+            const blob = await res.blob();
+            const url = URL.createObjectURL(blob);
+            const disposition = res.headers.get('Content-Disposition');
+            let fn = 'extracted.pdf';
+            if (disposition) { const m = disposition.match(/filename="(.+?)"/); if (m) fn = m[1]; }
+            document.getElementById('download-btn').href = url;
+            document.getElementById('download-btn').download = fn;
+            document.getElementById('progress-section').classList.add('hidden');
+            document.getElementById('success-section').classList.remove('hidden');
+            lucide.createIcons();
+        } catch (err) {
+            showError(err.message);
+            document.getElementById('progress-section').classList.add('hidden');
+            convertBtn.classList.remove('hidden');
+        }
+    });
+
+    function showError(msg) {
+        document.getElementById('error-message').textContent = msg;
+        document.getElementById('error-section').classList.remove('hidden');
+        lucide.createIcons();
+    }
+</script>
+{% endblock %}
