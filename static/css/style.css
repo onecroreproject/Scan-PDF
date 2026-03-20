@@ -1,0 +1,199 @@
+/* ═══════════════════════════════════════════════════════════
+   ConvertPro — Professional Light Theme
+   Custom styles & animations to supplement Tailwind CSS
+   ═══════════════════════════════════════════════════════════ */
+
+/* ─── Keyframes ────────────────────────────────────────── */
+
+@keyframes fade-in-up {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes pulse-slow {
+    0%, 100% { opacity: 0.3; transform: scale(1); }
+    50%      { opacity: 0.6; transform: scale(1.08); }
+}
+
+@keyframes scroll-dot {
+    0%   { opacity: 1; transform: translateY(0); }
+    100% { opacity: 0; transform: translateY(6px); }
+}
+
+@keyframes progress-bar {
+    0%   { width: 0%;  }
+    15%  { width: 12%; }
+    35%  { width: 35%; }
+    55%  { width: 50%; }
+    75%  { width: 70%; }
+    90%  { width: 85%; }
+    100% { width: 95%; }
+}
+
+@keyframes success-pop {
+    0%  { opacity: 0; transform: scale(0.6); }
+    50% { transform: scale(1.08); }
+    100%{ opacity: 1; transform: scale(1); }
+}
+
+@keyframes shimmer {
+    0%   { background-position: -200% center; }
+    100% { background-position: 200% center; }
+}
+
+@keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-6px); }
+}
+
+/* ─── Animation Utilities ──────────────────────────────── */
+
+.animate-fade-in-up {
+    animation: fade-in-up 0.7s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+    opacity: 0;
+}
+
+.animation-delay-100 { animation-delay: 0.1s; }
+.animation-delay-200 { animation-delay: 0.2s; }
+.animation-delay-300 { animation-delay: 0.3s; }
+.animation-delay-400 { animation-delay: 0.4s; }
+
+.animate-pulse-slow {
+    animation: pulse-slow 8s ease-in-out infinite;
+}
+
+.animate-pulse-slow-delayed {
+    animation: pulse-slow 8s ease-in-out infinite;
+    animation-delay: 4s;
+}
+
+.animate-scroll-dot {
+    animation: scroll-dot 1.5s ease-in-out infinite;
+}
+
+.animate-progress-bar {
+    animation: progress-bar 10s ease-out forwards;
+}
+
+.animate-success-pop {
+    animation: success-pop 0.45s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.animate-float {
+    animation: float 4s ease-in-out infinite;
+}
+
+/* ─── Base ─────────────────────────────────────────────── */
+
+html {
+    scroll-behavior: smooth;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+    text-rendering: optimizeLegibility;
+}
+
+/* ─── Navbar ───────────────────────────────────────────── */
+
+#navbar {
+    background: transparent;
+}
+
+#navbar.scrolled {
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(16px) saturate(180%);
+    -webkit-backdrop-filter: blur(16px) saturate(180%);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04),
+                0 4px 24px rgba(0, 0, 0, 0.03);
+}
+
+/* ─── Scrollbar ────────────────────────────────────────── */
+
+::-webkit-scrollbar {
+    width: 7px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: #c7d2fe;
+    border-radius: 100px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #a5b4fc;
+}
+
+/* ─── Selection ────────────────────────────────────────── */
+
+::selection {
+    background: rgba(99, 102, 241, 0.12);
+    color: #1e293b;
+}
+
+/* ─── Drop Zone ────────────────────────────────────────── */
+
+#drop-zone.drag-over {
+    border-color: #818cf8 !important;
+    background: rgba(238, 242, 255, 0.5) !important;
+}
+
+/* ─── Tool Card Stagger ────────────────────────────────── */
+
+.tool-card:nth-child(1) { animation-delay: 0.04s; }
+.tool-card:nth-child(2) { animation-delay: 0.08s; }
+.tool-card:nth-child(3) { animation-delay: 0.12s; }
+.tool-card:nth-child(4) { animation-delay: 0.16s; }
+.tool-card:nth-child(5) { animation-delay: 0.20s; }
+.tool-card:nth-child(6) { animation-delay: 0.24s; }
+.tool-card:nth-child(7) { animation-delay: 0.28s; }
+.tool-card:nth-child(8) { animation-delay: 0.32s; }
+.tool-card:nth-child(9) { animation-delay: 0.36s; }
+.tool-card:nth-child(10) { animation-delay: 0.40s; }
+.tool-card:nth-child(11) { animation-delay: 0.44s; }
+.tool-card:nth-child(12) { animation-delay: 0.48s; }
+
+/* ─── Focus ────────────────────────────────────────────── */
+
+*:focus-visible {
+    outline: 2px solid rgba(99, 102, 241, 0.4);
+    outline-offset: 2px;
+    border-radius: 4px;
+}
+
+/* ─── Responsive ───────────────────────────────────────── */
+
+@media (max-width: 640px) {
+    #hero h1 {
+        font-size: 2.75rem;
+        line-height: 1.05;
+    }
+
+    .tool-card {
+        animation-delay: 0s !important;
+    }
+}
+
+/* ─── Shimmer ──────────────────────────────────────────── */
+
+.shimmer {
+    background: linear-gradient(
+        90deg,
+        transparent 0%,
+        rgba(99, 102, 241, 0.03) 50%,
+        transparent 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 2.5s infinite;
+}
+
+/* ─── Transition Defaults ──────────────────────────────── */
+
+a, button {
+    transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1);
+}
