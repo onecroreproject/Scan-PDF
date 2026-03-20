@@ -31,6 +31,9 @@ from .utils import (
     add_watermark,
     remove_watermark,
     crop_pdf,
+    edit_pdf,
+    unlock_pdf,
+    protect_pdf,
 )
 
 
@@ -257,6 +260,39 @@ TOOLS = {
         'gradient': 'from-lime-500 to-lime-700',
         'category': 'pdf-tools',
     },
+    'edit-pdf': {
+        'title': 'Edit PDF',
+        'description': 'Add text annotations and notes to your PDF pages.',
+        'icon': 'pencil',
+        'accept': '.pdf',
+        'allowed_extensions': ['.pdf'],
+        'converter': None,
+        'color': '#8b5cf6',
+        'gradient': 'from-violet-500 to-purple-700',
+        'category': 'pdf-tools',
+    },
+    'unlock-pdf': {
+        'title': 'Unlock PDF',
+        'description': 'Remove password protection from your secured PDF files.',
+        'icon': 'lock-open',
+        'accept': '.pdf',
+        'allowed_extensions': ['.pdf'],
+        'converter': None,
+        'color': '#10b981',
+        'gradient': 'from-emerald-500 to-emerald-700',
+        'category': 'pdf-tools',
+    },
+    'protect-pdf': {
+        'title': 'Protect PDF',
+        'description': 'Encrypt your PDF with a password to restrict access.',
+        'icon': 'shield-check',
+        'accept': '.pdf',
+        'allowed_extensions': ['.pdf'],
+        'converter': None,
+        'color': '#ef4444',
+        'gradient': 'from-red-500 to-red-700',
+        'category': 'pdf-tools',
+    },
 }
 
 
@@ -294,6 +330,12 @@ def convert_page(request, tool_slug):
         template = 'converter/add_watermark.html'
     elif tool_slug == 'crop-pdf':
         template = 'converter/crop_pdf.html'
+    elif tool_slug == 'edit-pdf':
+        template = 'converter/edit_pdf.html'
+    elif tool_slug == 'unlock-pdf':
+        template = 'converter/unlock_pdf.html'
+    elif tool_slug == 'protect-pdf':
+        template = 'converter/protect_pdf.html'
     else:
         template = 'converter/convert.html'
 
@@ -547,6 +589,86 @@ def convert_file(request, tool_slug):
             return response
         except Exception as e:
             return JsonResponse({'error': f'Crop PDF failed: {str(e)}'}, status=500)
+
+    # ── Edit PDF ──
+    if tool_slug == 'edit-pdf':
+        if 'file' not in request.FILES:
+            return JsonResponse({'error': 'No file was uploaded.'}, status=400)
+
+        uploaded_file = request.FILES['file']
+        edits_json = request.POST.get('edits', '[]')
+
+        try:
+            input_path = save_uploaded_file(uploaded_file)
+            output_path = edit_pdf(input_path, uploaded_file.name, edits_json=edits_json)
+
+            try:
+                os.remove(input_path)
+            except OSError:
+                pass
+
+            response = FileResponse(open(output_path, 'rb'), content_type='application/pdf')
+            output_filename = os.path.basename(output_path)
+            response['Content-Disposition'] = f'attachment; filename="{output_filename}"'
+            return response
+        except Exception as e:
+            return JsonResponse({'error': f'Edit PDF failed: {str(e)}'}, status=500)
+
+    # ── Unlock PDF ──
+    if tool_slug == 'unlock-pdf':
+        if 'file' not in request.FILES:
+            return JsonResponse({'error': 'No file was uploaded.'}, status=400)
+
+        uploaded_file = request.FILES['file']
+        password = request.POST.get('password', '')
+
+        try:
+            input_path = save_uploaded_file(uploaded_file)
+            output_path = unlock_pdf(input_path, uploaded_file.name, password=password)
+
+            try:
+                os.remove(input_path)
+            except OSError:
+                pass
+
+            response = FileResponse(open(output_path, 'rb'), content_type='application/pdf')
+            output_filename = os.path.basename(output_path)
+            response['Content-Disposition'] = f'attachment; filename="{output_filename}"'
+            return response
+        except Exception as e:
+            return JsonResponse({'error': f'Unlock PDF failed: {str(e)}'}, status=500)
+
+    # ── Protect PDF ──
+    if tool_slug == 'protect-pdf':
+        if 'file' not in request.FILES:
+            return JsonResponse({'error': 'No file was uploaded.'}, status=400)
+
+        uploaded_file = request.FILES['file']
+        user_password = request.POST.get('user_password', '')
+        owner_password = request.POST.get('owner_password', '')
+
+        if not user_password:
+            return JsonResponse({'error': 'Please enter a password to protect this PDF.'}, status=400)
+
+        try:
+            input_path = save_uploaded_file(uploaded_file)
+            output_path = protect_pdf(
+                input_path, uploaded_file.name,
+                user_password=user_password,
+                owner_password=owner_password or user_password,
+            )
+
+            try:
+                os.remove(input_path)
+            except OSError:
+                pass
+
+            response = FileResponse(open(output_path, 'rb'), content_type='application/pdf')
+            output_filename = os.path.basename(output_path)
+            response['Content-Disposition'] = f'attachment; filename="{output_filename}"'
+            return response
+        except Exception as e:
+            return JsonResponse({'error': f'Protect PDF failed: {str(e)}'}, status=500)
 
     # ── Standard single-file conversion ──
     if 'file' not in request.FILES:

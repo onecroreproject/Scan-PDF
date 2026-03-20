@@ -2381,3 +2381,158 @@ def crop_pdf(input_path, original_name, crop_mode='auto',
     pdf.save(output_path, garbage=4, deflate=True)
     pdf.close()
     return output_path
+
+
+# ═══════════════════════════════════════════════════════════════
+# 21. EDIT PDF  (Add text / annotations to specific pages)
+# ═══════════════════════════════════════════════════════════════
+def edit_pdf(input_path, original_name, edits_json='[]'):
+    """Apply text edits/annotations to a PDF.
+
+    edits_json: a JSON string of an array of edit operations, e.g.
+    [
+      {"page": 1, "text": "Hello", "x": 100, "y": 200,
+       "size": 12, "color": "#000000"}
+    ]
+
+    Each edit inserts text at (x, y) on the specified page.
+    """
+    import fitz
+    import json
+
+    output_path = get_output_path(original_name, 'pdf')
+    base_name = Path(original_name).stem
+    output_path = os.path.join(
+        os.path.dirname(output_path), f"{base_name}_edited.pdf"
+    )
+
+    try:
+        edits = json.loads(edits_json)
+    except (json.JSONDecodeError, TypeError):
+        edits = []
+
+    pdf = fitz.open(input_path)
+    total_pages = len(pdf)
+
+    for edit in edits:
+        page_num = int(edit.get('page', 1)) - 1  # convert 1-indexed to 0-indexed
+        if page_num < 0 or page_num >= total_pages:
+            continue
+
+        page = pdf[page_num]
+        text = str(edit.get('text', ''))
+        x = float(edit.get('x', 50))
+        y = float(edit.get('y', 50))
+        font_size = float(edit.get('size', 12))
+
+        # Parse color
+        color_hex = str(edit.get('color', '#000000')).lstrip('#')
+        if len(color_hex) == 6:
+            r = int(color_hex[0:2], 16) / 255.0
+            g = int(color_hex[2:4], 16) / 255.0
+            b = int(color_hex[4:6], 16) / 255.0
+        else:
+            r, g, b = 0, 0, 0
+
+        try:
+            page.insert_text(
+                fitz.Point(x, y),
+                text,
+                fontsize=font_size,
+                color=(r, g, b),
+                overlay=True,
+            )
+        except Exception:
+            pass
+
+    pdf.save(output_path, garbage=4, deflate=True)
+    pdf.close()
+    return output_path
+
+
+# ═══════════════════════════════════════════════════════════════
+# 22. UNLOCK PDF  (Remove password protection)
+# ═══════════════════════════════════════════════════════════════
+def unlock_pdf(input_path, original_name, password=''):
+    """Unlock a password-protected PDF.
+
+    password: the password to unlock the document.
+    """
+    import fitz
+
+    output_path = get_output_path(original_name, 'pdf')
+    base_name = Path(original_name).stem
+    output_path = os.path.join(
+        os.path.dirname(output_path), f"{base_name}_unlocked.pdf"
+    )
+
+    pdf = fitz.open(input_path)
+
+    # Try to authenticate with the provided password
+    if pdf.is_encrypted:
+        authenticated = pdf.authenticate(password)
+        if not authenticated:
+            pdf.close()
+            raise Exception(
+                "Incorrect password. Please provide the correct password to unlock this PDF."
+            )
+    else:
+        # PDF is not encrypted — just save a copy
+        pass
+
+    # Save without encryption
+    pdf.save(output_path, garbage=4, deflate=True, encryption=fitz.PDF_ENCRYPT_NONE)
+    pdf.close()
+    return output_path
+
+
+# ═══════════════════════════════════════════════════════════════
+# 23. PROTECT PDF  (Add password encryption)
+# ═══════════════════════════════════════════════════════════════
+def protect_pdf(input_path, original_name, user_password='',
+                owner_password='', permissions=None):
+    """Encrypt a PDF with password protection.
+
+    user_password: password required to open and view the PDF.
+    owner_password: password for full access (edit, print, copy).
+                    If empty, defaults to user_password.
+    permissions: integer combining fitz permission flags, or None for default
+                 (allow reading only).
+    """
+    import fitz
+
+    output_path = get_output_path(original_name, 'pdf')
+    base_name = Path(original_name).stem
+    output_path = os.path.join(
+        os.path.dirname(output_path), f"{base_name}_protected.pdf"
+    )
+
+    if not user_password:
+        raise Exception("Please provide a password to protect this PDF.")
+
+    if not owner_password:
+        owner_password = user_password
+
+    pdf = fitz.open(input_path)
+
+    # Build permission flags
+    if permissions is None:
+        # Default: allow printing and reading, restrict editing & copying
+        perm = (
+            fitz.PDF_PERM_PRINT
+            | fitz.PDF_PERM_ACCESSIBILITY
+        )
+    else:
+        perm = int(permissions)
+
+    pdf.save(
+        output_path,
+        garbage=4,
+        deflate=True,
+        encryption=fitz.PDF_ENCRYPT_AES_256,
+        user_pw=user_password,
+        owner_pw=owner_password,
+        permissions=perm,
+    )
+    pdf.close()
+    return output_path
