@@ -32,9 +32,68 @@ from .utils import (
     remove_watermark,
     crop_pdf,
     edit_pdf,
+    convert_pdf_to_html_via_word,
+    convert_html_to_pdf_from_string,
     unlock_pdf,
     protect_pdf,
+    png_to_jpg,
+    jpg_to_png,
+    image_to_gif,
+    html_to_image,
+    resize_image,
+    scale_image,
+    rotate_image,
+    add_image_watermark,
+    compress_image,
+    crop_image,
+    remove_background,
+    balance_chemical_equation,
+    generate_qr_code,
+    generate_meme,
+    generate_password,
+    generate_story,
+    generate_names,
+    get_video_info,
+    download_video,
+    run_speed_test,
 )
+
+
+class FileCleanupResponse(FileResponse):
+    """
+    A specialization of FileResponse that deletes the underlying file on disk
+    once the response has been closed.
+    """
+    def __init__(self, file_path, *args, **kwargs):
+        self._temp_file_path = file_path
+        # We must open the file first to pass it to the parent constructor
+        file_handle = open(file_path, 'rb')
+        super().__init__(file_handle, *args, **kwargs)
+
+    def close(self):
+        super().close()
+        # After the response is closed (stream finished), delete the file
+        if self._temp_file_path and os.path.exists(self._temp_file_path):
+            try:
+                os.remove(self._temp_file_path)
+            except OSError:
+                pass
+
+
+def create_cleanup_response(file_path, content_type=None, filename=None):
+    """Helper to create a cleanup response with proper headers."""
+    if not content_type:
+        import mimetypes
+        content_type, _ = mimetypes.guess_type(file_path)
+        content_type = content_type or 'application/octet-stream'
+    
+    response = FileCleanupResponse(file_path, content_type=content_type)
+    if filename:
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    else:
+        response['Content-Disposition'] = f'attachment; filename="{os.path.basename(file_path)}"'
+    return response
+
 
 
 # ─── Tool Configuration ────────────────────────────────────────
@@ -293,6 +352,238 @@ TOOLS = {
         'gradient': 'from-red-500 to-red-700',
         'category': 'pdf-tools',
     },
+    'png-to-jpg': {
+        'title': 'PNG to JPG',
+        'description': 'Convert PNG images to high-quality JPEG format instantly.',
+        'icon': 'image',
+        'accept': '.png',
+        'allowed_extensions': ['.png'],
+        'converter': png_to_jpg,
+        'color': '#2b6cb0',
+        'gradient': 'from-blue-500 to-blue-700',
+        'category': 'convert',
+    },
+    'jpg-to-png': {
+        'title': 'JPG to PNG',
+        'description': 'Convert JPEG images to PNG format with lossless quality.',
+        'icon': 'image',
+        'accept': '.jpg,.jpeg',
+        'allowed_extensions': ['.jpg', '.jpeg'],
+        'converter': jpg_to_png,
+        'color': '#276749',
+        'gradient': 'from-green-500 to-emerald-700',
+        'category': 'convert',
+    },
+    'image-to-gif': {
+        'title': 'Image to GIF',
+        'description': 'Convert your images into a single GIF or an animated sequence.',
+        'icon': 'film',
+        'accept': '.jpg,.jpeg,.png',
+        'allowed_extensions': ['.jpg', '.jpeg', '.png'],
+        'converter': None,
+        'color': '#6b46c1',
+        'gradient': 'from-purple-500 to-indigo-700',
+        'category': 'convert',
+        'multi_file': True,
+    },
+    'html-to-image': {
+        'title': 'HTML to Image',
+        'description': 'Capture a pixel-perfect image of your HTML files.',
+        'icon': 'file-code',
+        'accept': '.html,.htm',
+        'allowed_extensions': ['.html', '.htm'],
+        'converter': html_to_image,
+        'color': '#c05621',
+        'gradient': 'from-orange-500 to-red-500',
+        'category': 'convert',
+    },
+    'resize-image': {
+        'title': 'Resize Image',
+        'description': 'Set an exact width and height for your JPG images.',
+        'icon': 'move',
+        'accept': '.jpg,.jpeg,.png',
+        'allowed_extensions': ['.jpg', '.jpeg', '.png'],
+        'converter': None,
+        'color': '#0d9488',
+        'gradient': 'from-teal-500 to-teal-700',
+        'category': 'image-tools',
+    },
+    'scale-image': {
+        'title': 'Scale Image',
+        'description': 'Scale your image up or down by a percentage.',
+        'icon': 'maximize-2',
+        'accept': '.jpg,.jpeg,.png',
+        'allowed_extensions': ['.jpg', '.jpeg', '.png'],
+        'converter': None,
+        'color': '#7c3aed',
+        'gradient': 'from-violet-500 to-violet-700',
+        'category': 'image-tools',
+    },
+    'rotate-image': {
+        'title': 'Rotate Image',
+        'description': 'Rotate your image by any angle with one click.',
+        'icon': 'rotate-cw',
+        'accept': '.jpg,.jpeg,.png',
+        'allowed_extensions': ['.jpg', '.jpeg', '.png'],
+        'converter': None,
+        'color': '#6366f1',
+        'gradient': 'from-indigo-500 to-indigo-700',
+        'category': 'image-tools',
+    },
+    'add-image-watermark': {
+        'title': 'Add Watermark',
+        'description': 'Overlay a custom text watermark on your images.',
+        'icon': 'stamp',
+        'accept': '.jpg,.jpeg,.png',
+        'allowed_extensions': ['.jpg', '.jpeg', '.png'],
+        'converter': None,
+        'color': '#0ea5e9',
+        'gradient': 'from-sky-500 to-sky-700',
+        'category': 'image-tools',
+    },
+    'compress-image': {
+        'title': 'Compress Image',
+        'description': 'Reduce your image file size while keeping great quality.',
+        'icon': 'archive',
+        'accept': '.jpg,.jpeg,.png',
+        'allowed_extensions': ['.jpg', '.jpeg', '.png'],
+        'converter': None,
+        'color': '#dc2626',
+        'gradient': 'from-red-500 to-red-700',
+        'category': 'image-tools',
+    },
+    'crop-image': {
+        'title': 'Crop Image',
+        'description': 'Crop your image to a precise rectangle selection.',
+        'icon': 'crop',
+        'accept': '.jpg,.jpeg,.png',
+        'allowed_extensions': ['.jpg', '.jpeg', '.png'],
+        'converter': None,
+        'color': '#84cc16',
+        'gradient': 'from-lime-500 to-lime-700',
+        'category': 'image-tools',
+    },
+    'remove-bg': {
+        'title': 'Remove Background',
+        'description': 'Instantly remove the background from any image using AI.',
+        'icon': 'eraser',
+        'accept': '.jpg,.jpeg,.png',
+        'allowed_extensions': ['.jpg', '.jpeg', '.png'],
+        'converter': remove_background,
+        'color': '#f43f5e',
+        'gradient': 'from-rose-500 to-rose-700',
+        'category': 'image-tools',
+    },
+    'chemical-balancer': {
+        'title': 'Chemical Balance',
+        'description': 'Balance chemical equations instantly with stoichiometry.',
+        'icon': 'beaker',
+        'accept': None,
+        'allowed_extensions': [],
+        'converter': None,
+        'color': '#8b5cf6',
+        'gradient': 'from-violet-500 to-purple-600',
+        'category': 'generate',
+    },
+    'password-generator': {
+        'title': 'Password Generator',
+        'description': 'Create secure, random passwords for your accounts.',
+        'icon': 'key',
+        'accept': None,
+        'allowed_extensions': [],
+        'converter': None,
+        'color': '#059669',
+        'gradient': 'from-emerald-500 to-teal-600',
+        'category': 'generate',
+    },
+    'unit-converter': {
+        'title': 'Unit Converter',
+        'description': 'Convert between length, weight, temp, and more.',
+        'icon': 'ruler',
+        'accept': None,
+        'allowed_extensions': [],
+        'converter': None,
+        'color': '#3b82f6',
+        'gradient': 'from-blue-500 to-indigo-600',
+        'category': 'other',
+    },
+    'speed-test': {
+        'title': 'Speed Test',
+        'description': 'Check your internet connection speed in seconds.',
+        'icon': 'zap',
+        'accept': None,
+        'allowed_extensions': [],
+        'converter': None,
+        'color': '#f59e0b',
+        'gradient': 'from-amber-400 to-orange-500',
+        'category': 'other',
+    },
+    'instagram-downloader': {
+        'title': 'IG Reels Downloader',
+        'description': 'Save Instagram Reels and videos directly to your device.',
+        'icon': 'instagram',
+        'accept': None,
+        'allowed_extensions': [],
+        'converter': None,
+        'color': '#d946ef',
+        'gradient': 'from-fuchsia-500 to-pink-600',
+        'category': 'download',
+    },
+    'youtube-downloader': {
+        'title': 'YouTube Downloader',
+        'description': 'Download YouTube videos in high quality.',
+        'icon': 'video',
+        'accept': None,
+        'allowed_extensions': [],
+        'converter': None,
+        'color': '#ef4444',
+        'gradient': 'from-red-500 to-rose-600',
+        'category': 'download',
+    },
+    'qrcode-generator': {
+        'title': 'QR Code Generator',
+        'description': 'Generate custom QR codes for links, text, or Wi-Fi.',
+        'icon': 'qr-code',
+        'accept': None,
+        'allowed_extensions': [],
+        'converter': None,
+        'color': '#111827',
+        'gradient': 'from-gray-700 to-black',
+        'category': 'generate',
+    },
+    'meme-generator': {
+        'title': 'Meme Generator',
+        'description': 'Create funny memes by adding text to your images.',
+        'icon': 'laugh',
+        'accept': '.jpg,.jpeg,.png',
+        'allowed_extensions': ['.jpg', '.jpeg', '.png'],
+        'converter': None,
+        'color': '#facc15',
+        'gradient': 'from-yellow-400 to-yellow-600',
+        'category': 'generate',
+    },
+    'story-generator': {
+        'title': 'Story Generator',
+        'description': 'Generate creative stories from different genres using AI.',
+        'icon': 'book-open',
+        'accept': None,
+        'allowed_extensions': [],
+        'converter': None,
+        'color': '#4ade80',
+        'gradient': 'from-green-400 to-emerald-500',
+        'category': 'generate',
+    },
+    'name-generator': {
+        'title': 'Name Generator',
+        'description': 'Generate random names for people, places, or companies.',
+        'icon': 'user-plus',
+        'accept': None,
+        'allowed_extensions': [],
+        'converter': None,
+        'color': '#2dd4bf',
+        'gradient': 'from-teal-400 to-cyan-500',
+        'category': 'generate',
+    },
 }
 
 
@@ -300,7 +591,7 @@ def home(request):
     """Render the home page with all available tools."""
     context = {
         'tools': TOOLS,
-        'page_title': 'ScanPDF — Scan Smart. Share Fast.',
+        'page_title': 'ScanPDF',
     }
     return render(request, 'converter/home.html', context)
 
@@ -336,6 +627,42 @@ def convert_page(request, tool_slug):
         template = 'converter/unlock_pdf.html'
     elif tool_slug == 'protect-pdf':
         template = 'converter/protect_pdf.html'
+    elif tool_slug == 'image-to-gif':
+        template = 'converter/gif_maker.html'
+    elif tool_slug == 'resize-image':
+        template = 'converter/resize_image.html'
+    elif tool_slug == 'scale-image':
+        template = 'converter/scale_image.html'
+    elif tool_slug == 'rotate-image':
+        template = 'converter/rotate_image.html'
+    elif tool_slug == 'add-image-watermark':
+        template = 'converter/add_image_watermark.html'
+    elif tool_slug == 'compress-image':
+        template = 'converter/compress_image.html'
+    elif tool_slug == 'crop-image':
+        template = 'converter/crop_image.html'
+    elif tool_slug == 'remove-bg':
+        template = 'converter/remove_bg.html'
+    elif tool_slug == 'chemical-balancer':
+        template = 'converter/chemical_balancer.html'
+    elif tool_slug == 'password-generator':
+        template = 'converter/password_generator.html'
+    elif tool_slug == 'unit-converter':
+        template = 'converter/unit_converter.html'
+    elif tool_slug == 'speed-test':
+        template = 'converter/speed_test.html'
+    elif tool_slug == 'instagram-downloader':
+        template = 'converter/downloader.html'
+    elif tool_slug == 'youtube-downloader':
+        template = 'converter/downloader.html'
+    elif tool_slug == 'qrcode-generator':
+        template = 'converter/qrcode_generator.html'
+    elif tool_slug == 'meme-generator':
+        template = 'converter/meme_generator.html'
+    elif tool_slug == 'story-generator':
+        template = 'converter/story_generator.html'
+    elif tool_slug == 'name-generator':
+        template = 'converter/name_generator.html'
     else:
         template = 'converter/convert.html'
 
@@ -378,13 +705,39 @@ def convert_file(request, tool_slug):
                 except OSError:
                     pass
 
-            content_type = 'application/pdf'
-            output_filename = os.path.basename(output_path)
-            response = FileResponse(open(output_path, 'rb'), content_type=content_type)
-            response['Content-Disposition'] = f'attachment; filename="{output_filename}"'
-            return response
+            return create_cleanup_response(output_path, content_type='application/pdf')
         except Exception as e:
             return JsonResponse({'error': f'Merge failed: {str(e)}'}, status=500)
+
+    # ── Image to GIF: multiple files ──
+    if tool_slug == 'image-to-gif':
+        files = request.FILES.getlist('files')
+        if not files:
+            # Fallback to single file if MultiValueDict is empty
+            files = [request.FILES.get('file')] if 'file' in request.FILES else []
+
+        if not files:
+            return JsonResponse({'error': 'Please upload at least one image to create a GIF.'}, status=400)
+
+        try:
+            input_paths = []
+            for f in files:
+                ext = os.path.splitext(f.name)[1].lower()
+                if ext not in tool['allowed_extensions']:
+                    return JsonResponse({'error': f'Invalid file "{f.name}". Only images (.jpg, .png) are allowed.'}, status=400)
+                input_paths.append(save_uploaded_file(f))
+
+            output_path = image_to_gif(input_paths, files[0].name)
+
+            for p in input_paths:
+                try:
+                    os.remove(p)
+                except OSError:
+                    pass
+
+            return create_cleanup_response(output_path, content_type='image/gif')
+        except Exception as e:
+            return JsonResponse({'error': f'GIF creation failed: {str(e)}'}, status=500)
 
     # ── Split PDF ──
     if tool_slug == 'split-pdf':
@@ -404,10 +757,7 @@ def convert_file(request, tool_slug):
             except OSError:
                 pass
 
-            response = FileResponse(open(output_path, 'rb'), content_type='application/zip')
-            output_filename = os.path.basename(output_path)
-            response['Content-Disposition'] = f'attachment; filename="{output_filename}"'
-            return response
+            return create_cleanup_response(output_path, content_type='application/zip')
         except Exception as e:
             return JsonResponse({'error': f'Split failed: {str(e)}'}, status=500)
 
@@ -431,10 +781,7 @@ def convert_file(request, tool_slug):
             except OSError:
                 pass
 
-            response = FileResponse(open(output_path, 'rb'), content_type='application/pdf')
-            output_filename = os.path.basename(output_path)
-            response['Content-Disposition'] = f'attachment; filename="{output_filename}"'
-            return response
+            return create_cleanup_response(output_path, content_type='application/pdf')
         except Exception as e:
             return JsonResponse({'error': f'Remove pages failed: {str(e)}'}, status=500)
 
@@ -458,10 +805,7 @@ def convert_file(request, tool_slug):
             except OSError:
                 pass
 
-            response = FileResponse(open(output_path, 'rb'), content_type='application/pdf')
-            output_filename = os.path.basename(output_path)
-            response['Content-Disposition'] = f'attachment; filename="{output_filename}"'
-            return response
+            return create_cleanup_response(output_path, content_type='application/pdf')
         except Exception as e:
             return JsonResponse({'error': f'Extract pages failed: {str(e)}'}, status=500)
 
@@ -485,10 +829,7 @@ def convert_file(request, tool_slug):
             except OSError:
                 pass
 
-            response = FileResponse(open(output_path, 'rb'), content_type='application/pdf')
-            output_filename = os.path.basename(output_path)
-            response['Content-Disposition'] = f'attachment; filename="{output_filename}"'
-            return response
+            return create_cleanup_response(output_path, content_type='application/pdf')
         except Exception as e:
             return JsonResponse({'error': f'Organize PDF failed: {str(e)}'}, status=500)
 
@@ -510,10 +851,7 @@ def convert_file(request, tool_slug):
             except OSError:
                 pass
 
-            response = FileResponse(open(output_path, 'rb'), content_type='application/pdf')
-            output_filename = os.path.basename(output_path)
-            response['Content-Disposition'] = f'attachment; filename="{output_filename}"'
-            return response
+            return create_cleanup_response(output_path, content_type='application/pdf')
         except Exception as e:
             return JsonResponse({'error': f'Rotate PDF failed: {str(e)}'}, status=500)
 
@@ -548,10 +886,7 @@ def convert_file(request, tool_slug):
             except OSError:
                 pass
 
-            response = FileResponse(open(output_path, 'rb'), content_type='application/pdf')
-            output_filename = os.path.basename(output_path)
-            response['Content-Disposition'] = f'attachment; filename="{output_filename}"'
-            return response
+            return create_cleanup_response(output_path, content_type='application/pdf')
         except Exception as e:
             return JsonResponse({'error': f'Add watermark failed: {str(e)}'}, status=500)
 
@@ -583,36 +918,40 @@ def convert_file(request, tool_slug):
             except OSError:
                 pass
 
-            response = FileResponse(open(output_path, 'rb'), content_type='application/pdf')
-            output_filename = os.path.basename(output_path)
-            response['Content-Disposition'] = f'attachment; filename="{output_filename}"'
-            return response
+            return create_cleanup_response(output_path, content_type='application/pdf')
         except Exception as e:
             return JsonResponse({'error': f'Crop PDF failed: {str(e)}'}, status=500)
 
     # ── Edit PDF ──
     if tool_slug == 'edit-pdf':
-        if 'file' not in request.FILES:
-            return JsonResponse({'error': 'No file was uploaded.'}, status=400)
+        if 'file' not in request.FILES and 'html_content' not in request.POST:
+            return JsonResponse({'error': 'No file or content provided.'}, status=400)
 
-        uploaded_file = request.FILES['file']
-        edits_json = request.POST.get('edits', '[]')
-
+        html_content = request.POST.get('html_content')
+        
         try:
-            input_path = save_uploaded_file(uploaded_file)
-            output_path = edit_pdf(input_path, uploaded_file.name, edits_json=edits_json)
-
-            try:
-                os.remove(input_path)
-            except OSError:
-                pass
-
-            response = FileResponse(open(output_path, 'rb'), content_type='application/pdf')
-            output_filename = os.path.basename(output_path)
-            response['Content-Disposition'] = f'attachment; filename="{output_filename}"'
-            return response
+            if html_content:
+                # Case 2: User is downloading the edited content as PDF
+                output_path = edit_pdf(None, "edited.pdf", html_content=html_content)
+                return create_cleanup_response(output_path, content_type='application/pdf', filename="edited_document.pdf")
+            else:
+                # Case 1: Initial upload - convert PDF to editable HTML
+                uploaded_file = request.FILES['file']
+                input_path = save_uploaded_file(uploaded_file)
+                html_data = convert_pdf_to_html_via_word(input_path)
+                
+                try:
+                    os.remove(input_path)
+                except OSError:
+                    pass
+                
+                return JsonResponse({
+                    'success': True,
+                    'html': html_data,
+                    'filename': uploaded_file.name
+                })
         except Exception as e:
-            return JsonResponse({'error': f'Edit PDF failed: {str(e)}'}, status=500)
+            return JsonResponse({'error': f'PDF Editor failed: {str(e)}'}, status=500)
 
     # ── Unlock PDF ──
     if tool_slug == 'unlock-pdf':
@@ -631,10 +970,7 @@ def convert_file(request, tool_slug):
             except OSError:
                 pass
 
-            response = FileResponse(open(output_path, 'rb'), content_type='application/pdf')
-            output_filename = os.path.basename(output_path)
-            response['Content-Disposition'] = f'attachment; filename="{output_filename}"'
-            return response
+            return create_cleanup_response(output_path, content_type='application/pdf')
         except Exception as e:
             return JsonResponse({'error': f'Unlock PDF failed: {str(e)}'}, status=500)
 
@@ -663,12 +999,274 @@ def convert_file(request, tool_slug):
             except OSError:
                 pass
 
-            response = FileResponse(open(output_path, 'rb'), content_type='application/pdf')
-            output_filename = os.path.basename(output_path)
-            response['Content-Disposition'] = f'attachment; filename="{output_filename}"'
-            return response
+            return create_cleanup_response(output_path, content_type='application/pdf')
         except Exception as e:
             return JsonResponse({'error': f'Protect PDF failed: {str(e)}'}, status=500)
+
+    # ── Resize Image ──
+    if tool_slug == 'resize-image':
+        if 'file' not in request.FILES:
+            return JsonResponse({'error': 'No file was uploaded.'}, status=400)
+
+        uploaded_file = request.FILES['file']
+        width = request.POST.get('width', '800')
+        height = request.POST.get('height', '600')
+        maintain_aspect = request.POST.get('maintain_aspect', 'true') == 'true'
+
+        try:
+            input_path = save_uploaded_file(uploaded_file)
+            output_path = resize_image(
+                input_path, uploaded_file.name,
+                width=width, height=height,
+                maintain_aspect=maintain_aspect,
+            )
+            try:
+                os.remove(input_path)
+            except OSError:
+                pass
+
+            return create_cleanup_response(output_path, content_type='image/jpeg')
+        except Exception as e:
+            return JsonResponse({'error': f'Resize failed: {str(e)}'}, status=500)
+
+    # ── Scale Image ──
+    if tool_slug == 'scale-image':
+        if 'file' not in request.FILES:
+            return JsonResponse({'error': 'No file was uploaded.'}, status=400)
+
+        uploaded_file = request.FILES['file']
+        scale_percent = request.POST.get('scale_percent', '50')
+
+        try:
+            input_path = save_uploaded_file(uploaded_file)
+            output_path = scale_image(
+                input_path, uploaded_file.name,
+                scale_percent=scale_percent,
+            )
+            try:
+                os.remove(input_path)
+            except OSError:
+                pass
+
+            return create_cleanup_response(output_path, content_type='image/jpeg')
+        except Exception as e:
+            return JsonResponse({'error': f'Scale failed: {str(e)}'}, status=500)
+
+    # ── Rotate Image ──
+    if tool_slug == 'rotate-image':
+        if 'file' not in request.FILES:
+            return JsonResponse({'error': 'No file was uploaded.'}, status=400)
+
+        uploaded_file = request.FILES['file']
+        angle = request.POST.get('angle', '90')
+
+        try:
+            input_path = save_uploaded_file(uploaded_file)
+            output_path = rotate_image(
+                input_path, uploaded_file.name,
+                angle=angle,
+            )
+            try:
+                os.remove(input_path)
+            except OSError:
+                pass
+
+            return create_cleanup_response(output_path, content_type='image/jpeg')
+        except Exception as e:
+            return JsonResponse({'error': f'Rotate failed: {str(e)}'}, status=500)
+
+    # ── Add Image Watermark ──
+    if tool_slug == 'add-image-watermark':
+        if 'file' not in request.FILES:
+            return JsonResponse({'error': 'No file was uploaded.'}, status=400)
+
+        uploaded_file = request.FILES['file']
+        watermark_text = request.POST.get('watermark_text', 'SAMPLE')
+        opacity = request.POST.get('opacity', '0.3')
+        font_size = request.POST.get('font_size', '40')
+        color = request.POST.get('color', '#888888')
+
+        if not watermark_text.strip():
+            return JsonResponse({'error': 'Please enter watermark text.'}, status=400)
+
+        try:
+            input_path = save_uploaded_file(uploaded_file)
+            output_path = add_image_watermark(
+                input_path, uploaded_file.name,
+                watermark_text=watermark_text,
+                opacity=opacity, font_size=font_size, color=color,
+            )
+            try:
+                os.remove(input_path)
+            except OSError:
+                pass
+
+            return create_cleanup_response(output_path, content_type='image/jpeg')
+        except Exception as e:
+            return JsonResponse({'error': f'Add watermark failed: {str(e)}'}, status=500)
+
+    # ── Compress Image ──
+    if tool_slug == 'compress-image':
+        if 'file' not in request.FILES:
+            return JsonResponse({'error': 'No file was uploaded.'}, status=400)
+
+        uploaded_file = request.FILES['file']
+        quality = request.POST.get('quality', '60')
+
+        try:
+            input_path = save_uploaded_file(uploaded_file)
+            output_path = compress_image(
+                input_path, uploaded_file.name,
+                quality=quality,
+            )
+            try:
+                os.remove(input_path)
+            except OSError:
+                pass
+
+            return create_cleanup_response(output_path, content_type='image/jpeg')
+        except Exception as e:
+            return JsonResponse({'error': f'Compress failed: {str(e)}'}, status=500)
+
+    # ── Crop Image ──
+    if tool_slug == 'crop-image':
+        if 'file' not in request.FILES:
+            return JsonResponse({'error': 'No file was uploaded.'}, status=400)
+
+        uploaded_file = request.FILES['file']
+        crop_x = request.POST.get('crop_x', '0')
+        crop_y = request.POST.get('crop_y', '0')
+        crop_width = request.POST.get('crop_width', '0')
+        crop_height = request.POST.get('crop_height', '0')
+
+        try:
+            input_path = save_uploaded_file(uploaded_file)
+            output_path = crop_image(
+                input_path, uploaded_file.name,
+                crop_x=crop_x, crop_y=crop_y,
+                crop_width=crop_width, crop_height=crop_height,
+            )
+            try:
+                os.remove(input_path)
+            except OSError:
+                pass
+
+            return create_cleanup_response(output_path, content_type='image/jpeg')
+        except Exception as e:
+            return JsonResponse({'error': f'Crop failed: {str(e)}'}, status=500)
+
+    # ── Remove Background ──
+    if tool_slug == 'remove-bg':
+        if 'file' not in request.FILES:
+            return JsonResponse({'error': 'No file was uploaded.'}, status=400)
+
+        uploaded_file = request.FILES['file']
+        try:
+            input_path = save_uploaded_file(uploaded_file)
+            output_path = remove_background(input_path, uploaded_file.name)
+            try:
+                os.remove(input_path)
+            except OSError:
+                pass
+
+            return create_cleanup_response(output_path, content_type='image/png')
+        except Exception as e:
+            return JsonResponse({'error': f'Background removal failed: {str(e)}'}, status=500)
+
+    # ── Chemical Balance ──
+    if tool_slug == 'chemical-balancer':
+        equation = request.POST.get('equation', '')
+        if not equation:
+            return JsonResponse({'error': 'Please enter a chemical equation.'}, status=400)
+        try:
+            balanced = balance_chemical_equation(equation)
+            return JsonResponse({'result': balanced})
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+
+    # ── Password Generator ──
+    if tool_slug == 'password-generator':
+        length = request.POST.get('length', 12)
+        use_upper = request.POST.get('use_upper') == 'true'
+        use_nums = request.POST.get('use_nums') == 'true'
+        use_syms = request.POST.get('use_syms') == 'true'
+        try:
+            password = generate_password(length, use_upper, use_nums, use_syms)
+            return JsonResponse({'result': password})
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+
+    # ── Story Generator ──
+    if tool_slug == 'story-generator':
+        genre = request.POST.get('genre', 'science fiction')
+        try:
+            story = generate_story(genre)
+            return JsonResponse({'result': story})
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+
+    # ── Name Generator ──
+    if tool_slug == 'name-generator':
+        count = request.POST.get('count', 10)
+        gender = request.POST.get('gender', 'both')
+        category = request.POST.get('category', 'person')
+        try:
+            names = generate_names(count, gender, category)
+            return JsonResponse({'result': names})
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+
+    # ── QR Code Generator ──
+    if tool_slug == 'qrcode-generator':
+        text = request.POST.get('text', '')
+        if not text:
+            return JsonResponse({'error': 'Please enter text or a URL.'}, status=400)
+        try:
+            output_path = generate_qr_code(text)
+            return create_cleanup_response(output_path, content_type='image/png')
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+
+    # ── Meme Generator ──
+    if tool_slug == 'meme-generator':
+        if 'file' not in request.FILES:
+            return JsonResponse({'error': 'No image uploaded.'}, status=400)
+        top_text = request.POST.get('top_text', '')
+        bottom_text = request.POST.get('bottom_text', '')
+        try:
+            uploaded_file = request.FILES['file']
+            input_path = save_uploaded_file(uploaded_file)
+            output_path = generate_meme(input_path, uploaded_file.name, top_text, bottom_text)
+            os.remove(input_path)
+            return create_cleanup_response(output_path, content_type='image/jpeg', filename="meme.jpg")
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+
+    # ── Video Downloader (YT/IG) ──
+    if tool_slug in ['youtube-downloader', 'instagram-downloader']:
+        action = request.POST.get('action', 'info')
+        url = request.POST.get('url', '')
+        if not url:
+            return JsonResponse({'error': 'Please enter a URL.'}, status=400)
+        
+        try:
+            if action == 'info':
+                info = get_video_info(url)
+                return JsonResponse({'result': info})
+            elif action == 'download':
+                format_id = request.POST.get('format_id')
+                output_path = download_video(url, format_id)
+                return create_cleanup_response(output_path, content_type='video/mp4')
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+
+    # ── Speed Test ──
+    if tool_slug == 'speed-test':
+        try:
+            results = run_speed_test()
+            return JsonResponse({'success': True, 'results': results})
+        except Exception as e:
+            return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
     # ── Standard single-file conversion ──
     if 'file' not in request.FILES:
@@ -702,14 +1300,54 @@ def convert_file(request, tool_slug):
             content_type = 'application/octet-stream'
 
         output_filename = os.path.basename(output_path)
-        response = FileResponse(
-            open(output_path, 'rb'),
-            content_type=content_type,
-        )
-        response['Content-Disposition'] = f'attachment; filename="{output_filename}"'
-        return response
+        return create_cleanup_response(output_path, content_type=content_type)
 
     except Exception as e:
         return JsonResponse({
             'error': f'Conversion failed: {str(e)}'
         }, status=500)
+
+# ─── Speed Test Endpoints ─────────────────────────────────────
+@csrf_exempt
+def get_client_info(request):
+    """Retrieve client and server information for the speed test."""
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    ip = x_forwarded_for.split(',')[0] if x_forwarded_for else request.META.get('REMOTE_ADDR')
+    
+    # Generic fallback if no external API reach
+    client_data = {
+        'ip': ip,
+        'city': 'Detected',
+        'country_code': 'Network',
+        'org': 'Standard ISP'
+    }
+    
+    # Attempt to get real metadata from ipapi securely on server-side (no CORS)
+    try:
+        import requests
+        resp = requests.get(f"https://ipapi.co/{ip}/json/", timeout=3)
+        if resp.status_code == 200:
+            client_data = resp.json()
+    except:
+        pass
+        
+    return JsonResponse(client_data)
+
+@csrf_exempt
+def speedtest_download(request):
+    """Fast endpoint for testing download speed."""
+    from django.http import HttpResponse
+    # Increased chunk to 10MB to saturate high-speed connections better
+    data = b'0' * (1024 * 1024 * 10) 
+    response = HttpResponse(data, content_type='application/octet-stream')
+    response['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+    response['Access-Control-Allow-Origin'] = '*'
+    return response
+
+@csrf_exempt
+def speedtest_upload(request):
+    """Endpoint for testing upload speed."""
+    if request.method == 'POST':
+        # Consume the data to measure upload time
+        _ = request.body
+    return JsonResponse({'success': True})

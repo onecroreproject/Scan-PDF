@@ -1,0 +1,142 @@
+{% extends 'converter/base.html' %}
+{% load static %}
+{% block content %}
+<section class="min-h-screen pt-24 sm:pt-32 pb-12 sm:pb-20 relative">
+    <div class="absolute inset-0 bg-gradient-to-b from-surface-50 via-white to-surface-50"></div>
+    <div class="absolute top-1/4 left-[10%] w-[400px] h-[400px] bg-blue-100/20 rounded-full blur-[80px]"></div>
+    <div class="relative z-10 max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+        <nav class="flex items-center gap-1.5 text-xs sm:text-sm mb-6 sm:mb-10">
+            <a href="{% url 'converter:home' %}" class="text-surface-400 hover:text-brand-600 transition-colors flex items-center gap-1.5"><i data-lucide="home" class="w-3 h-3"></i> Home</a>
+            <i data-lucide="chevron-right" class="w-3 h-3 text-surface-300"></i>
+            <span class="text-surface-700 font-medium">Unit Converter</span>
+        </nav>
+        <div class="mb-6 sm:mb-10 text-center">
+            <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-2xl bg-gradient-to-br from-blue-500 to-indigo-700 flex items-center justify-center shadow-xl mx-auto mb-4 animate-float">
+                <i data-lucide="ruler" class="w-7 h-7 sm:w-8 sm:h-8 text-white"></i>
+            </div>
+            <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-surface-900 tracking-tight">Unit Converter</h1>
+            <p class="text-surface-500 text-xs sm:text-sm mt-1">Easily convert between different units of measurement.</p>
+        </div>
+        <div class="rounded-xl sm:rounded-2xl bg-white border border-surface-100 p-4 sm:p-6 md:p-8 shadow-card space-y-8">
+            <!-- Category Selection -->
+            <div class="flex flex-wrap gap-2 justify-center pb-6 border-b border-surface-100">
+                <button class="cat-btn px-4 py-2 rounded-xl text-xs font-bold transition-all bg-blue-600 text-white shadow-md shadow-blue-500/20" data-category="length"><i data-lucide="ruler" class="inline w-3.5 h-3.5 mr-1.5 align-text-top"></i> Length</button>
+                <button class="cat-btn px-4 py-2 rounded-xl text-xs font-bold transition-all bg-surface-50 text-surface-600 hover:bg-surface-100" data-category="mass"><i data-lucide="weight" class="inline w-3.5 h-3.5 mr-1.5 align-text-top"></i> Mass</button>
+                <button class="cat-btn px-4 py-2 rounded-xl text-xs font-bold transition-all bg-surface-50 text-surface-600 hover:bg-surface-100" data-category="temp"><i data-lucide="thermometer" class="inline w-3.5 h-3.5 mr-1.5 align-text-top"></i> Temp</button>
+                <button class="cat-btn px-4 py-2 rounded-xl text-xs font-bold transition-all bg-surface-50 text-surface-600 hover:bg-surface-100" data-category="area"><i data-lucide="move" class="inline w-3.5 h-3.5 mr-1.5 align-text-top"></i> Area</button>
+                <button class="cat-btn px-4 py-2 rounded-xl text-xs font-bold transition-all bg-surface-50 text-surface-600 hover:bg-surface-100" data-category="volume"><i data-lucide="droplet" class="inline w-3.5 h-3.5 mr-1.5 align-text-top"></i> Volume</button>
+                <button class="cat-btn px-4 py-2 rounded-xl text-xs font-bold transition-all bg-surface-50 text-surface-600 hover:bg-surface-100" data-category="data"><i data-lucide="database" class="inline w-3.5 h-3.5 mr-1.5 align-text-top"></i> Data</button>
+            </div>
+
+            <!-- Conversion Interface -->
+            <div class="space-y-6">
+                <div class="relative group">
+                    <label class="block text-xs font-bold text-surface-400 uppercase tracking-widest mb-2.5 ml-1">From</label>
+                    <div class="flex gap-2">
+                        <input type="number" id="from-val" value="1" class="w-full px-4 py-3.5 rounded-xl border-2 border-surface-100 bg-surface-50 text-lg font-bold text-surface-900 focus:border-blue-400 focus:bg-white outline-none transition-all">
+                        <select id="from-unit" class="px-3 rounded-xl border-2 border-surface-100 bg-surface-50 text-sm font-semibold text-surface-700 outline-none focus:border-blue-400 transition-all text-center min-w-[120px]"></select>
+                    </div>
+                </div>
+
+                <div class="flex justify-center -my-3 relative z-10">
+                    <button id="swap-btn" class="w-10 h-10 rounded-full bg-white border border-surface-100 shadow-lg flex items-center justify-center text-blue-600 hover:rotate-180 transition-transform duration-500"><i data-lucide="arrow-down-up" class="w-5 h-5"></i></button>
+                </div>
+
+                <div class="relative group">
+                    <label class="block text-xs font-bold text-surface-400 uppercase tracking-widest mb-2.5 ml-1">To</label>
+                    <div class="flex gap-2">
+                        <input type="number" id="to-val" readonly class="w-full px-4 py-3.5 rounded-xl border-2 border-surface-100 bg-surface-50 text-lg font-bold text-surface-900 outline-none cursor-default opacity-80">
+                        <select id="to-unit" class="px-3 rounded-xl border-2 border-surface-100 bg-surface-50 text-sm font-semibold text-surface-700 outline-none focus:border-blue-400 transition-all text-center min-w-[120px]"></select>
+                    </div>
+                </div>
+            </div>
+            
+            <p id="formula-text" class="text-center text-[10px] text-surface-400 font-medium">1 Meter = 100 Centimeters</p>
+        </div>
+    </div>
+</section>
+{% endblock %}
+{% block extra_scripts %}
+<script>
+const units = {
+    length: {
+        'm': { name: 'Meter', factor: 1 }, 'cm': { name: 'Centimeter', factor: 0.01 }, 'mm': { name: 'Millimeter', factor: 0.001 },
+        'km': { name: 'Kilometer', factor: 1000 }, 'in': { name: 'Inch', factor: 0.0254 }, 'ft': { name: 'Foot', factor: 0.3048 },
+        'yd': { name: 'Yard', factor: 0.9144 }, 'mi': { name: 'Mile', factor: 1609.34 }
+    },
+    mass: {
+        'kg': { name: 'Kilogram', factor: 1 }, 'g': { name: 'Gram', factor: 0.001 }, 'mg': { name: 'Milligram', factor: 0.000001 },
+        'lb': { name: 'Pound', factor: 0.453592 }, 'oz': { name: 'Ounce', factor: 0.0283495 }, 't': { name: 'Metric Ton', factor: 1000 }
+    },
+    temp: {
+        'c': { name: 'Celsius' }, 'f': { name: 'Fahrenheit' }, 'k': { name: 'Kelvin' }
+    },
+    area: {
+        'm2': { name: 'Sq. Meter', factor: 1 }, 'km2': { name: 'Sq. Kilometer', factor: 1000000 }, 'ft2': { name: 'Sq. Foot', factor: 0.092903 },
+        'ac': { name: 'Acre', factor: 4046.86 }, 'ha': { name: 'Hectare', factor: 10000 }
+    },
+    volume: {
+        'l': { name: 'Liter', factor: 1 }, 'ml': { name: 'Milliliter', factor: 0.001 }, 'gal': { name: 'Gallon', factor: 3.78541 },
+        'm3': { name: 'Cubic Meter', factor: 1000 }, 'cup': { name: 'Cup', factor: 0.236588 }
+    },
+    data: {
+        'b': { name: 'Byte', factor: 1 }, 'kb': { name: 'KB', factor: 1024 }, 'mb': { name: 'MB', factor: 1048576 },
+        'gb': { name: 'GB', factor: 1073741824 }, 'tb': { name: 'TB', factor: 1099511627776 }
+    }
+};
+
+let currentCat = 'length';
+const fromVal = document.getElementById('from-val'), toVal = document.getElementById('to-val');
+const fromUnit = document.getElementById('from-unit'), toUnit = document.getElementById('to-unit');
+const catBtns = document.querySelectorAll('.cat-btn'), formulaText = document.getElementById('formula-text');
+
+function updateUnits() {
+    fromUnit.innerHTML = toUnit.innerHTML = '';
+    const list = units[currentCat];
+    for (const key in list) {
+        const opt = `<option value="${key}">${list[key].name}</option>`;
+        fromUnit.innerHTML += opt; toUnit.innerHTML += opt;
+    }
+    if (toUnit.options.length > 1) toUnit.selectedIndex = 1;
+    calc();
+}
+
+function calc() {
+    const v = parseFloat(fromVal.value); if (isNaN(v)) { toVal.value = ''; return; }
+    const u1 = fromUnit.value, u2 = toUnit.value;
+    const cat = units[currentCat];
+
+    let result;
+    if (currentCat === 'temp') {
+        let celsius;
+        if (u1 === 'c') celsius = v;
+        else if (u1 === 'f') celsius = (v - 32) * 5 / 9;
+        else if (u1 === 'k') celsius = v - 273.15;
+        
+        if (u2 === 'c') result = celsius;
+        else if (u2 === 'f') result = (celsius * 9 / 5) + 32;
+        else if (u2 === 'k') result = celsius + 273.15;
+    } else {
+        result = v * (cat[u1].factor / cat[u2].factor);
+    }
+    toVal.value = Number(result.toFixed(6));
+    formulaText.innerText = `1 ${cat[u1].name} = ${Number((cat[u1].factor / cat[u2].factor).toFixed(6))} ${cat[u2].name}`;
+}
+
+fromVal.addEventListener('input', calc); fromUnit.addEventListener('change', calc); toUnit.addEventListener('change', calc);
+
+catBtns.forEach(btn => btn.addEventListener('click', () => {
+    catBtns.forEach(b => b.classList.remove('bg-blue-600', 'text-white', 'shadow-blue-500/20'));
+    catBtns.forEach(b => b.classList.add('bg-surface-50', 'text-surface-600'));
+    btn.classList.replace('bg-surface-50', 'bg-blue-600'); btn.classList.replace('text-surface-600', 'text-white');
+    btn.classList.add('shadow-md', 'shadow-blue-500/20');
+    currentCat = btn.dataset.category; updateUnits();
+}));
+
+document.getElementById('swap-btn').addEventListener('click', () => {
+    const tmp = fromUnit.value; fromUnit.value = toUnit.value; toUnit.value = tmp; calc();
+});
+
+updateUnits(); lucide.createIcons();
+</script>
+{% endblock %}

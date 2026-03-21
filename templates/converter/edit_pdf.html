@@ -2,505 +2,272 @@
 {% load static %}
 
 {% block content %}
-<!-- PDF.js library -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-<script>
-    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
-</script>
+<!-- CKEditor 5 Document Build -->
+<script src="https://cdn.ckeditor.com/ckeditor5/40.0.0/decoupled-document/ckeditor.js"></script>
 
 <style>
-    .pdf-viewer-container {
-        scrollbar-width: thin;
-        scrollbar-color: #e2e8f0 transparent;
-    }
-    .page-wrapper {
-        position: relative;
-        margin-bottom: 2rem;
-        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
-        background: white;
-    }
-    .edit-layer {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        cursor: text;
-        z-index: 20;
-    }
-    .annotation-box {
-        position: absolute;
-        cursor: move;
-        background: rgba(139, 92, 246, 0.1);
-        border: 1px dashed #8b5cf6;
-        padding: 2px 4px;
-        white-space: nowrap;
-        user-select: none;
+    .editor-container {
         display: flex;
-        align-items: center;
-        gap: 4px;
-        min-height: 1.5em;
-        min-width: 20px;
-        transform: translate(-2px, -2px);
+        flex-direction: column;
+        height: calc(100vh - 140px);
+        background: #f8fafc;
+        border-radius: 1.5rem;
+        overflow: hidden;
+        border: 1px solid #e2e8f0;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
     }
-    .annotation-box:hover {
-        background: rgba(139, 92, 246, 0.2);
+
+    #toolbar-container {
+        background: #fff;
+        border-bottom: 1px solid #e2e8f0;
+        padding: 0.5rem;
+        z-index: 10;
     }
-    .annotation-box.selected {
-        border: 2px solid #8b5cf6;
-        background: rgba(139, 92, 246, 0.15);
-        z-index: 30;
-    }
-    .annotation-delete {
-        width: 16px;
-        height: 16px;
-        background: #ef4444;
-        color: white;
-        border-radius: 4px;
-        display: none;
-        align-items: center;
+
+    .editor-content-wrapper {
+        flex: 1;
+        overflow-y: auto;
+        padding: 3rem;
+        display: flex;
         justify-content: center;
-        cursor: pointer;
-        padding: 2px;
     }
-    .annotation-box.selected .annotation-delete {
-        display: flex;
-    }
-    #active-text-input {
-        position: absolute;
-        z-index: 100;
-        border: 2px solid #8b5cf6;
-        outline: none;
+
+    #editor {
+        width: 210mm; /* A4 width */
+        min-height: 297mm;
+        padding: 2cm;
         background: white;
-        padding: 4px 8px;
+        box-shadow: 0 0 15px rgba(0,0,0,0.05);
+        outline: none;
+        word-wrap: break-word;
+    }
+
+    .ck-content {
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif !important;
+        font-size: 11pt !important;
+    }
+
+    /* Custom Scrollbar */
+    .editor-content-wrapper::-webkit-scrollbar {
+        width: 8px;
+    }
+    .editor-content-wrapper::-webkit-scrollbar-track {
+        background: #f1f5f9;
+    }
+    .editor-content-wrapper::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
         border-radius: 4px;
-        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
     }
 </style>
 
 <section class="min-h-screen pt-24 pb-12 relative bg-surface-50">
-    <div id="editor-layout" class="hidden h-[calc(100vh-120px)] flex gap-6 px-6 relative z-10">
-        <!-- Sidebar -->
-        <div class="w-80 flex-shrink-0 flex flex-col gap-4">
-            <!-- Tool Info -->
-            <div class="bg-white rounded-2xl border border-surface-100 p-5 shadow-sm">
-                <div class="flex items-center gap-3 mb-4">
-                    <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-violet-500 to-purple-700 flex items-center justify-center shadow-lg">
-                        <i data-lucide="pencil" class="w-5 h-5 text-white"></i>
-                    </div>
-                    <div>
-                        <h1 class="font-bold text-surface-900 leading-tight text-lg">Edit PDF</h1>
-                        <p class="text-[10px] text-surface-400 font-medium uppercase tracking-wider">Interactive Editor</p>
-                    </div>
+    <div class="max-w-[1400px] mx-auto px-6">
+        
+        <!-- UI Header -->
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-8">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-2xl bg-gradient-to-br from-indigo-500 to-blue-700 flex items-center justify-center shadow-lg">
+                    <i data-lucide="file-text" class="w-6 h-6 text-white"></i>
                 </div>
-                <div class="space-y-3">
-                    <div class="p-3 bg-violet-50 rounded-xl border border-violet-100">
-                        <p class="text-[11px] text-violet-700 leading-relaxed font-medium">
-                            <i data-lucide="info" class="w-3.5 h-3.5 inline-block mr-1"></i>
-                            Click anywhere on the PDF pages to add your text. Drag labels to reposition.
-                        </p>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Global Controls -->
-            <div class="bg-white rounded-2xl border border-surface-100 p-5 shadow-sm space-y-5">
                 <div>
-                    <label class="block text-xs font-bold text-surface-700 uppercase tracking-widest mb-3">Font Settings</label>
-                    <div class="space-y-4">
-                        <div>
-                            <div class="flex justify-between items-center mb-1.5">
-                                <span class="text-[11px] font-semibold text-surface-500">Size</span>
-                                <span id="font-size-val" class="text-[11px] font-bold text-violet-600">14px</span>
-                            </div>
-                            <input type="range" id="global-font-size" min="8" max="72" value="14"
-                                class="w-full h-1.5 bg-surface-100 rounded-lg appearance-none cursor-pointer accent-violet-500">
-                        </div>
-                        <div>
-                            <span class="text-[11px] font-semibold text-surface-500 block mb-1.5">Color</span>
-                            <div class="flex items-center gap-2">
-                                <input type="color" id="global-color" value="#000000"
-                                    class="w-10 h-10 rounded-lg border border-surface-200 cursor-pointer p-0.5">
-                                <span id="color-hex" class="text-xs text-surface-400 font-mono">#000000</span>
-                            </div>
-                        </div>
-                    </div>
+                    <h1 class="text-2xl font-bold text-surface-900 tracking-tight">AI Document Editor</h1>
+                    <p class="text-surface-500 text-sm font-medium">Edit PDF content with Word-like precision</p>
                 </div>
-
-                <div class="pt-5 border-t border-surface-50">
-                    <button id="convert-btn"
-                        class="w-full py-4 rounded-xl bg-gradient-to-r from-violet-600 to-purple-700 text-white font-bold text-sm shadow-xl shadow-violet-500/20 hover:shadow-violet-500/30 hover:-translate-y-px active:translate-y-0 transition-all flex items-center justify-center gap-2.5">
-                        <i data-lucide="save" class="w-4 h-4"></i>
-                        Save & Download
-                    </button>
-                    <button id="restart-btn" class="w-full mt-3 py-3 text-surface-400 text-xs font-semibold hover:text-red-500 transition-colors">
-                        Discard & Start Over
-                    </button>
-                </div>
-            </div>
-
-            <div id="status-card" class="mt-auto hidden">
-                <div class="p-4 rounded-2xl bg-emerald-50 border border-emerald-100 flex items-center gap-3">
-                    <div class="w-8 h-8 rounded-lg bg-emerald-100 flex items-center justify-center">
-                        <i data-lucide="check" class="w-4 h-4 text-emerald-600"></i>
-                    </div>
-                    <div>
-                        <p class="text-[11px] font-bold text-emerald-800">Ready to save</p>
-                        <p id="edit-count" class="text-[10px] text-emerald-600">0 annotations added</p>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Main Viewer -->
-        <div class="flex-1 bg-surface-200 rounded-2xl overflow-hidden shadow-inner relative group/viewer">
-            <div id="pdf-viewer" class="pdf-viewer-container h-full overflow-y-auto p-8 flex flex-col items-center">
-                <!-- Pages will be rendered here -->
             </div>
             
-            <div class="absolute bottom-6 left-1/2 -translate-x-1/2 flex items-center gap-2 px-4 py-2 bg-black/80 backdrop-blur-md rounded-full text-white text-[10px] font-medium opacity-0 group-hover/viewer:opacity-100 transition-opacity">
-                <i data-lucide="mouse-pointer-2" class="w-3 h-3"></i>
-                Click page to add text • Drag to move
+            <div id="editor-actions" class="hidden flex items-center gap-3">
+                <span id="doc-status" class="text-[11px] font-bold text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-full border border-emerald-100 flex items-center gap-1.5">
+                    <i data-lucide="check" class="w-3 h-3"></i> READY TO EDIT
+                </span>
+                <button id="download-btn" class="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-indigo-700 text-white font-bold rounded-xl shadow-lg hover:shadow-indigo-500/25 transition-all hover:-translate-y-0.5 active:translate-y-0">
+                    <i data-lucide="download" class="w-4 h-4"></i>
+                    Export as PDF
+                </button>
+                <button onclick="location.reload()" class="p-3 text-surface-400 hover:text-red-500 transition-colors bg-white border border-surface-200 rounded-xl">
+                    <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                </button>
             </div>
         </div>
-    </div>
 
-    <!-- Upload State (Initial) -->
-    <div id="upload-layout" class="max-w-xl mx-auto px-4 mt-12">
-        <div class="text-center mb-10">
-            <div class="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl sm:rounded-3xl bg-gradient-to-br from-violet-500 to-purple-700 flex items-center justify-center shadow-2xl mx-auto mb-6">
-                <i data-lucide="pencil" class="w-8 h-8 sm:w-10 sm:h-10 text-white"></i>
-            </div>
-            <h1 class="text-3xl sm:text-4xl font-bold text-surface-900 tracking-tight mb-3">Edit PDF Content</h1>
-            <p class="text-surface-500 text-sm sm:text-base">Upload a PDF to add text, notes, and annotations directly on the pages.</p>
-        </div>
-
-        <div class="bg-white rounded-3xl border border-surface-100 p-8 shadow-card">
-            <div id="drop-zone" class="relative rounded-2xl border-2 border-dashed border-surface-200 hover:border-violet-300 bg-surface-50/50 hover:bg-violet-50/20 transition-all duration-500 p-12 text-center cursor-pointer group">
-                <input type="file" id="file-input" class="hidden" accept=".pdf">
-                <div class="space-y-4">
-                    <div class="w-16 h-16 rounded-2xl bg-white border border-surface-100 flex items-center justify-center mx-auto shadow-sm group-hover:scale-110 group-hover:shadow-md transition-all duration-500">
-                        <i data-lucide="cloud-upload" class="w-8 h-8 text-surface-300 group-hover:text-violet-500"></i>
-                    </div>
-                    <div>
-                        <p class="text-base font-bold text-surface-700">Choose PDF Document</p>
-                        <p class="text-xs text-surface-400 mt-1">Maximum file size: 50MB</p>
+        <!-- Initial Upload UI -->
+        <div id="upload-stage" class="max-w-xl mx-auto">
+            <div class="bg-white rounded-[2.5rem] border border-surface-100 p-10 shadow-2xl">
+                <div id="drop-zone" class="relative rounded-3xl border-2 border-dashed border-surface-200 hover:border-indigo-400 bg-surface-50/50 hover:bg-indigo-50/10 transition-all duration-500 p-16 text-center cursor-pointer group">
+                    <input type="file" id="file-input" class="hidden" accept=".pdf">
+                    <div class="space-y-6">
+                        <div class="w-20 h-20 rounded-3xl bg-white border border-surface-100 flex items-center justify-center mx-auto shadow-sm group-hover:scale-110 group-hover:rotate-3 group-hover:shadow-indigo-200/50 transition-all duration-500">
+                            <i data-lucide="file-up" class="w-10 h-10 text-surface-300 group-hover:text-indigo-500"></i>
+                        </div>
+                        <div>
+                            <p class="text-xl font-bold text-surface-800">Upload PDF to Edit</p>
+                            <p class="text-sm text-surface-400 mt-2">Documents will be automatically converted to Word format for editing</p>
+                        </div>
+                        <div class="pt-4 flex justify-center gap-2">
+                             <span class="px-3 py-1 bg-surface-100 rounded text-[10px] font-bold text-surface-400 uppercase tracking-widest leading-none flex items-center">PDF</span>
+                             <span class="px-3 py-1 bg-surface-100 rounded text-[10px] font-bold text-surface-400 uppercase tracking-widest leading-none flex items-center">DOCX</span>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
 
-    <!-- Processing Modal -->
-    <div id="processing-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center px-4">
-        <div class="absolute inset-0 bg-surface-900/60 backdrop-blur-sm"></div>
-        <div class="relative bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl text-center">
-            <div class="w-16 h-16 rounded-full border-4 border-surface-100 border-t-violet-500 animate-spin mx-auto mb-6"></div>
-            <h3 class="text-lg font-bold text-surface-900 mb-2">Processing PDF</h3>
-            <p id="processing-msg" class="text-sm text-surface-500">Saving your edits and finalizing document...</p>
+        <!-- Editor UI (Hidden Initially) -->
+        <div id="editor-stage" class="hidden">
+            <div class="editor-container">
+                <div id="toolbar-container"></div>
+                <div class="editor-content-wrapper">
+                    <div id="editor">
+                        <!-- Content loaded via AJAX -->
+                    </div>
+                </div>
+            </div>
         </div>
+
     </div>
 </section>
 
-<!-- Text Input Overlay -->
-<div id="text-input-overlay" class="hidden">
-    <input type="text" id="active-text-input" placeholder="Type text here...">
+<!-- Processing Overlay -->
+<div id="loading-overlay" class="hidden fixed inset-0 z-[100] flex items-center justify-center">
+    <div class="absolute inset-0 bg-surface-900/60 backdrop-blur-md"></div>
+    <div class="relative bg-white rounded-[2.5rem] p-12 max-w-sm w-full shadow-2xl text-center transform transition-all">
+        <div class="relative w-24 h-24 mx-auto mb-8">
+            <div class="absolute inset-0 border-4 border-surface-50 rounded-full"></div>
+            <div class="absolute inset-0 border-4 border-t-indigo-500 border-r-transparent border-b-transparent border-l-transparent rounded-full animate-spin"></div>
+            <div class="absolute inset-0 flex items-center justify-center text-indigo-500">
+                <i data-lucide="ai" class="w-10 h-10 animate-pulse"></i>
+            </div>
+        </div>
+        <h3 id="loading-title" class="text-xl font-black text-surface-900 mb-2">Analyzing Document</h3>
+        <p id="loading-desc" class="text-surface-500 text-sm leading-relaxed">Please wait while our AI engine converts your PDF layout into editable Word format...</p>
+    </div>
 </div>
 {% endblock %}
 
 {% block extra_scripts %}
 <script>
-    const CONVERT_URL = '{% url "converter:convert_file" "edit-pdf" %}';
+    const API_URL = '{% url "converter:convert_file" "edit-pdf" %}';
     const CSRF_TOKEN = '{{ csrf_token }}';
-
-    // State
-    let selectedFile = null;
-    let pdfDoc = null;
-    let annotations = []; // { id, page, x, y, text, size, color }
-    let scale = 1.5;
-    let nextPageId = 0;
-    let selectedAnnotationId = null;
-
-    // Elements
-    const uploadLayout = document.getElementById('upload-layout');
-    const editorLayout = document.getElementById('editor-layout');
-    const pdfViewer = document.getElementById('pdf-viewer');
-    const fileInput = document.getElementById('file-input');
+    
+    let editorInstance;
+    
+    // UI Elements
     const dropZone = document.getElementById('drop-zone');
-    const convertBtn = document.getElementById('convert-btn');
-    const globalFontSize = document.getElementById('global-font-size');
-    const globalColor = document.getElementById('global-color');
-    const textInputOverlay = document.getElementById('text-input-overlay');
-    const activeTextInput = document.getElementById('active-text-input');
-    const processingModal = document.getElementById('processing-modal');
+    const fileInput = document.getElementById('file-input');
+    const uploadStage = document.getElementById('upload-stage');
+    const editorStage = document.getElementById('editor-stage');
+    const editorActions = document.getElementById('editor-actions');
+    const downloadBtn = document.getElementById('download-btn');
+    const loadingOverlay = document.getElementById('loading-overlay');
+    const loadingTitle = document.getElementById('loading-title');
+    const loadingDesc = document.getElementById('loading-desc');
 
-    // Init
-    globalFontSize.addEventListener('input', (e) => {
-        document.getElementById('font-size-val').textContent = e.target.value + 'px';
-        if (selectedAnnotationId !== null) {
-            const ann = annotations.find(a => a.id === selectedAnnotationId);
-            if (ann) {
-                ann.size = parseInt(e.target.value);
-                updateAnnotationUI(ann);
-            }
-        }
-    });
-
-    globalColor.addEventListener('input', (e) => {
-        document.getElementById('color-hex').textContent = e.target.value;
-        if (selectedAnnotationId !== null) {
-            const ann = annotations.find(a => a.id === selectedAnnotationId);
-            if (ann) {
-                ann.color = e.target.value;
-                updateAnnotationUI(ann);
-            }
-        }
-    });
-
-    // Upload Logic
+    // Init Logic
     dropZone.addEventListener('click', () => fileInput.click());
-    fileInput.addEventListener('change', (e) => handleFileSelection(e.target.files[0]));
-    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('border-violet-400'); });
-    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('border-violet-400'));
-    dropZone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        dropZone.classList.remove('border-violet-400');
-        if (e.dataTransfer.files.length) handleFileSelection(e.dataTransfer.files[0]);
-    });
+    fileInput.addEventListener('change', (e) => handleUpload(e.target.files[0]));
 
-    async function handleFileSelection(file) {
-        if (!file || !file.name.toLowerCase().endsWith('.pdf')) return;
-        selectedFile = file;
-        uploadLayout.classList.add('hidden');
-        editorLayout.classList.remove('hidden');
-        processingModal.classList.remove('hidden');
+    async function handleUpload(file) {
+        if (!file) return;
+        
+        showLoading("Converting PDF", "Preparing your document for clinical-grade editing. This may take a moment for large files...");
+        
+        const fd = new FormData();
+        fd.append('file', file);
+        fd.append('csrfmiddlewaretoken', CSRF_TOKEN);
         
         try {
-            const arrayBuffer = await file.arrayBuffer();
-            pdfDoc = await pdfjsLib.getDocument(arrayBuffer).promise;
-            await renderAllPages();
-            lucide.createIcons();
-        } catch (err) {
-            console.error(err);
-            alert("Error loading PDF: " + err.message);
-            location.reload();
+            const resp = await fetch(API_URL, { method: 'POST', body: fd });
+            const data = await resp.json();
+            
+            if (data.success) {
+                initEditor(data.html);
+                uploadStage.classList.add('hidden');
+                editorStage.classList.remove('hidden');
+                editorActions.classList.remove('hidden');
+            } else {
+                alert(data.error || "Upload failed");
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Connection error occurred.");
         } finally {
-            processingModal.classList.add('hidden');
+            hideLoading();
         }
     }
 
-    async function renderAllPages() {
-        pdfViewer.innerHTML = '';
-        for (let i = 1; i <= pdfDoc.numPages; i++) {
-            const page = await pdfDoc.getPage(i);
-            const viewport = page.getViewport({ scale });
-            
-            const wrapper = document.createElement('div');
-            wrapper.className = 'page-wrapper';
-            wrapper.style.width = viewport.width + 'px';
-            wrapper.style.height = viewport.height + 'px';
-            wrapper.dataset.pageNumber = i;
-
-            const canvas = document.createElement('canvas');
-            canvas.style.display = 'block';
-            canvas.height = viewport.height;
-            canvas.width = viewport.width;
-            
-            const context = canvas.getContext('2d');
-            await page.render({ canvasContext: context, viewport }).promise;
-            
-            const editLayer = document.createElement('div');
-            editLayer.className = 'edit-layer';
-            editLayer.addEventListener('mousedown', (e) => handlePageClick(e, i, editLayer));
-
-            wrapper.appendChild(canvas);
-            wrapper.appendChild(editLayer);
-            pdfViewer.appendChild(wrapper);
-        }
-    }
-
-    function handlePageClick(e, pageNum, layer) {
-        if (e.target !== layer) return; // Ignore if clicked on annotation
-        
-        const rect = layer.getBoundingClientRect();
-        const x = e.clientX - rect.left;
-        const y = e.clientY - rect.top;
-
-        // Show input
-        activeTextInput.value = '';
-        activeTextInput.style.left = (e.pageX) + 'px';
-        activeTextInput.style.top = (e.pageY) + 'px';
-        activeTextInput.style.fontSize = globalFontSize.value + 'px';
-        activeTextInput.style.color = globalColor.value;
-        textInputOverlay.classList.remove('hidden');
-        activeTextInput.focus();
-
-        const finishInput = () => {
-            const val = activeTextInput.value.trim();
-            textInputOverlay.classList.add('hidden');
-            activeTextInput.removeEventListener('blur', finishInput);
-            activeTextInput.removeEventListener('keypress', keyHandle);
-            
-            if (val) {
-                addAnnotation(pageNum, x, y, val, layer);
-            }
-        };
-
-        const keyHandle = (ek) => {
-            if (ek.key === 'Enter') finishInput();
-        };
-
-        activeTextInput.addEventListener('blur', finishInput);
-        activeTextInput.addEventListener('keypress', keyHandle);
-    }
-
-    function addAnnotation(pageNum, x, y, text, layer) {
-        const annId = nextPageId++;
-        const ann = {
-            id: annId,
-            page: pageNum,
-            x: x / scale, // Save as PDF unscaled points
-            y: y / scale,
-            text: text,
-            size: parseInt(globalFontSize.value),
-            color: globalColor.value
-        };
-        annotations.push(ann);
-        createAnnotationUI(ann, layer);
-        document.getElementById('status-card').classList.remove('hidden');
-        document.getElementById('edit-count').textContent = annotations.length + ' annotations added';
-    }
-
-    function createAnnotationUI(ann, layer) {
-        const box = document.createElement('div');
-        box.className = 'annotation-box';
-        box.id = `ann-${ann.id}`;
-        box.style.left = (ann.x * scale) + 'px';
-        box.style.top = (ann.y * scale) + 'px';
-        box.style.fontSize = (ann.size * scale * 0.8) + 'px'; // visually match PDF.js scale roughly
-        box.style.color = ann.color;
-        
-        const textSpan = document.createElement('span');
-        textSpan.textContent = ann.text;
-        box.appendChild(textSpan);
-
-        const del = document.createElement('div');
-        del.className = 'annotation-delete';
-        del.innerHTML = '<i data-lucide="x" class="w-3 h-3"></i>';
-        del.onclick = (e) => {
-            e.stopPropagation();
-            annotations = annotations.filter(a => a.id !== ann.id);
-            box.remove();
-            if (annotations.length === 0) document.getElementById('status-card').classList.add('hidden');
-            document.getElementById('edit-count').textContent = annotations.length + ' annotations added';
-        };
-        box.appendChild(del);
-
-        // Click to select/drag
-        let isDragging = false;
-        let startX, startY;
-
-        box.onmousedown = (e) => {
-            e.stopPropagation();
-            selectAnnotation(ann.id);
-            isDragging = true;
-            const rect = box.getBoundingClientRect();
-            startX = e.clientX - rect.left;
-            startY = e.clientY - rect.top;
-            
-            const moveHandler = (em) => {
-                if (!isDragging) return;
-                const layerRect = layer.getBoundingClientRect();
-                let nx = em.clientX - layerRect.left - startX;
-                let ny = em.clientY - layerRect.top - startY;
-                
-                box.style.left = nx + 'px';
-                box.style.top = ny + 'px';
-                ann.x = nx / scale;
-                ann.y = ny / scale;
-            };
-
-            const upHandler = () => {
-                isDragging = false;
-                window.removeEventListener('mousemove', moveHandler);
-                window.removeEventListener('mouseup', upHandler);
-            };
-
-            window.addEventListener('mousemove', moveHandler);
-            window.addEventListener('mouseup', upHandler);
-        };
-
-        layer.appendChild(box);
-        lucide.createIcons();
-        selectAnnotation(ann.id);
-    }
-
-    function selectAnnotation(id) {
-        selectedAnnotationId = id;
-        document.querySelectorAll('.annotation-box').forEach(b => b.classList.remove('selected'));
-        const box = document.getElementById(`ann-${id}`);
-        if (box) box.classList.add('selected');
-        
-        // Sync global controls
-        const ann = annotations.find(a => a.id === id);
-        if (ann) {
-            globalFontSize.value = ann.size;
-            document.getElementById('font-size-val').textContent = ann.size + 'px';
-            globalColor.value = ann.color;
-            document.getElementById('color-hex').textContent = ann.color;
-        }
-    }
-
-    function updateAnnotationUI(ann) {
-        const box = document.getElementById(`ann-${ann.id}`);
-        if (box) {
-            box.style.fontSize = (ann.size * scale * 0.8) + 'px';
-            box.style.color = ann.color;
-        }
-    }
-
-    // Process & Save
-    convertBtn.addEventListener('click', async () => {
-        if (annotations.length === 0) {
-            alert("No changes made to save.");
-            return;
-        }
-
-        // Final coordinate math correction: 
-        // PyMuPDF uses 72 DPI points. PDF.js canvas was rendered at 'scale'.
-        // We already stored ann.x and ann.y as /scale.
-        // However, we need to compensate for the font-size mapping too.
-        
-        processingModal.classList.remove('hidden');
-        const formData = new FormData();
-        formData.append('file', selectedFile);
-        formData.append('csrfmiddlewaretoken', CSRF_TOKEN);
-        formData.append('edits', JSON.stringify(annotations));
+    async function initEditor(html) {
+        const editorEl = document.querySelector('#editor');
+        editorEl.innerHTML = html;
 
         try {
-            const response = await fetch(CONVERT_URL, { method: 'POST', body: formData });
-            if (!response.ok) {
-                const data = await response.json();
-                throw new Error(data.error || 'Failed to save edits');
-            }
-            const blob = await response.blob();
+            const editor = await DecoupledEditor.create(editorEl, {
+                placeholder: 'Type or paste your content here...',
+                toolbar: {
+                    items: [
+                        'heading', '|', 'bold', 'italic', 'underline', 'strikethrough', 'link', '|',
+                        'bulletedList', 'numberedList', 'todoList', '|',
+                        'outdent', 'indent', 'alignment', '|',
+                        'imageUpload', 'blockQuote', 'insertTable', 'mediaEmbed', '|',
+                        'undo', 'redo', 'fontSize', 'fontFamily', 'fontColor', 'fontBackgroundColor', 'highlight'
+                    ]
+                }
+            });
+            
+            const toolbarContainer = document.querySelector('#toolbar-container');
+            toolbarContainer.appendChild(editor.ui.view.toolbar.element);
+            editorInstance = editor;
+            
+            lucide.createIcons();
+        } catch (error) {
+            console.error(error);
+        }
+    }
+
+    downloadBtn.addEventListener('click', async () => {
+        if (!editorInstance) return;
+        
+        showLoading("Exporting PDF", "Finalizing your edits and re-aligning document layers...");
+        
+        const htmlContent = editorInstance.getData();
+        const fd = new FormData();
+        fd.append('html_content', htmlContent);
+        fd.append('csrfmiddlewaretoken', CSRF_TOKEN);
+        
+        try {
+            const resp = await fetch(API_URL, { method: 'POST', body: fd });
+            if (!resp.ok) throw new Error("Conversion failed");
+            
+            const blob = await resp.blob();
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = "edited_" + selectedFile.name;
+            a.download = "edited_document.pdf";
             document.body.appendChild(a);
             a.click();
             a.remove();
-            
-            // Success state - maybe show a checkmark?
-            alert("Changes saved and download started!");
-        } catch (err) {
-            alert(err.message);
+        } catch (e) {
+            alert(e.message);
         } finally {
-            processingModal.classList.add('hidden');
+            hideLoading();
         }
     });
 
-    document.getElementById('restart-btn').onclick = () => location.reload();
+    function showLoading(title, desc) {
+        loadingTitle.innerText = title;
+        loadingDesc.innerText = desc;
+        loadingOverlay.classList.remove('hidden');
+    }
+
+    function hideLoading() {
+        loadingOverlay.classList.add('hidden');
+    }
+
+    // Drag-n-drop
+    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('border-indigo-400'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('border-indigo-400'));
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('border-indigo-400');
+        handleUpload(e.dataTransfer.files[0]);
+    });
 </script>
 {% endblock %}

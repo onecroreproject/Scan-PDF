@@ -11,11 +11,13 @@
         content="scan pdf, file converter, word to pdf, pptx to pdf, excel to pdf, pdf tools, merge pdf, split pdf, compress pdf, online converter">
     <meta name="author" content="ScanPDF">
     <meta name="theme-color" content="#7c3aed">
-    <title>{{ page_title|default:"ScanPDF — Scan Smart. Share Fast." }}</title>
+    <title>{{ page_title|default:"ScanPDF" }}</title>
 
     <!-- Favicon -->
-    <link rel="icon" type="image/png" href="{% static 'images/favicon.png' %}">
-    <link rel="apple-touch-icon" href="{% static 'images/favicon.png' %}">
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'images/favicon.png' %}?v=3">
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'images/favicon.png' %}?v=3">
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'images/favicon.png' %}?v=3">
+    <link rel="icon" type="image/png" sizes="192x192" href="{% static 'images/favicon.png' %}?v=3">
 
     <!-- Tailwind CSS via CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -87,11 +89,12 @@
     <!-- ═══════════════ NAVBAR ═══════════════ -->
     <nav id="navbar" class="fixed top-0 left-0 right-0 z-50 transition-all duration-500">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between h-[72px] sm:h-[90px]">
+            <div class="flex items-center justify-between h-[80px] sm:h-[100px]">
                 <!-- Logo -->
                 <a href="{% url 'converter:home' %}" class="flex items-center gap-2 sm:gap-2.5 group flex-shrink-0"
                     aria-label="ScanPDF Home">
-                    <img src="{% static 'images/logo.png' %}" alt="ScanPDF" class="h-14 sm:h-16 md:h-20 w-auto object-contain">
+                    <img src="{% static 'images/logo.png' %}" alt="ScanPDF"
+                        class="h-16 sm:h-20 md:h-24 w-auto object-contain">
                 </a>
 
                 <!-- Desktop Nav -->
@@ -156,18 +159,12 @@
             <div class="py-8 sm:py-12 grid grid-cols-1 gap-6 sm:grid-cols-3 sm:gap-8 items-center">
                 <!-- Brand -->
                 <div class="flex items-center gap-3 justify-center sm:justify-start">
-                    <img src="{% static 'images/logo.png' %}" alt="ScanPDF" class="h-12 sm:h-14 md:h-16 w-auto object-contain">
+                    <h1>DLK Software Solutions</h1>
                 </div>
 
                 <!-- Links -->
                 <div class="flex items-center justify-center gap-4 sm:gap-6">
-                    <a href="{% url 'converter:home' %}"
-                        class="text-xs sm:text-sm text-surface-400 hover:text-brand-600 transition-colors">Home</a>
-                    <a href="{% url 'converter:home' %}#tools"
-                        class="text-xs sm:text-sm text-surface-400 hover:text-brand-600 transition-colors">Tools</a>
-                    <a href="{% url 'converter:home' %}#how-it-works"
-                        class="text-xs sm:text-sm text-surface-400 hover:text-brand-600 transition-colors">How It
-                        Works</a>
+
                 </div>
 
                 <!-- Copyright -->

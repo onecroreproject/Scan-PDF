@@ -7,5 +7,13 @@ WeasyPrint>=60.0
 PyMuPDF>=1.23.0
 Pillow>=10.0.0
 pdfplumber>=0.10.0
-pytesseract>=0.3.10
-pdf2image>=1.16.0
+easyocr
+html2image>=2.0.5
+rembg>=2.0.50
+yt-dlp>=2023.0.0
+qrcode>=7.4.2
+chempy>=0.8.2
+Faker>=19.0.0
+pdf2docx
+mammoth
+speedtest-cli
