@@ -56,6 +56,7 @@ from .utils import (
     get_video_info,
     download_video,
     run_speed_test,
+    convert_images_to_pdf,
 )
 
 
@@ -596,6 +597,18 @@ TOOLS = {
         'gradient': 'from-green-400 to-emerald-500',
         'category': 'ai-tools',
     },
+    'image-to-pdf': {
+        'title': 'Image to PDF',
+        'description': 'Convert one or more images (.jpg, .png) into a single PDF document.',
+        'icon': 'file-up',
+        'accept': '.jpg,.jpeg,.png',
+        'allowed_extensions': ['.jpg', '.jpeg', '.png'],
+        'converter': convert_images_to_pdf,
+        'color': '#0ea5e9',
+        'gradient': 'from-sky-500 to-indigo-600',
+        'category': 'convert',
+        'multi_file': True,
+    },
 }
 
 
@@ -641,6 +654,8 @@ def convert_page(request, tool_slug):
         template = 'converter/protect_pdf.html'
     elif tool_slug == 'image-to-gif':
         template = 'converter/gif_maker.html'
+    elif tool_slug == 'image-to-pdf':
+        template = 'converter/image_to_pdf.html'
     elif tool_slug == 'resize-image':
         template = 'converter/resize_image.html'
     elif tool_slug == 'scale-image':
@@ -722,6 +737,35 @@ def convert_file(request, tool_slug):
             return create_cleanup_response(output_path, content_type='application/pdf')
         except Exception as e:
             return JsonResponse({'error': f'Merge failed: {str(e)}'}, status=500)
+
+    # ── Image to PDF: multiple files ──
+    if tool_slug == 'image-to-pdf':
+        files = request.FILES.getlist('files')
+        if not files:
+            files = [request.FILES.get('file')] if 'file' in request.FILES else []
+        
+        if not files:
+            return JsonResponse({'error': 'Please upload at least one image.'}, status=400)
+
+        try:
+            input_paths = []
+            for f in files:
+                ext = os.path.splitext(f.name)[1].lower()
+                if ext not in tool['allowed_extensions']:
+                    return JsonResponse({'error': f'Invalid file "{f.name}". Only images (.jpg, .png) are allowed.'}, status=400)
+                input_paths.append(save_uploaded_file(f))
+
+            output_path = convert_images_to_pdf(input_paths, files[0].name)
+
+            for p in input_paths:
+                try:
+                    os.remove(p)
+                except OSError:
+                    pass
+
+            return create_cleanup_response(output_path, content_type='application/pdf')
+        except Exception as e:
+            return JsonResponse({'error': f'PDF creation failed: {str(e)}'}, status=500)
 
     # ── Image to GIF: multiple files ──
     if tool_slug == 'image-to-gif':
@@ -1397,3 +1441,8 @@ def speedtest_upload(request):
         # Consume the data to measure upload time
         _ = request.body
     return JsonResponse({'success': True})
+
+
+def custom_404_view(request, exception=None):
+    """Custom view for handling 404 errors."""
+    return render(request, '404.html', status=404)

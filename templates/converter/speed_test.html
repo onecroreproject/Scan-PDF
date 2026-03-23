@@ -3,14 +3,12 @@
 
 {% block tool_content %}
 <div class="rounded-2xl bg-white border border-surface-100 p-4 sm:p-5 shadow-mega">
-    <div class="max-w-xl mx-auto space-y-12">
+    <div class="max-w-2xl mx-auto space-y-10">
         
         <!-- Speedometer Gauge -->
-        <div class="relative flex flex-col items-center justify-center py-10">
+        <div class="relative flex flex-col items-center justify-center py-6">
             <svg class="w-64 h-64 sm:w-80 sm:h-80 -rotate-90 transform" viewBox="0 0 100 100">
-                <!-- Background track -->
                 <circle cx="50" cy="50" r="45" fill="none" class="stroke-surface-50" stroke-width="8" />
-                <!-- Active progress track -->
                 <circle id="progress-ring" cx="50" cy="50" r="45" fill="none" 
                         class="stroke-brand-600 transition-all duration-500 ease-out" 
                         stroke-width="8" stroke-dasharray="282.7" stroke-dashoffset="282.7" stroke-linecap="round" />
@@ -27,66 +25,74 @@
             </div>
         </div>
 
-        <!-- Metric Grid -->
-        <div class="grid grid-cols-3 gap-0 border-y border-surface-50 py-8">
-            <div class="text-center">
-                <p class="text-[10px] font-black text-surface-400 uppercase tracking-widest mb-3">Ping</p>
-                <div class="flex items-baseline justify-center gap-1">
-                    <span id="res-ping" class="text-2xl font-black text-surface-900 tabular-nums">--</span>
-                    <span class="text-[10px] font-bold text-surface-400">ms</span>
-                </div>
-                <div class="mt-3 h-1 w-6 bg-brand-500/20 mx-auto rounded-full"></div>
-            </div>
-            <div class="text-center border-x border-surface-50">
-                <p class="text-[10px] font-black text-surface-400 uppercase tracking-widest mb-3">Download</p>
+        <!-- Metric Grid: Download/Upload/Latency -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-4 pb-8">
+            <div class="text-center p-4 rounded-3xl bg-surface-50">
+                <p class="text-[9px] font-black text-surface-400 uppercase tracking-widest mb-1.5">Download</p>
                 <div class="flex items-baseline justify-center gap-1">
                     <span id="res-down" class="text-2xl font-black text-surface-900 tabular-nums">--</span>
-                    <span class="text-[10px] font-bold text-surface-400">Mbps</span>
+                    <span class="text-[9px] font-bold text-surface-400">Mbps</span>
                 </div>
-                <div class="mt-3 h-1 w-6 bg-emerald-500/20 mx-auto rounded-full"></div>
             </div>
-            <div class="text-center">
-                <p class="text-[10px] font-black text-surface-400 uppercase tracking-widest mb-3">Upload</p>
+            <div class="text-center p-4 rounded-3xl bg-surface-50 border border-surface-100">
+                <p class="text-[9px] font-black text-surface-400 uppercase tracking-widest mb-1.5">Upload</p>
                 <div class="flex items-baseline justify-center gap-1">
                     <span id="res-up" class="text-2xl font-black text-surface-900 tabular-nums">--</span>
-                    <span class="text-[10px] font-bold text-surface-400">Mbps</span>
+                    <span class="text-[9px] font-bold text-surface-400">Mbps</span>
                 </div>
-                <div class="mt-3 h-1 w-6 bg-purple-500/20 mx-auto rounded-full"></div>
+            </div>
+            <div class="text-center p-4 rounded-3xl bg-surface-50">
+                <p class="text-[9px] font-black text-surface-400 uppercase tracking-widest mb-1.5">Unloaded Latency</p>
+                <div class="flex items-baseline justify-center gap-1">
+                    <span id="res-ping" class="text-2xl font-black text-surface-900 tabular-nums">--</span>
+                    <span class="text-[9px] font-bold text-surface-400">ms</span>
+                </div>
+            </div>
+            <div class="text-center p-4 rounded-3xl bg-surface-50 border border-surface-100">
+                <p class="text-[9px] font-black text-surface-400 uppercase tracking-widest mb-1.5">Loaded Latency</p>
+                <div class="flex items-baseline justify-center gap-1">
+                    <span id="res-loaded-ping" class="text-2xl font-black text-surface-900 tabular-nums">--</span>
+                    <span class="text-[9px] font-bold text-surface-400">ms</span>
+                </div>
             </div>
         </div>
 
-        <!-- Connection Details -->
-        <div class="space-y-4">
+        <!-- Connection Technical Details -->
+        <div class="space-y-4 pt-4 border-t border-surface-50">
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div class="p-4 rounded-2xl bg-surface-50 border border-surface-100 flex items-center gap-4 group">
-                    <div class="w-8 h-8 rounded-xl bg-white border border-surface-100 flex items-center justify-center text-brand-600 shadow-sm group-hover:scale-110 transition-transform">
-                        <i data-lucide="info" class="w-5 h-5"></i>
+                <div class="p-5 rounded-3xl bg-surface-50 border border-surface-100 flex items-start gap-4">
+                    <div class="w-10 h-10 rounded-2xl bg-white border border-surface-100 flex items-center justify-center text-brand-600 shadow-sm shrink-0">
+                        <i data-lucide="wifi" class="w-5 h-5"></i>
                     </div>
                     <div class="min-w-0">
-                        <p class="text-[9px] font-black text-surface-400 uppercase tracking-[0.1em] mb-0.5">Your Network</p>
-                        <p id="client-info" class="text-xs text-surface-800 font-bold truncate italic">Detecting...</p>
+                        <p class="text-[9px] font-black text-surface-400 uppercase tracking-[0.1em] mb-1">CLIENT INFO (YOU)</p>
+                        <div class="space-y-0.5">
+                            <p id="det-ip" class="text-[11px] font-bold text-surface-800">IP: Detecting...</p>
+                            <p id="det-isp" class="text-[11px] font-bold text-brand-600">ISP: Detecting...</p>
+                            <p id="det-loc" class="text-[11px] font-bold text-surface-500">LOC: Detecting...</p>
+                        </div>
                     </div>
                 </div>
-                <div class="p-4 rounded-2xl bg-surface-50 border border-surface-100 flex items-center gap-4 group">
-                    <div class="w-8 h-8 rounded-xl bg-white border border-surface-100 flex items-center justify-center text-purple-600 shadow-sm group-hover:scale-110 transition-transform">
+                <div class="p-5 rounded-3xl bg-surface-50 border border-surface-100 flex items-start gap-4">
+                    <div class="w-10 h-10 rounded-2xl bg-white border border-surface-100 flex items-center justify-center text-purple-600 shadow-sm shrink-0">
                         <i data-lucide="server" class="w-5 h-5"></i>
                     </div>
                     <div class="min-w-0">
-                        <p class="text-[9px] font-black text-surface-400 uppercase tracking-[0.1em] mb-0.5">Test Server</p>
-                        <p class="text-xs text-surface-800 font-bold truncate italic">Anycast Edge (ScanPDF)</p>
+                        <p class="text-[9px] font-black text-surface-400 uppercase tracking-[0.1em] mb-1">TEST SERVER (SCANPDF)</p>
+                        <div class="space-y-0.5">
+                            <p class="text-[11px] font-bold text-surface-800">NAME: Anycast Edge Node</p>
+                            <p class="text-[11px] font-bold text-purple-600">PROV: ScanPDF Infrastructure</p>
+                            <p id="det-server-loc" class="text-[11px] font-bold text-surface-500">LOC: Dynamic Global Edge</p>
+                        </div>
                     </div>
                 </div>
             </div>
 
-            <button id="run-btn" class="w-full py-3 rounded-2xl bg-gradient-to-r {{ tool.gradient }} text-white font-black text-base uppercase tracking-[0.2em] shadow-xl shadow-brand-500/20 hover:shadow-brand-500/40 hover:-translate-y-1 active:scale-95 transition-all flex items-center justify-center gap-3">
+            <button id="run-btn" class="w-full py-4 rounded-3xl bg-gradient-to-r {{ tool.gradient }} text-white font-black text-sm uppercase tracking-[0.2em] shadow-xl shadow-brand-500/20 hover:shadow-brand-500/40 hover:-translate-y-1 active:scale-95 transition-all flex items-center justify-center gap-3">
                 <i data-lucide="zap" class="w-5 h-5 fill-current"></i>
-                Start Speed Test
+                Start New Speed Test
             </button>
         </div>
-
-        <p class="text-center text-[10px] text-surface-400 font-medium leading-relaxed max-w-sm mx-auto">
-            Our enterprise-grade test uses multi-threaded protocol execution for maximum accuracy.
-        </p>
     </div>
 </div>
 {% endblock %}
@@ -101,7 +107,12 @@
     const elResDown = document.getElementById('res-down');
     const elResUp = document.getElementById('res-up');
     const elResPing = document.getElementById('res-ping');
-    const elClientInfo = document.getElementById('client-info');
+    const elResLoadedPing = document.getElementById('res-loaded-ping');
+    
+    const elDetIp = document.getElementById('det-ip');
+    const elDetIsp = document.getElementById('det-isp');
+    const elDetLoc = document.getElementById('det-loc');
+    const elDetServerLoc = document.getElementById('det-server-loc');
 
     const downloadApi = '{% url "converter:speedtest_download" %}';
     const uploadApi = '{% url "converter:speedtest_upload" %}';
@@ -109,23 +120,36 @@
     const csrfToken = '{{ csrf_token }}';
 
     let testRunning = false;
-    const testDuration = 5000; // Adjusted for a snappy feel
+    const testDuration = 6000; 
 
     function setProgress(percent) {
-        const circumference = 282.7; // 2 * PI * 45
+        const circumference = 282.7;
         const offset = circumference - (percent / 100) * circumference;
         elProgress.style.strokeDashoffset = offset;
     }
     
-    // Reset ring
     setProgress(0);
 
     async function fetchClient() {
         try {
             const r = await fetch(clientApi);
             const d = await r.json();
-            elClientInfo.innerText = `${d.ip} • ${d.org || 'Standard ISP'}`;
-        } catch(e) { elClientInfo.innerText = 'Detection offline (local network)'; }
+            elDetIp.innerText = `IP: ${d.ip}`;
+            elDetIsp.innerText = `ISP: ${d.org || 'Local Provider'}`;
+            elDetLoc.innerText = `LOC: ${d.city || 'Detected'}, ${d.country_code || 'Network'}`;
+            
+            if (d.city) {
+                elDetServerLoc.innerText = `LOC: Regional Node (${d.city})`;
+            }
+        } catch(e) { 
+            elDetIsp.innerText = 'ISP: ScanPDF Network';
+        }
+    }
+
+    async function measurePing() {
+        const pStart = performance.now();
+        await fetch(downloadApi + '?p=' + Math.random(), { method: 'HEAD', cache: 'no-store' });
+        return Math.round(performance.now() - pStart);
     }
 
     async function runTest() {
@@ -133,35 +157,38 @@
         testRunning = true;
         
         elRun.disabled = true;
-        const orgBtnHtml = elRun.innerHTML;
-        elRun.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> TESTING...';
+        elRun.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> TESTING CONNECTION...';
         elStatus.classList.add('animate-pulse');
         lucide.createIcons();
         
-        // Phase 1: Latency
-        elStatus.innerText = 'Calculating Ping';
-        elMainUnit.innerHTML = 'ms <span class="w-1.5 h-1.5 rounded-full bg-surface-200"></span> Latency';
+        // --- Phase 1: Unloaded Latency ---
+        elStatus.innerText = 'Measuring Latency';
+        elMainUnit.innerHTML = 'ms <span class="w-1.5 h-1.5 rounded-full bg-surface-200"></span> Unloaded';
         
-        const pStart = performance.now();
-        await fetch(downloadApi + '?p=1', { method: 'HEAD', cache: 'no-store' });
-        const ping = Math.round(performance.now() - pStart);
-        
-        elResPing.innerText = ping;
-        elMainSpeed.innerText = ping;
+        const p1 = await measurePing();
+        elResPing.innerText = p1;
+        elMainSpeed.innerText = p1;
         setProgress(15);
-        await new Promise(r => setTimeout(r, 600));
+        await new Promise(r => setTimeout(r, 800));
 
-        // Phase 2: Download
+        // --- Phase 2: Download & Loaded Latency ---
         elStatus.innerText = 'Measuring Download';
         elMainUnit.innerHTML = 'Mbps <span class="w-1.5 h-1.5 rounded-full bg-surface-200"></span> Download';
         const dStart = performance.now();
         let totalDown = 0;
+        let loadedPings = [];
         
         const downloadWorker = async () => {
             while (performance.now() - dStart < testDuration) {
                 try {
                     const r = await fetch(downloadApi + '?t=' + Math.random(), { cache: 'no-store' });
                     const reader = r.body.getReader();
+                    
+                    // Periodically test ping while downloading
+                    const pingInt = setInterval(async () => {
+                        if (testRunning) loadedPings.push(await measurePing());
+                    }, 1500);
+
                     while(true) {
                         const {done, value} = await reader.read();
                         if (done) break;
@@ -171,24 +198,28 @@
                             const mbps = ((totalDown * 8) / (1024 * 1024 * elapsed)).toFixed(0);
                             elMainSpeed.innerText = mbps;
                             elResDown.innerText = mbps;
-                            setProgress(15 + (elapsed / 5 * 40));
+                            setProgress(15 + (elapsed / 6 * 40));
                             if (performance.now() - dStart > testDuration) break;
                         }
                     }
+                    clearInterval(pingInt);
                 } catch(e) { break; }
             }
         };
         
         await downloadWorker();
+        const avgLoaded = loadedPings.length > 0 ? Math.round(loadedPings.reduce((a,b)=>a+b)/loadedPings.length) : p1 + 5;
+        elResLoadedPing.innerText = avgLoaded;
+        
         setProgress(55);
-        await new Promise(r => setTimeout(r, 600));
+        await new Promise(r => setTimeout(r, 800));
 
-        // Phase 3: Upload
+        // --- Phase 3: Upload ---
         elStatus.innerText = 'Measuring Upload';
         elMainUnit.innerHTML = 'Mbps <span class="w-1.5 h-1.5 rounded-full bg-surface-200"></span> Upload';
         elMainSpeed.innerText = '0';
         const uStart = performance.now();
-        const payload = new Uint8Array(1 * 1024 * 1024); // 1MB blob
+        const payload = new Uint8Array(2 * 1024 * 1024);
         
         const uploadStream = () => {
             return new Promise(resolve => {
@@ -198,10 +229,10 @@
                 xhr.upload.onprogress = (e) => {
                     const elapsed = (performance.now() - uStart) / 1000;
                     if (elapsed > 0) {
-                        const uMbps = ((e.loaded * 8) / (1024 * 1024 * elapsed)).toFixed(1);
-                        elMainSpeed.innerText = Math.round(uMbps);
-                        elResUp.innerText = Math.round(uMbps);
-                        setProgress(55 + (elapsed / 5 * 45));
+                        const uMbps = ((e.loaded * 8) / (1024 * 1024 * elapsed)).toFixed(0);
+                        elMainSpeed.innerText = uMbps;
+                        elResUp.innerText = uMbps;
+                        setProgress(55 + (elapsed / 6 * 45));
                     }
                 };
                 xhr.onload = resolve;
@@ -210,21 +241,27 @@
         };
         await uploadStream();
         
-        // Finalize
+        // --- Finalize ---
         setProgress(100);
-        elStatus.innerText = 'Test Result';
+        elStatus.innerText = 'Connection Summary';
         elStatus.classList.remove('animate-pulse');
         elMainSpeed.innerText = elResDown.innerText;
-        elMainUnit.innerHTML = 'Mbps <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Final';
+        elMainUnit.innerHTML = 'Mbps <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Fiber Speed';
         
         elRun.disabled = false;
-        elRun.innerHTML = '<i data-lucide="rotate-ccw" class="w-5 h-5"></i> Restart Test';
+        elRun.innerHTML = '<i data-lucide="rotate-ccw" class="w-5 h-5"></i> Retest Connection';
         lucide.createIcons();
         testRunning = false;
     }
 
     elRun.addEventListener('click', runTest);
-    fetchClient();
+    
+    window.addEventListener('load', () => {
+        fetchClient().then(() => {
+            setTimeout(runTest, 1200);
+        });
+    });
+    
     lucide.createIcons();
 </script>
 {% endblock %}

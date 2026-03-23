@@ -3214,3 +3214,44 @@ def generate_story(genre="Science Fiction", prompt=""):
             
     raise Exception(f"AI Story Error: Could not find a compatible model. Last error: {last_error}")
 
+
+# ═══════════════════════════════════════════════════════════════
+# IMAGE → PDF
+# ═══════════════════════════════════════════════════════════════
+def convert_images_to_pdf(input_paths, original_name):
+    """Convert one or more images into a single PDF document using PyMuPDF."""
+    import fitz
+    output_path = get_output_path(original_name, 'pdf')
+    
+    # Create a new empty PDF
+    doc = fitz.open()
+    
+    # If input_paths is a single string, convert to list
+    if isinstance(input_paths, str):
+        input_paths = [input_paths]
+        
+    for img_path in input_paths:
+        try:
+            # Open the image as a document
+            imgdoc = fitz.open(img_path)
+            # Convert image to PDF in-memory
+            pdfbytes = imgdoc.convert_to_pdf()
+            imgdoc.close()
+            
+            # Open the temporary PDF bytes and insert into main document
+            imgpdf = fitz.open("pdf", pdfbytes)
+            doc.insert_pdf(imgpdf)
+            imgpdf.close()
+        except Exception as e:
+            # Skip corrupted images but continue with others
+            print(f"Error skipping image {img_path}: {str(e)}")
+            continue
+            
+    if len(doc) == 0:
+        doc.close()
+        raise Exception("No valid images were provided for conversion.")
+        
+    doc.save(output_path)
+    doc.close()
+    return output_path
+
