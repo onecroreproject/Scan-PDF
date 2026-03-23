@@ -1,169 +1,245 @@
-{% extends 'converter/base.html' %}
+{% extends 'converter/tool_base.html' %}
 {% load static %}
+
 {% block extra_head %}
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
 <style>
-    .cropper-container { max-height: 500px; width: 100%; overflow: hidden; border-radius: 1rem; border: 1px solid #e5e7eb; background: #f9fafb; margin-top: 1.5rem; }
-    #image-to-crop { max-width: 100%; display: block; }
+    .cropper-view-box, .cropper-face { border-radius: 0; }
+    .cropper-line, .cropper-point { background-color: #4f46e5; }
+    .cropper-bg { background-image: none !important; background-color: #f8fafc; }
 </style>
 {% endblock %}
-{% block content %}
-<section class="min-h-screen pt-24 sm:pt-32 pb-12 sm:pb-20 relative">
-    <div class="absolute inset-0 bg-gradient-to-b from-surface-50 via-white to-surface-50"></div>
-    <div class="absolute top-1/3 left-[10%] w-[300px] sm:w-[500px] h-[300px] sm:h-[500px] bg-lime-100/10 rounded-full blur-[80px] sm:blur-[100px]"></div>
-    <div class="relative z-10 max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <nav class="flex items-center gap-1.5 text-xs sm:text-sm mb-6 sm:mb-10">
-            <a href="{% url 'converter:home' %}" class="text-surface-400 hover:text-brand-600 transition-colors flex items-center gap-1.5"><i data-lucide="home" class="w-3 h-3"></i> Home</a>
-            <i data-lucide="chevron-right" class="w-3 h-3 text-surface-300"></i>
-            <a href="{% url 'converter:home' %}#tools" class="text-surface-400 hover:text-brand-600 transition-colors">Tools</a>
-            <i data-lucide="chevron-right" class="w-3 h-3 text-surface-300"></i>
-            <span class="text-surface-700 font-medium">Crop Image</span>
-        </nav>
-        <div class="mb-6 sm:mb-10">
-            <div class="flex items-center gap-3 sm:gap-4 mb-3">
-                <div class="w-11 h-11 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-br from-lime-500 to-lime-700 flex items-center justify-center shadow-xl flex-shrink-0">
-                    <i data-lucide="crop" class="w-5 h-5 sm:w-7 sm:h-7 text-white"></i>
+
+{% block tool_content %}
+<div class="rounded-2xl bg-white border border-surface-100 p-4 sm:p-5 shadow-mega">
+    <div class="space-y-4">
+        <!-- Drag & Drop Zone -->
+        <div id="drop-zone" class="relative rounded-2xl border-2 border-dashed border-brand-100 bg-brand-50/10 hover:bg-brand-50/30 hover:border-brand-400 transition-all duration-300 p-10 sm:p-14 text-center cursor-pointer group">
+            
+            <!-- Default State -->
+            <div id="upload-default" class="space-y-4">
+                <div class="w-14 h-14 rounded-2xl bg-surface-50 border border-surface-100 flex items-center justify-center mx-auto group-hover:bg-brand-50 group-hover:border-brand-200 group-hover:scale-105 transition-all duration-300">
+                    <i data-lucide="crop" class="w-8 h-8 text-surface-300 group-hover:text-brand-500 transition-colors"></i>
                 </div>
                 <div>
-                    <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-surface-900 tracking-tight">Interactive Crop</h1>
-                    <p class="text-surface-500 text-xs sm:text-sm mt-0.5">Choose the size and position of the image directly by dragging.</p>
+                    <p class="text-base font-semibold text-surface-700 mb-1">
+                        Drop image to crop, or <span class="text-brand-600 underline underline-offset-4 decoration-brand-200">browse</span>
+                    </p>
+                    <p class="text-xs text-surface-400">Max 50MB&nbsp;&nbsp;•&nbsp;&nbsp;Accepted: .jpg, .png</p>
                 </div>
             </div>
+
+            <!-- File Selected State -->
+            <div id="file-selected" class="hidden">
+                <div class="flex items-center justify-center gap-6">
+                    <div class="relative">
+                        <div class="w-14 h-14 rounded-2xl bg-brand-50 border border-brand-100 flex items-center justify-center flex-shrink-0">
+                            <i data-lucide="image" class="w-8 h-8 text-brand-600"></i>
+                        </div>
+                    </div>
+                    <div class="text-left min-w-0">
+                        <p id="file-name" class="text-surface-800 font-bold text-base truncate max-w-[180px]"></p>
+                        <p id="file-size" class="text-xs text-surface-400 mt-0.5 font-medium"></p>
+                    </div>
+                    <button id="remove-file-btn" class="p-2.5 rounded-xl hover:bg-red-50 text-surface-300 hover:text-red-500 transition-all flex-shrink-0" title="Remove file">
+                        <i data-lucide="trash-2" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
+
+            <input type="file" id="file-input" class="hidden" accept=".jpg,.jpeg,.png">
         </div>
-        <div class="rounded-xl sm:rounded-2xl bg-white border border-surface-100 p-4 sm:p-6 md:p-8 shadow-card">
-            <div id="drop-zone" class="relative rounded-xl border-2 border-dashed border-surface-200 hover:border-brand-300 transition-all duration-300 p-6 sm:p-8 md:p-14 text-center cursor-pointer group">
-                <div id="upload-default" class="space-y-3">
-                    <div class="w-14 h-14 sm:w-16 sm:h-16 rounded-xl sm:rounded-2xl bg-surface-50 border border-surface-100 flex items-center justify-center mx-auto group-hover:bg-lime-50 group-hover:border-lime-200 group-hover:scale-105 transition-all duration-300">
-                        <i data-lucide="cloud-upload" class="w-6 h-6 sm:w-8 sm:h-8 text-surface-300 group-hover:text-lime-500 transition-colors"></i>
-                    </div>
-                    <div>
-                        <p class="text-sm sm:text-base font-semibold text-surface-700 mb-1">Drop your image here, or <span class="text-brand-600 underline underline-offset-4 decoration-brand-200">browse</span></p>
-                        <p class="text-[10px] sm:text-xs text-surface-400">Max 50MB &bull; JPG, JPEG, PNG</p>
-                    </div>
-                </div>
-                <div id="file-selected" class="hidden">
-                    <div class="flex items-center justify-center gap-3 sm:gap-4">
-                        <div class="w-10 h-10 sm:w-12 sm:h-12 rounded-lg sm:rounded-xl bg-lime-50 border border-lime-100 flex items-center justify-center flex-shrink-0"><i data-lucide="file-check-2" class="w-5 h-5 sm:w-6 sm:h-6 text-lime-600"></i></div>
-                        <div class="text-left min-w-0"><p id="file-name" class="text-surface-800 font-semibold text-sm truncate"></p><p id="file-size" class="text-[10px] text-surface-400 mt-0.5"></p></div>
-                        <button id="remove-file-btn" class="p-1.5 rounded-lg hover:bg-red-50 text-surface-300 hover:text-red-500 transition-all flex-shrink-0"><i data-lucide="x" class="w-4 h-4"></i></button>
-                    </div>
-                </div>
-                <input type="file" id="file-input" class="hidden" accept=".jpg,.jpeg,.png">
-            </div>
 
-            <!-- Cropping Interface -->
-            <div id="crop-interface" class="hidden animate-fade-in-up">
-                <div class="cropper-container">
-                    <img id="image-to-crop" src="" alt="Image to crop">
-                </div>
-                
-                <div class="mt-6 flex flex-wrap gap-3 justify-center">
-                    <button id="aspect-free" class="aspect-btn active px-4 py-2 rounded-lg bg-surface-100 text-surface-600 text-xs font-bold hover:bg-surface-200 transition-all">Custom</button>
-                    <button id="aspect-1-1" class="aspect-btn px-4 py-2 rounded-lg bg-surface-50 text-surface-500 text-xs font-bold hover:bg-surface-200 transition-all">1:1 Square</button>
-                    <button id="aspect-4-3" class="aspect-btn px-4 py-2 rounded-lg bg-surface-50 text-surface-500 text-xs font-bold hover:bg-surface-200 transition-all">4:3 Standard</button>
-                    <button id="aspect-16-9" class="aspect-btn px-4 py-2 rounded-lg bg-surface-50 text-surface-500 text-xs font-bold hover:bg-surface-200 transition-all">16:9 Widescreen</button>
-                </div>
-            </div>
-
-            <button id="convert-btn" disabled class="w-full mt-5 sm:mt-6 py-3 sm:py-3.5 rounded-xl bg-gradient-to-r from-lime-500 to-lime-700 text-white font-semibold text-sm disabled:opacity-25 disabled:cursor-not-allowed hover:opacity-90 transition-all shadow-lg disabled:shadow-none hover:shadow-xl hover:-translate-y-px active:translate-y-0 flex items-center justify-center gap-2.5"><i data-lucide="crop" class="w-4 h-4"></i> Crop Selection</button>
+        <!-- Crop Interface (Initially Hidden) -->
+        <div id="crop-interface" class="hidden space-y-4 pt-4 border-t border-surface-50 animate-fade-in-up">
+            <h3 class="text-sm font-black text-surface-400 uppercase tracking-widest text-center">Visual Framing</h3>
             
-            <div id="progress-section" class="hidden mt-5 sm:mt-6"><div class="flex items-center gap-3 py-4 sm:py-6 px-3 sm:px-4 rounded-xl bg-surface-50 border border-surface-100"><div class="w-8 h-8 sm:w-10 sm:h-10 rounded-full border-[3px] border-surface-200 border-t-lime-500 animate-spin"></div><div><p class="text-surface-800 font-semibold text-xs sm:text-sm">Applying crop&hellip;</p><p class="text-[10px] text-surface-400 mt-0.5">Processing your pixels</p></div></div></div>
-            <div id="success-section" class="hidden mt-5 sm:mt-6"><div class="text-center py-5 sm:py-6 px-3 sm:px-4 rounded-xl bg-emerald-50/50 border border-emerald-100"><div class="w-12 h-12 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-emerald-100 flex items-center justify-center mx-auto mb-3 sm:mb-4 animate-success-pop"><i data-lucide="check-circle-2" class="w-6 h-6 sm:w-7 sm:h-7 text-emerald-600"></i></div><h3 class="text-base sm:text-lg font-bold text-surface-900 mb-1">Crop Applied!</h3><p class="text-surface-500 text-xs sm:text-sm mb-4 sm:mb-5">Your image was successfully cropped to the selection.</p><div class="flex flex-col xs:flex-row gap-2.5 justify-center"><a id="download-btn" href="#" class="inline-flex items-center justify-center gap-2 px-5 sm:px-7 py-2.5 sm:py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-semibold text-xs sm:text-sm shadow-lg shadow-emerald-500/20 hover:-translate-y-px transition-all"><i data-lucide="download" class="w-4 h-4"></i> Download Cropped Image</a><button id="convert-another-btn" class="inline-flex items-center justify-center gap-2 px-5 sm:px-7 py-2.5 sm:py-3 rounded-xl bg-white border border-surface-200 text-surface-600 font-semibold text-xs sm:text-sm hover:bg-surface-50 transition-all"><i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Try Multi-Crop</button></div></div></div>
-            <div id="error-section" class="hidden mt-5 sm:mt-6"><div class="p-3 sm:p-4 rounded-xl bg-red-50 border border-red-100"><div class="flex items-start gap-2.5"><div class="w-8 h-8 rounded-lg bg-red-100 flex items-center justify-center flex-shrink-0 mt-0.5"><i data-lucide="alert-triangle" class="w-4 h-4 text-red-500"></i></div><div><h4 class="font-semibold text-red-700 text-xs sm:text-sm mb-0.5">Crop Failed</h4><p id="error-message" class="text-[10px] text-red-500 leading-relaxed"></p></div></div></div></div>
+            <div class="aspect-video relative rounded-2xl border border-surface-100 bg-surface-50 overflow-hidden shadow-inner group">
+                <img id="image-to-crop" src="" class="max-w-full block">
+            </div>
+
+            <div class="flex flex-wrap justify-center gap-3">
+                <button id="aspect-free" class="aspect-btn px-6 py-3 rounded-xl bg-brand-50 text-brand-600 font-black text-xs uppercase tracking-widest border border-brand-100 hover:bg-brand-100 transition-all active">Free</button>
+                <button id="aspect-1-1" class="aspect-btn px-6 py-3 rounded-xl bg-surface-50 text-surface-500 font-black text-xs uppercase tracking-widest border border-surface-100 hover:bg-surface-100 transition-all">SQUARE (1:1)</button>
+                <button id="aspect-4-3" class="aspect-btn px-6 py-3 rounded-xl bg-surface-50 text-surface-500 font-black text-xs uppercase tracking-widest border border-surface-100 hover:bg-surface-100 transition-all">TV (4:3)</button>
+                <button id="aspect-16-9" class="aspect-btn px-6 py-3 rounded-xl bg-surface-50 text-surface-500 font-black text-xs uppercase tracking-widest border border-surface-100 hover:bg-surface-100 transition-all">WIDESCREEN (16:9)</button>
+            </div>
+
+            <button id="convert-btn" disabled 
+                class="w-full py-3 rounded-2xl bg-gradient-to-r {{ tool.gradient }} text-white font-black text-base uppercase tracking-widest shadow-xl shadow-brand-500/20 hover:shadow-brand-500/40 hover:-translate-y-1 active:scale-95 transition-all flex items-center justify-center gap-3 group">
+                <i data-lucide="crop" class="w-5 h-5"></i>
+                Crop and Save
+            </button>
         </div>
-        <div class="mt-4 sm:mt-5 flex items-center justify-center gap-2 text-[10px] sm:text-xs text-surface-400"><i data-lucide="shield" class="w-3 h-3"></i><span>Your files are processed securely and automatically deleted after conversion.</span></div>
+
+        <!-- ═══════════════ PROGRESS STATE ═══════════════ -->
+        <div id="progress-section" class="hidden mt-4">
+            <div class="flex items-center gap-5 py-4 px-5 rounded-2xl bg-surface-50 border border-surface-100">
+                <div class="relative flex-shrink-0">
+                    <div class="w-9 h-9 rounded-full border-[3px] border-surface-200 border-t-brand-500 animate-spin"></div>
+                </div>
+                <div>
+                    <p class="text-surface-800 font-black text-base">Trimming Canvas...</p>
+                    <p class="text-xs text-surface-400 mt-1">Slicing the image to your exact selection.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════════ SUCCESS STATE ═══════════════ -->
+        <div id="success-section" class="hidden mt-4">
+            <div class="text-center py-4 px-5 rounded-2xl bg-emerald-50/50 border border-emerald-100">
+                <div class="w-14 h-14 rounded-xl bg-emerald-100 flex items-center justify-center mx-auto mb-2 animate-success-pop shadow-inner">
+                    <i data-lucide="check" class="w-8 h-8 text-emerald-600"></i>
+                </div>
+                <h3 class="text-lg font-black text-surface-900 mb-1">Snatched!</h3>
+                <p class="text-surface-500 text-sm mb-4">Your image has been cropped successfully.</p>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                    <a id="download-btn" href="#" download
+                        class="inline-flex items-center justify-center gap-2.5 px-10 py-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-black text-sm hover:from-emerald-400 hover:to-emerald-500 transition-all shadow-xl shadow-emerald-500/20">
+                        <i data-lucide="download" class="w-5 h-5"></i> Download Cropped
+                    </a>
+                    <button onclick="window.location.reload()"
+                        class="inline-flex items-center justify-center gap-2.5 px-10 py-4 rounded-2xl bg-white border border-surface-200 text-surface-600 font-bold text-sm hover:bg-surface-50 transition-all shadow-sm">
+                        <i data-lucide="refresh-cw" class="w-4 h-4"></i> Start Over
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- ═══════════════ ERROR STATE ═══════════════ -->
+        <div id="error-section" class="hidden mt-4">
+            <div class="p-5 rounded-2xl bg-red-50 border border-red-100 flex items-start gap-4 animate-shake">
+                <div class="w-9 h-9 rounded-xl bg-red-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <i data-lucide="alert-octagon" class="w-6 h-6 text-red-500"></i>
+                </div>
+                <div class="pt-0.5">
+                    <h4 class="font-black text-red-700 text-sm uppercase tracking-wider mb-1">Crop Failed</h4>
+                    <p id="error-message" class="text-xs text-red-500 leading-relaxed font-bold"></p>
+                </div>
+            </div>
+        </div>
     </div>
-</section>
+</div>
 {% endblock %}
+
 {% block extra_scripts %}
 <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 <script>
-const CONVERT_URL='{% url "converter:convert_file" "crop-image" %}';const CSRF_TOKEN='{{ csrf_token }}';
-const dropZone=document.getElementById('drop-zone'),fileInput=document.getElementById('file-input'),uploadDefault=document.getElementById('upload-default'),fileSelected=document.getElementById('file-selected'),fileName=document.getElementById('file-name'),fileSize_el=document.getElementById('file-size'),removeFileBtn=document.getElementById('remove-file-btn'),convertBtn=document.getElementById('convert-btn'),progressSection=document.getElementById('progress-section'),successSection=document.getElementById('success-section'),errorSection=document.getElementById('error-section'),errorMessage=document.getElementById('error-message'),downloadBtn=document.getElementById('download-btn'),convertAnotherBtn=document.getElementById('convert-another-btn'),cropInterface=document.getElementById('crop-interface'),imageToCrop=document.getElementById('image-to-crop');
-let selectedFile=null;let cropper=null;const ACCEPTED=['.jpg','.jpeg','.png'];
+    const CONVERT_URL = '{% url "converter:convert_file" "crop-image" %}';
+    const CSRF_TOKEN = '{{ csrf_token }}';
 
-dropZone.addEventListener('click',e=>{if(!e.target.closest('#remove-file-btn'))fileInput.click();});
-dropZone.addEventListener('dragover',e=>{e.preventDefault();dropZone.classList.add('border-lime-400','bg-lime-50/30');});
-dropZone.addEventListener('dragleave',e=>{e.preventDefault();dropZone.classList.remove('border-lime-400','bg-lime-50/30');});
-dropZone.addEventListener('drop',e=>{e.preventDefault();dropZone.classList.remove('border-lime-400','bg-lime-50/30');if(e.dataTransfer.files.length)handleFile(e.dataTransfer.files[0]);});
-fileInput.addEventListener('change',e=>{if(e.target.files.length)handleFile(e.target.files[0]);});
+    const dropZone = document.getElementById('drop-zone'), fileInput = document.getElementById('file-input');
+    const uploadDefault = document.getElementById('upload-default'), fileSelected = document.getElementById('file-selected'), fileName = document.getElementById('file-name'), fileSize_el = document.getElementById('file-size');
+    const convertBtn = document.getElementById('convert-btn'), progressSection = document.getElementById('progress-section'), successSection = document.getElementById('success-section'), errorSection = document.getElementById('error-section'), errorMessage = document.getElementById('error-message'), downloadBtn = document.getElementById('download-btn'), cropInterface = document.getElementById('crop-interface'), imageToCrop = document.getElementById('image-to-crop');
 
-function handleFile(f){
-    const ext='.'+f.name.split('.').pop().toLowerCase();
-    if(!ACCEPTED.includes(ext)){showError('Only JPG, JPEG, and PNG files are accepted.');return;}
-    if(f.size>52428800){showError('File exceeds 50MB limit.');return;}
-    selectedFile=f;fileName.textContent=f.name;fileSize_el.textContent=(f.size/1024/1024).toFixed(2)+' MB';
-    uploadDefault.classList.add('hidden');fileSelected.classList.remove('hidden');convertBtn.disabled=false;
-    errorSection.classList.add('hidden');
-    
-    // Show cropper
-    const reader = new FileReader();
-    reader.onload = function(e){
-        imageToCrop.src = e.target.result;
-        cropInterface.classList.remove('hidden');
-        if(cropper) cropper.destroy();
-        cropper = new Cropper(imageToCrop, {
-            viewMode: 1,
-            autoCropArea: 0.8,
-            responsive: true,
-            checkOrientation: false,
-        });
+    let selectedFile = null, cropper = null;
+    const ACCEPTED = ['.jpg', '.jpeg', '.png', '.webp'];
+
+    dropZone.onclick = e => { if (!e.target.closest('#remove-file-btn')) fileInput.click(); };
+    dropZone.ondragover = e => { e.preventDefault(); dropZone.classList.add('border-brand-400', 'bg-brand-50/40'); };
+    dropZone.ondragleave = () => { dropZone.classList.remove('border-brand-400', 'bg-brand-50/40'); };
+    dropZone.ondrop = e => { 
+        e.preventDefault(); 
+        dropZone.classList.remove('border-brand-400', 'bg-brand-50/40'); 
+        if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]); 
     };
-    reader.readAsDataURL(f);
-    lucide.createIcons();
-}
 
-removeFileBtn.addEventListener('click',e=>{e.stopPropagation();resetUpload();});
-convertAnotherBtn.addEventListener('click',()=>resetUpload());
+    fileInput.onchange = e => { if (e.target.files.length) handleFile(e.target.files[0]); };
 
-function resetUpload(){
-    selectedFile=null;fileInput.value='';uploadDefault.classList.remove('hidden');fileSelected.classList.add('hidden');
-    cropInterface.classList.add('hidden');
-    if(cropper){cropper.destroy(); cropper=null;}
-    convertBtn.disabled=true;convertBtn.classList.remove('hidden');progressSection.classList.add('hidden');successSection.classList.add('hidden');errorSection.classList.add('hidden');lucide.createIcons();
-}
-
-// Aspect ratio buttons
-document.querySelectorAll('.aspect-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-        document.querySelectorAll('.aspect-btn').forEach(b => {
-            b.classList.remove('bg-surface-100','text-surface-600','active');
-            b.classList.add('bg-surface-50','text-surface-500');
-        });
-        btn.classList.add('bg-surface-100','text-surface-600','active');
-        btn.classList.remove('bg-surface-50','text-surface-500');
+    function handleFile(f) {
+        const ext = '.' + f.name.split('.').pop().toLowerCase();
+        if (!ACCEPTED.includes(ext)) { showError('Only JPG, PNG, and WEBP files are accepted.'); return; }
+        if (f.size > 52428800) { showError('File exceeds 50MB limit.'); return; }
         
-        let ratio = NaN;
-        if(btn.id === 'aspect-1-1') ratio = 1;
-        else if(btn.id === 'aspect-4-3') ratio = 4/3;
-        else if(btn.id === 'aspect-16-9') ratio = 16/9;
+        selectedFile = f;
+        fileName.textContent = f.name;
+        fileSize_el.textContent = (f.size / 1024 / 1024).toFixed(2) + ' MB';
         
-        if(cropper) cropper.setAspectRatio(ratio);
+        uploadDefault.classList.add('hidden'); 
+        fileSelected.classList.remove('hidden');
+        convertBtn.disabled = false; 
+        errorSection.classList.add('hidden');
+        
+        const reader = new FileReader();
+        reader.onload = function(e){
+            imageToCrop.src = e.target.result;
+            cropInterface.classList.remove('hidden');
+            if(cropper) cropper.destroy();
+            cropper = new Cropper(imageToCrop, {
+                viewMode: 1,
+                autoCropArea: 0.8,
+                responsive: true,
+                checkOrientation: false,
+                background: false
+            });
+        };
+        reader.readAsDataURL(f);
+        lucide.createIcons();
+    }
+
+    document.querySelectorAll('.aspect-btn').forEach(btn => {
+        btn.onclick = () => {
+            document.querySelectorAll('.aspect-btn').forEach(b => {
+                b.classList.replace('bg-brand-50', 'bg-surface-50');
+                b.classList.replace('text-brand-600', 'text-surface-500');
+                b.classList.replace('border-brand-100', 'border-surface-100');
+            });
+            btn.classList.replace('bg-surface-50', 'bg-brand-50');
+            btn.classList.replace('text-surface-500', 'text-brand-600');
+            btn.classList.replace('border-surface-100', 'border-brand-100');
+            
+            let ratio = NaN;
+            if(btn.id === 'aspect-1-1') ratio = 1;
+            else if(btn.id === 'aspect-4-3') ratio = 4/3;
+            else if(btn.id === 'aspect-16-9') ratio = 16/9;
+            
+            if(cropper) cropper.setAspectRatio(ratio);
+        };
     });
-});
 
-convertBtn.addEventListener('click',async()=>{
-    if(!selectedFile || !cropper)return;
-    convertBtn.classList.add('hidden');progressSection.classList.remove('hidden');successSection.classList.add('hidden');errorSection.classList.add('hidden');
-    
-    const data = cropper.getData(true); // integer values
-    const fd=new FormData();
-    fd.append('file',selectedFile);
-    fd.append('csrfmiddlewaretoken',CSRF_TOKEN);
-    fd.append('crop_x', data.x);
-    fd.append('crop_y', data.y);
-    fd.append('crop_width', data.width);
-    fd.append('crop_height', data.height);
-    
-    try{
-        const r=await fetch(CONVERT_URL,{method:'POST',body:fd});
-        if(!r.ok){const d=await r.json();throw new Error(d.error||'Failed');}
-        const blob=await r.blob();const url=window.URL.createObjectURL(blob);
-        const disp=r.headers.get('Content-Disposition');let fn='cropped.jpg';
-        if(disp){const m=disp.match(/filename="(.+?)"/);if(m)fn=m[1];}
-        downloadBtn.href=url;downloadBtn.download=fn;progressSection.classList.add('hidden');successSection.classList.remove('hidden');lucide.createIcons();
-    }catch(err){showError(err.message);progressSection.classList.add('hidden');convertBtn.classList.remove('hidden');}
-});
-function showError(msg){errorMessage.textContent=msg;errorSection.classList.remove('hidden');lucide.createIcons();}
+    document.getElementById('remove-file-btn').onclick = e => { 
+        e.stopPropagation(); 
+        resetUpload();
+    };
+
+    function resetUpload(){
+        selectedFile = null; fileInput.value = '';
+        uploadDefault.classList.remove('hidden'); fileSelected.classList.add('hidden');
+        cropInterface.classList.add('hidden');
+        if(cropper){cropper.destroy(); cropper=null;}
+        convertBtn.disabled = true; convertBtn.classList.remove('hidden');
+        progressSection.classList.add('hidden'); successSection.classList.add('hidden'); errorSection.classList.add('hidden');
+        lucide.createIcons();
+    }
+
+    convertBtn.onclick = async () => {
+        if (!selectedFile || !cropper) return;
+        convertBtn.classList.add('hidden');
+        progressSection.classList.remove('hidden');
+        
+        const data = cropper.getData(true);
+        const fd = new FormData();
+        fd.append('file', selectedFile);
+        fd.append('csrfmiddlewaretoken', CSRF_TOKEN);
+        fd.append('crop_x', data.x);
+        fd.append('crop_y', data.y);
+        fd.append('crop_width', data.width);
+        fd.append('crop_height', data.height);
+
+        try {
+            const r = await fetch(CONVERT_URL, { method: 'POST', body: fd });
+            if (!r.ok) { const d = await r.json(); throw new Error(d.error || 'Failed to crop image.'); }
+            const blob = await r.blob();
+            const url = window.URL.createObjectURL(blob);
+            downloadBtn.href = url; downloadBtn.download = fileName.textContent.split('.')[0] + '_cropped.jpg';
+            progressSection.classList.add('hidden'); successSection.classList.remove('hidden');
+        } catch (err) {
+            showError(err.message);
+            progressSection.classList.add('hidden'); convertBtn.classList.remove('hidden');
+        }
+        lucide.createIcons();
+    };
+
+    function showError(msg) { errorMessage.textContent = msg; errorSection.classList.remove('hidden'); lucide.createIcons(); }
 </script>
 {% endblock %}

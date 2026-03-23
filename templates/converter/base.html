@@ -14,10 +14,12 @@
     <title>{{ page_title|default:"ScanPDF" }}</title>
 
     <!-- Favicon -->
-    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'images/favicon.png' %}?v=3">
-    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'images/favicon.png' %}?v=3">
-    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'images/favicon.png' %}?v=3">
-    <link rel="icon" type="image/png" sizes="192x192" href="{% static 'images/favicon.png' %}?v=3">
+    <link rel="shortcut icon" href="{% static 'images/favicon.png' %}?v=4" type="image/x-icon">
+    <link rel="icon" href="{% static 'images/favicon.png' %}?v=4" type="image/x-icon">
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'images/favicon.png' %}?v=4">
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'images/favicon.png' %}?v=4">
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'images/favicon.png' %}?v=4">
+    <link rel="icon" type="image/png" sizes="192x192" href="{% static 'images/favicon.png' %}?v=4">
 
     <!-- Tailwind CSS via CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -61,6 +63,7 @@
                         'card': '0 1px 3px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.04)',
                         'card-hover': '0 4px 12px rgba(0,0,0,0.06), 0 20px 48px rgba(0,0,0,0.06)',
                         'elevated': '0 20px 60px -12px rgba(0,0,0,0.10)',
+                        'mega': '0 30px 100px -15px rgba(0,0,0,0.12)',
                     },
                     screens: {
                         'xs': '475px',
@@ -87,69 +90,328 @@
 <body class="bg-white text-surface-800 font-sans antialiased">
 
     <!-- ═══════════════ NAVBAR ═══════════════ -->
-    <nav id="navbar" class="fixed top-0 left-0 right-0 z-50 transition-all duration-500">
+    <header id="navbar" class="fixed top-0 left-0 right-0 z-50 bg-white shadow-card transition-all duration-300">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between h-[80px] sm:h-[100px]">
+            <div class="flex items-center justify-between h-[70px]">
                 <!-- Logo -->
-                <a href="{% url 'converter:home' %}" class="flex items-center gap-2 sm:gap-2.5 group flex-shrink-0"
+                <a href="{% url 'converter:home' %}" class="flex items-center gap-2 group flex-shrink-0"
                     aria-label="ScanPDF Home">
-                    <img src="{% static 'images/logo.png' %}" alt="ScanPDF"
-                        class="h-16 sm:h-20 md:h-24 w-auto object-contain">
+                    <img src="{% static 'images/logo.png' %}" alt="ScanPDFLogo"
+                        class="h-10 sm:h-12 w-auto object-contain transition-transform group-hover:scale-105">
                 </a>
 
-                <!-- Desktop Nav -->
-                <div class="hidden md:flex items-center gap-1 lg:gap-2">
-                    <a href="{% url 'converter:home' %}"
-                        class="nav-link px-3 lg:px-4 py-2 rounded-lg text-sm font-medium text-surface-500 hover:text-brand-600 hover:bg-brand-50/50 transition-all duration-200">Home</a>
-                    <a href="{% url 'converter:home' %}#tools"
-                        class="nav-link px-3 lg:px-4 py-2 rounded-lg text-sm font-medium text-surface-500 hover:text-brand-600 hover:bg-brand-50/50 transition-all duration-200">Tools</a>
-                    <a href="{% url 'converter:home' %}#how-it-works"
-                        class="nav-link px-3 lg:px-4 py-2 rounded-lg text-sm font-medium text-surface-500 hover:text-brand-600 hover:bg-brand-50/50 transition-all duration-200">How
-                        It Works</a>
-                    <div class="w-px h-6 bg-surface-200 mx-1 lg:mx-2"></div>
-                    <a href="{% url 'converter:home' %}#tools"
-                        class="px-4 lg:px-5 py-2.5 rounded-xl bg-gradient-to-r from-brand-600 to-brand-700 text-white text-sm font-semibold hover:from-brand-500 hover:to-brand-600 transition-all duration-300 shadow-lg shadow-brand-600/20 hover:shadow-brand-500/30 hover:-translate-y-px active:translate-y-0">
-                        Get Started
-                    </a>
+                <!-- Desktop Nav: Properly Aligned -->
+                <div class="hidden md:flex items-center flex-1 justify-between ml-12 gap-8">
+                    <!-- Left Side Tools -->
+                    <div class="flex items-center gap-4">
+                        <!-- Mega Menu: All PDF Tools -->
+                        <div class="relative group">
+                            <button
+                                class="flex items-center gap-1.5 px-4 py-2 text-[14px] font-black text-surface-900 transition-all uppercase tracking-widest hover:text-brand-600">
+                                All PDF Tools <i data-lucide="chevron-down"
+                                    class="w-4 h-4 transition-transform group-hover:rotate-180"></i>
+                            </button>
+                            <!-- Mega Menu Content: EXHAUSTIVE LIST -->
+                            <div
+                                class="fixed top-[70px] left-1/2 -translate-x-1/2 w-[95vw] max-w-7xl bg-white border border-surface-100 shadow-mega rounded-3xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 translate-y-2 group-hover:translate-y-0 z-50 overflow-hidden">
+                                <div class="grid grid-cols-4 divide-x divide-surface-100">
+                                    <!-- Optimize & Organization -->
+                                    <div class="p-8 space-y-6">
+                                        <div class="flex items-center gap-3 mb-2 px-3">
+                                            <div class="w-1.5 h-6 bg-brand-500 rounded-full"></div>
+                                            <h3
+                                                class="text-[11px] font-black text-surface-400 uppercase tracking-[0.2em]">
+                                                Optimize & Org</h3>
+                                        </div>
+                                        <div class="grid gap-0.5">
+                                            <a href="{% url 'converter:convert_page' 'merge-pdf' %}"
+                                                class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="combine" class="w-4 h-4 text-brand-600"></i>
+                                                <span
+                                                    class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Merge
+                                                    PDF</span>
+                                            </a>
+                                            <a href="{% url 'converter:convert_page' 'split-pdf' %}"
+                                                class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="split" class="w-4 h-4 text-brand-600"></i>
+                                                <span
+                                                    class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Split
+                                                    PDF</span>
+                                            </a>
+                                            <a href="{% url 'converter:convert_page' 'compress-pdf' %}"
+                                                class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="archive" class="w-4 h-4 text-brand-600"></i>
+                                                <span
+                                                    class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Compress
+                                                    PDF</span>
+                                            </a>
+                                            <a href="{% url 'converter:convert_page' 'repair-pdf' %}"
+                                                class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="wrench" class="w-4 h-4 text-brand-600"></i>
+                                                <span
+                                                    class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Repair
+                                                    PDF</span>
+                                            </a>
+                                            <a href="{% url 'converter:convert_page' 'organize-pdf' %}"
+                                                class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="layout-grid" class="w-4 h-4 text-brand-600"></i>
+                                                <span
+                                                    class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Organize
+                                                    PDF</span>
+                                            </a>
+                                        </div>
+                                    </div>
+                                    <!-- Convert To PDF -->
+                                    <div class="p-8 bg-surface-5/20 space-y-6">
+                                        <div class="flex items-center gap-3 mb-2 px-3">
+                                            <div class="w-1.5 h-6 bg-brand-500 rounded-full"></div>
+                                            <h3
+                                                class="text-[11px] font-black text-surface-400 uppercase tracking-[0.2em]">
+                                                Convert to PDF</h3>
+                                        </div>
+                                        <div class="grid gap-0.5">
+                                            <a href="{% url 'converter:convert_page' 'word-to-pdf' %}"
+                                                class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="file-text" class="w-4 h-4 text-brand-600"></i>
+                                                <p
+                                                    class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">
+                                                    Word to PDF</p>
+                                            </a>
+                                            <a href="{% url 'converter:convert_page' 'pptx-to-pdf' %}"
+                                                class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="presentation" class="w-4 h-4 text-brand-600"></i>
+                                                <p
+                                                    class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">
+                                                    PPT to PDF</p>
+                                            </a>
+                                            <a href="{% url 'converter:convert_page' 'excel-to-pdf' %}"
+                                                class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="sheet" class="w-4 h-4 text-brand-600"></i>
+                                                <p
+                                                    class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">
+                                                    Excel to PDF</p>
+                                            </a>
+                                            <a href="{% url 'converter:convert_page' 'html-to-pdf' %}"
+                                                class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="code-2" class="w-4 h-4 text-brand-600"></i>
+                                                <p
+                                                    class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">
+                                                    HTML to PDF</p>
+                                            </a>
+                                            <a href="{% url 'converter:convert_page' 'image-to-pdf' %}"
+                                                class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="image" class="w-4 h-4 text-brand-600"></i>
+                                                <p
+                                                    class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">
+                                                    Image to PDF</p>
+                                            </a>
+                                        </div>
+                                    </div>
+                                    <!-- Convert From PDF -->
+                                    <div class="p-8 space-y-6">
+                                        <div class="flex items-center gap-3 mb-2 px-3">
+                                            <div class="w-1.5 h-6 bg-brand-500 rounded-full"></div>
+                                            <h3
+                                                class="text-[11px] font-black text-surface-400 uppercase tracking-[0.2em]">
+                                                Convert from PDF</h3>
+                                        </div>
+                                        <div class="grid gap-0.5">
+                                            <a href="{% url 'converter:convert_page' 'pdf-to-word' %}"
+                                                class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="file-type" class="w-4 h-4 text-brand-600"></i>
+                                                <p
+                                                    class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">
+                                                    PDF to Word</p>
+                                            </a>
+                                            <a href="{% url 'converter:convert_page' 'pdf-to-pptx' %}"
+                                                class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="monitor-play" class="w-4 h-4 text-brand-600"></i>
+                                                <p
+                                                    class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">
+                                                    PDF to PPT</p>
+                                            </a>
+                                            <a href="{% url 'converter:convert_page' 'pdf-to-excel' %}"
+                                                class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="table-2" class="w-4 h-4 text-brand-600"></i>
+                                                <p
+                                                    class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">
+                                                    PDF to Excel</p>
+                                            </a>
+                                            <a href="{% url 'converter:convert_page' 'pdf-to-image' %}"
+                                                class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="image-down" class="w-4 h-4 text-brand-600"></i>
+                                                <p
+                                                    class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">
+                                                    PDF to JPG</p>
+                                            </a>
+                                            <a href="{% url 'converter:convert_page' 'pdf-to-html' %}"
+                                                class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="file-code" class="w-4 h-4 text-brand-600"></i>
+                                                <p
+                                                    class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">
+                                                    PDF to HTML</p>
+                                            </a>
+                                        </div>
+                                    </div>
+                                    <!-- Edit & Security -->
+                                    <div class="p-8 bg-surface-5/20 space-y-6">
+                                        <div class="flex items-center gap-3 mb-2 px-3">
+                                            <div class="w-1.5 h-6 bg-brand-500 rounded-full"></div>
+                                            <h3
+                                                class="text-[11px] font-black text-surface-400 uppercase tracking-[0.2em]">
+                                                Secure & Edit</h3>
+                                        </div>
+                                        <div class="grid gap-0.5">
+                                            <a href="{% url 'converter:convert_page' 'rotate-pdf' %}"
+                                                class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="rotate-cw" class="w-4 h-4 text-brand-600"></i>
+                                                <p
+                                                    class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">
+                                                    Rotate PDF</p>
+                                            </a>
+                                            <a href="{% url 'converter:convert_page' 'add-watermark' %}"
+                                                class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="stamp" class="w-4 h-4 text-brand-600"></i>
+                                                <p
+                                                    class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">
+                                                    Add Watermark</p>
+                                            </a>
+                                            <a href="{% url 'converter:convert_page' 'unlock-pdf' %}"
+                                                class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="lock-open" class="w-4 h-4 text-brand-600"></i>
+                                                <p
+                                                    class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">
+                                                    Unlock PDF</p>
+                                            </a>
+                                            <a href="{% url 'converter:convert_page' 'protect-pdf' %}"
+                                                class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="shield-check" class="w-4 h-4 text-brand-600"></i>
+                                                <p
+                                                    class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">
+                                                    Protect PDF</p>
+                                            </a>
+                                            <a href="{% url 'converter:convert_page' 'ocr-pdf' %}"
+                                                class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="scan-eye" class="w-4 h-4 text-brand-600"></i>
+                                                <p
+                                                    class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">
+                                                    OCR PDF</p>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+
+                            </div>
+                        </div>
+
+                        <!-- Other Tools Dropdown -->
+                        <div class="relative group">
+                            <button
+                                class="flex items-center gap-1.5 px-4 py-2 text-[14px] font-black text-surface-500 transition-all uppercase tracking-widest hover:text-brand-600">
+                                More <i data-lucide="more-horizontal" class="w-4 h-4"></i>
+                            </button>
+                            <div
+                                class="absolute top-full left-0 w-72 bg-white border border-surface-100 shadow-elevated rounded-2xl py-4 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 translate-y-2 group-hover:translate-y-0 z-50">
+                                <a href="{% url 'converter:convert_page' 'meme-generator' %}"
+                                    class="flex items-center gap-4 px-6 py-3.5 text-[13px] font-bold text-surface-700 hover:bg-brand-50 hover:text-brand-600 transition-all">
+                                    <i data-lucide="laugh" class="w-5 h-5 text-yellow-500"></i> Meme Generator</a>
+                                <a href="{% url 'converter:convert_page' 'story-generator' %}"
+                                    class="flex items-center gap-4 px-6 py-3.5 text-[13px] font-bold text-surface-700 hover:bg-brand-50 hover:text-brand-600 transition-all">
+                                    <i data-lucide="book-open" class="w-5 h-5 text-green-500"></i> AI Story Maker</a>
+                                <a href="{% url 'converter:convert_page' 'speed-test' %}"
+                                    class="flex items-center gap-4 px-6 py-3.5 text-[13px] font-bold text-surface-700 hover:bg-brand-50 hover:text-brand-600 transition-all">
+                                    <i data-lucide="zap" class="w-5 h-5 text-amber-500"></i> Speed Test</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Search Bar: Properly Aligned Right -->
+                    <div class="relative flex-1 max-w-sm group/search">
+                        <div class="relative flex items-center">
+                            <i data-lucide="search"
+                                class="absolute left-4 w-4 h-4 text-surface-400 group-focus-within/search:text-brand-600 transition-colors"></i>
+                            <input type="text" id="tool-search" placeholder="Search for PDF tools..."
+                                class="w-full pl-11 pr-4 py-3 rounded-2xl bg-surface-50 border border-surface-100 focus:bg-white focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 outline-none transition-all text-sm font-semibold text-surface-900 placeholder:text-surface-400">
+                        </div>
+
+                        <!-- Search Results Overlay -->
+                        <div id="search-results"
+                            class="absolute top-full left-0 right-0 mt-3 bg-white border border-surface-100 shadow-mega rounded-2xl py-3 opacity-0 invisible translate-y-2 transition-all duration-300 z-[60] max-h-[400px] overflow-y-auto">
+                            <!-- Results will be injected here -->
+                            <div id="no-results" class="px-6 py-10 text-center space-y-3">
+                                <i data-lucide="search-x" class="w-8 h-8 text-surface-300 mx-auto"></i>
+                                <p class="text-xs font-bold text-surface-500 uppercase tracking-widest">No tools found
+                                    for your search</p>
+                            </div>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- Mobile Hamburger -->
                 <button id="mobile-menu-btn"
-                    class="md:hidden p-2 rounded-xl hover:bg-surface-100 transition-colors text-surface-600"
+                    class="md:hidden p-2.5 rounded-xl hover:bg-surface-50 transition-colors text-surface-500 border border-surface-100"
                     aria-label="Toggle menu">
-                    <i data-lucide="menu" class="w-5 h-5"></i>
+                    <i data-lucide="menu" class="w-6 h-6"></i>
                 </button>
             </div>
         </div>
 
         <!-- Mobile Menu -->
         <div id="mobile-menu"
-            class="md:hidden hidden bg-white/98 backdrop-blur-2xl border-t border-surface-100 shadow-elevated">
-            <div class="px-4 py-4 space-y-1">
-                <a href="{% url 'converter:home' %}"
-                    class="flex items-center gap-3 px-4 py-3 rounded-xl text-surface-600 hover:text-brand-600 hover:bg-brand-50/60 transition-all text-sm">
-                    <i data-lucide="home" class="w-4 h-4"></i>Home
-                </a>
-                <a href="{% url 'converter:home' %}#tools"
-                    class="flex items-center gap-3 px-4 py-3 rounded-xl text-surface-600 hover:text-brand-600 hover:bg-brand-50/60 transition-all text-sm">
-                    <i data-lucide="wrench" class="w-4 h-4"></i>Tools
-                </a>
-                <a href="{% url 'converter:home' %}#how-it-works"
-                    class="flex items-center gap-3 px-4 py-3 rounded-xl text-surface-600 hover:text-brand-600 hover:bg-brand-50/60 transition-all text-sm">
-                    <i data-lucide="info" class="w-4 h-4"></i>How It Works
-                </a>
-                <div class="pt-2">
-                    <a href="{% url 'converter:home' %}#tools"
-                        class="flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-gradient-to-r from-brand-600 to-brand-700 text-white font-semibold text-sm shadow-lg shadow-brand-600/20">
-                        <i data-lucide="zap" class="w-4 h-4"></i>Get Started
+            class="md:hidden hidden bg-white border-t border-surface-100 shadow-elevated h-[calc(100vh-100px)] overflow-y-auto">
+            <div class="px-4 py-8 space-y-6">
+                <!-- Mobile Search -->
+                <div class="relative group/m-search mt-4 px-2">
+                    <div class="relative flex items-center">
+                        <i data-lucide="search" class="absolute left-4 w-4 h-4 text-surface-400"></i>
+                        <input type="text" id="tool-search-mobile" placeholder="Search for PDF tools..."
+                            class="w-full pl-11 pr-4 py-4 rounded-2xl bg-surface-50 border border-surface-100 focus:bg-white focus:border-brand-500 outline-none transition-all text-sm font-bold text-surface-900 shadow-sm">
+                    </div>
+                    <!-- Results Overlay Mobile -->
+                    <div id="search-results-mobile"
+                        class="hidden absolute top-full left-0 right-0 mt-3 bg-white border border-surface-100 shadow-mega rounded-3xl py-3 z-[60] max-h-[400px] overflow-y-auto">
+                        <!-- Results will be injected here -->
+                    </div>
+                </div>
+
+                <div class="space-y-2">
+                    <div class="px-4 py-2 border-b border-surface-50 mb-2">
+                        <span class="text-[10px] font-bold text-surface-400 uppercase tracking-widest">Main Menu</span>
+                    </div>
+                    <a href="{% url 'converter:home' %}"
+                        class="flex items-center gap-3 px-4 py-3 rounded-2xl text-surface-700 hover:text-brand-600 hover:bg-brand-50/60 transition-all font-bold text-sm">
+                        <i data-lucide="home" class="w-5 h-5"></i>Home
                     </a>
+                    <a href="{% url 'converter:home' %}#tools"
+                        class="flex items-center gap-3 px-4 py-3 rounded-2xl text-surface-700 hover:text-brand-600 hover:bg-brand-50/60 transition-all font-bold text-sm">
+                        <i data-lucide="grid-3x3" class="w-5 h-5"></i>All Tools
+                    </a>
+
+                    <div class="px-4 py-2 border-b border-surface-50 mt-6 mb-2">
+                        <span class="text-[10px] font-bold text-surface-400 uppercase tracking-widest block">Core PDF
+                            Toolsets</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-3 mt-1 px-1">
+                        <a href="{% url 'converter:convert_page' 'word-to-pdf' %}"
+                            class="p-6 bg-surface-50 border border-surface-100 rounded-3xl flex flex-col items-center gap-3 group active:bg-brand-50 transition-all">
+                            <i data-lucide="file-text" class="w-6 h-6 text-brand-600"></i>
+                            <span class="text-[12px] font-black text-surface-800 uppercase tracking-[0.05em]">To
+                                PDF</span>
+                        </a>
+                        <a href="{% url 'converter:convert_page' 'pdf-to-word' %}"
+                            class="p-6 bg-surface-50 border border-surface-100 rounded-3xl flex flex-col items-center gap-3 group active:bg-brand-50 transition-all">
+                            <i data-lucide="file-type" class="w-6 h-6 text-brand-600"></i>
+                            <span class="text-[12px] font-black text-surface-800 uppercase tracking-[0.05em]">From
+                                PDF</span>
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>
-    </nav>
+    </header>
 
     <!-- Main Content -->
-    <main>
+    <main class="pt-[70px]">
         {% block content %}{% endblock %}
     </main>
 
@@ -158,8 +420,8 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="py-8 sm:py-12 grid grid-cols-1 gap-6 sm:grid-cols-3 sm:gap-8 items-center">
                 <!-- Brand -->
-                <div class="flex items-center gap-3 justify-center sm:justify-start">
-                    <h1>DLK Software Solutions</h1>
+                <div class="text-xs text-surface-400 text-center sm:text-left">
+                    <h1>DLK Groups Powered By ScanPDF</h1>
                 </div>
 
                 <!-- Links -->
@@ -175,9 +437,88 @@
         </div>
     </footer>
 
+    <!-- Tools Data -->
+    {{ all_tools_metadata|json_script:"tools-data" }}
+
     <!-- Core JS -->
     <script src="{% static 'js/main.js' %}"></script>
-    <script>lucide.createIcons();</script>
+    <script>
+        lucide.createIcons();
+
+        // Search Logic: Desktop & Mobile
+        const toolsData = JSON.parse(document.getElementById('tools-data').textContent);
+        const searchInput = document.getElementById('tool-search');
+        const searchInputMobile = document.getElementById('tool-search-mobile');
+        const resultsBox = document.getElementById('search-results');
+        const resultsBoxMobile = document.getElementById('search-results-mobile');
+        const noResults = document.getElementById('no-results');
+
+        function handleSearch(input, results, isMobile = false) {
+            if (!input || !results) return;
+
+            input.addEventListener('input', (e) => {
+                const query = e.target.value.toLowerCase().trim();
+
+                if (query.length < 1) {
+                    results.classList.add(isMobile ? 'hidden' : 'invisible');
+                    if (!isMobile) results.classList.add('opacity-0', 'translate-y-2');
+                    return;
+                }
+
+                const filtered = Object.values(toolsData).filter(tool =>
+                    tool.title.toLowerCase().includes(query) ||
+                    tool.description.toLowerCase().includes(query)
+                );
+
+                // Clear current
+                const currentItems = results.querySelectorAll('.search-item');
+                currentItems.forEach(item => item.remove());
+
+                if (filtered.length > 0) {
+                    if (noResults && !isMobile) noResults.classList.add('hidden');
+                    filtered.forEach(tool => {
+                        const div = document.createElement('a');
+                        div.href = `/convert/${tool.slug}/`;
+                        div.className = `search-item flex items-center gap-4 px-6 py-4 hover:bg-brand-50 transition-all border-b border-surface-50 last:border-0 group/si ${isMobile ? 'py-3' : 'py-4'}`;
+                        div.innerHTML = `
+                            <div class="w-10 h-10 rounded-xl bg-surface-50 flex items-center justify-center group-hover/si:bg-brand-100 transition-colors">
+                                <i data-lucide="${tool.icon || 'settings'}" class="w-5 h-5 text-brand-600"></i>
+                            </div>
+                            <div class="flex-1 text-left">
+                                <p class="text-sm font-bold text-surface-900 group-hover/si:text-brand-600">${tool.title}</p>
+                                <p class="text-[10px] text-surface-400 line-clamp-1">${tool.description}</p>
+                            </div>
+                            <i data-lucide="chevron-right" class="w-4 h-4 text-surface-200 group-hover/si:translate-x-1 group-hover/si:text-brand-400 transition-all"></i>
+                        `;
+                        results.appendChild(div);
+                    });
+                    lucide.createIcons();
+                    results.classList.remove(isMobile ? 'hidden' : 'invisible');
+                    if (!isMobile) results.classList.remove('opacity-0', 'translate-y-2');
+                } else {
+                    if (isMobile) {
+                        results.classList.add('hidden');
+                    } else {
+                        noResults.classList.remove('hidden');
+                        results.classList.remove('invisible', 'opacity-0', 'translate-y-2');
+                    }
+                }
+            });
+        }
+
+        handleSearch(searchInput, resultsBox);
+        handleSearch(searchInputMobile, resultsBoxMobile, true);
+
+        // Close on click outside
+        document.addEventListener('click', (e) => {
+            if (searchInput && !searchInput.contains(e.target) && !resultsBox.contains(e.target)) {
+                resultsBox.classList.add('invisible', 'opacity-0', 'translate-y-2');
+            }
+            if (searchInputMobile && !searchInputMobile.contains(e.target) && !resultsBoxMobile.contains(e.target)) {
+                resultsBoxMobile.classList.add('hidden');
+            }
+        });
+    </script>
 
     {% block extra_scripts %}{% endblock %}
 </body>

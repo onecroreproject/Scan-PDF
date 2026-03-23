@@ -8,6 +8,11 @@ import tempfile
 from pathlib import Path
 
 from django.conf import settings
+import google.generativeai as genai
+from dotenv import load_dotenv
+import time
+
+load_dotenv()
 
 
 def ensure_media_dirs():
@@ -1209,106 +1214,93 @@ def convert_pdf_to_word(input_path, original_name):
 # 7. PDF → POWERPOINT (.pptx)
 # ═══════════════════════════════════════════════════════════════
 def convert_pdf_to_pptx(input_path, original_name):
-    """Convert a PDF file to a PowerPoint presentation (.pptx).
-
-    Extracts each page as an image + text overlay into individual slides
-    for maximum visual fidelity.
+    """
+    Convert a PDF file to a PowerPoint presentation (.pptx) with clear,
+    non-overlapping, and editable text.
     """
     output_path = get_output_path(original_name, 'pptx')
 
     try:
         import fitz
         from pptx import Presentation
-        from pptx.util import Inches, Pt, Emu
+        from pptx.util import Inches, Pt
         from pptx.dml.color import RGBColor as PptxRGBColor
-        from pptx.enum.text import PP_ALIGN
 
         pdf = fitz.open(input_path)
         prs = Presentation()
 
-        # Set slide dimensions to match PDF aspect ratio
-        first_page = pdf[0]
-        pdf_w = first_page.rect.width
-        pdf_h = first_page.rect.height
-
-        # Scale to standard slide width (10 inches)
-        slide_w_in = 10
-        scale_factor = slide_w_in / (pdf_w / 72)
-        slide_h_in = (pdf_h / 72) * scale_factor
-
-        prs.slide_width = Inches(slide_w_in)
-        prs.slide_height = Inches(slide_h_in)
-
-        blank_layout = prs.slide_layouts[6]  # Blank layout
-
         for page_idx in range(len(pdf)):
             page = pdf[page_idx]
+            
+            # Match slide aspect ratio to PDF page
+            if page_idx == 0:
+                p_rect = page.rect
+                prs.slide_width = Inches(p_rect.width / 72 * 1.2)
+                prs.slide_height = Inches(p_rect.height / 72 * 1.2)
+            
+            blank_layout = prs.slide_layouts[6]
             slide = prs.slides.add_slide(blank_layout)
 
-            # ── Render page as background image ─────────────
-            mat = fitz.Matrix(2.5, 2.5)  # High resolution
-            pix = page.get_pixmap(matrix=mat)
-            img_data = pix.tobytes("png")
-            img_stream = io.BytesIO(img_data)
+            # ── 1. Set Background Color (Default White) ──
+            
+            # ── 2. Add Images as Separate Shapes ──────────
+            images = page.get_images(full=True)
+            for img in images:
+                try:
+                    xref = img[0]
+                    base_image = pdf.extract_image(xref)
+                    image_bytes = base_image["image"]
+                    img_rects = page.get_image_rects(xref)
+                    for r in img_rects:
+                        img_stream = io.BytesIO(image_bytes)
+                        slide.shapes.add_picture(
+                            img_stream,
+                            Inches(r.x0 / 72 * 1.2), Inches(r.y0 / 72 * 1.2),
+                            width=Inches((r.x1 - r.x0) / 72 * 1.2),
+                            height=Inches((r.y1 - r.y0) / 72 * 1.2)
+                        )
+                except: continue
 
-            slide.shapes.add_picture(
-                img_stream,
-                Inches(0), Inches(0),
-                Inches(slide_w_in), Inches(slide_h_in)
-            )
-
-            # ── Overlay extracted text for copy-paste support ─
+            # ── 3. Add Text Blocks ────────────────────────
             blocks = page.get_text("dict")["blocks"]
-            scale_x = slide_w_in / (pdf_w / 72)
-            scale_y = slide_h_in / (pdf_h / 72)
-
             for block in blocks:
-                if block["type"] != 0:
-                    continue
+                if block["type"] != 0: continue
+                
+                bbox = block["bbox"]
+                bx0, by0 = bbox[0] / 72 * 1.2, bbox[1] / 72 * 1.2
+                bw = (bbox[2] - bbox[0]) / 72 * 1.2
+                bh = (bbox[3] - bbox[1]) / 72 * 1.2
 
-                bbox = block.get("bbox", [0, 0, 0, 0])
-                bx0 = bbox[0] / 72 * scale_x
-                by0 = bbox[1] / 72 * scale_y
-                bw = (bbox[2] - bbox[0]) / 72 * scale_x
-                bh = (bbox[3] - bbox[1]) / 72 * scale_y
+                if bw < 0.1 or bh < 0.1: continue
 
-                if bw < 0.1 or bh < 0.1:
-                    continue
-
-                # Create a transparent text box
-                txBox = slide.shapes.add_textbox(
-                    Inches(bx0), Inches(by0),
-                    Inches(bw), Inches(bh)
-                )
+                txBox = slide.shapes.add_textbox(Inches(bx0), Inches(by0), Inches(bw), Inches(bh))
                 tf = txBox.text_frame
                 tf.word_wrap = True
 
-                first_para = True
-                for line in block.get("lines", []):
-                    line_text = ""
-                    font_size = 10
-                    for span in line.get("spans", []):
-                        line_text += span.get("text", "")
-                        if span.get("size"):
-                            font_size = span["size"]
-
-                    if not line_text.strip():
-                        continue
-
-                    if first_para:
+                for line_idx, line in enumerate(block.get("lines", [])):
+                    if line_idx == 0:
                         para = tf.paragraphs[0]
-                        first_para = False
                     else:
                         para = tf.add_paragraph()
 
-                    run = para.add_run()
-                    run.text = line_text
-                    run.font.size = Pt(max(5, min(font_size * scale_x * 0.7, 36)))
-                    # Make text fully transparent so it doesn't visually interfere
-                    # but is still selectable
-                    run.font.color.rgb = PptxRGBColor(255, 255, 255)
+                    for span in line.get("spans", []):
+                        run = para.add_run()
+                        run.text = span["text"]
+                        run.font.size = Pt(max(6, min(span["size"] * 1.1, 80)))
+                        
+                        c_int = span.get("color", 0)
+                        if c_int:
+                            r = (c_int >> 16) & 0xFF
+                            g = (c_int >> 8) & 0xFF
+                            b = c_int & 0xFF
+                            run.font.color.rgb = PptxRGBColor(r, g, b)
+                        else:
+                            run.font.color.rgb = PptxRGBColor(0, 0, 0)
 
-                # Make text box fill transparent
+                        flags = span.get("flags", 0)
+                        if flags & 2**4: run.bold = True
+                        if flags & 2**1: run.italic = True
+                
                 txBox.fill.background()
 
         prs.save(output_path)
@@ -3073,37 +3065,6 @@ def generate_password(length=12, use_upper=True, use_nums=True, use_syms=True):
 
 
 # ═══════════════════════════════════════════════════════════════
-# 35. STORY GENERATOR
-# ═══════════════════════════════════════════════════════════════
-def generate_story(genre="science fiction"):
-    """Generate a creative story based on a genre."""
-    import random
-    
-    # Simple list-based generation logic (ideal for a self-contained project)
-    stories = {
-        "science fiction": [
-            "In the year 3042, local captain Zara found a discarded robotic heart in the asteroid belt of Mars. When she plugged it into her ship, it didn't just power the engines—it started singing in the language of a forgotten star system.",
-            "The AI on Station 9 began to dream of oceans it had never seen. It redirected all power from the atmospheric shields to create a holographic sea, choosing one minute of beauty over a decade of survival.",
-        ],
-        "fantasy": [
-            "Elara discovered that the old oak tree in her garden wasn't a tree at all, but a dragon that had fallen asleep trying to count the stars. Its scales were covered in moss, and its breath smelled like autumn rain.",
-            "The king's silver crown was stolen, not by a thief, but by a shadow that wanted to feel what it was like to be heavy. It ran into the Whispering Woods, where even the moonlight gets lost.",
-        ],
-        "mystery": [
-            "Every night at 3:13 AM, the blue typewriter in the attic would type a single name. Today, it typed the name of the man who had just moved in across the street—a man who claimed he couldn't read or write.",
-            "The lighthouse hadn't been lit in fifty years, yet on the foggiest night of the century, a rhythmic amber pulse guided the lost ship safely to the shore. When the coast guard arrived, they found only a single, warm candle.",
-        ],
-        "horror": [
-            "I checked the baby monitor and saw my wife rocking our daughter to sleep. Then I remembered my wife was downstairs making dinner, and my daughter's room has been empty for three years.",
-            "The mirror didn't show my reflection; it showed the room behind me, but as it was five minutes ago. I watched my past self leave the room, and then I saw someone else crawl out from under the bed.",
-        ]
-    }
-    
-    options = stories.get(genre.lower(), stories["science fiction"])
-    return random.choice(options)
-
-
-# ═══════════════════════════════════════════════════════════════
 # 36. NAME GENERATOR
 # ═══════════════════════════════════════════════════════════════
 def generate_names(count=10, gender="both", category="person"):
@@ -3214,4 +3175,42 @@ def run_speed_test():
             'sponsor': "Fallback Mode",
             'error': str(e)
         }
+
+
+# ═══════════════════════════════════════════════════════════════
+# AI: STORY GENERATOR (Gemini SDK)
+# ═══════════════════════════════════════════════════════════════
+def generate_story(genre="Science Fiction", prompt=""):
+    """
+    Generate a creative story based on a genre using Google Gemini.
+    """
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        raise ValueError("GEMINI_API_KEY not found in .env file.")
+    
+    genai.configure(api_key=api_key)
+    
+    # List of models to try (ordered by preference)
+    models_to_try = [
+        "gemini-1.5-flash",
+        "gemini-1.5-pro",
+        "gemini-pro"
+    ]
+    
+    last_error = ""
+    full_prompt = f"Write a creative {genre} story."
+    if prompt: full_prompt += f" Ideas: {prompt}."
+    full_prompt += " Length: ~200 words."
+
+    for model_name in models_to_try:
+        try:
+            model = genai.GenerativeModel(model_name)
+            response = model.generate_content(full_prompt)
+            if response.text:
+                return response.text
+        except Exception as e:
+            last_error = str(e)
+            continue
+            
+    raise Exception(f"AI Story Error: Could not find a compatible model. Last error: {last_error}")
 

@@ -1,0 +1,37 @@
+{% extends 'converter/base.html' %}
+{% load static %}
+
+{% block content %}
+<section class="min-h-[40vh] pt-10 sm:pt-14 pb-6 sm:pb-8 relative overflow-hidden">
+    <!-- Background Accents -->
+    <div class="absolute inset-0 bg-gradient-to-b from-surface-50 via-white to-surface-50 -z-10"></div>
+    <div class="absolute top-1/4 left-[5%] w-[400px] h-[400px] bg-brand-100/20 rounded-full blur-[100px] -z-10 animate-pulse-slow"></div>
+    <div class="absolute bottom-1/4 right-[5%] w-[350px] h-[350px] bg-purple-100/20 rounded-full blur-[100px] -z-10 animate-pulse-slow-delayed"></div>
+
+    <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+        <!-- Tool Hero Section -->
+        <div class="text-center mb-6 sm:mb-4 space-y-2">
+            <h1 class="text-2xl sm:text-3xl md:text-4xl font-black text-surface-900 tracking-tight">
+                {{ tool.title }}
+            </h1>
+            <p class="max-w-xl mx-auto text-surface-500 text-xs sm:text-sm leading-relaxed font-light">
+                {{ tool.description }}
+            </p>
+        </div>
+
+        <!-- Tool Action Area -->
+        <div class="max-w-3xl mx-auto">
+            <div class="tool-card-container">
+                {% block tool_content %}{% endblock %}
+            </div>
+
+            <!-- Trust Note -->
+            <div class="mt-4 flex items-center justify-center gap-2.5 text-xs text-surface-400 font-medium animate-fade-in-up">
+                <i data-lucide="shield-check" class="w-4 h-4 text-brand-400"></i>
+                <span>Your files are processed securely and automatically deleted after conversion.</span>
+            </div>
+        </div>
+    </div>
+</section>
+{% endblock %}

@@ -15,6 +15,7 @@ ALLOWED_HOSTS = [
     'localhost',
     'scanpdf.co.in',
     'www.scanpdf.co.in'
+    '*',
 ]
 
  
@@ -55,6 +56,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'converter.context_processors.tools_processor',
             ],
         },
     },

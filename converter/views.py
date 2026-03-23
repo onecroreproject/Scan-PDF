@@ -562,17 +562,6 @@ TOOLS = {
         'gradient': 'from-yellow-400 to-yellow-600',
         'category': 'generate',
     },
-    'story-generator': {
-        'title': 'Story Generator',
-        'description': 'Generate creative stories from different genres using AI.',
-        'icon': 'book-open',
-        'accept': None,
-        'allowed_extensions': [],
-        'converter': None,
-        'color': '#4ade80',
-        'gradient': 'from-green-400 to-emerald-500',
-        'category': 'generate',
-    },
     'name-generator': {
         'title': 'Name Generator',
         'description': 'Generate random names for people, places, or companies.',
@@ -583,6 +572,29 @@ TOOLS = {
         'color': '#2dd4bf',
         'gradient': 'from-teal-400 to-cyan-500',
         'category': 'generate',
+    },
+    'image-to-video': {
+        'title': 'AI Video Gen',
+        'description': 'AI Video generation is coming soon! Stay tuned for cinematic video creation.',
+        'icon': 'monitor-play',
+        'accept': None,
+        'allowed_extensions': [],
+        'converter': None,
+        'color': '#8b5cf6',
+        'gradient': 'from-violet-500 to-purple-600',
+        'category': 'ai-tools',
+        'is_coming_soon': True,
+    },
+    'story-generator': {
+        'title': 'AI Story Generator',
+        'description': 'Generate creative stories from different genres using Gemini AI.',
+        'icon': 'book-open',
+        'accept': None,
+        'allowed_extensions': [],
+        'converter': generate_story,
+        'color': '#4ade80',
+        'gradient': 'from-green-400 to-emerald-500',
+        'category': 'ai-tools',
     },
 }
 
@@ -663,6 +675,8 @@ def convert_page(request, tool_slug):
         template = 'converter/story_generator.html'
     elif tool_slug == 'name-generator':
         template = 'converter/name_generator.html'
+    elif tool_slug == 'image-to-video':
+        template = 'converter/image_to_video.html'
     else:
         template = 'converter/convert.html'
 
@@ -1268,6 +1282,38 @@ def convert_file(request, tool_slug):
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)}, status=500)
 
+    # ── AI: Image/Text to Video ──
+    if tool_slug == 'image-to-video':
+        prompt = request.POST.get('prompt')
+        if not prompt:
+            return JsonResponse({'error': 'Please provide a prompt for video generation.'}, status=400)
+        
+        uploaded_file = request.FILES.get('file')
+        input_path = None
+        if uploaded_file:
+            input_path = save_uploaded_file(uploaded_file)
+        
+        try:
+            output_path = generate_video(prompt, input_path=input_path, original_name=uploaded_file.name if uploaded_file else "gen_video")
+            
+            if input_path and os.path.exists(input_path):
+                os.remove(input_path)
+                
+            return create_cleanup_response(output_path, content_type='video/mp4')
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+
+    # ── AI: Story Generator ──
+    if tool_slug == 'story-generator':
+        genre = request.POST.get('genre', 'Science Fiction')
+        prompt = request.POST.get('prompt', '')
+        try:
+            story = generate_story(genre, prompt=prompt)
+            return JsonResponse({'result': story})
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
+
+    # ── Default Fallback for other tools ──
     # ── Standard single-file conversion ──
     if 'file' not in request.FILES:
         return JsonResponse({'error': 'No file was uploaded. Please select a file.'}, status=400)

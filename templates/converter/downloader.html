@@ -1,116 +1,185 @@
-{% extends 'converter/base.html' %}
+{% extends 'converter/tool_base.html' %}
 {% load static %}
-{% block content %}
-<section class="min-h-screen pt-24 sm:pt-32 pb-12 sm:pb-20 relative">
-    <div class="absolute inset-0 bg-gradient-to-b from-surface-50 via-white to-surface-50"></div>
-    <div class="relative z-10 max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
-        <nav class="flex items-center gap-1.5 text-xs sm:text-sm mb-6 sm:mb-10">
-            <a href="{% url 'converter:home' %}" class="text-surface-400 hover:text-brand-600 transition-colors flex items-center gap-1.5"><i data-lucide="home" class="w-3 h-3"></i> Home</a>
-            <i data-lucide="chevron-right" class="w-3 h-3 text-surface-300"></i>
-            <span class="text-surface-700 font-medium">Video Downloader</span>
-        </nav>
-        <div class="mb-6 sm:mb-10">
-            <div class="flex items-center gap-3 sm:gap-4 mb-3">
-                <div class="w-11 h-11 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-br from-red-500 to-rose-700 flex items-center justify-center shadow-xl flex-shrink-0">
-                    <i data-lucide="video-off" class="w-5 h-5 sm:w-7 sm:h-7 text-white"></i>
+
+{% block tool_content %}
+<div class="rounded-2xl bg-white border border-surface-100 p-4 sm:p-5 shadow-mega">
+    <div class="space-y-4">
+        <!-- URL Input -->
+        <div class="space-y-4">
+            <label class="block text-[11px] font-black text-surface-400 uppercase tracking-widest ml-1">Paste Video Link</label>
+            <div class="flex flex-col sm:flex-row gap-3">
+                <div class="relative flex-1 group">
+                    <input type="text" id="url-input" 
+                        placeholder="https://www.youtube.com/watch?v=..." 
+                        class="w-full pl-12 pr-6 py-3 rounded-2xl bg-surface-50 border-2 border-surface-100 focus:bg-white focus:border-brand-500 outline-none transition-all text-sm font-bold text-surface-900 placeholder:text-surface-300">
+                    <i data-lucide="link" class="absolute left-5 top-1/2 -translate-y-1/2 w-5 h-5 text-surface-300 group-focus-within:text-brand-500 transition-colors"></i>
+                </div>
+                <button id="fetch-btn" 
+                    class="px-8 py-3 rounded-2xl bg-surface-900 text-white font-black text-sm uppercase tracking-widest hover:bg-black transition-all shadow-xl shadow-surface-900/10 active:scale-95 disabled:opacity-50 flex items-center justify-center gap-2">
+                    <i data-lucide="search" class="w-4 h-4"></i>
+                    Analyze
+                </button>
+            </div>
+            <p class="text-[10px] text-surface-400 font-medium italic ml-1">Supports YouTube, Instagram Reels, and TikTok.</p>
+        </div>
+
+        <!-- Progress State -->
+        <div id="progress-section" class="hidden">
+            <div class="p-6 rounded-2xl bg-surface-50 border border-surface-100 flex items-center gap-5 animate-pulse">
+                <div class="relative flex-shrink-0">
+                    <div class="w-9 h-9 rounded-full border-[3px] border-surface-200 border-t-brand-500 animate-spin"></div>
                 </div>
                 <div>
-                    <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-surface-900 tracking-tight">Video Downloader</h1>
-                    <p class="text-surface-500 text-xs sm:text-sm mt-0.5">Download videos from YouTube and Instagram in high quality.</p>
+                    <p id="progress-msg" class="text-sm font-black text-surface-800">Processing Link...</p>
+                    <p class="text-[10px] text-surface-400 font-medium mt-0.5">Fetching media streams and formats.</p>
                 </div>
             </div>
         </div>
-        <div class="rounded-xl sm:rounded-2xl bg-white border border-surface-100 p-4 sm:p-6 md:p-8 shadow-card">
-            <div class="space-y-4">
-                <div class="relative group">
-                    <div class="absolute left-4 top-1/2 -translate-y-1/2 text-surface-400 group-focus-within:text-red-500 transition-colors"><i data-lucide="link" class="w-5 h-5"></i></div>
-                    <input type="text" id="url-input" placeholder="Paste video URL here..." class="w-full pl-11 pr-4 py-4 rounded-xl border border-surface-200 text-sm focus:border-red-400 focus:ring-2 focus:ring-red-100 outline-none shadow-sm transition-all font-medium">
-                </div>
-                <button id="fetch-btn" class="w-full py-4 rounded-xl bg-gradient-to-r from-red-600 to-rose-700 text-white font-bold text-sm hover:opacity-95 shadow-lg shadow-red-500/20 active:translate-y-0 hover:-translate-y-px transition-all flex items-center justify-center gap-3">
-                    <i data-lucide="search" class="w-5 h-5"></i> FETCH VIDEO INFO
-                </button>
-            </div>
 
-            <!-- Video Info Preview -->
-            <div id="video-info" class="hidden mt-8 space-y-6 pt-6 border-t border-surface-100 animate-fade-in-up">
-                <div class="flex flex-col sm:flex-row gap-5">
-                    <div class="w-full sm:w-1/3 aspect-video rounded-xl bg-surface-100 overflow-hidden shadow-inner flex-shrink-0">
-                        <img id="thumb-img" src="" class="w-full h-full object-cover">
-                    </div>
-                    <div class="flex-grow min-w-0">
-                        <div id="video-title" class="text-base font-bold text-surface-900 mb-1.5 leading-tight truncate-2">Video Title</div>
-                        <div id="video-uploader" class="text-xs font-semibold text-surface-400 flex items-center gap-1.5 mb-3"><i data-lucide="user" class="w-3.5 h-3.5"></i> <span>Uploader</span></div>
-                        <div id="formats-grid" class="space-y-2">
-                            <!-- Format buttons will be injected -->
+        <!-- Error State -->
+        <div id="error-section" class="hidden">
+            <div class="p-5 rounded-2xl bg-red-50 border border-red-100 flex items-start gap-4 animate-shake">
+                <div class="w-8 h-8 rounded-xl bg-red-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <i data-lucide="alert-circle" class="w-5 h-5 text-red-500"></i>
+                </div>
+                <div class="pt-0.5">
+                    <h4 class="text-xs font-black text-red-700 uppercase tracking-wider mb-1">Analysis Failed</h4>
+                    <p id="error-message" class="text-xs text-red-500 font-bold leading-tight"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Video Info & Formats (Initially Hidden) -->
+        <div id="video-info" class="hidden space-y-4 animate-fade-in-up">
+            <!-- Thumbnail & Title -->
+            <div class="flex flex-col md:flex-row gap-6 p-6 rounded-2xl bg-surface-50 border border-surface-100">
+                <div class="relative w-full md:w-56 h-32 flex-shrink-0 rounded-2xl overflow-hidden shadow-lg border-2 border-white">
+                    <img id="thumb-img" class="w-full h-full object-cover">
+                    <div class="absolute inset-0 bg-black/20 flex items-center justify-center">
+                        <div class="w-8 h-8 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center text-red-600">
+                            <i data-lucide="play" class="w-5 h-5 fill-current ml-0.5"></i>
                         </div>
                     </div>
                 </div>
-            </div>
-
-            <div id="progress-section" class="hidden mt-6 pb-2">
-                <div class="flex items-center gap-4 p-4 rounded-2xl bg-surface-50 border border-surface-100 animate-pulse">
-                    <div class="w-10 h-10 rounded-full border-4 border-surface-200 border-t-red-500 animate-spin"></div>
-                    <div><p id="progress-msg" class="text-sm font-bold text-surface-800">Hang tight...</p><p class="text-[10px] text-surface-400">Fetching video streams & resolution info.</p></div>
+                <div class="min-w-0 pt-1">
+                    <h3 id="video-title" class="text-lg font-black text-surface-900 tracking-tight leading-snug line-clamp-2 mb-2"></h3>
+                    <div id="video-uploader" class="flex items-center gap-2 text-xs font-bold text-surface-500">
+                        <i data-lucide="user" class="w-3.5 h-3.5"></i>
+                        <span></span>
+                    </div>
                 </div>
             </div>
 
-            <div id="error-section" class="hidden mt-6">
-                <div class="p-4 rounded-xl bg-red-50 border border-red-100 flex items-start gap-3">
-                    <i data-lucide="alert-triangle" class="w-5 h-5 text-red-500 mt-0.5"></i>
-                    <p id="error-message" class="text-xs text-red-600 font-bold"></p>
+            <!-- Formats List -->
+            <div class="space-y-4">
+                <h4 class="text-[11px] font-black text-surface-400 uppercase tracking-widest ml-1">Available Download Options</h4>
+                <div id="formats-grid" class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <!-- Format buttons injected here -->
                 </div>
             </div>
         </div>
     </div>
-</section>
+</div>
 {% endblock %}
+
 {% block extra_scripts %}
 <script>
     const CONVERT_URL = '{% url "converter:convert_file" "youtube-downloader" %}';
     const CSRF_TOKEN = '{{ csrf_token }}';
     const urlInput = document.getElementById('url-input'), fetchBtn = document.getElementById('fetch-btn');
     const infoArea = document.getElementById('video-info'), progress = document.getElementById('progress-section');
-    const error = document.getElementById('error-section'), errMsg = document.getElementById('error-message');
+    const errorSection = document.getElementById('error-section'), errMsg = document.getElementById('error-message');
     const thumb = document.getElementById('thumb-img'), title = document.getElementById('video-title'), uploader = document.getElementById('video-uploader'), formatsGrid = document.getElementById('formats-grid');
 
     const fetchInfo = async () => {
-        const urlValue = urlInput.value.trim(); if (!urlValue) return;
-        progress.classList.remove('hidden'); infoArea.classList.add('hidden'); error.classList.add('hidden');
+        const urlValue = urlInput.value.trim(); 
+        if (!urlValue) return;
+
+        progress.classList.remove('hidden'); 
+        infoArea.classList.add('hidden'); 
+        errorSection.classList.add('hidden');
         fetchBtn.disabled = true;
 
         try {
-            const fd = new FormData(); fd.append('url', urlValue); fd.append('action', 'info'); fd.append('csrfmiddlewaretoken', CSRF_TOKEN);
+            const fd = new FormData(); 
+            fd.append('url', urlValue); 
+            fd.append('action', 'info'); 
+            fd.append('csrfmiddlewaretoken', CSRF_TOKEN);
+            
             const r = await fetch(CONVERT_URL, { method: 'POST', body: fd });
-            const d = await r.json(); if (!r.ok) throw new Error(d.error || 'Failed to fetch video info');
+            const d = await r.json(); 
+            if (!r.ok) throw new Error(d.error || 'Failed to analyze link. Please check the URL.');
 
-            thumb.src = d.result.thumbnail; title.innerText = d.result.title; uploader.querySelector('span').innerText = d.result.uploader;
-            formatsGrid.innerHTML = ''; d.result.formats.forEach(f => {
+            thumb.src = d.result.thumbnail; 
+            title.innerText = d.result.title; 
+            uploader.querySelector('span').innerText = d.result.uploader;
+            
+            formatsGrid.innerHTML = ''; 
+            d.result.formats.forEach(f => {
                 const btn = document.createElement('button');
-                btn.className = 'w-full px-4 py-2.5 rounded-xl border border-surface-200 bg-surface-50 text-left hover:bg-red-50 hover:border-red-200 transition-all group flex items-center justify-between';
-                btn.innerHTML = `<div><div class="text-[10px] font-bold text-surface-400 uppercase tracking-widest leading-none mb-1">${f.ext} - ${f.resolution || 'Auto'}</div><div class="text-sm font-bold text-surface-700 group-hover:text-red-600">${f.note || 'Default Format'}</div></div><i data-lucide="download" class="w-4 h-4 text-surface-300 group-hover:text-red-500"></i>`;
+                btn.className = 'w-full px-5 py-4 rounded-2xl border-2 border-surface-100 bg-white text-left hover:border-brand-500 hover:shadow-lg transition-all group flex items-center justify-between';
+                btn.innerHTML = `
+                    <div class="min-w-0">
+                        <div class="flex items-center gap-2 mb-1">
+                            <span class="text-[9px] font-black bg-surface-100 text-surface-500 px-1.5 py-0.5 rounded uppercase">${f.ext}</span>
+                            <span class="text-[10px] font-black text-brand-600 uppercase tracking-widest">${f.resolution || 'Auto'}</span>
+                        </div>
+                        <div class="text-xs font-bold text-surface-800 truncate">${f.note || 'Default Stream'}</div>
+                    </div>
+                    <div class="flex-shrink-0 w-8 h-8 rounded-lg bg-surface-50 flex items-center justify-center text-surface-300 group-hover:bg-brand-50 group-hover:text-brand-500 transition-colors">
+                        <i data-lucide="download" class="w-4 h-4"></i>
+                    </div>
+                `;
                 btn.onclick = () => startDownload(f.format_id);
                 formatsGrid.appendChild(btn);
             });
+            
             infoArea.classList.remove('hidden');
-        } catch (err) { errMsg.innerText = err.message; error.classList.remove('hidden'); }
-        finally { progress.classList.add('hidden'); fetchBtn.disabled = false; lucide.createIcons(); }
+            infoArea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } catch (err) { 
+            errMsg.innerText = err.message; 
+            errorSection.classList.remove('hidden'); 
+        } finally { 
+            progress.classList.add('hidden'); 
+            fetchBtn.disabled = false; 
+            lucide.createIcons(); 
+        }
     };
 
     const startDownload = async (fid) => {
-        progress.classList.remove('hidden'); document.getElementById('progress-msg').innerText = 'Downloading video from server...';
+        progress.classList.remove('hidden'); 
+        document.getElementById('progress-msg').innerText = 'Downloading to server...';
         try {
-            const fd = new FormData(); fd.append('url', urlInput.value.trim()); fd.append('action', 'download'); fd.append('format_id', fid); fd.append('csrfmiddlewaretoken', CSRF_TOKEN);
+            const fd = new FormData(); 
+            fd.append('url', urlInput.value.trim()); 
+            fd.append('action', 'download'); 
+            fd.append('format_id', fid); 
+            fd.append('csrfmiddlewaretoken', CSRF_TOKEN);
+            
             const r = await fetch(CONVERT_URL, { method: 'POST', body: fd });
             if (!r.ok) { const d = await r.json(); throw new Error(d.error || 'Download failed'); }
-            const blob = await r.blob(); const bUrl = window.URL.createObjectURL(blob);
-            const a = document.createElement('a'); a.href = bUrl;
-            const disp = r.headers.get('Content-Disposition'); let fn = 'video.mp4';
+            
+            const blob = await r.blob(); 
+            const bUrl = window.URL.createObjectURL(blob);
+            const a = document.createElement('a'); 
+            a.href = bUrl;
+            
+            const disp = r.headers.get('Content-Disposition'); 
+            let fn = 'video.mp4';
             if (disp) { const m = disp.match(/filename="(.+?)"/); if (m) fn = m[1]; }
-            a.download = fn; a.click();
-        } catch (err) { alert(err.message); }
-        finally { progress.classList.add('hidden'); document.getElementById('progress-msg').innerText = 'Hang tight...'; lucide.createIcons(); }
+            
+            a.download = fn; 
+            a.click();
+        } catch (err) { 
+            alert(err.message); 
+        } finally { 
+            progress.classList.add('hidden'); 
+            document.getElementById('progress-msg').innerText = 'Processing Link...'; 
+            lucide.createIcons(); 
+        }
     };
 
     fetchBtn.addEventListener('click', fetchInfo);
+    urlInput.addEventListener('keypress', (e) => { if (e.key === 'Enter') fetchBtn.click(); });
 </script>
 {% endblock %}

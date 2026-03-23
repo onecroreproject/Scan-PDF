@@ -1,0 +1,20 @@
+{% extends 'converter/tool_base.html' %}
+{% load static %}
+
+{% block tool_content %}
+<div class="rounded-2xl bg-white border border-surface-100 p-8 sm:p-12 shadow-mega text-center">
+    <div class="w-24 h-24 rounded-2xl bg-brand-50 flex items-center justify-center mx-auto mb-4 animate-bounce-slow">
+        <i data-lucide="sparkles" class="w-9 h-9 text-brand-600"></i>
+    </div>
+    
+    <h2 class="text-3xl font-black text-surface-900 mb-4 tracking-tight">Coming Soon!</h2>
+    <p class="text-surface-500 text-base mb-4 max-w-md mx-auto leading-relaxed">
+        We're working hard to bring AI-powered video generation to you. Stay tuned for a cinematic experience!
+    </p>
+
+    <a href="{% url 'converter:home' %}" class="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl bg-surface-900 text-white font-bold text-sm hover:bg-black transition-all shadow-xl shadow-surface-900/10">
+        <i data-lucide="arrow-left" class="w-4 h-4"></i>
+        Go Back Home
+    </a>
+</div>
+{% endblock %}

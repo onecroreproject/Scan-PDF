@@ -1,64 +1,66 @@
-{% extends 'converter/base.html' %}
+{% extends 'converter/tool_base.html' %}
 {% load static %}
-{% block content %}
-<section class="min-h-screen pt-24 sm:pt-32 pb-12 sm:pb-20 relative">
-    <div class="absolute inset-0 bg-gradient-to-b from-surface-50 via-white to-surface-50"></div>
-    <div class="absolute top-1/4 left-[10%] w-[300px] h-[300px] bg-violet-100/20 rounded-full blur-[80px]"></div>
-    <div class="relative z-10 max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
-        <nav class="flex items-center gap-1.5 text-xs sm:text-sm mb-6 sm:mb-10">
-            <a href="{% url 'converter:home' %}" class="text-surface-400 hover:text-brand-600 transition-colors flex items-center gap-1.5"><i data-lucide="home" class="w-3 h-3"></i> Home</a>
-            <i data-lucide="chevron-right" class="w-3 h-3 text-surface-300"></i>
-            <span class="text-surface-700 font-medium">Chemical Balance</span>
-        </nav>
-        <div class="mb-6 sm:mb-10">
-            <div class="flex items-center gap-3 sm:gap-4 mb-3">
-                <div class="w-11 h-11 sm:w-14 sm:h-14 rounded-xl sm:rounded-2xl bg-gradient-to-br from-violet-500 to-purple-700 flex items-center justify-center shadow-xl flex-shrink-0">
-                    <i data-lucide="beaker" class="w-5 h-5 sm:w-7 sm:h-7 text-white"></i>
+
+{% block tool_content %}
+<div class="rounded-2xl bg-white border border-surface-100 p-4 sm:p-5 shadow-mega">
+    <div class="space-y-3">
+        <!-- Input Area -->
+        <div class="space-y-3 text-center">
+            <label class="text-sm font-black text-surface-400 uppercase tracking-widest">Enter Unbalanced Equation</label>
+            <div class="relative group">
+                <input type="text" id="equation-input" 
+                    placeholder="e.g. H2 + O2 = H2O"
+                    class="w-full px-6 py-3 rounded-2xl bg-surface-50 border-2 border-surface-100 focus:bg-white focus:border-brand-500 focus:ring-4 focus:ring-brand-500/5 outline-none transition-all text-lg font-bold text-surface-900 placeholder:text-surface-300">
+                <div class="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                    <kbd class="px-2 py-1 rounded bg-surface-100 border border-surface-200 text-[10px] font-black text-surface-400">ENTER</kbd>
                 </div>
-                <div>
-                    <h1 class="text-xl sm:text-2xl md:text-3xl font-bold text-surface-900 tracking-tight">Chemical Balance</h1>
-                    <p class="text-surface-500 text-xs sm:text-sm mt-0.5">Balance chemical equations instantly with stoichiometry.</p>
-                </div>
+            </div>
+            <p class="text-[11px] text-surface-400 font-medium">Use uppercase symbols and numbers (e.g., NaCl, H2SO4).</p>
+        </div>
+
+        <button id="balance-btn"
+            class="w-full py-4 sm:py-4 rounded-2xl bg-gradient-to-r {{ tool.gradient }} text-white font-black text-sm sm:text-base uppercase tracking-widest transition-all shadow-xl shadow-brand-500/20 hover:shadow-brand-500/40 hover:-translate-y-1 active:translate-y-0 flex items-center justify-center gap-3">
+            <i data-lucide="beaker" class="w-5 h-5"></i>
+            Balance Equation
+        </button>
+
+        <!-- Progress State -->
+        <div id="progress-section" class="hidden animate-pulse">
+            <div class="flex items-center justify-center gap-3 py-4 rounded-xl bg-surface-50 border border-surface-100 italic text-sm text-surface-500">
+                <div class="w-4 h-4 rounded-full border-2 border-brand-500 border-t-transparent animate-spin"></div>
+                Calculating stoichiometry...
             </div>
         </div>
-        <div class="rounded-xl sm:rounded-2xl bg-white border border-surface-100 p-4 sm:p-6 md:p-8 shadow-card">
-            <div class="space-y-4">
-                <div>
-                    <label class="block text-sm font-semibold text-surface-700 mb-2">Enter Equation</label>
-                    <div class="relative">
-                        <textarea id="equation-input" placeholder="e.g. H2 + O2 = H2O" class="w-full px-4 py-3 rounded-xl border border-surface-200 text-sm focus:border-violet-400 focus:ring-2 focus:ring-violet-100 outline-none min-h-[100px] resize-none"></textarea>
-                    </div>
-                    <p class="text-[10px] text-surface-400 mt-2">Format: Reactant1 + Reactant2 = Product1 + Product2. Use normal capital letters for elements.</p>
-                </div>
-                <button id="balance-btn" class="w-full py-3.5 rounded-xl bg-gradient-to-r from-violet-600 to-purple-700 text-white font-semibold text-sm hover:opacity-90 transition-all shadow-lg hover:shadow-xl hover:-translate-y-px active:translate-y-0 flex items-center justify-center gap-2.5">
-                    <i data-lucide="flask-conical" class="w-4 h-4"></i> Balance Equation
-                </button>
-            </div>
-            <div id="progress-section" class="hidden mt-6">
-                <div class="flex items-center gap-3 py-4 px-4 rounded-xl bg-surface-50">
-                    <div class="w-8 h-8 rounded-full border-[3px] border-surface-200 border-t-violet-500 animate-spin"></div>
-                    <div><p class="text-surface-800 font-semibold text-xs sm:text-sm">Calculating stoichiometry...</p></div>
-                </div>
-            </div>
-            <div id="result-section" class="hidden mt-6">
-                <div class="p-5 rounded-xl bg-violet-50 border border-violet-100">
-                    <h3 class="text-xs font-bold text-violet-700 uppercase tracking-wider mb-2">Balanced Equation</h3>
-                    <div id="result-text" class="text-lg font-bold text-surface-900 break-all"></div>
-                    <button id="copy-btn" class="mt-4 flex items-center gap-1.5 text-xs font-medium text-violet-600 hover:text-violet-700">
-                        <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copy to Clipboard
+
+        <!-- Result Section -->
+        <div id="result-section" class="hidden space-y-4 animate-fade-in-up">
+            <div class="p-6 rounded-2xl bg-brand-50 border border-brand-100 text-center relative overflow-hidden">
+                <div class="absolute top-0 right-0 p-2">
+                    <button id="copy-btn" class="p-2 rounded-lg bg-white border border-brand-100 text-brand-600 hover:bg-brand-50 transition-all shadow-sm flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-wider">
+                        <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copy
                     </button>
                 </div>
+                <h4 class="text-[10px] font-black text-brand-600 uppercase tracking-[0.2em] mb-3">Balanced Result</h4>
+                <div id="result-text" class="text-xl sm:text-2xl md:text-3xl font-black text-surface-900 tracking-tight leading-relaxed"></div>
             </div>
-            <div id="error-section" class="hidden mt-6">
-                <div class="p-4 rounded-xl bg-red-50 border border-red-100 flex items-start gap-2.5">
-                    <i data-lucide="alert-circle" class="w-4 h-4 text-red-500 mt-0.5"></i>
-                    <p id="error-message" class="text-xs text-red-600 font-medium"></p>
+        </div>
+
+        <!-- Error Section -->
+        <div id="error-section" class="hidden">
+            <div class="p-5 rounded-2xl bg-red-50 border border-red-100 flex items-start gap-4 animate-shake">
+                <div class="w-9 h-9 rounded-xl bg-red-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                    <i data-lucide="alert-triangle" class="w-5 h-5 text-red-500"></i>
+                </div>
+                <div class="min-w-0 pt-1">
+                    <h4 class="font-black text-red-700 text-sm uppercase tracking-wider mb-1">Calculation Error</h4>
+                    <p id="error-message" class="text-xs text-red-500 leading-relaxed font-semibold"></p>
                 </div>
             </div>
         </div>
     </div>
-</section>
+</div>
 {% endblock %}
+
 {% block extra_scripts %}
 <script>
     const CONVERT_URL = '{% url "converter:convert_file" "chemical-balancer" %}';
@@ -72,8 +74,14 @@
     const errorMsg = document.getElementById('error-message');
     const copyBtn = document.getElementById('copy-btn');
 
+    input.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') btn.click();
+    });
+
     btn.addEventListener('click', async () => {
-        if (!input.value.trim()) return;
+        const val = input.value.trim();
+        if (!val) return;
+        
         btn.disabled = true;
         progress.classList.remove('hidden');
         result.classList.add('hidden');
@@ -81,13 +89,17 @@
 
         try {
             const fd = new FormData();
-            fd.append('equation', input.value.trim());
+            fd.append('equation', val);
             fd.append('csrfmiddlewaretoken', CSRF_TOKEN);
+            
             const r = await fetch(CONVERT_URL, { method: 'POST', body: fd });
             const d = await r.json();
-            if (!r.ok) throw new Error(d.error || 'Failed');
-            resultText.innerText = d.result;
+            
+            if (!r.ok) throw new Error(d.error || 'Failed to balance equation.');
+            
+            resultText.innerHTML = d.result;
             result.classList.remove('hidden');
+            lucide.createIcons();
         } catch (err) {
             errorMsg.innerText = err.message;
             error.classList.remove('hidden');
