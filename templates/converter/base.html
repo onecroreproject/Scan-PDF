@@ -133,9 +133,10 @@
                                                 <span
                                                     class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">
                                                     {{ t.title }}
-                                                    {% if t.is_coming_soon %}<span
-                                                        class="text-[10px] bg-brand-100 text-brand-600 px-1.5 py-0.5 rounded-full ml-auto">SOON</span>{%
-                                                    endif %}
+                                                    {% if t.is_coming_soon %}
+                                                    <span
+                                                        class="text-[10px] bg-brand-100 text-brand-600 px-1.5 py-0.5 rounded-full ml-auto">SOON</span>
+                                                    {% endif %}
                                                 </span>
                                             </a>
                                             {% endfor %}
