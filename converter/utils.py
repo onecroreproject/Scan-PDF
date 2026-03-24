@@ -53,104 +53,64 @@ def get_output_path(original_name, new_extension):
 # 1. WORD (.docx) → PDF
 # ═══════════════════════════════════════════════════════════════
 def convert_word_to_pdf(input_path, original_name):
-    """Convert a Word document (.docx) to PDF using python-docx + reportlab-style approach."""
-    from docx import Document
-    import fitz  # PyMuPDF
-
+    """Convert a Word document (.docx) to PDF with professional multi-page support."""
+    import mammoth
+    
     output_path = get_output_path(original_name, 'pdf')
 
-    doc = Document(input_path)
-    
-    # Create a PDF using PyMuPDF
-    pdf_doc = fitz.open()
-    
-    for para in doc.paragraphs:
-        text = para.text.strip()
-        if not text:
-            continue
-        
-        # Determine font size based on paragraph style
-        font_size = 11
-        is_bold = False
-        style_name = para.style.name.lower() if para.style else ''
-        
-        if 'heading 1' in style_name:
-            font_size = 24
-            is_bold = True
-        elif 'heading 2' in style_name:
-            font_size = 20
-            is_bold = True
-        elif 'heading 3' in style_name:
-            font_size = 16
-            is_bold = True
-        elif 'title' in style_name:
-            font_size = 28
-            is_bold = True
-    
-    # If no pages created yet, we need a different approach
-    # Use a simple text-to-PDF method via PyMuPDF
-    pdf_doc.close()
-    
-    # Use PyMuPDF Story for proper text rendering
-    pdf_doc = fitz.open()
-    
-    # Extract all text from the document
-    full_text_parts = []
-    for para in doc.paragraphs:
-        text = para.text
-        if text.strip():
-            style_name = para.style.name.lower() if para.style else ''
-            if 'heading 1' in style_name or 'title' in style_name:
-                full_text_parts.append(f'<h1>{text}</h1>')
-            elif 'heading 2' in style_name:
-                full_text_parts.append(f'<h2>{text}</h2>')
-            elif 'heading 3' in style_name:
-                full_text_parts.append(f'<h3>{text}</h3>')
-            else:
-                full_text_parts.append(f'<p>{text}</p>')
-        else:
-            full_text_parts.append('<br/>')
-    
-    # Also extract tables
-    for table in doc.tables:
-        table_html = '<table border="1" style="border-collapse: collapse; width: 100%;">'
-        for row in table.rows:
-            table_html += '<tr>'
-            for cell in row.cells:
-                table_html += f'<td style="padding: 4px; border: 1px solid #333;">{cell.text}</td>'
-            table_html += '</tr>'
-        table_html += '</table><br/>'
-        full_text_parts.append(table_html)
-    
-    html_content = f"""
-    <html>
-    <head>
-        <style>
-            body {{ font-family: Helvetica, Arial, sans-serif; font-size: 11pt; line-height: 1.6; margin: 40px; }}
-            h1 {{ font-size: 22pt; color: #1a1a2e; margin-bottom: 10px; }}
-            h2 {{ font-size: 18pt; color: #16213e; margin-bottom: 8px; }}
-            h3 {{ font-size: 14pt; color: #0f3460; margin-bottom: 6px; }}
-            p {{ margin-bottom: 6px; color: #333; }}
-            table {{ margin: 10px 0; }}
-        </style>
-    </head>
-    <body>{''.join(full_text_parts)}</body>
-    </html>
-    """
-    
-    # Use PyMuPDF (fitz) for HTML-to-PDF (most reliable on Windows, zero-dependency)
+    # Convert DOCX to HTML using Mammoth for best semantic structure and fidelity
     try:
+        with open(input_path, "rb") as docx_file:
+            result = mammoth.convert_to_html(docx_file)
+            body_html = result.value
+            
+            # Add professional styles and Ensure A4 multi-page pagination
+            html_content = f"""
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <meta charset="utf-8">
+                <style>
+                    @page {{
+                        size: A4;
+                        margin: 2.5cm;
+                    }}
+                    body {{
+                        font-family: 'Times New Roman', Times, serif;
+                        font-size: 11pt;
+                        line-height: 1.5;
+                        color: #1a1a1a;
+                        margin: 0;
+                        padding: 0;
+                    }}
+                    p {{ margin-bottom: 0.5cm; }}
+                    h1, h2, h3 {{ color: #1a365d; margin-top: 1cm; margin-bottom: 0.5cm; }}
+                    table {{ border-collapse: collapse; width: 100%; margin: 1cm 0; }}
+                    td, th {{ border: 1px solid #cbd5e0; padding: 0.2cm; }}
+                    img {{ max-width: 100%; height: auto; }}
+                </style>
+            </head>
+            <body>
+                {body_html}
+            </body>
+            </html>
+            """
+            
+            # Use WeasyPrint for high-quality multi-page PDF generation
+            import weasyprint
+            weasyprint.HTML(string=html_content).write_pdf(output_path)
+            return output_path
+            
+    except Exception as e:
+        # Check if it was weasyprint failure or file error
+        pass
+
+    # Fallback to a simpler manual pagination if weasyprint/mammoth fails
+    try:
+        from docx import Document
         import fitz
-        pdf_doc = fitz.open()
-        # A4 size in points: 595 x 842
-        page = pdf_doc.new_page(width=595, height=842)
-        # We wrap in a container to maintain margins
-        rect = fitz.Rect(50, 50, 545, 792)
-        page.insert_htmlbox(rect, html_content)
-        pdf_doc.save(output_path)
-        pdf_doc.close()
-    except Exception:
-        # Fallback: use PyMuPDF simple text insertion
+        
+        doc = Document(input_path)
         pdf_doc = fitz.open()
         page = pdf_doc.new_page()
         y_position = 72
@@ -166,12 +126,12 @@ def convert_word_to_pdf(input_path, original_name):
             if 'heading' in style_name or 'title' in style_name:
                 fontsize = 16
             
-            # Word wrap manually
+            # Simple word wrap calculation
             words = text.split()
             line = ""
             for word in words:
                 test_line = f"{line} {word}".strip()
-                if len(test_line) * fontsize * 0.5 > 470:  # approximate width
+                if len(test_line) * fontsize * 0.5 > 470:  # approx width
                     if y_position > 750:
                         page = pdf_doc.new_page()
                         y_position = 72
@@ -188,10 +148,20 @@ def convert_word_to_pdf(input_path, original_name):
                 page.insert_text((72, y_position), line, fontsize=fontsize)
                 y_position += fontsize + 8
         
+        # Add tables to fallback if needed (simplified)
+        for table in doc.tables:
+            if y_position > 700:
+                page = pdf_doc.new_page()
+                y_position = 72
+            page.insert_text((72, y_position), "[Table Included]", fontsize=10, color=(0.5, 0.5, 0.5))
+            y_position += 20
+
         pdf_doc.save(output_path)
         pdf_doc.close()
-    
-    return output_path
+        return output_path
+    except Exception as e:
+        raise Exception(f"Failed to convert Word to PDF: {str(e)}")
+
 
 
 # ═══════════════════════════════════════════════════════════════
