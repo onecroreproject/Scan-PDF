@@ -1814,71 +1814,136 @@ def _get_ocr_reader():
     return _EASYOCR_READER
 
 def ocr_pdf(input_path, original_name):
-    """Refined and Optimized OCR: Faster recognition and better memory usage."""
+    """Refined and Optimized OCR: Faster recognition and better memory usage.
+    Supports single PDF path or a list of image/PDF paths.
+    """
     import fitz
-    from PIL import Image
+    import os
     try:
         reader = _get_ocr_reader()
     except Exception as e:
         raise Exception(f"OCR Engine load failed: {str(e)}")
 
     output_path = get_output_path(original_name, 'pdf')
-    base_name = Path(original_name).stem
+    base_name = os.path.splitext(original_name)[0]
     output_path = os.path.join(os.path.dirname(output_path), f"{base_name}_ocr.pdf")
 
-    pdf = fitz.open(input_path)
+    if isinstance(input_path, (str, bytes, os.PathLike)):
+        input_paths = [input_path]
+    else:
+        input_paths = input_path
+
     output_pdf = fitz.open()
 
-    for page_idx in range(len(pdf)):
-        page = pdf[page_idx]
-        # SKIP OCR if page already has text (huge speedup for hybrid PDFs)
-        if page.get_text().strip():
-            output_pdf.insert_pdf(pdf, from_page=page_idx, to_page=page_idx)
+    for path in input_paths:
+        try:
+            doc = fitz.open(path)
+        except Exception:
             continue
 
-        # Render page to balanced resolution (1.3 zoom is sweet spot for speed/accuracy)
-        zoom = 1.3
-        mat = fitz.Matrix(zoom, zoom)
-        pix = page.get_pixmap(matrix=mat)
-        
-        # Run OCR with optimized 'paragraph=True' (much faster grouping)
-        results = reader.readtext(pix.tobytes("png"), paragraph=True)
-
-        # Create new page & insert background
-        rect = page.rect
-        new_page = output_pdf.new_page(width=rect.width, height=rect.height)
-        new_page.insert_image(rect, stream=pix.tobytes("png"))
-
-        # Re-calc scale relative to original PDF coords
-        scale_x = rect.width / pix.width
-        scale_y = rect.height / pix.height
-        
-        for (bbox, text) in results:
-            # bbox: [[x0, y0], [x1, y1], [x2, y2], [x3, y3]]
-            x_min = min(p[0] for p in bbox) * scale_x
-            y_min = min(p[1] for p in bbox) * scale_y
-            x_max = max(p[0] for p in bbox) * scale_x
-            y_max = max(p[1] for p in bbox) * scale_y
+        for page_idx in range(len(doc)):
+            page = doc[page_idx]
             
-            h = y_max - y_min
-            
-            try:
-                # Optimized overlay
-                new_page.insert_text(
-                    fitz.Point(x_min, y_min + h * 0.8),
-                    text,
-                    fontsize=max(h * 0.8, 1),
-                    render_mode=3 # Invisible searchable text
-                )
-            except:
+            if page.get_text().strip():
+                output_pdf.insert_pdf(doc, from_page=page_idx, to_page=page_idx)
                 continue
-        
-        pix = None # Manual cleanup for memory safety
 
-    output_pdf.save(output_path, garbage=3, deflate=True) # Optimized save
+            zoom = 1.3
+            mat = fitz.Matrix(zoom, zoom)
+            pix = page.get_pixmap(matrix=mat)
+            results = reader.readtext(pix.tobytes("png"), paragraph=True)
+
+            rect = page.rect
+            new_page = output_pdf.new_page(width=rect.width, height=rect.height)
+            new_page.insert_image(rect, stream=pix.tobytes("png"))
+
+            scale_x = rect.width / pix.width
+            scale_y = rect.height / pix.height
+            
+            for (bbox, text) in results:
+                x_min = min(p[0] for p in bbox) * scale_x
+                y_min = min(p[1] for p in bbox) * scale_y
+                x_max = max(p[0] for p in bbox) * scale_x
+                y_max = max(p[1] for p in bbox) * scale_y
+                h = y_max - y_min
+                try:
+                    new_page.insert_text(
+                        fitz.Point(x_min, y_min + h * 0.8),
+                        text,
+                        fontsize=max(h * 0.8, 1),
+                        render_mode=3 
+                    )
+                except:
+                    continue
+            pix = None
+        doc.close()
+
+    if len(output_pdf) == 0:
+        output_pdf.close()
+        raise Exception("No valid pages were processed for OCR.")
+
+    output_pdf.save(output_path, garbage=3, deflate=True)
     output_pdf.close()
-    pdf.close()
     return output_path
+
+def extract_all_text(input_path):
+    """Extract all text from various formats including DOCX, PDF, and Images.
+    If a PDF page has no text, it performs OCR.
+    """
+    import fitz
+    from docx import Document
+    import os
+
+    try:
+        reader = _get_ocr_reader()
+    except Exception as e:
+        raise Exception(f"OCR Engine load failed: {str(e)}")
+
+    if isinstance(input_path, (str, bytes, os.PathLike)):
+        input_paths = [input_path]
+    else:
+        input_paths = input_path
+
+    full_text = []
+
+    for path in input_paths:
+        ext = os.path.splitext(str(path))[1].lower()
+
+        if ext == '.docx':
+            try:
+                doc = Document(path)
+                full_text.append(f"--- File: {os.path.basename(str(path))} ---")
+                text_parts = [para.text for para in doc.paragraphs]
+                full_text.append("\n".join(text_parts))
+            except Exception as e:
+                full_text.append(f"Error reading Word file: {str(e)}")
+
+        elif ext == '.pdf' or ext in ['.jpg', '.jpeg', '.png']:
+            try:
+                doc = fitz.open(path)
+                full_text.append(f"--- File: {os.path.basename(str(path))} ---")
+                
+                for page_idx in range(len(doc)):
+                    page = doc[page_idx]
+                    page_text = page.get_text().strip()
+                    
+                    if page_text:
+                        full_text.append(page_text)
+                    else:
+                        # Perform OCR on image-based page
+                        zoom = 1.3
+                        mat = fitz.Matrix(zoom, zoom)
+                        pix = page.get_pixmap(matrix=mat)
+                        results = reader.readtext(pix.tobytes("png"), paragraph=True)
+                        for (_, text) in results:
+                            full_text.append(text)
+                doc.close()
+            except Exception as e:
+                full_text.append(f"Error reading PDF/Image: {str(e)}")
+        
+        full_text.append("\n" + "="*30 + "\n")
+
+    return "\n".join(full_text)
 
 
 # ═══════════════════════════════════════════════════════════════

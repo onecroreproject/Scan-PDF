@@ -266,15 +266,16 @@ TOOLS = {
         'category': 'pdf-tools',
     },
     'ocr-pdf': {
-        'title': 'OCR PDF',
-        'description': 'Convert scanned PDFs into searchable, selectable text.',
+        'title': 'OCR to PDF',
+        'description': 'Convert scanned PDFs, Word documents, and images into searchable, selectable PDF documents or extract their text directly.',
         'icon': 'scan-text',
-        'accept': '.pdf',
-        'allowed_extensions': ['.pdf'],
+        'accept': '.pdf,.jpg,.jpeg,.png,.docx',
+        'allowed_extensions': ['.pdf', '.jpg', '.jpeg', '.png', '.docx'],
         'converter': ocr_pdf,
         'color': '#0d9488',
         'gradient': 'from-teal-500 to-teal-700',
         'category': 'pdf-tools',
+        'multi_file': True,
     },
     'rotate-pdf': {
         'title': 'Rotate PDF',
@@ -656,6 +657,8 @@ def convert_page(request, tool_slug):
         template = 'converter/gif_maker.html'
     elif tool_slug == 'image-to-pdf':
         template = 'converter/image_to_pdf.html'
+    elif tool_slug == 'ocr-pdf':
+        template = 'converter/ocr.html'
     elif tool_slug == 'resize-image':
         template = 'converter/resize_image.html'
     elif tool_slug == 'scale-image':
@@ -796,6 +799,37 @@ def convert_file(request, tool_slug):
             return create_cleanup_response(output_path, content_type='image/gif')
         except Exception as e:
             return JsonResponse({'error': f'GIF creation failed: {str(e)}'}, status=500)
+
+    # ── OCR to PDF: multiple files ──
+    if tool_slug == 'ocr-pdf':
+        files = request.FILES.getlist('files')
+        if not files:
+            files = [request.FILES.get('file')] if 'file' in request.FILES else []
+        
+        if not files:
+            return JsonResponse({'error': 'Please upload at least one image, PDF, or Word file.'}, status=400)
+
+        try:
+            input_paths = []
+            for f in files:
+                ext = os.path.splitext(f.name)[1].lower()
+                if ext not in tool['allowed_extensions']:
+                    allowed = ', '.join(tool['allowed_extensions'])
+                    return JsonResponse({'error': f'Invalid file "{f.name}". Allowed types: {allowed}'}, status=400)
+                input_paths.append(save_uploaded_file(f))
+
+            from .utils import extract_all_text
+            extracted_text = extract_all_text(input_paths)
+
+            for p in input_paths:
+                try:
+                    os.remove(p)
+                except OSError:
+                    pass
+
+            return JsonResponse({'extracted_text': extracted_text})
+        except Exception as e:
+            return JsonResponse({'error': f'OCR failed: {str(e)}'}, status=500)
 
     # ── Split PDF ──
     if tool_slug == 'split-pdf':
