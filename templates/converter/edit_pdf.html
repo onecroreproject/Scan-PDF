@@ -151,17 +151,21 @@
         
         try {
             const resp = await fetch(API_URL, { method: 'POST', body: fd });
-            const data = await resp.json();
-            
-            if (data.success) {
-                initEditor(data.html);
-                uploadStage.classList.add('hidden');
-                editorWrapper.classList.remove('hidden');
+            const ct = resp.headers.get('content-type') || '';
+            if (ct.includes('application/json')) {
+                const data = await resp.json();
+                if (data.success) {
+                    initEditor(data.html);
+                    uploadStage.classList.add('hidden');
+                    editorWrapper.classList.remove('hidden');
+                } else {
+                    alert(data.error || "Upload failed. Please try a standard PDF.");
+                }
             } else {
-                alert(data.error || "Upload failed. Please try a standard PDF.");
+                alert("Server returned an unexpected response. Please try a different PDF.");
             }
         } catch (e) {
-            alert("Network error occurred during conversion.");
+            alert("Error: " + e.message);
         } finally {
             hideLoading();
         }

@@ -11,7 +11,7 @@ easyocr
 html2image>=2.0.5
 rembg>=2.0.50
 yt-dlp>=2023.0.0
-qrcode>=7.4.2
+qrcode[pil]>=7.4.2
 chempy>=0.8.2
 Faker>=19.0.0
 pdf2docx

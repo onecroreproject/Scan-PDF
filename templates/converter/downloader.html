@@ -54,7 +54,7 @@
             <!-- Thumbnail & Title -->
             <div class="flex flex-col md:flex-row gap-6 p-6 rounded-2xl bg-surface-50 border border-surface-100">
                 <div class="relative w-full md:w-56 h-32 flex-shrink-0 rounded-2xl overflow-hidden shadow-lg border-2 border-white">
-                    <img id="thumb-img" class="w-full h-full object-cover">
+                    <img id="thumb-img" referrerpolicy="no-referrer" class="w-full h-full object-cover">
                     <div class="absolute inset-0 bg-black/20 flex items-center justify-center">
                         <div class="w-8 h-8 rounded-full bg-white/90 backdrop-blur-sm flex items-center justify-center text-red-600">
                             <i data-lucide="play" class="w-5 h-5 fill-current ml-0.5"></i>
@@ -84,7 +84,7 @@
 
 {% block extra_scripts %}
 <script>
-    const CONVERT_URL = '{% url "converter:convert_file" "youtube-downloader" %}';
+    const CONVERT_URL = '{% url "converter:convert_file" tool_slug %}';
     const CSRF_TOKEN = '{{ csrf_token }}';
     const urlInput = document.getElementById('url-input'), fetchBtn = document.getElementById('fetch-btn');
     const infoArea = document.getElementById('video-info'), progress = document.getElementById('progress-section');

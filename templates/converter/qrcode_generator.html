@@ -1,51 +1,673 @@
 {% extends 'converter/tool_base.html' %}
 {% load static %}
 
+{% block extra_head %}
+<style>
+    .acc-body {
+        display: none
+    }
+
+    .acc-body.open {
+        display: block
+    }
+
+    .acc-head.open .acc-arrow {
+        transform: rotate(180deg)
+    }
+
+    .type-pill.active {
+        background: rgb(79 70 229);
+        color: #fff;
+        border-color: rgb(79 70 229)
+    }
+
+    .type-form {
+        display: none
+    }
+
+    .type-form.active {
+        display: block
+    }
+
+    .shape-opt input:checked+div {
+        border-color: rgb(79 70 229);
+        box-shadow: 0 0 0 2px rgba(79, 70, 229, .15)
+    }
+
+    .color-swatch::-webkit-color-swatch-wrapper {
+        padding: 0
+    }
+
+    .color-swatch::-webkit-color-swatch {
+        border: none;
+        border-radius: 8px
+    }
+
+    .scrollbar-hide::-webkit-scrollbar {
+        display: none
+    }
+
+    .field {
+        width: 100%;
+        padding: .65rem 1rem;
+        border-radius: .75rem;
+        border: 2px solid #e5e7eb;
+        font-size: .8rem;
+        font-weight: 600;
+        outline: none;
+        transition: border-color .2s
+    }
+
+    .field:focus {
+        border-color: rgb(79 70 229)
+    }
+
+    .field-label {
+        display: block;
+        font-size: .6rem;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: .1em;
+        color: #9ca3af;
+        margin-bottom: .35rem
+    }
+
+    .logo-preset {
+        transition: all .15s;
+        border: 2px solid transparent;
+        border-radius: .75rem;
+        cursor: pointer
+    }
+
+    .logo-preset:hover {
+        transform: scale(1.08);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, .1)
+    }
+
+    .logo-preset.active {
+        border-color: rgb(79 70 229);
+        box-shadow: 0 0 0 3px rgba(79, 70, 229, .2)
+    }
+</style>
+{% endblock %}
+
 {% block tool_content %}
-<div class="rounded-2xl bg-white border border-surface-100 p-4 sm:p-5 shadow-mega">
-    <div class="space-y-4">
-        <!-- Input Section -->
-        <div class="space-y-3">
-            <label class="block text-[11px] font-black text-surface-400 uppercase tracking-widest ml-1">Content for QR Code</label>
-            <div class="relative group">
-                <textarea id="qr-input" 
-                    placeholder="Enter URL, text, or any data here..." 
-                    class="w-full px-6 py-3 rounded-2xl bg-surface-50 border-2 border-surface-100 focus:bg-white focus:border-brand-500 outline-none transition-all text-sm font-bold text-surface-900 placeholder:text-surface-300 min-h-[140px] resize-none"></textarea>
-                <div class="absolute right-4 bottom-4 text-surface-200 group-focus-within:text-brand-500 transition-colors">
-                    <i data-lucide="type" class="w-6 h-6"></i>
-                </div>
+<div class="flex flex-col lg:flex-row gap-8 items-start">
+
+    <!-- ═══════════  LEFT: CONFIGURATION  ═══════════ -->
+    <div class="flex-1 w-full space-y-5">
+
+        <!-- Content Type Pills -->
+        <div class="overflow-x-auto scrollbar-hide pb-1">
+            <div class="flex gap-1.5 min-w-max p-1 bg-surface-50 rounded-2xl border border-surface-100">
+                <button onclick="switchType('url')"
+                    class="type-pill active px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest border border-transparent transition-all">URL</button>
+                <button onclick="switchType('text')"
+                    class="type-pill px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest border border-transparent transition-all">Text</button>
+                <button onclick="switchType('email')"
+                    class="type-pill px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest border border-transparent transition-all">Email</button>
+                <button onclick="switchType('phone')"
+                    class="type-pill px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest border border-transparent transition-all">Phone</button>
+                <button onclick="switchType('sms')"
+                    class="type-pill px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest border border-transparent transition-all">SMS</button>
+                <button onclick="switchType('vcard')"
+                    class="type-pill px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest border border-transparent transition-all">vCard</button>
+                <button onclick="switchType('wifi')"
+                    class="type-pill px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest border border-transparent transition-all">WiFi</button>
+                <button onclick="switchType('location')"
+                    class="type-pill px-4 py-2.5 rounded-xl text-[10px] font-black uppercase tracking-widest border border-transparent transition-all">Location</button>
             </div>
-            <p class="text-[10px] text-surface-400 font-medium italic ml-1">Max 2,000 characters. Perfect for links, Wi-Fi, or simple text.</p>
         </div>
 
-        <button id="generate-btn" 
-            class="w-full py-3 rounded-2xl bg-gradient-to-r {{ tool.gradient }} text-white font-black text-base uppercase tracking-widest shadow-xl shadow-brand-500/20 hover:shadow-brand-500/40 hover:-translate-y-1 active:scale-95 transition-all flex items-center justify-center gap-3">
-            <i data-lucide="sparkles" class="w-5 h-5"></i>
-            Generate QR Code
-        </button>
+        <!-- ── ACCORDION 1: ENTER CONTENT ── -->
+        <div class="rounded-2xl bg-white border border-surface-100 shadow-mega overflow-hidden">
+            <button onclick="toggleAcc('content')"
+                class="acc-head open w-full px-6 py-4.5 flex items-center justify-between hover:bg-surface-50/60 transition-colors">
+                <span class="flex items-center gap-3"><i data-lucide="message-square"
+                        class="w-5 h-5 text-brand-500"></i><span
+                        class="text-xs font-black uppercase tracking-widest">Enter Content</span></span>
+                <i data-lucide="chevron-down" class="acc-arrow w-4 h-4 transition-transform"></i>
+            </button>
+            <div id="acc-content" class="acc-body open px-6 pb-6 pt-2 border-t border-surface-50">
+                <!-- URL -->
+                <div id="form-url" class="type-form active space-y-3">
+                    <label class="field-label">Your URL</label>
+                    <input id="f-url" type="url" class="field" placeholder="https://www.example.com">
+                </div>
+                <!-- TEXT -->
+                <div id="form-text" class="type-form space-y-3">
+                    <label class="field-label">Your Message</label>
+                    <textarea id="f-text" class="field min-h-[120px] resize-none"
+                        placeholder="Enter any text here..."></textarea>
+                </div>
+                <!-- EMAIL -->
+                <div id="form-email" class="type-form space-y-4">
+                    <div><label class="field-label">Email Address</label><input id="f-email-to" class="field"
+                            placeholder="name@example.com"></div>
+                    <div><label class="field-label">Subject</label><input id="f-email-sub" class="field"
+                            placeholder="Hello!"></div>
+                    <div><label class="field-label">Message Body</label><textarea id="f-email-body"
+                            class="field min-h-[80px] resize-none" placeholder="Type your message..."></textarea></div>
+                </div>
+                <!-- PHONE -->
+                <div id="form-phone" class="type-form space-y-3">
+                    <label class="field-label">Phone Number</label>
+                    <input id="f-phone" class="field" placeholder="+91 98765 43210">
+                </div>
+                <!-- SMS -->
+                <div id="form-sms" class="type-form space-y-4">
+                    <div><label class="field-label">Phone Number</label><input id="f-sms-num" class="field"
+                            placeholder="+91 98765 43210"></div>
+                    <div><label class="field-label">Your Message</label><textarea id="f-sms-msg"
+                            class="field min-h-[80px] resize-none" placeholder="Hi there!"></textarea></div>
+                </div>
+                <!-- VCARD -->
+                <div id="form-vcard" class="type-form space-y-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div><label class="field-label">First Name</label><input id="f-vc-fn" class="field"
+                                placeholder="John"></div>
+                        <div><label class="field-label">Last Name</label><input id="f-vc-ln" class="field"
+                                placeholder="Doe"></div>
+                        <div><label class="field-label">Organization</label><input id="f-vc-org" class="field"
+                                placeholder="Acme Inc."></div>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div><label class="field-label">Position</label><input id="f-vc-title" class="field"
+                                placeholder="CEO"></div>
+                        <div><label class="field-label">Phone (Work)</label><input id="f-vc-pw" class="field"
+                                placeholder="+91..."></div>
+                        <div><label class="field-label">Phone (Mobile)</label><input id="f-vc-pm" class="field"
+                                placeholder="+91..."></div>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div><label class="field-label">Fax (Work)</label><input id="f-vc-fax" class="field"
+                                placeholder="+91..."></div>
+                        <div><label class="field-label">Email</label><input id="f-vc-email" class="field"
+                                placeholder="john@acme.com"></div>
+                        <div><label class="field-label">Website</label><input id="f-vc-url" class="field"
+                                placeholder="https://acme.com"></div>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div><label class="field-label">Street</label><input id="f-vc-street" class="field"
+                                placeholder="123 Main St"></div>
+                        <div><label class="field-label">City</label><input id="f-vc-city" class="field"
+                                placeholder="Chennai"></div>
+                        <div><label class="field-label">State</label><input id="f-vc-state" class="field"
+                                placeholder="Tamil Nadu"></div>
+                    </div>
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div><label class="field-label">Zip Code</label><input id="f-vc-zip" class="field"
+                                placeholder="600001"></div>
+                        <div><label class="field-label">Country</label><input id="f-vc-country" class="field"
+                                placeholder="India"></div>
+                    </div>
+                </div>
+                <!-- WIFI -->
+                <div id="form-wifi" class="type-form space-y-4">
+                    <div><label class="field-label">Network Name (SSID)</label><input id="f-wifi-ssid" class="field"
+                            placeholder="MyWiFi"></div>
+                    <div><label class="field-label">Password</label><input id="f-wifi-pass" class="field"
+                            type="password" placeholder="••••••••"></div>
+                    <div><label class="field-label">Encryption</label>
+                        <select id="f-wifi-enc" class="field">
+                            <option value="WPA">WPA / WPA2</option>
+                            <option value="WEP">WEP</option>
+                            <option value="nopass">None (Open)</option>
+                        </select>
+                    </div>
+                    <label class="flex items-center gap-2 cursor-pointer"><input type="checkbox" id="f-wifi-hidden"
+                            class="accent-brand-500 w-4 h-4"><span class="text-xs font-bold text-surface-600">Hidden
+                            Network</span></label>
+                </div>
+                <!-- LOCATION -->
+                <div id="form-location" class="type-form space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div><label class="field-label">Latitude</label><input id="f-loc-lat" class="field"
+                                placeholder="13.0827" type="number" step="any"></div>
+                        <div><label class="field-label">Longitude</label><input id="f-loc-lng" class="field"
+                                placeholder="80.2707" type="number" step="any"></div>
+                    </div>
+                    <p class="text-[9px] text-surface-400 font-bold italic">Tip: Right-click Google Maps → "What's
+                        here?" to get coordinates.</p>
+                </div>
+            </div>
+        </div>
 
-        <!-- Result Area (Initially Hidden) -->
-        <div id="result-area" class="hidden mt-10 pt-10 border-t-2 border-dashed border-surface-50 animate-fade-in-up">
-            <div class="flex flex-col items-center gap-4">
-                <div class="relative group">
-                    <div class="absolute -inset-4 bg-gradient-to-tr from-brand-500/10 to-purple-500/10 rounded-2xl blur-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-                    <div class="relative w-56 h-56 sm:w-64 sm:h-64 rounded-xl bg-white p-6 border border-surface-100 shadow-2xl group-hover:scale-[1.02] transition-transform duration-500">
-                        <img id="qr-img" src="" class="w-full h-full object-contain select-none pointer-events-none">
+        <!-- ── ACCORDION 2: SET COLORS ── -->
+        <div class="rounded-2xl bg-white border border-surface-100 shadow-mega overflow-hidden">
+            <button onclick="toggleAcc('colors')"
+                class="acc-head w-full px-6 py-4.5 flex items-center justify-between hover:bg-surface-50/60 transition-colors">
+                <span class="flex items-center gap-3"><i data-lucide="palette" class="w-5 h-5 text-brand-500"></i><span
+                        class="text-xs font-black uppercase tracking-widest">Set Colors</span></span>
+                <i data-lucide="chevron-down" class="acc-arrow w-4 h-4 transition-transform"></i>
+            </button>
+            <div id="acc-colors" class="acc-body px-6 pb-6 pt-2 border-t border-surface-50 space-y-6">
+                <div class="grid grid-cols-2 gap-6">
+                    <div><label class="field-label">Foreground</label><input type="color" id="fg-color" value="#000000"
+                            class="color-swatch w-full h-12 cursor-pointer rounded-xl border-2 border-surface-100 overflow-hidden bg-transparent">
+                    </div>
+                    <div><label class="field-label">Background</label><input type="color" id="bg-color" value="#ffffff"
+                            class="color-swatch w-full h-12 cursor-pointer rounded-xl border-2 border-surface-100 overflow-hidden bg-transparent">
+                    </div>
+                </div>
+                <div><label class="field-label">Gradient</label>
+                    <select id="gradient-type" class="field">
+                        <option value="none">Single Color</option>
+                        <option value="horizontal">Linear Gradient</option>
+                        <option value="radial">Radial Gradient</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- ── ACCORDION 3: ADD LOGO ── -->
+        <div class="rounded-2xl bg-white border border-surface-100 shadow-mega overflow-hidden">
+            <button onclick="toggleAcc('logo')"
+                class="acc-head w-full px-6 py-4.5 flex items-center justify-between hover:bg-surface-50/60 transition-colors">
+                <span class="flex items-center gap-3"><i data-lucide="image" class="w-5 h-5 text-brand-500"></i><span
+                        class="text-xs font-black uppercase tracking-widest">Add Logo Image</span></span>
+                <i data-lucide="chevron-down" class="acc-arrow w-4 h-4 transition-transform"></i>
+            </button>
+            <div id="acc-logo" class="acc-body px-6 pb-6 pt-2 border-t border-surface-50 space-y-6">
+                <!-- Upload -->
+                <div
+                    class="relative flex flex-col items-center p-6 bg-surface-50 rounded-2xl border-2 border-dashed border-surface-200 hover:border-brand-400 transition-all cursor-pointer group">
+                    <input type="file" id="logo-file" accept="image/*"
+                        class="absolute inset-0 opacity-0 cursor-pointer z-10" onchange="onLogoFile(this)">
+                    <div id="logo-preview" class="hidden text-center z-0">
+                        <img id="logo-preview-img"
+                            class="w-16 h-16 rounded-lg object-contain bg-white p-1 shadow-md border border-surface-100 mx-auto mb-2">
+                        <button onclick="clearLogo(event)"
+                            class="text-[9px] font-black text-red-500 uppercase hover:text-red-700">Remove Logo</button>
+                    </div>
+                    <div id="logo-empty" class="text-center">
+                        <i data-lucide="upload-cloud"
+                            class="w-8 h-8 text-surface-300 mx-auto mb-2 group-hover:text-brand-500 transition-colors"></i>
+                        <p class="text-[10px] font-black text-surface-400 uppercase tracking-widest">Upload Image</p>
+                        <p class="text-[8px] text-surface-300 mt-1">PNG / JPG — Max 2 MB</p>
                     </div>
                 </div>
 
-                <div class="flex flex-col sm:flex-row gap-3 w-full justify-center">
-                    <a id="download-btn" href="#" download="qrcode.png" 
-                       class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-2xl bg-surface-900 text-white font-black text-xs uppercase tracking-widest hover:bg-black transition-all shadow-xl shadow-surface-900/10">
-                        <i data-lucide="download" class="w-4 h-4"></i>
-                        Download PNG
-                    </a>
-                    <button onclick="window.location.reload()" 
-                       class="flex-1 sm:flex-none inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-2xl bg-surface-50 border border-surface-100 text-surface-600 font-black text-xs uppercase tracking-widest hover:bg-surface-100 transition-all">
-                        <i data-lucide="refresh-cw" class="w-4 h-4"></i>
-                        Create New
-                    </button>
+                <!-- Social Media Preset Logos -->
+                <div>
+                    <label class="field-label mb-3 block">Or Choose a Brand Logo</label>
+                    <div class="grid grid-cols-8 sm:grid-cols-10 gap-2" id="preset-logos">
+                        <!-- Each preset: colored circle with letter, generated via canvas -->
+                        <div class="logo-preset p-1.5 bg-surface-50 rounded-lg"
+                            onclick="selectPreset(this,'#1877F2','f','Facebook')" title="Facebook">
+                            <div class="w-full aspect-square rounded-lg flex items-center justify-center text-white font-black text-sm"
+                                style="background:#1877F2">f</div>
+                        </div>
+                        <div class="logo-preset p-1.5 bg-surface-50 rounded-lg"
+                            onclick="selectPreset(this,'#E1306C','Ig','Instagram')" title="Instagram">
+                            <div class="w-full aspect-square rounded-lg flex items-center justify-center text-white font-black text-[10px]"
+                                style="background:linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)">Ig
+                            </div>
+                        </div>
+                        <div class="logo-preset p-1.5 bg-surface-50 rounded-lg"
+                            onclick="selectPreset(this,'#25D366','W','WhatsApp')" title="WhatsApp">
+                            <div class="w-full aspect-square rounded-lg flex items-center justify-center text-white font-black text-sm"
+                                style="background:#25D366">W</div>
+                        </div>
+                        <div class="logo-preset p-1.5 bg-surface-50 rounded-lg"
+                            onclick="selectPreset(this,'#1DA1F2','t','Twitter')" title="Twitter">
+                            <div class="w-full aspect-square rounded-lg flex items-center justify-center text-white font-black text-sm"
+                                style="background:#1DA1F2">t</div>
+                        </div>
+                        <div class="logo-preset p-1.5 bg-surface-50 rounded-lg"
+                            onclick="selectPreset(this,'#FF0000','▶','YouTube')" title="YouTube">
+                            <div class="w-full aspect-square rounded-lg flex items-center justify-center text-white font-black text-sm"
+                                style="background:#FF0000">▶</div>
+                        </div>
+                        <div class="logo-preset p-1.5 bg-surface-50 rounded-lg"
+                            onclick="selectPreset(this,'#0A66C2','in','LinkedIn')" title="LinkedIn">
+                            <div class="w-full aspect-square rounded-lg flex items-center justify-center text-white font-black text-[10px]"
+                                style="background:#0A66C2">in</div>
+                        </div>
+                        <div class="logo-preset p-1.5 bg-surface-50 rounded-lg"
+                            onclick="selectPreset(this,'#E60023','P','Pinterest')" title="Pinterest">
+                            <div class="w-full aspect-square rounded-lg flex items-center justify-center text-white font-black text-sm"
+                                style="background:#E60023">P</div>
+                        </div>
+                        <div class="logo-preset p-1.5 bg-surface-50 rounded-lg"
+                            onclick="selectPreset(this,'#FF4500','r/','Reddit')" title="Reddit">
+                            <div class="w-full aspect-square rounded-lg flex items-center justify-center text-white font-black text-[10px]"
+                                style="background:#FF4500">r/</div>
+                        </div>
+                        <div class="logo-preset p-1.5 bg-surface-50 rounded-lg"
+                            onclick="selectPreset(this,'#0088cc','Tg','Telegram')" title="Telegram">
+                            <div class="w-full aspect-square rounded-lg flex items-center justify-center text-white font-black text-[10px]"
+                                style="background:#0088cc">Tg</div>
+                        </div>
+                        <div class="logo-preset p-1.5 bg-surface-50 rounded-lg"
+                            onclick="selectPreset(this,'#FFFC00','S','Snapchat')" title="Snapchat">
+                            <div class="w-full aspect-square rounded-lg flex items-center justify-center text-black font-black text-sm"
+                                style="background:#FFFC00">S</div>
+                        </div>
+                        <div class="logo-preset p-1.5 bg-surface-50 rounded-lg"
+                            onclick="selectPreset(this,'#4267B2','G+','Google+')" title="Google+">
+                            <div class="w-full aspect-square rounded-lg flex items-center justify-center text-white font-black text-[9px]"
+                                style="background:#4267B2">G+</div>
+                        </div>
+                        <div class="logo-preset p-1.5 bg-surface-50 rounded-lg"
+                            onclick="selectPreset(this,'#00B900','Li','LINE')" title="LINE">
+                            <div class="w-full aspect-square rounded-lg flex items-center justify-center text-white font-black text-[10px]"
+                                style="background:#00B900">Li</div>
+                        </div>
+                        <div class="logo-preset p-1.5 bg-surface-50 rounded-lg"
+                            onclick="selectPreset(this,'#7C4DFF','V','Viber')" title="Viber">
+                            <div class="w-full aspect-square rounded-lg flex items-center justify-center text-white font-black text-sm"
+                                style="background:#7C4DFF">V</div>
+                        </div>
+                        <div class="logo-preset p-1.5 bg-surface-50 rounded-lg"
+                            onclick="selectPreset(this,'#00AFF0','Sk','Skype')" title="Skype">
+                            <div class="w-full aspect-square rounded-lg flex items-center justify-center text-white font-black text-[10px]"
+                                style="background:#00AFF0">Sk</div>
+                        </div>
+                        <div class="logo-preset p-1.5 bg-surface-50 rounded-lg"
+                            onclick="selectPreset(this,'#EA4335','@','Gmail')" title="Gmail">
+                            <div class="w-full aspect-square rounded-lg flex items-center justify-center text-white font-black text-sm"
+                                style="background:#EA4335">@</div>
+                        </div>
+                        <div class="logo-preset p-1.5 bg-surface-50 rounded-lg"
+                            onclick="selectPreset(this,'#34A853','▷','Play Store')" title="Play Store">
+                            <div class="w-full aspect-square rounded-lg flex items-center justify-center text-white font-black text-sm"
+                                style="background:#34A853">▷</div>
+                        </div>
+                        <div class="logo-preset p-1.5 bg-surface-50 rounded-lg"
+                            onclick="selectPreset(this,'#555555','☎','Phone')" title="Phone">
+                            <div class="w-full aspect-square rounded-lg flex items-center justify-center text-white font-black text-sm"
+                                style="background:#555">☎</div>
+                        </div>
+                        <div class="logo-preset p-1.5 bg-surface-50 rounded-lg"
+                            onclick="selectPreset(this,'#333','◀','Share')" title="Share">
+                            <div class="w-full aspect-square rounded-lg flex items-center justify-center text-white font-black text-sm"
+                                style="background:#333">⤴</div>
+                        </div>
+                        <div class="logo-preset p-1.5 bg-surface-50 rounded-lg"
+                            onclick="selectPreset(this,'#009688','◉','WiFi')" title="WiFi">
+                            <div class="w-full aspect-square rounded-lg flex items-center justify-center text-white font-black text-sm"
+                                style="background:#009688">◉</div>
+                        </div>
+                        <div class="logo-preset p-1.5 bg-surface-50 rounded-lg"
+                            onclick="selectPreset(this,'#F7931A','₿','Bitcoin')" title="Bitcoin">
+                            <div class="w-full aspect-square rounded-lg flex items-center justify-center text-white font-black text-sm"
+                                style="background:#F7931A">₿</div>
+                        </div>
+                    </div>
                 </div>
+            </div>
+        </div>
+
+        <!-- ── ACCORDION 4: CUSTOMIZE DESIGN ── -->
+        <div class="rounded-2xl bg-white border border-surface-100 shadow-mega overflow-hidden">
+            <button onclick="toggleAcc('design')"
+                class="acc-head w-full px-6 py-4.5 flex items-center justify-between hover:bg-surface-50/60 transition-colors">
+                <span class="flex items-center gap-3"><i data-lucide="layout" class="w-5 h-5 text-brand-500"></i><span
+                        class="text-xs font-black uppercase tracking-widest">Customize Design</span></span>
+                <i data-lucide="chevron-down" class="acc-arrow w-4 h-4 transition-transform"></i>
+            </button>
+            <div id="acc-design" class="acc-body px-6 pb-6 pt-2 border-t border-surface-50 space-y-8">
+                <!-- Body Shape -->
+                <div>
+                    <label class="field-label mb-3 block">Body Shape</label>
+                    <div class="grid grid-cols-6 sm:grid-cols-8 gap-2">
+                        <label class="shape-opt cursor-pointer"><input type="radio" name="body" value="square" checked
+                                class="sr-only">
+                            <div
+                                class="aspect-square rounded-lg border-2 border-surface-100 flex items-center justify-center p-2">
+                                <div class="w-full h-full bg-surface-800"></div>
+                            </div>
+                        </label>
+                        <label class="shape-opt cursor-pointer"><input type="radio" name="body" value="rounded"
+                                class="sr-only">
+                            <div
+                                class="aspect-square rounded-lg border-2 border-surface-100 flex items-center justify-center p-2">
+                                <div class="w-full h-full bg-surface-800 rounded-md"></div>
+                            </div>
+                        </label>
+                        <label class="shape-opt cursor-pointer"><input type="radio" name="body" value="circle"
+                                class="sr-only">
+                            <div
+                                class="aspect-square rounded-lg border-2 border-surface-100 flex items-center justify-center p-2">
+                                <div class="w-full h-full bg-surface-800 rounded-full"></div>
+                            </div>
+                        </label>
+                        <label class="shape-opt cursor-pointer"><input type="radio" name="body" value="diamond"
+                                class="sr-only">
+                            <div
+                                class="aspect-square rounded-lg border-2 border-surface-100 flex items-center justify-center p-2">
+                                <div class="w-full h-full bg-surface-800 rotate-45 scale-[.7]"></div>
+                            </div>
+                        </label>
+                        <label class="shape-opt cursor-pointer"><input type="radio" name="body" value="dot"
+                                class="sr-only">
+                            <div
+                                class="aspect-square rounded-lg border-2 border-surface-100 flex items-center justify-center p-3">
+                                <div class="w-3/4 h-3/4 bg-surface-800 rounded-full"></div>
+                            </div>
+                        </label>
+                        <label class="shape-opt cursor-pointer"><input type="radio" name="body" value="small-square"
+                                class="sr-only">
+                            <div
+                                class="aspect-square rounded-lg border-2 border-surface-100 flex items-center justify-center p-3">
+                                <div class="w-3/4 h-3/4 bg-surface-800"></div>
+                            </div>
+                        </label>
+                        <label class="shape-opt cursor-pointer"><input type="radio" name="body" value="hline"
+                                class="sr-only">
+                            <div
+                                class="aspect-square rounded-lg border-2 border-surface-100 flex items-center justify-center p-2">
+                                <div class="w-full h-1/2 bg-surface-800"></div>
+                            </div>
+                        </label>
+                        <label class="shape-opt cursor-pointer"><input type="radio" name="body" value="vline"
+                                class="sr-only">
+                            <div
+                                class="aspect-square rounded-lg border-2 border-surface-100 flex items-center justify-center p-2">
+                                <div class="w-1/2 h-full bg-surface-800"></div>
+                            </div>
+                        </label>
+                        <label class="shape-opt cursor-pointer"><input type="radio" name="body" value="star"
+                                class="sr-only">
+                            <div
+                                class="aspect-square rounded-lg border-2 border-surface-100 flex items-center justify-center p-2 text-surface-800 text-lg font-black">
+                                ✦</div>
+                        </label>
+                        <label class="shape-opt cursor-pointer"><input type="radio" name="body" value="cross"
+                                class="sr-only">
+                            <div
+                                class="aspect-square rounded-lg border-2 border-surface-100 flex items-center justify-center p-2 text-surface-800 text-lg font-black">
+                                ✚</div>
+                        </label>
+                        <label class="shape-opt cursor-pointer"><input type="radio" name="body" value="leaf"
+                                class="sr-only">
+                            <div
+                                class="aspect-square rounded-lg border-2 border-surface-100 flex items-center justify-center p-2">
+                                <div class="w-full h-full bg-surface-800 rounded-full rounded-tl-none rounded-br-none">
+                                </div>
+                            </div>
+                        </label>
+                        <label class="shape-opt cursor-pointer"><input type="radio" name="body" value="clover"
+                                class="sr-only">
+                            <div
+                                class="aspect-square rounded-lg border-2 border-surface-100 flex items-center justify-center p-2 text-surface-800 text-lg font-black">
+                                ✿</div>
+                        </label>
+                    </div>
+                </div>
+                <!-- Eye Frame Shape -->
+                <div>
+                    <label class="field-label mb-3 block">Eye Frame Shape</label>
+                    <div class="grid grid-cols-6 sm:grid-cols-8 gap-2">
+                        <label class="shape-opt cursor-pointer"><input type="radio" name="eye" value="square" checked
+                                class="sr-only">
+                            <div
+                                class="aspect-square rounded-lg border-2 border-surface-100 flex items-center justify-center p-2.5">
+                                <div class="w-full h-full border-[3px] border-surface-800"></div>
+                            </div>
+                        </label>
+                        <label class="shape-opt cursor-pointer"><input type="radio" name="eye" value="rounded"
+                                class="sr-only">
+                            <div
+                                class="aspect-square rounded-lg border-2 border-surface-100 flex items-center justify-center p-2.5">
+                                <div class="w-full h-full border-[3px] border-surface-800 rounded-lg"></div>
+                            </div>
+                        </label>
+                        <label class="shape-opt cursor-pointer"><input type="radio" name="eye" value="circle"
+                                class="sr-only">
+                            <div
+                                class="aspect-square rounded-lg border-2 border-surface-100 flex items-center justify-center p-2.5">
+                                <div class="w-full h-full border-[3px] border-surface-800 rounded-full"></div>
+                            </div>
+                        </label>
+                        <label class="shape-opt cursor-pointer"><input type="radio" name="eye" value="diamond"
+                                class="sr-only">
+                            <div
+                                class="aspect-square rounded-lg border-2 border-surface-100 flex items-center justify-center p-3">
+                                <div class="w-full h-full border-[3px] border-surface-800 rotate-45 scale-[.7]"></div>
+                            </div>
+                        </label>
+                        <label class="shape-opt cursor-pointer"><input type="radio" name="eye" value="leaf"
+                                class="sr-only">
+                            <div
+                                class="aspect-square rounded-lg border-2 border-surface-100 flex items-center justify-center p-2.5">
+                                <div
+                                    class="w-full h-full border-[3px] border-surface-800 rounded-full rounded-tl-none rounded-br-none">
+                                </div>
+                            </div>
+                        </label>
+                        <label class="shape-opt cursor-pointer"><input type="radio" name="eye" value="dot"
+                                class="sr-only">
+                            <div
+                                class="aspect-square rounded-lg border-2 border-surface-100 flex items-center justify-center p-3">
+                                <div class="w-3/4 h-3/4 border-[3px] border-surface-800 rounded-full"></div>
+                            </div>
+                        </label>
+                    </div>
+                </div>
+                <!-- Eye Ball Shape -->
+                <div>
+                    <label class="field-label mb-3 block">Eye Ball Shape</label>
+                    <div class="grid grid-cols-6 sm:grid-cols-8 gap-2">
+                        <label class="shape-opt cursor-pointer"><input type="radio" name="ball" value="square" checked
+                                class="sr-only">
+                            <div
+                                class="aspect-square rounded-lg border-2 border-surface-100 flex items-center justify-center p-3">
+                                <div class="w-5 h-5 bg-surface-800"></div>
+                            </div>
+                        </label>
+                        <label class="shape-opt cursor-pointer"><input type="radio" name="ball" value="rounded"
+                                class="sr-only">
+                            <div
+                                class="aspect-square rounded-lg border-2 border-surface-100 flex items-center justify-center p-3">
+                                <div class="w-5 h-5 bg-surface-800 rounded"></div>
+                            </div>
+                        </label>
+                        <label class="shape-opt cursor-pointer"><input type="radio" name="ball" value="circle"
+                                class="sr-only">
+                            <div
+                                class="aspect-square rounded-lg border-2 border-surface-100 flex items-center justify-center p-3">
+                                <div class="w-5 h-5 bg-surface-800 rounded-full"></div>
+                            </div>
+                        </label>
+                        <label class="shape-opt cursor-pointer"><input type="radio" name="ball" value="diamond"
+                                class="sr-only">
+                            <div
+                                class="aspect-square rounded-lg border-2 border-surface-100 flex items-center justify-center p-3">
+                                <div class="w-5 h-5 bg-surface-800 rotate-45 scale-75"></div>
+                            </div>
+                        </label>
+                        <label class="shape-opt cursor-pointer"><input type="radio" name="ball" value="star"
+                                class="sr-only">
+                            <div
+                                class="aspect-square rounded-lg border-2 border-surface-100 flex items-center justify-center text-surface-800 text-sm font-black">
+                                ✦</div>
+                        </label>
+                        <label class="shape-opt cursor-pointer"><input type="radio" name="ball" value="cross"
+                                class="sr-only">
+                            <div
+                                class="aspect-square rounded-lg border-2 border-surface-100 flex items-center justify-center text-surface-800 text-sm font-black">
+                                ✚</div>
+                        </label>
+                        <label class="shape-opt cursor-pointer"><input type="radio" name="ball" value="leaf"
+                                class="sr-only">
+                            <div
+                                class="aspect-square rounded-lg border-2 border-surface-100 flex items-center justify-center p-3">
+                                <div class="w-5 h-5 bg-surface-800 rounded-full rounded-tl-none rounded-br-none"></div>
+                            </div>
+                        </label>
+                        <label class="shape-opt cursor-pointer"><input type="radio" name="ball" value="hline"
+                                class="sr-only">
+                            <div
+                                class="aspect-square rounded-lg border-2 border-surface-100 flex items-center justify-center p-3">
+                                <div class="w-5 h-2 bg-surface-800"></div>
+                            </div>
+                        </label>
+                        <label class="shape-opt cursor-pointer"><input type="radio" name="ball" value="vline"
+                                class="sr-only">
+                            <div
+                                class="aspect-square rounded-lg border-2 border-surface-100 flex items-center justify-center p-3">
+                                <div class="w-2 h-5 bg-surface-800"></div>
+                            </div>
+                        </label>
+                        <label class="shape-opt cursor-pointer"><input type="radio" name="ball" value="clover"
+                                class="sr-only">
+                            <div
+                                class="aspect-square rounded-lg border-2 border-surface-100 flex items-center justify-center text-surface-800 text-sm font-black">
+                                ✿</div>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- GENERATE BTN -->
+        <button id="gen-btn"
+            class="w-full py-5 rounded-2xl bg-gradient-to-r {{ tool.gradient }} text-white font-black text-base uppercase tracking-widest shadow-2xl shadow-brand-500/20 hover:shadow-brand-500/40 hover:-translate-y-1 active:scale-[.98] transition-all flex items-center justify-center gap-3">
+            <i data-lucide="sparkles" class="w-6 h-6"></i> Create QR Code
+        </button>
+    </div>
+
+    <!-- ═══════════  RIGHT: PREVIEW  ═══════════ -->
+    <div class="w-full lg:w-[480px] flex flex-col gap-6 lg:sticky lg:top-8">
+        <div class="rounded-3xl bg-white border border-surface-100 p-8 shadow-mega flex flex-col items-center">
+            <label
+                class="w-full text-center text-[10px] font-black text-surface-400 uppercase tracking-widest mb-6">Preview</label>
+            <div id="qr-box"
+                class="relative w-full bg-surface-50 rounded-2xl border-2 border-surface-100 flex items-center justify-center overflow-hidden mb-8 group"
+                style="min-height:380px; aspect-ratio:1/1;">
+                <div id="placeholder" class="text-center opacity-25 select-none">
+                    <i data-lucide="qr-code" class="w-24 h-24 mx-auto mb-3"></i>
+                    <p class="text-[10px] font-black uppercase tracking-widest">Your QR Code</p>
+                </div>
+                <img id="qr-img" class="hidden absolute inset-0 w-full h-full object-contain p-4">
+            </div>
+            <div class="w-full flex items-center gap-3 mb-6">
+                <span class="text-[9px] font-black text-surface-400 uppercase tracking-widest">Resolution</span>
+                <span class="text-xs font-bold text-surface-800 ml-auto">1000 × 1000 Px</span>
+            </div>
+            <!-- Download Actions: PNG + JPG Only -->
+            <div id="actions" class="hidden w-full space-y-3">
+                <a id="dl-png" href="#" download="ScanPDF_QR.png"
+                    class="w-full inline-flex items-center justify-center gap-3 py-4 rounded-2xl bg-brand-500 text-white font-black text-xs uppercase tracking-widest hover:bg-brand-600 transition-all shadow-xl shadow-brand-500/20">
+                    <i data-lucide="download" class="w-5 h-5"></i> Download PNG
+                </a>
+                <button id="dl-jpg-btn"
+                    class="w-full inline-flex items-center justify-center gap-3 py-4 rounded-2xl bg-surface-900 text-white font-black text-xs uppercase tracking-widest hover:bg-black transition-all shadow-xl shadow-surface-900/10">
+                    <i data-lucide="download" class="w-5 h-5"></i> Download JPG
+                </button>
+                <button onclick="window.print()"
+                    class="w-full inline-flex items-center justify-center gap-2.5 py-3.5 rounded-2xl bg-surface-50 border border-surface-100 text-surface-600 font-black text-[10px] uppercase tracking-widest hover:bg-surface-100 transition-all">
+                    <i data-lucide="printer" class="w-4 h-4"></i> Print QR Code
+                </button>
+            </div>
+        </div>
+        <div class="p-5 rounded-2xl bg-amber-50 border border-amber-100">
+            <div class="flex gap-3 items-start">
+                <i data-lucide="alert-triangle" class="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5"></i>
+                <p class="text-[11px] text-amber-800 font-bold leading-relaxed">Use high-contrast colors for best scan
+                    performance. Dark foreground on a light background is recommended.</p>
             </div>
         </div>
     </div>
@@ -55,45 +677,171 @@
 {% block extra_scripts %}
 <script>
     const CONVERT_URL = '{% url "converter:convert_file" "qrcode-generator" %}';
-    const CSRF_TOKEN = '{{ csrf_token }}';
-    const btn = document.getElementById('generate-btn'), input = document.getElementById('qr-input');
-    const result = document.getElementById('result-area'), img = document.getElementById('qr-img'), download = document.getElementById('download-btn');
+    const CSRF = '{{ csrf_token }}';
 
-    btn.addEventListener('click', async () => {
-        const val = input.value.trim(); 
-        if (!val) return;
-        
-        btn.disabled = true; 
-        const originalHtml = btn.innerHTML;
-        btn.innerHTML = '<div class="w-5 h-5 rounded-full border-2 border-white border-t-transparent animate-spin"></div> GENERATING...';
-        
-        try {
-            const fd = new FormData(); 
-            fd.append('text', val); 
-            fd.append('csrfmiddlewaretoken', CSRF_TOKEN);
-            
-            const r = await fetch(CONVERT_URL, { method: 'POST', body: fd });
-            if (!r.ok) { const d = await r.json(); throw new Error(d.error || 'Failed'); }
-            
-            const blob = await r.blob(); 
-            const url = window.URL.createObjectURL(blob);
-            
-            img.src = url; 
-            download.href = url;
-            result.classList.remove('hidden');
-            result.scrollIntoView({ behavior: 'smooth', block: 'center' });
-        } catch(err) { 
-            alert(err.message); 
-        } finally { 
-            btn.disabled = false; 
-            btn.innerHTML = originalHtml; 
-            lucide.createIcons(); 
+    /* ── Accordion ── */
+    function toggleAcc(id) {
+        const body = document.getElementById('acc-' + id);
+        const head = body.previousElementSibling;
+        body.classList.toggle('open'); head.classList.toggle('open');
+    }
+
+    /* ── Content-type pills ── */
+    let currentType = 'url';
+    function switchType(t) {
+        currentType = t;
+        document.querySelectorAll('.type-pill').forEach(b => b.classList.remove('active'));
+        event.target.classList.add('active');
+        document.querySelectorAll('.type-form').forEach(f => f.classList.remove('active'));
+        document.getElementById('form-' + t).classList.add('active');
+    }
+
+    /* ── Build data string from form ── */
+    function buildQRData() {
+        switch (currentType) {
+            case 'url': return document.getElementById('f-url').value.trim() || 'https://scanpdf.com';
+            case 'text': return document.getElementById('f-text').value.trim() || 'Hello World';
+            case 'email': {
+                const to = document.getElementById('f-email-to').value.trim();
+                const sub = document.getElementById('f-email-sub').value.trim();
+                const body = document.getElementById('f-email-body').value.trim();
+                return `mailto:${to}?subject=${encodeURIComponent(sub)}&body=${encodeURIComponent(body)}`;
+            }
+            case 'phone': return 'tel:' + document.getElementById('f-phone').value.trim();
+            case 'sms': {
+                const num = document.getElementById('f-sms-num').value.trim();
+                const msg = document.getElementById('f-sms-msg').value.trim();
+                return `smsto:${num}:${msg}`;
+            }
+            case 'vcard': {
+                const g = id => document.getElementById(id).value.trim();
+                let v = 'BEGIN:VCARD\nVERSION:3.0\n';
+                v += `N:${g('f-vc-ln')};${g('f-vc-fn')};;;\n`;
+                v += `FN:${g('f-vc-fn')} ${g('f-vc-ln')}\n`;
+                if (g('f-vc-org')) v += `ORG:${g('f-vc-org')}\n`;
+                if (g('f-vc-title')) v += `TITLE:${g('f-vc-title')}\n`;
+                if (g('f-vc-pw')) v += `TEL;TYPE=WORK:${g('f-vc-pw')}\n`;
+                if (g('f-vc-pm')) v += `TEL;TYPE=CELL:${g('f-vc-pm')}\n`;
+                if (g('f-vc-fax')) v += `TEL;TYPE=FAX:${g('f-vc-fax')}\n`;
+                if (g('f-vc-email')) v += `EMAIL:${g('f-vc-email')}\n`;
+                if (g('f-vc-url')) v += `URL:${g('f-vc-url')}\n`;
+                const adr = `${g('f-vc-street')};${g('f-vc-city')};${g('f-vc-state')};${g('f-vc-zip')};${g('f-vc-country')}`;
+                if (adr.replace(/;/g, '')) v += `ADR;TYPE=WORK:;;${adr}\n`;
+                v += 'END:VCARD';
+                return v;
+            }
+            case 'wifi': {
+                const ssid = document.getElementById('f-wifi-ssid').value.trim();
+                const pass = document.getElementById('f-wifi-pass').value.trim();
+                const enc = document.getElementById('f-wifi-enc').value;
+                const hidden = document.getElementById('f-wifi-hidden').checked ? 'H:true;' : '';
+                return `WIFI:S:${ssid};T:${enc};P:${pass};${hidden};`;
+            }
+            case 'location': {
+                const lat = document.getElementById('f-loc-lat').value.trim() || '0';
+                const lng = document.getElementById('f-loc-lng').value.trim() || '0';
+                return `geo:${lat},${lng}`;
+            }
         }
-    });
+        return '';
+    }
 
-    // Handle CTRL+ENTER to generate
-    input.addEventListener('keydown', (e) => {
-        if (e.ctrlKey && e.key === 'Enter') btn.click();
-    });
+    /* ── Logo handling ── */
+    let logoFile = null;
+    function onLogoFile(inp) {
+        if (!inp.files || !inp.files[0]) return;
+        logoFile = inp.files[0];
+        document.querySelectorAll('.logo-preset').forEach(p => p.classList.remove('active'));
+        const r = new FileReader();
+        r.onload = e => {
+            document.getElementById('logo-preview-img').src = e.target.result;
+            document.getElementById('logo-preview').classList.remove('hidden');
+            document.getElementById('logo-empty').classList.add('hidden');
+        };
+        r.readAsDataURL(logoFile);
+    }
+    function clearLogo(e) {
+        e.stopPropagation();
+        logoFile = null;
+        document.getElementById('logo-file').value = '';
+        document.getElementById('logo-preview').classList.add('hidden');
+        document.getElementById('logo-empty').classList.remove('hidden');
+        document.querySelectorAll('.logo-preset').forEach(p => p.classList.remove('active'));
+    }
+
+    /* ── Preset logo: generate a canvas-based image ── */
+    function selectPreset(el, color, letter, name) {
+        document.querySelectorAll('.logo-preset').forEach(p => p.classList.remove('active'));
+        el.classList.add('active');
+        // Generate a 200x200 branded logo via Canvas
+        const c = document.createElement('canvas'); c.width = 200; c.height = 200;
+        const ctx = c.getContext('2d');
+        // Circle background
+        ctx.fillStyle = color;
+        ctx.beginPath(); ctx.arc(100, 100, 95, 0, Math.PI * 2); ctx.fill();
+        // Text
+        ctx.fillStyle = '#fff'; ctx.font = 'bold 80px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(letter, 100, 105);
+        c.toBlob(blob => {
+            logoFile = new File([blob], name + '.png', { type: 'image/png' });
+            document.getElementById('logo-preview-img').src = c.toDataURL();
+            document.getElementById('logo-preview').classList.remove('hidden');
+            document.getElementById('logo-empty').classList.add('hidden');
+        }, 'image/png');
+    }
+
+    /* ── Generate QR ── */
+    async function generateQR(format = 'png') {
+        const data = buildQRData();
+        if (!data) { alert('Please fill in the content fields.'); return null; }
+        const fd = new FormData();
+        fd.append('text', data);
+        fd.append('fg_color', document.getElementById('fg-color').value);
+        fd.append('bg_color', document.getElementById('bg-color').value);
+        fd.append('gradient', document.getElementById('gradient-type').value);
+        fd.append('style', document.querySelector('input[name="body"]:checked').value);
+        fd.append('eye_style', document.querySelector('input[name="eye"]:checked').value);
+        fd.append('ball_style', document.querySelector('input[name="ball"]:checked').value);
+        fd.append('output_format', format);
+        if (logoFile) fd.append('logo', logoFile);
+        fd.append('csrfmiddlewaretoken', CSRF);
+        const r = await fetch(CONVERT_URL, { method: 'POST', body: fd });
+        if (!r.ok) throw new Error('Generation failed');
+        return await r.blob();
+    }
+
+    const genBtn = document.getElementById('gen-btn');
+    genBtn.onclick = async () => {
+        genBtn.disabled = true;
+        const orig = genBtn.innerHTML;
+        genBtn.innerHTML = '<div class="w-5 h-5 rounded-full border-2 border-white border-t-transparent animate-spin"></div> CREATING...';
+        try {
+            const blob = await generateQR('png');
+            if (!blob) return;
+            const url = window.URL.createObjectURL(blob);
+            document.getElementById('qr-img').src = url;
+            document.getElementById('dl-png').href = url;
+            document.getElementById('placeholder').classList.add('hidden');
+            document.getElementById('qr-img').classList.remove('hidden');
+            document.getElementById('actions').classList.remove('hidden');
+            document.getElementById('qr-box').scrollIntoView({ behavior: 'smooth', block: 'center' });
+        } catch (err) { alert(err.message); }
+        finally { genBtn.disabled = false; genBtn.innerHTML = orig; lucide.createIcons(); }
+    };
+
+    /* ── JPG Download ── */
+    document.getElementById('dl-jpg-btn').onclick = async () => {
+        const btn = document.getElementById('dl-jpg-btn');
+        btn.disabled = true;
+        const orig = btn.innerHTML;
+        btn.innerHTML = '<div class="w-4 h-4 rounded-full border-2 border-white border-t-transparent animate-spin"></div> PREPARING...';
+        try {
+            const blob = await generateQR('jpg');
+            if (!blob) return;
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = 'ScanPDF_QR.jpg'; a.click();
+        } catch (err) { alert(err.message); }
+        finally { btn.disabled = false; btn.innerHTML = orig; lucide.createIcons(); }
+    };
 </script>
 {% endblock %}
