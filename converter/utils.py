@@ -3054,11 +3054,15 @@ def remove_background(input_path, original_name):
     """
     from PIL import Image
     from rembg import remove as rembg_remove
+    from rembg.session_factory import new_session
 
     output_path = get_output_path(original_name, 'png', suffix='_nobg')
 
+    # Force lightweight 'u2netp' to prevent Live Server OOM & Worker Timeout killing
+    session = new_session('u2netp')
+
     img = Image.open(input_path)
-    result = rembg_remove(img)
+    result = rembg_remove(img, session=session)
     result.save(output_path, 'PNG')
     return output_path
 
@@ -3439,7 +3443,16 @@ def get_video_info(url):
         'referer': 'https://www.instagram.com/',
         'geo_bypass': True,
         'ignore_no_formats_error': True,
+        'source_address': '0.0.0.0',
+        'socket_timeout': 30,
+        'extractor_args': {'youtube': ['player_client=android']},
     }
+    
+    # Auto-load authentication cookies if provided via file to bypass Datacenter/Server blocking
+    from django.conf import settings
+    cookie_path = os.path.join(settings.BASE_DIR, 'cookies.txt')
+    if os.path.exists(cookie_path):
+        ydl_opts['cookiefile'] = cookie_path
     
     # Use bundled FFmpeg to avoid requiring user to install it system-wide
     try:
@@ -3462,8 +3475,12 @@ def get_video_info(url):
                     available_h.append(h)
                     
             format_options = []
-            if available_h:
-                # Target standard recognizable tiers
+            
+            # Instagram should only show a single "Best Quality" option, bypass resolution detection
+            is_ig = 'instagram.com' in url.lower()
+            
+            if not is_ig and available_h:
+                # Target standard recognizable tiers for YouTube etc
                 for h in [2160, 1440, 1080, 720, 480, 360, 240, 144]:
                     # check if the video has a stream at or very close to this tier
                     if any(vh >= h - 60 for vh in available_h):
@@ -3481,7 +3498,7 @@ def get_video_info(url):
                             'note': note
                         })
             else:
-                # Fallback for platforms with no explicit heights (e.g. some social media)
+                # Fallback for Instagram and platforms with no explicit heights
                 format_options.append({
                     'format_id': 'best',
                     'ext': 'mp4',
@@ -3524,7 +3541,16 @@ def download_video(url, format_id=None):
         'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
         'geo_bypass': True,
         'ignore_no_formats_error': True,
+        'source_address': '0.0.0.0',
+        'socket_timeout': 60,
+        'extractor_args': {'youtube': ['player_client=android']},
     }
+    
+    # Auto-load authentication cookies if provided via file to bypass Datacenter/Server blocking
+    from django.conf import settings
+    cookie_path = os.path.join(settings.BASE_DIR, 'cookies.txt')
+    if os.path.exists(cookie_path):
+        ydl_opts['cookiefile'] = cookie_path
     
     # Use bundled FFmpeg to prevent merging errors
     try:
@@ -3552,7 +3578,8 @@ def download_video(url, format_id=None):
                 except OSError:
                     pass
             
-            os.rename(temp_path, final_path)
+            import shutil
+            shutil.move(temp_path, final_path)
             return final_path
     except Exception as e:
         # If it was a 500 caused by the video being truly private/unavailable, we'll get a better error now
