@@ -1661,18 +1661,24 @@ def split_pdf(input_path, original_name, split_mode='each', page_ranges=None):
 # 11. COMPRESS PDF
 # ═══════════════════════════════════════════════════════════════
 def compress_pdf(input_path, original_name):
-    """Compress a PDF file to reduce its size."""
+    """Compress a PDF file aggressively but extremely fast by caching image xrefs."""
     import fitz
 
     output_path = get_output_path(original_name, 'pdf', suffix='_compressed')
-
     pdf = fitz.open(input_path)
 
-    # Aggressively compress images on each page
+    processed_xrefs = set()
+    
+    # Aggressively compress images once per unique global object reference
     for page in pdf:
         images = page.get_images(full=True)
         for img_info in images:
             xref = img_info[0]
+            
+            if xref in processed_xrefs:
+                continue
+            processed_xrefs.add(xref)
+            
             try:
                 base_image = pdf.extract_image(xref)
                 if base_image and base_image.get("image"):
@@ -1680,21 +1686,20 @@ def compress_pdf(input_path, original_name):
                     img_bytes = base_image["image"]
                     img = Image.open(io.BytesIO(img_bytes))
 
-                    # Aggressively resize large images
-                    max_dim = 800
+                    # Fast integer downscaling using BILINEAR for speed over LANCZOS
+                    max_dim = 1600
                     if img.width > max_dim or img.height > max_dim:
                         ratio = min(max_dim / img.width, max_dim / img.height)
                         new_size = (int(img.width * ratio), int(img.height * ratio))
-                        img = img.resize(new_size, Image.LANCZOS)
+                        img = img.resize(new_size, Image.Resampling.BILINEAR)
 
-                    # Convert to RGB
+                    # Ensure standard JPEG 8-bit compatibility
                     if img.mode != 'RGB':
                         img = img.convert('RGB')
 
                     buf = io.BytesIO()
-                    img.save(buf, format='JPEG', quality=40, optimize=True)
-                    buf.seek(0)
-
+                    # Quality 60 heavily reduces file size without losing readability.
+                    img.save(buf, format='JPEG', quality=60, optimize=False)
                     page.replace_image(xref, stream=buf.getvalue())
             except Exception:
                 continue
@@ -1702,6 +1707,7 @@ def compress_pdf(input_path, original_name):
     # Remove unused objects, metadata, etc.
     pdf.set_metadata({})
 
+    # Use PyMuPDF's built-in fast garbage collection and deflating to prune anything unused
     pdf.save(
         output_path,
         garbage=4,
@@ -3435,34 +3441,64 @@ def get_video_info(url):
         'ignore_no_formats_error': True,
     }
     
+    # Use bundled FFmpeg to avoid requiring user to install it system-wide
+    try:
+        import imageio_ffmpeg
+        ydl_opts['ffmpeg_location'] = imageio_ffmpeg.get_ffmpeg_exe()
+    except (ImportError, Exception):
+        pass
+    
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
             if not info:
                 raise Exception("This video is locked or private.")
                 
+            # Safely determine available resolutions up to 4K based on video streams present
+            available_h = []
+            for f in info.get('formats', []):
+                h = f.get('height')
+                if h and isinstance(h, int) and f.get('vcodec') != 'none':
+                    available_h.append(h)
+                    
+            format_options = []
+            if available_h:
+                # Target standard recognizable tiers
+                for h in [2160, 1440, 1080, 720, 480, 360, 240, 144]:
+                    # check if the video has a stream at or very close to this tier
+                    if any(vh >= h - 60 for vh in available_h):
+                        note = 'SD'
+                        if h >= 2160: note = '4K Ultra HD'
+                        elif h >= 1440: note = '2K Quad HD'
+                        elif h >= 1080: note = 'Full HD'
+                        elif h >= 720: note = 'HD'
+
+                        format_options.append({
+                            'format_id': f"bestvideo[ext=mp4][height<={h}]+bestaudio[ext=m4a]/bestvideo[height<={h}]+bestaudio/best[height<={h}]",
+                            'ext': 'mp4',
+                            'resolution': f"{h}p",
+                            'filesize': 0,
+                            'note': note
+                        })
+            else:
+                # Fallback for platforms with no explicit heights (e.g. some social media)
+                format_options.append({
+                    'format_id': 'best',
+                    'ext': 'mp4',
+                    'resolution': 'Best',
+                    'filesize': 0,
+                    'note': 'Auto-Selected Quality'
+                })
+
             return {
                 'title': info.get('title', 'Unknown Title'),
                 'thumbnail': info.get('thumbnail', ''),
                 'duration': info.get('duration', 0),
                 'uploader': info.get('uploader', 'Unknown'),
-                'formats': [
-                    {
-                        'format_id': f.get('format_id'),
-                        'ext': f.get('ext'),
-                        'resolution': f.get('resolution', 'N/A'),
-                        'filesize': f.get('filesize', 0),
-                        'note': f.get('format_note', '')
-                    } for f in info.get('formats', []) 
-                    if f.get('vcodec') != 'none' and f.get('acodec') != 'none' # only combined formats
-                ]
+                'formats': format_options
             }
     except Exception as e:
-        # Better error for Instagram login hurdles
-        err_msg = str(e)
-        if "certain audiences" in err_msg or "login" in err_msg.lower():
-            raise Exception("This content is protected by Instagram. Try a different public link or ensure the account is not private.")
-        raise Exception(f"Analysis Failed: {err_msg}")
+        raise Exception(f"Analysis Failed: {str(e)}")
 
 def download_video(url, format_id=None):
     """Download a video to the outputs directory and return the file path."""
@@ -3479,6 +3515,7 @@ def download_video(url, format_id=None):
     ydl_opts = {
         'outtmpl': os.path.join(output_dir, f'scan_temp_{temp_uuid}_%(title)s.%(ext)s'),
         'format': format_id if format_id else 'best',
+        'merge_output_format': 'mp4',
         'quiet': True,
         'no_warnings': True,
         'nocheckcertificate': True,
@@ -3488,6 +3525,13 @@ def download_video(url, format_id=None):
         'geo_bypass': True,
         'ignore_no_formats_error': True,
     }
+    
+    # Use bundled FFmpeg to prevent merging errors
+    try:
+        import imageio_ffmpeg
+        ydl_opts['ffmpeg_location'] = imageio_ffmpeg.get_ffmpeg_exe()
+    except (ImportError, Exception):
+        pass
     
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:

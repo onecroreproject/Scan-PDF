@@ -739,6 +739,7 @@ def convert_page(request, tool_slug):
     return render(request, template, context)
 
 
+@csrf_exempt
 @require_POST
 def convert_file(request, tool_slug):
     """Handle file conversion via AJAX request."""
