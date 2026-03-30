@@ -742,10 +742,18 @@ def convert_page(request, tool_slug):
 @require_POST
 def convert_file(request, tool_slug):
     """Handle file conversion via AJAX request."""
-    if tool_slug not in TOOLS:
-        return JsonResponse({'error': 'Invalid tool selected.'}, status=400)
-
     tool = TOOLS[tool_slug]
+
+    # ── Chemical Balance ──
+    if tool_slug == 'chemical-balancer':
+        equation = request.POST.get('equation', '')
+        if not equation:
+            return JsonResponse({'error': 'Please enter a chemical equation.'}, status=400)
+        try:
+            balanced = balance_chemical_equation(equation)
+            return JsonResponse({'result': balanced})
+        except Exception as e:
+            return JsonResponse({'error': str(e)}, status=500)
 
     # ── Merge PDF: multiple files ──
     if tool_slug == 'merge-pdf':
@@ -1364,16 +1372,6 @@ def convert_file(request, tool_slug):
         except Exception as e:
             return JsonResponse({'error': f'Background removal failed: {str(e)}'}, status=500)
 
-    # ── Chemical Balance ──
-    if tool_slug == 'chemical-balancer':
-        equation = request.POST.get('equation', '')
-        if not equation:
-            return JsonResponse({'error': 'Please enter a chemical equation.'}, status=400)
-        try:
-            balanced = balance_chemical_equation(equation)
-            return JsonResponse({'result': balanced})
-        except Exception as e:
-            return JsonResponse({'error': str(e)}, status=500)
 
     # ── Password Generator ──
     if tool_slug == 'password-generator':

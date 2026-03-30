@@ -3120,13 +3120,13 @@ def balance_chemical_equation(equation_str):
         balanced_eq = f"{format_side(reac)} = {format_side(prod)}"
         return balanced_eq
     except Exception as e:
-        # User-friendly error for common issues
+        # Avoid showing cryptic pyparsing/regex errors to the user
         msg = str(e)
-        if "Expected end of text" in msg:
-            msg = "Invalid formula. Use uppercase (e.g., 'H2O' not 'h2o')."
+        if any(keyword in msg for keyword in ["Expected", "found", "char", "line", "col"]):
+            msg = "Incorrect formula detected. Ensure you use CAPITAL symbols (e.g., 'H2O' instead of 'h2o') and proper numbers."
         elif "Linear system" in msg:
-            msg = "Equation cannot be balanced as written."
-        raise Exception(f"Failed to balance: {msg}")
+            msg = "Equation could not be balanced. Double check your reactants/products."
+        raise Exception(msg)
 
 
 # ═══════════════════════════════════════════════════════════════

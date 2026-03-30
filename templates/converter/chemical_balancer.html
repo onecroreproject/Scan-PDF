@@ -93,7 +93,14 @@
             fd.append('csrfmiddlewaretoken', CSRF_TOKEN);
             
             const r = await fetch(CONVERT_URL, { method: 'POST', body: fd });
-            const d = await r.json();
+            
+            let d;
+            try {
+                d = await r.json();
+            } catch (jsonErr) {
+                if (!r.ok) throw new Error(`Server Error (${r.status}): Failed to calculate stoichiometry.`);
+                throw new Error("Invalid response from server.");
+            }
             
             if (!r.ok) throw new Error(d.error || 'Failed to balance equation.');
             
