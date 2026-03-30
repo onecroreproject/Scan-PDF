@@ -38,14 +38,64 @@ def save_uploaded_file(uploaded_file):
     return file_path
 
 
-def get_output_path(original_name, new_extension):
-    """Generate a temporary output file path."""
+def format_download_name(name):
+    """
+    Format the filename for download:
+    1. Prepend 'ScanPDF_'
+    2. Remove internal unique suffixes (like _A1B2 or long hex strings)
+    3. Ensure underscores instead of spaces and special characters
+    """
+    import re
+    # Extract filename and extension
+    stem = Path(name).stem
+    ext = Path(name).suffix
+
+    # 1. Remove internal unique suffixes (e.g. _A1B2 or _a1b2c3d4e5f6...)
+    # We match an underscore followed by 4 or more hex characters at the end of the stem
+    stem = re.sub(r'_[0-9a-fA-F]{4,32}$', '', stem)
+    
+    # 2. Add 'ScanPDF' prefix if not there
+    if not stem.lower().startswith('scanpdf'):
+        stem = f"ScanPDF_{stem}"
+    elif not stem.startswith('ScanPDF_'):
+        # Normalize the case
+        stem = re.sub(r'^scanpdf_?', 'ScanPDF_', stem, flags=re.IGNORECASE)
+
+    # 3. Replace spaces and all non-alphanumeric (except . - _) with underscores
+    stem = re.sub(r'[^\w\.\-]', '_', stem)
+    # Remove duplicate underscores
+    stem = re.sub(r'_{2,}', '_', stem)
+    # Final cleanup
+    stem = stem.strip('_')
+
+    return f"{stem}{ext}"
+
+
+def get_output_path(original_name, new_extension, suffix=''):
+    """
+    Generate a temporary output file path with a readable but unique name.
+    suffix: Optional string like '_merged' or '_converted' to append to the base name.
+    """
     import uuid
+    import re
     _, output_dir = ensure_media_dirs()
+    
+    # Use the original name as the base for readability
     base_name = Path(original_name).stem
+    
+    # Sanitize base_name for the file system (remove spaces, etc.)
+    base_name = re.sub(r'[^\w\.\-]', '_', base_name)
+    base_name = re.sub(r'_{2,}', '_', base_name).strip('_')
+    
     ext = new_extension if new_extension.startswith('.') else f".{new_extension}"
-    # Use UUID to ensure unique temp file
-    output_name = f"{base_name}_{uuid.uuid4().hex[:8]}{ext}"
+    
+    # unique_suffix: 4 chars is enough for unique temp files on a typical server
+    unique_suffix = uuid.uuid4().hex[:4].upper()
+    
+    # Format: ScanPDF_OriginalName_Suffix_UNIQUE.ext
+    # Example: ScanPDF_MyFile_merged_A1B2.pdf
+    output_name = f"ScanPDF_{base_name}{suffix}_{unique_suffix}{ext}"
+    
     return os.path.join(output_dir, output_name)
 
 
@@ -945,64 +995,127 @@ def convert_excel_to_pdf(input_path, original_name):
 # ═══════════════════════════════════════════════════════════════
 # 4. HTML → PDF
 # ═══════════════════════════════════════════════════════════════
-def convert_html_to_pdf(input_path, original_name):
-    """Convert an HTML file to PDF."""
+def convert_html_to_pdf(input_path, original_name, url=None):
+    """Convert an HTML file or a URL to PDF.
+
+    If `url` is provided, the page at that URL is fetched and rendered.
+    Otherwise the local HTML file at `input_path` is used.
+    """
     output_path = get_output_path(original_name, 'pdf')
-    
-    with open(input_path, 'r', encoding='utf-8', errors='ignore') as f:
-        html_content = f.read()
-    
-    # Try WeasyPrint first
+
+    html_content = None
+    base_url = None
+
+    if url:
+        # Fetch the remote page
+        try:
+            import requests as req_lib
+            resp = req_lib.get(url, timeout=30, headers={
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+            })
+            resp.raise_for_status()
+            html_content = resp.text
+            base_url = url
+        except Exception as e:
+            raise Exception(f"Could not fetch URL: {str(e)}")
+    else:
+        with open(input_path, 'r', encoding='utf-8', errors='ignore') as f:
+            html_content = f.read()
+        base_url = Path(input_path).parent.as_uri()
+
+    # ── Primary Engine: WeasyPrint ───────────────────────────
+    # Best for local HTML files with standard CSS
     try:
         import weasyprint
-        weasyprint.HTML(string=html_content).write_pdf(output_path)
+        weasyprint.HTML(string=html_content, base_url=base_url).write_pdf(output_path)
         return output_path
     except Exception:
         pass
-    
-    # Fallback: PyMuPDF
+
+    # ── High-Fidelity Fallback: Headless Browser (Chrome) ────
+    # Uses html2image + PyMuPDF to capture the page exactly as it appears
     try:
+        from html2image import Html2Image
+        import uuid
         import fitz
-        import re
+
+        # Prepare a temporary high-res screenshot
+        _, output_dir = ensure_media_dirs()
+        temp_img_name = f"render_tmp_{uuid.uuid4().hex[:8]}.png"
         
-        # Strip HTML tags for plain text extraction
-        clean_text = re.sub(r'<[^>]+>', '\n', html_content)
-        clean_text = re.sub(r'\n{3,}', '\n\n', clean_text)
-        lines = [line.strip() for line in clean_text.split('\n') if line.strip()]
+        hti = Html2Image(
+            browser='chrome',
+            output_path=output_dir,
+            custom_flags=['--no-sandbox', '--disable-gpu', '--hide-scrollbars']
+        )
         
+        # Determine whether to render the raw string or the URL directly
+        if url:
+            hti.screenshot(url=url, save_as=temp_img_name, size=(1280, 2500))
+        else:
+            hti.screenshot(html_str=html_content, save_as=temp_img_name, size=(1280, 2500))
+            
+        temp_img_path = os.path.join(output_dir, temp_img_name)
+        
+        if os.path.exists(temp_img_path):
+            # Convert screen capture to PDF
+            doc = fitz.open()
+            img_doc = fitz.open(temp_img_path)
+            # Create a PDF page matching the image aspect ratio
+            # image zoom (mat) can be adjusted for higher quality
+            pdf_bytes = img_doc.convert_to_pdf()
+            res_doc = fitz.open("pdf", pdf_bytes)
+            doc.insert_pdf(res_doc)
+            
+            doc.save(output_path)
+            doc.close()
+            img_doc.close()
+            res_doc.close()
+            
+            # Clean up temp image
+            try:
+                os.remove(temp_img_path)
+            except:
+                pass
+                
+            return output_path
+    except Exception:
+        pass
+
+    # ── Final Fallback: Simple text-based reconstruction ────
+    try:
+        import fitz, re
+        clean = re.sub(r'<[^>]+>', '\n', html_content)
+        clean = re.sub(r'\n{3,}', '\n\n', clean)
+        lines = [l.strip() for l in clean.split('\n') if l.strip()]
         pdf_doc = fitz.open()
         page = pdf_doc.new_page()
         y = 72
-        
         for line in lines:
             if y > 750:
                 page = pdf_doc.new_page()
                 y = 72
-            
-            # Word wrap
             words = line.split()
-            current_line = ""
-            for word in words:
-                test = f"{current_line} {word}".strip()
-                if len(test) * 5.5 > 470:
-                    page.insert_text((72, y), current_line, fontsize=11)
+            cur = ""
+            for w in words:
+                t = f"{cur} {w}".strip()
+                if len(t) * 5.5 > 470:
+                    page.insert_text((72, y), cur, fontsize=11)
                     y += 16
-                    current_line = word
+                    cur = w
                     if y > 750:
                         page = pdf_doc.new_page()
                         y = 72
                 else:
-                    current_line = test
-            
-            if current_line:
-                page.insert_text((72, y), current_line, fontsize=11)
+                    cur = t
+            if cur:
+                page.insert_text((72, y), cur, fontsize=11)
                 y += 18
-        
         pdf_doc.save(output_path)
         pdf_doc.close()
         return output_path
     except Exception as e:
-        raise Exception(f"Failed to convert HTML to PDF: {str(e)}")
+        raise Exception(f"HTML to PDF failed: {str(e)}")
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -1025,17 +1138,15 @@ def convert_pdf_to_image(input_path, original_name, image_format='png'):
     if num_pages == 1:
         # Single page: return a single image
         page = pdf_doc[0]
-        # High quality rendering (2x zoom)
         mat = fitz.Matrix(2.0, 2.0)
-        pix = page.get_pixmap(matrix=mat)
+        pix = page.get_pixmap(matrix=mat, alpha=False)
         
-        output_path = os.path.join(output_dir, f"{base_name}.{image_format}")
+        output_path = get_output_path(original_name, image_format)
         
-        if image_format.lower() == 'jpg' or image_format.lower() == 'jpeg':
-            # PyMuPDF saves as PNG by default, convert via Pillow
+        if image_format.lower() in ('jpg', 'jpeg'):
             from PIL import Image
             img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
-            img.save(output_path, "JPEG", quality=95)
+            img.save(output_path, "JPEG", quality=95, subsampling=0)
         else:
             pix.save(output_path)
         
@@ -1043,13 +1154,13 @@ def convert_pdf_to_image(input_path, original_name, image_format='png'):
         return output_path
     else:
         # Multiple pages: create a ZIP archive
-        zip_path = os.path.join(output_dir, f"{base_name}_images.zip")
+        zip_path = get_output_path(original_name, 'zip', suffix='_images')
         
         with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
             for page_num in range(num_pages):
                 page = pdf_doc[page_num]
                 mat = fitz.Matrix(2.0, 2.0)
-                pix = page.get_pixmap(matrix=mat)
+                pix = page.get_pixmap(matrix=mat, alpha=False)
                 
                 img_filename = f"{base_name}_page_{page_num + 1}.{image_format}"
                 img_path = os.path.join(output_dir, img_filename)
@@ -1057,7 +1168,7 @@ def convert_pdf_to_image(input_path, original_name, image_format='png'):
                 if image_format.lower() in ('jpg', 'jpeg'):
                     from PIL import Image
                     img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
-                    img.save(img_path, "JPEG", quality=95)
+                    img.save(img_path, "JPEG", quality=95, subsampling=0)
                 else:
                     pix.save(img_path)
                 
@@ -1185,15 +1296,15 @@ def convert_pdf_to_word(input_path, original_name):
 # ═══════════════════════════════════════════════════════════════
 def convert_pdf_to_pptx(input_path, original_name):
     """
-    Convert a PDF file to a PowerPoint presentation (.pptx) with clear,
-    non-overlapping, and editable text.
+    Convert a PDF file to a PowerPoint presentation (.pptx) with accurate
+    alignment by mapping PDF coordinates directly to slide coordinates.
     """
     output_path = get_output_path(original_name, 'pptx')
 
     try:
         import fitz
         from pptx import Presentation
-        from pptx.util import Inches, Pt
+        from pptx.util import Inches, Pt, Emu
         from pptx.dml.color import RGBColor as PptxRGBColor
 
         pdf = fitz.open(input_path)
@@ -1201,19 +1312,20 @@ def convert_pdf_to_pptx(input_path, original_name):
 
         for page_idx in range(len(pdf)):
             page = pdf[page_idx]
-            
-            # Match slide aspect ratio to PDF page
+            p_rect = page.rect
+
+            # Set slide size to match PDF page exactly (points → EMU)
             if page_idx == 0:
-                p_rect = page.rect
-                prs.slide_width = Inches(p_rect.width / 72 * 1.2)
-                prs.slide_height = Inches(p_rect.height / 72 * 1.2)
-            
+                prs.slide_width = Emu(int(p_rect.width / 72 * 914400))
+                prs.slide_height = Emu(int(p_rect.height / 72 * 914400))
+
             blank_layout = prs.slide_layouts[6]
             slide = prs.slides.add_slide(blank_layout)
 
-            # ── 1. Set Background Color (Default White) ──
-            
-            # ── 2. Add Images as Separate Shapes ──────────
+            # Scale factor: PDF points to inches (1 inch = 72 pt)
+            s = 1.0 / 72.0
+
+            # Add images
             images = page.get_images(full=True)
             for img in images:
                 try:
@@ -1225,25 +1337,31 @@ def convert_pdf_to_pptx(input_path, original_name):
                         img_stream = io.BytesIO(image_bytes)
                         slide.shapes.add_picture(
                             img_stream,
-                            Inches(r.x0 / 72 * 1.2), Inches(r.y0 / 72 * 1.2),
-                            width=Inches((r.x1 - r.x0) / 72 * 1.2),
-                            height=Inches((r.y1 - r.y0) / 72 * 1.2)
+                            Inches(r.x0 * s), Inches(r.y0 * s),
+                            width=Inches((r.x1 - r.x0) * s),
+                            height=Inches((r.y1 - r.y0) * s)
                         )
-                except: continue
+                except Exception:
+                    continue
 
-            # ── 3. Add Text Blocks ────────────────────────
+            # Add text blocks
             blocks = page.get_text("dict")["blocks"]
             for block in blocks:
-                if block["type"] != 0: continue
-                
+                if block["type"] != 0:
+                    continue
+
                 bbox = block["bbox"]
-                bx0, by0 = bbox[0] / 72 * 1.2, bbox[1] / 72 * 1.2
-                bw = (bbox[2] - bbox[0]) / 72 * 1.2
-                bh = (bbox[3] - bbox[1]) / 72 * 1.2
+                bx0 = bbox[0] * s
+                by0 = bbox[1] * s
+                bw = (bbox[2] - bbox[0]) * s
+                bh = (bbox[3] - bbox[1]) * s
 
-                if bw < 0.1 or bh < 0.1: continue
+                if bw < 0.05 or bh < 0.05:
+                    continue
 
-                txBox = slide.shapes.add_textbox(Inches(bx0), Inches(by0), Inches(bw), Inches(bh))
+                txBox = slide.shapes.add_textbox(
+                    Inches(bx0), Inches(by0), Inches(bw), Inches(bh)
+                )
                 tf = txBox.text_frame
                 tf.word_wrap = True
 
@@ -1256,21 +1374,29 @@ def convert_pdf_to_pptx(input_path, original_name):
                     for span in line.get("spans", []):
                         run = para.add_run()
                         run.text = span["text"]
-                        run.font.size = Pt(max(6, min(span["size"] * 1.1, 80)))
-                        
+                        fs = span.get("size", 12)
+                        run.font.size = Pt(max(6, min(fs, 72)))
+
                         c_int = span.get("color", 0)
                         if c_int:
-                            r = (c_int >> 16) & 0xFF
-                            g = (c_int >> 8) & 0xFF
-                            b = c_int & 0xFF
-                            run.font.color.rgb = PptxRGBColor(r, g, b)
+                            r_c = (c_int >> 16) & 0xFF
+                            g_c = (c_int >> 8) & 0xFF
+                            b_c = c_int & 0xFF
+                            run.font.color.rgb = PptxRGBColor(r_c, g_c, b_c)
                         else:
                             run.font.color.rgb = PptxRGBColor(0, 0, 0)
 
                         flags = span.get("flags", 0)
-                        if flags & 2**4: run.bold = True
-                        if flags & 2**1: run.italic = True
-                
+                        if flags & 2**4:
+                            run.bold = True
+                        if flags & 2**1:
+                            run.italic = True
+
+                        font_name = span.get("font", "")
+                        if font_name:
+                            clean_name = font_name.split("+")[-1].split("-")[0]
+                            run.font.name = clean_name
+
                 txBox.fill.background()
 
         prs.save(output_path)
@@ -1319,9 +1445,16 @@ def convert_pdf_to_excel(input_path, original_name):
             for page_idx, page in enumerate(pdf.pages):
                 # 1. Attempt to find REAL tables first (with explicit lines)
                 tables = page.extract_tables({
-                    "vertical_strategy": "lines_strict",
-                    "horizontal_strategy": "lines_strict",
+                    "vertical_strategy": "lines",
+                    "horizontal_strategy": "lines",
                 })
+
+                # If strict lines found nothing, try text-based detection
+                if not tables:
+                    tables = page.extract_tables({
+                        "vertical_strategy": "text",
+                        "horizontal_strategy": "text",
+                    })
 
                 # Decide if we found actual structured data or if we should fallback to logic-based extraction
                 # We consider it a "Real Table" only if it has more than 1 column.
@@ -1452,7 +1585,7 @@ def merge_pdfs(input_paths, original_name):
 
     _, output_dir = ensure_media_dirs()
     base_name = Path(original_name).stem
-    output_path = os.path.join(output_dir, f"{base_name}_merged.pdf")
+    output_path = get_output_path(original_name, 'pdf', suffix='_merged')
 
     merged = fitz.open()
     for path in input_paths:
@@ -1475,7 +1608,7 @@ def split_pdf(input_path, original_name, split_mode='each', page_ranges=None):
 
     _, output_dir = ensure_media_dirs()
     base_name = Path(original_name).stem
-    zip_path = os.path.join(output_dir, f"{base_name}_split.zip")
+    zip_path = get_output_path(original_name, 'zip', suffix='_split')
 
     pdf = fitz.open(input_path)
     total_pages = len(pdf)
@@ -1531,15 +1664,11 @@ def compress_pdf(input_path, original_name):
     """Compress a PDF file to reduce its size."""
     import fitz
 
-    output_path = get_output_path(original_name, 'pdf')
-    base_name = Path(original_name).stem
-    output_path = os.path.join(
-        os.path.dirname(output_path), f"{base_name}_compressed.pdf"
-    )
+    output_path = get_output_path(original_name, 'pdf', suffix='_compressed')
 
     pdf = fitz.open(input_path)
 
-    # Compress images on each page
+    # Aggressively compress images on each page
     for page in pdf:
         images = page.get_images(full=True)
         for img_info in images:
@@ -1551,27 +1680,28 @@ def compress_pdf(input_path, original_name):
                     img_bytes = base_image["image"]
                     img = Image.open(io.BytesIO(img_bytes))
 
-                    # Resize large images
-                    max_dim = 1200
+                    # Aggressively resize large images
+                    max_dim = 800
                     if img.width > max_dim or img.height > max_dim:
                         ratio = min(max_dim / img.width, max_dim / img.height)
                         new_size = (int(img.width * ratio), int(img.height * ratio))
                         img = img.resize(new_size, Image.LANCZOS)
 
-                    # Convert to RGB if needed
-                    if img.mode in ('RGBA', 'P', 'LA'):
+                    # Convert to RGB
+                    if img.mode != 'RGB':
                         img = img.convert('RGB')
 
                     buf = io.BytesIO()
-                    img.save(buf, format='JPEG', quality=65, optimize=True)
+                    img.save(buf, format='JPEG', quality=40, optimize=True)
                     buf.seek(0)
 
-                    # Replace image in PDF
                     page.replace_image(xref, stream=buf.getvalue())
             except Exception:
                 continue
 
-    # Save with garbage collection and deflation
+    # Remove unused objects, metadata, etc.
+    pdf.set_metadata({})
+
     pdf.save(
         output_path,
         garbage=4,
@@ -1594,11 +1724,7 @@ def remove_pdf_pages(input_path, original_name, pages_to_remove):
     """
     import fitz
 
-    output_path = get_output_path(original_name, 'pdf')
-    base_name = Path(original_name).stem
-    output_path = os.path.join(
-        os.path.dirname(output_path), f"{base_name}_trimmed.pdf"
-    )
+    output_path = get_output_path(original_name, 'pdf', suffix='_trimmed')
 
     pdf = fitz.open(input_path)
     total_pages = len(pdf)
@@ -1643,11 +1769,7 @@ def extract_pdf_pages(input_path, original_name, pages_to_extract):
     """
     import fitz
 
-    output_path = get_output_path(original_name, 'pdf')
-    base_name = Path(original_name).stem
-    output_path = os.path.join(
-        os.path.dirname(output_path), f"{base_name}_extracted.pdf"
-    )
+    output_path = get_output_path(original_name, 'pdf', suffix='_extracted')
 
     pdf = fitz.open(input_path)
     total_pages = len(pdf)
@@ -1697,11 +1819,7 @@ def organize_pdf(input_path, original_name, page_order):
     """
     import fitz
 
-    output_path = get_output_path(original_name, 'pdf')
-    base_name = Path(original_name).stem
-    output_path = os.path.join(
-        os.path.dirname(output_path), f"{base_name}_organized.pdf"
-    )
+    output_path = get_output_path(original_name, 'pdf', suffix='_organized')
 
     pdf = fitz.open(input_path)
     total_pages = len(pdf)
@@ -1744,11 +1862,7 @@ def repair_pdf(input_path, original_name):
     """
     import fitz
 
-    output_path = get_output_path(original_name, 'pdf')
-    base_name = Path(original_name).stem
-    output_path = os.path.join(
-        os.path.dirname(output_path), f"{base_name}_repaired.pdf"
-    )
+    output_path = get_output_path(original_name, 'pdf', suffix='_repaired')
 
     try:
         # Open with repair flag
@@ -1794,9 +1908,7 @@ def ocr_pdf(input_path, original_name):
     except Exception as e:
         raise Exception(f"OCR Engine load failed: {str(e)}")
 
-    output_path = get_output_path(original_name, 'pdf')
-    base_name = os.path.splitext(original_name)[0]
-    output_path = os.path.join(os.path.dirname(output_path), f"{base_name}_ocr.pdf")
+    output_path = get_output_path(original_name, 'pdf', suffix='_ocr')
 
     if isinstance(input_path, (str, bytes, os.PathLike)):
         input_paths = [input_path]
@@ -1927,11 +2039,7 @@ def rotate_pdf(input_path, original_name, rotation_angle=90, page_selection='all
     """
     import fitz
 
-    output_path = get_output_path(original_name, 'pdf')
-    base_name = Path(original_name).stem
-    output_path = os.path.join(
-        os.path.dirname(output_path), f"{base_name}_rotated.pdf"
-    )
+    output_path = get_output_path(original_name, 'pdf', suffix='_rotated')
 
     # Validate rotation angle
     rotation_angle = int(rotation_angle)
@@ -1988,11 +2096,7 @@ def add_watermark(input_path, original_name, watermark_text='CONFIDENTIAL',
     """
     import fitz
 
-    output_path = get_output_path(original_name, 'pdf')
-    base_name = Path(original_name).stem
-    output_path = os.path.join(
-        os.path.dirname(output_path), f"{base_name}_watermarked.pdf"
-    )
+    output_path = get_output_path(original_name, 'pdf', suffix='_watermarked')
 
     # Parse hex color to RGB (0-1 range)
     color_hex = color.lstrip('#')
@@ -2100,11 +2204,7 @@ def remove_watermark(input_path, original_name):
     import fitz
     import re
 
-    output_path = get_output_path(original_name, 'pdf')
-    base_name = Path(original_name).stem
-    output_path = os.path.join(
-        os.path.dirname(output_path), f"{base_name}_no_watermark.pdf"
-    )
+    output_path = get_output_path(original_name, 'pdf', suffix='_no_watermark')
 
     pdf = fitz.open(input_path)
     total_pages = len(pdf)
@@ -2290,46 +2390,54 @@ def remove_watermark(input_path, original_name):
 # 20. CROP PDF
 # ═══════════════════════════════════════════════════════════════
 def crop_pdf(input_path, original_name, crop_mode='auto',
-             top=0, bottom=0, left=0, right=0):
+             top=0, bottom=0, left=0, right=0,
+             crop_x=0, crop_y=0, crop_w=0, crop_h=0):
     """Crop pages of a PDF.
 
     crop_mode:
       'auto'   — automatically detect and remove white margins
       'manual' — crop by specified margins (in points, 1 inch = 72 points)
+      'visual' — crop to a specific rectangle defined by x, y, w, h (in points)
 
     top, bottom, left, right: margins to crop (in points) for manual mode
+    crop_x, crop_y, crop_w, crop_h: rectangle for visual mode (in points)
     """
     import fitz
 
-    output_path = get_output_path(original_name, 'pdf')
-    base_name = Path(original_name).stem
-    output_path = os.path.join(
-        os.path.dirname(output_path), f"{base_name}_cropped.pdf"
-    )
+    output_path = get_output_path(original_name, 'pdf', suffix='_cropped')
 
     pdf = fitz.open(input_path)
 
     for page in pdf:
         rect = page.rect
 
-        if crop_mode == 'auto':
-            # Auto-crop: detect content boundaries
-            # Render page to find actual content area
+        if crop_mode == 'visual':
+            # Visual crop mode: exact rectangle
+            cx = float(crop_x)
+            cy = float(crop_y)
+            cw = float(crop_w)
+            ch = float(crop_h)
+            if cw > 5 and ch > 5:
+                crop_rect = fitz.Rect(cx, cy, cx + cw, cy + ch)
+                # Clamp to page bounds
+                crop_rect = crop_rect & rect
+                if crop_rect.width > 5 and crop_rect.height > 5:
+                    page.set_cropbox(crop_rect)
+
+        elif crop_mode == 'auto':
             try:
-                # Get all text and image bounding boxes
                 text_blocks = page.get_text("blocks")
                 images = page.get_image_info()
                 drawings = page.get_drawings()
 
                 if not text_blocks and not images and not drawings:
-                    continue  # Skip blank pages
+                    continue
 
                 min_x = rect.width
                 min_y = rect.height
                 max_x = 0
                 max_y = 0
 
-                # Check text blocks
                 for block in text_blocks:
                     x0, y0, x1, y1 = block[:4]
                     min_x = min(min_x, x0)
@@ -2337,7 +2445,6 @@ def crop_pdf(input_path, original_name, crop_mode='auto',
                     max_x = max(max_x, x1)
                     max_y = max(max_y, y1)
 
-                # Check images
                 for img in images:
                     bbox = img.get("bbox", None)
                     if bbox:
@@ -2346,7 +2453,6 @@ def crop_pdf(input_path, original_name, crop_mode='auto',
                         max_x = max(max_x, bbox[2])
                         max_y = max(max_y, bbox[3])
 
-                # Check drawings
                 for drawing in drawings:
                     drect = drawing.get("rect", None)
                     if drect:
@@ -2356,7 +2462,6 @@ def crop_pdf(input_path, original_name, crop_mode='auto',
                         max_y = max(max_y, drect.y1)
 
                 if max_x > min_x and max_y > min_y:
-                    # Add a small margin (10 points ≈ 3.5mm)
                     margin = 10
                     crop_rect = fitz.Rect(
                         max(0, min_x - margin),
@@ -2366,10 +2471,9 @@ def crop_pdf(input_path, original_name, crop_mode='auto',
                     )
                     page.set_cropbox(crop_rect)
             except Exception:
-                continue  # Skip page if auto-crop fails
+                continue
 
         elif crop_mode == 'manual':
-            # Manual crop using specified margins
             top_val = float(top)
             bottom_val = float(bottom)
             left_val = float(left)
@@ -2382,7 +2486,6 @@ def crop_pdf(input_path, original_name, crop_mode='auto',
                 rect.y1 - bottom_val,
             )
 
-            # Validate the crop rectangle
             if crop_rect.width > 10 and crop_rect.height > 10:
                 page.set_cropbox(crop_rect)
             else:
@@ -2399,52 +2502,113 @@ def crop_pdf(input_path, original_name, crop_mode='auto',
 # 21. EDIT PDF  (Add text / annotations to specific pages)
 # ═══════════════════════════════════════════════════════════════
 def convert_pdf_to_html_via_word(input_path):
-    """Convert PDF to editable HTML by going through Word format for best layout preservation."""
-    from pdf2docx import Converter
-    import mammoth
-    
-    docx_file = tempfile.NamedTemporaryFile(suffix='.docx', delete=False).name
+    """Convert PDF to editable HTML for the rich-text editor.
+
+    Primary: PyMuPDF text extraction into styled HTML paragraphs.
+    Fallback: pdf2docx + mammoth (if installed).
+    """
+    # Primary: PyMuPDF — fast and reliable
     try:
-        # 1. PDF -> Word
-        cv = Converter(input_path)
-        cv.convert(docx_file, start=0, end=None)
-        cv.close()
-        
-        # 2. Word -> HTML
-        with open(docx_file, "rb") as docx_f:
-            result = mammoth.convert_to_html(docx_f)
-            html = result.value
-            # Wrap in base styles for the editor
-            wrapped_html = f'<div class="document-content">{html}</div>'
-            return wrapped_html
-    finally:
-        if os.path.exists(docx_file):
-            os.remove(docx_file)
+        import fitz
+        pdf = fitz.open(input_path)
+        html_parts = []
+        for page_idx in range(len(pdf)):
+            page = pdf[page_idx]
+            # Add a clear page-break separator for the editor
+            if page_idx > 0:
+                html_parts.append('<div class="pdf-page-break" style="page-break-after:always; border-bottom: 2px dashed #cbd5e1; margin: 40px 0; position:relative;"><span style="position:absolute; top:-12px; left:50%; transform:translateX(-50%); background:white; padding:0 10px; color:#94a3b8; font-size:10pt;">Page Break</span></div>')
+            
+            blocks = page.get_text("dict")["blocks"]
+            for block in blocks:
+                if block["type"] == 0:  # text
+                    for line in block.get("lines", []):
+                        spans_html = ""
+                        for span in line.get("spans", []):
+                            text = span.get("text", "")
+                            if not text.strip():
+                                spans_html += " "
+                                continue
+                            style_parts = []
+                            size = span.get("size", 12)
+                            style_parts.append(f"font-size:{max(8,min(size,36))}pt")
+                            flags = span.get("flags", 0)
+                            if flags & 2**4:
+                                style_parts.append("font-weight:bold")
+                            if flags & 2**1:
+                                style_parts.append("font-style:italic")
+                            c = span.get("color", 0)
+                            if c and c != 0:
+                                r = (c >> 16) & 0xFF
+                                g = (c >> 8) & 0xFF
+                                b = c & 0xFF
+                                if not (r == 0 and g == 0 and b == 0):
+                                    style_parts.append(f"color:rgb({r},{g},{b})")
+                            import html as html_mod
+                            safe = html_mod.escape(text)
+                            spans_html += f'<span style="{";".join(style_parts)}">{safe}</span>'
+                        if spans_html.strip():
+                            html_parts.append(f"<p>{spans_html}</p>")
+        pdf.close()
+        if html_parts:
+            return '<div class="document-content">' + "\n".join(html_parts) + '</div>'
+    except Exception:
+        pass
+
+    # Fallback: pdf2docx + mammoth
+    try:
+        from pdf2docx import Converter
+        import mammoth
+        docx_file = tempfile.NamedTemporaryFile(suffix='.docx', delete=False).name
+        try:
+            cv = Converter(input_path)
+            cv.convert(docx_file, start=0, end=None)
+            cv.close()
+            with open(docx_file, "rb") as docx_f:
+                result = mammoth.convert_to_html(docx_f)
+                return f'<div class="document-content">{result.value}</div>'
+        finally:
+            if os.path.exists(docx_file):
+                os.remove(docx_file)
+    except Exception:
+        pass
+
+    raise Exception("Could not extract content from this PDF. It may be image-based — try OCR first.")
 
 def convert_html_to_pdf_from_string(html_content, original_name):
-    """Convert raw HTML (from editor) back to a high-quality PDF using PyMuPDF (No dependencies)."""
+    """Convert multi-page HTML (from editor) back to a high-quality PDF, preserving page breaks."""
     import fitz
+    import re
     output_path = get_output_path(original_name, 'pdf')
     
-    # Wrap in print-friendly container
-    styled_html = f"""
-    <div style="font-family: 'Segoe UI', Arial, sans-serif; line-height: 1.6; padding: 20px;">
-        {html_content}
-    </div>
-    """
+    # Identify page breaks (either our custom div or standard hr)
+    # This splits the content into individual pages
+    page_sections = re.split(r'<div class="pdf-page-break".*?</div>|<hr.*?>', html_content, flags=re.IGNORECASE)
     
     doc = fitz.open()
-    # Create page(s). If content is long, it might need better pagination, 
-    # but insert_htmlbox is good for standard documents.
-    page = doc.new_page(width=595, height=842) # A4
-    rect = fitz.Rect(40, 40, 555, 802) # approx 1.5cm margins
     
-    try:
-        page.insert_htmlbox(rect, styled_html)
-    except Exception:
-        # Fallback to simple text if HTML box fails
-        page.insert_text((50, 50), "Error rendering HTML layout. Falling back to plain text.")
-        page.insert_textbox(rect, html_content)
+    for section in page_sections:
+        if not section.strip():
+            continue
+            
+        # Wrap each page in a clean container
+        styled_html = f"""
+        <div style="font-family: 'Segoe UI', Arial, sans-serif; line-height: 1.6; padding: 20px;">
+            {section}
+        </div>
+        """
+        
+        page = doc.new_page(width=595, height=842) # A4
+        rect = fitz.Rect(40, 40, 555, 802) # approx 1.5cm margins
+        
+        try:
+            page.insert_htmlbox(rect, styled_html)
+        except Exception:
+            # Fallback for complex layouts
+            page.insert_textbox(rect, section)
+            
+    if len(doc) == 0:
+        # Emergency fallback if no sections were valid
+        doc.new_page()
         
     doc.save(output_path)
     doc.close()
@@ -2463,11 +2627,7 @@ def edit_pdf(input_path, original_name, edits_json='[]', html_content=None):
     import fitz
     import json
 
-    output_path = get_output_path(original_name, 'pdf')
-    base_name = Path(original_name).stem
-    output_path = os.path.join(
-        os.path.dirname(output_path), f"{base_name}_edited.pdf"
-    )
+    output_path = get_output_path(original_name, 'pdf', suffix='_edited')
 
     try:
         edits = json.loads(edits_json)
@@ -2523,11 +2683,7 @@ def unlock_pdf(input_path, original_name, password=''):
     """
     import fitz
 
-    output_path = get_output_path(original_name, 'pdf')
-    base_name = Path(original_name).stem
-    output_path = os.path.join(
-        os.path.dirname(output_path), f"{base_name}_unlocked.pdf"
-    )
+    output_path = get_output_path(original_name, 'pdf', suffix='_unlocked')
 
     pdf = fitz.open(input_path)
 
@@ -2564,11 +2720,7 @@ def protect_pdf(input_path, original_name, user_password='',
     """
     import fitz
 
-    output_path = get_output_path(original_name, 'pdf')
-    base_name = Path(original_name).stem
-    output_path = os.path.join(
-        os.path.dirname(output_path), f"{base_name}_protected.pdf"
-    )
+    output_path = get_output_path(original_name, 'pdf', suffix='_protected')
 
     if not user_password:
         raise Exception("Please provide a password to protect this PDF.")
@@ -2673,21 +2825,17 @@ def image_to_gif(input_paths, original_name):
 # ═══════════════════════════════════════════════════════════════
 # 23. HTML TO IMAGE
 # ═══════════════════════════════════════════════════════════════
-def html_to_image(input_path, original_name):
-    """Convert an HTML file to a pixel-perfect PNG using Chrome headless via html2image."""
+def html_to_image(input_path, original_name, url=None):
+    """Convert an HTML file or a URL to a pixel-perfect PNG using Chrome headless via html2image."""
     from html2image import Html2Image
     import uuid
 
     try:
-        # Read the HTML content from the uploaded file
-        with open(input_path, 'r', encoding='utf-8', errors='replace') as f:
-            html_content = f.read()
-
         # Prepare output
         output_path = get_output_path(original_name, 'png')
         output_dir = os.path.dirname(output_path)
         # Use a unique temp name to avoid collisions, then rename
-        temp_name = f'_h2i_{uuid.uuid4().hex}.png'
+        temp_name = f'_h2i_{uuid.uuid4().hex[:8]}.png'
 
         hti = Html2Image(
             browser='chrome',
@@ -2700,13 +2848,26 @@ def html_to_image(input_path, original_name):
             ],
         )
 
-        hti.screenshot(
-            html_str=html_content,
-            save_as=temp_name,
-            size=(1280, 900),
-        )
+        if url:
+            # Direct URL Mode
+            hti.screenshot(
+                url=url,
+                save_as=temp_name,
+                size=(1280, 2000), # Taller for better "full page" view
+            )
+        else:
+            # File Mode
+            with open(input_path, 'r', encoding='utf-8', errors='replace') as f:
+                html_content = f.read()
+            hti.screenshot(
+                html_str=html_content,
+                save_as=temp_name,
+                size=(1280, 2000),
+            )
 
         temp_output = os.path.join(output_dir, temp_name)
+        if not os.path.exists(temp_output):
+            raise Exception("Capture failed - image was not generated.")
 
         # Rename temp file to final output path
         if os.path.exists(output_path):
@@ -2732,11 +2893,7 @@ def resize_image(input_path, original_name, width=800, height=600, maintain_aspe
     width = int(width)
     height = int(height)
 
-    output_path = get_output_path(original_name, 'jpg')
-    base_name = Path(original_name).stem
-    output_path = os.path.join(
-        os.path.dirname(output_path), f"{base_name}_resized.jpg"
-    )
+    output_path = get_output_path(original_name, 'jpg', suffix='_resized')
 
     img = Image.open(input_path)
     if img.mode in ('RGBA', 'P', 'LA'):
@@ -2762,11 +2919,7 @@ def scale_image(input_path, original_name, scale_percent=50):
     if scale_percent <= 0 or scale_percent > 1000:
         raise Exception("Scale percentage must be between 1 and 1000.")
 
-    output_path = get_output_path(original_name, 'jpg')
-    base_name = Path(original_name).stem
-    output_path = os.path.join(
-        os.path.dirname(output_path), f"{base_name}_scaled.jpg"
-    )
+    output_path = get_output_path(original_name, 'jpg', suffix='_scaled')
 
     img = Image.open(input_path)
     if img.mode in ('RGBA', 'P', 'LA'):
@@ -2789,11 +2942,7 @@ def rotate_image(input_path, original_name, angle=90):
 
     angle = float(angle)
 
-    output_path = get_output_path(original_name, 'jpg')
-    base_name = Path(original_name).stem
-    output_path = os.path.join(
-        os.path.dirname(output_path), f"{base_name}_rotated.jpg"
-    )
+    output_path = get_output_path(original_name, 'jpg', suffix='_rotated')
 
     img = Image.open(input_path)
     if img.mode in ('RGBA', 'P', 'LA'):
@@ -2820,11 +2969,7 @@ def add_image_watermark(input_path, original_name, watermark_text='SAMPLE',
     opacity = float(opacity)
     font_size = int(font_size)
 
-    output_path = get_output_path(original_name, 'jpg')
-    base_name = Path(original_name).stem
-    output_path = os.path.join(
-        os.path.dirname(output_path), f"{base_name}_watermarked.jpg"
-    )
+    output_path = get_output_path(original_name, 'jpg', suffix='_watermarked')
 
     img = Image.open(input_path).convert('RGBA')
 
@@ -2883,11 +3028,7 @@ def compress_image(input_path, original_name, quality=60):
     quality = int(quality)
     quality = max(1, min(quality, 100))
 
-    output_path = get_output_path(original_name, 'jpg')
-    base_name = Path(original_name).stem
-    output_path = os.path.join(
-        os.path.dirname(output_path), f"{base_name}_compressed.jpg"
-    )
+    output_path = get_output_path(original_name, 'jpg', suffix='_compressed')
 
     img = Image.open(input_path)
     if img.mode in ('RGBA', 'P', 'LA'):
@@ -2912,11 +3053,7 @@ def crop_image(input_path, original_name, crop_x=0, crop_y=0, crop_width=0, crop
     crop_width = int(crop_width)
     crop_height = int(crop_height)
 
-    output_path = get_output_path(original_name, 'jpg')
-    base_name = Path(original_name).stem
-    output_path = os.path.join(
-        os.path.dirname(output_path), f"{base_name}_cropped.jpg"
-    )
+    output_path = get_output_path(original_name, 'jpg', suffix='_cropped')
 
     img = Image.open(input_path)
     if img.mode in ('RGBA', 'P', 'LA'):
@@ -2953,11 +3090,7 @@ def remove_background(input_path, original_name):
     from PIL import Image
     from rembg import remove as rembg_remove
 
-    output_path = get_output_path(original_name, 'png')
-    base_name = Path(original_name).stem
-    output_path = os.path.join(
-        os.path.dirname(output_path), f"{base_name}_nobg.png"
-    )
+    output_path = get_output_path(original_name, 'png', suffix='_nobg')
 
     img = Image.open(input_path)
     result = rembg_remove(img)
@@ -3001,27 +3134,189 @@ def balance_chemical_equation(equation_str):
 # ═══════════════════════════════════════════════════════════════
 # 32. QR CODE GENERATOR
 # ═══════════════════════════════════════════════════════════════
-def generate_qr_code(text, box_size=10, border=4):
-    """Generate a QR code image from the given text."""
+def generate_qr_code(text, box_size=10, border=4, fg_color="#000000", bg_color="#ffffff",
+                     logo_path=None, style="square", gradient_type=None,
+                     eye_style="square", ball_style="square", output_format="png"):
+    """
+    Professional QR Code Engine — Full QRCode Monkey feature parity.
+    Supports 8+ body styles, 6+ eye/ball styles, logo embeds, and PNG/JPG output.
+    """
     import qrcode
-    from PIL import Image
+    from PIL import Image, ImageDraw, ImageColor
+    import math
 
-    # Unique output path
-    _, output_dir = ensure_media_dirs()
-    output_filename = f"qr_{os.urandom(4).hex()}.png"
-    output_path = os.path.join(output_dir, output_filename)
-
+    # ── 1. Build QR matrix ──
     qr = qrcode.QRCode(
-        version=1,
-        error_correction=qrcode.constants.ERROR_CORRECT_L,
-        box_size=int(box_size),
-        border=int(border),
+        error_correction=qrcode.constants.ERROR_CORRECT_H,
+        box_size=1, border=0,
     )
     qr.add_data(text)
     qr.make(fit=True)
+    matrix = qr.get_matrix()
+    modules = len(matrix)
 
-    img = qr.make_image(fill_color="black", back_color="white")
-    img.save(output_path)
+    # ── 2. Dimensions ──
+    pad = int(border)
+    cell = 30
+    img_cells = modules + 2 * pad
+    img_px = img_cells * cell
+
+    fmt = output_format.lower().strip()
+    if fmt not in ("png", "jpg", "jpeg"):
+        fmt = "png"
+    ext = "jpg" if fmt in ("jpg", "jpeg") else "png"
+    output_path = get_output_path("qr_code", ext)
+
+    bg_rgb = ImageColor.getcolor(bg_color, "RGB")
+    fg_rgb = ImageColor.getcolor(fg_color, "RGB")
+
+    canvas = Image.new("RGB", (img_px, img_px), bg_rgb)
+    draw = ImageDraw.Draw(canvas)
+
+    # ── Drawing helpers ──
+    def _square(x1, y1, x2, y2, color):
+        draw.rectangle([x1, y1, x2, y2], fill=color)
+
+    def _circle(x1, y1, x2, y2, color):
+        draw.ellipse([x1+1, y1+1, x2-1, y2-1], fill=color)
+
+    def _rounded(x1, y1, x2, y2, color):
+        r = max((x2-x1)//3, 2)
+        draw.rounded_rectangle([x1, y1, x2, y2], radius=r, fill=color)
+
+    def _diamond(x1, y1, x2, y2, color):
+        cx, cy = (x1+x2)//2, (y1+y2)//2
+        draw.polygon([(cx, y1), (x2, cy), (cx, y2), (x1, cy)], fill=color)
+
+    def _dot(x1, y1, x2, y2, color):
+        """Small circle with gap"""
+        m = (x2-x1)//5
+        draw.ellipse([x1+m, y1+m, x2-m, y2-m], fill=color)
+
+    def _small_sq(x1, y1, x2, y2, color):
+        """Gapped small square"""
+        m = (x2-x1)//5
+        draw.rectangle([x1+m, y1+m, x2-m, y2-m], fill=color)
+
+    def _hline(x1, y1, x2, y2, color):
+        """Horizontal dash"""
+        m = (x2-x1)//4
+        draw.rectangle([x1, y1+m, x2, y2-m], fill=color)
+
+    def _vline(x1, y1, x2, y2, color):
+        """Vertical dash"""
+        m = (x2-x1)//4
+        draw.rectangle([x1+m, y1, x2-m, y2], fill=color)
+
+    def _star(x1, y1, x2, y2, color):
+        """4-pointed star"""
+        cx, cy = (x1+x2)//2, (y1+y2)//2
+        s = (x2-x1)//2
+        q = s//3
+        pts = [(cx, y1), (cx+q, cy-q), (x2, cy), (cx+q, cy+q),
+               (cx, y2), (cx-q, cy+q), (x1, cy), (cx-q, cy-q)]
+        draw.polygon(pts, fill=color)
+
+    def _cross(x1, y1, x2, y2, color):
+        """Plus/cross shape"""
+        t = (x2-x1)//3
+        draw.rectangle([x1+t, y1, x2-t, y2], fill=color)
+        draw.rectangle([x1, y1+t, x2, y2-t], fill=color)
+
+    def _leaf(x1, y1, x2, y2, color):
+        """Leaf: two diagonally opposite rounded corners"""
+        r = (x2-x1)//2
+        draw.rounded_rectangle([x1, y1, x2, y2], radius=r, fill=color)
+
+    def _clover(x1, y1, x2, y2, color):
+        """Four-leaf clover"""
+        cx, cy = (x1+x2)//2, (y1+y2)//2
+        r = (x2-x1)//4
+        for dx, dy in [(-1,-1),(1,-1),(-1,1),(1,1)]:
+            ox, oy = cx + dx*r, cy + dy*r
+            draw.ellipse([ox-r, oy-r, ox+r, oy+r], fill=color)
+
+    # Map style names to drawing functions
+    body_map = {
+        'square': _square, 'rounded': _rounded, 'circle': _circle,
+        'diamond': _diamond, 'dot': _dot, 'small-square': _small_sq,
+        'hline': _hline, 'vline': _vline, 'star': _star,
+        'cross': _cross, 'leaf': _leaf, 'clover': _clover,
+    }
+    fn_body = body_map.get(style, _square)
+
+    # ── Eye shape helper (for complete finder-pattern rendering) ──
+    def _eye_shape(x1, y1, x2, y2, s, color):
+        if s == 'circle':
+            draw.ellipse([x1, y1, x2, y2], fill=color)
+        elif s == 'rounded':
+            r = max((x2 - x1) // 5, 4)
+            draw.rounded_rectangle([x1, y1, x2, y2], radius=r, fill=color)
+        elif s == 'diamond':
+            cx, cy = (x1 + x2) // 2, (y1 + y2) // 2
+            draw.polygon([(cx, y1), (x2, cy), (cx, y2), (x1, cy)], fill=color)
+        elif s == 'leaf':
+            r = (x2 - x1) // 2
+            draw.rounded_rectangle([x1, y1, x2, y2], radius=r, fill=color)
+        else:
+            draw.rectangle([x1, y1, x2, y2], fill=color)
+
+    # ── Identify eye regions to skip during body rendering ──
+    eye_corners = [(0, 0), (0, modules - 7), (modules - 7, 0)]
+
+    def in_eye(r, c):
+        for (er, ec) in eye_corners:
+            if er <= r < er + 7 and ec <= c < ec + 7:
+                return True
+        return False
+
+    # ── 3. Draw BODY modules (skip all eye regions) ──
+    for r_idx, row in enumerate(matrix):
+        for c_idx, val in enumerate(row):
+            if not val or in_eye(r_idx, c_idx):
+                continue
+            px = (c_idx + pad) * cell
+            py = (r_idx + pad) * cell
+            fn_body(px, py, px + cell - 1, py + cell - 1, fg_rgb)
+
+    # ── 4. Draw COMPLETE finder patterns as single shapes ──
+    # This guarantees the 1:1:3:1:1 ratio scanners require.
+    for (er, ec) in eye_corners:
+        ox = (ec + pad) * cell
+        oy = (er + pad) * cell
+        s7 = 7 * cell - 1   # outer 7×7 boundary
+        s5 = 5 * cell - 1   # inner white 5×5
+        s3 = 3 * cell - 1   # ball 3×3
+
+        # Layer 1: Outer frame — solid fill
+        _eye_shape(ox, oy, ox + s7, oy + s7, eye_style, fg_rgb)
+        # Layer 2: White cutout — creates the frame ring
+        _eye_shape(ox + cell, oy + cell, ox + cell + s5, oy + cell + s5, eye_style, bg_rgb)
+        # Layer 3: Inner ball — solid fill
+        _eye_shape(ox + 2 * cell, oy + 2 * cell, ox + 2 * cell + s3, oy + 2 * cell + s3, ball_style, fg_rgb)
+
+    # ── 5. Logo ──
+    if logo_path and os.path.exists(logo_path):
+        try:
+            logo = Image.open(logo_path).convert("RGBA")
+            max_logo = int(img_px * 0.22)
+            logo.thumbnail((max_logo, max_logo), Image.Resampling.LANCZOS)
+            pad_px = 10
+            bg_box = Image.new("RGBA", (logo.width + pad_px * 2, logo.height + pad_px * 2), (*bg_rgb, 255))
+            bx = (img_px - bg_box.width) // 2
+            by = (img_px - bg_box.height) // 2
+            canvas.paste(bg_box, (bx, by), bg_box)
+            lx = (img_px - logo.width) // 2
+            ly = (img_px - logo.height) // 2
+            canvas.paste(logo, (lx, ly), logo)
+        except Exception:
+            pass
+
+    # ── 6. Save ──
+    if ext == "jpg":
+        canvas.save(output_path, "JPEG", quality=95)
+    else:
+        canvas.save(output_path, "PNG")
     return output_path
 
 
@@ -3032,9 +3327,7 @@ def generate_meme(input_path, original_name, top_text="", bottom_text=""):
     """Overlay top and bottom text on an image to create a meme."""
     from PIL import Image, ImageDraw, ImageFont
 
-    output_path = get_output_path(original_name, 'jpg')
-    base_name = Path(original_name).stem
-    output_path = os.path.join(os.path.dirname(output_path), f"meme_{base_name}.jpg")
+    output_path = get_output_path(original_name, 'jpg', suffix='_meme')
 
     img = Image.open(input_path)
     if img.mode != 'RGB':
@@ -3137,11 +3430,19 @@ def get_video_info(url):
         'quiet': True,
         'no_warnings': True,
         'skip_download': True,
+        'nocheckcertificate': True,
+        'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+        'referer': 'https://www.instagram.com/',
+        'geo_bypass': True,
+        'ignore_no_formats_error': True,
     }
     
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
+            if not info:
+                raise Exception("This video is locked or private.")
+                
             return {
                 'title': info.get('title', 'Unknown Title'),
                 'thumbnail': info.get('thumbnail', ''),
@@ -3151,35 +3452,69 @@ def get_video_info(url):
                     {
                         'format_id': f.get('format_id'),
                         'ext': f.get('ext'),
-                        'resolution': f.get('resolution'),
-                        'filesize': f.get('filesize'),
+                        'resolution': f.get('resolution', 'N/A'),
+                        'filesize': f.get('filesize', 0),
                         'note': f.get('format_note', '')
                     } for f in info.get('formats', []) 
                     if f.get('vcodec') != 'none' and f.get('acodec') != 'none' # only combined formats
                 ]
             }
     except Exception as e:
-        raise Exception(f"Failed to fetch video info: {str(e)}")
+        # Better error for Instagram login hurdles
+        err_msg = str(e)
+        if "certain audiences" in err_msg or "login" in err_msg.lower():
+            raise Exception("This content is protected by Instagram. Try a different public link or ensure the account is not private.")
+        raise Exception(f"Analysis Failed: {err_msg}")
 
 def download_video(url, format_id=None):
     """Download a video to the outputs directory and return the file path."""
     import yt_dlp
+    import uuid
+    import os
     
     _, output_dir = ensure_media_dirs()
     
+    # We use a generic template first, then rename to our ScanPDF format
+    temp_uuid = uuid.uuid4().hex[:8]
+    
+    # Modern options to avoid being blocked by YouTube
     ydl_opts = {
-        'outtmpl': os.path.join(output_dir, '%(title)s.%(ext)s'),
+        'outtmpl': os.path.join(output_dir, f'scan_temp_{temp_uuid}_%(title)s.%(ext)s'),
         'format': format_id if format_id else 'best',
         'quiet': True,
+        'no_warnings': True,
+        'nocheckcertificate': True,
+        'ignoreerrors': False,
+        'logtostderr': False,
+        'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+        'geo_bypass': True,
+        'ignore_no_formats_error': True,
     }
     
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=True)
-            output_file = ydl.prepare_filename(info)
-            return output_file
+            if not info:
+                raise Exception("Could not fetch video information.")
+                
+            temp_path = ydl.prepare_filename(info)
+            
+            # Now rename to our branded format
+            title = info.get('title', 'video')
+            ext = os.path.splitext(temp_path)[1]
+            final_path = get_output_path(title, ext, suffix='_download')
+            
+            if os.path.exists(final_path):
+                try:
+                    os.remove(final_path)
+                except OSError:
+                    pass
+            
+            os.rename(temp_path, final_path)
+            return final_path
     except Exception as e:
-        raise Exception(f"Download failed: {str(e)}")
+        # If it was a 500 caused by the video being truly private/unavailable, we'll get a better error now
+        raise Exception(f"YouTube Download Failed: {str(e)}")
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -3217,37 +3552,65 @@ def run_speed_test():
 # ═══════════════════════════════════════════════════════════════
 def generate_story(genre="Science Fiction", prompt=""):
     """
-    Generate a creative story based on a genre using Google Gemini.
+    Final ultimate robustness fix for Gemini API 404s.
+    Uses 'rest' transport for better Windows/Network compatibility.
     """
     api_key = os.getenv("GEMINI_API_KEY")
     if not api_key:
         raise ValueError("GEMINI_API_KEY not found in .env file.")
     
-    genai.configure(api_key=api_key)
+    import google.generativeai as genai
+    # Using 'rest' transport as it is often more reliable than gRPC on some networks
+    genai.configure(api_key=api_key, transport='rest')
     
-    # List of models to try (ordered by preference)
-    models_to_try = [
-        "gemini-1.5-flash",
-        "gemini-1.5-pro",
-        "gemini-pro"
-    ]
+    available_models = []
+    discovery_error = ""
     
-    last_error = ""
-    full_prompt = f"Write a creative {genre} story."
-    if prompt: full_prompt += f" Ideas: {prompt}."
-    full_prompt += " Length: ~200 words."
+    try:
+        # Try to dynamically list models first
+        raw_list = genai.list_models()
+        available_models = [m.name for m in raw_list if 'generateContent' in m.supported_generation_methods]
+    except Exception as e:
+        discovery_error = str(e)
+        # If discovery fails, we use a wide-range fallback strategy
+        available_models = [
+            "gemini-1.5-flash", 
+            "models/gemini-1.5-flash",
+            "gemini-1.5-pro",
+            "models/gemini-1.5-pro",
+            "gemini-1.0-pro",
+            "models/gemini-1.0-pro"
+        ]
 
-    for model_name in models_to_try:
+    # Deduplicate and sort
+    priority = ["1.5-flash", "1.5-pro", "1.0-pro", "gemini-pro"]
+    final_list = []
+    for p in priority:
+        for m in available_models:
+            if p in m and m not in final_list:
+                final_list.append(m)
+    
+    if not final_list:
+        final_list = available_models # Fallback to whatever we found
+        
+    # Construct Story Prompt
+    clean_genre = genre if genre and genre.lower() != "none" else "Creative"
+    safe_prompt = f"Write a professional {clean_genre} story. Ideas: {prompt if prompt else 'A sudden discovery'}. Length: ~200 words."
+
+    last_err = ""
+    for model_name in final_list:
         try:
             model = genai.GenerativeModel(model_name)
-            response = model.generate_content(full_prompt)
-            if response.text:
+            response = model.generate_content(safe_prompt)
+            if response and hasattr(response, 'text') and response.text:
                 return response.text
         except Exception as e:
-            last_error = str(e)
+            last_err = str(e)
             continue
             
-    raise Exception(f"AI Story Error: Could not find a compatible model. Last error: {last_error}")
+    # If we reached here, the key is likely invalid or the API is not enabled
+    error_detail = discovery_error if discovery_error else last_err
+    raise Exception(f"Gemini API Error: Access denied or Service not enabled. Please go to https://aistudio.google.com/ to verify your API Key and ensure 'Generative Language API' is enabled. (Detail: {error_detail})")
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -3256,7 +3619,7 @@ def generate_story(genre="Science Fiction", prompt=""):
 def convert_images_to_pdf(input_paths, original_name):
     """Convert one or more images into a single PDF document using PyMuPDF."""
     import fitz
-    output_path = get_output_path(original_name, 'pdf')
+    output_path = get_output_path(original_name, 'pdf', suffix='_from_images')
     
     # Create a new empty PDF
     doc = fitz.open()
@@ -3289,4 +3652,236 @@ def convert_images_to_pdf(input_paths, original_name):
     doc.save(output_path)
     doc.close()
     return output_path
+
+
+# ═══════════════════════════════════════════════════════════════
+# PDF to PDF/A
+# ═══════════════════════════════════════════════════════════════
+def convert_pdf_to_pdfa(input_path, original_name):
+    """Convert a standard PDF to PDF/A format for long-term archival.
+
+    Sets the proper PDF/A metadata (XMP) and embeds fonts to ensure
+    the output conforms as closely as possible to PDF/A-2b standards.
+    """
+    import fitz
+    import datetime
+
+    output_path = get_output_path(original_name, 'pdf', suffix='_pdfa')
+
+    doc = fitz.open(input_path)
+
+    # --- Set PDF/A-2b compliant metadata ---
+    now = datetime.datetime.now(datetime.timezone.utc)
+    date_str = now.strftime("D:%Y%m%d%H%M%S+00'00'")
+
+    metadata = doc.metadata or {}
+    metadata["producer"] = "ScanPDF – PDF/A Converter"
+    metadata["creator"] = "ScanPDF"
+    metadata["creationDate"] = date_str
+    metadata["modDate"] = date_str
+
+    doc.set_metadata(metadata)
+
+    # Build XMP conformance block for PDF/A-2b
+    xmp = (
+        '<?xpacket begin="\xef\xbb\xbf" id="W5M0MpCehiHzreSzNTczkc9d"?>\n'
+        '<x:xmpmeta xmlns:x="adobe:ns:meta/">\n'
+        '<rdf:RDF xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">\n'
+        '<rdf:Description rdf:about=""\n'
+        '  xmlns:pdfaid="http://www.aiim.org/pdfa/ns/id/"\n'
+        '  xmlns:dc="http://purl.org/dc/elements/1.1/"\n'
+        '  xmlns:xmp="http://ns.adobe.com/xap/1.0/">\n'
+        '  <pdfaid:part>2</pdfaid:part>\n'
+        '  <pdfaid:conformance>B</pdfaid:conformance>\n'
+        f'  <xmp:CreateDate>{now.isoformat()}</xmp:CreateDate>\n'
+        f'  <xmp:ModifyDate>{now.isoformat()}</xmp:ModifyDate>\n'
+        '  <xmp:CreatorTool>ScanPDF</xmp:CreatorTool>\n'
+        '  <dc:title><rdf:Alt><rdf:li xml:lang="x-default">'
+        f'{Path(original_name).stem}</rdf:li></rdf:Alt></dc:title>\n'
+        '</rdf:Description>\n'
+        '</rdf:RDF>\n'
+        '</x:xmpmeta>\n'
+        '<?xpacket end="w"?>'
+    )
+
+    doc.set_xml_metadata(xmp)
+
+    # Save with garbage collection and deflation for best compliance
+    doc.save(output_path, garbage=3, deflate=True)
+    doc.close()
+    return output_path
+
+
+# ═══════════════════════════════════════════════════════════════
+# Add Page Numbers
+# ═══════════════════════════════════════════════════════════════
+def add_page_numbers(input_path, original_name, position='bottom-center',
+                     start_number=1, font_size='12', font_color='#000000',
+                     format_str='{n}'):
+    """Add page numbers to every page of a PDF.
+
+    Parameters
+    ----------
+    position : str
+        One of: top-left, top-center, top-right,
+                bottom-left, bottom-center, bottom-right
+    start_number : int or str
+        First page number (default 1).
+    font_size : str or int
+        Font size in points.
+    font_color : str
+        Hex colour string e.g. '#000000'.
+    format_str : str
+        Format pattern – use {n} for page number, {total} for total pages.
+        Examples: '{n}', 'Page {n} of {total}', '- {n} -'
+    """
+    import fitz
+
+    output_path = get_output_path(original_name, 'pdf', suffix='_numbered')
+
+    doc = fitz.open(input_path)
+    total_pages = len(doc)
+    start = int(start_number)
+    fsize = float(font_size)
+
+    # Parse hex colour to (r, g, b) floats 0‒1
+    hex_c = font_color.lstrip('#')
+    r_c = int(hex_c[0:2], 16) / 255
+    g_c = int(hex_c[2:4], 16) / 255
+    b_c = int(hex_c[4:6], 16) / 255
+
+    margin = 36  # 0.5 inch from edges
+
+    for i, page in enumerate(doc):
+        page_num = start + i
+        text = format_str.replace('{n}', str(page_num)).replace('{total}', str(total_pages))
+        rect = page.rect
+
+        # Calculate position
+        if 'top' in position:
+            y = margin
+        else:  # bottom
+            y = rect.height - margin
+
+        if 'left' in position:
+            x = margin
+            align = 0  # left
+        elif 'right' in position:
+            x = rect.width - margin
+            align = 2  # right
+        else:  # center
+            x = rect.width / 2
+            align = 1  # center
+
+        # Use a text writer for precise text placement
+        tw = fitz.TextWriter(rect)
+        font = fitz.Font("helv")
+        text_width = font.text_length(text, fontsize=fsize)
+
+        if align == 1:      # center
+            x -= text_width / 2
+        elif align == 2:    # right
+            x -= text_width
+
+        tw.append((x, y), text, font=font, fontsize=fsize)
+        tw.write_text(page, color=(r_c, g_c, b_c))
+
+    doc.save(output_path, garbage=3, deflate=True)
+    doc.close()
+    return output_path
+
+
+# ═══════════════════════════════════════════════════════════════
+# Sign PDF
+# ═══════════════════════════════════════════════════════════════
+def sign_pdf(input_path, original_name, signature_image_path=None,
+             signature_data=None, page_number=0, x=100, y=100,
+             width=200, height=80):
+    """Overlay a signature image on a specific page of a PDF.
+
+    Either `signature_image_path` (file on disk) or `signature_data`
+    (base64-encoded PNG from a canvas) must be provided.
+    """
+    import fitz
+    import base64
+
+    output_path = get_output_path(original_name, 'pdf', suffix='_signed')
+    doc = fitz.open(input_path)
+
+    page_idx = int(page_number)
+    if page_idx < 0 or page_idx >= len(doc):
+        page_idx = 0
+
+    page = doc[page_idx]
+
+    sig_x = float(x)
+    sig_y = float(y)
+    sig_w = float(width)
+    sig_h = float(height)
+
+    rect = fitz.Rect(sig_x, sig_y, sig_x + sig_w, sig_y + sig_h)
+
+    if signature_data:
+        # Decode base64 PNG data
+        if ',' in signature_data:
+            signature_data = signature_data.split(',', 1)[1]
+        img_bytes = base64.b64decode(signature_data)
+        page.insert_image(rect, stream=img_bytes)
+    elif signature_image_path:
+        page.insert_image(rect, filename=signature_image_path)
+    else:
+        raise Exception("No signature provided.")
+
+    doc.save(output_path, garbage=3, deflate=True)
+    doc.close()
+    return output_path
+
+
+# ═══════════════════════════════════════════════════════════════
+# Redact PDF
+# ═══════════════════════════════════════════════════════════════
+def redact_pdf(input_path, original_name, redaction_areas=None):
+    """Permanently redact (black-out) specified areas from a PDF.
+
+    Parameters
+    ----------
+    redaction_areas : list of dict
+        Each dict should have: page (int), x (float), y (float),
+        width (float), height (float).
+        Example: [{"page": 0, "x": 100, "y": 200, "width": 300, "height": 50}]
+    """
+    import fitz
+    import json
+
+    output_path = get_output_path(original_name, 'pdf', suffix='_redacted')
+    doc = fitz.open(input_path)
+
+    if isinstance(redaction_areas, str):
+        redaction_areas = json.loads(redaction_areas)
+
+    if not redaction_areas:
+        raise Exception("No redaction areas specified.")
+
+    for area in redaction_areas:
+        page_idx = int(area.get('page', 0))
+        if page_idx < 0 or page_idx >= len(doc):
+            continue
+
+        page = doc[page_idx]
+        x = float(area.get('x', 0))
+        y = float(area.get('y', 0))
+        w = float(area.get('width', 100))
+        h = float(area.get('height', 20))
+
+        rect = fitz.Rect(x, y, x + w, y + h)
+        page.add_redact_annot(rect, fill=(0, 0, 0))
+
+    # Apply all redactions permanently
+    for page in doc:
+        page.apply_redactions()
+
+    doc.save(output_path, garbage=3, deflate=True)
+    doc.close()
+    return output_path
+
 

@@ -1,71 +1,71 @@
 {% extends 'converter/tool_base.html' %}
 {% load static %}
 
+{% block extra_head %}
+<style>
+    .crop-canvas-wrapper { position: relative; display: inline-block; cursor: crosshair; max-width:100%; }
+    .crop-canvas-wrapper img { display: block; max-width: 100%; border-radius: 0.75rem; box-shadow: 0 4px 20px rgba(0,0,0,0.12); }
+    .crop-overlay { position: absolute; border: 2px dashed #6366f1; background: rgba(99,102,241,0.08); pointer-events: none; border-radius: 4px; }
+    .crop-dim { position: absolute; background: rgba(0,0,0,0.45); pointer-events: none; }
+</style>
+{% endblock %}
+
 {% block tool_content %}
-<div class="rounded-2xl bg-white border border-surface-100 p-4 sm:p-5 shadow-mega">
-    <div class="space-y-4">
-        <!-- Drag & Drop Zone -->
-        <div id="drop-zone" class="relative rounded-2xl border-2 border-dashed border-brand-100 bg-brand-50/10 hover:bg-brand-50/30 hover:border-brand-400 transition-all duration-300 p-10 sm:p-14 text-center cursor-pointer group">
-            
-            <!-- Default State -->
+<div class="rounded-2xl bg-white border border-surface-100 p-4 sm:p-6 shadow-mega">
+    <!-- Upload -->
+    <div id="upload-stage">
+        <div id="drop-zone" class="rounded-2xl border-2 border-dashed border-brand-100 bg-brand-50/10 hover:bg-brand-50/30 hover:border-brand-400 transition-all p-10 sm:p-14 text-center cursor-pointer group">
             <div id="upload-default" class="space-y-4">
-                <div class="w-14 h-14 rounded-2xl bg-surface-50 border border-surface-100 flex items-center justify-center mx-auto group-hover:bg-brand-50 group-hover:border-brand-200 group-hover:scale-105 transition-all duration-300">
-                    <i data-lucide="crop" class="w-8 h-8 text-surface-300 group-hover:text-brand-500 transition-colors"></i>
+                <div class="w-14 h-14 rounded-2xl bg-surface-50 border border-surface-100 flex items-center justify-center mx-auto group-hover:bg-brand-50 transition-all">
+                    <i data-lucide="crop" class="w-8 h-8 text-surface-300 group-hover:text-brand-500"></i>
                 </div>
-                <div>
-                    <p class="text-base font-semibold text-surface-700 mb-1">
-                        Drop PDF to crop margins, or <span class="text-brand-600 underline underline-offset-4 decoration-brand-200">browse</span>
-                    </p>
-                    <p class="text-xs text-surface-400">Max 50MB&nbsp;&nbsp;•&nbsp;&nbsp;Accepted: .pdf</p>
-                </div>
+                <p class="text-base font-semibold text-surface-700">Drop PDF to crop, or <span class="text-brand-600 underline">browse</span></p>
+                <p class="text-xs text-surface-400">Max 50MB • .pdf only</p>
             </div>
-
-            <!-- File Selected State -->
             <div id="file-selected" class="hidden">
-                <div class="flex items-center justify-center gap-6">
-                    <div class="relative">
-                        <div class="w-14 h-14 rounded-2xl bg-brand-50 border border-brand-100 flex items-center justify-center flex-shrink-0">
-                            <i data-lucide="file-check" class="w-8 h-8 text-brand-600"></i>
-                        </div>
-                    </div>
+                <div class="flex items-center justify-center gap-4">
+                    <div class="w-12 h-12 rounded-xl bg-brand-50 border border-brand-100 flex items-center justify-center"><i data-lucide="file-check" class="w-6 h-6 text-brand-600"></i></div>
                     <div class="text-left min-w-0">
-                        <p id="file-name" class="text-surface-800 font-bold text-base truncate max-w-[180px]"></p>
-                        <p id="file-size" class="text-xs text-surface-400 mt-0.5 font-medium"></p>
+                        <p id="file-name" class="font-bold text-base text-surface-800 truncate"></p>
+                        <p id="file-size" class="text-xs text-surface-400"></p>
                     </div>
-                    <button id="remove-file-btn" class="p-2.5 rounded-xl hover:bg-red-50 text-surface-300 hover:text-red-500 transition-all flex-shrink-0" title="Remove file">
-                        <i data-lucide="trash-2" class="w-5 h-5"></i>
-                    </button>
+                    <button id="remove-file-btn" class="p-2 rounded-lg hover:bg-red-50 text-surface-300 hover:text-red-500 transition-all"><i data-lucide="trash-2" class="w-5 h-5"></i></button>
                 </div>
             </div>
-
             <input type="file" id="file-input" class="hidden" accept=".pdf">
         </div>
 
-        <!-- Crop Options (Initially Hidden) -->
-        <div id="initial-upload-area" class="hidden space-y-4 pt-4 border-t border-surface-50 animate-fade-in-up">
-            <h3 class="text-sm font-black text-surface-400 uppercase tracking-widest text-center">Cropping Calibration</h3>
-            
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <label class="relative flex items-center gap-4 p-5 rounded-2xl border-2 border-surface-100 bg-surface-50 cursor-pointer hover:bg-white hover:border-brand-500 hover:shadow-md transition-all group">
-                    <input type="radio" name="crop_mode" value="auto" checked class="w-5 h-5 text-brand-600 border-surface-300 focus:ring-brand-500">
-                    <div>
-                        <span class="block text-sm font-black text-surface-700">Auto-Trim White Space</span>
-                        <span class="block text-[10px] text-surface-400 font-medium">Magically removes all empty margins</span>
-                    </div>
-                </label>
+        <!-- Crop Options -->
+        <div id="options-section" class="hidden mt-4 space-y-4">
+            <div class="flex rounded-xl bg-surface-50 border border-surface-100 p-1">
+                <button data-mode="visual" class="crop-tab flex-1 py-2.5 rounded-lg text-xs font-black uppercase tracking-widest bg-white text-brand-700 shadow-sm border border-surface-100 transition-all">
+                    <i data-lucide="scan" class="w-4 h-4 inline mr-1"></i> Visual Crop
+                </button>
+                <button data-mode="auto" class="crop-tab flex-1 py-2.5 rounded-lg text-xs font-black uppercase tracking-widest text-surface-400 transition-all">
+                    <i data-lucide="wand-2" class="w-4 h-4 inline mr-1"></i> Auto-Trim
+                </button>
+                <button data-mode="manual" class="crop-tab flex-1 py-2.5 rounded-lg text-xs font-black uppercase tracking-widest text-surface-400 transition-all">
+                    <i data-lucide="ruler" class="w-4 h-4 inline mr-1"></i> Manual
+                </button>
+            </div>
 
-                <label class="relative flex items-center gap-4 p-5 rounded-2xl border-2 border-surface-100 bg-surface-50 cursor-pointer hover:bg-white hover:border-brand-500 hover:shadow-md transition-all group">
-                    <input type="radio" name="crop_mode" value="manual" class="w-5 h-5 text-brand-600 border-surface-300 focus:ring-brand-500">
-                    <div>
-                        <span class="block text-sm font-black text-surface-700">Manual Edge Control</span>
-                        <span class="block text-[10px] text-surface-400 font-medium">Fine-tune each individual margin</span>
+            <!-- Visual Crop Preview -->
+            <div id="visual-crop-area" class="p-4 bg-surface-50 rounded-2xl border border-surface-100">
+                <p class="text-[10px] font-black text-surface-400 uppercase tracking-widest mb-3 text-center">Click and drag to select crop area on page 1</p>
+                <div class="flex justify-center overflow-auto max-h-[60vh]">
+                    <div id="crop-canvas-wrapper" class="crop-canvas-wrapper">
+                        <canvas id="pdf-canvas"></canvas>
+                        <div id="crop-rect" class="crop-overlay hidden"></div>
                     </div>
-                </label>
+                </div>
+                <div id="crop-info" class="hidden mt-3 text-center">
+                    <span class="text-xs font-bold text-brand-700 bg-brand-50 px-3 py-1 rounded-lg" id="crop-dims"></span>
+                </div>
             </div>
 
             <!-- Manual Controls -->
-            <div id="manual-controls" class="hidden animate-fade-in-up">
-                <div class="max-w-md mx-auto relative p-12 bg-surface-50 rounded-2xl border border-surface-100">
+            <div id="manual-section" class="hidden p-4 bg-surface-50 rounded-2xl border border-surface-100">
+                <div class="max-w-md mx-auto relative p-12 bg-white rounded-xl border border-surface-200">
                     <div class="absolute top-4 left-1/2 -translate-x-1/2 w-32">
                         <label class="block text-[10px] font-black text-center text-surface-400 uppercase mb-1">Top (PT)</label>
                         <input type="number" id="crop-top" value="20" class="w-full text-center py-2 rounded-lg border border-surface-200 text-sm font-bold focus:border-brand-500 outline-none">
@@ -82,154 +82,211 @@
                         <label class="block text-[10px] font-black text-center text-surface-400 uppercase mb-1">Right</label>
                         <input type="number" id="crop-right" value="20" class="w-full text-center py-2 rounded-lg border border-surface-200 text-sm font-bold focus:border-brand-500 outline-none">
                     </div>
-                    <div class="aspect-[4/3] bg-white rounded-xl border-2 border-dashed border-surface-200 flex items-center justify-center text-surface-200">
-                        <i data-lucide="scan" class="w-9 h-9 opacity-50"></i>
-                    </div>
+                    <div class="aspect-[4/3] flex items-center justify-center text-surface-200"><i data-lucide="scan" class="w-9 h-9 opacity-50"></i></div>
                 </div>
             </div>
 
-            <button id="convert-btn" disabled 
-                class="w-full py-3 rounded-2xl bg-gradient-to-r {{ tool.gradient }} text-white font-black text-base uppercase tracking-widest shadow-xl shadow-brand-500/20 hover:shadow-brand-500/40 hover:-translate-y-1 active:scale-95 transition-all flex items-center justify-center gap-3">
-                <i data-lucide="crop" class="w-5 h-5"></i>
-                Crop PDF
+            <!-- Auto Info -->
+            <div id="auto-section" class="hidden p-4 bg-surface-50 rounded-2xl border border-surface-100 text-center">
+                <div class="w-12 h-12 rounded-xl bg-brand-50 border border-brand-100 flex items-center justify-center mx-auto mb-3">
+                    <i data-lucide="wand-2" class="w-6 h-6 text-brand-600"></i>
+                </div>
+                <p class="text-sm font-bold text-surface-700">Auto-Trim White Space</p>
+                <p class="text-xs text-surface-400 mt-1">We'll detect content boundaries and remove all empty margins automatically.</p>
+            </div>
+
+            <button id="convert-btn" class="w-full py-3.5 rounded-2xl bg-gradient-to-r {{ tool.gradient }} text-white font-black text-sm uppercase tracking-widest hover:shadow-2xl hover:-translate-y-1 active:translate-y-0 transition-all flex items-center justify-center gap-3">
+                <i data-lucide="crop" class="w-5 h-5"></i> Crop PDF
             </button>
         </div>
+    </div>
 
-        <!-- ═══════════════ PROGRESS STATE ═══════════════ -->
-        <div id="progress-section" class="hidden mt-4">
-            <div class="flex items-center gap-5 py-4 px-5 rounded-2xl bg-surface-50 border border-surface-100">
-                <div class="relative flex-shrink-0">
-                    <div class="w-9 h-9 rounded-full border-[3px] border-surface-200 border-t-brand-500 animate-spin"></div>
-                </div>
-                <div>
-                    <p class="text-surface-800 font-black text-base italic">Trimming Pages...</p>
-                    <p class="text-xs text-surface-400 mt-1">Our engine is precisely cutting the document boundaries.</p>
-                </div>
+    <!-- Progress -->
+    <div id="progress-section" class="hidden mt-4">
+        <div class="flex items-center gap-4 py-4 px-5 rounded-2xl bg-surface-50 border border-surface-100">
+            <div class="w-8 h-8 rounded-full border-[3px] border-surface-200 border-t-brand-500 animate-spin"></div>
+            <div><p class="text-surface-800 font-bold">Trimming pages…</p><p class="text-xs text-surface-400 mt-1">Cutting to exact boundaries</p></div>
+        </div>
+    </div>
+
+    <!-- Success -->
+    <div id="success-section" class="hidden mt-4">
+        <div class="text-center py-4 px-6 rounded-2xl bg-emerald-50/50 border border-emerald-100">
+            <div class="w-14 h-14 rounded-xl bg-emerald-100 flex items-center justify-center mx-auto mb-3 animate-success-pop"><i data-lucide="check" class="w-8 h-8 text-emerald-600"></i></div>
+            <h3 class="text-lg font-black text-surface-900 mb-1">Cropped!</h3>
+            <p class="text-surface-500 text-sm mb-4">Your PDF margins have been adjusted.</p>
+            <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                <a id="download-btn" href="#" download class="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-black text-sm shadow-xl"><i data-lucide="download" class="w-5 h-5"></i> Download</a>
+                <button onclick="location.reload()" class="inline-flex items-center justify-center gap-2 px-8 py-4 rounded-2xl bg-white border border-surface-200 text-surface-600 font-bold text-sm"><i data-lucide="refresh-cw" class="w-4 h-4"></i> Start Over</button>
             </div>
         </div>
+    </div>
 
-        <!-- ═══════════════ SUCCESS STATE ═══════════════ -->
-        <div id="success-section" class="hidden mt-4">
-            <div class="text-center py-4 px-5 rounded-2xl bg-emerald-50/50 border border-emerald-100">
-                <div class="w-14 h-14 rounded-xl bg-emerald-100 flex items-center justify-center mx-auto mb-2 animate-success-pop shadow-inner">
-                    <i data-lucide="check" class="w-8 h-8 text-emerald-600"></i>
-                </div>
-                <h3 class="text-lg font-black text-surface-900 mb-1">Cropped!</h3>
-                <p class="text-surface-500 text-sm mb-4">The PDF margins have been adjusted to your specifications.</p>
-                <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                    <a id="download-btn" href="#" download
-                        class="inline-flex items-center justify-center gap-2.5 px-10 py-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-black text-sm hover:from-emerald-400 hover:to-emerald-500 transition-all shadow-xl shadow-emerald-500/20">
-                        <i data-lucide="download" class="w-5 h-5"></i> Download File
-                    </a>
-                    <button onclick="window.location.reload()"
-                        class="inline-flex items-center justify-center gap-2.5 px-10 py-4 rounded-2xl bg-white border border-surface-200 text-surface-600 font-bold text-sm hover:bg-surface-50 transition-all shadow-sm">
-                        <i data-lucide="refresh-cw" class="w-4 h-4"></i> Start Over
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- ═══════════════ ERROR STATE ═══════════════ -->
-        <div id="error-section" class="hidden mt-4">
-            <div class="p-5 rounded-2xl bg-red-50 border border-red-100 flex items-start gap-4 animate-shake">
-                <div class="w-9 h-9 rounded-xl bg-red-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <i data-lucide="alert-octagon" class="w-6 h-6 text-red-500"></i>
-                </div>
-                <div class="pt-0.5">
-                    <h4 class="font-black text-red-700 text-sm uppercase tracking-wider mb-1">Cropping Failed</h4>
-                    <p id="error-message" class="text-xs text-red-500 leading-relaxed font-bold"></p>
-                </div>
-            </div>
+    <!-- Error -->
+    <div id="error-section" class="hidden mt-4">
+        <div class="p-5 rounded-2xl bg-red-50 border border-red-100 flex items-start gap-4">
+            <div class="w-9 h-9 rounded-xl bg-red-100 flex items-center justify-center flex-shrink-0"><i data-lucide="alert-octagon" class="w-5 h-5 text-red-500"></i></div>
+            <div><h4 class="font-black text-red-700 text-sm uppercase tracking-wider mb-1">Error</h4><p id="error-message" class="text-xs text-red-500 font-bold"></p></div>
         </div>
     </div>
 </div>
 {% endblock %}
 
 {% block extra_scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script>
+    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
     const CONVERT_URL = '{% url "converter:convert_file" "crop-pdf" %}';
-    const CSRF_TOKEN = '{{ csrf_token }}';
+    const CSRF = '{{ csrf_token }}';
 
-    const dropZone = document.getElementById('drop-zone'), fileInput = document.getElementById('file-input');
-    const uploadDefault = document.getElementById('upload-default'), fileSelected = document.getElementById('file-selected'), fileName = document.getElementById('file-name'), fileSize = document.getElementById('file-size');
-    const convertBtn = document.getElementById('convert-btn'), progressSection = document.getElementById('progress-section'), successSection = document.getElementById('success-section'), errorSection = document.getElementById('error-section'), errorMessage = document.getElementById('error-message'), downloadBtn = document.getElementById('download-btn'), initialUploadArea = document.getElementById('initial-upload-area'), manualControls = document.getElementById('manual-controls');
+    let selectedFile = null, cropMode = 'visual';
+    let cropStart = null, cropEnd = null, pdfPageRect = null, canvasScale = 1;
 
-    document.querySelectorAll('input[name="crop_mode"]').forEach(radio => {
-        radio.onchange = (e) => {
-            manualControls.classList.toggle('hidden', e.target.value !== 'manual');
-        };
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('file-input');
+
+    // Tab switching
+    document.querySelectorAll('.crop-tab').forEach(btn => {
+        btn.addEventListener('click', () => {
+            cropMode = btn.dataset.mode;
+            document.querySelectorAll('.crop-tab').forEach(b => b.className = 'crop-tab flex-1 py-2.5 rounded-lg text-xs font-black uppercase tracking-widest text-surface-400 transition-all');
+            btn.className = 'crop-tab flex-1 py-2.5 rounded-lg text-xs font-black uppercase tracking-widest bg-white text-brand-700 shadow-sm border border-surface-100 transition-all';
+            document.getElementById('visual-crop-area').classList.toggle('hidden', cropMode !== 'visual');
+            document.getElementById('manual-section').classList.toggle('hidden', cropMode !== 'manual');
+            document.getElementById('auto-section').classList.toggle('hidden', cropMode !== 'auto');
+            lucide.createIcons();
+        });
     });
 
-    let selectedFile = null;
+    // File handling
+    dropZone.addEventListener('click', e => { if (!e.target.closest('#remove-file-btn')) fileInput.click(); });
+    dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('border-brand-400'); });
+    dropZone.addEventListener('dragleave', () => dropZone.classList.remove('border-brand-400'));
+    dropZone.addEventListener('drop', e => { e.preventDefault(); dropZone.classList.remove('border-brand-400'); if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]); });
+    fileInput.addEventListener('change', e => { if (e.target.files.length) handleFile(e.target.files[0]); });
 
-    dropZone.onclick = e => { if (!e.target.closest('#remove-file-btn')) fileInput.click(); };
-    dropZone.ondragover = e => { e.preventDefault(); dropZone.classList.add('border-brand-400', 'bg-brand-50/40'); };
-    dropZone.ondragleave = () => { dropZone.classList.remove('border-brand-400', 'bg-brand-50/40'); };
-    dropZone.ondrop = e => { 
-        e.preventDefault(); 
-        dropZone.classList.remove('border-brand-400', 'bg-brand-50/40'); 
-        if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]); 
-    };
-
-    fileInput.onchange = e => { if (e.target.files.length) handleFile(e.target.files[0]); };
-
-    function handleFile(file) {
-        if (!file.name.toLowerCase().endsWith('.pdf')) { showError('Only PDF files are accepted.'); return; }
-        if (file.size > 52428800) { showError('File exceeds 50MB limit.'); return; }
-        
-        selectedFile = file;
-        fileName.textContent = file.name;
-        fileSize.textContent = (file.size / 1024 / 1024).toFixed(2) + ' MB';
-        
-        uploadDefault.classList.add('hidden'); 
-        fileSelected.classList.remove('hidden');
-        initialUploadArea.classList.remove('hidden');
-        convertBtn.disabled = false; 
-        errorSection.classList.add('hidden');
+    document.getElementById('remove-file-btn').addEventListener('click', e => {
+        e.stopPropagation(); selectedFile = null; fileInput.value = '';
+        document.getElementById('upload-default').classList.remove('hidden');
+        document.getElementById('file-selected').classList.add('hidden');
+        document.getElementById('options-section').classList.add('hidden');
         lucide.createIcons();
+    });
+
+    async function handleFile(file) {
+        if (!file.name.toLowerCase().endsWith('.pdf')) { showError('Only PDF files accepted.'); return; }
+        if (file.size > 52428800) { showError('File exceeds 50MB.'); return; }
+        selectedFile = file;
+        document.getElementById('file-name').textContent = file.name;
+        document.getElementById('file-size').textContent = (file.size/1024/1024).toFixed(2)+' MB';
+        document.getElementById('upload-default').classList.add('hidden');
+        document.getElementById('file-selected').classList.remove('hidden');
+        document.getElementById('options-section').classList.remove('hidden');
+        document.getElementById('error-section').classList.add('hidden');
+        lucide.createIcons();
+        await renderPreview(file);
     }
 
-    document.getElementById('remove-file-btn').onclick = e => { 
-        e.stopPropagation(); 
-        selectedFile = null; fileInput.value = '';
-        uploadDefault.classList.remove('hidden'); fileSelected.classList.add('hidden');
-        initialUploadArea.classList.add('hidden');
-        convertBtn.disabled = true; 
-        lucide.createIcons();
-    };
+    async function renderPreview(file) {
+        const buf = await file.arrayBuffer();
+        const pdf = await pdfjsLib.getDocument({ data: buf }).promise;
+        const page = await pdf.getPage(1);
+        pdfPageRect = page.getViewport({ scale: 1 });
 
-    convertBtn.onclick = async () => {
+        const maxW = Math.min(500, window.innerWidth - 80);
+        canvasScale = maxW / pdfPageRect.width;
+        const viewport = page.getViewport({ scale: canvasScale });
+
+        const canvas = document.getElementById('pdf-canvas');
+        canvas.width = viewport.width;
+        canvas.height = viewport.height;
+        const ctx = canvas.getContext('2d');
+        await page.render({ canvasContext: ctx, viewport }).promise;
+
+        // Setup visual crop drag
+        const wrapper = document.getElementById('crop-canvas-wrapper');
+        let dragging = false, sx, sy;
+
+        wrapper.onmousedown = wrapper.ontouchstart = e => {
+            e.preventDefault();
+            dragging = true;
+            const r = canvas.getBoundingClientRect();
+            const pt = e.touches ? e.touches[0] : e;
+            sx = pt.clientX - r.left; sy = pt.clientY - r.top;
+            cropStart = { x: sx, y: sy };
+        };
+        wrapper.onmousemove = wrapper.ontouchmove = e => {
+            if (!dragging) return;
+            e.preventDefault();
+            const r = canvas.getBoundingClientRect();
+            const pt = e.touches ? e.touches[0] : e;
+            const ex = Math.max(0, Math.min(pt.clientX - r.left, canvas.width));
+            const ey = Math.max(0, Math.min(pt.clientY - r.top, canvas.height));
+            cropEnd = { x: ex, y: ey };
+            drawCropRect();
+        };
+        wrapper.onmouseup = wrapper.ontouchend = () => { dragging = false; };
+    }
+
+    function drawCropRect() {
+        if (!cropStart || !cropEnd) return;
+        const rect = document.getElementById('crop-rect');
+        const x = Math.min(cropStart.x, cropEnd.x), y = Math.min(cropStart.y, cropEnd.y);
+        const w = Math.abs(cropEnd.x - cropStart.x), h = Math.abs(cropEnd.y - cropStart.y);
+        rect.style.left = x+'px'; rect.style.top = y+'px'; rect.style.width = w+'px'; rect.style.height = h+'px';
+        rect.classList.remove('hidden');
+        // Show dimensions in PDF points
+        const pw = Math.round(w / canvasScale), ph = Math.round(h / canvasScale);
+        document.getElementById('crop-dims').textContent = `${pw} × ${ph} pt`;
+        document.getElementById('crop-info').classList.remove('hidden');
+    }
+
+    document.getElementById('convert-btn').addEventListener('click', async () => {
         if (!selectedFile) return;
-        convertBtn.classList.add('hidden');
-        progressSection.classList.remove('hidden');
-        
-        const cropMode = document.querySelector('input[name="crop_mode"]:checked').value;
-        const formData = new FormData();
-        formData.append('file', selectedFile);
-        formData.append('csrfmiddlewaretoken', CSRF_TOKEN);
-        formData.append('crop_mode', cropMode);
-        
-        if (cropMode === 'manual') {
-            formData.append('crop_top', document.getElementById('crop-top').value);
-            formData.append('crop_bottom', document.getElementById('crop-bottom').value);
-            formData.append('crop_left', document.getElementById('crop-left').value);
-            formData.append('crop_right', document.getElementById('crop-right').value);
+        const fd = new FormData();
+        fd.append('file', selectedFile);
+        fd.append('csrfmiddlewaretoken', CSRF);
+
+        if (cropMode === 'auto') {
+            fd.append('crop_mode', 'auto');
+        } else if (cropMode === 'manual') {
+            fd.append('crop_mode', 'manual');
+            fd.append('crop_top', document.getElementById('crop-top').value);
+            fd.append('crop_bottom', document.getElementById('crop-bottom').value);
+            fd.append('crop_left', document.getElementById('crop-left').value);
+            fd.append('crop_right', document.getElementById('crop-right').value);
+        } else {
+            // Visual crop — convert canvas pixels to PDF points
+            if (!cropStart || !cropEnd) { showError('Please draw a crop rectangle on the page.'); return; }
+            fd.append('crop_mode', 'visual');
+            fd.append('crop_x', Math.round(Math.min(cropStart.x, cropEnd.x) / canvasScale));
+            fd.append('crop_y', Math.round(Math.min(cropStart.y, cropEnd.y) / canvasScale));
+            fd.append('crop_w', Math.round(Math.abs(cropEnd.x - cropStart.x) / canvasScale));
+            fd.append('crop_h', Math.round(Math.abs(cropEnd.y - cropStart.y) / canvasScale));
         }
+
+        document.getElementById('convert-btn').classList.add('hidden');
+        document.getElementById('progress-section').classList.remove('hidden');
+        document.getElementById('error-section').classList.add('hidden');
 
         try {
-            const response = await fetch(CONVERT_URL, { method: 'POST', body: formData });
-            if (!response.ok) { const d = await response.json(); throw new Error(d.error || 'Failed to crop PDF.'); }
-            const blob = await response.blob();
+            const resp = await fetch(CONVERT_URL, { method: 'POST', body: fd });
+            if (!resp.ok) { const d = await resp.json(); throw new Error(d.error || 'Crop failed'); }
+            const blob = await resp.blob();
             const url = window.URL.createObjectURL(blob);
-            downloadBtn.href = url; downloadBtn.download = fileName.textContent.split('.')[0] + '_trimmed.pdf';
-            progressSection.classList.add('hidden'); successSection.classList.remove('hidden');
+            document.getElementById('download-btn').href = url;
+            document.getElementById('download-btn').download = selectedFile.name.replace('.pdf','') + '_cropped.pdf';
+            document.getElementById('progress-section').classList.add('hidden');
+            document.getElementById('success-section').classList.remove('hidden');
+            lucide.createIcons();
         } catch (err) {
             showError(err.message);
-            progressSection.classList.add('hidden'); convertBtn.classList.remove('hidden');
+            document.getElementById('progress-section').classList.add('hidden');
+            document.getElementById('convert-btn').classList.remove('hidden');
         }
-        lucide.createIcons();
-    };
+    });
 
-    function showError(msg) { errorMessage.textContent = msg; errorSection.classList.remove('hidden'); lucide.createIcons(); }
+    function showError(msg) { document.getElementById('error-message').textContent = msg; document.getElementById('error-section').classList.remove('hidden'); lucide.createIcons(); }
 </script>
 {% endblock %}

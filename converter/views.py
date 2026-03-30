@@ -3,6 +3,7 @@ Views for the file converter application.
 """
 import os
 import mimetypes
+from pathlib import Path
 from django.shortcuts import render
 from django.http import JsonResponse, FileResponse, Http404
 from django.views.decorators.csrf import csrf_exempt
@@ -57,6 +58,10 @@ from .utils import (
     download_video,
     run_speed_test,
     convert_images_to_pdf,
+    convert_pdf_to_pdfa,
+    add_page_numbers,
+    sign_pdf,
+    redact_pdf,
 )
 
 
@@ -82,17 +87,21 @@ class FileCleanupResponse(FileResponse):
 
 
 def create_cleanup_response(file_path, content_type=None, filename=None):
-    """Helper to create a cleanup response with proper headers."""
+    """Helper to create a cleanup response with proper headers and formatted filenames."""
     if not content_type:
         import mimetypes
         content_type, _ = mimetypes.guess_type(file_path)
         content_type = content_type or 'application/octet-stream'
     
+    # Choose the starting point for formatting: passed filename or the disk name
+    raw_name = filename or os.path.basename(file_path)
+    
+    # Use the formatting logic from utils
+    from .utils import format_download_name
+    final_filename = format_download_name(raw_name)
+
     response = FileCleanupResponse(file_path, content_type=content_type)
-    if filename:
-        response['Content-Disposition'] = f'attachment; filename="{filename}"'
-    else:
-        response['Content-Disposition'] = f'attachment; filename="{os.path.basename(file_path)}"'
+    response['Content-Disposition'] = f'attachment; filename="{final_filename}"'
     return response
 
 
@@ -134,7 +143,7 @@ TOOLS = {
     },
     'html-to-pdf': {
         'title': 'HTML to PDF',
-        'description': 'Convert HTML files to pixel-perfect PDF documents with styling preserved.',
+        'description': 'Convert any webpage URL or HTML file to a pixel-perfect PDF document.',
         'icon': 'code',
         'accept': '.html,.htm',
         'allowed_extensions': ['.html', '.htm'],
@@ -610,6 +619,50 @@ TOOLS = {
         'category': 'convert',
         'multi_file': True,
     },
+    'pdf-to-pdfa': {
+        'title': 'PDF to PDF/A',
+        'description': 'Convert your PDF to PDF/A archival format for long-term preservation and compliance.',
+        'icon': 'archive',
+        'accept': '.pdf',
+        'allowed_extensions': ['.pdf'],
+        'converter': convert_pdf_to_pdfa,
+        'color': '#0d9488',
+        'gradient': 'from-teal-500 to-teal-700',
+        'category': 'convert',
+    },
+    'add-page-numbers': {
+        'title': 'Add Page Numbers',
+        'description': 'Insert page numbers on every page of your PDF with customizable position and format.',
+        'icon': 'hash',
+        'accept': '.pdf',
+        'allowed_extensions': ['.pdf'],
+        'converter': None,
+        'color': '#6366f1',
+        'gradient': 'from-indigo-500 to-indigo-700',
+        'category': 'pdf-tools',
+    },
+    'sign-pdf': {
+        'title': 'Sign PDF',
+        'description': 'Draw, type, or upload a signature and place it on any page of your PDF.',
+        'icon': 'pen-tool',
+        'accept': '.pdf',
+        'allowed_extensions': ['.pdf'],
+        'converter': None,
+        'color': '#059669',
+        'gradient': 'from-emerald-500 to-emerald-700',
+        'category': 'pdf-tools',
+    },
+    'redact-pdf': {
+        'title': 'Redact PDF',
+        'description': 'Permanently black out sensitive text and areas in your PDF documents.',
+        'icon': 'eye-off',
+        'accept': '.pdf',
+        'allowed_extensions': ['.pdf'],
+        'converter': None,
+        'color': '#dc2626',
+        'gradient': 'from-red-600 to-red-800',
+        'category': 'pdf-tools',
+    },
 }
 
 
@@ -695,6 +748,14 @@ def convert_page(request, tool_slug):
         template = 'converter/name_generator.html'
     elif tool_slug == 'image-to-video':
         template = 'converter/image_to_video.html'
+    elif tool_slug == 'add-page-numbers':
+        template = 'converter/add_page_numbers.html'
+    elif tool_slug == 'sign-pdf':
+        template = 'converter/sign_pdf.html'
+    elif tool_slug == 'redact-pdf':
+        template = 'converter/redact_pdf.html'
+    elif tool_slug == 'html-to-pdf':
+        template = 'converter/html_to_pdf.html'
     else:
         template = 'converter/convert.html'
 
@@ -737,9 +798,68 @@ def convert_file(request, tool_slug):
                 except OSError:
                     pass
 
-            return create_cleanup_response(output_path, content_type='application/pdf')
+            return create_cleanup_response(output_path, content_type='application/pdf',
+                                           filename=f"{Path(files[0].name).stem}_merged.pdf")
         except Exception as e:
             return JsonResponse({'error': f'Merge failed: {str(e)}'}, status=500)
+
+    # ── HTML to PDF (URL or file) ──
+    if tool_slug == 'html-to-pdf':
+        url_input = request.POST.get('url', '').strip()
+        uploaded_file = request.FILES.get('file')
+
+        if not url_input and not uploaded_file:
+            return JsonResponse({'error': 'Please provide a URL or upload an HTML file.'}, status=400)
+
+        try:
+            if url_input:
+                # URL mode
+                if not url_input.startswith(('http://', 'https://')):
+                    url_input = 'https://' + url_input
+                from urllib.parse import urlparse
+                domain = urlparse(url_input).netloc or 'webpage'
+                output_path = convert_html_to_pdf(None, f"{domain}.html", url=url_input)
+            else:
+                # File mode
+                input_path = save_uploaded_file(uploaded_file)
+                output_path = convert_html_to_pdf(input_path, uploaded_file.name)
+                try:
+                    os.remove(input_path)
+                except OSError:
+                    pass
+
+            return create_cleanup_response(output_path, content_type='application/pdf')
+        except Exception as e:
+            return JsonResponse({'error': f'HTML to PDF failed: {str(e)}'}, status=500)
+
+    # ── HTML to Image (URL or file) ──
+    if tool_slug == 'html-to-image':
+        url_input = request.POST.get('url', '').strip()
+        uploaded_file = request.FILES.get('file')
+
+        if not url_input and not uploaded_file:
+            return JsonResponse({'error': 'Please provide a URL or upload an HTML file.'}, status=400)
+
+        try:
+            if url_input:
+                # URL mode
+                if not url_input.startswith(('http://', 'https://')):
+                    url_input = 'https://' + url_input
+                from urllib.parse import urlparse
+                domain = urlparse(url_input).netloc or 'webpage'
+                output_path = html_to_image(None, f"{domain}.png", url=url_input)
+            else:
+                # File mode
+                input_path = save_uploaded_file(uploaded_file)
+                output_path = html_to_image(input_path, uploaded_file.name)
+                try:
+                    os.remove(input_path)
+                except OSError:
+                    pass
+
+            return create_cleanup_response(output_path, content_type='image/png')
+        except Exception as e:
+            return JsonResponse({'error': f'HTML to Image failed: {str(e)}'}, status=500)
 
     # ── Image to PDF: multiple files ──
     if tool_slug == 'image-to-pdf':
@@ -993,6 +1113,10 @@ def convert_file(request, tool_slug):
         crop_bottom = request.POST.get('crop_bottom', '0')
         crop_left = request.POST.get('crop_left', '0')
         crop_right = request.POST.get('crop_right', '0')
+        crop_x = request.POST.get('crop_x', '0')
+        crop_y = request.POST.get('crop_y', '0')
+        crop_w = request.POST.get('crop_w', '0')
+        crop_h = request.POST.get('crop_h', '0')
 
         try:
             input_path = save_uploaded_file(uploaded_file)
@@ -1003,6 +1127,10 @@ def convert_file(request, tool_slug):
                 bottom=crop_bottom,
                 left=crop_left,
                 right=crop_right,
+                crop_x=crop_x,
+                crop_y=crop_y,
+                crop_w=crop_w,
+                crop_h=crop_h,
             )
 
             try:
@@ -1288,14 +1416,6 @@ def convert_file(request, tool_slug):
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=500)
 
-    # ── Story Generator ──
-    if tool_slug == 'story-generator':
-        genre = request.POST.get('genre', 'science fiction')
-        try:
-            story = generate_story(genre)
-            return JsonResponse({'result': story})
-        except Exception as e:
-            return JsonResponse({'error': str(e)}, status=500)
 
     # ── Name Generator ──
     if tool_slug == 'name-generator':
@@ -1313,11 +1433,37 @@ def convert_file(request, tool_slug):
         text = request.POST.get('text', '')
         if not text:
             return JsonResponse({'error': 'Please enter text or a URL.'}, status=400)
+        
+        # New advanced options (Monkey Features)
+        fg_color = request.POST.get('fg_color', '#000000')
+        bg_color = request.POST.get('bg_color', '#ffffff')
+        style = request.POST.get('style', 'square')
+        eye_style = request.POST.get('eye_style', 'square')
+        ball_style = request.POST.get('ball_style', 'square')
+        gradient = request.POST.get('gradient', 'none')
+        output_format = request.POST.get('output_format', 'png')
+        
+        logo_path = None
+        # Check for uploaded logo OR preset logo
+        if 'logo' in request.FILES:
+            logo_path = save_uploaded_file(request.FILES['logo'])
+
         try:
-            output_path = generate_qr_code(text)
-            return create_cleanup_response(output_path, content_type='image/png')
+            output_path = generate_qr_code(
+                text, fg_color=fg_color, bg_color=bg_color, 
+                style=style, gradient_type=gradient, 
+                eye_style=eye_style, ball_style=ball_style,
+                logo_path=logo_path, output_format=output_format
+            )
+            # Cleanup logo if used
+            if logo_path and os.path.exists(logo_path):
+                try: os.remove(logo_path)
+                except: pass
+            
+            ct = 'image/jpeg' if output_format.lower() in ('jpg', 'jpeg') else 'image/png'
+            return create_cleanup_response(output_path, content_type=ct)
         except Exception as e:
-            return JsonResponse({'error': str(e)}, status=500)
+            return JsonResponse({'error': f"QR Generation Failed: {str(e)}"}, status=500)
 
     # ── Meme Generator ──
     if tool_slug == 'meme-generator':
@@ -1330,7 +1476,7 @@ def convert_file(request, tool_slug):
             input_path = save_uploaded_file(uploaded_file)
             output_path = generate_meme(input_path, uploaded_file.name, top_text, bottom_text)
             os.remove(input_path)
-            return create_cleanup_response(output_path, content_type='image/jpeg', filename="meme.jpg")
+            return create_cleanup_response(output_path, content_type='image/jpeg')
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=500)
 
@@ -1383,13 +1529,138 @@ def convert_file(request, tool_slug):
 
     # ── AI: Story Generator ──
     if tool_slug == 'story-generator':
-        genre = request.POST.get('genre', 'Science Fiction')
-        prompt = request.POST.get('prompt', '')
+        action = request.POST.get('action', 'info')
+        if action == 'info':
+            genre = request.POST.get('genre', 'Science Fiction')
+            prompt = request.POST.get('prompt', '')
+            try:
+                story = generate_story(genre, prompt=prompt)
+                return JsonResponse({'result': story})
+            except Exception as e:
+                return JsonResponse({'error': str(e)}, status=500)
+        elif action == 'download':
+            story_html = request.POST.get('story', '')
+            try:
+                # Wrap story in professional PDF template
+                styled_html = f"""
+                <html>
+                <head>
+                    <style>
+                        @page {{ size: A5; margin: 2cm; }}
+                        body {{ font-family: serif; line-height: 1.6; color: #333; }}
+                        h1 {{ text-align: center; color: #4f46e5; border-bottom: 2px solid #4f46e5; }}
+                        .footer {{ text-align: center; font-size: 8pt; color: #999; margin-top: 2cm; }}
+                    </style>
+                </head>
+                <body>
+                    <h1>A ScanPDF Story</h1>
+                    <div>{story_html}</div>
+                    <div class="footer">Generated by ScanPDF AI Story Engine • {time.strftime('%Y')}</div>
+                </body>
+                </html>
+                """
+                import weasyprint
+                output_path = get_output_path("AI_Story", "pdf")
+                weasyprint.HTML(string=styled_html).write_pdf(output_path)
+                return create_cleanup_response(output_path, content_type='application/pdf')
+            except Exception as e:
+                return JsonResponse({'error': f"Failed to generate PDF: {str(e)}"}, status=500)
+
+    # ── Add Page Numbers ──
+    if tool_slug == 'add-page-numbers':
+        if 'file' not in request.FILES:
+            return JsonResponse({'error': 'No file was uploaded.'}, status=400)
+
+        uploaded_file = request.FILES['file']
+        position = request.POST.get('position', 'bottom-center')
+        start_number = request.POST.get('start_number', '1')
+        font_size = request.POST.get('font_size', '12')
+        font_color = request.POST.get('font_color', '#000000')
+        format_str = request.POST.get('format_str', '{n}')
+
         try:
-            story = generate_story(genre, prompt=prompt)
-            return JsonResponse({'result': story})
+            input_path = save_uploaded_file(uploaded_file)
+            output_path = add_page_numbers(
+                input_path, uploaded_file.name,
+                position=position,
+                start_number=start_number,
+                font_size=font_size,
+                font_color=font_color,
+                format_str=format_str,
+            )
+            try:
+                os.remove(input_path)
+            except OSError:
+                pass
+            return create_cleanup_response(output_path, content_type='application/pdf')
         except Exception as e:
-            return JsonResponse({'error': str(e)}, status=500)
+            return JsonResponse({'error': f'Add page numbers failed: {str(e)}'}, status=500)
+
+    # ── Sign PDF ──
+    if tool_slug == 'sign-pdf':
+        if 'file' not in request.FILES:
+            return JsonResponse({'error': 'No file was uploaded.'}, status=400)
+
+        uploaded_file = request.FILES['file']
+        signature_data = request.POST.get('signature_data', '')
+        page_number = request.POST.get('page_number', '0')
+        sig_x = request.POST.get('sig_x', '100')
+        sig_y = request.POST.get('sig_y', '600')
+        sig_width = request.POST.get('sig_width', '200')
+        sig_height = request.POST.get('sig_height', '80')
+
+        signature_image = request.FILES.get('signature_image')
+        sig_image_path = None
+        if signature_image:
+            sig_image_path = save_uploaded_file(signature_image)
+
+        if not signature_data and not sig_image_path:
+            return JsonResponse({'error': 'Please provide a signature (draw or upload).'}, status=400)
+
+        try:
+            input_path = save_uploaded_file(uploaded_file)
+            output_path = sign_pdf(
+                input_path, uploaded_file.name,
+                signature_image_path=sig_image_path,
+                signature_data=signature_data,
+                page_number=page_number,
+                x=sig_x, y=sig_y,
+                width=sig_width, height=sig_height,
+            )
+            try:
+                os.remove(input_path)
+            except OSError:
+                pass
+            if sig_image_path:
+                try:
+                    os.remove(sig_image_path)
+                except OSError:
+                    pass
+            return create_cleanup_response(output_path, content_type='application/pdf')
+        except Exception as e:
+            return JsonResponse({'error': f'Sign PDF failed: {str(e)}'}, status=500)
+
+    # ── Redact PDF ──
+    if tool_slug == 'redact-pdf':
+        if 'file' not in request.FILES:
+            return JsonResponse({'error': 'No file was uploaded.'}, status=400)
+
+        uploaded_file = request.FILES['file']
+        redaction_areas = request.POST.get('redaction_areas', '[]')
+
+        try:
+            input_path = save_uploaded_file(uploaded_file)
+            output_path = redact_pdf(
+                input_path, uploaded_file.name,
+                redaction_areas=redaction_areas,
+            )
+            try:
+                os.remove(input_path)
+            except OSError:
+                pass
+            return create_cleanup_response(output_path, content_type='application/pdf')
+        except Exception as e:
+            return JsonResponse({'error': f'Redact PDF failed: {str(e)}'}, status=500)
 
     # ── Default Fallback for other tools ──
     # ── Standard single-file conversion ──
@@ -1423,8 +1694,24 @@ def convert_file(request, tool_slug):
         if content_type is None:
             content_type = 'application/octet-stream'
 
-        output_filename = os.path.basename(output_path)
-        return create_cleanup_response(output_path, content_type=content_type)
+        # Generate a proper filename based on the tool
+        base = Path(uploaded_file.name).stem
+        ext = Path(output_path).suffix
+        slug_to_suffix = {
+            'word-to-pdf': '_converted.pdf',
+            'pptx-to-pdf': '_converted.pdf',
+            'excel-to-pdf': '_converted.pdf',
+            'pdf-to-image': ext,
+            'pdf-to-word': '_converted.docx',
+            'pdf-to-pptx': '_converted.pptx',
+            'pdf-to-excel': '_converted.xlsx',
+            'compress-pdf': '_compressed.pdf',
+            'pdf-to-pdfa': '_pdfa.pdf',
+        }
+        suffix = slug_to_suffix.get(tool_slug, f'_output{ext}')
+        download_name = f"{base}{suffix}"
+
+        return create_cleanup_response(output_path, content_type=content_type, filename=download_name)
 
     except Exception as e:
         return JsonResponse({
