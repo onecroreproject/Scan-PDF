@@ -39,7 +39,6 @@ from .utils import (
     protect_pdf,
     png_to_jpg,
     jpg_to_png,
-    image_to_gif,
     html_to_image,
     resize_image,
     scale_image,
@@ -59,7 +58,6 @@ from .utils import (
     run_speed_test,
     convert_images_to_pdf,
     convert_pdf_to_pdfa,
-    add_page_numbers,
     sign_pdf,
     redact_pdf,
 )
@@ -385,18 +383,6 @@ TOOLS = {
         'gradient': 'from-green-500 to-emerald-700',
         'category': 'convert',
     },
-    'image-to-gif': {
-        'title': 'Image to GIF',
-        'description': 'Convert your images into a single GIF or an animated sequence.',
-        'icon': 'film',
-        'accept': '.jpg,.jpeg,.png',
-        'allowed_extensions': ['.jpg', '.jpeg', '.png'],
-        'converter': None,
-        'color': '#6b46c1',
-        'gradient': 'from-purple-500 to-indigo-700',
-        'category': 'convert',
-        'multi_file': True,
-    },
     'html-to-image': {
         'title': 'HTML to Image',
         'description': 'Capture a pixel-perfect image of your HTML files.',
@@ -630,17 +616,6 @@ TOOLS = {
         'gradient': 'from-teal-500 to-teal-700',
         'category': 'convert',
     },
-    'add-page-numbers': {
-        'title': 'Add Page Numbers',
-        'description': 'Insert page numbers on every page of your PDF with customizable position and format.',
-        'icon': 'hash',
-        'accept': '.pdf',
-        'allowed_extensions': ['.pdf'],
-        'converter': None,
-        'color': '#6366f1',
-        'gradient': 'from-indigo-500 to-indigo-700',
-        'category': 'pdf-tools',
-    },
     'sign-pdf': {
         'title': 'Sign PDF',
         'description': 'Draw, type, or upload a signature and place it on any page of your PDF.',
@@ -706,8 +681,6 @@ def convert_page(request, tool_slug):
         template = 'converter/unlock_pdf.html'
     elif tool_slug == 'protect-pdf':
         template = 'converter/protect_pdf.html'
-    elif tool_slug == 'image-to-gif':
-        template = 'converter/gif_maker.html'
     elif tool_slug == 'image-to-pdf':
         template = 'converter/image_to_pdf.html'
     elif tool_slug == 'ocr-pdf':
@@ -748,8 +721,6 @@ def convert_page(request, tool_slug):
         template = 'converter/name_generator.html'
     elif tool_slug == 'image-to-video':
         template = 'converter/image_to_video.html'
-    elif tool_slug == 'add-page-numbers':
-        template = 'converter/add_page_numbers.html'
     elif tool_slug == 'sign-pdf':
         template = 'converter/sign_pdf.html'
     elif tool_slug == 'redact-pdf':
@@ -1566,35 +1537,6 @@ def convert_file(request, tool_slug):
             except Exception as e:
                 return JsonResponse({'error': f"Failed to generate PDF: {str(e)}"}, status=500)
 
-    # ── Add Page Numbers ──
-    if tool_slug == 'add-page-numbers':
-        if 'file' not in request.FILES:
-            return JsonResponse({'error': 'No file was uploaded.'}, status=400)
-
-        uploaded_file = request.FILES['file']
-        position = request.POST.get('position', 'bottom-center')
-        start_number = request.POST.get('start_number', '1')
-        font_size = request.POST.get('font_size', '12')
-        font_color = request.POST.get('font_color', '#000000')
-        format_str = request.POST.get('format_str', '{n}')
-
-        try:
-            input_path = save_uploaded_file(uploaded_file)
-            output_path = add_page_numbers(
-                input_path, uploaded_file.name,
-                position=position,
-                start_number=start_number,
-                font_size=font_size,
-                font_color=font_color,
-                format_str=format_str,
-            )
-            try:
-                os.remove(input_path)
-            except OSError:
-                pass
-            return create_cleanup_response(output_path, content_type='application/pdf')
-        except Exception as e:
-            return JsonResponse({'error': f'Add page numbers failed: {str(e)}'}, status=500)
 
     # ── Sign PDF ──
     if tool_slug == 'sign-pdf':

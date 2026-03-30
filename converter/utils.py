@@ -2779,47 +2779,6 @@ def jpg_to_png(input_path, original_name):
     return output_path
 
 
-# ═══════════════════════════════════════════════════════════════
-# 22. IMAGE TO GIF
-# ═══════════════════════════════════════════════════════════════
-def image_to_gif(input_paths, original_name):
-    """Convert one or more images into a GIF (animated if multiple)."""
-    from PIL import Image
-    output_path = get_output_path(original_name, 'gif')
-
-    if isinstance(input_paths, str):
-        input_paths = [input_paths]
-
-    frames = []
-    for path in input_paths:
-        img = Image.open(path)
-        # GIFs work better in P mode or RGB
-        if img.mode == 'RGBA':
-            # Create white background for transparent images
-            bg = Image.new('RGB', img.size, (255, 255, 255))
-            bg.paste(img, mask=img.split()[3])
-            frames.append(bg)
-        else:
-            frames.append(img.convert('RGB'))
-
-    if not frames:
-        raise Exception("No images provided for GIF conversion.")
-
-    if len(frames) == 1:
-        frames[0].save(output_path, 'GIF')
-    else:
-        # Resize all frames to match the first frame for consistent animation
-        base_size = frames[0].size
-        resized_frames = [f.resize(base_size, Image.Resampling.LANCZOS) for f in frames]
-        resized_frames[0].save(
-            output_path,
-            save_all=True,
-            append_images=resized_frames[1:],
-            duration=500,  # 0.5s per frame
-            loop=0,
-            optimize=True
-        )
-    return output_path
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -3712,83 +3671,6 @@ def convert_pdf_to_pdfa(input_path, original_name):
     return output_path
 
 
-# ═══════════════════════════════════════════════════════════════
-# Add Page Numbers
-# ═══════════════════════════════════════════════════════════════
-def add_page_numbers(input_path, original_name, position='bottom-center',
-                     start_number=1, font_size='12', font_color='#000000',
-                     format_str='{n}'):
-    """Add page numbers to every page of a PDF.
-
-    Parameters
-    ----------
-    position : str
-        One of: top-left, top-center, top-right,
-                bottom-left, bottom-center, bottom-right
-    start_number : int or str
-        First page number (default 1).
-    font_size : str or int
-        Font size in points.
-    font_color : str
-        Hex colour string e.g. '#000000'.
-    format_str : str
-        Format pattern – use {n} for page number, {total} for total pages.
-        Examples: '{n}', 'Page {n} of {total}', '- {n} -'
-    """
-    import fitz
-
-    output_path = get_output_path(original_name, 'pdf', suffix='_numbered')
-
-    doc = fitz.open(input_path)
-    total_pages = len(doc)
-    start = int(start_number)
-    fsize = float(font_size)
-
-    # Parse hex colour to (r, g, b) floats 0‒1
-    hex_c = font_color.lstrip('#')
-    r_c = int(hex_c[0:2], 16) / 255
-    g_c = int(hex_c[2:4], 16) / 255
-    b_c = int(hex_c[4:6], 16) / 255
-
-    margin = 36  # 0.5 inch from edges
-
-    for i, page in enumerate(doc):
-        page_num = start + i
-        text = format_str.replace('{n}', str(page_num)).replace('{total}', str(total_pages))
-        rect = page.rect
-
-        # Calculate position
-        if 'top' in position:
-            y = margin
-        else:  # bottom
-            y = rect.height - margin
-
-        if 'left' in position:
-            x = margin
-            align = 0  # left
-        elif 'right' in position:
-            x = rect.width - margin
-            align = 2  # right
-        else:  # center
-            x = rect.width / 2
-            align = 1  # center
-
-        # Use a text writer for precise text placement
-        tw = fitz.TextWriter(rect)
-        font = fitz.Font("helv")
-        text_width = font.text_length(text, fontsize=fsize)
-
-        if align == 1:      # center
-            x -= text_width / 2
-        elif align == 2:    # right
-            x -= text_width
-
-        tw.append((x, y), text, font=font, fontsize=fsize)
-        tw.write_text(page, color=(r_c, g_c, b_c))
-
-    doc.save(output_path, garbage=3, deflate=True)
-    doc.close()
-    return output_path
 
 
 # ═══════════════════════════════════════════════════════════════
