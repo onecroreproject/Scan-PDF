@@ -3512,7 +3512,7 @@ def get_video_info(url):
                         elif h >= 720: note = 'HD'
 
                         format_options.append({
-                            'format_id': f"bestvideo[ext=mp4][height<={h}]+bestaudio[ext=m4a]/bestvideo[height<={h}]+bestaudio/best[height<={h}]/best",
+                            'format_id': f"bestvideo[height<={h}]+bestaudio/best",
                             'ext': 'mp4',
                             'resolution': f"{h}p",
                             'filesize': 0,
