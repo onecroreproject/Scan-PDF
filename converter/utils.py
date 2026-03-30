@@ -3052,6 +3052,14 @@ def remove_background(input_path, original_name):
 
     Returns a PNG (to preserve transparency).
     """
+    import os
+    import tempfile
+    
+    # Fix Serverless read-only restrictions by moving ONNX weight cache to /tmp
+    temp_u2net = os.path.join(tempfile.gettempdir(), 'u2net_cache')
+    os.makedirs(temp_u2net, exist_ok=True)
+    os.environ['U2NET_HOME'] = temp_u2net
+    
     from PIL import Image
     from rembg import remove as rembg_remove
     from rembg.session_factory import new_session
@@ -3434,13 +3442,26 @@ def get_video_info(url):
     """Retrieve metadata and available formats for a video URL."""
     import yt_dlp
     
+    import random
+    ua_list = [
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+        'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1',
+        'Mozilla/5.0 (Linux; Android 13; SM-G998B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Mobile Safari/537.36'
+    ]
+    
     ydl_opts = {
         'quiet': True,
         'no_warnings': True,
         'skip_download': True,
         'nocheckcertificate': True,
-        'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-        'referer': 'https://www.instagram.com/',
+        'user_agent': random.choice(ua_list),
+        'http_headers': {
+            'Sec-Fetch-Mode': 'navigate',
+            'Sec-Fetch-Site': 'none',
+            'Sec-Fetch-User': '?1',
+            'Accept-Language': 'en-US,en;q=0.9',
+        },
         'geo_bypass': True,
         'ignore_no_formats_error': True,
         'source_address': '0.0.0.0',
@@ -3491,7 +3512,7 @@ def get_video_info(url):
                         elif h >= 720: note = 'HD'
 
                         format_options.append({
-                            'format_id': f"bestvideo[ext=mp4][height<={h}]+bestaudio[ext=m4a]/bestvideo[height<={h}]+bestaudio/best[height<={h}]",
+                            'format_id': f"bestvideo[ext=mp4][height<={h}]+bestaudio[ext=m4a]/bestvideo[height<={h}]+bestaudio/best[height<={h}]/best",
                             'ext': 'mp4',
                             'resolution': f"{h}p",
                             'filesize': 0,
@@ -3528,6 +3549,14 @@ def download_video(url, format_id=None):
     # We use a generic template first, then rename to our ScanPDF format
     temp_uuid = uuid.uuid4().hex[:8]
     
+    import random
+    ua_list = [
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+        'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1',
+        'Mozilla/5.0 (Linux; Android 13; SM-G998B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Mobile Safari/537.36'
+    ]
+    
     # Modern options to avoid being blocked by YouTube
     ydl_opts = {
         'outtmpl': os.path.join(output_dir, f'scan_temp_{temp_uuid}_%(title)s.%(ext)s'),
@@ -3538,7 +3567,13 @@ def download_video(url, format_id=None):
         'nocheckcertificate': True,
         'ignoreerrors': False,
         'logtostderr': False,
-        'user_agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+        'user_agent': random.choice(ua_list),
+        'http_headers': {
+            'Sec-Fetch-Mode': 'navigate',
+            'Sec-Fetch-Site': 'none',
+            'Sec-Fetch-User': '?1',
+            'Accept-Language': 'en-US,en;q=0.9',
+        },
         'geo_bypass': True,
         'ignore_no_formats_error': True,
         'source_address': '0.0.0.0',
