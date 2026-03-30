@@ -154,7 +154,14 @@
         
         try {
             const r = await fetch(CONVERT_URL, { method: 'POST', body: fd });
-            if(!r.ok) { const d = await r.json(); throw new Error(d.error || 'AI processing failed. The image might be too complex.'); }
+            if(!r.ok) { 
+                let msg = 'Live Server Memory Limit or Timeout reached. Try a smaller image.';
+                try {
+                    const d = await r.json(); 
+                    if(d.error) msg = d.error;
+                } catch(parseErr) {}
+                throw new Error(msg); 
+            }
             
             const blob = await r.blob(); 
             const url = URL.createObjectURL(blob);
