@@ -3066,28 +3066,67 @@ def balance_chemical_equation(equation_str):
     import re
 
     try:
-        # Split equation into reactants and products
-        parts = re.split(r'[=→>]', equation_str)
-        if len(parts) != 2:
-            raise ValueError("Equation must contain '=' or '→' between reactants and products.")
+        # Normalize subscripts (unicode to normal digits)
+        sub_trans = str.maketrans('₀₁₂₃₄₅₆₇₈₉', '0123456789')
+        eq_normalized = equation_str.translate(sub_trans)
 
-        reactants = [r.strip() for r in parts[0].split('+') if r.strip()]
-        products = [p.strip() for p in parts[1].split('+') if p.strip()]
+        # Normalize arrows
+        eq_normalized = eq_normalized.replace('→', '=').replace('->', '=').replace('>', '=')
+
+        # Split equation into reactants and products
+        if '=' not in eq_normalized:
+            raise ValueError("Equation must contain '=' or '→' between reactants and products.")
+            
+        parts = eq_normalized.split('=')
+        if len(parts) != 2:
+            raise ValueError("Invalid format. Use 'Reactants = Products'.")
+
+        def strip_coeff(side_str):
+            # Split by '+' and normalize
+            items = filter(None, [s.strip() for s in side_str.replace('+', ' + ').split(' + ')])
+            cleaned = []
+            for s in items:
+                # Replace common typo 0 (zero) with O (Oxygen) in common cases
+                # Only if it's like H20 or 02
+                s_fixed = re.sub(r'([A-Z])0', r'\1O', s) # H20 -> H2O
+                s_fixed = re.sub(r'^0', r'O', s_fixed)   # 02 -> O2
+                
+                # Strip leading coefficient
+                m = re.match(r'^(\d+)?(.*)$', s_fixed)
+                formula = m.group(2).strip() if m else s_fixed
+                if formula:
+                    cleaned.append(formula)
+            return cleaned
+
+        reactants = strip_coeff(parts[0])
+        products = strip_coeff(parts[1])
 
         if not reactants or not products:
-            raise ValueError("Reactants or products are missing.")
+            raise ValueError("Missing reactants or products.")
 
-        # Balance the stoichiometry
-        reac, prod = balance_stoichiometry(set(reactants), set(products))
+        # Balance the stoichiometry - use lists to keep it predictable
+        reac, prod = balance_stoichiometry(reactants, products)
         
         # Build the balanced string
         def format_side(side_dict):
-            return ' + '.join(f"{count if count > 1 else ''}{formula}" for formula, count in side_dict.items())
+            # Sort keys to keep output consistent
+            items = []
+            for formula in sorted(side_dict.keys()):
+                count = side_dict[formula]
+                coeff = str(count) if count > 1 else ""
+                items.append(f"{coeff}{formula}")
+            return ' + '.join(items)
 
         balanced_eq = f"{format_side(reac)} = {format_side(prod)}"
         return balanced_eq
     except Exception as e:
-        raise Exception(f"Failed to balance equation: {str(e)}")
+        # User-friendly error for common issues
+        msg = str(e)
+        if "Expected end of text" in msg:
+            msg = "Invalid formula. Use uppercase (e.g., 'H2O' not 'h2o')."
+        elif "Linear system" in msg:
+            msg = "Equation cannot be balanced as written."
+        raise Exception(f"Failed to balance: {msg}")
 
 
 # ═══════════════════════════════════════════════════════════════
