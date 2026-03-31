@@ -1371,7 +1371,7 @@ def convert_file(request, tool_slug):
 
             return create_cleanup_response(output_path, content_type='image/png')
         except Exception as e:
-            return JsonResponse({'error': f'Background removal failed: {str(e)}'}, status=500)
+            return JsonResponse({'error': str(e)}, status=500)
 
 
     # ── Password Generator ──
