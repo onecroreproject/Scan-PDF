@@ -3069,10 +3069,22 @@ def remove_background(input_path, original_name):
     # Force lightweight 'u2netp' to prevent Live Server OOM & Worker Timeout killing
     session = new_session('u2netp')
 
-    img = Image.open(input_path)
-    result = rembg_remove(img, session=session)
-    result.save(output_path, 'PNG')
-    return output_path
+    try:
+        img = Image.open(input_path)
+        
+        # Scale down if too large to prevent OOM
+        max_size = 1200 # Set a safe limit for shared hosting
+        if img.width > max_size or img.height > max_size:
+            img.thumbnail((max_size, max_size), Image.Resampling.LANCZOS)
+            
+        result = rembg_remove(img, session=session)
+        result.save(output_path, 'PNG')
+        return output_path
+    except Exception as e:
+        error_msg = str(e).lower()
+        if 'memory' in error_msg or 'timeout' in error_msg or 'killed' in error_msg or 'allocate' in error_msg:
+            raise Exception("Image is too complex or large. Server limit reached. Please try a smaller image.")
+        raise Exception("Background removal failed. Please try a simpler image.")
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -3536,7 +3548,19 @@ def get_video_info(url):
                 'formats': format_options
             }
     except Exception as e:
-        raise Exception(f"Analysis Failed: {str(e)}")
+        error_msg = str(e).lower()
+        if 'login' in error_msg or 'sign in' in error_msg or 'confirm your age' in error_msg:
+            raise Exception("This video requires login or is age-restricted. Try a public video without restrictions.")
+        elif 'rate-limit' in error_msg or 'http error 429' in error_msg or 'too many requests' in error_msg:
+            raise Exception("Rate limit reached. Please try again later.")
+        elif 'not available' in error_msg or 'unavailable' in error_msg or 'private' in error_msg:
+            raise Exception("This video is locked, private, or no longer available.")
+        elif 'format' in error_msg or 'no video formats' in error_msg:
+            raise Exception("No standard video formats found. This video might not be downloadable.")
+        elif 'timeout' in error_msg or 'timed out' in error_msg:
+            raise Exception("Connection timed out. The server might be busy, please try again.")
+        else:
+            raise Exception(f"Analysis Failed: We couldn't fetch the video. Ensure the URL is valid and public.")
 
 def download_video(url, format_id=None):
     """Download a video to the outputs directory and return the file path."""
@@ -3617,8 +3641,19 @@ def download_video(url, format_id=None):
             shutil.move(temp_path, final_path)
             return final_path
     except Exception as e:
-        # If it was a 500 caused by the video being truly private/unavailable, we'll get a better error now
-        raise Exception(f"YouTube Download Failed: {str(e)}")
+        error_msg = str(e).lower()
+        if 'login' in error_msg or 'sign in' in error_msg or 'confirm your age' in error_msg:
+            raise Exception("This video requires login or is age-restricted. Try a public video without restrictions.")
+        elif 'rate-limit' in error_msg or 'http error 429' in error_msg or 'too many requests' in error_msg:
+            raise Exception("Rate limit reached. Please try again later.")
+        elif 'not available' in error_msg or 'unavailable' in error_msg or 'private' in error_msg:
+            raise Exception("This video is locked, private, or no longer available.")
+        elif 'format' in error_msg or 'no video formats' in error_msg:
+            raise Exception("No standard video formats found. This video might not be downloadable.")
+        elif 'timeout' in error_msg or 'timed out' in error_msg:
+            raise Exception("Connection timed out. The server might be busy, please try again.")
+        else:
+            raise Exception(f"Download Failed: We couldn't download the video. Ensure the URL is valid and public.")
 
 
 # ═══════════════════════════════════════════════════════════════
