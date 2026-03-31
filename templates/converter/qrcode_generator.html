@@ -2,7 +2,10 @@
 {% load static %}
 
 {% block extra_head %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css" />
 <style>
+    .cropper-view-box, .cropper-face { border-radius: 50%; }
+    
     .acc-body { display: none }
     .acc-body.open { display: block; animation: slideDown 0.3s ease-out forwards; }
     @keyframes slideDown { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
@@ -265,7 +268,7 @@
                         class="absolute inset-0 opacity-0 cursor-pointer z-10" onchange="onLogoFile(this)">
                     <div id="logo-preview" class="hidden text-center z-0">
                         <img id="logo-preview-img"
-                            class="w-16 h-16 rounded-lg object-contain bg-white p-1 shadow-md border border-surface-100 mx-auto mb-2">
+                            class="w-16 h-16 rounded-full object-contain bg-white p-1 shadow-md border border-surface-100 mx-auto mb-2">
                         <button onclick="clearLogo(event)"
                             class="text-[9px] font-black text-red-500 uppercase hover:text-red-700">Remove Logo</button>
                     </div>
@@ -651,6 +654,17 @@
                     class="w-full inline-flex items-center justify-center gap-3 py-4 rounded-2xl bg-surface-900 text-white font-black text-xs uppercase tracking-widest hover:bg-black transition-all shadow-xl shadow-surface-900/10">
                     <i data-lucide="download" class="w-5 h-5"></i> Download JPG
                 </button>
+                <button id="dl-svg-btn"
+                    class="w-full inline-flex items-center justify-center gap-3 py-4 rounded-2xl bg-surface-50 border border-surface-200 text-surface-700 font-black text-xs uppercase tracking-widest hover:bg-surface-100 transition-all">
+                    <i data-lucide="file-type" class="w-5 h-5 text-purple-500"></i> Download SVG (Vector)
+                </button>
+
+                <div class="pt-2"></div>
+
+                <button id="copy-btn"
+                    class="w-full inline-flex items-center justify-center gap-3 py-4 rounded-2xl bg-white border-2 border-brand-100 text-brand-600 font-black text-xs uppercase tracking-widest hover:bg-brand-50 hover:border-brand-200 transition-all">
+                    <i data-lucide="copy" class="w-5 h-5"></i> Copy to Clipboard
+                </button>
                 <button onclick="window.print()"
                     class="w-full inline-flex items-center justify-center gap-2.5 py-3.5 rounded-2xl bg-surface-50 border border-surface-100 text-surface-600 font-black text-[10px] uppercase tracking-widest hover:bg-surface-100 transition-all">
                     <i data-lucide="printer" class="w-4 h-4"></i> Print QR Code
@@ -666,9 +680,28 @@
         </div>
     </div>
 </div>
+
+<!-- Logo Crop Modal -->
+<div id="crop-modal" class="hidden fixed inset-0 z-[120] flex items-center justify-center">
+    <div class="absolute inset-0 bg-surface-900/60 backdrop-blur-sm"></div>
+    <div class="relative bg-white rounded-2xl w-full max-w-md mx-4 shadow-mega overflow-hidden flex flex-col">
+        <div class="p-4 border-b border-surface-100 flex justify-between items-center">
+            <h3 class="font-black text-surface-900 uppercase tracking-widest text-sm">Crop Logo</h3>
+            <button onclick="cancelCrop()" class="text-surface-400 hover:text-red-500"><i data-lucide="x" class="w-5 h-5"></i></button>
+        </div>
+        <div class="p-4 bg-surface-50 flex-1 flex items-center justify-center min-h-[300px] max-h-[60vh]">
+             <img id="crop-image" class="max-w-full block">
+        </div>
+        <div class="p-4 border-t border-surface-100 flex gap-3">
+            <button onclick="cancelCrop()" class="flex-1 py-3 rounded-xl border-2 border-surface-200 text-surface-600 font-bold text-xs uppercase hover:bg-surface-50">Cancel</button>
+            <button onclick="confirmCrop()" class="flex-1 py-3 rounded-xl bg-brand-500 text-white font-bold text-xs uppercase hover:bg-brand-600 shadow-xl shadow-brand-500/20">Apply Mask</button>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_scripts %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.js"></script>
 <script>
     const CONVERT_URL = '{% url "converter:convert_file" "qrcode-generator" %}';
     const CSRF = '{{ csrf_token }}';
@@ -740,19 +773,72 @@
         return '';
     }
 
-    /* ── Logo handling ── */
+    /* ── Logo handling & Cropping ── */
     let logoFile = null;
+    let cropper = null;
+    const cropModal = document.getElementById('crop-modal');
+    const cropImage = document.getElementById('crop-image');
+
     function onLogoFile(inp) {
         if (!inp.files || !inp.files[0]) return;
-        logoFile = inp.files[0];
+        
         document.querySelectorAll('.logo-preset').forEach(p => p.classList.remove('active'));
         const r = new FileReader();
         r.onload = e => {
-            document.getElementById('logo-preview-img').src = e.target.result;
+            cropImage.src = e.target.result;
+            cropModal.classList.remove('hidden');
+            if (cropper) cropper.destroy();
+            
+            // Timeout allows the modal display calculation before cropper binds
+            setTimeout(() => {
+                cropper = new Cropper(cropImage, {
+                    aspectRatio: 1,
+                    viewMode: 1,
+                    dragMode: 'move',
+                    autoCropArea: 0.9,
+                    restore: false,
+                    guides: false,
+                    center: false,
+                    highlight: false,
+                    cropBoxMovable: true,
+                    cropBoxResizable: true,
+                    toggleDragModeOnDblclick: false,
+                });
+            }, 100);
+        };
+        r.readAsDataURL(inp.files[0]);
+    }
+
+    function cancelCrop() {
+        cropModal.classList.add('hidden');
+        if (cropper) { cropper.destroy(); cropper = null; }
+        document.getElementById('logo-file').value = '';
+    }
+
+    function confirmCrop() {
+        if (!cropper) return;
+        const sourceCanvas = cropper.getCroppedCanvas({ width: 256, height: 256 });
+        
+        // Apply Circular Mask
+        const canvas = document.createElement('canvas');
+        canvas.width = 256; canvas.height = 256;
+        const ctx = canvas.getContext('2d');
+        ctx.imageSmoothingEnabled = true;
+        ctx.beginPath();
+        ctx.arc(128, 128, 128, 0, 2 * Math.PI);
+        ctx.clip();
+        ctx.drawImage(sourceCanvas, 0, 0, 256, 256);
+
+        canvas.toBlob(blob => {
+            logoFile = new File([blob], 'cropped_logo.png', { type: 'image/png' });
+            document.getElementById('logo-preview-img').src = canvas.toDataURL();
             document.getElementById('logo-preview').classList.remove('hidden');
             document.getElementById('logo-empty').classList.add('hidden');
-        };
-        r.readAsDataURL(logoFile);
+            
+            cropModal.classList.add('hidden');
+            cropper.destroy(); cropper = null;
+            document.getElementById('logo-file').value = '';
+        }, 'image/png');
     }
     function clearLogo(e) {
         e.stopPropagation();
@@ -852,6 +938,41 @@
             const a = document.createElement('a'); a.href = url; a.download = 'ScanPDF_QR.jpg'; a.click();
         } catch (err) { alert(err.message); }
         finally { btn.disabled = false; btn.innerHTML = orig; lucide.createIcons(); }
+    };
+
+    /* ── SVG Download ── */
+    document.getElementById('dl-svg-btn').onclick = async () => {
+        const btn = document.getElementById('dl-svg-btn');
+        btn.disabled = true;
+        const orig = btn.innerHTML;
+        btn.innerHTML = '<div class="w-4 h-4 rounded-full border-2 border-purple-500 border-t-transparent animate-spin"></div> Vectorizing...';
+        try {
+            const blob = await generateQR('svg');
+            if (!blob) return;
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href = url; a.download = 'ScanPDF_QR.svg'; a.click();
+        } catch (err) { alert(err.message); }
+        finally { btn.disabled = false; btn.innerHTML = orig; lucide.createIcons(); }
+    };
+
+    /* ── Copy Action ── */
+    document.getElementById('copy-btn').onclick = async () => {
+        const btn = document.getElementById('copy-btn');
+        btn.disabled = true;
+        const orig = btn.innerHTML;
+        btn.innerHTML = '<div class="w-4 h-4 rounded-full border-2 border-brand-500 border-t-transparent animate-spin"></div> Copying...';
+        try {
+            const blob = await generateQR('png');
+            if (!blob) return;
+            const item = new ClipboardItem({ 'image/png': blob });
+            await navigator.clipboard.write([item]);
+            btn.innerHTML = '<i data-lucide="check" class="w-5 h-5 text-green-500"></i> Copied!';
+            setTimeout(() => { btn.innerHTML = orig; btn.disabled = false; lucide.createIcons(); }, 2000);
+        } catch (err) { 
+            console.error(err);
+            alert("Clipboard access failed. Either the browser blocked it or you need HTTPS.");
+            btn.innerHTML = orig; btn.disabled = false; lucide.createIcons();
+        }
     };
 </script>
 {% endblock %}

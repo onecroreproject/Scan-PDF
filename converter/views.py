@@ -1374,7 +1374,12 @@ def convert_file(request, tool_slug):
                 try: os.remove(logo_path)
                 except: pass
             
-            ct = 'image/jpeg' if output_format.lower() in ('jpg', 'jpeg') else 'image/png'
+            if output_format.lower() in ('jpg', 'jpeg'):
+                ct = 'image/jpeg'
+            elif output_format.lower() == 'svg':
+                ct = 'image/svg+xml'
+            else:
+                ct = 'image/png'
             return create_cleanup_response(output_path, content_type=ct)
         except Exception as e:
             return JsonResponse({'error': f"QR Generation Failed: {str(e)}"}, status=500)
