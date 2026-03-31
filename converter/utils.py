@@ -3147,10 +3147,26 @@ def generate_qr_code(text, box_size=10, border=4, fg_color="#000000", bg_color="
     img_px = img_cells * cell
 
     fmt = output_format.lower().strip()
-    if fmt not in ("png", "jpg", "jpeg"):
+    if fmt not in ("png", "jpg", "jpeg", "svg"):
         fmt = "png"
-    ext = "jpg" if fmt in ("jpg", "jpeg") else "png"
+    
+    if fmt == "svg":
+        ext = "svg"
+    else:
+        ext = "jpg" if fmt in ("jpg", "jpeg") else "png"
+        
     output_path = get_output_path("qr_code", ext)
+
+    if fmt == "svg":
+        import qrcode.image.svg
+        # For SVG we use the standard qrcode SVG factory
+        # Note: Monkey features are currently only supported for raster outputs
+        factory = qrcode.image.svg.SvgPathImage
+        img = qrcode.make(text, image_factory=factory, error_correction=qrcode.constants.ERROR_CORRECT_H)
+        # We can't easily draw the logo or custom shapes on the factory image without a lot of XML manipulation, 
+        # so we provide the base vector QR for professional use.
+        img.save(output_path)
+        return output_path
 
     bg_rgb = ImageColor.getcolor(bg_color, "RGB")
     fg_rgb = ImageColor.getcolor(fg_color, "RGB")
