@@ -46,15 +46,12 @@ from .utils import (
     add_image_watermark,
     compress_image,
     crop_image,
-    remove_background,
     balance_chemical_equation,
     generate_qr_code,
     generate_meme,
     generate_password,
     generate_story,
     generate_names,
-    get_video_info,
-    download_video,
     run_speed_test,
     convert_images_to_pdf,
     convert_pdf_to_pdfa,
@@ -460,17 +457,7 @@ TOOLS = {
         'gradient': 'from-lime-500 to-lime-700',
         'category': 'image-tools',
     },
-    'remove-bg': {
-        'title': 'Remove Background',
-        'description': 'Instantly remove the background from any image using AI.',
-        'icon': 'eraser',
-        'accept': '.jpg,.jpeg,.png',
-        'allowed_extensions': ['.jpg', '.jpeg', '.png'],
-        'converter': remove_background,
-        'color': '#f43f5e',
-        'gradient': 'from-rose-500 to-rose-700',
-        'category': 'image-tools',
-    },
+
     'chemical-balancer': {
         'title': 'Chemical Balance',
         'description': 'Balance chemical equations instantly with stoichiometry.',
@@ -515,28 +502,7 @@ TOOLS = {
         'gradient': 'from-amber-400 to-orange-500',
         'category': 'other',
     },
-    'instagram-downloader': {
-        'title': 'IG Reels Downloader',
-        'description': 'Save Instagram Reels and videos directly to your device.',
-        'icon': 'instagram',
-        'accept': None,
-        'allowed_extensions': [],
-        'converter': None,
-        'color': '#d946ef',
-        'gradient': 'from-fuchsia-500 to-pink-600',
-        'category': 'download',
-    },
-    'youtube-downloader': {
-        'title': 'YouTube Downloader',
-        'description': 'Download YouTube videos in high quality.',
-        'icon': 'video',
-        'accept': None,
-        'allowed_extensions': [],
-        'converter': None,
-        'color': '#ef4444',
-        'gradient': 'from-red-500 to-rose-600',
-        'category': 'download',
-    },
+
     'qrcode-generator': {
         'title': 'QR Code Generator',
         'description': 'Generate custom QR codes for links, text, or Wi-Fi.',
@@ -697,8 +663,7 @@ def convert_page(request, tool_slug):
         template = 'converter/compress_image.html'
     elif tool_slug == 'crop-image':
         template = 'converter/crop_image.html'
-    elif tool_slug == 'remove-bg':
-        template = 'converter/remove_bg.html'
+
     elif tool_slug == 'chemical-balancer':
         template = 'converter/chemical_balancer.html'
     elif tool_slug == 'password-generator':
@@ -707,10 +672,7 @@ def convert_page(request, tool_slug):
         template = 'converter/unit_converter.html'
     elif tool_slug == 'speed-test':
         template = 'converter/speed_test.html'
-    elif tool_slug == 'instagram-downloader':
-        template = 'converter/downloader.html'
-    elif tool_slug == 'youtube-downloader':
-        template = 'converter/downloader.html'
+
     elif tool_slug == 'qrcode-generator':
         template = 'converter/qrcode_generator.html'
     elif tool_slug == 'meme-generator':
@@ -1138,7 +1100,7 @@ def convert_file(request, tool_slug):
                 # Case 1: Initial upload - convert PDF to editable HTML
                 uploaded_file = request.FILES['file']
                 input_path = save_uploaded_file(uploaded_file)
-                html_data = convert_pdf_to_html_via_word(input_path)
+                html_data_list = convert_pdf_to_html_via_word(input_path)
                 
                 try:
                     os.remove(input_path)
@@ -1147,7 +1109,7 @@ def convert_file(request, tool_slug):
                 
                 return JsonResponse({
                     'success': True,
-                    'html': html_data,
+                    'pages': html_data_list,
                     'filename': uploaded_file.name
                 })
         except Exception as e:
@@ -1355,24 +1317,6 @@ def convert_file(request, tool_slug):
         except Exception as e:
             return JsonResponse({'error': f'Crop failed: {str(e)}'}, status=500)
 
-    # ── Remove Background ──
-    if tool_slug == 'remove-bg':
-        if 'file' not in request.FILES:
-            return JsonResponse({'error': 'No file was uploaded.'}, status=400)
-
-        uploaded_file = request.FILES['file']
-        try:
-            input_path = save_uploaded_file(uploaded_file)
-            output_path = remove_background(input_path, uploaded_file.name)
-            try:
-                os.remove(input_path)
-            except OSError:
-                pass
-
-            return create_cleanup_response(output_path, content_type='image/png')
-        except Exception as e:
-            return JsonResponse({'error': str(e)}, status=500)
-
 
     # ── Password Generator ──
     if tool_slug == 'password-generator':
@@ -1450,23 +1394,7 @@ def convert_file(request, tool_slug):
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=500)
 
-    # ── Video Downloader (YT/IG) ──
-    if tool_slug in ['youtube-downloader', 'instagram-downloader']:
-        action = request.POST.get('action', 'info')
-        url = request.POST.get('url', '')
-        if not url:
-            return JsonResponse({'error': 'Please enter a URL.'}, status=400)
-        
-        try:
-            if action == 'info':
-                info = get_video_info(url)
-                return JsonResponse({'result': info})
-            elif action == 'download':
-                format_id = request.POST.get('format_id')
-                output_path = download_video(url, format_id)
-                return create_cleanup_response(output_path, content_type='video/mp4')
-        except Exception as e:
-            return JsonResponse({'error': str(e)}, status=500)
+
 
     # ── Speed Test ──
     if tool_slug == 'speed-test':

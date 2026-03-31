@@ -2517,12 +2517,10 @@ def convert_pdf_to_html_via_word(input_path):
     try:
         import fitz
         pdf = fitz.open(input_path)
-        html_parts = []
+        pages_html = []
         for page_idx in range(len(pdf)):
             page = pdf[page_idx]
-            # Add a clear page-break separator for the editor
-            if page_idx > 0:
-                html_parts.append('<div class="pdf-page-break" style="page-break-after:always; border-bottom: 2px dashed #cbd5e1; margin: 40px 0; position:relative;"><span style="position:absolute; top:-12px; left:50%; transform:translateX(-50%); background:white; padding:0 10px; color:#94a3b8; font-size:10pt;">Page Break</span></div>')
+            page_html_parts = []
             
             blocks = page.get_text("dict")["blocks"]
             for block in blocks:
@@ -2553,10 +2551,11 @@ def convert_pdf_to_html_via_word(input_path):
                             safe = html_mod.escape(text)
                             spans_html += f'<span style="{";".join(style_parts)}">{safe}</span>'
                         if spans_html.strip():
-                            html_parts.append(f"<p>{spans_html}</p>")
+                            page_html_parts.append(f"<p>{spans_html}</p>")
+            pages_html.append('<div class="document-content">' + "\n".join(page_html_parts) + '</div>')
         pdf.close()
-        if html_parts:
-            return '<div class="document-content">' + "\n".join(html_parts) + '</div>'
+        if pages_html:
+            return pages_html
     except Exception:
         pass
 
@@ -2571,7 +2570,7 @@ def convert_pdf_to_html_via_word(input_path):
             cv.close()
             with open(docx_file, "rb") as docx_f:
                 result = mammoth.convert_to_html(docx_f)
-                return f'<div class="document-content">{result.value}</div>'
+                return [f'<div class="document-content">{result.value}</div>']
         finally:
             if os.path.exists(docx_file):
                 os.remove(docx_file)
@@ -3044,48 +3043,6 @@ def crop_image(input_path, original_name, crop_x=0, crop_y=0, crop_width=0, crop
     return output_path
 
 
-# ═══════════════════════════════════════════════════════════════
-# 30. REMOVE BACKGROUND
-# ═══════════════════════════════════════════════════════════════
-def remove_background(input_path, original_name):
-    """Remove the background from an image using rembg.
-
-    Returns a PNG (to preserve transparency).
-    """
-    import os
-    import tempfile
-    
-    # Fix Serverless read-only restrictions by moving ONNX weight cache to /tmp
-    temp_u2net = os.path.join(tempfile.gettempdir(), 'u2net_cache')
-    os.makedirs(temp_u2net, exist_ok=True)
-    os.environ['U2NET_HOME'] = temp_u2net
-    
-    from PIL import Image
-    from rembg import remove as rembg_remove
-    from rembg.session_factory import new_session
-
-    output_path = get_output_path(original_name, 'png', suffix='_nobg')
-
-    # Force lightweight 'u2netp' to prevent Live Server OOM & Worker Timeout killing
-    session = new_session('u2netp')
-
-    try:
-        img = Image.open(input_path)
-        
-        # Scale down if too large to prevent OOM
-        max_size = 1200 # Set a safe limit for shared hosting
-        if img.width > max_size or img.height > max_size:
-            img.thumbnail((max_size, max_size), Image.Resampling.LANCZOS)
-            
-        result = rembg_remove(img, session=session)
-        result.save(output_path, 'PNG')
-        return output_path
-    except Exception as e:
-        error_msg = str(e).lower()
-        if 'memory' in error_msg or 'timeout' in error_msg or 'killed' in error_msg or 'allocate' in error_msg:
-            raise Exception("Image is too complex or large. Server limit reached. Please try a smaller image.")
-        raise Exception("Background removal failed. Please try a simpler image.")
-
 
 # ═══════════════════════════════════════════════════════════════
 # 31. CHEMICAL EQUATION BALANCER
@@ -3446,214 +3403,6 @@ def generate_names(count=10, gender="both", category="person"):
     
     return names
 
-
-# ═══════════════════════════════════════════════════════════════
-# 37. VIDEO DOWNLOADER (YT/IG)
-# ═══════════════════════════════════════════════════════════════
-def get_video_info(url):
-    """Retrieve metadata and available formats for a video URL."""
-    import yt_dlp
-    
-    import random
-    ua_list = [
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
-        'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1',
-        'Mozilla/5.0 (Linux; Android 13; SM-G998B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Mobile Safari/537.36'
-    ]
-    
-    ydl_opts = {
-        'quiet': True,
-        'no_warnings': True,
-        'skip_download': True,
-        'nocheckcertificate': True,
-        'user_agent': random.choice(ua_list),
-        'http_headers': {
-            'Sec-Fetch-Mode': 'navigate',
-            'Sec-Fetch-Site': 'none',
-            'Sec-Fetch-User': '?1',
-            'Accept-Language': 'en-US,en;q=0.9',
-        },
-        'geo_bypass': True,
-        'ignore_no_formats_error': True,
-        'source_address': '0.0.0.0',
-        'socket_timeout': 30,
-        'extractor_args': {'youtube': ['player_client=android']},
-    }
-    
-    # Auto-load authentication cookies if provided via file to bypass Datacenter/Server blocking
-    from django.conf import settings
-    cookie_path = os.path.join(settings.BASE_DIR, 'cookies.txt')
-    if os.path.exists(cookie_path):
-        ydl_opts['cookiefile'] = cookie_path
-    
-    # Use bundled FFmpeg to avoid requiring user to install it system-wide
-    try:
-        import imageio_ffmpeg
-        ydl_opts['ffmpeg_location'] = imageio_ffmpeg.get_ffmpeg_exe()
-    except (ImportError, Exception):
-        pass
-    
-    try:
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(url, download=False)
-            if not info:
-                raise Exception("This video is locked or private.")
-                
-            # Safely determine available resolutions up to 4K based on video streams present
-            available_h = []
-            for f in info.get('formats', []):
-                h = f.get('height')
-                if h and isinstance(h, int) and f.get('vcodec') != 'none':
-                    available_h.append(h)
-                    
-            format_options = []
-            
-            # Instagram should only show a single "Best Quality" option, bypass resolution detection
-            is_ig = 'instagram.com' in url.lower()
-            
-            if not is_ig and available_h:
-                # Target standard recognizable tiers for YouTube etc
-                for h in [2160, 1440, 1080, 720, 480, 360, 240, 144]:
-                    # check if the video has a stream at or very close to this tier
-                    if any(vh >= h - 60 for vh in available_h):
-                        note = 'SD'
-                        if h >= 2160: note = '4K Ultra HD'
-                        elif h >= 1440: note = '2K Quad HD'
-                        elif h >= 1080: note = 'Full HD'
-                        elif h >= 720: note = 'HD'
-
-                        format_options.append({
-                            'format_id': f"bestvideo[height<={h}]+bestaudio/best",
-                            'ext': 'mp4',
-                            'resolution': f"{h}p",
-                            'filesize': 0,
-                            'note': note
-                        })
-            else:
-                # Fallback for Instagram and platforms with no explicit heights
-                format_options.append({
-                    'format_id': 'best',
-                    'ext': 'mp4',
-                    'resolution': 'Best',
-                    'filesize': 0,
-                    'note': 'Auto-Selected Quality'
-                })
-
-            return {
-                'title': info.get('title', 'Unknown Title'),
-                'thumbnail': info.get('thumbnail', ''),
-                'duration': info.get('duration', 0),
-                'uploader': info.get('uploader', 'Unknown'),
-                'formats': format_options
-            }
-    except Exception as e:
-        error_msg = str(e).lower()
-        if 'login' in error_msg or 'sign in' in error_msg or 'confirm your age' in error_msg:
-            raise Exception("This video requires login or is age-restricted. Try a public video without restrictions.")
-        elif 'rate-limit' in error_msg or 'http error 429' in error_msg or 'too many requests' in error_msg:
-            raise Exception("Rate limit reached. Please try again later.")
-        elif 'not available' in error_msg or 'unavailable' in error_msg or 'private' in error_msg:
-            raise Exception("This video is locked, private, or no longer available.")
-        elif 'format' in error_msg or 'no video formats' in error_msg:
-            raise Exception("No standard video formats found. This video might not be downloadable.")
-        elif 'timeout' in error_msg or 'timed out' in error_msg:
-            raise Exception("Connection timed out. The server might be busy, please try again.")
-        else:
-            raise Exception(f"Analysis Failed: We couldn't fetch the video. Ensure the URL is valid and public.")
-
-def download_video(url, format_id=None):
-    """Download a video to the outputs directory and return the file path."""
-    import yt_dlp
-    import uuid
-    import os
-    
-    _, output_dir = ensure_media_dirs()
-    
-    # We use a generic template first, then rename to our ScanPDF format
-    temp_uuid = uuid.uuid4().hex[:8]
-    
-    import random
-    ua_list = [
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
-        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
-        'Mozilla/5.0 (iPhone; CPU iPhone OS 16_6 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Mobile/15E148 Safari/604.1',
-        'Mozilla/5.0 (Linux; Android 13; SM-G998B) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Mobile Safari/537.36'
-    ]
-    
-    # Modern options to avoid being blocked by YouTube
-    ydl_opts = {
-        'outtmpl': os.path.join(output_dir, f'scan_temp_{temp_uuid}_%(title)s.%(ext)s'),
-        'format': format_id if format_id else 'best',
-        'merge_output_format': 'mp4',
-        'quiet': True,
-        'no_warnings': True,
-        'nocheckcertificate': True,
-        'ignoreerrors': False,
-        'logtostderr': False,
-        'user_agent': random.choice(ua_list),
-        'http_headers': {
-            'Sec-Fetch-Mode': 'navigate',
-            'Sec-Fetch-Site': 'none',
-            'Sec-Fetch-User': '?1',
-            'Accept-Language': 'en-US,en;q=0.9',
-        },
-        'geo_bypass': True,
-        'ignore_no_formats_error': True,
-        'source_address': '0.0.0.0',
-        'socket_timeout': 60,
-        'extractor_args': {'youtube': ['player_client=android']},
-    }
-    
-    # Auto-load authentication cookies if provided via file to bypass Datacenter/Server blocking
-    from django.conf import settings
-    cookie_path = os.path.join(settings.BASE_DIR, 'cookies.txt')
-    if os.path.exists(cookie_path):
-        ydl_opts['cookiefile'] = cookie_path
-    
-    # Use bundled FFmpeg to prevent merging errors
-    try:
-        import imageio_ffmpeg
-        ydl_opts['ffmpeg_location'] = imageio_ffmpeg.get_ffmpeg_exe()
-    except (ImportError, Exception):
-        pass
-    
-    try:
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            info = ydl.extract_info(url, download=True)
-            if not info:
-                raise Exception("Could not fetch video information.")
-                
-            temp_path = ydl.prepare_filename(info)
-            
-            # Now rename to our branded format
-            title = info.get('title', 'video')
-            ext = os.path.splitext(temp_path)[1]
-            final_path = get_output_path(title, ext, suffix='_download')
-            
-            if os.path.exists(final_path):
-                try:
-                    os.remove(final_path)
-                except OSError:
-                    pass
-            
-            import shutil
-            shutil.move(temp_path, final_path)
-            return final_path
-    except Exception as e:
-        error_msg = str(e).lower()
-        if 'login' in error_msg or 'sign in' in error_msg or 'confirm your age' in error_msg:
-            raise Exception("This video requires login or is age-restricted. Try a public video without restrictions.")
-        elif 'rate-limit' in error_msg or 'http error 429' in error_msg or 'too many requests' in error_msg:
-            raise Exception("Rate limit reached. Please try again later.")
-        elif 'not available' in error_msg or 'unavailable' in error_msg or 'private' in error_msg:
-            raise Exception("This video is locked, private, or no longer available.")
-        elif 'format' in error_msg or 'no video formats' in error_msg:
-            raise Exception("No standard video formats found. This video might not be downloadable.")
-        elif 'timeout' in error_msg or 'timed out' in error_msg:
-            raise Exception("Connection timed out. The server might be busy, please try again.")
-        else:
-            raise Exception(f"Download Failed: We couldn't download the video. Ensure the URL is valid and public.")
 
 
 # ═══════════════════════════════════════════════════════════════
