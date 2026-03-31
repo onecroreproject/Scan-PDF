@@ -25,24 +25,22 @@
 
     .editor-content-wrapper {
         flex: 1;
-        overflow-y: auto;
-        padding: 3rem 1rem;
+        overflow: hidden;
         display: flex;
-        justify-content: center;
-        background: #f1f5f9;
-        scrollbar-width: thin;
-        scrollbar-color: #cbd5e1 #f1f5f9;
+        flex-direction: column;
+        background: #fff;
     }
 
     #editor {
-        width: 210mm; /* A4 width */
-        min-height: 297mm;
-        padding: 2.5cm;
+        flex: 1;
+        width: 100%;
+        height: 100%;
+        padding: 3rem;
         background: white;
-        box-shadow: 0 0 25px rgba(0,0,0,0.08);
         outline: none;
         word-wrap: break-word;
-        border: 1px solid #e2e8f0;
+        border: none;
+        overflow-y: auto;
     }
 
     .ck-content {
@@ -83,10 +81,22 @@
              <span id="doc-status" class="text-[10px] font-black text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100 uppercase tracking-widest flex items-center gap-2">
                 <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span> READY
             </span>
+            <div id="page-nav" class="hidden flex items-center gap-2 ml-4">
+                <button id="prev-page-btn" class="p-2 text-surface-500 hover:text-brand-600 hover:bg-surface-100 rounded bg-white border border-surface-200 shadow-sm transition-colors disabled:opacity-50">
+                    <i data-lucide="chevron-left" class="w-4 h-4"></i>
+                </button>
+                <span id="page-indicator" class="text-xs font-bold text-surface-700 bg-white border border-surface-200 rounded-lg px-4 py-1.5 shadow-sm">Page 1</span>
+                <button id="next-page-btn" class="p-2 text-surface-500 hover:text-brand-600 hover:bg-surface-100 rounded bg-white border border-surface-200 shadow-sm transition-colors disabled:opacity-50">
+                    <i data-lucide="chevron-right" class="w-4 h-4"></i>
+                </button>
+            </div>
         </div>
         <div class="flex gap-3">
+             <button id="download-page-btn" class="hidden items-center gap-2 px-6 py-3 bg-white border border-brand-200 text-brand-700 font-black text-xs uppercase tracking-widest rounded-xl shadow-sm hover:bg-brand-50 transition-all active:translate-y-0.5">
+                <i data-lucide="file-down" class="w-4 h-4"></i> Export Page
+             </button>
              <button id="download-btn" class="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-brand-600 to-brand-700 text-white font-black text-xs uppercase tracking-widest rounded-xl shadow-lg hover:shadow-brand-500/30 transition-all hover:-translate-y-0.5 active:translate-y-0">
-                <i data-lucide="download" class="w-4 h-4"></i> Export PDF
+                <i data-lucide="download" class="w-4 h-4"></i> Export All
             </button>
             <button onclick="location.reload()" class="p-3 text-surface-400 hover:text-red-500 transition-colors bg-white border border-surface-100 rounded-xl shadow-sm">
                 <i data-lucide="refresh-cw" class="w-4 h-4"></i>
@@ -127,12 +137,19 @@
     const CSRF_TOKEN = '{{ csrf_token }}';
     
     let editorInstance;
+    let pagesData = [];
+    let currentPageIndex = 0;
     
     const dropZone = document.getElementById('drop-zone');
     const fileInput = document.getElementById('file-input');
     const uploadStage = document.getElementById('upload-stage');
     const editorWrapper = document.getElementById('editor-wrapper');
     const downloadBtn = document.getElementById('download-btn');
+    const downloadPageBtn = document.getElementById('download-page-btn');
+    const pageNav = document.getElementById('page-nav');
+    const prevPageBtn = document.getElementById('prev-page-btn');
+    const nextPageBtn = document.getElementById('next-page-btn');
+    const pageIndicator = document.getElementById('page-indicator');
     const loadingOverlay = document.getElementById('loading-overlay');
     const loadingTitle = document.getElementById('loading-title');
     const loadingDesc = document.getElementById('loading-desc');
@@ -155,9 +172,24 @@
             if (ct.includes('application/json')) {
                 const data = await resp.json();
                 if (data.success) {
-                    initEditor(data.html);
-                    uploadStage.classList.add('hidden');
-                    editorWrapper.classList.remove('hidden');
+                    pagesData = data.pages || [];
+                    currentPageIndex = 0;
+                    
+                    if (pagesData.length > 0) {
+                        if (pagesData.length > 1) {
+                            pageNav.classList.remove('hidden');
+                            pageNav.classList.add('flex');
+                            downloadPageBtn.classList.remove('hidden');
+                            downloadPageBtn.classList.add('flex');
+                            updatePaginationUI();
+                        }
+
+                        initEditor(pagesData[0]);
+                        uploadStage.classList.add('hidden');
+                        editorWrapper.classList.remove('hidden');
+                    } else {
+                        alert("No editable pages found in this PDF.");
+                    }
                 } else {
                     alert(data.error || "Upload failed. Please try a standard PDF.");
                 }
@@ -196,12 +228,8 @@
         } catch (error) { console.error(error); }
     }
 
-    downloadBtn.onclick = async () => {
-        if (!editorInstance) return;
-        
+    async function executeDownload(htmlContent, filename) {
         showLoading("Exporting PDF", "Finalizing your edits and re-aligning document layers...");
-        
-        const htmlContent = editorInstance.getData();
         const fd = new FormData();
         fd.append('html_content', htmlContent);
         fd.append('csrfmiddlewaretoken', CSRF_TOKEN);
@@ -214,12 +242,27 @@
             const url = window.URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = "edited_by_antigravity.pdf";
+            a.download = filename;
             document.body.appendChild(a);
             a.click();
             a.remove();
         } catch (e) { alert(e.message); } 
         finally { hideLoading(); }
+    }
+
+    downloadBtn.onclick = async () => {
+        if (!editorInstance) return;
+        pagesData[currentPageIndex] = editorInstance.getData();
+        const pageBreakHtml = '\n<div class="pdf-page-break" style="page-break-after:always; border-bottom: 2px dashed #cbd5e1; margin: 40px 0; position:relative;"><span style="position:absolute; top:-12px; left:50%; transform:translateX(-50%); background:white; padding:0 10px; color:#94a3b8; font-size:10pt;">Page Break</span></div>\n';
+        const combinedHtml = pagesData.join(pageBreakHtml);
+        await executeDownload(combinedHtml, "document_edited.pdf");
+    };
+
+    downloadPageBtn.onclick = async () => {
+        if (!editorInstance) return;
+        const pageHtml = editorInstance.getData();
+        pagesData[currentPageIndex] = pageHtml;
+        await executeDownload(pageHtml, `page_${currentPageIndex + 1}_edited.pdf`);
     };
 
     function showLoading(title, desc) {
@@ -229,6 +272,27 @@
     }
 
     function hideLoading() { loadingOverlay.classList.add('hidden'); }
+
+    function updatePaginationUI() {
+        pageIndicator.textContent = `Page ${currentPageIndex + 1} of ${pagesData.length}`;
+        prevPageBtn.disabled = currentPageIndex === 0;
+        nextPageBtn.disabled = currentPageIndex === pagesData.length - 1;
+    }
+
+    function goToPage(index) {
+        if (index < 0 || index >= pagesData.length) return;
+        if (editorInstance) {
+            pagesData[currentPageIndex] = editorInstance.getData();
+        }
+        currentPageIndex = index;
+        editorInstance.setData(pagesData[currentPageIndex]);
+        updatePaginationUI();
+    }
+
+    if (prevPageBtn) prevPageBtn.onclick = () => goToPage(currentPageIndex - 1);
+    if (nextPageBtn) nextPageBtn.onclick = () => goToPage(currentPageIndex + 1);
+
+
 
     dropZone.ondragover = e => { e.preventDefault(); dropZone.classList.add('border-brand-400'); };
     dropZone.ondragleave = () => dropZone.classList.remove('border-brand-400');
