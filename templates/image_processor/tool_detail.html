@@ -1,0 +1,478 @@
+{% extends 'converter/tool_base.html' %}
+{% load static %}
+
+{% block tool_head %}
+{% if tool_slug == 'cut-image' %}
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+<style>
+    .cropper-container {
+        width: 100% !important;
+    }
+    .cropper-view-box,
+    .cropper-face {
+        border-radius: 0;
+    }
+    .cropper-modal {
+        background-color: rgba(0, 0, 0, 0.7);
+    }
+    #cropper-container {
+        max-height: 600px;
+    }
+    .cropper-bg {
+        background-image: none !important;
+    }
+</style>
+{% endif %}
+{% endblock %}
+
+{% block tool_content %}
+<!-- ═══════════════ UPLOAD CARD ═══════════════ -->
+<div class="rounded-2xl bg-white border border-surface-100 p-4 sm:p-6 shadow-mega">
+    
+    <!-- Drag & Drop Zone -->
+    <div id="drop-zone" 
+         class="relative rounded-2xl border-2 border-dashed border-brand-100 bg-brand-50/10 hover:bg-brand-50/30 hover:border-brand-400 transition-all duration-300 p-6 sm:p-10 md:p-12 text-center cursor-pointer group"
+         data-accept="{{ tool.accept }}">
+
+        <!-- Default State -->
+        <div id="upload-default" class="space-y-4">
+            <div class="w-14 h-14 rounded-2xl bg-surface-50 border border-surface-100 flex items-center justify-center mx-auto group-hover:bg-brand-50 group-hover:border-brand-200 group-hover:scale-105 transition-all duration-300">
+                <i data-lucide="cloud-upload" class="w-8 h-8 text-surface-300 group-hover:text-brand-500 transition-colors"></i>
+            </div>
+            <div>
+                <p class="text-base font-semibold text-surface-700 mb-1">
+                    Drop your file here, or <span class="text-brand-600 underline underline-offset-4 decoration-brand-200">browse</span>
+                </p>
+                <p class="text-xs text-surface-400">
+                    Max 50MB&nbsp;&nbsp;•&nbsp;&nbsp;Accepted: <span class="text-surface-500 font-medium">{{ tool.accept }}</span>
+                </p>
+            </div>
+        </div>
+
+        <!-- File Selected State -->
+        <div id="file-selected" class="hidden">
+            <div class="flex items-center justify-center gap-4">
+                <div class="w-14 h-14 rounded-xl bg-brand-50 border border-brand-100 flex items-center justify-center flex-shrink-0">
+                    <i data-lucide="file-check-2" class="w-7 h-7 text-brand-600"></i>
+                </div>
+                <div class="text-left min-w-0">
+                    <p id="file-name" class="text-surface-800 font-bold text-base truncate"></p>
+                    <p id="file-size" class="text-xs text-surface-400 mt-0.5"></p>
+                </div>
+                <button id="remove-file-btn" class="p-2.5 rounded-xl hover:bg-red-50 text-surface-300 hover:text-red-500 transition-all flex-shrink-0" title="Remove file">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Hidden file input -->
+        <input type="file" id="file-input" class="hidden" accept="{{ tool.accept }}" {% if tool.multi_file %}multiple{% endif %}>
+    </div>
+
+    <!-- ═══════════════ TOOL PARAMETERS ═══════════════ -->
+    <div id="parameters-section" class="mt-6 border-t border-surface-50 pt-6 space-y-6">
+        
+        <!-- Blur Radius -->
+        {% if tool_slug == 'blur-image' %}
+        <div class="space-y-3">
+            <div class="flex justify-between items-center">
+                <label class="text-[11px] font-black text-surface-400 uppercase tracking-widest">Blur Intensity</label>
+                <span id="radius-val" class="text-sm font-bold text-brand-600">5px</span>
+            </div>
+            <input type="range" id="radius" min="1" max="50" value="5" class="w-full h-2 bg-surface-100 rounded-lg appearance-none cursor-pointer accent-brand-500"
+                   oninput="document.getElementById('radius-val').textContent = this.value + 'px'">
+        </div>
+        {% endif %}
+
+        <!-- Brightness Factor -->
+        {% if tool_slug == 'brighten-image' %}
+        <div class="space-y-3">
+            <div class="flex justify-between items-center">
+                <label class="text-[11px] font-black text-surface-400 uppercase tracking-widest">Brightness Level</label>
+                <span id="factor-val" class="text-sm font-bold text-brand-600">1.5x</span>
+            </div>
+            <input type="range" id="factor" min="0.1" max="3.0" step="0.1" value="1.5" class="w-full h-2 bg-surface-100 rounded-lg appearance-none cursor-pointer accent-brand-500"
+                   oninput="document.getElementById('factor-val').textContent = this.value + 'x'">
+        </div>
+        {% endif %}
+
+        <!-- GIF Speed -->
+        {% if tool_slug == 'change-gif-speed' %}
+        <div class="space-y-3">
+            <div class="flex justify-between items-center">
+                <label class="text-[11px] font-black text-surface-400 uppercase tracking-widest">Speed Multiplier</label>
+                <span id="speed-val" class="text-sm font-bold text-brand-600">1.0x</span>
+            </div>
+            <input type="range" id="speed" min="0.5" max="3.0" step="0.1" value="1.0" class="w-full h-2 bg-surface-100 rounded-lg appearance-none cursor-pointer accent-brand-500"
+                   oninput="document.getElementById('speed-val').textContent = this.value + 'x'">
+        </div>
+        {% endif %}
+
+        <!-- Background Color -->
+        {% if tool_slug == 'change-background' %}
+        <div class="space-y-3">
+            <label class="text-[11px] font-black text-surface-400 uppercase tracking-widest">Background Color</label>
+            <div class="flex items-center gap-4">
+                <input type="color" id="color" value="#ffffff" class="w-12 h-12 rounded-xl border border-surface-200 cursor-pointer">
+                <span class="text-sm font-semibold text-surface-600">Choose custom background color</span>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Watermark Text -->
+        {% if tool_slug == 'watermark-image' %}
+        <div class="space-y-3">
+            <label class="text-[11px] font-black text-surface-400 uppercase tracking-widest">Watermark Text</label>
+            <input type="text" id="watermark-text" value="ScanPDF" class="w-full px-4 py-3 rounded-xl border border-surface-200 focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 outline-none transition-all font-semibold">
+        </div>
+        {% endif %}
+
+        <!-- Resize -->
+        {% if tool_slug == 'resize-image' %}
+        <div class="grid grid-cols-2 gap-4">
+            <div class="space-y-2">
+                <label class="text-[11px] font-black text-surface-400 uppercase tracking-widest">Width (px)</label>
+                <input type="number" id="width" placeholder="Auto" class="w-full px-4 py-3 rounded-xl border border-surface-200 focus:border-brand-500 outline-none font-semibold">
+            </div>
+            <div class="space-y-2">
+                <label class="text-[11px] font-black text-surface-400 uppercase tracking-widest">Height (px)</label>
+                <input type="number" id="height" placeholder="Auto" class="w-full px-4 py-3 rounded-xl border border-surface-200 focus:border-brand-500 outline-none font-semibold">
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Rotation -->
+        {% if tool_slug == 'rotate-image' %}
+        <div class="space-y-3">
+            <div class="flex justify-between items-center">
+                <label class="text-[11px] font-black text-surface-400 uppercase tracking-widest">Rotation Angle</label>
+                <span id="angle-val" class="text-sm font-bold text-brand-600">90°</span>
+            </div>
+            <input type="range" id="angle" min="0" max="359" step="90" value="90" class="w-full h-2 bg-surface-100 rounded-lg appearance-none cursor-pointer accent-brand-500"
+                   oninput="document.getElementById('angle-val').textContent = this.value + '°'">
+        </div>
+        {% endif %}
+
+        <!-- Video Extract -->
+        {% if tool_slug == 'extract-frame' %}
+        <div class="space-y-3">
+            <label class="text-[11px] font-black text-surface-400 uppercase tracking-widest">Frame Timestamp (seconds)</label>
+            <input type="number" id="timestamp" value="1.0" step="0.1" class="w-full px-4 py-3 rounded-xl border border-surface-200 outline-none font-semibold">
+        </div>
+        {% endif %}
+
+        <!-- Image to Video -->
+        {% if tool_slug == 'image-to-video' %}
+        <div class="space-y-3">
+            <label class="text-[11px] font-black text-surface-400 uppercase tracking-widest">Frame Rate (FPS)</label>
+            <input type="number" id="fps" value="1" min="1" max="60" class="w-full px-4 py-3 rounded-xl border border-surface-200 outline-none font-semibold">
+        </div>
+        {% endif %}
+
+        <!-- Image Converter Selector -->
+        {% if tool_slug == 'image-converter' %}
+        <div class="space-y-3">
+            <label class="text-[11px] font-black text-surface-400 uppercase tracking-widest">Convert To</label>
+            <select id="target_format" class="w-full px-4 py-3 rounded-xl border border-surface-200 focus:border-brand-500 outline-none font-bold text-surface-700 bg-white">
+                <option value="jpg">JPG (JPEG Image)</option>
+                <option value="png">PNG (Portable Network Graphics)</option>
+                <option value="webp">WEBP (Web-optimized)</option>
+                <option value="gif">GIF (Graphics Interchange Format)</option>
+                <option value="bmp">BMP (Standard Windows Bitmap)</option>
+                <option value="tiff">TIFF (Tagged Image File Format)</option>
+                <option value="pdf">PDF (Direct Document Export)</option>
+            </select>
+        </div>
+        {% endif %}
+
+        <!-- Image Preview & Cropper -->
+        {% if tool_slug == 'cut-image' %}
+        <div id="cropper-wrapper" class="hidden space-y-4">
+            <div class="flex items-center justify-between px-1">
+                <label class="text-[11px] font-black text-surface-400 uppercase tracking-widest">Adjust Selection</label>
+                <div class="flex gap-1.5">
+                    <button type="button" id="crop-rotate-l" class="p-2 rounded-lg bg-surface-50 hover:bg-brand-50 text-surface-500 hover:text-brand-600 transition-all border border-surface-100" title="Rotate Left">
+                        <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
+                    </button>
+                    <button type="button" id="crop-rotate-r" class="p-2 rounded-lg bg-surface-50 hover:bg-brand-50 text-surface-500 hover:text-brand-600 transition-all border border-surface-100" title="Rotate Right">
+                        <i data-lucide="rotate-cw" class="w-4 h-4"></i>
+                    </button>
+                    <button type="button" id="crop-reset" class="p-2 rounded-lg bg-surface-50 hover:bg-brand-50 text-surface-500 hover:text-brand-600 transition-all border border-surface-100" title="Reset">
+                        <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+            <div id="cropper-container" class="rounded-2xl border border-surface-100 bg-surface-50 overflow-hidden relative" style="min-height: 300px;">
+                <div class="flex items-center justify-center h-full">
+                    <img id="cropper-image" src="" alt="Source preview" class="max-w-full hidden">
+                    <div id="cropper-loader" class="flex flex-col items-center gap-3 py-20">
+                         <div class="w-8 h-8 border-4 border-brand-100 border-t-brand-500 rounded-full animate-spin"></div>
+                         <p class="text-[10px] font-bold text-surface-400 uppercase tracking-tighter">Initializing Editor...</p>
+                    </div>
+                </div>
+            </div>
+            <p class="text-[10px] text-center text-surface-400 font-medium italic">Drag selection handles to crop your image</p>
+        </div>
+        {% endif %}
+
+    </div>
+
+    <!-- Process Button -->
+    <button id="convert-btn" disabled
+        class="w-full mt-6 py-4 rounded-2xl bg-gradient-to-r {{ tool.gradient }} text-white font-black text-base uppercase tracking-widest disabled:opacity-20 disabled:cursor-not-allowed hover:shadow-2xl hover:shadow-brand-500/30 transition-all flex items-center justify-center gap-3">
+        <i data-lucide="sparkles" class="w-5 h-5"></i>
+        Process Now
+    </button>
+
+    <!-- ═══════════════ PROGRESS STATE ═══════════════ -->
+    <div id="progress-section" class="hidden mt-4">
+        <div class="flex items-center gap-4 py-4 px-6 rounded-2xl bg-surface-50 border border-surface-100">
+            <div class="w-8 h-8 rounded-full border-[3px] border-surface-200 border-t-brand-500 animate-spin"></div>
+            <div class="min-w-0">
+                <p class="text-surface-800 font-bold text-base">Processing your file…</p>
+                <p class="text-xs text-surface-400 mt-1">AI models are working on your image</p>
+            </div>
+        </div>
+        <div class="w-full h-1.5 rounded-full bg-surface-100 overflow-hidden mt-4">
+            <div class="h-full bg-gradient-to-r {{ tool.gradient }} rounded-full animate-progress-bar"></div>
+        </div>
+    </div>
+
+    <!-- ═══════════════ SUCCESS STATE ═══════════════ -->
+    <div id="success-section" class="hidden mt-4">
+        <div class="text-center py-6 px-6 rounded-2xl bg-emerald-50/50 border border-emerald-100">
+            <div class="w-16 h-16 rounded-xl bg-emerald-100 flex items-center justify-center mx-auto mb-4">
+                <i data-lucide="check-circle-2" class="w-8 h-8 text-emerald-600"></i>
+            </div>
+            <h3 class="text-lg font-black text-surface-900 mb-1">Processing Complete!</h3>
+            <p class="text-surface-500 text-sm mb-6">Your modified file is ready.</p>
+            <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                <a id="download-btn" href="#" class="inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-black text-sm hover:translate-y-[-2px] transition-all shadow-xl shadow-emerald-500/20">
+                    <i data-lucide="download" class="w-5 h-5"></i> Download File
+                </a>
+                <button id="convert-another-btn" class="inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-2xl bg-white border border-surface-200 text-surface-600 font-bold text-sm hover:bg-surface-50 transition-all">
+                    <i data-lucide="refresh-cw" class="w-4 h-4"></i> Process Another
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════════ ERROR STATE ═══════════════ -->
+    <div id="error-section" class="hidden mt-4">
+        <div class="p-5 rounded-2xl bg-red-50 border border-red-100 flex items-start gap-4">
+            <div class="w-9 h-9 rounded-xl bg-red-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+                <i data-lucide="alert-triangle" class="w-5 h-5 text-red-500"></i>
+            </div>
+            <div class="min-w-0 pt-1">
+                <h4 class="font-black text-red-700 text-sm uppercase tracking-wider mb-1">Process Failed</h4>
+                <p id="error-message" class="text-xs text-red-500 font-semibold"></p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block tool_scripts %}
+{% if tool_slug == 'cut-image' %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+{% endif %}
+<script>
+    const TOOL_SLUG = '{{ tool_slug }}';
+    const PROCESS_URL = '{% url "image_processor:process_tool" tool_slug %}';
+    const CSRF_TOKEN = '{{ csrf_token }}';
+
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('file-input');
+    const uploadDefault = document.getElementById('upload-default');
+    const fileSelected = document.getElementById('file-selected');
+    const fileName = document.getElementById('file-name');
+    const fileSize = document.getElementById('file-size');
+    const removeFileBtn = document.getElementById('remove-file-btn');
+    const convertBtn = document.getElementById('convert-btn');
+    const progressSection = document.getElementById('progress-section');
+    const successSection = document.getElementById('success-section');
+    const errorSection = document.getElementById('error-section');
+    const errorMessage = document.getElementById('error-message');
+    const downloadBtn = document.getElementById('download-btn');
+    const convertAnotherBtn = document.getElementById('convert-another-btn');
+
+    // Cropper related
+    let cropper = null;
+    const cropperWrapper = document.getElementById('cropper-wrapper');
+    const cropperImage = document.getElementById('cropper-image');
+    const cropperLoader = document.getElementById('cropper-loader');
+
+    let selectedFiles = [];
+
+    dropZone.addEventListener('click', (e) => {
+        if (e.target.closest('#remove-file-btn')) return;
+        fileInput.click();
+    });
+
+    dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('border-brand-400', 'bg-brand-50/40'); });
+    dropZone.addEventListener('dragleave', (e) => { e.preventDefault(); dropZone.classList.remove('border-brand-400', 'bg-brand-50/40'); });
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropZone.classList.remove('border-brand-400', 'bg-brand-50/40');
+        if (e.dataTransfer.files.length) handleFiles(e.dataTransfer.files);
+    });
+
+    fileInput.addEventListener('change', (e) => {
+        if (e.target.files.length) handleFiles(e.target.files);
+    });
+
+    function handleFiles(files) {
+        selectedFiles = Array.from(files);
+        const file = selectedFiles[0];
+        fileName.textContent = selectedFiles.length > 1 ? `${selectedFiles.length} files selected` : file.name;
+        fileSize.textContent = formatFileSize(selectedFiles.reduce((acc, f) => acc + f.size, 0));
+        uploadDefault.classList.add('hidden');
+        fileSelected.classList.remove('hidden');
+        convertBtn.disabled = false;
+        errorSection.classList.add('hidden');
+
+        // Handle Cropper Preview
+        if (TOOL_SLUG === 'cut-image' && file.type.startsWith('image/')) {
+            initCropper(file);
+        }
+
+        lucide.createIcons();
+    }
+
+    function initCropper(file) {
+        if (cropper) {
+            cropper.destroy();
+            cropper = null;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            cropperImage.src = e.target.result;
+            cropperImage.classList.remove('hidden');
+            cropperWrapper.classList.remove('hidden');
+            cropperLoader.classList.add('hidden');
+
+            cropper = new Cropper(cropperImage, {
+                viewMode: 2,
+                dragMode: 'move',
+                autoCropArea: 0.8,
+                restore: false,
+                guides: true,
+                center: true,
+                highlight: false,
+                cropBoxMovable: true,
+                cropBoxResizable: true,
+                toggleDragModeOnDblclick: false,
+                ready() {
+                    lucide.createIcons();
+                }
+            });
+        };
+        reader.readAsDataURL(file);
+
+        // Cropper Controls
+        document.getElementById('crop-rotate-l')?.addEventListener('click', () => cropper?.rotate(-90));
+        document.getElementById('crop-rotate-r')?.addEventListener('click', () => cropper?.rotate(90));
+        document.getElementById('crop-reset')?.addEventListener('click', () => cropper?.reset());
+    }
+
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024, sizes = ['Bytes', 'KB', 'MB', 'GB'], i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    removeFileBtn.addEventListener('click', (e) => { e.stopPropagation(); resetUpload(); });
+
+    function resetUpload() {
+        selectedFiles = [];
+        fileInput.value = '';
+        uploadDefault.classList.remove('hidden');
+        fileSelected.classList.add('hidden');
+        convertBtn.disabled = true;
+        progressSection.classList.add('hidden');
+        successSection.classList.add('hidden');
+        errorSection.classList.add('hidden');
+        convertBtn.classList.remove('hidden');
+
+        if (cropper) {
+            cropper.destroy();
+            cropper = null;
+        }
+        if (cropperWrapper) cropperWrapper.classList.add('hidden');
+        if (cropperImage) {
+            cropperImage.src = '';
+            cropperImage.classList.add('hidden');
+        }
+        if (cropperLoader) cropperLoader.classList.remove('hidden');
+    }
+
+    convertAnotherBtn.addEventListener('click', () => resetUpload());
+
+    convertBtn.addEventListener('click', async () => {
+        if (selectedFiles.length === 0) return;
+
+        convertBtn.classList.add('hidden');
+        progressSection.classList.remove('hidden');
+        successSection.classList.add('hidden');
+        errorSection.classList.add('hidden');
+
+        const formData = new FormData();
+        selectedFiles.forEach(f => formData.append('files', f));
+        if (selectedFiles.length === 1) formData.append('file', selectedFiles[0]);
+        formData.append('csrfmiddlewaretoken', CSRF_TOKEN);
+
+        // Add tool specific parameters
+        if (document.getElementById('radius')) formData.append('radius', document.getElementById('radius').value);
+        if (document.getElementById('factor')) formData.append('factor', document.getElementById('factor').value);
+        if (document.getElementById('speed')) formData.append('speed', document.getElementById('speed').value);
+        if (document.getElementById('color')) formData.append('color', document.getElementById('color').value);
+        if (document.getElementById('watermark-text')) formData.append('text', document.getElementById('watermark-text').value);
+        if (document.getElementById('width')) formData.append('width', document.getElementById('width').value);
+        if (document.getElementById('height')) formData.append('height', document.getElementById('height').value);
+        if (document.getElementById('angle')) formData.append('angle', document.getElementById('angle').value);
+        if (document.getElementById('timestamp')) formData.append('timestamp', document.getElementById('timestamp').value);
+        if (document.getElementById('fps')) formData.append('fps', document.getElementById('fps').value);
+        if (document.getElementById('target_format')) formData.append('target_format', document.getElementById('target_format').value);
+
+        if (TOOL_SLUG === 'cut-image' && cropper) {
+            const data = cropper.getData(true); // true means rounded results
+            formData.append('left', data.x);
+            formData.append('top', data.y);
+            formData.append('right', data.x + data.width);
+            formData.append('bottom', data.y + data.height);
+        }
+
+        try {
+            const response = await fetch(PROCESS_URL, { method: 'POST', body: formData });
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.error || 'Processing failed.');
+            }
+
+            const disposition = response.headers.get('Content-Disposition');
+            let outputFilename = 'processed_file.jpg';
+            if (disposition) {
+                const match = disposition.match(/filename="(.+?)"/);
+                if (match) outputFilename = match[1];
+            }
+
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            downloadBtn.href = url;
+            downloadBtn.download = outputFilename;
+
+            progressSection.classList.add('hidden');
+            successSection.classList.remove('hidden');
+            lucide.createIcons();
+        } catch (err) {
+            errorMessage.textContent = err.message;
+            errorSection.classList.remove('hidden');
+            progressSection.classList.add('hidden');
+            convertBtn.classList.remove('hidden');
+            lucide.createIcons();
+        }
+    });
+
+</script>
+{% endblock %}

@@ -147,11 +147,180 @@
                             </div>
                         </div>
 
-                        <!-- Speed Test Link -->
-                        <a href="{% url 'converter:convert_page' 'speed-test' %}"
-                            class="flex items-center gap-1.5 px-4 py-2 text-[14px] font-black text-surface-900 transition-all uppercase tracking-widest hover:text-brand-600 ml-4">
-                            Speed Test
-                        </a>
+                        <!-- Image Editor Link -->
+                        <div class="relative group">
+                            <button
+                                class="flex items-center gap-1.5 px-4 py-2 text-[14px] font-black text-surface-900 transition-all uppercase tracking-widest hover:text-brand-600">
+                                Image Tools <i data-lucide="chevron-down"
+                                    class="w-4 h-4 transition-transform group-hover:rotate-180"></i>
+                            </button>
+                            <!-- Mega Menu Content -->
+                            <div
+                                class="fixed top-[70px] left-1/2 -translate-x-1/2 w-[95vw] max-w-7xl bg-white border border-surface-100 shadow-mega rounded-3xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 translate-y-2 group-hover:translate-y-0 z-50 overflow-hidden">
+                                <div
+                                    class="grid grid-cols-1 md:grid-cols-2 divide-x divide-surface-100 max-h-[70vh] overflow-y-auto p-8 gap-10">
+                                    
+                                    <!-- Column 1: Image Tools -->
+                                    <div class="space-y-6">
+                                        <div class="flex items-center gap-3 mb-2 px-3">
+                                            <div class="w-1.5 h-6 bg-brand-500 rounded-full"></div>
+                                            <h3 class="text-[11px] font-black text-surface-400 uppercase tracking-[0.2em]">Image Tools</h3>
+                                        </div>
+                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-2 gap-y-1">
+                                            <a href="{% url 'image_processor:tool_page' 'blur-image' %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-brand-50/50 group/item transition-all border border-transparent hover:border-brand-100">
+                                                <div class="w-8 h-8 rounded-lg bg-surface-50 flex items-center justify-center group-hover/item:bg-white shadow-sm transition-colors">
+                                                    <i data-lucide="cloud-fog" class="w-4 h-4 text-brand-600"></i>
+                                                </div>
+                                                <span class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Blur Image</span>
+                                            </a>
+                                            <a href="{% url 'image_processor:tool_page' 'brighten-image' %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-brand-50/50 group/item transition-all border border-transparent hover:border-brand-100">
+                                                <div class="w-8 h-8 rounded-lg bg-surface-50 flex items-center justify-center group-hover/item:bg-white shadow-sm transition-colors">
+                                                    <i data-lucide="sun" class="w-4 h-4 text-brand-600"></i>
+                                                </div>
+                                                <span class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Brighten Image</span>
+                                            </a>
+                                            <a href="{% url 'image_processor:tool_page' 'change-gif-speed' %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-brand-50/50 group/item transition-all border border-transparent hover:border-brand-100">
+                                                <div class="w-8 h-8 rounded-lg bg-surface-50 flex items-center justify-center group-hover/item:bg-white shadow-sm transition-colors">
+                                                    <i data-lucide="zap" class="w-4 h-4 text-brand-600"></i>
+                                                </div>
+                                                <span class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Change GIF Speed</span>
+                                            </a>
+                                            <a href="{% url 'image_processor:tool_page' 'change-background' %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-brand-50/50 group/item transition-all border border-transparent hover:border-brand-100">
+                                                <div class="w-8 h-8 rounded-lg bg-surface-50 flex items-center justify-center group-hover/item:bg-white shadow-sm transition-colors">
+                                                    <i data-lucide="palette" class="w-4 h-4 text-brand-600"></i>
+                                                </div>
+                                                <span class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Change Background</span>
+                                            </a>
+                                            <a href="{% url 'image_processor:tool_page' 'compress-image' %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-brand-50/50 group/item transition-all border border-transparent hover:border-brand-100">
+                                                <div class="w-8 h-8 rounded-lg bg-surface-50 flex items-center justify-center group-hover/item:bg-white shadow-sm transition-colors">
+                                                    <i data-lucide="archive" class="w-4 h-4 text-brand-600"></i>
+                                                </div>
+                                                <span class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Compress Image</span>
+                                            </a>
+                                            <a href="{% url 'image_processor:tool_page' 'cut-image' %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-brand-50/50 group/item transition-all border border-transparent hover:border-brand-100">
+                                                <div class="w-8 h-8 rounded-lg bg-surface-50 flex items-center justify-center group-hover/item:bg-white shadow-sm transition-colors">
+                                                    <i data-lucide="crop" class="w-4 h-4 text-brand-600"></i>
+                                                </div>
+                                                <span class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Cut Image</span>
+                                            </a>
+                                            <a href="{% url 'image_processor:tool_page' 'extract-frame' %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-brand-50/50 group/item transition-all border border-transparent hover:border-brand-100">
+                                                <div class="w-8 h-8 rounded-lg bg-surface-50 flex items-center justify-center group-hover/item:bg-white shadow-sm transition-colors">
+                                                    <i data-lucide="video" class="w-4 h-4 text-brand-600"></i>
+                                                </div>
+                                                <span class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Extract Image from Video</span>
+                                            </a>
+                                            <a href="{% url 'image_processor:tool_page' 'gif-to-video' %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-brand-50/50 group/item transition-all border border-transparent hover:border-brand-100">
+                                                <div class="w-8 h-8 rounded-lg bg-surface-50 flex items-center justify-center group-hover/item:bg-white shadow-sm transition-colors">
+                                                    <i data-lucide="film" class="w-4 h-4 text-brand-600"></i>
+                                                </div>
+                                                <span class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">GIF to Video</span>
+                                            </a>
+                                            <a href="{% url 'image_processor:tool_page' 'image-to-video' %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-brand-50/50 group/item transition-all border border-transparent hover:border-brand-100">
+                                                <div class="w-8 h-8 rounded-lg bg-surface-50 flex items-center justify-center group-hover/item:bg-white shadow-sm transition-colors">
+                                                    <i data-lucide="monitor-play" class="w-4 h-4 text-brand-600"></i>
+                                                </div>
+                                                <span class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Image to Video</span>
+                                            </a>
+                                            <a href="{% url 'image_processor:tool_page' 'merge-images' %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-brand-50/50 group/item transition-all border border-transparent hover:border-brand-100">
+                                                <div class="w-8 h-8 rounded-lg bg-surface-50 flex items-center justify-center group-hover/item:bg-white shadow-sm transition-colors">
+                                                    <i data-lucide="combine" class="w-4 h-4 text-brand-600"></i>
+                                                </div>
+                                                <span class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Merge Images</span>
+                                            </a>
+                                            <a href="{% url 'image_processor:tool_page' 'remove-background' %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-brand-50/50 group/item transition-all border border-transparent hover:border-brand-100">
+                                                <div class="w-8 h-8 rounded-lg bg-surface-50 flex items-center justify-center group-hover/item:bg-white shadow-sm transition-colors">
+                                                    <i data-lucide="eraser" class="w-4 h-4 text-brand-600"></i>
+                                                </div>
+                                                <span class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Remove Background</span>
+                                            </a>
+                                            <a href="{% url 'image_processor:tool_page' 'resize-image' %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-brand-50/50 group/item transition-all border border-transparent hover:border-brand-100">
+                                                <div class="w-8 h-8 rounded-lg bg-surface-50 flex items-center justify-center group-hover/item:bg-white shadow-sm transition-colors">
+                                                    <i data-lucide="move" class="w-4 h-4 text-brand-600"></i>
+                                                </div>
+                                                <span class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Resize Image</span>
+                                            </a>
+                                            <a href="{% url 'image_processor:tool_page' 'rotate-image' %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-brand-50/50 group/item transition-all border border-transparent hover:border-brand-100">
+                                                <div class="w-8 h-8 rounded-lg bg-surface-50 flex items-center justify-center group-hover/item:bg-white shadow-sm transition-colors">
+                                                    <i data-lucide="rotate-cw" class="w-4 h-4 text-brand-600"></i>
+                                                </div>
+                                                <span class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Rotate Image</span>
+                                            </a>
+                                            <a href="{% url 'image_processor:tool_page' 'watermark-image' %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-brand-50/50 group/item transition-all border border-transparent hover:border-brand-100">
+                                                <div class="w-8 h-8 rounded-lg bg-surface-50 flex items-center justify-center group-hover/item:bg-white shadow-sm transition-colors">
+                                                    <i data-lucide="stamp" class="w-4 h-4 text-brand-600"></i>
+                                                </div>
+                                                <span class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Watermark Image</span>
+                                            </a>
+                                        </div>
+                                    </div>
+                                    
+                                    <!-- Column 2: Image Converter -->
+                                    <div class="space-y-6">
+                                        <div class="flex items-center gap-3 mb-2 px-3">
+                                            <div class="w-1.5 h-6 bg-brand-500 rounded-full"></div>
+                                            <h3 class="text-[11px] font-black text-surface-400 uppercase tracking-[0.2em]">Image Converter</h3>
+                                        </div>
+                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-2 gap-y-1">
+                                            <a href="{% url 'image_processor:tool_page' 'image-converter' %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-brand-50/50 group/item transition-all border border-transparent hover:border-brand-100">
+                                                <div class="w-8 h-8 rounded-lg bg-surface-50 flex items-center justify-center group-hover/item:bg-white shadow-sm transition-colors">
+                                                    <i data-lucide="refresh-cw" class="w-4 h-4 text-brand-600"></i>
+                                                </div>
+                                                <span class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Image Converter</span>
+                                            </a>
+                                            <a href="{% url 'image_processor:tool_page' 'jpg-converter' %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-brand-50/50 group/item transition-all border border-transparent hover:border-brand-100">
+                                                <div class="w-8 h-8 rounded-lg bg-surface-50 flex items-center justify-center group-hover/item:bg-white shadow-sm transition-colors">
+                                                    <i data-lucide="file-image" class="w-4 h-4 text-brand-600"></i>
+                                                </div>
+                                                <span class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">JPG Converter</span>
+                                            </a>
+                                            <a href="{% url 'image_processor:tool_page' 'bmp-converter' %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-brand-50/50 group/item transition-all border border-transparent hover:border-brand-100">
+                                                <div class="w-8 h-8 rounded-lg bg-surface-50 flex items-center justify-center group-hover/item:bg-white shadow-sm transition-colors">
+                                                    <i data-lucide="file-image" class="w-4 h-4 text-brand-600"></i>
+                                                </div>
+                                                <span class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">BMP Converter</span>
+                                            </a>
+                                            <a href="{% url 'image_processor:tool_page' 'dng-converter' %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-brand-50/50 group/item transition-all border border-transparent hover:border-brand-100">
+                                                <div class="w-8 h-8 rounded-lg bg-surface-50 flex items-center justify-center group-hover/item:bg-white shadow-sm transition-colors">
+                                                    <i data-lucide="file-image" class="w-4 h-4 text-brand-600"></i>
+                                                </div>
+                                                <span class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">DNG Converter</span>
+                                            </a>
+                                            <a href="{% url 'image_processor:tool_page' 'gif-converter' %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-brand-50/50 group/item transition-all border border-transparent hover:border-brand-100">
+                                                <div class="w-8 h-8 rounded-lg bg-surface-50 flex items-center justify-center group-hover/item:bg-white shadow-sm transition-colors">
+                                                    <i data-lucide="file-image" class="w-4 h-4 text-brand-600"></i>
+                                                </div>
+                                                <span class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">GIF Converter</span>
+                                            </a>
+                                            <a href="{% url 'image_processor:tool_page' 'pdf-converter' %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-brand-50/50 group/item transition-all border border-transparent hover:border-brand-100">
+                                                <div class="w-8 h-8 rounded-lg bg-surface-50 flex items-center justify-center group-hover/item:bg-white shadow-sm transition-colors">
+                                                    <i data-lucide="file-pdf" class="w-4 h-4 text-brand-600"></i>
+                                                </div>
+                                                <span class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">PDF Converter</span>
+                                            </a>
+                                            <a href="{% url 'image_processor:tool_page' 'png-converter' %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-brand-50/50 group/item transition-all border border-transparent hover:border-brand-100">
+                                                <div class="w-8 h-8 rounded-lg bg-surface-50 flex items-center justify-center group-hover/item:bg-white shadow-sm transition-colors">
+                                                    <i data-lucide="file-image" class="w-4 h-4 text-brand-600"></i>
+                                                </div>
+                                                <span class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">PNG Converter</span>
+                                            </a>
+                                            <a href="{% url 'image_processor:tool_page' 'tiff-converter' %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-brand-50/50 group/item transition-all border border-transparent hover:border-brand-100">
+                                                <div class="w-8 h-8 rounded-lg bg-surface-50 flex items-center justify-center group-hover/item:bg-white shadow-sm transition-colors">
+                                                    <i data-lucide="file-image" class="w-4 h-4 text-brand-600"></i>
+                                                </div>
+                                                <span class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">TIFF Converter</span>
+                                            </a>
+                                            <a href="{% url 'image_processor:tool_page' 'webp-converter' %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-brand-50/50 group/item transition-all border border-transparent hover:border-brand-100">
+                                                <div class="w-8 h-8 rounded-lg bg-surface-50 flex items-center justify-center group-hover/item:bg-white shadow-sm transition-colors">
+                                                    <i data-lucide="file-image" class="w-4 h-4 text-brand-600"></i>
+                                                </div>
+                                                <span class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">WEBP Converter</span>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                     </div>
 
                     <!-- Search Bar: Properly Aligned Right -->
