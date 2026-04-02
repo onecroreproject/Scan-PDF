@@ -127,7 +127,7 @@ IMAGE_TOOLS = {
     },
     'gif-to-video': {
         'title': 'GIF to Video',
-        'description': 'Convert your animated GIFs into standard MP4 video files.',
+        'description': 'Convert animated GIFs into standard MP4 or WEBM video files with advanced effects and music.',
         'icon': 'film',
         'accept': '.gif',
         'allowed_extensions': ['.gif'],
@@ -137,7 +137,7 @@ IMAGE_TOOLS = {
     },
     'image-to-video': {
         'title': 'Image to Video',
-        'description': 'Create a video from a sequence of images.',
+        'description': 'Create professional videos from your images with music, transitions, and custom durations.',
         'icon': 'monitor-play',
         'accept': '.jpg,.jpeg,.png',
         'allowed_extensions': ['.jpg', '.jpeg', '.png'],
@@ -296,10 +296,47 @@ def process_tool(request, tool_slug):
             ts = request.POST.get('timestamp', 1.0)
             output_path = extract_image_from_video(input_paths[0], original_name, timestamp=ts)
         elif tool_slug == 'gif-to-video':
-            output_path = gif_to_video(input_paths[0], original_name)
+            target_format = request.POST.get('target_format', 'mp4')
+            duration = request.POST.get('duration', 'default')
+            effect = request.POST.get('effect', 'none')
+            effect_duration = request.POST.get('effect_duration', '3')
+            speed = request.POST.get('speed', 'default')
+            color = request.POST.get('color', 'default')
+            
+            music_file = request.FILES.get('music_file')
+            music_path = save_uploaded_file(music_file) if music_file else None
+            
+            output_path = gif_to_video(
+                input_paths[0], 
+                original_name, 
+                target_format=target_format,
+                duration=duration,
+                effect=effect,
+                effect_duration=effect_duration,
+                speed_factor=speed,
+                bg_color=color,
+                music_path=music_path
+            )
+            if music_path and os.path.exists(music_path):
+                input_paths.append(music_path)
         elif tool_slug == 'image-to-video':
-            fps = request.POST.get('fps', 1)
-            output_path = image_to_video(input_paths, original_name, fps=fps)
+            target_format = request.POST.get('target_format', 'mp4')
+            duration_per_image = request.POST.get('img_duration', '2')
+            transition = request.POST.get('transition', 'fade')
+            
+            music_file = request.FILES.get('music_file')
+            music_path = save_uploaded_file(music_file) if music_file else None
+            
+            output_path = image_to_video(
+                input_paths, 
+                original_name, 
+                target_format=target_format,
+                duration_per_image=duration_per_image,
+                transition_type=transition,
+                music_path=music_path
+            )
+            if music_path and os.path.exists(music_path):
+                input_paths.append(music_path)
         
         # --- Converters ---
         elif tool_slug.endswith('-converter'):
