@@ -12,16 +12,54 @@ import google.generativeai as genai
 from dotenv import load_dotenv
 import time
 
-load_dotenv()
+# Use absolute path for .env to ensure it loads in production WSGI environments
+load_dotenv(os.path.join(settings.BASE_DIR, '.env'))
 
 
 def ensure_media_dirs():
-    """Ensure temporary upload and output directories exist in system temp."""
+    """Ensure temporary upload and output directories exist with high-reliability fallbacks."""
     import tempfile
-    upload_dir = os.path.join(tempfile.gettempdir(), 'scanpdf_uploads')
-    output_dir = os.path.join(tempfile.gettempdir(), 'scanpdf_outputs')
-    os.makedirs(upload_dir, exist_ok=True)
-    os.makedirs(output_dir, exist_ok=True)
+    
+    # Priority 1: Project's own media temp folder (best for VPS)
+    media_temp = os.path.join(settings.BASE_DIR, 'media', 'temp')
+    
+    # Priority 2: System temp folder (best for shared hosting)
+    sys_temp = os.path.join(tempfile.gettempdir(), 'scanpdf_worker')
+    
+    upload_dir = None
+    output_dir = None
+    
+    for base in [media_temp, sys_temp]:
+        try:
+            u = os.path.join(base, 'uploads')
+            o = os.path.join(base, 'outputs')
+            os.makedirs(u, exist_ok=True)
+            os.makedirs(o, exist_ok=True)
+            
+            # Test write access
+            test_file = os.path.join(u, '.test')
+            with open(test_file, 'w') as f:
+                f.write('test')
+            os.remove(test_file)
+            
+            upload_dir, output_dir = u, o
+            
+            # Create .gitignore in this base if it doesn't exist
+            gi = os.path.join(base, '.gitignore')
+            if not os.path.exists(gi):
+                with open(gi, 'w') as f: f.write('*\n!.gitignore\n')
+            
+            break # Found a working directory
+        except:
+            continue
+            
+    if not upload_dir:
+        # Emergency fallback: project root / 'tmp'
+        upload_dir = os.path.join(settings.BASE_DIR, 'tmp', 'uploads')
+        output_dir = os.path.join(settings.BASE_DIR, 'tmp', 'outputs')
+        os.makedirs(upload_dir, exist_ok=True)
+        os.makedirs(output_dir, exist_ok=True)
+        
     return upload_dir, output_dir
 
 

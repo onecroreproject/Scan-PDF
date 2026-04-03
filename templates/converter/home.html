@@ -214,7 +214,11 @@
         <!-- Tool Cards Grid -->
         <div class="grid grid-cols-1 xs:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-5">
             {% for slug, tool in tools.items %}
+            {% if tool.url_name %}
+            <a href="{% url tool.url_name slug %}" class="tool-card group block relative">
+            {% else %}
             <a href="{% url 'converter:convert_page' slug %}" class="tool-card group block relative">
+            {% endif %}
                 <div
                     class="relative h-full p-4 sm:p-5 md:p-7 rounded-xl sm:rounded-2xl bg-white border border-surface-100 hover:border-surface-200 transition-all duration-400 overflow-hidden hover:-translate-y-1 shadow-card hover:shadow-card-hover">
                     <!-- Ambient glow -->

@@ -153,115 +153,6 @@
         </div>
         {% endif %}
 
-        {% if tool_slug == 'gif-to-video' %}
-        <div class="space-y-8 animate-fade-in">
-            <!-- Basic Settings: Format & Duration -->
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 rounded-3xl bg-surface-50/50 border border-surface-100">
-                <div class="space-y-3">
-                    <label class="text-[11px] font-black text-surface-400 uppercase tracking-widest">Output Format</label>
-                    <select id="target_format_gif" class="w-full px-4 py-3 rounded-xl border border-surface-200 focus:border-brand-500 outline-none font-bold text-surface-700 bg-white shadow-sm">
-                        <option value="mp4">MP4 Video (Most Compatible)</option>
-                        <option value="webm">WEBM Video (Web Optimized)</option>
-                    </select>
-                </div>
-                <div class="space-y-3">
-                    <label class="text-[11px] font-black text-surface-400 uppercase tracking-widest">Total Duration (Seconds)</label>
-                    <select id="duration" class="w-full px-4 py-3 rounded-xl border border-surface-200 focus:border-brand-500 outline-none font-bold text-surface-700 bg-white shadow-sm">
-                        <option value="default">Default (Keep GIF speed)</option>
-                        <option value="1">1 sec</option><option value="2">2 sec</option><option value="3">3 sec</option>
-                        <option value="5">5 sec</option><option value="10">10 sec</option><option value="15">15 sec</option>
-                        <option value="20">20 sec</option><option value="30">30 sec</option><option value="60">60 sec</option>
-                    </select>
-                </div>
-            </div>
-
-            <!-- Music Upload -->
-            <div class="p-6 rounded-3xl bg-surface-50/50 border border-surface-100 space-y-4">
-                <label class="text-[11px] font-black text-surface-400 uppercase tracking-widest block">Background Music (Optional)</label>
-                <div class="flex items-center gap-4">
-                    <div class="relative flex-1 group">
-                        <input type="file" id="music_file_gif" accept=".mp3,.wav" class="absolute inset-0 opacity-0 cursor-pointer z-10">
-                        <div class="px-5 py-4 rounded-2xl bg-white border border-surface-200 flex items-center justify-between group-hover:border-brand-300 transition-all">
-                            <div class="flex items-center gap-3 min-w-0">
-                                <i data-lucide="music" class="w-5 h-5 text-brand-500"></i>
-                                <span id="music-filename-gif" class="text-xs font-bold text-surface-400 truncate">Choose music file...</span>
-                            </div>
-                            <span class="text-[10px] font-black text-brand-600 uppercase">Browse</span>
-                        </div>
-                    </div>
-                    <button type="button" id="remove-music-gif" class="p-4 rounded-2xl bg-red-50 text-red-500 hover:bg-red-100 transition-all hidden">
-                        <i data-lucide="trash-2" class="w-5 h-5"></i>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Effect Engine -->
-            <div class="space-y-6">
-                <div class="flex items-center gap-3">
-                    <div class="w-2 h-6 bg-brand-500 rounded-full"></div>
-                    <label class="text-[13px] font-black text-surface-900 uppercase tracking-wider">Video Effects Engine</label>
-                </div>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    <!-- Effect Selection -->
-                    <div class="space-y-4">
-                        <div class="space-y-2">
-                             <label class="text-[10px] font-bold text-surface-400 uppercase ml-1">Effect Category</label>
-                             <select id="effect-cat" class="w-full px-4 py-3 rounded-2xl border border-surface-200 focus:border-brand-500 outline-none font-bold text-surface-700 bg-white">
-                                <option value="none">1. None (Normal Video)</option>
-                                <option value="zoom">2. Zoom Effects</option>
-                                <option value="pan">3. Pan Effects</option>
-                                <option value="rotate">4. Rotate Effects</option>
-                                <option value="blur">5. Blur Effects</option>
-                                <option value="transition">6. Transition Effects</option>
-                                <option value="wipe">7. Advanced Wipe</option>
-                             </select>
-                        </div>
-                        <div id="effect-type-container" class="space-y-2">
-                             <label class="text-[10px] font-bold text-surface-400 uppercase ml-1">Specific Effect</label>
-                             <select id="effect" class="w-full px-4 py-3 rounded-2xl border border-surface-200 focus:border-brand-500 outline-none font-bold text-surface-700 bg-white">
-                                <option value="none" data-cat="none">No effect selected</option>
-                                <option value="zoom_in" data-cat="zoom">Zoom In</option>
-                                <option value="zoom_out" data-cat="zoom">Zoom Out</option>
-                                <option value="pan_left" data-cat="pan">Pan Left</option>
-                                <option value="pan_right" data-cat="pan">Pan Right</option>
-                                <option value="blur_to_clear" data-cat="blur">Blurred To Clear</option>
-                                <option value="fade" data-cat="transition">Fade In/Out</option>
-                             </select>
-                        </div>
-                    </div>
-
-                    <!-- Extra Settings -->
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="space-y-2">
-                             <label class="text-[10px] font-bold text-surface-400 uppercase ml-1">Effect Dur (s)</label>
-                             <select id="effect_duration" class="w-full px-4 py-3 rounded-2xl border border-surface-200 font-bold text-surface-700 bg-white">
-                                <option value="1">1 sec</option><option value="2">2 sec</option><option value="3">3 sec</option>
-                                <option value="5">5 sec</option>
-                             </select>
-                        </div>
-                        <div class="space-y-2">
-                             <label class="text-[10px] font-bold text-surface-400 uppercase ml-1">Playback Speed</label>
-                             <select id="speed" class="w-full px-4 py-3 rounded-2xl border border-surface-200 font-bold text-surface-700 bg-white">
-                                <option value="default">Default (1x)</option>
-                                <option value="1.5">Fast (1.5x)</option>
-                                <option value="2.0">Very Fast (2x)</option>
-                                <option value="0.5">Slow (0.5x)</option>
-                             </select>
-                        </div>
-                        <div class="col-span-2 space-y-2">
-                             <label class="text-[10px] font-bold text-surface-400 uppercase ml-1">Color Theme / BG</label>
-                             <select id="color" class="w-full px-4 py-3 rounded-2xl border border-surface-200 font-bold text-surface-700 bg-white">
-                                <option value="default">Default</option>
-                                <option value="black">Black</option><option value="white">White</option>
-                                <option value="blue">Blue</option><option value="red">Red</option>
-                             </select>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        {% endif %}
 
         {% if tool_slug == 'image-to-video' %}
         <div class="space-y-8 animate-fade-in">
@@ -276,12 +167,21 @@
             <!-- Video Settings -->
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 p-6 rounded-3xl bg-surface-50/50 border border-surface-100">
                 <div class="space-y-3">
-                    <label class="text-[11px] font-black text-surface-400 uppercase tracking-widest">Duration per Image</label>
-                    <div class="flex items-center gap-4 bg-white px-4 py-3 rounded-xl border border-surface-200">
-                        <input type="range" id="img_duration" min="0.5" max="10" step="0.5" value="2" class="flex-1 accent-brand-500"
-                               oninput="document.getElementById('img_duration_val').textContent = this.value + 's'">
-                        <span id="img_duration_val" class="text-sm font-bold text-brand-600 min-w-[30px]">2s</span>
+                    <div class="flex justify-between items-center">
+                        <label class="text-[11px] font-black text-surface-400 uppercase tracking-widest">Duration per Image</label>
+                        <span id="img_duration_val" class="text-sm font-bold text-brand-600">2s</span>
                     </div>
+                    <input type="range" id="img_duration" min="0.5" max="10" step="0.5" value="2" class="w-full h-2 bg-surface-100 rounded-lg appearance-none cursor-pointer accent-brand-500"
+                           oninput="document.getElementById('img_duration_val').textContent = this.value + 's'">
+                </div>
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center">
+                        <label class="text-[11px] font-black text-surface-400 uppercase tracking-widest">Total Video Duration</label>
+                        <span id="total_duration_val" class="text-sm font-bold text-brand-600">Auto</span>
+                    </div>
+                    <input type="range" id="total_video_duration" min="0" max="600" step="1" value="0" class="w-full h-2 bg-surface-100 rounded-lg appearance-none cursor-pointer accent-brand-500"
+                           oninput="document.getElementById('total_duration_val').textContent = this.value == 0 ? 'Auto' : this.value + 's'">
+                    <p class="text-[10px] text-surface-400 font-medium italic mt-1">Set to 'Auto' to use per-image duration. Max 600s (10m).</p>
                 </div>
                 <div class="space-y-3">
                     <label class="text-[11px] font-black text-surface-400 uppercase tracking-widest">Transition Effect</label>
@@ -560,25 +460,6 @@
         });
     }
 
-    const musicFileInputGif = document.getElementById('music_file_gif');
-    const musicFilenameDisplayGif = document.getElementById('music-filename-gif');
-    const removeMusicBtnGif = document.getElementById('remove-music-gif');
-
-    if (musicFileInputGif) {
-        musicFileInputGif.addEventListener('change', (e) => {
-            if (e.target.files.length) {
-                musicFilenameDisplayGif.textContent = e.target.files[0].name;
-                musicFilenameDisplayGif.classList.replace('text-surface-400', 'text-brand-600');
-                removeMusicBtnGif.classList.remove('hidden');
-            }
-        });
-        removeMusicBtnGif.addEventListener('click', () => {
-            musicFileInputGif.value = '';
-            musicFilenameDisplayGif.textContent = 'Choose music file...';
-            musicFilenameDisplayGif.classList.replace('text-brand-600', 'text-surface-400');
-            removeMusicBtnGif.classList.add('hidden');
-        });
-    }
 
     const musicFileInputVideo = document.getElementById('music_file_video');
     const musicFilenameDisplayVideo = document.getElementById('music-filename-video');
@@ -592,7 +473,8 @@
                 removeMusicBtnVideo.classList.remove('hidden');
             }
         });
-        removeMusicBtnVideo.addEventListener('click', () => {
+        removeMusicBtnVideo.addEventListener('click', (e) => {
+            e.stopPropagation();
             musicFileInputVideo.value = '';
             musicFilenameDisplayVideo.textContent = 'Choose music file...';
             musicFilenameDisplayVideo.classList.replace('text-brand-600', 'text-surface-400');
@@ -682,27 +564,16 @@
         if (document.getElementById('height')) formData.append('height', document.getElementById('height').value);
         if (document.getElementById('angle')) formData.append('angle', document.getElementById('angle').value);
         if (document.getElementById('timestamp')) formData.append('timestamp', document.getElementById('timestamp').value);
-        if (document.getElementById('fps')) formData.append('fps', document.getElementById('fps').value);
-        if (document.getElementById('fps')) formData.append('fps', document.getElementById('fps').value);
-        if (document.getElementById('fps')) formData.append('fps', document.getElementById('fps').value);
         if (document.getElementById('target_format')) formData.append('target_format', document.getElementById('target_format').value);
 
         if (TOOL_SLUG === 'image-to-video') {
             if (document.getElementById('img_duration')) formData.append('img_duration', document.getElementById('img_duration').value);
+            if (document.getElementById('total_video_duration')) formData.append('total_video_duration', document.getElementById('total_video_duration').value);
             if (document.getElementById('transition')) formData.append('transition', document.getElementById('transition').value);
             if (document.getElementById('target_format_video')) formData.append('target_format', document.getElementById('target_format_video').value);
             if (document.getElementById('music_file_video')?.files[0]) formData.append('music_file', document.getElementById('music_file_video').files[0]);
         }
 
-        if (TOOL_SLUG === 'gif-to-video') {
-            if (document.getElementById('duration')) formData.append('duration', document.getElementById('duration').value);
-            if (document.getElementById('effect')) formData.append('effect', document.getElementById('effect').value);
-            if (document.getElementById('effect_duration')) formData.append('effect_duration', document.getElementById('effect_duration').value);
-            if (document.getElementById('speed')) formData.append('speed', document.getElementById('speed').value);
-            if (document.getElementById('color')) formData.append('color', document.getElementById('color').value);
-            if (document.getElementById('target_format_gif')) formData.append('target_format', document.getElementById('target_format_gif').value);
-            if (document.getElementById('music_file_gif')?.files[0]) formData.append('music_file', document.getElementById('music_file_gif').files[0]);
-        }
 
         if (TOOL_SLUG === 'cut-image' && cropper) {
             const data = cropper.getData(true); // true means rounded results

@@ -1,3 +1,4 @@
+import time
 import os
 import io
 import uuid
@@ -7,16 +8,53 @@ from pathlib import Path
 from PIL import Image, ImageFilter, ImageEnhance, ImageDraw, ImageFont
 import numpy as np
 import cv2
+from django.conf import settings
+from dotenv import load_dotenv
+
+# Use absolute path for .env to ensure it loads in production WSGI environments
+load_dotenv(os.path.join(settings.BASE_DIR, '.env'))
 
 # Functionality for video and gif processing
 from moviepy.editor import VideoFileClip, ImageSequenceClip
 
 def ensure_media_dirs():
-    """Ensure temporary upload and output directories exist."""
-    upload_dir = os.path.join(tempfile.gettempdir(), 'image_processor_uploads')
-    output_dir = os.path.join(tempfile.gettempdir(), 'image_processor_outputs')
-    os.makedirs(upload_dir, exist_ok=True)
-    os.makedirs(output_dir, exist_ok=True)
+    """Ensure temporary upload and output directories exist with high-reliability fallbacks."""
+    import tempfile
+    
+    # Priority 1: Project's own media temp folder (best for VPS)
+    media_temp = os.path.join(settings.BASE_DIR, 'media', 'temp_img')
+    
+    # Priority 2: System temp folder (best for shared hosting)
+    sys_temp = os.path.join(tempfile.gettempdir(), 'image_processor_worker')
+    
+    upload_dir = None
+    output_dir = None
+    
+    for base in [media_temp, sys_temp]:
+        try:
+            u = os.path.join(base, 'uploads')
+            o = os.path.join(base, 'outputs')
+            os.makedirs(u, exist_ok=True)
+            os.makedirs(o, exist_ok=True)
+            
+            # Test write access
+            test_file = os.path.join(u, '.test')
+            with open(test_file, 'w') as f:
+                f.write('test')
+            os.remove(test_file)
+            
+            upload_dir, output_dir = u, o
+            break # Found a working directory
+        except:
+            continue
+            
+    if not upload_dir:
+        # Emergency fallback: project root / 'tmp_img'
+        upload_dir = os.path.join(settings.BASE_DIR, 'tmp_img', 'uploads')
+        output_dir = os.path.join(settings.BASE_DIR, 'tmp_img', 'outputs')
+        os.makedirs(upload_dir, exist_ok=True)
+        os.makedirs(output_dir, exist_ok=True)
+        
     return upload_dir, output_dir
 
 def save_uploaded_file(uploaded_file):
@@ -208,96 +246,16 @@ def extract_image_from_video(input_path, original_name, timestamp=1.0):
     img.save(output_path, quality=95)
     return output_path
 
-def gif_to_video(input_path, original_name, target_format='mp4', duration='default', effect='none', effect_duration='3', speed_factor='default', bg_color='default', music_path=None):
-    from moviepy.editor import VideoFileClip, AudioFileClip, CompositeVideoClip, ColorClip, vfx
-    import moviepy.video.fx.all as vfx
-    
-    clip = VideoFileClip(input_path)
-    
-    # 1. Handle Speed
-    if speed_factor != 'default':
-        clip = clip.fx(vfx.speedx, float(speed_factor))
-    
-    # 2. Handle Duration
-    if duration != 'default':
-        target_dur = float(duration)
-        if clip.duration < target_dur:
-            clip = clip.fx(vfx.loop, duration=target_dur)
-        else:
-            clip = clip.subclip(0, target_dur)
-    
-    w, h = clip.size
-    fps = clip.fps or 24
-    
-    # 3. Handle Color Background / Theme
-    colors = {
-        'azure': (240, 255, 255), 'black': (0,0,0), 'blue': (0,0,255), 'brown': (165,42,42),
-        'cyan': (0,255,255), 'fuchsia': (255,0,255), 'gold': (255,215,0), 'gray': (128,128,128),
-        'green': (0,128,0), 'maroon': (128,0,0), 'navy': (0,0,128), 'olive': (128,128,0),
-        'orange': (255,166,0), 'pink': (255,192,203), 'purple': (128,0,128), 'red': (255,0,0),
-        'silver': (192,192,192), 'skyblue': (135,206,235), 'white': (255,255,255)
-    }
-    
-    if bg_color.lower() in colors:
-        bg_rgb = colors[bg_color.lower()]
-        bg_clip = ColorClip(size=(w, h), color=bg_rgb, duration=clip.duration)
-        clip = CompositeVideoClip([bg_clip, clip.set_position('center')])
 
-    # 4. Handle Effects
-    eff_dur = float(effect_duration)
-    if clip.duration < eff_dur: eff_dur = clip.duration
-
-    if effect != 'none':
-        if effect.startswith('zoom_in'):
-            clip = clip.fx(vfx.resize, lambda t: 1 + 0.3 * (t/clip.duration))
-        elif effect.startswith('zoom_out'):
-            clip = clip.fx(vfx.resize, lambda t: 1.3 - 0.3 * (t/clip.duration))
-        elif effect == 'pan_left':
-            clip = clip.set_position(lambda t: (max(0, w - w*(1 + 0.1*t)), 'center'))
-        elif effect == 'pan_right':
-            clip = clip.set_position(lambda t: (min(0, -w*0.1*t), 'center'))
-        elif effect == 'blur_to_clear':
-            clip = clip.fx(vfx.gaussian_blur, lambda t: max(0, 10 * (1 - t/eff_dur)))
-        elif effect == 'clear_to_blur':
-            clip = clip.fx(vfx.gaussian_blur, lambda t: 10 * (t/eff_dur))
-        elif effect == 'fade':
-             clip = clip.fx(vfx.fadein, eff_dur).fx(vfx.fadeout, eff_dur)
-        elif effect.startswith('rotate'):
-            angle = 45 if '45' in effect else 90
-            if 'l' in effect: angle = -angle
-            clip = clip.fx(vfx.rotate, lambda t: angle * (t/clip.duration))
-        elif 'slide' in effect or 'wipe' in effect:
-            # Simplified transition for single clip
-            clip = clip.fx(vfx.fadein, eff_dur)
-        elif 'slice' in effect:
-            clip = clip.fx(vfx.mirror_x) if 'left' in effect else clip
-
-    # 5. Handle Music
-    if music_path and os.path.exists(music_path):
-        try:
-            audio = AudioFileClip(music_path)
-            if audio.duration < clip.duration:
-                audio = audio.fx(vfx.loop, duration=clip.duration)
-            else:
-                audio = audio.subclip(0, clip.duration)
-            clip = clip.set_audio(audio)
-        except:
-            pass
-
-    output_path = get_output_path(original_name, target_format, f'_processed')
-    
-    write_args = {'codec': 'libx264', 'audio_codec': 'aac'}
-    if target_format == 'webm':
-        write_args = {'codec': 'libvpx', 'audio_codec': 'libvorbis'}
-    
-    clip.write_videofile(output_path, **write_args)
-    return output_path
-
-def image_to_video(input_paths, original_name, target_format='mp4', duration_per_image='2', transition_type='fade', music_path=None):
+def image_to_video(input_paths, original_name, target_format='mp4', duration_per_image='2', transition_type='fade', music_path=None, total_duration=None):
     from moviepy.editor import ImageClip, AudioFileClip, CompositeVideoClip, concatenate_videoclips
     
     clips = []
     dur = float(duration_per_image)
+    
+    # Use total_duration to calculate per-image duration if set
+    if total_duration and float(total_duration) > 0:
+        dur = float(total_duration) / len(input_paths)
     
     # Process each image into a clip
     for path in input_paths:
@@ -332,11 +290,32 @@ def image_to_video(input_paths, original_name, target_format='mp4', duration_per
 
     output_path = get_output_path(original_name, target_format, '_slideshow')
     
-    write_args = {'codec': 'libx264', 'audio_codec': 'aac', 'fps': 24}
+    write_args = {'codec': 'libx264', 'audio_codec': 'aac', 'fps': 24, 'preset': 'ultrafast'}
     if target_format == 'webm':
         write_args = {'codec': 'libvpx', 'audio_codec': 'libvorbis', 'fps': 24}
+
+    try:
+        final_clip.write_videofile(output_path, **write_args)
+    finally:
+        # Crucial: Close all clips to release file handles and system resources
+        try:
+            final_clip.close()
+        except:
+            pass
+        for c in clips:
+            try:
+                c.close()
+            except:
+                pass
+        if music_path and 'audio' in locals():
+            try:
+                audio.close()
+            except:
+                pass
     
-    final_clip.write_videofile(output_path, **write_args)
+    # Small safeguard for Windows to ensure the file is released by FFmpeg
+    # before we try to open it for the HTTP response.
+    time.sleep(0.5) 
     return output_path
 
 # ═══════════════════════════════════════════════════════════════

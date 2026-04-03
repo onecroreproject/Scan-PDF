@@ -604,6 +604,30 @@ TOOLS = {
         'gradient': 'from-red-600 to-red-800',
         'category': 'pdf-tools',
     },
+    'trim-audio': {
+        'title': 'Trim Audio',
+        'description': 'Cut and edit your audio files with precision using our professional trimmer.',
+        'icon': 'scissors',
+        'accept': '.mp3,.wav,.m4a',
+        'allowed_extensions': ['.mp3', '.wav', '.m4a'],
+        'converter': None,
+        'color': '#3b82f6',
+        'gradient': 'from-blue-500 to-blue-700',
+        'category': 'audio',
+        'url_name': 'audio_processor:tool_page',
+    },
+    'trim-video': {
+        'title': 'Trim Video',
+        'description': 'Cut and trim specific segments of your video clips with ease.',
+        'icon': 'scissors',
+        'accept': '.mp4,.mov,.avi',
+        'allowed_extensions': ['.mp4', '.mov', '.avi'],
+        'converter': None,
+        'color': '#8b5cf6',
+        'gradient': 'from-violet-500 to-purple-700',
+        'category': 'video',
+        'url_name': 'video_processor:tool_page',
+    },
 }
 
 
@@ -1641,3 +1665,72 @@ def speedtest_upload(request):
 def custom_404_view(request, exception=None):
     """Custom view for handling 404 errors."""
     return render(request, '404.html', status=404)
+
+def system_status(request):
+    """Diagnose production environment and library availability."""
+    import sys
+    import platform
+    import shutil
+    from django.http import HttpResponse
+
+    # 1. Basic System Info
+    info = {
+        'OS': platform.system(),
+        'Python': sys.version.split(' ')[0],
+        'Django': f"{settings.DEBUG=}",
+    }
+    
+    # 2. Check Libraries
+    libs = {}
+    check_list = [
+        ('weasyprint', 'WeasyPrint (HTML to PDF)'),
+        ('fitz', 'PyMuPDF (PDF Engine)'),
+        ('easyocr', 'EasyOCR (Text Recognition)'),
+        ('rembg', 'Rembg (AI Background Mask)'),
+        ('moviepy', 'MoviePy (Video Engines)'),
+        ('google.generativeai', 'Gemini AI SDK'),
+    ]
+    
+    for mod, label in check_list:
+        try:
+            __import__(mod)
+            libs[label] = "✅ Available"
+        except ImportError:
+            libs[label] = "❌ Missing"
+        except Exception as e:
+            libs[label] = f"⚠️ Error: {str(e)[:50]}"
+            
+    # 3. Check External Binaries
+    binaries = {}
+    for b in ['ffmpeg', 'google-chrome', 'chrome', 'tesseract']:
+        binaries[b] = "✅ Found" if shutil.which(b) else "❌ Not Found"
+        
+    # 4. Check API Key
+    api_key_status = "✅ Set" if os.getenv("GEMINI_API_KEY") else "❌ Missing from .env"
+    
+    html = f"""
+    <html><head><title>System Status</title><style>
+        body {{ font-family: system-ui; padding: 2rem; background: #f8fafc; }}
+        .card {{ background: white; padding: 2rem; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); max-width: 800px; margin: 0 auto; }}
+        h1 {{ color: #4f46e5; border-bottom: 2px solid #eef2ff; padding-bottom: 1rem; text-align: center; }}
+        section {{ margin-top: 1.5rem; }}
+        h2 {{ font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.1em; color: #64748b; margin-bottom: 0.5rem; }}
+        ul {{ list-style: none; padding: 0; }}
+        li {{ padding: 0.5rem 0.75rem; border-bottom: 1px solid #f1f5f9; display: flex; justify-content: space-between; }}
+        .val {{ font-weight: bold; font-family: monospace; }}
+        .tip {{ margin-top: 2rem; padding: 1rem; background: #fffbeb; border: 1px solid #fef3c7; border-radius: 0.5rem; color: #92400e; font-size: 0.85rem; }}
+    </style></head><body>
+    <div class="card">
+        <h1>ScanPDF Deployment Check</h1>
+        <section><h2>System Info</h2><ul>
+    """
+    for k, v in info.items(): html += f"<li><span>{k}</span><span class='val'>{v}</span></li>"
+    html += "</ul></section><section><h2>Python Libraries</h2><ul>"
+    for k, v in libs.items(): html += f"<li><span>{k}</span><span class='val'>{v}</span></li>"
+    html += "</ul></section><section><h2>System Binaries</h2><ul>"
+    for k, v in binaries.items(): html += f"<li><span>{k}</span><span class='val'>{v}</span></li>"
+    html += "</ul></section><section><h2>Secrets</h2><ul>"
+    html += f"<li><span>GEMINI_API_KEY</span><span class='val'>{api_key_status}</span></li>"
+    html += "</ul></section><div class='tip'><b>Admin Notice:</b> If core libraries are missing, tools will fail. Please ensure system-level dependencies like <code>libpango-1.0-0</code> are installed for WeasyPrint. Use <code>pip install -r requirements.txt</code> to ensure all python packages are available.</div>"
+    html += "</div></body></html>"
+    return HttpResponse(html)
