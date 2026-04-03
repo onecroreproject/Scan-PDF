@@ -101,41 +101,30 @@
                 </a>
 
                 <!-- Desktop Nav: Properly Aligned -->
-                <div class="hidden md:flex items-center flex-1 justify-between ml-12 gap-8">
-                    <!-- Left Side Tools -->
-                    <div class="flex items-center gap-4">
-                        <!-- Mega Menu: All PDF Tools -->
+                <div class="hidden md:flex items-center flex-1 ml-10 gap-4">
+                    <!-- Left Section: All PDF Tools -->
+                    <div class="flex items-center">
                         <div class="relative group">
-                            <button
-                                class="flex items-center gap-1.5 px-4 py-2 text-[14px] font-black text-surface-900 transition-all uppercase tracking-widest hover:text-brand-600">
-                                All PDF Tools <i data-lucide="chevron-down"
-                                    class="w-4 h-4 transition-transform group-hover:rotate-180"></i>
+                            <button class="flex items-center gap-1.5 px-4 py-2 text-[13px] font-black text-surface-900 transition-all uppercase tracking-widest hover:text-brand-600 whitespace-nowrap">
+                                All PDF Tools <i data-lucide="chevron-down" class="w-3.5 h-3.5 transition-transform group-hover:rotate-180"></i>
                             </button>
                             <!-- Mega Menu Content: EXHAUSTIVE LIST (DYNAMIC) -->
-                            <div
-                                class="fixed top-[70px] left-1/2 -translate-x-1/2 w-[95vw] max-w-7xl bg-white border border-surface-100 shadow-mega rounded-3xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 translate-y-2 group-hover:translate-y-0 z-50 overflow-hidden">
-                                <div
-                                    class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 divide-x divide-surface-100 max-h-[70vh] overflow-y-auto">
+                            <div class="fixed top-[70px] left-1/2 -translate-x-1/2 w-[95vw] max-w-7xl bg-white border border-surface-100 shadow-mega rounded-3xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 translate-y-2 group-hover:translate-y-0 z-50 overflow-hidden">
+                                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 divide-x divide-surface-100 max-h-[70vh] overflow-y-auto">
                                     {% for cat_id, cat_data in grouped_tools.items %}
-                                    <div
-                                        class="p-6 space-y-4 {% if forloop.counter|divisibleby:2 %}bg-surface-5/20{% endif %}">
+                                    <div class="p-6 space-y-4 {% if forloop.counter|divisibleby:2 %}bg-surface-5/20{% endif %}">
                                         <div class="flex items-center gap-3 mb-2 px-3">
                                             <div class="w-1.5 h-6 bg-brand-500 rounded-full"></div>
-                                            <h3
-                                                class="text-[11px] font-black text-surface-400 uppercase tracking-[0.2em]">
-                                                {{ cat_data.label }}</h3>
+                                            <h3 class="text-[11px] font-black text-surface-400 uppercase tracking-[0.2em]">{{ cat_data.label }}</h3>
                                         </div>
                                         <div class="grid gap-0.5">
                                             {% for t in cat_data.tools %}
-                                            <a href="{% url 'converter:convert_page' t.slug %}"
-                                                class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                            <a href="{% url 'converter:convert_page' t.slug %}" class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
                                                 <i data-lucide="{{ t.icon }}" class="w-4 h-4 text-brand-600"></i>
-                                                <span
-                                                    class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">
+                                                <span class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">
                                                     {{ t.title }}
                                                     {% if t.is_coming_soon %}
-                                                    <span
-                                                        class="text-[10px] bg-brand-100 text-brand-600 px-1.5 py-0.5 rounded-full ml-auto">SOON</span>
+                                                    <span class="text-[10px] bg-brand-100 text-brand-600 px-1.5 py-0.5 rounded-full ml-auto">SOON</span>
                                                     {% endif %}
                                                 </span>
                                             </a>
@@ -146,174 +135,93 @@
                                 </div>
                             </div>
                         </div>
+                    </div>
 
-                        <!-- Image Editor Link -->
+                    <!-- Spacer / Right Aligned Tools -->
+                             <!-- Image Tools -->
                         <div class="relative group">
-                            <button
-                                class="flex items-center gap-1.5 px-4 py-2 text-[14px] font-black text-surface-900 transition-all uppercase tracking-widest hover:text-brand-600">
-                                Image Tools <i data-lucide="chevron-down"
-                                    class="w-4 h-4 transition-transform group-hover:rotate-180"></i>
+                            <button class="flex items-center gap-1.5 px-3 py-2 text-[13px] font-black text-surface-900 transition-all uppercase tracking-widest hover:text-brand-600 whitespace-nowrap">
+                                Image Tools <i data-lucide="chevron-down" class="w-3.5 h-3.5 transition-transform group-hover:rotate-180"></i>
                             </button>
-                            <!-- Mega Menu Content -->
-                            <div
-                                class="fixed top-[70px] left-1/2 -translate-x-1/2 w-[95vw] max-w-7xl bg-white border border-surface-100 shadow-mega rounded-3xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 translate-y-2 group-hover:translate-y-0 z-50 overflow-hidden">
-                                <div
-                                    class="grid grid-cols-1 md:grid-cols-2 divide-x divide-surface-100 max-h-[70vh] overflow-y-auto p-8 gap-10">
-                                    
-                                    <!-- Column 1: Image Tools -->
+                            <div class="fixed top-[70px] left-1/2 -translate-x-1/2 w-[95vw] max-w-7xl bg-white border border-surface-100 shadow-mega rounded-3xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 translate-y-2 group-hover:translate-y-0 z-50 overflow-hidden">
+                                <div class="grid grid-cols-1 md:grid-cols-2 divide-x divide-surface-100 max-h-[70vh] overflow-y-auto p-8 gap-10">
                                     <div class="space-y-6">
                                         <div class="flex items-center gap-3 mb-2 px-3">
                                             <div class="w-1.5 h-6 bg-brand-500 rounded-full"></div>
-                                            <h3 class="text-[11px] font-black text-surface-400 uppercase tracking-[0.2em]">Image Tools</h3>
+                                            <h3 class="text-[11px] font-black text-surface-400 uppercase tracking-[0.2em]">Image Editor</h3>
                                         </div>
                                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-2 gap-y-1">
-                                            <a href="{% url 'image_processor:tool_page' 'blur-image' %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-brand-50/50 group/item transition-all border border-transparent hover:border-brand-100">
-                                                <div class="w-8 h-8 rounded-lg bg-surface-50 flex items-center justify-center group-hover/item:bg-white shadow-sm transition-colors">
-                                                    <i data-lucide="cloud-fog" class="w-4 h-4 text-brand-600"></i>
-                                                </div>
+                                            <a href="{% url 'image_processor:tool_page' 'blur-image' %}" class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="cloud-fog" class="w-4 h-4 text-brand-600"></i>
                                                 <span class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Blur Image</span>
                                             </a>
-                                            <a href="{% url 'image_processor:tool_page' 'brighten-image' %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-brand-50/50 group/item transition-all border border-transparent hover:border-brand-100">
-                                                <div class="w-8 h-8 rounded-lg bg-surface-50 flex items-center justify-center group-hover/item:bg-white shadow-sm transition-colors">
-                                                    <i data-lucide="sun" class="w-4 h-4 text-brand-600"></i>
-                                                </div>
+                                            <a href="{% url 'image_processor:tool_page' 'brighten-image' %}" class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="sun" class="w-4 h-4 text-brand-600"></i>
                                                 <span class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Brighten Image</span>
                                             </a>
-                                            <a href="{% url 'image_processor:tool_page' 'change-gif-speed' %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-brand-50/50 group/item transition-all border border-transparent hover:border-brand-100">
-                                                <div class="w-8 h-8 rounded-lg bg-surface-50 flex items-center justify-center group-hover/item:bg-white shadow-sm transition-colors">
-                                                    <i data-lucide="zap" class="w-4 h-4 text-brand-600"></i>
-                                                </div>
-                                                <span class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Change GIF Speed</span>
-                                            </a>
-                                            <a href="{% url 'image_processor:tool_page' 'change-background' %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-brand-50/50 group/item transition-all border border-transparent hover:border-brand-100">
-                                                <div class="w-8 h-8 rounded-lg bg-surface-50 flex items-center justify-center group-hover/item:bg-white shadow-sm transition-colors">
-                                                    <i data-lucide="palette" class="w-4 h-4 text-brand-600"></i>
-                                                </div>
+                                            <a href="{% url 'image_processor:tool_page' 'change-background' %}" class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="palette" class="w-4 h-4 text-brand-600"></i>
                                                 <span class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Change Background</span>
                                             </a>
-                                            <a href="{% url 'image_processor:tool_page' 'compress-image' %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-brand-50/50 group/item transition-all border border-transparent hover:border-brand-100">
-                                                <div class="w-8 h-8 rounded-lg bg-surface-50 flex items-center justify-center group-hover/item:bg-white shadow-sm transition-colors">
-                                                    <i data-lucide="archive" class="w-4 h-4 text-brand-600"></i>
-                                                </div>
+                                            <a href="{% url 'image_processor:tool_page' 'compress-image' %}" class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="archive" class="w-4 h-4 text-brand-600"></i>
                                                 <span class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Compress Image</span>
                                             </a>
-                                            <a href="{% url 'image_processor:tool_page' 'cut-image' %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-brand-50/50 group/item transition-all border border-transparent hover:border-brand-100">
-                                                <div class="w-8 h-8 rounded-lg bg-surface-50 flex items-center justify-center group-hover/item:bg-white shadow-sm transition-colors">
-                                                    <i data-lucide="crop" class="w-4 h-4 text-brand-600"></i>
-                                                </div>
+                                            <a href="{% url 'image_processor:tool_page' 'cut-image' %}" class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="crop" class="w-4 h-4 text-brand-600"></i>
                                                 <span class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Cut Image</span>
                                             </a>
-                                            <a href="{% url 'image_processor:tool_page' 'extract-frame' %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-brand-50/50 group/item transition-all border border-transparent hover:border-brand-100">
-                                                <div class="w-8 h-8 rounded-lg bg-surface-50 flex items-center justify-center group-hover/item:bg-white shadow-sm transition-colors">
-                                                    <i data-lucide="video" class="w-4 h-4 text-brand-600"></i>
-                                                </div>
-                                                <span class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Extract Image from Video</span>
-                                            </a>
-                                            <a href="{% url 'image_processor:tool_page' 'gif-to-video' %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-brand-50/50 group/item transition-all border border-transparent hover:border-brand-100">
-                                                <div class="w-8 h-8 rounded-lg bg-surface-50 flex items-center justify-center group-hover/item:bg-white shadow-sm transition-colors">
-                                                    <i data-lucide="film" class="w-4 h-4 text-brand-600"></i>
-                                                </div>
-                                                <span class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">GIF to Video</span>
-                                            </a>
-                                            <a href="{% url 'image_processor:tool_page' 'image-to-video' %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-brand-50/50 group/item transition-all border border-transparent hover:border-brand-100">
-                                                <div class="w-8 h-8 rounded-lg bg-surface-50 flex items-center justify-center group-hover/item:bg-white shadow-sm transition-colors">
-                                                    <i data-lucide="monitor-play" class="w-4 h-4 text-brand-600"></i>
-                                                </div>
-                                                <span class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Image to Video</span>
-                                            </a>
-                                            <a href="{% url 'image_processor:tool_page' 'merge-images' %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-brand-50/50 group/item transition-all border border-transparent hover:border-brand-100">
-                                                <div class="w-8 h-8 rounded-lg bg-surface-50 flex items-center justify-center group-hover/item:bg-white shadow-sm transition-colors">
-                                                    <i data-lucide="combine" class="w-4 h-4 text-brand-600"></i>
-                                                </div>
-                                                <span class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Merge Images</span>
-                                            </a>
-                                            <a href="{% url 'image_processor:tool_page' 'remove-background' %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-brand-50/50 group/item transition-all border border-transparent hover:border-brand-100">
-                                                <div class="w-8 h-8 rounded-lg bg-surface-50 flex items-center justify-center group-hover/item:bg-white shadow-sm transition-colors">
-                                                    <i data-lucide="eraser" class="w-4 h-4 text-brand-600"></i>
-                                                </div>
+                                            <a href="{% url 'image_processor:tool_page' 'remove-background' %}" class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="eraser" class="w-4 h-4 text-brand-600"></i>
                                                 <span class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Remove Background</span>
                                             </a>
-                                            <a href="{% url 'image_processor:tool_page' 'resize-image' %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-brand-50/50 group/item transition-all border border-transparent hover:border-brand-100">
-                                                <div class="w-8 h-8 rounded-lg bg-surface-50 flex items-center justify-center group-hover/item:bg-white shadow-sm transition-colors">
-                                                    <i data-lucide="move" class="w-4 h-4 text-brand-600"></i>
-                                                </div>
+                                            <a href="{% url 'image_processor:tool_page' 'resize-image' %}" class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="move" class="w-4 h-4 text-brand-600"></i>
                                                 <span class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Resize Image</span>
                                             </a>
-                                            <a href="{% url 'image_processor:tool_page' 'rotate-image' %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-brand-50/50 group/item transition-all border border-transparent hover:border-brand-100">
-                                                <div class="w-8 h-8 rounded-lg bg-surface-50 flex items-center justify-center group-hover/item:bg-white shadow-sm transition-colors">
-                                                    <i data-lucide="rotate-cw" class="w-4 h-4 text-brand-600"></i>
-                                                </div>
+                                            <a href="{% url 'image_processor:tool_page' 'rotate-image' %}" class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="rotate-cw" class="w-4 h-4 text-brand-600"></i>
                                                 <span class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Rotate Image</span>
                                             </a>
-                                            <a href="{% url 'image_processor:tool_page' 'watermark-image' %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-brand-50/50 group/item transition-all border border-transparent hover:border-brand-100">
-                                                <div class="w-8 h-8 rounded-lg bg-surface-50 flex items-center justify-center group-hover/item:bg-white shadow-sm transition-colors">
-                                                    <i data-lucide="stamp" class="w-4 h-4 text-brand-600"></i>
-                                                </div>
+                                            <a href="{% url 'image_processor:tool_page' 'watermark-image' %}" class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="stamp" class="w-4 h-4 text-brand-600"></i>
                                                 <span class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Watermark Image</span>
+                                            </a>
+                                            <a href="{% url 'image_processor:tool_page' 'merge-images' %}" class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="combine" class="w-4 h-4 text-brand-600"></i>
+                                                <span class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Merge Images</span>
                                             </a>
                                         </div>
                                     </div>
-                                    
-                                    <!-- Column 2: Image Converter -->
                                     <div class="space-y-6">
                                         <div class="flex items-center gap-3 mb-2 px-3">
                                             <div class="w-1.5 h-6 bg-brand-500 rounded-full"></div>
-                                            <h3 class="text-[11px] font-black text-surface-400 uppercase tracking-[0.2em]">Image Converter</h3>
+                                            <h3 class="text-[11px] font-black text-surface-400 uppercase tracking-[0.2em]">Creative & Converter</h3>
                                         </div>
                                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-2 gap-y-1">
-                                            <a href="{% url 'image_processor:tool_page' 'image-converter' %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-brand-50/50 group/item transition-all border border-transparent hover:border-brand-100">
-                                                <div class="w-8 h-8 rounded-lg bg-surface-50 flex items-center justify-center group-hover/item:bg-white shadow-sm transition-colors">
-                                                    <i data-lucide="refresh-cw" class="w-4 h-4 text-brand-600"></i>
-                                                </div>
+                                            <a href="{% url 'image_processor:tool_page' 'image-to-video' %}" class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="monitor-play" class="w-4 h-4 text-brand-600"></i>
+                                                <span class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Image to Video</span>
+                                            </a>
+                                            <a href="{% url 'image_processor:tool_page' 'extract-frame' %}" class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="video" class="w-4 h-4 text-brand-600"></i>
+                                                <span class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Frame Extractor</span>
+                                            </a>
+                                            <a href="{% url 'image_processor:tool_page' 'change-gif-speed' %}" class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="zap" class="w-4 h-4 text-brand-600"></i>
+                                                <span class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">GIF Speed</span>
+                                            </a>
+                                            <a href="{% url 'image_processor:tool_page' 'image-converter' %}" class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="refresh-cw" class="w-4 h-4 text-brand-600"></i>
                                                 <span class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Image Converter</span>
                                             </a>
-                                            <a href="{% url 'image_processor:tool_page' 'jpg-converter' %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-brand-50/50 group/item transition-all border border-transparent hover:border-brand-100">
-                                                <div class="w-8 h-8 rounded-lg bg-surface-50 flex items-center justify-center group-hover/item:bg-white shadow-sm transition-colors">
-                                                    <i data-lucide="file-image" class="w-4 h-4 text-brand-600"></i>
-                                                </div>
+                                            <a href="{% url 'image_processor:tool_page' 'jpg-converter' %}" class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="file-image" class="w-4 h-4 text-brand-600"></i>
                                                 <span class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">JPG Converter</span>
                                             </a>
-                                            <a href="{% url 'image_processor:tool_page' 'bmp-converter' %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-brand-50/50 group/item transition-all border border-transparent hover:border-brand-100">
-                                                <div class="w-8 h-8 rounded-lg bg-surface-50 flex items-center justify-center group-hover/item:bg-white shadow-sm transition-colors">
-                                                    <i data-lucide="file-image" class="w-4 h-4 text-brand-600"></i>
-                                                </div>
-                                                <span class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">BMP Converter</span>
-                                            </a>
-                                            <a href="{% url 'image_processor:tool_page' 'dng-converter' %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-brand-50/50 group/item transition-all border border-transparent hover:border-brand-100">
-                                                <div class="w-8 h-8 rounded-lg bg-surface-50 flex items-center justify-center group-hover/item:bg-white shadow-sm transition-colors">
-                                                    <i data-lucide="file-image" class="w-4 h-4 text-brand-600"></i>
-                                                </div>
-                                                <span class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">DNG Converter</span>
-                                            </a>
-                                            <a href="{% url 'image_processor:tool_page' 'gif-converter' %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-brand-50/50 group/item transition-all border border-transparent hover:border-brand-100">
-                                                <div class="w-8 h-8 rounded-lg bg-surface-50 flex items-center justify-center group-hover/item:bg-white shadow-sm transition-colors">
-                                                    <i data-lucide="file-image" class="w-4 h-4 text-brand-600"></i>
-                                                </div>
-                                                <span class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">GIF Converter</span>
-                                            </a>
-                                            <a href="{% url 'image_processor:tool_page' 'pdf-converter' %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-brand-50/50 group/item transition-all border border-transparent hover:border-brand-100">
-                                                <div class="w-8 h-8 rounded-lg bg-surface-50 flex items-center justify-center group-hover/item:bg-white shadow-sm transition-colors">
-                                                    <i data-lucide="file-pdf" class="w-4 h-4 text-brand-600"></i>
-                                                </div>
-                                                <span class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">PDF Converter</span>
-                                            </a>
-                                            <a href="{% url 'image_processor:tool_page' 'png-converter' %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-brand-50/50 group/item transition-all border border-transparent hover:border-brand-100">
-                                                <div class="w-8 h-8 rounded-lg bg-surface-50 flex items-center justify-center group-hover/item:bg-white shadow-sm transition-colors">
-                                                    <i data-lucide="file-image" class="w-4 h-4 text-brand-600"></i>
-                                                </div>
+                                            <a href="{% url 'image_processor:tool_page' 'png-converter' %}" class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="file-image" class="w-4 h-4 text-brand-600"></i>
                                                 <span class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">PNG Converter</span>
-                                            </a>
-                                            <a href="{% url 'image_processor:tool_page' 'tiff-converter' %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-brand-50/50 group/item transition-all border border-transparent hover:border-brand-100">
-                                                <div class="w-8 h-8 rounded-lg bg-surface-50 flex items-center justify-center group-hover/item:bg-white shadow-sm transition-colors">
-                                                    <i data-lucide="file-image" class="w-4 h-4 text-brand-600"></i>
-                                                </div>
-                                                <span class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">TIFF Converter</span>
-                                            </a>
-                                            <a href="{% url 'image_processor:tool_page' 'webp-converter' %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-brand-50/50 group/item transition-all border border-transparent hover:border-brand-100">
-                                                <div class="w-8 h-8 rounded-lg bg-surface-50 flex items-center justify-center group-hover/item:bg-white shadow-sm transition-colors">
-                                                    <i data-lucide="file-image" class="w-4 h-4 text-brand-600"></i>
-                                                </div>
-                                                <span class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">WEBP Converter</span>
                                             </a>
                                         </div>
                                     </div>
@@ -321,25 +229,91 @@
                             </div>
                         </div>
 
-                    </div>
-
-                    <!-- Search Bar: Properly Aligned Right -->
-                    <div class="relative flex-1 max-w-sm group/search">
-                        <div class="relative flex items-center">
-                            <i data-lucide="search"
-                                class="absolute left-4 w-4 h-4 text-surface-400 group-focus-within/search:text-brand-600 transition-colors"></i>
-                            <input type="text" id="tool-search" placeholder="Search for PDF tools..."
-                                class="w-full pl-11 pr-4 py-3 rounded-2xl bg-surface-50 border border-surface-100 focus:bg-white focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 outline-none transition-all text-sm font-semibold text-surface-900 placeholder:text-surface-400">
+                        <!-- Video Tools -->
+                        <div class="relative group">
+                            <button class="flex items-center gap-1.5 px-3 py-2 text-[13px] font-black text-surface-900 transition-all uppercase tracking-widest hover:text-brand-600 whitespace-nowrap">
+                                Video Tools <i data-lucide="chevron-down" class="w-3.5 h-3.5 transition-transform group-hover:rotate-180"></i>
+                            </button>
+                            <div class="fixed top-[70px] left-1/2 -translate-x-1/2 w-[95vw] max-w-7xl bg-white border border-surface-100 shadow-mega rounded-3xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 translate-y-2 group-hover:translate-y-0 z-50 overflow-hidden">
+                                <div class="grid grid-cols-1 md:grid-cols-2 p-8 gap-10">
+                                    <div class="space-y-6">
+                                        <div class="flex items-center gap-3 mb-2 px-3">
+                                            <div class="w-1.5 h-6 bg-purple-500 rounded-full"></div>
+                                            <h3 class="text-[11px] font-black text-surface-400 uppercase tracking-[0.2em]">Video Editor</h3>
+                                        </div>
+                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-2 gap-y-1">
+                                            <a href="{% url 'video_processor:tool_page' 'trim-video' %}" class="flex items-center gap-3 p-2 rounded-xl hover:bg-purple-50/50 group/item transition-all">
+                                                <i data-lucide="scissors" class="w-4 h-4 text-purple-600"></i><span class="text-[12px] font-bold text-surface-700">Trim Video</span>
+                                            </a>
+                                            <a href="{% url 'video_processor:tool_page' 'crop-video' %}" class="flex items-center gap-3 p-2 rounded-xl hover:bg-purple-50/50 group/item transition-all">
+                                                <i data-lucide="crop" class="w-4 h-4 text-purple-600"></i><span class="text-[12px] font-bold text-surface-700">Crop Video</span>
+                                            </a>
+                                            <a href="{% url 'video_processor:tool_page' 'rotate-video' %}" class="flex items-center gap-3 p-2 rounded-xl hover:bg-purple-50/50 group/item transition-all">
+                                                <i data-lucide="rotate-cw" class="w-4 h-4 text-purple-600"></i><span class="text-[12px] font-bold text-surface-700">Rotate Video</span>
+                                            </a>
+                                            <a href="{% url 'video_processor:tool_page' 'change-speed-video' %}" class="flex items-center gap-3 p-2 rounded-xl hover:bg-purple-50/50 group/item transition-all">
+                                                <i data-lucide="zap" class="w-4 h-4 text-purple-600"></i><span class="text-[12px] font-bold text-surface-700">Change Speed</span>
+                                            </a>
+                                            <a href="{% url 'video_processor:tool_page' 'merge-video' %}" class="flex items-center gap-3 p-2 rounded-xl hover:bg-purple-50/50 group/item transition-all">
+                                                <i data-lucide="combine" class="w-4 h-4 text-purple-600"></i><span class="text-[12px] font-bold text-surface-700">Merge Video</span>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
 
-                        <!-- Search Results Overlay -->
-                        <div id="search-results"
-                            class="absolute top-full left-0 right-0 mt-3 bg-white border border-surface-100 shadow-mega rounded-2xl py-3 opacity-0 invisible translate-y-2 transition-all duration-300 z-[60] max-h-[400px] overflow-y-auto">
-                            <!-- Results will be injected here -->
-                            <div id="no-results" class="px-6 py-10 text-center space-y-3">
-                                <i data-lucide="search-x" class="w-8 h-8 text-surface-300 mx-auto"></i>
-                                <p class="text-xs font-bold text-surface-500 uppercase tracking-widest">No tools found
-                                    for your search</p>
+                        <!-- Audio Tools -->
+                        <div class="relative group">
+                            <button class="flex items-center gap-1.5 px-3 py-2 text-[13px] font-black text-surface-900 transition-all uppercase tracking-widest hover:text-brand-600 whitespace-nowrap">
+                                Audio Tools <i data-lucide="chevron-down" class="w-3.5 h-3.5 transition-transform group-hover:rotate-180"></i>
+                            </button>
+                            <div class="fixed top-[70px] left-1/2 -translate-x-1/2 w-[95vw] max-w-7xl bg-white border border-surface-100 shadow-mega rounded-3xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 translate-y-2 group-hover:translate-y-0 z-50 overflow-hidden">
+                                <div class="grid grid-cols-1 md:grid-cols-2 divide-x divide-surface-100 p-8 gap-10">
+                                    <div class="space-y-6">
+                                        <div class="flex items-center gap-3 mb-2 px-3">
+                                            <div class="w-1.5 h-6 bg-blue-500 rounded-full"></div>
+                                            <h3 class="text-[11px] font-black text-surface-400 uppercase tracking-[0.2em]">Audio Editor</h3>
+                                        </div>
+                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-2 gap-y-1">
+                                            <a href="{% url 'audio_processor:tool_page' 'trim-audio' %}" class="flex items-center gap-3 p-2 rounded-xl hover:bg-blue-50/50 group/item transition-all">
+                                                <i data-lucide="scissors" class="w-4 h-4 text-blue-600"></i><span class="text-[12px] font-bold text-surface-700">Trim Audio</span>
+                                            </a>
+                                            <a href="{% url 'audio_processor:tool_page' 'change-volume' %}" class="flex items-center gap-3 p-2 rounded-xl hover:bg-blue-50/50 group/item transition-all">
+                                                <i data-lucide="volume-2" class="w-4 h-4 text-blue-600"></i><span class="text-[12px] font-bold text-surface-700">Change Volume</span>
+                                            </a>
+                                            <a href="{% url 'audio_processor:tool_page' 'change-speed' %}" class="flex items-center gap-3 p-2 rounded-xl hover:bg-blue-50/50 group/item transition-all">
+                                                <i data-lucide="zap" class="w-4 h-4 text-blue-600"></i><span class="text-[12px] font-bold text-surface-700">Change Speed</span>
+                                            </a>
+                                        </div>
+                                    </div>
+                                    <div class="space-y-6">
+                                        <div class="flex items-center gap-3 mb-2 px-3">
+                                            <div class="w-1.5 h-6 bg-indigo-500 rounded-full"></div>
+                                            <h3 class="text-[11px] font-black text-surface-400 uppercase tracking-[0.2em]">Audio Effects</h3>
+                                        </div>
+                                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-2 gap-y-1">
+                                            <a href="{% url 'audio_processor:tool_page' 'reverse-audio' %}" class="flex items-center gap-3 p-2 rounded-xl hover:bg-indigo-50/50 group/item transition-all">
+                                                <i data-lucide="rotate-ccw" class="w-4 h-4 text-indigo-600"></i><span class="text-[12px] font-bold text-surface-700">Reverse Audio</span>
+                                            </a>
+                                            <a href="{% url 'audio_processor:tool_page' 'merge-audio' %}" class="flex items-center gap-3 p-2 rounded-xl hover:bg-indigo-50/50 group/item transition-all">
+                                                <i data-lucide="combine" class="w-4 h-4 text-indigo-600"></i><span class="text-[12px] font-bold text-surface-700">Merge Audio</span>
+                                            </a>
+                                            <a href="{% url 'audio_processor:tool_page' 'video-to-audio' %}" class="flex items-center gap-3 p-2 rounded-xl hover:bg-indigo-50/50 group/item transition-all">
+                                                <i data-lucide="file-audio" class="w-4 h-4 text-indigo-600"></i><span class="text-[12px] font-bold text-surface-700">Video to MP3</span>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Search Bar -->
+                        <div class="relative group/search ml-2">
+                            <div class="relative flex items-center">
+                                <i data-lucide="search" class="absolute left-3 w-3.5 h-3.5 text-surface-400"></i>
+                                <input type="text" id="tool-search" placeholder="Search..."
+                                    class="w-[140px] pl-9 pr-3 py-2 rounded-xl bg-surface-50 border border-surface-100 focus:bg-white focus:border-brand-500 outline-none transition-all text-[12px] font-semibold text-surface-900">
                             </div>
                         </div>
                     </div>
@@ -354,55 +328,42 @@
             </div>
         </div>
 
-        <!-- Mobile Menu -->
-        <div id="mobile-menu"
-            class="md:hidden hidden bg-white border-t border-surface-100 shadow-elevated h-[calc(100vh-100px)] overflow-y-auto">
+        <!-- Desktop Search Results Overlay -->
+        <div id="search-results"
+            class="absolute top-full left-0 right-0 max-w-2xl mx-auto mt-3 bg-white border border-surface-100 shadow-mega rounded-2xl py-3 opacity-0 invisible translate-y-2 transition-all duration-300 z-[60] max-h-[400px] overflow-y-auto">
+            <div id="no-results" class="px-6 py-10 text-center space-y-3 hidden">
+                <i data-lucide="search-x" class="w-8 h-8 text-surface-300 mx-auto"></i>
+                <p class="text-xs font-bold text-surface-500 uppercase tracking-widest">No tools found</p>
+            </div>
+        </div>
+
+        <!-- Mobile Menu (Deduplicated Clean Version) -->
+        <div id="mobile-menu" class="md:hidden hidden fixed inset-x-0 top-[70px] bottom-0 bg-white z-[100] overflow-y-auto">
             <div class="px-4 py-8 space-y-6">
-                <!-- Mobile Search -->
                 <div class="relative group/m-search mt-4 px-2">
                     <div class="relative flex items-center">
                         <i data-lucide="search" class="absolute left-4 w-4 h-4 text-surface-400"></i>
-                        <input type="text" id="tool-search-mobile" placeholder="Search for PDF tools..."
-                            class="w-full pl-11 pr-4 py-4 rounded-2xl bg-surface-50 border border-surface-100 focus:bg-white focus:border-brand-500 outline-none transition-all text-sm font-bold text-surface-900 shadow-sm">
+                        <input type="text" id="tool-search-mobile" placeholder="Search tools..."
+                            class="w-full pl-11 pr-4 py-4 rounded-2xl bg-surface-50 border border-surface-100 outline-none text-sm font-bold shadow-sm">
                     </div>
-                    <!-- Results Overlay Mobile -->
-                    <div id="search-results-mobile"
-                        class="hidden absolute top-full left-0 right-0 mt-3 bg-white border border-surface-100 shadow-mega rounded-3xl py-3 z-[60] max-h-[400px] overflow-y-auto">
-                        <!-- Results will be injected here -->
-                    </div>
+                    <div id="search-results-mobile" class="hidden mt-4 border border-surface-100 rounded-2xl overflow-hidden bg-white shadow-sm"></div>
                 </div>
-
-                <div class="space-y-2">
-                    <div class="px-4 py-2 border-b border-surface-50 mb-2">
-                        <span class="text-[10px] font-bold text-surface-400 uppercase tracking-widest">Main Menu</span>
-                    </div>
-                    <a href="{% url 'converter:home' %}"
-                        class="flex items-center gap-3 px-4 py-3 rounded-2xl text-surface-700 hover:text-brand-600 hover:bg-brand-50/60 transition-all font-bold text-sm">
+                <div class="space-y-4">
+                    <a href="{% url 'converter:home' %}" class="flex items-center gap-3 px-4 py-3 rounded-2xl text-surface-700 hover:bg-brand-50 font-bold text-sm">
                         <i data-lucide="home" class="w-5 h-5"></i>Home
                     </a>
-                    <a href="{% url 'converter:home' %}#tools"
-                        class="flex items-center gap-3 px-4 py-3 rounded-2xl text-surface-700 hover:text-brand-600 hover:bg-brand-50/60 transition-all font-bold text-sm">
-                        <i data-lucide="grid-3x3" class="w-5 h-5"></i>All Tools
-                    </a>
-
-                    <div class="px-4 py-2 border-b border-surface-50 mt-6 mb-2">
-                        <span class="text-[10px] font-bold text-surface-400 uppercase tracking-widest block">Core PDF
-                            Toolsets</span>
+                    {% for cat_id, cat_data in grouped_tools.items %}
+                    <div class="p-4 bg-surface-50 rounded-2xl space-y-3">
+                         <p class="text-[10px] font-black text-brand-600 uppercase">{{ cat_data.label }}</p>
+                         <div class="grid grid-cols-1 gap-2">
+                             {% for t in cat_data.tools %}
+                             <a href="{% url 'converter:convert_page' t.slug %}" class="flex items-center gap-2 text-sm font-bold text-surface-700">
+                                 <i data-lucide="{{ t.icon }}" class="w-4 h-4 text-brand-400"></i>{{ t.title }}
+                             </a>
+                             {% endfor %}
+                         </div>
                     </div>
-                    <div class="grid grid-cols-2 gap-3 mt-1 px-1">
-                        <a href="{% url 'converter:convert_page' 'word-to-pdf' %}"
-                            class="p-6 bg-surface-50 border border-surface-100 rounded-3xl flex flex-col items-center gap-3 group active:bg-brand-50 transition-all">
-                            <i data-lucide="file-text" class="w-6 h-6 text-brand-600"></i>
-                            <span class="text-[12px] font-black text-surface-800 uppercase tracking-[0.05em]">To
-                                PDF</span>
-                        </a>
-                        <a href="{% url 'converter:convert_page' 'pdf-to-word' %}"
-                            class="p-6 bg-surface-50 border border-surface-100 rounded-3xl flex flex-col items-center gap-3 group active:bg-brand-50 transition-all">
-                            <i data-lucide="file-type" class="w-6 h-6 text-brand-600"></i>
-                            <span class="text-[12px] font-black text-surface-800 uppercase tracking-[0.05em]">From
-                                PDF</span>
-                        </a>
-                    </div>
+                    {% endfor %}
                 </div>
             </div>
         </div>
