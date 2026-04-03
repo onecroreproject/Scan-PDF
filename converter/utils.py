@@ -17,19 +17,21 @@ load_dotenv(os.path.join(settings.BASE_DIR, '.env'))
 
 
 def ensure_media_dirs():
-    """Ensure temporary upload and output directories exist with high-reliability fallbacks."""
+    """Ensure temporary upload and output directories exist, primarily using system temp to avoid project folder bloat."""
     import tempfile
     
-    # Priority 1: Project's own media temp folder (best for VPS)
-    media_temp = os.path.join(settings.BASE_DIR, 'media', 'temp')
+    # Priority 1: System temp folder (guaranteed to be outside the project and cleaned by OS)
+    # We use a unique subdirectory to avoid conflicts
+    sys_temp_base = os.path.join(tempfile.gettempdir(), 'scanpdf_temp')
     
-    # Priority 2: System temp folder (best for shared hosting)
-    sys_temp = os.path.join(tempfile.gettempdir(), 'scanpdf_worker')
+    # Priority 2: Project's own media temp folder (only as standby)
+    project_temp_fallback = os.path.join(settings.BASE_DIR, 'media', 'temp')
     
     upload_dir = None
     output_dir = None
     
-    for base in [media_temp, sys_temp]:
+    # We prefer sys_temp_base for real temporary handling
+    for base in [sys_temp_base, project_temp_fallback]:
         try:
             u = os.path.join(base, 'uploads')
             o = os.path.join(base, 'outputs')
@@ -37,24 +39,18 @@ def ensure_media_dirs():
             os.makedirs(o, exist_ok=True)
             
             # Test write access
-            test_file = os.path.join(u, '.test')
+            test_file = os.path.join(u, f'.test_access_{os.getpid()}')
             with open(test_file, 'w') as f:
                 f.write('test')
             os.remove(test_file)
             
             upload_dir, output_dir = u, o
-            
-            # Create .gitignore in this base if it doesn't exist
-            gi = os.path.join(base, '.gitignore')
-            if not os.path.exists(gi):
-                with open(gi, 'w') as f: f.write('*\n!.gitignore\n')
-            
-            break # Found a working directory
+            break 
         except:
             continue
             
     if not upload_dir:
-        # Emergency fallback: project root / 'tmp'
+        # Emergency last-resort only (should rarely happen)
         upload_dir = os.path.join(settings.BASE_DIR, 'tmp', 'uploads')
         output_dir = os.path.join(settings.BASE_DIR, 'tmp', 'outputs')
         os.makedirs(upload_dir, exist_ok=True)

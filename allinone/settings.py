@@ -98,9 +98,10 @@ STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
 
-# Media files
+# Media files (Redirected to system temp to keep project folder clean)
+import tempfile
 MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+MEDIA_ROOT = os.path.join(tempfile.gettempdir(), 'scanpdf_media_root')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
