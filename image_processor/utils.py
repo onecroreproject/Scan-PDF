@@ -11,61 +11,14 @@ import cv2
 from django.conf import settings
 from dotenv import load_dotenv
 
+from converter.utils import ensure_media_dirs, save_uploaded_file, format_download_name
+
 # Use absolute path for .env to ensure it loads in production WSGI environments
 load_dotenv(os.path.join(settings.BASE_DIR, '.env'))
 
 # Functionality for video and gif processing
 from moviepy.editor import VideoFileClip, ImageSequenceClip
 
-def ensure_media_dirs():
-    """Ensure temporary upload and output directories exist with high-reliability fallbacks."""
-    import tempfile
-    
-    # Priority 1: Project's own media temp folder (best for VPS)
-    media_temp = os.path.join(settings.BASE_DIR, 'media', 'temp_img')
-    
-    # Priority 2: System temp folder (best for shared hosting)
-    sys_temp = os.path.join(tempfile.gettempdir(), 'image_processor_worker')
-    
-    upload_dir = None
-    output_dir = None
-    
-    for base in [media_temp, sys_temp]:
-        try:
-            u = os.path.join(base, 'uploads')
-            o = os.path.join(base, 'outputs')
-            os.makedirs(u, exist_ok=True)
-            os.makedirs(o, exist_ok=True)
-            
-            # Test write access
-            test_file = os.path.join(u, '.test')
-            with open(test_file, 'w') as f:
-                f.write('test')
-            os.remove(test_file)
-            
-            upload_dir, output_dir = u, o
-            break # Found a working directory
-        except:
-            continue
-            
-    if not upload_dir:
-        # Emergency fallback: project root / 'tmp_img'
-        upload_dir = os.path.join(settings.BASE_DIR, 'tmp_img', 'uploads')
-        output_dir = os.path.join(settings.BASE_DIR, 'tmp_img', 'outputs')
-        os.makedirs(upload_dir, exist_ok=True)
-        os.makedirs(output_dir, exist_ok=True)
-        
-    return upload_dir, output_dir
-
-def save_uploaded_file(uploaded_file):
-    """Save an uploaded file and return its path."""
-    upload_dir, _ = ensure_media_dirs()
-    ext = os.path.splitext(uploaded_file.name)[1]
-    file_path = os.path.join(upload_dir, f"{uuid.uuid4().hex}{ext}")
-    with open(file_path, 'wb+') as dest:
-        for chunk in uploaded_file.chunks():
-            dest.write(chunk)
-    return file_path
 
 def get_output_path(original_name, new_extension, suffix=''):
     """Generate a unique output path."""
@@ -78,16 +31,6 @@ def get_output_path(original_name, new_extension, suffix=''):
     output_name = f"ImageEditor_{base_name}{suffix}_{unique_suffix}{ext}"
     return os.path.join(output_dir, output_name)
 
-def format_download_name(name):
-    """Clean filename for download."""
-    stem = Path(name).stem
-    ext = Path(name).suffix
-    stem = re.sub(r'_[0-9a-fA-F]{4,32}$', '', stem)
-    if not stem.lower().startswith('imageeditor'):
-        stem = f"ImageEditor_{stem}"
-    stem = re.sub(r'[^\w\.\-]', '_', stem)
-    stem = re.sub(r'_{2,}', '_', stem).strip('_')
-    return f"{stem}{ext}"
 
 # ═══════════════════════════════════════════════════════════════
 # 1. IMAGE TOOLS

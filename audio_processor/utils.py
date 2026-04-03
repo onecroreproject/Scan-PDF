@@ -2,18 +2,15 @@ import os
 from pydub import AudioSegment
 import uuid
 from django.conf import settings
-from converter.utils import format_download_name
+from converter.utils import format_download_name, ensure_media_dirs
 
-def ensure_temp_dir():
-    temp_dir = os.path.join(settings.MEDIA_ROOT, 'temp_audio')
-    os.makedirs(temp_dir, exist_ok=True)
-    return temp_dir
 
 def get_output_path(original_name, target_extension, prefix=''):
+    upload_dir, output_dir = ensure_media_dirs()
     base_name = os.path.splitext(original_name)[0]
     unique_suffix = uuid.uuid4().hex[:8].upper()
     filename = f"{base_name}{prefix}_{unique_suffix}.{target_extension}"
-    return os.path.join(ensure_temp_dir(), filename)
+    return os.path.join(output_dir, filename)
 
 def process_audio(input_path, original_name, tool_params):
     """
