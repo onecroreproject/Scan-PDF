@@ -1,4 +1,3 @@
-import time
 import os
 import io
 import uuid
@@ -8,17 +7,27 @@ from pathlib import Path
 from PIL import Image, ImageFilter, ImageEnhance, ImageDraw, ImageFont
 import numpy as np
 import cv2
-from django.conf import settings
-from dotenv import load_dotenv
-
-from converter.utils import ensure_media_dirs, save_uploaded_file, format_download_name
-
-# Use absolute path for .env to ensure it loads in production WSGI environments
-load_dotenv(os.path.join(settings.BASE_DIR, '.env'))
 
 # Functionality for video and gif processing
 from moviepy.editor import VideoFileClip, ImageSequenceClip
 
+def ensure_media_dirs():
+    """Ensure temporary upload and output directories exist."""
+    upload_dir = os.path.join(tempfile.gettempdir(), 'image_processor_uploads')
+    output_dir = os.path.join(tempfile.gettempdir(), 'image_processor_outputs')
+    os.makedirs(upload_dir, exist_ok=True)
+    os.makedirs(output_dir, exist_ok=True)
+    return upload_dir, output_dir
+
+def save_uploaded_file(uploaded_file):
+    """Save an uploaded file and return its path."""
+    upload_dir, _ = ensure_media_dirs()
+    ext = os.path.splitext(uploaded_file.name)[1]
+    file_path = os.path.join(upload_dir, f"{uuid.uuid4().hex}{ext}")
+    with open(file_path, 'wb+') as dest:
+        for chunk in uploaded_file.chunks():
+            dest.write(chunk)
+    return file_path
 
 def get_output_path(original_name, new_extension, suffix=''):
     """Generate a unique output path."""
@@ -31,6 +40,16 @@ def get_output_path(original_name, new_extension, suffix=''):
     output_name = f"ImageEditor_{base_name}{suffix}_{unique_suffix}{ext}"
     return os.path.join(output_dir, output_name)
 
+def format_download_name(name):
+    """Clean filename for download."""
+    stem = Path(name).stem
+    ext = Path(name).suffix
+    stem = re.sub(r'_[0-9a-fA-F]{4,32}$', '', stem)
+    if not stem.lower().startswith('imageeditor'):
+        stem = f"ImageEditor_{stem}"
+    stem = re.sub(r'[^\w\.\-]', '_', stem)
+    stem = re.sub(r'_{2,}', '_', stem).strip('_')
+    return f"{stem}{ext}"
 
 # ═══════════════════════════════════════════════════════════════
 # 1. IMAGE TOOLS
@@ -189,76 +208,16 @@ def extract_image_from_video(input_path, original_name, timestamp=1.0):
     img.save(output_path, quality=95)
     return output_path
 
+def gif_to_video(input_path, original_name):
+    clip = VideoFileClip(input_path)
+    output_path = get_output_path(original_name, 'mp4', '_converted')
+    clip.write_videofile(output_path, codec="libx264") # libx264 is common
+    return output_path
 
-def image_to_video(input_paths, original_name, target_format='mp4', duration_per_image='2', transition_type='fade', music_path=None, total_duration=None):
-    from moviepy.editor import ImageClip, AudioFileClip, CompositeVideoClip, concatenate_videoclips
-    
-    clips = []
-    dur = float(duration_per_image)
-    
-    # Use total_duration to calculate per-image duration if set
-    if total_duration and float(total_duration) > 0:
-        dur = float(total_duration) / len(input_paths)
-    
-    # Process each image into a clip
-    for path in input_paths:
-        clip = ImageClip(path).set_duration(dur)
-        if transition_type == 'fade':
-            clip = clip.crossfadein(0.5).crossfadeout(0.5)
-        clips.append(clip)
-    
-    # Concatenate with or without transitions
-    if transition_type == 'fade':
-        # Overlap clips for crossfade
-        final_clip = concatenate_videoclips(clips, method="compose", padding=-0.5)
-    elif 'slide' in transition_type:
-        final_clip = concatenate_videoclips(clips, method="compose")
-        # Basic slide can be implemented via position animation if needed, 
-        # but concatenate method="compose" handles basic sequencing.
-    else:
-        final_clip = concatenate_videoclips(clips, method="chain")
-
-    # Handle Music
-    if music_path and os.path.exists(music_path):
-        try:
-            audio = AudioFileClip(music_path)
-            if audio.duration < final_clip.duration:
-                from moviepy.video.fx.all import loop
-                audio = audio.fx(loop, duration=final_clip.duration)
-            else:
-                audio = audio.subclip(0, final_clip.duration)
-            final_clip = final_clip.set_audio(audio)
-        except:
-            pass
-
-    output_path = get_output_path(original_name, target_format, '_slideshow')
-    
-    write_args = {'codec': 'libx264', 'audio_codec': 'aac', 'fps': 24, 'preset': 'ultrafast'}
-    if target_format == 'webm':
-        write_args = {'codec': 'libvpx', 'audio_codec': 'libvorbis', 'fps': 24}
-
-    try:
-        final_clip.write_videofile(output_path, **write_args)
-    finally:
-        # Crucial: Close all clips to release file handles and system resources
-        try:
-            final_clip.close()
-        except:
-            pass
-        for c in clips:
-            try:
-                c.close()
-            except:
-                pass
-        if music_path and 'audio' in locals():
-            try:
-                audio.close()
-            except:
-                pass
-    
-    # Small safeguard for Windows to ensure the file is released by FFmpeg
-    # before we try to open it for the HTTP response.
-    time.sleep(0.5) 
+def image_to_video(input_paths, original_name, fps=1):
+    clip = ImageSequenceClip(input_paths, fps=float(fps))
+    output_path = get_output_path(original_name, 'mp4', '_seq_to_vid')
+    clip.write_videofile(output_path, codec="libx264")
     return output_path
 
 # ═══════════════════════════════════════════════════════════════
