@@ -21,6 +21,7 @@ from .utils import (
     merge_images,
     change_gif_speed,
     extract_image_from_video,
+    gif_to_video,
     image_to_video,
     convert_image,
     format_download_name
@@ -123,6 +124,16 @@ IMAGE_TOOLS = {
         'category': 'image-pro',
         'color': '#0ea5e9',
         'gradient': 'from-sky-400 to-blue-600',
+    },
+    'gif-to-video': {
+        'title': 'GIF to Video',
+        'description': 'Convert animated GIFs into standard MP4 or WEBM video files with advanced effects and music.',
+        'icon': 'film',
+        'accept': '.gif',
+        'allowed_extensions': ['.gif'],
+        'category': 'image-pro',
+        'color': '#6366f1',
+        'gradient': 'from-indigo-500 to-violet-600',
     },
     'image-to-video': {
         'title': 'Image to Video',
@@ -284,6 +295,30 @@ def process_tool(request, tool_slug):
         elif tool_slug == 'extract-frame':
             ts = request.POST.get('timestamp', 1.0)
             output_path = extract_image_from_video(input_paths[0], original_name, timestamp=ts)
+        elif tool_slug == 'gif-to-video':
+            target_format = request.POST.get('target_format', 'mp4')
+            duration = request.POST.get('duration', 'default')
+            effect = request.POST.get('effect', 'none')
+            effect_duration = request.POST.get('effect_duration', '3')
+            speed = request.POST.get('speed', 'default')
+            color = request.POST.get('color', 'default')
+            
+            music_file = request.FILES.get('music_file')
+            music_path = save_uploaded_file(music_file) if music_file else None
+            
+            output_path = gif_to_video(
+                input_paths[0], 
+                original_name, 
+                target_format=target_format,
+                duration=duration,
+                effect=effect,
+                effect_duration=effect_duration,
+                speed_factor=speed,
+                bg_color=color,
+                music_path=music_path
+            )
+            if music_path and os.path.exists(music_path):
+                input_paths.append(music_path)
         elif tool_slug == 'image-to-video':
             target_format = request.POST.get('target_format', 'mp4')
             duration_per_image = request.POST.get('img_duration', '2')
@@ -292,16 +327,13 @@ def process_tool(request, tool_slug):
             music_file = request.FILES.get('music_file')
             music_path = save_uploaded_file(music_file) if music_file else None
             
-            total_duration = request.POST.get('total_video_duration')
-            
             output_path = image_to_video(
                 input_paths, 
                 original_name, 
                 target_format=target_format,
                 duration_per_image=duration_per_image,
                 transition_type=transition,
-                music_path=music_path,
-                total_duration=total_duration
+                music_path=music_path
             )
             if music_path and os.path.exists(music_path):
                 input_paths.append(music_path)

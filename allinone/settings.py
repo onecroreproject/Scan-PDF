@@ -38,8 +38,6 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'converter',
     'image_processor',
-    'audio_processor',
-    'video_processor',
 ]
 
 MIDDLEWARE = [
