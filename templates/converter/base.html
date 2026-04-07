@@ -127,7 +127,7 @@
                                         </div>
                                         <div class="grid gap-0.5">
                                             {% for t in cat_data.tools %}
-                                            <a href="{% url 'converter:convert_page' t.slug %}"
+                                            <a href="{% if t.app_name == 'image_processor' %}{% url 'image_processor:tool_page' t.slug %}{% else %}{% url 'converter:convert_page' t.slug %}{% endif %}"
                                                 class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
                                                 <i data-lucide="{{ t.icon }}" class="w-4 h-4 text-brand-600"></i>
                                                 <span

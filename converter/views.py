@@ -437,7 +437,7 @@ TOOLS = {
         'gradient': 'from-indigo-500 to-indigo-700',
         'category': 'image-tools',
     },
-    'add-image-watermark': {
+    'watermark-image': {
         'title': 'Add Watermark',
         'description': 'Overlay a custom text watermark on your images.',
         'icon': 'stamp',
@@ -633,9 +633,15 @@ TOOLS = {
 
 def home(request):
     """Render the home page with all available tools."""
+    all_tools = {**TOOLS}
+    # Update with image tools metadata for the grid
+    from image_processor.views import IMAGE_TOOLS
+    all_tools.update(IMAGE_TOOLS)
+    
     context = {
-        'tools': TOOLS,
+        'tools': all_tools,
         'page_title': 'ScanPDF',
+        'IMAGE_TOOLS_KEYS': list(IMAGE_TOOLS.keys())
     }
     return render(request, 'converter/home.html', context)
 
@@ -681,11 +687,11 @@ def convert_page(request, tool_slug):
         template = 'converter/scale_image.html'
     elif tool_slug == 'rotate-image':
         template = 'converter/rotate_image.html'
-    elif tool_slug == 'add-image-watermark':
+    elif tool_slug == 'add-image-watermark' or tool_slug == 'watermark-image':
         template = 'converter/add_image_watermark.html'
     elif tool_slug == 'compress-image':
         template = 'converter/compress_image.html'
-    elif tool_slug == 'crop-image':
+    elif tool_slug == 'crop-image' or tool_slug == 'cut-image':
         template = 'converter/crop_image.html'
 
     elif tool_slug == 'chemical-balancer':
@@ -1288,7 +1294,7 @@ def convert_file(request, tool_slug):
             return JsonResponse({'error': f'Rotate failed: {str(e)}'}, status=500)
 
     # ── Add Image Watermark ──
-    if tool_slug == 'add-image-watermark':
+    if tool_slug == 'add-image-watermark' or tool_slug == 'watermark-image':
         if 'file' not in request.FILES:
             return JsonResponse({'error': 'No file was uploaded.'}, status=400)
 
@@ -1341,7 +1347,7 @@ def convert_file(request, tool_slug):
             return JsonResponse({'error': f'Compress failed: {str(e)}'}, status=500)
 
     # ── Crop Image ──
-    if tool_slug == 'crop-image':
+    if tool_slug == 'crop-image' or tool_slug == 'cut-image':
         if 'file' not in request.FILES:
             return JsonResponse({'error': 'No file was uploaded.'}, status=400)
 
