@@ -21,7 +21,6 @@ from .utils import (
     merge_images,
     change_gif_speed,
     extract_image_from_video,
-    gif_to_video,
     image_to_video,
     convert_image,
     format_download_name
@@ -125,19 +124,10 @@ IMAGE_TOOLS = {
         'color': '#0ea5e9',
         'gradient': 'from-sky-400 to-blue-600',
     },
-    'gif-to-video': {
-        'title': 'GIF to Video',
-        'description': 'Convert your animated GIFs into standard MP4 video files.',
-        'icon': 'film',
-        'accept': '.gif',
-        'allowed_extensions': ['.gif'],
-        'category': 'image-pro',
-        'color': '#6366f1',
-        'gradient': 'from-indigo-500 to-violet-600',
-    },
+
     'image-to-video': {
         'title': 'Image to Video',
-        'description': 'Create a video from a sequence of images.',
+        'description': 'Create a cinematic video from your image sequence with custom audio and timing.',
         'icon': 'monitor-play',
         'accept': '.jpg,.jpeg,.png',
         'allowed_extensions': ['.jpg', '.jpeg', '.png'],
@@ -295,11 +285,19 @@ def process_tool(request, tool_slug):
         elif tool_slug == 'extract-frame':
             ts = request.POST.get('timestamp', 1.0)
             output_path = extract_image_from_video(input_paths[0], original_name, timestamp=ts)
-        elif tool_slug == 'gif-to-video':
-            output_path = gif_to_video(input_paths[0], original_name)
+
         elif tool_slug == 'image-to-video':
-            fps = request.POST.get('fps', 1)
-            output_path = image_to_video(input_paths, original_name, fps=fps)
+            fps = request.POST.get('fps', 24)
+            img_duration = request.POST.get('img_duration', 3)
+            audio_file = request.FILES.get('audio')
+            audio_path = save_uploaded_file(audio_file) if audio_file else None
+            
+            try:
+                output_path = image_to_video(input_paths, original_name, fps=fps, img_duration=img_duration, audio_path=audio_path)
+            finally:
+                if audio_path and os.path.exists(audio_path):
+                    try: os.remove(audio_path)
+                    except: pass
         
         # --- Converters ---
         elif tool_slug.endswith('-converter'):

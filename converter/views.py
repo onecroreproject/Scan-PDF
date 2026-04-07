@@ -604,6 +604,17 @@ TOOLS = {
         'gradient': 'from-red-600 to-red-800',
         'category': 'pdf-tools',
     },
+    'audio-editor': {
+        'title': 'Audio Editor',
+        'description': 'A professional-grade audio editing suite to trim, change volume, speed, pitch and apply equalizer effects.',
+        'icon': 'music',
+        'accept': '.mp3,.wav,.ogg,.m4a,.flac',
+        'allowed_extensions': ['.mp3', '.wav', '.ogg', '.m4a', '.flac'],
+        'converter': None,
+        'color': '#10b981',
+        'gradient': 'from-emerald-500 to-teal-600',
+        'category': 'audio-tools',
+    },
 }
 
 
@@ -689,6 +700,8 @@ def convert_page(request, tool_slug):
         template = 'converter/redact_pdf.html'
     elif tool_slug == 'html-to-pdf':
         template = 'converter/html_to_pdf.html'
+    elif tool_slug == 'audio-editor':
+        template = 'audio_processor/editor.html'
     else:
         template = 'converter/convert.html'
 

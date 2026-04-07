@@ -1,9 +1,17 @@
 import os
-from pydub import AudioSegment
 import uuid
+import math
+from pydub import AudioSegment
+import imageio_ffmpeg
 from django.conf import settings
 from converter.utils import format_download_name, ensure_media_dirs
 
+# Fix for WinError 2: Set pydub's dependencies using imageio_ffmpeg
+AudioSegment.converter = imageio_ffmpeg.get_ffmpeg_exe()
+# Also try to find ffprobe if available in the same package (pydub uses it for info)
+# Some versions of imageio_ffmpeg don't provide ffprobe but we'll try something similar 
+# or hope ffmpeg is enough for basic tasks. 
+# pydub often works with just ffmpeg if it's set correctly.
 
 def get_output_path(original_name, target_extension, prefix=''):
     upload_dir, output_dir = ensure_media_dirs()
@@ -14,60 +22,80 @@ def get_output_path(original_name, target_extension, prefix=''):
 
 def process_audio(input_path, original_name, tool_params):
     """
-    Main dispatcher for audio tasks.
+    Apply multiple audio effects in a pipeline.
     """
-    tool = tool_params.get('tool')
-    
-    if tool == 'video-to-audio':
-        from moviepy.editor import VideoFileClip
-        clip = VideoFileClip(input_path)
-        output_path = get_output_path(original_name, 'mp3', '_extracted')
-        clip.audio.write_audiofile(output_path)
-        clip.close()
-        return output_path
-
-    # All other tools use pydub
     audio = AudioSegment.from_file(input_path)
     
-    if tool == 'trim-audio':
-        start_ms = float(tool_params.get('start', 0)) * 1000
-        end_ms = float(tool_params.get('end', audio.duration_seconds)) * 1000
-        audio = audio[start_ms:end_ms]
-        
-        # Fades
-        fade_in = float(tool_params.get('fade_in', 0)) * 1000
-        fade_out = float(tool_params.get('fade_out', 0)) * 1000
-        if fade_in > 0: audio = audio.fade_in(int(fade_in))
-        if fade_out > 0: audio = audio.fade_out(int(fade_out))
+    # 1. Trimming
+    start_time = tool_params.get('start')
+    end_time = tool_params.get('end')
+    if start_time is not None or end_time is not None:
+        try:
+            start_ms = float(start_time or 0) * 1000
+            total_ms = len(audio)
+            end_ms = float(end_time) * 1000 if end_time else total_ms
+            if end_ms > total_ms: end_ms = total_ms
+            if start_ms < 0: start_ms = 0
+            if end_ms > start_ms:
+                audio = audio[start_ms:end_ms]
+        except (ValueError, TypeError):
+            pass
 
-    elif tool == 'change-volume':
-        volume_change = float(tool_params.get('volume', 100)) - 100 # percentage
-        # pydub volume is in dB. 6dB is roughly double volume.
-        # Simple linear to dB conversion helper
-        if volume_change != 0:
-            audio = audio + (volume_change / 10) # rough mapping
+    # 2. Volume
+    try:
+        volume_level = float(tool_params.get('volume', 100)) # percentage
+        if volume_level != 100:
+            if volume_level > 0:
+                gain_db = 20 * math.log10(volume_level / 100.0)
+                audio = audio.apply_gain(gain_db)
+            else:
+                audio = audio - 120 # Mute
+    except (ValueError, TypeError):
+        pass
 
-    elif tool == 'change-speed':
+    # 3. Speed (and Pitch if simple)
+    try:
         speed = float(tool_params.get('speed', 1.0))
         if speed != 1.0:
-            # Note: This changes PITCH too. For pitch-invariant speed, we need rubberband or librosa.
             new_sample_rate = int(audio.frame_rate * speed)
             audio = audio._spawn(audio.raw_data, overrides={'frame_rate': new_sample_rate})
             audio = audio.set_frame_rate(audio.frame_rate)
+    except (ValueError, TypeError):
+        pass
 
-    elif tool == 'reverse-audio':
+    # 4. Pitch
+    try:
+        pitch = float(tool_params.get('pitch', 0))
+        if pitch != 0:
+            # Shift pitch by changing sample rate
+            new_sample_rate = int(audio.frame_rate * (2.0 ** (pitch / 12.0)))
+            audio = audio._spawn(audio.raw_data, overrides={'frame_rate': new_sample_rate})
+            audio = audio.set_frame_rate(audio.frame_rate)
+    except (ValueError, TypeError):
+        pass
+
+    # 5. Equalizer (Presets)
+    preset = tool_params.get('preset', 'none')
+    if preset != 'none':
+        if preset == 'bass-boost':
+            audio = audio.low_pass_filter(250).apply_gain(6)
+        elif preset == 'treble-boost':
+            audio = audio.high_pass_filter(5000).apply_gain(6)
+        elif preset == 'classic':
+            audio = audio.high_pass_filter(1000).low_pass_filter(4000).apply_gain(3)
+        elif preset == 'dance':
+            audio = audio.low_pass_filter(200).apply_gain(4).high_pass_filter(6000).apply_gain(4)
+        elif preset == 'pop':
+            audio = audio.high_pass_filter(1000).apply_gain(2)
+        elif preset == 'rock':
+            audio = audio.low_pass_filter(150).apply_gain(3).high_pass_filter(3000).apply_gain(3)
+
+    # 5. Reverse
+    if tool_params.get('reverse') == 'true':
         audio = audio.reverse()
 
-    elif tool == 'audio-equalizer':
-        preset = tool_params.get('preset', 'none')
-        if preset == 'bass-boost':
-            audio = audio.low_pass_filter(250).apply_gain(6) + audio
-        elif preset == 'treble-boost':
-            audio = audio.high_pass_filter(5000).apply_gain(6) + audio
-
-
     target_format = tool_params.get('format', 'mp3')
-    output_path = get_output_path(original_name, target_format, f'_{tool}')
+    output_path = get_output_path(original_name, target_format, '_processed')
     audio.export(output_path, format=target_format)
     return output_path
 
