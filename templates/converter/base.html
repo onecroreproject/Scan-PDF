@@ -127,7 +127,7 @@
                                         </div>
                                         <div class="grid gap-0.5">
                                             {% for t in cat_data.tools %}
-                                            <a href="{% url 'converter:convert_page' t.slug %}"
+                                            <a href="{% if t.app_name == 'image_processor' %}{% url 'image_processor:tool_page' t.slug %}{% else %}{% url 'converter:convert_page' t.slug %}{% endif %}"
                                                 class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
                                                 <i data-lucide="{{ t.icon }}" class="w-4 h-4 text-brand-600"></i>
                                                 <span
@@ -208,12 +208,6 @@
                                                     <i data-lucide="video" class="w-4 h-4 text-brand-600"></i>
                                                 </div>
                                                 <span class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Extract Image from Video</span>
-                                            </a>
-                                            <a href="{% url 'image_processor:tool_page' 'gif-to-video' %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-brand-50/50 group/item transition-all border border-transparent hover:border-brand-100">
-                                                <div class="w-8 h-8 rounded-lg bg-surface-50 flex items-center justify-center group-hover/item:bg-white shadow-sm transition-colors">
-                                                    <i data-lucide="film" class="w-4 h-4 text-brand-600"></i>
-                                                </div>
-                                                <span class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">GIF to Video</span>
                                             </a>
                                             <a href="{% url 'image_processor:tool_page' 'image-to-video' %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-brand-50/50 group/item transition-all border border-transparent hover:border-brand-100">
                                                 <div class="w-8 h-8 rounded-lg bg-surface-50 flex items-center justify-center group-hover/item:bg-white shadow-sm transition-colors">
@@ -476,7 +470,7 @@
                     if (noResults && !isMobile) noResults.classList.add('hidden');
                     filtered.forEach(tool => {
                         const div = document.createElement('a');
-                        div.href = `/convert/${tool.slug}/`;
+                        div.href = tool.url;
                         div.className = `search-item flex items-center gap-4 px-6 py-4 hover:bg-brand-50 transition-all border-b border-surface-50 last:border-0 group/si ${isMobile ? 'py-3' : 'py-4'}`;
                         div.innerHTML = `
                             <div class="w-10 h-10 rounded-xl bg-surface-50 flex items-center justify-center group-hover/si:bg-brand-100 transition-colors">
