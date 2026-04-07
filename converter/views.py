@@ -57,6 +57,7 @@ from .utils import (
     convert_pdf_to_pdfa,
     sign_pdf,
     redact_pdf,
+    merge_word_files,
 )
 
 
@@ -201,6 +202,18 @@ TOOLS = {
         'color': '#7c3aed',
         'gradient': 'from-violet-500 to-violet-700',
         'category': 'pdf-tools',
+        'multi_file': True,
+    },
+    'merge-word': {
+        'title': 'Merge Word',
+        'description': 'Combine multiple Word documents (.docx) into a single file.',
+        'icon': 'file-type',
+        'accept': '.docx',
+        'allowed_extensions': ['.docx'],
+        'converter': merge_word_files,
+        'color': '#2b6cb0',
+        'gradient': 'from-blue-600 to-indigo-700',
+        'category': 'convert',
         'multi_file': True,
     },
     'split-pdf': {
@@ -636,7 +649,7 @@ def convert_page(request, tool_slug):
     form = FileUploadForm()
 
     # Determine which template to use
-    if tool_slug == 'merge-pdf':
+    if tool_slug == 'merge-pdf' or tool_slug == 'merge-word':
         template = 'converter/merge.html'
     elif tool_slug == 'split-pdf':
         template = 'converter/split.html'
@@ -757,6 +770,30 @@ def convert_file(request, tool_slug):
                                            filename=f"{Path(files[0].name).stem}_merged.pdf")
         except Exception as e:
             return JsonResponse({'error': f'Merge failed: {str(e)}'}, status=500)
+
+    # ── Merge Word: multiple files ──
+    if tool_slug == 'merge-word':
+        files = request.FILES.getlist('files')
+        if not files or len(files) < 2:
+            return JsonResponse({'error': 'Please upload at least 2 Word files to merge.'}, status=400)
+
+        try:
+            input_paths = []
+            for f in files:
+                ext = os.path.splitext(f.name)[1].lower()
+                if ext != '.docx':
+                    return JsonResponse({'error': f'Invalid file "{f.name}". Only .docx files are allowed.'}, status=400)
+                input_paths.append(save_uploaded_file(f))
+
+            output_path = merge_word_files(input_paths, files[0].name)
+
+            for p in input_paths:
+                try: os.remove(p)
+                except OSError: pass
+
+            return create_cleanup_response(output_path, content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+        except Exception as e:
+            return JsonResponse({'error': f'Word Merge failed: {str(e)}'}, status=500)
 
     # ── HTML to PDF (URL or file) ──
     if tool_slug == 'html-to-pdf':
