@@ -8,6 +8,10 @@ from pydub.effects import speedup
 import imageio_ffmpeg
 from converter.utils import format_download_name, ensure_media_dirs
 
+def _binary_name(base):
+    return f"{base}.exe" if os.name == "nt" else base
+
+
 def _get_winget_ffmpeg_bin_dir():
     local_app_data = os.environ.get('LOCALAPPDATA', '')
     if not local_app_data:
@@ -27,11 +31,16 @@ def _get_winget_ffmpeg_bin_dir():
 
 def _configure_audio_binaries():
     """Configure ffmpeg/ffprobe paths for pydub, with Windows-safe fallbacks."""
+    env_ffmpeg = os.environ.get("FFMPEG_BINARY")
+    env_ffprobe = os.environ.get("FFPROBE_BINARY")
+
     winget_bin_dir = _get_winget_ffmpeg_bin_dir()
-    winget_ffmpeg = os.path.join(winget_bin_dir, 'ffmpeg.exe') if winget_bin_dir else None
-    winget_ffprobe = os.path.join(winget_bin_dir, 'ffprobe.exe') if winget_bin_dir else None
+    winget_ffmpeg = os.path.join(winget_bin_dir, _binary_name('ffmpeg')) if winget_bin_dir else None
+    winget_ffprobe = os.path.join(winget_bin_dir, _binary_name('ffprobe')) if winget_bin_dir else None
 
     ffmpeg_candidates = []
+    if env_ffmpeg and os.path.exists(env_ffmpeg):
+        ffmpeg_candidates.append(env_ffmpeg)
     if winget_ffmpeg and os.path.exists(winget_ffmpeg):
         ffmpeg_candidates.append(winget_ffmpeg)
     which_ffmpeg = shutil.which('ffmpeg')
@@ -49,13 +58,15 @@ def _configure_audio_binaries():
         )
 
     ffprobe_candidates = []
+    if env_ffprobe and os.path.exists(env_ffprobe):
+        ffprobe_candidates.append(env_ffprobe)
     if winget_ffprobe and os.path.exists(winget_ffprobe):
         ffprobe_candidates.append(winget_ffprobe)
     which_ffprobe = shutil.which('ffprobe')
     if which_ffprobe:
         ffprobe_candidates.append(which_ffprobe)
     if not ffprobe_candidates:
-        candidate = os.path.join(os.path.dirname(ffmpeg_path), 'ffprobe.exe')
+        candidate = os.path.join(os.path.dirname(ffmpeg_path), _binary_name('ffprobe'))
         if os.path.exists(candidate):
             ffprobe_candidates.append(candidate)
     ffprobe_path = next((p for p in ffprobe_candidates if p and os.path.exists(p)), None)
@@ -154,9 +165,10 @@ def process_audio(input_path, original_name, tool_params):
             else:
                 # Slowing down with simple resampling is fallback behavior.
                 # It is only used when user explicitly asks for <1.0 speed.
+                original_sample_rate = audio.frame_rate
                 new_sample_rate = int(audio.frame_rate * speed)
                 audio = audio._spawn(audio.raw_data, overrides={'frame_rate': new_sample_rate})
-                audio = audio.set_frame_rate(audio.frame_rate)
+                audio = audio.set_frame_rate(original_sample_rate)
     except (ValueError, TypeError):
         raise ValueError("Invalid speed value.")
 

@@ -4,6 +4,35 @@
 {% block tool_head %}
 <script src="https://unpkg.com/wavesurfer.js@7/dist/wavesurfer.min.js"></script>
 <script src="https://unpkg.com/wavesurfer.js@7/dist/plugins/regions.min.js"></script>
+<style>
+    .audio-shell {
+        background: linear-gradient(180deg, #103b7e 0%, #1b2f6b 45%, #1f2f6d 100%);
+    }
+    .audio-tab {
+        color: #cbd5e1;
+        background: transparent;
+        border: 1px solid transparent;
+    }
+    .audio-tab.active {
+        color: #ffffff;
+        background: rgba(15, 23, 42, 0.35);
+        border-color: rgba(148, 163, 184, 0.25);
+    }
+    .control-panel {
+        background: rgba(15, 23, 42, 0.35);
+        border: 1px solid rgba(148, 163, 184, 0.2);
+    }
+    .eq-chip {
+        border: 1px solid rgba(148, 163, 184, 0.25);
+        color: #dbeafe;
+        background: rgba(15, 23, 42, 0.35);
+    }
+    .eq-chip.active {
+        background: rgba(59, 130, 246, 0.35);
+        border-color: rgba(96, 165, 250, 0.6);
+        color: #ffffff;
+    }
+</style>
 {% endblock %}
 
 {% block tool_content %}
@@ -27,49 +56,128 @@
         </div>
     </div>
 
-    <div id="editor-interface" class="hidden rounded-2xl bg-slate-950 text-white border border-slate-800 overflow-hidden">
-        <div class="p-4 border-b border-slate-800 flex items-center justify-between">
+    <div id="editor-interface" class="hidden rounded-2xl audio-shell text-white border border-blue-900/60 overflow-hidden shadow-2xl">
+        <div class="p-3 border-b border-blue-900/60 flex items-center justify-between">
             <div>
                 <p class="text-xs uppercase tracking-wider text-slate-400">Audio Editor</p>
-                <p id="file-name" class="text-sm font-bold">filename.mp3</p>
+                <p id="file-name" class="text-sm font-bold text-cyan-100">filename.mp3</p>
             </div>
-            <button onclick="closeEditor()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-bold">Close</button>
-        </div>
-
-        <div class="p-4 bg-slate-900">
-            <div id="waveform"></div>
-            <div class="mt-2 text-xs text-slate-300">
-                <span id="current-time">0:00</span> - <span id="total-time">0:00</span>
+            <div class="flex items-center gap-2">
+                <button id="reset-btn" type="button" onclick="resetEffects()" class="px-3 py-1.5 rounded-lg bg-slate-800/80 hover:bg-slate-700 text-xs font-bold transition">Reset</button>
+                <button onclick="closeEditor()" class="w-7 h-7 rounded-full bg-slate-200 text-slate-800 text-xs font-bold">X</button>
             </div>
         </div>
 
-        <div class="p-4 grid grid-cols-1 md:grid-cols-3 gap-3 bg-slate-950 border-t border-slate-800">
-            <div>
-                <label class="text-xs text-slate-400">Start (s)</label>
-                <input id="trim-start" type="number" step="0.01" value="0" class="w-full mt-1 rounded-lg bg-slate-900 border border-slate-700 px-2 py-1.5 text-sm">
+        <div class="px-4 pt-3">
+            <div class="flex flex-wrap items-center gap-2 mb-3">
+                <button class="audio-tab active px-3 py-1.5 rounded-lg text-xs font-semibold" data-panel="trim-panel" type="button">Trim</button>
+                <button class="audio-tab px-3 py-1.5 rounded-lg text-xs font-semibold" data-panel="volume-panel" type="button">Volume</button>
+                <button class="audio-tab px-3 py-1.5 rounded-lg text-xs font-semibold" data-panel="speed-panel" type="button">Speed</button>
+                <button class="audio-tab px-3 py-1.5 rounded-lg text-xs font-semibold" data-panel="pitch-panel" type="button">Pitch</button>
+                <button class="audio-tab px-3 py-1.5 rounded-lg text-xs font-semibold" data-panel="equalizer-panel" type="button">Equalizer</button>
+                <button class="audio-tab px-3 py-1.5 rounded-lg text-xs font-semibold" data-panel="reverse-panel" type="button">Reverse</button>
             </div>
-            <div>
-                <label class="text-xs text-slate-400">End (s)</label>
-                <input id="trim-end" type="number" step="0.01" value="0" class="w-full mt-1 rounded-lg bg-slate-900 border border-slate-700 px-2 py-1.5 text-sm">
+            <div class="rounded-xl border border-cyan-500/40 bg-[#0f4b8a]/70 p-3">
+                <div id="waveform"></div>
             </div>
-            <div>
-                <label class="text-xs text-slate-400">Format</label>
-                <select id="export-format" class="w-full mt-1 rounded-lg bg-slate-900 border border-slate-700 px-2 py-1.5 text-sm">
-                    <option value="mp3">MP3</option>
-                    <option value="wav">WAV</option>
-                    <option value="m4a">M4A</option>
-                    <option value="ogg">OGG</option>
-                    <option value="flac">FLAC</option>
+            <div class="mt-3 flex items-center justify-between text-xs text-slate-300">
+                <span>Current: <span id="current-time">0:00</span></span>
+                <span>Duration: <span id="total-time">0:00</span></span>
+            </div>
+        </div>
+
+        <div class="p-4 border-t border-blue-900/60">
+            <div id="trim-panel" class="control-panel rounded-xl p-3 grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div>
+                    <label class="text-xs text-slate-300 font-semibold">Trim Start (s)</label>
+                    <input id="trim-start" type="number" step="0.01" value="0" class="w-full mt-1 rounded-lg bg-slate-900 border border-slate-700 px-2 py-1.5 text-sm">
+                </div>
+                <div>
+                    <label class="text-xs text-slate-300 font-semibold">Trim End (s)</label>
+                    <input id="trim-end" type="number" step="0.01" value="0" class="w-full mt-1 rounded-lg bg-slate-900 border border-slate-700 px-2 py-1.5 text-sm">
+                </div>
+                <div>
+                    <label class="text-xs text-slate-300 font-semibold">Export Format</label>
+                    <select id="export-format" class="w-full mt-1 rounded-lg bg-slate-900 border border-slate-700 px-2 py-1.5 text-sm">
+                        <option value="mp3">MP3</option>
+                        <option value="wav">WAV</option>
+                        <option value="m4a">M4A</option>
+                        <option value="ogg">OGG</option>
+                        <option value="flac">FLAC</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="volume-panel" class="control-panel rounded-xl p-3 hidden">
+                <label class="text-xs text-slate-300 flex justify-between">
+                    <span>Volume</span>
+                    <span id="volume-value">100%</span>
+                </label>
+                <input id="volume-slider" type="range" min="0" max="300" step="1" value="100" class="w-full mt-2 accent-cyan-400">
+            </div>
+
+            <div id="speed-panel" class="control-panel rounded-xl p-3 hidden">
+                <label class="text-xs text-slate-300 flex justify-between">
+                    <span>Speed</span>
+                    <span id="speed-value">1.0x</span>
+                </label>
+                <input id="speed-slider" type="range" min="0.5" max="2.5" step="0.1" value="1.0" class="w-full mt-2 accent-cyan-400">
+            </div>
+
+            <div id="pitch-panel" class="control-panel rounded-xl p-3 hidden">
+                <label class="text-xs text-slate-300 flex justify-between">
+                    <span>Pitch</span>
+                    <span id="pitch-value">0 semitones</span>
+                </label>
+                <input id="pitch-slider" type="range" min="-12" max="12" step="1" value="0" class="w-full mt-2 accent-cyan-400">
+            </div>
+
+            <div id="equalizer-panel" class="control-panel rounded-xl p-3 hidden space-y-3">
+                <label class="text-xs text-slate-300 font-semibold">Equalizer Preset</label>
+                <div class="flex flex-wrap gap-2">
+                    <button type="button" class="eq-chip active text-xs px-2.5 py-1 rounded-md" data-preset="none">Default</button>
+                    <button type="button" class="eq-chip text-xs px-2.5 py-1 rounded-md" data-preset="classic">Classic</button>
+                    <button type="button" class="eq-chip text-xs px-2.5 py-1 rounded-md" data-preset="dance">Dance</button>
+                    <button type="button" class="eq-chip text-xs px-2.5 py-1 rounded-md" data-preset="club">Club</button>
+                    <button type="button" class="eq-chip text-xs px-2.5 py-1 rounded-md" data-preset="bass-boost">Full bass</button>
+                    <button type="button" class="eq-chip text-xs px-2.5 py-1 rounded-md" data-preset="treble-boost">Full treble</button>
+                    <button type="button" class="eq-chip text-xs px-2.5 py-1 rounded-md" data-preset="pop">Pop</button>
+                    <button type="button" class="eq-chip text-xs px-2.5 py-1 rounded-md" data-preset="rock">Rock</button>
+                </div>
+                <select id="equalizer-preset" class="w-full rounded-lg bg-slate-900 border border-slate-700 px-2 py-1.5 text-sm">
+                    <option value="none">None</option>
+                    <option value="bass-boost">Bass Boost</option>
+                    <option value="treble-boost">Treble Boost</option>
+                    <option value="classic">Classic</option>
+                    <option value="dance">Dance</option>
+                    <option value="club">Club</option>
+                    <option value="pop">Pop</option>
+                    <option value="rock">Rock</option>
                 </select>
             </div>
+
+            <div id="reverse-panel" class="control-panel rounded-xl p-3 hidden">
+                <label class="inline-flex items-center gap-3 text-sm text-slate-200">
+                    <input type="checkbox" id="reverse-toggle" class="accent-cyan-400">
+                    Reverse Audio
+                </label>
+            </div>
         </div>
 
-        <div class="p-4 flex items-center gap-3 border-t border-slate-800">
-            <button id="play-btn" onclick="togglePlay()" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-sm font-bold">Play Selection</button>
-            <button id="save-btn" onclick="saveAudio()" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-sm font-bold">Save</button>
-            <label class="inline-flex items-center gap-2 text-xs text-slate-200">
-                <input type="checkbox" id="reverse-toggle"> Reverse
-            </label>
+        <div class="p-4 flex flex-wrap items-center justify-between gap-3 border-t border-blue-900/60">
+            <div class="flex items-center gap-2">
+                <button id="play-btn" onclick="togglePlay()" class="px-4 py-2 rounded-xl bg-slate-900/80 hover:bg-slate-800 text-sm font-bold transition">Play</button>
+            </div>
+            <div class="flex items-center gap-2">
+                <select id="export-format-bottom" class="rounded-lg bg-slate-900 border border-slate-700 px-2 py-1.5 text-sm">
+                    <option value="mp3">mp3</option>
+                    <option value="wav">wav</option>
+                    <option value="m4a">m4a</option>
+                    <option value="ogg">ogg</option>
+                    <option value="flac">flac</option>
+                </select>
+                <button id="save-btn" onclick="saveAudio()" class="px-5 py-2 rounded-xl bg-white text-slate-900 hover:bg-slate-100 text-sm font-bold transition">Save</button>
+            </div>
             <div id="processing" class="hidden text-xs text-amber-300 font-semibold">Processing...</div>
         </div>
     </div>
@@ -81,6 +189,99 @@
 let wavesurfer;
 let regions;
 let activeFile;
+let regionInputHandlersBound = false;
+let previewAudio = null;
+let previewUrl = null;
+let previewStateKey = null;
+
+function bindSliderValue(sliderId, labelId, formatter) {
+    const slider = document.getElementById(sliderId);
+    const label = document.getElementById(labelId);
+    if (!slider || !label) return;
+    const update = () => {
+        label.innerText = formatter(slider.value);
+    };
+    slider.addEventListener('input', update);
+    update();
+}
+
+function updateEffectLabels() {
+    const volume = document.getElementById('volume-slider');
+    const speed = document.getElementById('speed-slider');
+    const pitch = document.getElementById('pitch-slider');
+    if (volume) document.getElementById('volume-value').innerText = `${parseInt(volume.value, 10)}%`;
+    if (speed) document.getElementById('speed-value').innerText = `${parseFloat(speed.value).toFixed(1)}x`;
+    if (pitch) {
+        const v = parseInt(pitch.value, 10);
+        document.getElementById('pitch-value').innerText = `${v >= 0 ? '+' : ''}${v} semitones`;
+    }
+}
+
+function activatePanel(panelId) {
+    document.querySelectorAll('.audio-tab').forEach((tab) => {
+        tab.classList.toggle('active', tab.dataset.panel === panelId);
+    });
+    document.querySelectorAll('#trim-panel, #volume-panel, #speed-panel, #pitch-panel, #equalizer-panel, #reverse-panel')
+        .forEach((panel) => {
+            panel.classList.toggle('hidden', panel.id !== panelId);
+        });
+}
+
+function syncExportFormat(sourceId, targetId) {
+    const source = document.getElementById(sourceId);
+    const target = document.getElementById(targetId);
+    if (!source || !target) return;
+    target.value = source.value;
+}
+
+function clearPreviewCache() {
+    previewStateKey = null;
+    if (previewAudio) {
+        previewAudio.pause();
+        previewAudio = null;
+    }
+    if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+        previewUrl = null;
+    }
+}
+
+function getCurrentParams() {
+    syncRegionFromInputs();
+    let startValue = document.getElementById('trim-start').value || '0';
+    let endValue = document.getElementById('trim-end').value || '0';
+    const parsedStart = parseFloat(startValue);
+    const parsedEnd = parseFloat(endValue);
+    if (!Number.isFinite(parsedStart) || parsedStart < 0) startValue = '0';
+    if (!Number.isFinite(parsedEnd) || parsedEnd <= 0) endValue = '';
+    return {
+        start: startValue,
+        end: endValue === '0.00' ? '' : endValue,
+        format: document.getElementById('export-format').value,
+        volume: document.getElementById('volume-slider').value || '100',
+        speed: document.getElementById('speed-slider').value || '1.0',
+        pitch: document.getElementById('pitch-slider').value || '0',
+        preset: document.getElementById('equalizer-preset').value || 'none',
+        reverse: document.getElementById('reverse-toggle').checked ? 'true' : 'false',
+    };
+}
+
+function buildFormDataForParams(params, formatOverride = null) {
+    const fd = new FormData();
+    fd.append('mode', 'edit');
+    fd.append('file', activeFile);
+    fd.append('start', params.start);
+    fd.append('end', params.end);
+    fd.append('format', formatOverride || params.format);
+    fd.append('volume', params.volume);
+    fd.append('speed', params.speed);
+    fd.append('pitch', params.pitch);
+    fd.append('fade_in', '0');
+    fd.append('fade_out', '0');
+    fd.append('preset', params.preset);
+    fd.append('reverse', params.reverse);
+    return fd;
+}
 
 function formatTime(seconds) {
     const m = Math.floor(seconds / 60);
@@ -92,10 +293,24 @@ function handleFileSelect(event) {
     const file = event.target.files[0];
     if (!file) return;
     activeFile = file;
+    clearPreviewCache();
     document.getElementById('file-name').innerText = file.name;
     document.getElementById('upload-area').classList.add('hidden');
     document.getElementById('editor-interface').classList.remove('hidden');
     initWaveform(file);
+}
+
+function resetEffects() {
+    document.getElementById('volume-slider').value = '100';
+    document.getElementById('speed-slider').value = '1.0';
+    document.getElementById('pitch-slider').value = '0';
+    document.getElementById('equalizer-preset').value = 'none';
+    document.querySelectorAll('.eq-chip').forEach((chip) => chip.classList.remove('active'));
+    const defaultChip = document.querySelector('.eq-chip[data-preset="none"]');
+    if (defaultChip) defaultChip.classList.add('active');
+    document.getElementById('reverse-toggle').checked = false;
+    updateEffectLabels();
+    clearPreviewCache();
 }
 
 function initWaveform(file) {
@@ -107,41 +322,160 @@ function initWaveform(file) {
         cursorColor: '#22c55e',
         height: 160
     });
-    regions = wavesurfer.registerPlugin(WaveSurfer.Regions.create());
+    regions = null;
+    const RegionsPlugin =
+        (window.WaveSurfer && window.WaveSurfer.Regions) ||
+        window.RegionsPlugin ||
+        null;
+    if (RegionsPlugin && typeof RegionsPlugin.create === 'function') {
+        regions = wavesurfer.registerPlugin(RegionsPlugin.create());
+    }
     wavesurfer.load(URL.createObjectURL(file));
 
     wavesurfer.on('ready', () => {
         const duration = wavesurfer.getDuration();
-        regions.addRegion({
-            start: 0,
-            end: duration,
-            color: 'rgba(16,185,129,0.2)',
-            drag: true,
-            resize: true
-        });
+        if (regions && typeof regions.addRegion === 'function') {
+            regions.addRegion({
+                start: 0,
+                end: duration,
+                color: 'rgba(16,185,129,0.2)',
+                drag: true,
+                resize: true
+            });
+        }
         document.getElementById('total-time').innerText = formatTime(duration);
         document.getElementById('trim-start').value = '0';
         document.getElementById('trim-end').value = duration.toFixed(2);
 
-        regions.on('region-updated', (region) => {
-            document.getElementById('trim-start').value = region.start.toFixed(2);
-            document.getElementById('trim-end').value = region.end.toFixed(2);
-            document.getElementById('current-time').innerText = formatTime(region.start);
-            document.getElementById('total-time').innerText = formatTime(region.end);
-        });
+        if (regions && typeof regions.on === 'function') {
+            regions.on('region-updated', (region) => {
+                document.getElementById('trim-start').value = region.start.toFixed(2);
+                document.getElementById('trim-end').value = region.end.toFixed(2);
+                document.getElementById('current-time').innerText = formatTime(region.start);
+            });
+        }
+
+        if (!regionInputHandlersBound) {
+            document.getElementById('trim-start').addEventListener('change', syncRegionFromInputs);
+            document.getElementById('trim-end').addEventListener('change', syncRegionFromInputs);
+            regionInputHandlersBound = true;
+        }
     });
 }
 
-function togglePlay() {
+function syncRegionFromInputs() {
     if (!wavesurfer) return;
     const region = regions?.getRegions?.()[0];
-    if (wavesurfer.isPlaying()) {
-        wavesurfer.pause();
-    } else if (region) {
-        wavesurfer.play(region.start, region.end);
+    const duration = wavesurfer.getDuration() || 0;
+    let start = parseFloat(document.getElementById('trim-start').value || '0');
+    let end = parseFloat(document.getElementById('trim-end').value || '0');
+    if (!Number.isFinite(start)) start = 0;
+    if (!Number.isFinite(end) || end <= 0) end = duration > 0 ? duration : start + 1;
+    if (duration > 0) {
+        start = Math.max(0, Math.min(start, duration));
     } else {
-        wavesurfer.play();
+        start = Math.max(0, start);
     }
+    if (duration > 0) {
+        end = Math.max(start + 0.01, Math.min(end, duration));
+    } else {
+        end = Math.max(start + 0.01, end);
+    }
+    if (region && typeof region.setOptions === 'function') {
+        region.setOptions({ start, end });
+    }
+    document.getElementById('trim-start').value = start.toFixed(2);
+    document.getElementById('trim-end').value = end.toFixed(2);
+    document.getElementById('current-time').innerText = formatTime(start);
+}
+
+function togglePlay() {
+    if (!activeFile) return;
+    if (previewAudio && !previewAudio.paused) {
+        previewAudio.pause();
+        return;
+    }
+    const params = getCurrentParams();
+    const currentKey = JSON.stringify({
+        fileName: activeFile.name,
+        fileSize: activeFile.size,
+        fileTime: activeFile.lastModified,
+        ...params,
+    });
+    const processing = document.getElementById('processing');
+    const playBtn = document.getElementById('play-btn');
+
+    const playLoadedPreview = () => {
+        if (!previewAudio) return;
+        previewAudio.currentTime = 0;
+        previewAudio.play();
+    };
+
+    if (previewStateKey === currentKey && previewAudio) {
+        playLoadedPreview();
+        return;
+    }
+
+    processing.textContent = 'Generating preview...';
+    processing.classList.remove('hidden');
+    playBtn.disabled = true;
+
+    const fd = buildFormDataForParams(params, 'wav');
+    fetch('/audio/api/process/', { method: 'POST', body: fd })
+        .then(async (response) => {
+            if (!response.ok) {
+                let message = 'Failed to generate preview';
+                try {
+                    const err = await response.json();
+                    message = err.error || message;
+                } catch (parseError) {
+                    const raw = await response.text();
+                    if (raw) message = raw;
+                }
+                throw new Error(message);
+            }
+            return response.blob();
+        })
+        .then((blob) => {
+            clearPreviewCache();
+            previewUrl = URL.createObjectURL(blob);
+            previewAudio = new Audio(previewUrl);
+            previewStateKey = currentKey;
+            playLoadedPreview();
+        })
+        .catch((error) => {
+            alert('Error: ' + error.message);
+        })
+        .finally(() => {
+            playBtn.disabled = false;
+            processing.textContent = 'Processing...';
+            processing.classList.add('hidden');
+        });
+}
+
+function bindPreviewInvalidation() {
+    [
+        'trim-start',
+        'trim-end',
+        'volume-slider',
+        'speed-slider',
+        'pitch-slider',
+        'equalizer-preset',
+        'reverse-toggle',
+        'export-format',
+        'export-format-bottom',
+    ].forEach((id) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        const eventName = (el.tagName === 'INPUT' && el.type === 'range') ? 'input' : 'change';
+        el.addEventListener(eventName, clearPreviewCache);
+    });
+}
+
+function getSavePayload() {
+    const params = getCurrentParams();
+    const fd = buildFormDataForParams(params);
+    return fd;
 }
 
 async function saveAudio() {
@@ -149,27 +483,23 @@ async function saveAudio() {
     const saveBtn = document.getElementById('save-btn');
     const processing = document.getElementById('processing');
     saveBtn.disabled = true;
+    processing.textContent = 'Processing...';
     processing.classList.remove('hidden');
 
-    const fd = new FormData();
-    fd.append('mode', 'edit');
-    fd.append('file', activeFile);
-    fd.append('start', document.getElementById('trim-start').value || '0');
-    fd.append('end', document.getElementById('trim-end').value || '0');
-    fd.append('format', document.getElementById('export-format').value);
-    fd.append('volume', '100');
-    fd.append('speed', '1.0');
-    fd.append('pitch', '0');
-    fd.append('fade_in', '0');
-    fd.append('fade_out', '0');
-    fd.append('preset', 'none');
-    fd.append('reverse', document.getElementById('reverse-toggle').checked ? 'true' : 'false');
+    const fd = getSavePayload();
 
     try {
         const response = await fetch('/audio/api/process/', { method: 'POST', body: fd });
         if (!response.ok) {
-            const err = await response.json();
-            throw new Error(err.error || 'Failed to process audio');
+            let message = 'Failed to process audio';
+            try {
+                const err = await response.json();
+                message = err.error || message;
+            } catch (parseError) {
+                const raw = await response.text();
+                if (raw) message = raw;
+            }
+            throw new Error(message);
         }
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
@@ -191,9 +521,42 @@ async function saveAudio() {
 function closeEditor() {
     if (wavesurfer) wavesurfer.destroy();
     activeFile = null;
+    clearPreviewCache();
     document.getElementById('editor-interface').classList.add('hidden');
     document.getElementById('upload-area').classList.remove('hidden');
     document.getElementById('audio-input').value = '';
+    resetEffects();
 }
+
+bindSliderValue('volume-slider', 'volume-value', (value) => `${parseInt(value, 10)}%`);
+bindSliderValue('speed-slider', 'speed-value', (value) => `${parseFloat(value).toFixed(1)}x`);
+bindSliderValue('pitch-slider', 'pitch-value', (value) => {
+    const v = parseInt(value, 10);
+    return `${v >= 0 ? '+' : ''}${v} semitones`;
+});
+
+document.querySelectorAll('.audio-tab').forEach((tab) => {
+    tab.addEventListener('click', () => activatePanel(tab.dataset.panel));
+});
+
+document.querySelectorAll('.eq-chip').forEach((chip) => {
+    chip.addEventListener('click', () => {
+        const preset = chip.dataset.preset || 'none';
+        document.getElementById('equalizer-preset').value = preset;
+        document.querySelectorAll('.eq-chip').forEach((c) => c.classList.toggle('active', c === chip));
+    });
+});
+
+document.getElementById('equalizer-preset').addEventListener('change', (event) => {
+    const selected = event.target.value;
+    document.querySelectorAll('.eq-chip').forEach((c) => c.classList.toggle('active', c.dataset.preset === selected));
+});
+
+document.getElementById('export-format').addEventListener('change', () => syncExportFormat('export-format', 'export-format-bottom'));
+document.getElementById('export-format-bottom').addEventListener('change', () => syncExportFormat('export-format-bottom', 'export-format'));
+syncExportFormat('export-format', 'export-format-bottom');
+activatePanel('trim-panel');
+bindPreviewInvalidation();
+updateEffectLabels();
 </script>
 {% endblock %}

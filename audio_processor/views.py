@@ -165,6 +165,9 @@ def process_audio_api(request):
         start = str(start_f)
         end = str(end_f)
 
+    reverse_raw = (request.POST.get('reverse', 'false') or '').strip().lower()
+    reverse_value = 'true' if reverse_raw in {'true', '1', 'yes', 'on'} else 'false'
+
     tool_params = {
         'start': start,
         'end': end,
@@ -175,7 +178,7 @@ def process_audio_api(request):
         'pitch': request.POST.get('pitch', 0),
         'preset': preset,
         'format': output_format,
-        'reverse': request.POST.get('reverse', 'false'),
+        'reverse': reverse_value,
         'bitrate': request.POST.get('bitrate', '192k'),
     }
 
