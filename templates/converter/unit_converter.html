@@ -2,171 +2,75 @@
 {% load static %}
 
 {% block tool_content %}
-<div class="rounded-2xl bg-white border border-surface-100 p-4 sm:p-5 shadow-mega">
-    <div class="space-y-4">
-        <!-- Category Selection -->
-        <div class="flex flex-wrap gap-2.5 justify-center pb-8 border-b border-surface-50">
-            <button class="cat-btn px-5 py-2.5 rounded-xl text-xs font-black transition-all bg-brand-600 text-white shadow-lg shadow-brand-500/20 active:scale-95" data-category="length">
-                <i data-lucide="ruler" class="w-4 h-4 mr-2 inline-block align-middle"></i>Length
-            </button>
-            <button class="cat-btn px-5 py-2.5 rounded-xl text-xs font-black transition-all bg-surface-50 text-surface-600 hover:bg-surface-100 active:scale-95" data-category="mass">
-                <i data-lucide="weight" class="w-4 h-4 mr-2 inline-block align-middle"></i>Weight
-            </button>
-            <button class="cat-btn px-5 py-2.5 rounded-xl text-xs font-black transition-all bg-surface-50 text-surface-600 hover:bg-surface-100 active:scale-95" data-category="temp">
-                <i data-lucide="thermometer" class="w-4 h-4 mr-2 inline-block align-middle"></i>Temp
-            </button>
-            <button class="cat-btn px-5 py-2.5 rounded-xl text-xs font-black transition-all bg-surface-50 text-surface-600 hover:bg-surface-100 active:scale-95" data-category="area">
-                <i data-lucide="layers" class="w-4 h-4 mr-2 inline-block align-middle"></i>Area
-            </button>
-            <button class="cat-btn px-5 py-2.5 rounded-xl text-xs font-black transition-all bg-surface-50 text-surface-600 hover:bg-surface-100 active:scale-95" data-category="volume">
-                <i data-lucide="droplets" class="w-4 h-4 mr-2 inline-block align-middle"></i>Volume
-            </button>
-            <button class="cat-btn px-5 py-2.5 rounded-xl text-xs font-black transition-all bg-surface-50 text-surface-600 hover:bg-surface-100 active:scale-95" data-category="data">
-                <i data-lucide="database" class="w-4 h-4 mr-2 inline-block align-middle"></i>Data
-            </button>
-        </div>
+<div class="uc-app rounded-2xl bg-white border border-surface-100 p-4 sm:p-6 shadow-mega">
+    <div class="uc-hero mb-5">
+        <h2 class="text-xl sm:text-2xl font-black text-surface-900">Privacy-First Multi Converter</h2>
+    </div>
 
-        <!-- Conversion Interface -->
-        <div class="space-y-3 relative">
-            <!-- From Section -->
-            <div class="space-y-2">
-                <label class="block text-[11px] font-black text-surface-400 uppercase tracking-widest ml-1">From</label>
-                <div class="flex flex-col sm:flex-row gap-3">
-                    <div class="relative flex-1 group">
-                        <input type="number" id="from-val" value="1" 
-                            class="w-full px-6 py-3 rounded-2xl bg-surface-50 border-2 border-surface-100 focus:bg-white focus:border-brand-500 outline-none transition-all text-xl font-black text-surface-900 group-hover:border-surface-200">
-                    </div>
-                    <div class="relative min-w-[160px]">
-                        <select id="from-unit" class="w-full h-full px-6 py-3 rounded-2xl bg-surface-50 border-2 border-surface-100 focus:bg-white focus:border-brand-500 outline-none transition-all text-sm font-bold text-surface-700 appearance-none cursor-pointer"></select>
-                        <i data-lucide="chevron-down" class="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-surface-300 pointer-events-none"></i>
-                    </div>
+    <div class="uc-layout">
+        <aside class="uc-sidebar" id="uc-sidebar"></aside>
+
+        <section class="uc-panel">
+            <div class="uc-header">
+                <div>
+                    <h3 id="uc-title" class="text-lg font-extrabold text-surface-900">Length / Distance</h3>
+                    <p id="uc-subtitle" class="text-xs text-surface-500 mt-0.5">Base-unit conversion with real-time updates.</p>
+                </div>
+                <div class="uc-badge" id="currency-status" hidden>Static rates</div>
+            </div>
+
+            <div id="uc-error" class="uc-error" hidden></div>
+
+            <div id="uc-standard-grid" class="uc-grid">
+                <div class="uc-field">
+                    <label for="uc-input">Input value</label>
+                    <input id="uc-input" type="number" step="any" placeholder="Enter value">
+                </div>
+                <div class="uc-field">
+                    <label for="uc-from">From unit</label>
+                    <select id="uc-from"></select>
+                </div>
+                <div class="uc-field">
+                    <label for="uc-to">To unit</label>
+                    <select id="uc-to"></select>
                 </div>
             </div>
 
-            <!-- Swap Button -->
-            <div class="flex justify-center -my-3 relative z-20">
-                <button id="swap-btn" class="w-9 h-9 rounded-full bg-white border border-surface-100 shadow-xl flex items-center justify-center text-brand-600 hover:rotate-180 transition-transform duration-500 group-hover:shadow-brand-500/10">
-                    <i data-lucide="arrow-down-up" class="w-5 h-5"></i>
-                </button>
-            </div>
-
-            <!-- To Section -->
-            <div class="space-y-2">
-                <label class="block text-[11px] font-black text-surface-400 uppercase tracking-widest ml-1">To</label>
-                <div class="flex flex-col sm:flex-row gap-3">
-                    <div class="relative flex-1 group">
-                        <input type="number" id="to-val" readonly 
-                            class="w-full px-6 py-3 rounded-2xl bg-brand-50/30 border-2 border-brand-100 text-xl font-black text-brand-700 outline-none cursor-default opacity-80">
-                    </div>
-                    <div class="relative min-w-[160px]">
-                        <select id="to-unit" class="w-full h-full px-6 py-3 rounded-2xl bg-surface-50 border-2 border-surface-100 focus:bg-white focus:border-brand-500 outline-none transition-all text-sm font-bold text-surface-700 appearance-none cursor-pointer"></select>
-                        <i data-lucide="chevron-down" class="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-surface-300 pointer-events-none"></i>
-                    </div>
+            <div id="uc-timezone-grid" class="uc-grid" hidden>
+                <div class="uc-field">
+                    <label for="tz-datetime">Date and time</label>
+                    <input id="tz-datetime" type="datetime-local">
+                </div>
+                <div class="uc-field">
+                    <label for="tz-from">From timezone</label>
+                    <select id="tz-from"></select>
+                </div>
+                <div class="uc-field">
+                    <label for="tz-to">To timezone</label>
+                    <select id="tz-to"></select>
                 </div>
             </div>
-        </div>
 
-        <!-- Formula Display -->
-        <div class="p-4 rounded-xl bg-surface-50 border border-surface-100 text-center">
-            <p id="formula-text" class="text-xs font-bold text-surface-500 tracking-wide uppercase"></p>
+            <div class="uc-actions">
+                <button id="uc-swap" class="uc-btn uc-btn-soft" type="button">Swap Units</button>
+                <button id="uc-reset" class="uc-btn uc-btn-soft" type="button">Reset</button>
+                <button id="uc-convert" class="uc-btn uc-btn-primary" type="button">Convert</button>
+            </div>
+
+            <div class="uc-result-wrap">
+                <p class="uc-result-label">Result</p>
+                <div id="uc-result" class="uc-result">-</div>
+                <p id="uc-meta" class="uc-meta"></p>
+            </div>
         </div>
     </div>
 </div>
 {% endblock %}
 
-{% block extra_scripts %}
-<script>
-    const units = {
-        length: {
-            'm': { name: 'Meter', factor: 1 }, 'cm': { name: 'Centimeter', factor: 0.01 }, 'mm': { name: 'Millimeter', factor: 0.001 },
-            'km': { name: 'Kilometer', factor: 1000 }, 'in': { name: 'Inch', factor: 0.0254 }, 'ft': { name: 'Foot', factor: 0.3048 },
-            'yd': { name: 'Yard', factor: 0.9144 }, 'mi': { name: 'Mile', factor: 1609.34 }
-        },
-        mass: {
-            'kg': { name: 'Kilogram', factor: 1 }, 'g': { name: 'Gram', factor: 0.001 }, 'mg': { name: 'Milligram', factor: 0.000001 },
-            'lb': { name: 'Pound', factor: 0.453592 }, 'oz': { name: 'Ounce', factor: 0.0283495 }, 't': { name: 'Metric Ton', factor: 1000 }
-        },
-        temp: {
-            'c': { name: 'Celsius' }, 'f': { name: 'Fahrenheit' }, 'k': { name: 'Kelvin' }
-        },
-        area: {
-            'm2': { name: 'Sq. Meter', factor: 1 }, 'km2': { name: 'Sq. Kilometer', factor: 1000000 }, 'ft2': { name: 'Sq. Foot', factor: 0.092903 },
-            'ac': { name: 'Acre', factor: 4046.86 }, 'ha': { name: 'Hectare', factor: 10000 }
-        },
-        volume: {
-            'l': { name: 'Liter', factor: 1 }, 'ml': { name: 'Milliliter', factor: 0.001 }, 'gal': { name: 'Gallon', factor: 3.78541 },
-            'm3': { name: 'Cubic Meter', factor: 1000 }, 'cup': { name: 'Cup', factor: 0.236588 }
-        },
-        data: {
-            'b': { name: 'Byte', factor: 1 }, 'kb': { name: 'KB', factor: 1024 }, 'mb': { name: 'MB', factor: 1048576 },
-            'gb': { name: 'GB', factor: 1073741824 }, 'tb': { name: 'TB', factor: 1099511627776 }
-        }
-    };
+{% block tool_head %}
+<link rel="stylesheet" href="{% static 'css/unit_converter.css' %}">
+{% endblock %}
 
-    let currentCat = 'length';
-    const fromVal = document.getElementById('from-val'), toVal = document.getElementById('to-val');
-    const fromUnit = document.getElementById('from-unit'), toUnit = document.getElementById('to-unit');
-    const catBtns = document.querySelectorAll('.cat-btn'), formulaText = document.getElementById('formula-text');
-
-    function updateUnits() {
-        fromUnit.innerHTML = toUnit.innerHTML = '';
-        const list = units[currentCat];
-        for (const key in list) {
-            const opt = `<option value="${key}">${list[key].name}</option>`;
-            fromUnit.innerHTML += opt; toUnit.innerHTML += opt;
-        }
-        if (toUnit.options.length > 1) toUnit.selectedIndex = 1;
-        calc();
-    }
-
-    function calc() {
-        const v = parseFloat(fromVal.value); if (isNaN(v)) { toVal.value = ''; return; }
-        const u1 = fromUnit.value, u2 = toUnit.value;
-        const cat = units[currentCat];
-
-        let result;
-        if (currentCat === 'temp') {
-            let celsius;
-            if (u1 === 'c') celsius = v;
-            else if (u1 === 'f') celsius = (v - 32) * 5 / 9;
-            else if (u1 === 'k') celsius = v - 273.15;
-            
-            if (u2 === 'c') result = celsius;
-            else if (u2 === 'f') result = (celsius * 9 / 5) + 32;
-            else if (u2 === 'k') result = celsius + 273.15;
-        } else {
-            result = v * (cat[u1].factor / cat[u2].factor);
-        }
-        toVal.value = Number(result.toFixed(6));
-        
-        // Update formula text
-        if (currentCat !== 'temp') {
-            formulaText.innerText = `1 ${cat[u1].name} = ${Number((cat[u1].factor / cat[u2].factor).toFixed(6))} ${cat[u2].name}`;
-        } else {
-            formulaText.innerText = `Converting Temperature Scale`;
-        }
-    }
-
-    fromVal.addEventListener('input', calc); 
-    fromUnit.addEventListener('change', calc); 
-    toUnit.addEventListener('change', calc); 
-
-    catBtns.forEach(btn => btn.addEventListener('click', () => {
-        catBtns.forEach(b => {
-            b.classList.remove('bg-brand-600', 'text-white', 'shadow-lg', 'shadow-brand-500/20');
-            b.classList.add('bg-surface-50', 'text-surface-600');
-        });
-        btn.classList.remove('bg-surface-50', 'text-surface-600');
-        btn.classList.add('bg-brand-600', 'text-white', 'shadow-lg', 'shadow-brand-500/20');
-        currentCat = btn.dataset.category; 
-        updateUnits();
-    }));
-
-    document.getElementById('swap-btn').addEventListener('click', () => {
-        const tmp = fromUnit.value; fromUnit.value = toUnit.value; toUnit.value = tmp; calc();
-    });
-
-    updateUnits(); 
-    lucide.createIcons();
-</script>
+{% block tool_scripts %}
+<script src="{% static 'js/unit_converter.js' %}"></script>
 {% endblock %}
