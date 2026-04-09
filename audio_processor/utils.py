@@ -207,7 +207,6 @@ def process_audio(input_path, original_name, tool_params):
             audio = audio.fade_out(fade_out_ms)
     except (ValueError, TypeError):
         raise ValueError("Invalid fade values.")
-
     # 5. Reverse
     if tool_params.get('reverse') == 'true':
         audio = audio.reverse()

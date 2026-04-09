@@ -2,784 +2,171 @@
 {% load static %}
 
 {% block tool_head %}
-<!-- Wavesurfer.js -->
 <script src="https://unpkg.com/wavesurfer.js@7/dist/wavesurfer.min.js"></script>
 <script src="https://unpkg.com/wavesurfer.js@7/dist/plugins/regions.min.js"></script>
-<style>
-    /* Premium Audio Editor Styles */
-    .editor-container {
-        background: #0f172a;
-        border-radius: 24px;
-        color: #f8fafc;
-        overflow: hidden;
-        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-        display: none; /* Hidden until file loaded */
-        animation: fadeIn 0.5s ease-out;
-    }
-
-    @keyframes fadeIn {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-
-    .editor-header {
-        background: rgba(30, 41, 59, 0.5);
-        border-bottom: 1px solid rgba(255, 255, 255, 0.1);
-        padding: 12px 24px;
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-    }
-
-    .tool-tabs {
-        display: flex;
-        gap: 8px;
-    }
-
-    .tool-tab {
-        padding: 8px 16px;
-        border-radius: 12px;
-        font-size: 13px;
-        font-weight: 600;
-        color: #94a3b8;
-        cursor: pointer;
-        transition: all 0.2s;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-
-    .tool-tab:hover {
-        background: rgba(255, 255, 255, 0.05);
-        color: #f8fafc;
-    }
-
-    .tool-tab.active {
-        background: #10b981;
-        color: white;
-        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-    }
-
-    .waveform-section {
-        padding: 24px;
-        position: relative;
-        background: #020617;
-    }
-
-    #waveform {
-        width: 100%;
-        height: 200px;
-    }
-
-    .time-badge {
-        position: absolute;
-        top: 10px;
-        background: rgba(0, 0, 0, 0.6);
-        padding: 2px 8px;
-        border-radius: 4px;
-        font-size: 11px;
-        font-family: monospace;
-        color: #10b981;
-        border: 1px solid rgba(16, 185, 129, 0.3);
-    }
-
-    .controls-section {
-        padding: 32px 24px;
-        min-height: 180px;
-        background: #0f172a;
-    }
-
-    .control-group {
-        display: none;
-    }
-
-    .control-group.active {
-        display: block;
-        animation: slideUp 0.3s ease-out;
-    }
-
-    @keyframes slideUp {
-        from { opacity: 0; transform: translateY(10px); }
-        to { opacity: 1; transform: translateY(0); }
-    }
-
-    .editor-footer {
-        padding: 16px 24px;
-        background: rgba(30, 41, 59, 0.8);
-        border-top: 1px solid rgba(255, 255, 255, 0.1);
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-    }
-
-    /* Range Sliders */
-    input[type=range] {
-        -webkit-appearance: none;
-        width: 100%;
-        background: transparent;
-    }
-
-    input[type=range]:focus {
-        outline: none;
-    }
-
-    input[type=range]::-webkit-slider-runnable-track {
-        width: 100%;
-        height: 6px;
-        cursor: pointer;
-        background: #334155;
-        border-radius: 3px;
-    }
-
-    input[type=range]::-webkit-slider-thumb {
-        height: 20px;
-        width: 20px;
-        border-radius: 50%;
-        background: #10b981;
-        cursor: pointer;
-        -webkit-appearance: none;
-        margin-top: -7px;
-        box-shadow: 0 0 10px rgba(16, 185, 129, 0.4);
-        border: 2px solid white;
-    }
-
-    /* EQ Presets */
-    .preset-list {
-        display: flex;
-        flex-wrap: wrap;
-        gap: 8px;
-        margin-bottom: 24px;
-    }
-
-    .preset-btn {
-        background: #1e293b;
-        border: 1px solid #334155;
-        color: #94a3b8;
-        padding: 6px 12px;
-        border-radius: 8px;
-        font-size: 11px;
-        cursor: pointer;
-        transition: all 0.2s;
-    }
-
-    .preset-btn:hover {
-        background: #334155;
-        color: white;
-    }
-
-    .preset-btn.active {
-        background: #10b981;
-        border-color: #10b981;
-        color: white;
-    }
-
-    /* Dropzone Styling */
-    .audio-dropzone {
-        background: white;
-        border: 2px dashed #e2e8f0;
-        border-radius: 24px;
-        padding: 60px 20px;
-        text-align: center;
-        transition: all 0.3s;
-        cursor: pointer;
-    }
-
-    .audio-dropzone:hover {
-        border-color: #10b981;
-        background: #f0fdf4;
-    }
-
-    /* Equalizer Sliders */
-    .eq-sliders {
-        display: flex;
-        justify-content: space-between;
-        gap: 12px;
-        margin-top: 20px;
-    }
-
-    .eq-slider-col {
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        flex: 1;
-    }
-
-    .eq-slider-col input {
-        writing-mode: bt-lr; /* IE */
-        -webkit-appearance: slider-vertical; /* WebKit */
-        width: 8px;
-        height: 100px;
-        padding: 0 5px;
-    }
-    
-    .eq-label {
-        font-size: 10px;
-        color: #64748b;
-        margin-top: 8px;
-    }
-</style>
 {% endblock %}
 
 {% block tool_content %}
 <div class="space-y-6">
-    <!-- Initial Upload Area -->
-    <div id="upload-area" class="animate-fade-in">
-        <div class="audio-dropzone group" onclick="document.getElementById('audio-input').click()">
-            <input type="file" id="audio-input" class="hidden" accept=".mp3,.wav,.ogg,.m4a,.flac" onchange="handleFileSelect(event)">
-            <div class="w-20 h-20 bg-emerald-50 rounded-3xl flex items-center justify-center mx-auto mb-6 group-hover:scale-110 transition-transform duration-300">
-                <i data-lucide="music" class="w-10 h-10 text-emerald-600"></i>
-            </div>
-            <h2 class="text-xl font-bold text-surface-900 mb-2">Select Audio File</h2>
-            <p class="text-surface-500 text-sm max-w-sm mx-auto mb-6">Support formats: MP3, WAV, OGG, M4A, FLAC. Max file size: 50MB.</p>
-            <button class="bg-emerald-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-emerald-700 transition-all shadow-md hover:shadow-lg inline-flex items-center gap-2">
-                <i data-lucide="upload" class="w-4 h-4"></i> Browse Files
-            </button>
-        </div>
-        <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-3">
-            <a class="audio-dropzone !p-4 !rounded-2xl block" href="{% url 'audio_processor:merge' %}">
-                <div class="font-bold text-surface-900 text-sm">Merge Audio Files</div>
-                <div class="text-xs text-surface-500">Open merge page</div>
+    <div id="upload-area" class="rounded-2xl bg-white border border-surface-100 p-6 text-center">
+        <input type="file" id="audio-input" class="hidden" accept=".mp3,.wav,.ogg,.m4a,.flac" onchange="handleFileSelect(event)">
+        <button onclick="document.getElementById('audio-input').click()" class="px-6 py-3 rounded-xl bg-emerald-600 text-white font-bold hover:bg-emerald-700">
+            Select Audio File
+        </button>
+        <p class="text-xs text-surface-400 mt-2">MP3, WAV, OGG, M4A, FLAC (Max 50MB)</p>
+
+        <div class="mt-6 grid grid-cols-1 md:grid-cols-2 gap-3">
+            <a class="block rounded-xl border border-surface-200 hover:border-emerald-400 p-4 text-left" href="{% url 'audio_processor:merge' %}">
+                <p class="font-bold text-surface-900 text-sm">Merge Audio Files</p>
+                <p class="text-xs text-surface-500">Open dedicated merge page</p>
             </a>
-            <a class="audio-dropzone !p-4 !rounded-2xl block" href="{% url 'audio_processor:extract' %}">
-                <div class="font-bold text-surface-900 text-sm">Extract Audio From Video</div>
-                <div class="text-xs text-surface-500">Open extract page</div>
+            <a class="block rounded-xl border border-surface-200 hover:border-blue-400 p-4 text-left" href="{% url 'audio_processor:extract' %}">
+                <p class="font-bold text-surface-900 text-sm">Extract Audio From Video</p>
+                <p class="text-xs text-surface-500">Open dedicated extraction page</p>
             </a>
-        </div>
-
-        <div id="quick-actions-panel" class="mt-4 hidden rounded-2xl border border-surface-200 bg-white p-4 space-y-4">
-            <div id="merge-preview" class="hidden">
-                <h4 class="text-sm font-bold text-surface-800 mb-2">Selected files for merge</h4>
-                <ul id="merge-file-list" class="text-xs text-surface-600 space-y-1 max-h-28 overflow-y-auto"></ul>
-                <button id="merge-run-btn" class="mt-3 bg-emerald-600 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-emerald-700 transition-all">
-                    Merge & Download
-                </button>
-            </div>
-
-            <div id="video-preview" class="hidden">
-                <h4 class="text-sm font-bold text-surface-800 mb-2">Selected video</h4>
-                <p id="video-file-name" class="text-xs text-surface-600 mb-3"></p>
-                <div class="flex flex-wrap items-center gap-4 mb-3">
-                    <label class="inline-flex items-center gap-2 text-xs font-semibold text-surface-700">
-                        <input type="radio" name="extract-mode" value="full" checked>
-                        Full audio
-                    </label>
-                    <label class="inline-flex items-center gap-2 text-xs font-semibold text-surface-700">
-                        <input type="radio" name="extract-mode" value="range">
-                        Start to end
-                    </label>
-                </div>
-                <div id="extract-range-fields" class="hidden flex flex-wrap items-center gap-3 mb-3">
-                    <input type="number" id="extract-start" min="0" step="0.01" value="0" class="w-28 rounded-lg border border-surface-200 px-2 py-1.5 text-xs" placeholder="Start (s)">
-                    <input type="number" id="extract-end" min="0" step="0.01" value="10" class="w-28 rounded-lg border border-surface-200 px-2 py-1.5 text-xs" placeholder="End (s)">
-                </div>
-                <button id="extract-run-btn" class="bg-emerald-600 text-white px-4 py-2 rounded-lg text-xs font-bold hover:bg-emerald-700 transition-all">
-                    Extract & Download
-                </button>
-            </div>
-
-            <div id="quick-processing" class="hidden rounded-xl bg-surface-50 border border-surface-100 p-3">
-                <p id="quick-processing-text" class="text-xs font-semibold text-surface-700">Processing...</p>
-            </div>
         </div>
     </div>
 
-    <!-- Main Editor -->
-    <div id="editor-interface" class="editor-container">
-        <!-- Header -->
-        <div class="editor-header">
-            <div class="tool-tabs">
-                <div class="tool-tab active" onclick="switchTab('trim', this)">
-                    <i data-lucide="scissors" class="w-4 h-4"></i> Trim
-                </div>
-                <div class="tool-tab" onclick="switchTab('volume', this)">
-                    <i data-lucide="speaker" class="w-4 h-4"></i> Volume
-                </div>
-                <div class="tool-tab" onclick="switchTab('speed', this)">
-                    <i data-lucide="timer" class="w-4 h-4"></i> Speed
-                </div>
-                <div class="tool-tab" onclick="switchTab('pitch', this)">
-                    <i data-lucide="waveform" class="w-4 h-4"></i> Pitch
-                </div>
-                <div class="tool-tab" onclick="switchTab('eq', this)">
-                    <i data-lucide="sliders" class="w-4 h-4"></i> Equalizer
-                </div>
+    <div id="editor-interface" class="hidden rounded-2xl bg-slate-950 text-white border border-slate-800 overflow-hidden">
+        <div class="p-4 border-b border-slate-800 flex items-center justify-between">
+            <div>
+                <p class="text-xs uppercase tracking-wider text-slate-400">Audio Editor</p>
+                <p id="file-name" class="text-sm font-bold">filename.mp3</p>
             </div>
-            <div class="flex items-center gap-4">
-                <button onclick="resetEditor()" class="text-xs font-bold text-slate-400 hover:text-white transition-colors">RESET</button>
-                <button onclick="closeEditor()" class="w-8 h-8 rounded-full bg-slate-800 flex items-center justify-center hover:bg-slate-700 transition-colors">
-                    <i data-lucide="x" class="w-4 h-4"></i>
-                </button>
-            </div>
+            <button onclick="closeEditor()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-bold">Close</button>
         </div>
 
-        <!-- Waveform -->
-        <div class="waveform-section">
-            <div id="current-time" class="time-badge left-6">0:00</div>
-            <div id="file-name" class="absolute top-2 left-1/2 -translate-x-1/2 text-[10px] text-slate-500 font-bold uppercase tracking-widest">Filename.mp3</div>
-            <div id="total-time" class="time-badge right-6">0:00</div>
-            
+        <div class="p-4 bg-slate-900">
             <div id="waveform"></div>
-            
-            <div id="duration-center" class="text-center mt-4 text-xs font-bold text-slate-500">Duration: 0:00</div>
-        </div>
-
-        <!-- Controls -->
-        <div class="controls-section">
-            <!-- Trim Controls -->
-            <div id="tab-trim" class="control-group active text-center">
-                <p class="text-xs text-slate-400 mb-6">Select the portion of the audio you want to keep using the handles on the waveform.</p>
-                <div class="flex items-center justify-center gap-12">
-                    <div class="text-center">
-                        <label class="block text-[10px] text-slate-500 font-black uppercase mb-2">Fade In (s)</label>
-                        <input type="number" id="fade-in" step="0.1" value="0" min="0" class="w-20 bg-slate-800 border border-slate-700 rounded-lg p-2 text-center text-sm">
-                    </div>
-                    <div class="text-center">
-                        <label class="block text-[10px] text-slate-500 font-black uppercase mb-2">Fade Out (s)</label>
-                        <input type="number" id="fade-out" step="0.1" value="0" min="0" class="w-20 bg-slate-800 border border-slate-700 rounded-lg p-2 text-center text-sm">
-                    </div>
-                </div>
-                <div class="flex items-center justify-center gap-6 mt-6 flex-wrap">
-                    <div class="text-center">
-                        <label class="block text-[10px] text-slate-500 font-black uppercase mb-2">Start (s)</label>
-                        <input type="number" id="trim-start" step="0.01" value="0" min="0" class="w-24 bg-slate-800 border border-slate-700 rounded-lg p-2 text-center text-sm">
-                    </div>
-                    <div class="text-center">
-                        <label class="block text-[10px] text-slate-500 font-black uppercase mb-2">End (s)</label>
-                        <input type="number" id="trim-end" step="0.01" value="0" min="0" class="w-24 bg-slate-800 border border-slate-700 rounded-lg p-2 text-center text-sm">
-                    </div>
-                    <label class="inline-flex items-center gap-2 text-xs font-bold text-slate-200">
-                        <input type="checkbox" id="reverse-toggle"> Reverse
-                    </label>
-                    <label class="inline-flex items-center gap-2 text-xs font-bold text-slate-200">
-                        <input type="checkbox" id="ringtone-toggle"> iPhone Ringtone (40s)
-                    </label>
-                </div>
-            </div>
-
-            <!-- Volume Controls -->
-            <div id="tab-volume" class="control-group text-center">
-                <p class="text-xs text-slate-400 mb-8">Adjust audio volume level.</p>
-                <div class="max-w-md mx-auto px-10">
-                    <div class="flex justify-between mb-4">
-                        <i data-lucide="volume-1" class="w-5 h-5 text-slate-500"></i>
-                        <span id="volume-display" class="text-2xl font-black text-emerald-500">100%</span>
-                        <i data-lucide="volume-2" class="w-5 h-5 text-slate-500"></i>
-                    </div>
-                    <input type="range" id="volume-slider" min="0" max="200" value="100" oninput="updateVolume(this.value)">
-                </div>
-            </div>
-
-            <!-- Speed Controls -->
-            <div id="tab-speed" class="control-group text-center">
-                <p class="text-xs text-slate-400 mb-8">Change playback speed.</p>
-                <div class="max-w-md mx-auto px-10">
-                    <div class="flex justify-between mb-4">
-                        <span class="text-xl">🐢</span>
-                        <span id="speed-display" class="text-2xl font-black text-emerald-500">1.0x</span>
-                        <span class="text-xl">🐇</span>
-                    </div>
-                    <input type="range" id="speed-slider" min="0.5" max="2.0" step="0.1" value="1.0" oninput="updateSpeed(this.value)">
-                </div>
-            </div>
-
-            <!-- Pitch Controls -->
-            <div id="tab-pitch" class="control-group text-center">
-                <p class="text-xs text-slate-400 mb-8">Shift the pitch of the audio.</p>
-                <div class="max-w-md mx-auto px-10">
-                    <div class="flex justify-between mb-4">
-                        <span class="text-xs font-bold text-slate-500">LOW</span>
-                        <span id="pitch-display" class="text-2xl font-black text-emerald-500">0</span>
-                        <span class="text-xs font-bold text-slate-500">HIGH</span>
-                    </div>
-                    <input type="range" id="pitch-slider" min="-12" max="12" step="1" value="0" oninput="updatePitch(this.value)">
-                </div>
-            </div>
-
-            <!-- EQ Controls -->
-            <div id="tab-eq" class="control-group">
-                <div class="preset-list" id="eq-presets">
-                    <!-- Presets as buttons -->
-                    <button class="preset-btn active" data-preset="none" onclick="setEQ(this.dataset.preset, this)">Default</button>
-                    <button class="preset-btn" data-preset="classic" onclick="setEQ(this.dataset.preset, this)">Classic</button>
-                    <button class="preset-btn" data-preset="dance" onclick="setEQ(this.dataset.preset, this)">Dance</button>
-                    <button class="preset-btn" data-preset="club" onclick="setEQ(this.dataset.preset, this)">Club</button>
-                    <button class="preset-btn" data-preset="bass-boost" onclick="setEQ(this.dataset.preset, this)">Full bass</button>
-                    <button class="preset-btn" data-preset="treble-boost" onclick="setEQ(this.dataset.preset, this)">Full treble</button>
-                    <button class="preset-btn" data-preset="pop" onclick="setEQ(this.dataset.preset, this)">Pop</button>
-                    <button class="preset-btn" data-preset="rock" onclick="setEQ(this.dataset.preset, this)">Rock</button>
-                </div>
-                <div class="eq-sliders">
-                    <div class="eq-slider-col">
-                        <input type="range" min="-10" max="10" value="0">
-                        <span class="eq-label">60</span>
-                    </div>
-                    <div class="eq-slider-col">
-                        <input type="range" min="-10" max="10" value="0">
-                        <span class="eq-label">170</span>
-                    </div>
-                    <div class="eq-slider-col">
-                        <input type="range" min="-10" max="10" value="0">
-                        <span class="eq-label">310</span>
-                    </div>
-                    <div class="eq-slider-col">
-                        <input type="range" min="-10" max="10" value="0">
-                        <span class="eq-label">600</span>
-                    </div>
-                    <div class="eq-slider-col">
-                        <input type="range" min="-10" max="10" value="0">
-                        <span class="eq-label">1k</span>
-                    </div>
-                    <div class="eq-slider-col">
-                        <input type="range" min="-10" max="10" value="0">
-                        <span class="eq-label">3k</span>
-                    </div>
-                    <div class="eq-slider-col">
-                        <input type="range" min="-10" max="10" value="0">
-                        <span class="eq-label">6k</span>
-                    </div>
-                    <div class="eq-slider-col">
-                        <input type="range" min="-10" max="10" value="0">
-                        <span class="eq-label">12k</span>
-                    </div>
-                    <div class="eq-slider-col">
-                        <input type="range" min="-10" max="10" value="0">
-                        <span class="eq-label">14k</span>
-                    </div>
-                    <div class="eq-slider-col">
-                        <input type="range" min="-10" max="10" value="0">
-                        <span class="eq-label">16k</span>
-                    </div>
-                </div>
+            <div class="mt-2 text-xs text-slate-300">
+                <span id="current-time">0:00</span> - <span id="total-time">0:00</span>
             </div>
         </div>
 
-        <!-- Footer -->
-        <div class="editor-footer">
-            <div class="flex items-center gap-6">
-                <button id="play-btn" onclick="togglePlay()" class="w-12 h-12 rounded-full bg-emerald-600 flex items-center justify-center hover:bg-emerald-500 transition-all shadow-lg hover:shadow-emerald-500/20">
-                    <i data-lucide="play" id="play-icon" class="w-6 h-6 ml-1"></i>
-                </button>
+        <div class="p-4 grid grid-cols-1 md:grid-cols-3 gap-3 bg-slate-950 border-t border-slate-800">
+            <div>
+                <label class="text-xs text-slate-400">Start (s)</label>
+                <input id="trim-start" type="number" step="0.01" value="0" class="w-full mt-1 rounded-lg bg-slate-900 border border-slate-700 px-2 py-1.5 text-sm">
             </div>
-            
-            <div class="flex items-center gap-4">
-                <div class="relative group">
-                    <select id="export-format" class="bg-slate-800 border border-slate-700 text-white text-xs font-bold rounded-lg px-4 py-2 outline-none appearance-none pr-8 cursor-pointer">
-                        <option value="mp3">MP3</option>
-                        <option value="m4a">M4A</option>
-                        <option value="wav">WAV</option>
-                        <option value="flac">FLAC</option>
-                        <option value="ogg">OGG</option>
-                    </select>
-                    <i data-lucide="chevron-down" class="absolute right-2 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none"></i>
-                </div>
-                
-                <button id="save-btn" onclick="saveAudio()" class="bg-emerald-600 text-white px-8 py-2 rounded-xl font-bold hover:bg-emerald-700 transition-all shadow-md flex items-center gap-2">
-                    <span id="save-text">Save</span>
-                    <div id="save-loader" class="hidden animate-spin w-4 h-4 border-2 border-white/30 border-t-white rounded-full"></div>
-                </button>
+            <div>
+                <label class="text-xs text-slate-400">End (s)</label>
+                <input id="trim-end" type="number" step="0.01" value="0" class="w-full mt-1 rounded-lg bg-slate-900 border border-slate-700 px-2 py-1.5 text-sm">
+            </div>
+            <div>
+                <label class="text-xs text-slate-400">Format</label>
+                <select id="export-format" class="w-full mt-1 rounded-lg bg-slate-900 border border-slate-700 px-2 py-1.5 text-sm">
+                    <option value="mp3">MP3</option>
+                    <option value="wav">WAV</option>
+                    <option value="m4a">M4A</option>
+                    <option value="ogg">OGG</option>
+                    <option value="flac">FLAC</option>
+                </select>
             </div>
         </div>
-    </div>
-</div>
 
-<!-- Extra Help Note -->
-<div class="mt-20 grid grid-cols-1 md:grid-cols-3 gap-8">
-    <div class="p-8 bg-white rounded-3xl border border-surface-100 shadow-sm space-y-4">
-        <div class="w-12 h-12 bg-emerald-50 rounded-2xl flex items-center justify-center text-emerald-600">
-            <i data-lucide="scissors" class="w-6 h-6"></i>
+        <div class="p-4 flex items-center gap-3 border-t border-slate-800">
+            <button id="play-btn" onclick="togglePlay()" class="px-4 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-sm font-bold">Play Selection</button>
+            <button id="save-btn" onclick="saveAudio()" class="px-4 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-sm font-bold">Save</button>
+            <label class="inline-flex items-center gap-2 text-xs text-slate-200">
+                <input type="checkbox" id="reverse-toggle"> Reverse
+            </label>
+            <div id="processing" class="hidden text-xs text-amber-300 font-semibold">Processing...</div>
         </div>
-        <h3 class="text-lg font-bold text-surface-900">Precise Trimming</h3>
-        <p class="text-surface-500 text-sm leading-relaxed">Cut any part of your audio with millisecond precision. Just drag the handles to select your desired section.</p>
-    </div>
-    <div class="p-8 bg-white rounded-3xl border border-surface-100 shadow-sm space-y-4">
-        <div class="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center text-blue-600">
-            <i data-lucide="sliders" class="w-6 h-6"></i>
-        </div>
-        <h3 class="text-lg font-bold text-surface-900">Audio Enhancements</h3>
-        <p class="text-surface-500 text-sm leading-relaxed">Boost volume, change speed, or adjust pitch. Use our advanced 10-band equalizer to get the perfect sound.</p>
-    </div>
-    <div class="p-8 bg-white rounded-3xl border border-surface-100 shadow-sm space-y-4">
-        <div class="w-12 h-12 bg-purple-50 rounded-2xl flex items-center justify-center text-purple-600">
-            <i data-lucide="shield-check" class="w-6 h-6"></i>
-        </div>
-        <h3 class="text-lg font-bold text-surface-900">Secure & Private</h3>
-        <p class="text-surface-500 text-sm leading-relaxed">Your files never leave your browser for processing when possible, and are securely handled with auto-deletion.</p>
     </div>
 </div>
 {% endblock %}
 
 {% block tool_scripts %}
 <script>
-    let wavesurfer;
-    let regions;
-    let activeFile;
-    let format = 'mp3';
-    let currentTab = 'trim';
-    let activePreset = 'none';
-    let selectedMergeFiles = [];
-    let selectedVideoFile = null;
+let wavesurfer;
+let regions;
+let activeFile;
 
-    function handleFileSelect(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-        
-        activeFile = file;
-        document.getElementById('upload-area').style.display = 'none';
-        document.getElementById('editor-interface').style.display = 'block';
-        document.getElementById('file-name').innerText = file.name;
+function formatTime(seconds) {
+    const m = Math.floor(seconds / 60);
+    const s = Math.floor(seconds % 60);
+    return `${m}:${s.toString().padStart(2, '0')}`;
+}
 
-        initWaveform(file);
-    }
+function handleFileSelect(event) {
+    const file = event.target.files[0];
+    if (!file) return;
+    activeFile = file;
+    document.getElementById('file-name').innerText = file.name;
+    document.getElementById('upload-area').classList.add('hidden');
+    document.getElementById('editor-interface').classList.remove('hidden');
+    initWaveform(file);
+}
 
-    function initWaveform(file) {
-        if (wavesurfer) wavesurfer.destroy();
+function initWaveform(file) {
+    if (wavesurfer) wavesurfer.destroy();
+    wavesurfer = WaveSurfer.create({
+        container: '#waveform',
+        waveColor: '#334155',
+        progressColor: '#10b981',
+        cursorColor: '#22c55e',
+        height: 160
+    });
+    regions = wavesurfer.registerPlugin(WaveSurfer.Regions.create());
+    wavesurfer.load(URL.createObjectURL(file));
 
-        wavesurfer = WaveSurfer.create({
-            container: '#waveform',
-            waveColor: '#1e293b',
-            progressColor: '#10b981',
-            cursorColor: '#10b981',
-            barWidth: 2,
-            barRadius: 2,
-            responsive: true,
-            height: 200,
-            cursorWidth: 1,
-            hideScrollbar: true,
-            plugins: []
+    wavesurfer.on('ready', () => {
+        const duration = wavesurfer.getDuration();
+        regions.addRegion({
+            start: 0,
+            end: duration,
+            color: 'rgba(16,185,129,0.2)',
+            drag: true,
+            resize: true
         });
+        document.getElementById('total-time').innerText = formatTime(duration);
+        document.getElementById('trim-start').value = '0';
+        document.getElementById('trim-end').value = duration.toFixed(2);
 
-        // Initialize Regions plugin
-        regions = wavesurfer.registerPlugin(WaveSurfer.Regions.create());
-
-        wavesurfer.load(URL.createObjectURL(file));
-
-        wavesurfer.on('ready', () => {
-            const duration = wavesurfer.getDuration();
-            document.getElementById('total-time').innerText = formatTime(duration);
-            document.getElementById('duration-center').innerText = 'Duration: ' + formatTime(duration);
-            document.getElementById('trim-end').value = duration.toFixed(2);
-            
-            // Add a region for trimming
-            regions.addRegion({
-                start: 0,
-                end: duration,
-                color: 'rgba(16, 185, 129, 0.15)',
-                drag: true,
-                resize: true,
-                handleStyle: {
-                    left: { backgroundColor: '#10b981', width: '6px', border: '1px solid rgba(255,255,255,0.2)', cursor: 'col-resize' },
-                    right: { backgroundColor: '#10b981', width: '6px', border: '1px solid rgba(255,255,255,0.2)', cursor: 'col-resize' }
-                }
-            });
-
-            // Update UI when region is resized or moved (real-time)
-            regions.on('region-in-progress', (region) => {
-                document.getElementById('current-time').innerText = formatTime(region.start);
-                document.getElementById('total-time').innerText = formatTime(region.end);
-                const duration = region.end - region.start;
-                document.getElementById('duration-center').innerText = 'Selection: ' + formatTime(duration);
-                document.getElementById('trim-start').value = region.start.toFixed(2);
-                document.getElementById('trim-end').value = region.end.toFixed(2);
-            });
-
-            regions.on('region-updated', (region) => {
-                document.getElementById('current-time').innerText = formatTime(region.start);
-                document.getElementById('total-time').innerText = formatTime(region.end);
-                const duration = region.end - region.start;
-                document.getElementById('duration-center').innerText = 'Selection: ' + formatTime(duration);
-                document.getElementById('trim-start').value = region.start.toFixed(2);
-                document.getElementById('trim-end').value = region.end.toFixed(2);
-            });
-
-            // Handle accidental multiple regions (keep only newest)
-            regions.on('region-created', (region) => {
-                regions.getRegions().forEach(r => {
-                    if (r !== region) r.remove();
-                });
-            });
+        regions.on('region-updated', (region) => {
+            document.getElementById('trim-start').value = region.start.toFixed(2);
+            document.getElementById('trim-end').value = region.end.toFixed(2);
+            document.getElementById('current-time').innerText = formatTime(region.start);
+            document.getElementById('total-time').innerText = formatTime(region.end);
         });
+    });
+}
 
-        // Current time should only update if it's NOT a trim badge
-        // or we use a separate indicator. For now, let's update it but it will be
-        // overwritten by region dragging if they occur at the same time.
-        wavesurfer.on('audioprocess', (time) => {
-            // If playing outside region (rare if we prevent it), update?
-            // Let's just update the time display in center if playing
-            if (wavesurfer.isPlaying()) {
-                // optional: show current play position somewhere else
-            }
-        });
-
-        wavesurfer.on('finish', () => {
-            document.getElementById('play-icon').setAttribute('data-lucide', 'play');
-            lucide.createIcons();
-        });
+function togglePlay() {
+    if (!wavesurfer) return;
+    const region = regions?.getRegions?.()[0];
+    if (wavesurfer.isPlaying()) {
+        wavesurfer.pause();
+    } else if (region) {
+        wavesurfer.play(region.start, region.end);
+    } else {
+        wavesurfer.play();
     }
+}
 
-    function formatTime(seconds) {
-        const minutes = Math.floor(seconds / 60);
-        const secs = Math.floor(seconds % 60);
-        return `${minutes}:${secs.toString().padStart(2, '0')}`;
-    }
+async function saveAudio() {
+    if (!activeFile) return;
+    const saveBtn = document.getElementById('save-btn');
+    const processing = document.getElementById('processing');
+    saveBtn.disabled = true;
+    processing.classList.remove('hidden');
 
-    function switchTab(tabId, el) {
-        currentTab = tabId;
-        
-        // Update Tabs
-        document.querySelectorAll('.tool-tab').forEach(t => t.classList.remove('active'));
-        el.classList.add('active');
+    const fd = new FormData();
+    fd.append('mode', 'edit');
+    fd.append('file', activeFile);
+    fd.append('start', document.getElementById('trim-start').value || '0');
+    fd.append('end', document.getElementById('trim-end').value || '0');
+    fd.append('format', document.getElementById('export-format').value);
+    fd.append('volume', '100');
+    fd.append('speed', '1.0');
+    fd.append('pitch', '0');
+    fd.append('fade_in', '0');
+    fd.append('fade_out', '0');
+    fd.append('preset', 'none');
+    fd.append('reverse', document.getElementById('reverse-toggle').checked ? 'true' : 'false');
 
-        // Update Controls
-        document.querySelectorAll('.control-group').forEach(c => c.classList.remove('active'));
-        document.getElementById('tab-' + tabId).classList.add('active');
-
-        // Toggle Region Visibility if not trim? (actually easy to keep)
-    }
-
-    function updateVolume(val) {
-        document.getElementById('volume-display').innerText = val + '%';
-        if (wavesurfer) wavesurfer.setVolume(val / 100);
-    }
-
-    function updateSpeed(val) {
-        document.getElementById('speed-display').innerText = val + 'x';
-        if (wavesurfer) wavesurfer.setPlaybackRate(val);
-    }
-
-    function updatePitch(val) {
-        document.getElementById('pitch-display').innerText = (val > 0 ? '+' : '') + val;
-        // Web Audio pitch shift is complex without external libs
-    }
-
-    function setEQ(preset, el) {
-        document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
-        el.classList.add('active');
-        activePreset = preset;
-    }
-
-    function togglePlay() {
-        if (!wavesurfer) return;
-        const region = regions?.getRegions?.()[0];
-        if (wavesurfer.isPlaying()) {
-            wavesurfer.pause();
-        } else if (region) {
-            // Play only the selected trim range, not the full track.
-            wavesurfer.play(region.start, region.end);
-        } else {
-            wavesurfer.play();
-        }
-        const icon = wavesurfer.isPlaying() ? 'pause' : 'play';
-        document.getElementById('play-icon').setAttribute('data-lucide', icon);
-        lucide.createIcons();
-    }
-
-    function resetEditor() {
-        if (activeFile) initWaveform(activeFile);
-        document.getElementById('volume-slider').value = 100;
-        document.getElementById('volume-display').innerText = '100%';
-        document.getElementById('speed-slider').value = 1.0;
-        document.getElementById('speed-display').innerText = '1.0x';
-        document.getElementById('pitch-slider').value = 0;
-        document.getElementById('pitch-display').innerText = '0';
-        document.getElementById('fade-in').value = 0;
-        document.getElementById('fade-out').value = 0;
-        document.getElementById('trim-start').value = 0;
-        document.getElementById('trim-end').value = 0;
-        document.getElementById('reverse-toggle').checked = false;
-        document.getElementById('ringtone-toggle').checked = false;
-        document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
-        const defaultPreset = document.querySelector('.preset-btn[data-preset="none"]');
-        if (defaultPreset) defaultPreset.classList.add('active');
-        activePreset = 'none';
-    }
-
-    function closeEditor() {
-        document.getElementById('upload-area').style.display = 'block';
-        document.getElementById('editor-interface').style.display = 'none';
-        if (wavesurfer) wavesurfer.destroy();
-        activeFile = null;
-    }
-
-    async function saveAudio() {
-        if (!activeFile) return;
-
-        const saveBtn = document.getElementById('save-btn');
-        const saveText = document.getElementById('save-text');
-        const saveLoader = document.getElementById('save-loader');
-
-        saveBtn.disabled = true;
-        saveText.innerText = 'Processing...';
-        saveLoader.classList.remove('hidden');
-
-        const formData = new FormData();
-        formData.append('file', activeFile);
-        formData.append('mode', 'edit');
-        
-        // Get region data
-        const region = regions.getRegions()[0];
-        if (region) {
-            formData.append('start', region.start);
-            formData.append('end', region.end);
-        }
-        const trimStartInput = parseFloat(document.getElementById('trim-start').value || '0');
-        const trimEndInput = parseFloat(document.getElementById('trim-end').value || '0');
-        if (!Number.isNaN(trimStartInput)) formData.set('start', trimStartInput);
-        if (!Number.isNaN(trimEndInput) && trimEndInput > 0) formData.set('end', trimEndInput);
-
-        formData.append('volume', document.getElementById('volume-slider').value);
-        formData.append('speed', document.getElementById('speed-slider').value);
-        formData.append('pitch', document.getElementById('pitch-slider').value);
-        formData.append('fade_in', document.getElementById('fade-in').value);
-        formData.append('fade_out', document.getElementById('fade-out').value);
-        formData.append('format', document.getElementById('export-format').value);
-        formData.append('preset', activePreset);
-        formData.append('reverse', document.getElementById('reverse-toggle').checked ? 'true' : 'false');
-        formData.append('ringtone_mode', document.getElementById('ringtone-toggle').checked ? 'true' : 'false');
-
-        try {
-            const response = await fetch('/audio/api/process/', {
-                method: 'POST',
-                body: formData
-            });
-
-            if (response.ok) {
-                const blob = await response.blob();
-                const url = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = url;
-                const filename = response.headers.get('Content-Disposition')?.split('filename=')[1]?.replace(/"/g, '') || 'processed_audio.mp3';
-                a.download = filename;
-                document.body.appendChild(a);
-                a.click();
-                a.remove();
-            } else {
-                const err = await response.json();
-                alert('Error: ' + (err.error || 'Failed to process audio'));
-            }
-        } catch (error) {
-            alert('Error: ' + error.message);
-        } finally {
-            saveBtn.disabled = false;
-            saveText.innerText = 'Save';
-            saveLoader.classList.add('hidden');
-        }
-    }
-
-    async function processQuickMode(mode, payload) {
-        const formData = new FormData();
-        formData.append('mode', mode);
-        formData.append('format', document.getElementById('export-format').value || 'mp3');
-        if (mode === 'merge') {
-            payload.files.forEach(file => formData.append('files', file));
-        } else if (mode === 'extract') {
-            formData.append('video_file', payload.videoFile);
-            formData.append('extract_mode', payload.extractMode || 'full');
-            if ((payload.extractMode || 'full') === 'range') {
-                formData.append('start', payload.start || 0);
-                formData.append('end', payload.end || 0);
-            }
-        }
-        const response = await fetch('/audio/api/process/', {method: 'POST', body: formData});
+    try {
+        const response = await fetch('/audio/api/process/', { method: 'POST', body: fd });
         if (!response.ok) {
             const err = await response.json();
             throw new Error(err.error || 'Failed to process audio');
@@ -788,163 +175,25 @@
         const url = window.URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        const filename = response.headers.get('Content-Disposition')?.split('filename=')[1]?.replace(/"/g, '') || 'audio_output.mp3';
+        const filename = response.headers.get('Content-Disposition')?.split('filename=')[1]?.replace(/"/g, '') || 'processed_audio.mp3';
         a.download = filename;
         document.body.appendChild(a);
         a.click();
         a.remove();
+    } catch (error) {
+        alert('Error: ' + error.message);
+    } finally {
+        saveBtn.disabled = false;
+        processing.classList.add('hidden');
     }
+}
 
-    function setQuickProcessing(isProcessing, text='Processing...') {
-        const panel = document.getElementById('quick-processing');
-        const textEl = document.getElementById('quick-processing-text');
-        if (isProcessing) {
-            textEl.innerText = text;
-            panel.classList.remove('hidden');
-        } else {
-            panel.classList.add('hidden');
-        }
-    }
-
-    function updateQuickPanelVisibility() {
-        const panel = document.getElementById('quick-actions-panel');
-        const mergePreview = document.getElementById('merge-preview');
-        const videoPreview = document.getElementById('video-preview');
-        const hasMerge = selectedMergeFiles.length > 0;
-        const hasVideo = !!selectedVideoFile;
-        if (hasMerge || hasVideo) {
-            panel.classList.remove('hidden');
-        } else {
-            panel.classList.add('hidden');
-        }
-        mergePreview.classList.toggle('hidden', !hasMerge);
-        videoPreview.classList.toggle('hidden', !hasVideo);
-    }
-
-    function bindExtractModeRadios() {
-        document.querySelectorAll('input[name="extract-mode"]').forEach((radio) => {
-            radio.addEventListener('change', () => {
-                const showRange = document.querySelector('input[name="extract-mode"]:checked')?.value === 'range';
-                document.getElementById('extract-range-fields').classList.toggle('hidden', !showRange);
-            });
-        });
-    }
-
-    function renderMergeFiles() {
-        const list = document.getElementById('merge-file-list');
-        list.innerHTML = '';
-        selectedMergeFiles.forEach((f, i) => {
-            const li = document.createElement('li');
-            li.className = 'flex items-center justify-between gap-2';
-            li.innerHTML = `<span>${i + 1}. ${f.name}</span><span class="text-surface-400">${(f.size / (1024 * 1024)).toFixed(1)} MB</span>`;
-            list.appendChild(li);
-        });
-    }
-
-    async function handleMergeSelect(event) {
-        const files = Array.from(event.target.files || []);
-        if (files.length < 2) {
-            alert('Please select at least 2 files to merge.');
-            return;
-        }
-        selectedMergeFiles = files;
-        renderMergeFiles();
-        updateQuickPanelVisibility();
-        event.target.value = '';
-    }
-
-    async function handleVideoExtract(event) {
-        const file = event.target.files?.[0];
-        if (!file) return;
-        selectedVideoFile = file;
-        document.getElementById('video-file-name').innerText = `${file.name} (${(file.size / (1024 * 1024)).toFixed(1)} MB)`;
-        updateQuickPanelVisibility();
-        event.target.value = '';
-    }
-
-    async function runMergeDownload() {
-        if (selectedMergeFiles.length < 2) {
-            alert('Please select at least 2 files.');
-            return;
-        }
-        try {
-            setQuickProcessing(true, 'Merging selected files...');
-            await processQuickMode('merge', {files: selectedMergeFiles});
-            selectedMergeFiles = [];
-            renderMergeFiles();
-            updateQuickPanelVisibility();
-        } catch (error) {
-            alert('Error: ' + error.message);
-        } finally {
-            setQuickProcessing(false);
-        }
-    }
-
-    async function runExtractDownload() {
-        if (!selectedVideoFile) {
-            alert('Please choose a video file first.');
-            return;
-        }
-        const extractMode = document.querySelector('input[name="extract-mode"]:checked')?.value || 'full';
-        const startVal = document.getElementById('extract-start').value;
-        const endVal = document.getElementById('extract-end').value;
-        if (extractMode === 'range' && (!endVal || parseFloat(endVal) <= parseFloat(startVal || '0'))) {
-            alert('Please enter a valid start and end range.');
-            return;
-        }
-
-        try {
-            setQuickProcessing(true, extractMode === 'range' ? 'Extracting selected range from video...' : 'Extracting full audio from video...');
-            await processQuickMode('extract', {
-                videoFile: selectedVideoFile,
-                extractMode: extractMode,
-                start: startVal,
-                end: endVal,
-            });
-            selectedVideoFile = null;
-            updateQuickPanelVisibility();
-        } catch (error) {
-            alert('Error: ' + error.message);
-        } finally {
-            setQuickProcessing(false);
-        }
-    }
-
-    document.addEventListener('keydown', (event) => {
-        if (!wavesurfer || currentTab !== 'trim') return;
-        const activeTag = document.activeElement?.tagName;
-        if (activeTag === 'INPUT' || activeTag === 'TEXTAREA' || activeTag === 'SELECT') return;
-        const region = regions?.getRegions?.()[0];
-        if (!region) return;
-        const step = event.shiftKey ? 1.0 : 0.1;
-        if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
-            const max = wavesurfer.getDuration();
-            const direction = event.key === 'ArrowLeft' ? -1 : 1;
-            const nextStart = Math.max(0, Math.min(max - 0.1, region.start + (direction * step)));
-            const nextEnd = Math.max(nextStart + 0.1, Math.min(max, region.end + (direction * step)));
-            region.setOptions({start: nextStart, end: nextEnd});
-            event.preventDefault();
-        }
-    });
-
-    ['trim-start', 'trim-end'].forEach((id) => {
-        document.getElementById(id).addEventListener('change', () => {
-            if (!wavesurfer) return;
-            const region = regions?.getRegions?.()[0];
-            if (!region) return;
-            const max = wavesurfer.getDuration();
-            let start = parseFloat(document.getElementById('trim-start').value || '0');
-            let end = parseFloat(document.getElementById('trim-end').value || String(max));
-            if (Number.isNaN(start)) start = 0;
-            if (Number.isNaN(end)) end = max;
-            start = Math.max(0, Math.min(start, max - 0.1));
-            end = Math.max(start + 0.1, Math.min(end, max));
-            region.setOptions({start, end});
-        });
-    });
-
-    document.getElementById('merge-run-btn').addEventListener('click', runMergeDownload);
-    document.getElementById('extract-run-btn').addEventListener('click', runExtractDownload);
-    bindExtractModeRadios();
+function closeEditor() {
+    if (wavesurfer) wavesurfer.destroy();
+    activeFile = null;
+    document.getElementById('editor-interface').classList.add('hidden');
+    document.getElementById('upload-area').classList.remove('hidden');
+    document.getElementById('audio-input').value = '';
+}
 </script>
 {% endblock %}

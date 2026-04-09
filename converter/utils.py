@@ -213,6 +213,31 @@ def convert_word_to_pdf(input_path, original_name):
         raise Exception(f"Failed to convert Word to PDF: {str(e)}")
 
 
+def merge_word_files(input_paths, original_name):
+    """Combine multiple Word files into a single document."""
+    from docx import Document
+    if not input_paths: return None
+    
+    # Use the first document as base
+    master = Document(input_paths[0])
+    
+    import copy
+    for path in input_paths[1:]:
+        sub_doc = Document(path)
+        # Add page break
+        master.add_page_break()
+        for element in sub_doc.element.body:
+            tag = element.tag
+            if tag.endswith('sectPr'):
+                continue
+            master.element.body.append(element)
+            
+    output_path = get_output_path(original_name, 'docx', '_merged')
+    master.save(output_path)
+    return output_path
+
+
+
 
 # ═══════════════════════════════════════════════════════════════
 # 2. POWERPOINT (.pptx) → PDF

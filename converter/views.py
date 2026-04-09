@@ -57,6 +57,7 @@ from .utils import (
     convert_pdf_to_pdfa,
     sign_pdf,
     redact_pdf,
+    merge_word_files,
 )
 
 
@@ -201,6 +202,18 @@ TOOLS = {
         'color': '#7c3aed',
         'gradient': 'from-violet-500 to-violet-700',
         'category': 'pdf-tools',
+        'multi_file': True,
+    },
+    'merge-word': {
+        'title': 'Merge Word',
+        'description': 'Combine multiple Word documents (.docx) into a single file.',
+        'icon': 'file-type',
+        'accept': '.docx',
+        'allowed_extensions': ['.docx'],
+        'converter': merge_word_files,
+        'color': '#2b6cb0',
+        'gradient': 'from-blue-600 to-indigo-700',
+        'category': 'convert',
         'multi_file': True,
     },
     'split-pdf': {
@@ -424,7 +437,7 @@ TOOLS = {
         'gradient': 'from-indigo-500 to-indigo-700',
         'category': 'image-tools',
     },
-    'add-image-watermark': {
+    'watermark-image': {
         'title': 'Add Watermark',
         'description': 'Overlay a custom text watermark on your images.',
         'icon': 'stamp',
@@ -643,9 +656,15 @@ TOOLS = {
 
 def home(request):
     """Render the home page with all available tools."""
+    all_tools = {**TOOLS}
+    # Update with image tools metadata for the grid
+    from image_processor.views import IMAGE_TOOLS
+    all_tools.update(IMAGE_TOOLS)
+    
     context = {
-        'tools': TOOLS,
+        'tools': all_tools,
         'page_title': 'ScanPDF',
+        'IMAGE_TOOLS_KEYS': list(IMAGE_TOOLS.keys())
     }
     return render(request, 'converter/home.html', context)
 
@@ -659,7 +678,7 @@ def convert_page(request, tool_slug):
     form = FileUploadForm()
 
     # Determine which template to use
-    if tool_slug == 'merge-pdf':
+    if tool_slug == 'merge-pdf' or tool_slug == 'merge-word':
         template = 'converter/merge.html'
     elif tool_slug == 'split-pdf':
         template = 'converter/split.html'
@@ -691,11 +710,11 @@ def convert_page(request, tool_slug):
         template = 'converter/scale_image.html'
     elif tool_slug == 'rotate-image':
         template = 'converter/rotate_image.html'
-    elif tool_slug == 'add-image-watermark':
+    elif tool_slug == 'add-image-watermark' or tool_slug == 'watermark-image':
         template = 'converter/add_image_watermark.html'
     elif tool_slug == 'compress-image':
         template = 'converter/compress_image.html'
-    elif tool_slug == 'crop-image':
+    elif tool_slug == 'crop-image' or tool_slug == 'cut-image':
         template = 'converter/crop_image.html'
 
     elif tool_slug == 'chemical-balancer':
@@ -784,6 +803,30 @@ def convert_file(request, tool_slug):
                                            filename=f"{Path(files[0].name).stem}_merged.pdf")
         except Exception as e:
             return JsonResponse({'error': f'Merge failed: {str(e)}'}, status=500)
+
+    # ── Merge Word: multiple files ──
+    if tool_slug == 'merge-word':
+        files = request.FILES.getlist('files')
+        if not files or len(files) < 2:
+            return JsonResponse({'error': 'Please upload at least 2 Word files to merge.'}, status=400)
+
+        try:
+            input_paths = []
+            for f in files:
+                ext = os.path.splitext(f.name)[1].lower()
+                if ext != '.docx':
+                    return JsonResponse({'error': f'Invalid file "{f.name}". Only .docx files are allowed.'}, status=400)
+                input_paths.append(save_uploaded_file(f))
+
+            output_path = merge_word_files(input_paths, files[0].name)
+
+            for p in input_paths:
+                try: os.remove(p)
+                except OSError: pass
+
+            return create_cleanup_response(output_path, content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
+        except Exception as e:
+            return JsonResponse({'error': f'Word Merge failed: {str(e)}'}, status=500)
 
     # ── HTML to PDF (URL or file) ──
     if tool_slug == 'html-to-pdf':
@@ -1278,7 +1321,7 @@ def convert_file(request, tool_slug):
             return JsonResponse({'error': f'Rotate failed: {str(e)}'}, status=500)
 
     # ── Add Image Watermark ──
-    if tool_slug == 'add-image-watermark':
+    if tool_slug == 'add-image-watermark' or tool_slug == 'watermark-image':
         if 'file' not in request.FILES:
             return JsonResponse({'error': 'No file was uploaded.'}, status=400)
 
@@ -1331,7 +1374,7 @@ def convert_file(request, tool_slug):
             return JsonResponse({'error': f'Compress failed: {str(e)}'}, status=500)
 
     # ── Crop Image ──
-    if tool_slug == 'crop-image':
+    if tool_slug == 'crop-image' or tool_slug == 'cut-image':
         if 'file' not in request.FILES:
             return JsonResponse({'error': 'No file was uploaded.'}, status=400)
 

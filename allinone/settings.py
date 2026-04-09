@@ -8,14 +8,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = 'django-insecure-change-this-in-production-x9$k2m!q@w3e4r5t6y7u8i9o0p'
 
-DEBUG = False
+DEBUG = True
 
-ALLOWED_HOSTS = [
-    'scanpdf.co.in',
-    'www.scanpdf.co.in',
-    '127.0.0.1',
-    'localhost',
-]
+ALLOWED_HOSTS = ['*']
 
 # CSRF security for production (Required for POST requests on HTTPS)
 CSRF_TRUSTED_ORIGINS = [
@@ -26,8 +21,8 @@ CSRF_TRUSTED_ORIGINS = [
 
 # Security settings
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-CSRF_COOKIE_SECURE = True
-SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = not DEBUG
+SESSION_COOKIE_SECURE = not DEBUG
 
 INSTALLED_APPS = [
     'django.contrib.admin',
