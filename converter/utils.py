@@ -3644,45 +3644,92 @@ def convert_pdf_to_pdfa(input_path, original_name):
 
 
 # ═══════════════════════════════════════════════════════════════
-# Sign PDF
+# Sign PDF  (Advanced – multi-page, multi-signature)
 # ═══════════════════════════════════════════════════════════════
 def sign_pdf(input_path, original_name, signature_image_path=None,
              signature_data=None, page_number=0, x=100, y=100,
-             width=200, height=80):
-    """Overlay a signature image on a specific page of a PDF.
+             width=200, height=80, signatures_json=None):
+    """Overlay one or more signature images on a PDF.
 
-    Either `signature_image_path` (file on disk) or `signature_data`
-    (base64-encoded PNG from a canvas) must be provided.
+    Supports two modes:
+    1. **Legacy** – single signature via *signature_data* / *signature_image_path*
+       placed at (x, y) on *page_number*.
+    2. **Advanced** – *signatures_json* is a JSON-encoded list of dicts, each with:
+           page (int), x (float), y (float), width (float), height (float),
+           and either '_resolved_path' (server file path) or 'data' (base64 data-URI).
+       All signatures in the list are applied at once, enabling multi-page /
+       multi-signature support from the interactive frontend.
     """
     import fitz
     import base64
+    import json
 
     output_path = get_output_path(original_name, 'pdf', suffix='_signed')
     doc = fitz.open(input_path)
+    total_pages = len(doc)
 
-    page_idx = int(page_number)
-    if page_idx < 0 or page_idx >= len(doc):
-        page_idx = 0
+    def _insert_sig(page_obj, rect, img_data=None, img_path=None):
+        """Insert a single signature onto *page_obj* and report success."""
+        if img_path and os.path.exists(img_path):
+            page_obj.insert_image(rect, filename=img_path)
+            return True
+        elif img_data:
+            if ',' in img_data:
+                img_data = img_data.split(',', 1)[1]
+            raw = base64.b64decode(img_data)
+            page_obj.insert_image(rect, stream=raw)
+            return True
+        return False
 
-    page = doc[page_idx]
+    # ── Advanced mode: JSON list of placements ──
+    if signatures_json:
+        if isinstance(signatures_json, str):
+            placements = json.loads(signatures_json)
+        else:
+            placements = signatures_json
 
-    sig_x = float(x)
-    sig_y = float(y)
-    sig_w = float(width)
-    sig_h = float(height)
+        if not placements:
+            raise Exception("No signature placements provided.")
 
-    rect = fitz.Rect(sig_x, sig_y, sig_x + sig_w, sig_y + sig_h)
+        inserted_count = 0
+        for item in placements:
+            pg = int(item.get('page', 0))
+            if pg < 0 or pg >= total_pages:
+                continue
+            sx = float(item.get('x', 0))
+            sy = float(item.get('y', 0))
+            sw = float(item.get('width', 200))
+            sh = float(item.get('height', 80))
+            rect = fitz.Rect(sx, sy, sx + sw, sy + sh)
 
-    if signature_data:
-        # Decode base64 PNG data
-        if ',' in signature_data:
-            signature_data = signature_data.split(',', 1)[1]
-        img_bytes = base64.b64decode(signature_data)
-        page.insert_image(rect, stream=img_bytes)
-    elif signature_image_path:
-        page.insert_image(rect, filename=signature_image_path)
+            # Prefer file-based path (new robust approach), fallback to inline data
+            resolved_path = item.get('_resolved_path', '')
+            inline_data = item.get('data', '')
+            did_insert = _insert_sig(doc[pg], rect, img_data=inline_data, img_path=resolved_path)
+            if did_insert:
+                inserted_count += 1
+
+        if inserted_count == 0:
+            raise Exception("No valid signatures were embedded. Please re-add signatures and try again.")
     else:
-        raise Exception("No signature provided.")
+        # ── Legacy single-signature mode ──
+        page_idx = int(page_number)
+        if page_idx < 0 or page_idx >= total_pages:
+            page_idx = 0
+
+        sig_x, sig_y = float(x), float(y)
+        sig_w, sig_h = float(width), float(height)
+        rect = fitz.Rect(sig_x, sig_y, sig_x + sig_w, sig_y + sig_h)
+
+        if signature_data:
+            did_insert = _insert_sig(doc[page_idx], rect, img_data=signature_data)
+        elif signature_image_path:
+            did_insert = _insert_sig(doc[page_idx], rect, img_path=signature_image_path)
+        else:
+            raise Exception("No signature provided.")
+
+        if not did_insert:
+            raise Exception("Signature could not be embedded. Please try again with a PNG/JPG signature.")
 
     doc.save(output_path, garbage=3, deflate=True)
     doc.close()

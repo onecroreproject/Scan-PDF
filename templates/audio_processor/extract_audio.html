@@ -1,0 +1,224 @@
+{% extends 'converter/tool_base.html' %}
+{% load static %}
+
+{% block tool_content %}
+<div class="max-w-4xl mx-auto space-y-5">
+    <div class="rounded-2xl bg-white border border-surface-100 p-6 shadow-card">
+        <h2 class="text-xl font-black text-surface-900 mb-2">Extract Audio From Video</h2>
+        <p class="text-sm text-surface-500 mb-5">Upload one video, preview it, then extract full audio or only a selected range.</p>
+
+        <label for="video-file" class="block rounded-xl border-2 border-dashed border-surface-200 hover:border-brand-400 hover:bg-brand-50/20 transition-all p-6 cursor-pointer text-center">
+            <input id="video-file" type="file" class="hidden" accept=".mp4,.mov,.avi,.mkv,.webm">
+            <p class="text-sm font-bold text-surface-700">Choose a video file</p>
+            <p class="text-xs text-surface-400 mt-1">MP4, MOV, AVI, MKV, WEBM</p>
+        </label>
+
+        <div id="video-wrap" class="hidden mt-5 space-y-3">
+            <div class="flex items-center justify-between">
+                <h3 class="text-sm font-bold text-surface-800">Selected video</h3>
+                <button id="remove-video" class="text-xs font-black text-red-600 hover:text-red-700">Remove video</button>
+            </div>
+            <p id="video-name" class="text-xs text-surface-500"></p>
+            <video id="video-preview" controls class="w-full max-h-72 rounded-xl border border-surface-100 bg-black"></video>
+        </div>
+
+        <div class="mt-5 space-y-4">
+            <div class="flex flex-wrap items-center gap-5">
+                <label class="inline-flex items-center gap-2 text-sm font-semibold text-surface-700">
+                    <input type="radio" name="extract-mode" value="full" checked>
+                    Extract full audio
+                </label>
+                <label class="inline-flex items-center gap-2 text-sm font-semibold text-surface-700">
+                    <input type="radio" name="extract-mode" value="range">
+                    Extract from start to end
+                </label>
+            </div>
+
+            <div id="range-fields" class="hidden flex flex-wrap items-center gap-3">
+                <input type="number" id="extract-start" min="0" step="0.01" value="0" class="w-36 rounded-lg border border-surface-200 px-3 py-2 text-sm" placeholder="Start (s)">
+                <input type="number" id="extract-end" min="0" step="0.01" value="10" class="w-36 rounded-lg border border-surface-200 px-3 py-2 text-sm" placeholder="End (s)">
+            </div>
+        </div>
+
+        <div class="mt-5 flex items-center gap-3">
+            <select id="output-format" class="rounded-lg border border-surface-200 px-3 py-2 text-sm font-semibold">
+                <option value="mp3">MP3</option>
+                <option value="wav">WAV</option>
+                <option value="m4a">M4A</option>
+                <option value="ogg">OGG</option>
+                <option value="flac">FLAC</option>
+            </select>
+            <button id="extract-btn" class="px-5 py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-black hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed">
+                Extract & Download
+            </button>
+        </div>
+
+        <div id="processing" class="hidden mt-4 rounded-xl border border-surface-100 bg-surface-50 p-3 text-sm font-semibold text-surface-700">
+            Processing extraction... please wait.
+        </div>
+
+        <div id="extracted-result" class="hidden mt-4 rounded-xl border border-emerald-100 bg-emerald-50/40 p-4">
+            <h4 class="text-sm font-bold text-surface-800 mb-2">Extracted audio preview</h4>
+            <audio id="extracted-audio-player" controls class="w-full"></audio>
+            <div class="mt-3">
+                <a id="extracted-download-link" href="#" class="inline-flex items-center rounded-lg bg-emerald-600 px-4 py-2 text-xs font-black text-white hover:bg-emerald-700">
+                    Download extracted audio
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block tool_scripts %}
+<script>
+(() => {
+    const videoInput = document.getElementById('video-file');
+    const removeVideoBtn = document.getElementById('remove-video');
+    const videoWrap = document.getElementById('video-wrap');
+    const videoName = document.getElementById('video-name');
+    const videoPreview = document.getElementById('video-preview');
+    const rangeFields = document.getElementById('range-fields');
+    const extractBtn = document.getElementById('extract-btn');
+    const processing = document.getElementById('processing');
+    const outputFormat = document.getElementById('output-format');
+    const extractStartInput = document.getElementById('extract-start');
+    const extractEndInput = document.getElementById('extract-end');
+    const extractedResult = document.getElementById('extracted-result');
+    const extractedAudioPlayer = document.getElementById('extracted-audio-player');
+    const extractedDownloadLink = document.getElementById('extracted-download-link');
+
+    let selectedVideo = null;
+    let previewUrl = null;
+    let extractedUrl = null;
+    let selectedVideoDuration = 0;
+
+    function refreshState() {
+        const hasVideo = !!selectedVideo;
+        videoWrap.classList.toggle('hidden', !hasVideo);
+        extractBtn.disabled = !hasVideo;
+        const mode = document.querySelector('input[name="extract-mode"]:checked')?.value || 'full';
+        rangeFields.classList.toggle('hidden', mode !== 'range');
+    }
+
+    function clearVideoSelection() {
+        selectedVideo = null;
+        selectedVideoDuration = 0;
+        if (previewUrl) {
+            URL.revokeObjectURL(previewUrl);
+            previewUrl = null;
+        }
+        videoPreview.removeAttribute('src');
+        videoPreview.load();
+        videoName.textContent = '';
+        extractStartInput.value = '0';
+        extractEndInput.value = '10';
+        extractStartInput.removeAttribute('max');
+        extractEndInput.removeAttribute('max');
+        extractedResult.classList.add('hidden');
+        refreshState();
+    }
+
+    function clampRangeInputs() {
+        if (!selectedVideoDuration || Number.isNaN(selectedVideoDuration)) return;
+        const maxDuration = selectedVideoDuration;
+        let start = parseFloat(extractStartInput.value || '0');
+        let end = parseFloat(extractEndInput.value || String(maxDuration));
+        if (Number.isNaN(start)) start = 0;
+        if (Number.isNaN(end)) end = maxDuration;
+
+        start = Math.max(0, Math.min(start, maxDuration));
+        end = Math.max(start + 0.01, Math.min(end, maxDuration));
+
+        extractStartInput.value = start.toFixed(2);
+        extractEndInput.value = end.toFixed(2);
+    }
+
+    videoInput.addEventListener('change', () => {
+        const file = videoInput.files?.[0];
+        if (!file) return;
+        selectedVideo = file;
+        if (previewUrl) URL.revokeObjectURL(previewUrl);
+        previewUrl = URL.createObjectURL(file);
+        videoPreview.src = previewUrl;
+        videoName.textContent = `${file.name} (${(file.size / (1024 * 1024)).toFixed(2)} MB)`;
+        videoPreview.onloadedmetadata = () => {
+            selectedVideoDuration = videoPreview.duration || 0;
+            if (selectedVideoDuration > 0) {
+                extractStartInput.min = '0';
+                extractEndInput.min = '0';
+                extractStartInput.max = selectedVideoDuration.toFixed(2);
+                extractEndInput.max = selectedVideoDuration.toFixed(2);
+                extractStartInput.value = '0';
+                extractEndInput.value = selectedVideoDuration.toFixed(2);
+                clampRangeInputs();
+            }
+        };
+        refreshState();
+        videoInput.value = '';
+    });
+
+    removeVideoBtn.addEventListener('click', clearVideoSelection);
+    document.querySelectorAll('input[name="extract-mode"]').forEach(r => r.addEventListener('change', refreshState));
+    extractStartInput.addEventListener('input', clampRangeInputs);
+    extractEndInput.addEventListener('input', clampRangeInputs);
+    extractStartInput.addEventListener('change', clampRangeInputs);
+    extractEndInput.addEventListener('change', clampRangeInputs);
+
+    extractBtn.addEventListener('click', async () => {
+        if (!selectedVideo) return;
+        const mode = document.querySelector('input[name="extract-mode"]:checked')?.value || 'full';
+        const start = extractStartInput.value;
+        const end = extractEndInput.value;
+        if (mode === 'range') {
+            clampRangeInputs();
+        }
+        if (mode === 'range' && (!end || parseFloat(end) <= parseFloat(start || '0'))) {
+            alert('Please provide a valid start/end range.');
+            return;
+        }
+        if (mode === 'range' && selectedVideoDuration > 0 && parseFloat(end) > selectedVideoDuration) {
+            alert('End time cannot exceed video duration.');
+            return;
+        }
+
+        const fd = new FormData();
+        fd.append('mode', 'extract');
+        fd.append('format', outputFormat.value);
+        fd.append('video_file', selectedVideo);
+        fd.append('extract_mode', mode);
+        if (mode === 'range') {
+            fd.append('start', start || '0');
+            fd.append('end', end);
+        }
+
+        processing.classList.remove('hidden');
+        extractBtn.disabled = true;
+        try {
+            const response = await fetch('/audio/api/process/', { method: 'POST', body: fd });
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.error || 'Failed to extract audio');
+            }
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const filename = response.headers.get('Content-Disposition')?.split('filename=')[1]?.replace(/"/g, '') || 'extracted_audio.mp3';
+            if (extractedUrl) URL.revokeObjectURL(extractedUrl);
+            extractedUrl = url;
+            extractedAudioPlayer.src = url;
+            extractedDownloadLink.href = url;
+            extractedDownloadLink.download = filename;
+            extractedResult.classList.remove('hidden');
+        } catch (error) {
+            alert('Error: ' + error.message);
+        } finally {
+            processing.classList.add('hidden');
+            extractBtn.disabled = !selectedVideo;
+        }
+    });
+
+    refreshState();
+})();
+</script>
+{% endblock %}
+

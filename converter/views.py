@@ -628,6 +628,29 @@ TOOLS = {
         'gradient': 'from-emerald-500 to-teal-600',
         'category': 'audio-tools',
     },
+    'merge-audio': {
+        'title': 'Merge Audio',
+        'description': 'Combine multiple audio files into one track with in-page preview and processing status.',
+        'icon': 'combine',
+        'accept': '.mp3,.wav,.ogg,.m4a,.flac',
+        'allowed_extensions': ['.mp3', '.wav', '.ogg', '.m4a', '.flac'],
+        'converter': None,
+        'color': '#059669',
+        'gradient': 'from-emerald-500 to-green-700',
+        'category': 'audio-tools',
+        'multi_file': True,
+    },
+    'extract-audio-from-video': {
+        'title': 'Extract Audio From Video',
+        'description': 'Upload a video, preview it, and extract full audio or a custom start-to-end range.',
+        'icon': 'video',
+        'accept': '.mp4,.mov,.avi,.mkv,.webm',
+        'allowed_extensions': ['.mp4', '.mov', '.avi', '.mkv', '.webm'],
+        'converter': None,
+        'color': '#2563eb',
+        'gradient': 'from-blue-500 to-indigo-700',
+        'category': 'audio-tools',
+    },
 }
 
 
@@ -721,6 +744,10 @@ def convert_page(request, tool_slug):
         template = 'converter/html_to_pdf.html'
     elif tool_slug == 'audio-editor':
         template = 'audio_processor/editor.html'
+    elif tool_slug == 'merge-audio':
+        template = 'audio_processor/merge_audio.html'
+    elif tool_slug == 'extract-audio-from-video':
+        template = 'audio_processor/extract_audio.html'
     else:
         template = 'converter/convert.html'
 
@@ -1532,6 +1559,9 @@ def convert_file(request, tool_slug):
             return JsonResponse({'error': 'No file was uploaded.'}, status=400)
 
         uploaded_file = request.FILES['file']
+        signatures_json = request.POST.get('signatures_json', '')
+
+        # Legacy single-signature fields (backward compat)
         signature_data = request.POST.get('signature_data', '')
         page_number = request.POST.get('page_number', '0')
         sig_x = request.POST.get('sig_x', '100')
@@ -1544,10 +1574,25 @@ def convert_file(request, tool_slug):
         if signature_image:
             sig_image_path = save_uploaded_file(signature_image)
 
-        if not signature_data and not sig_image_path:
+        if not signatures_json and not signature_data and not sig_image_path:
             return JsonResponse({'error': 'Please provide a signature (draw or upload).'}, status=400)
 
         try:
+            # If using advanced mode, resolve file-based signature images
+            # The frontend sends each sig as 'sig_file_N' in request.FILES
+            sig_file_paths = {}
+            if signatures_json:
+                import json as _json
+                placements = _json.loads(signatures_json) if isinstance(signatures_json, str) else signatures_json
+                for item in placements:
+                    file_key = item.get('file_key', '')
+                    if file_key and file_key in request.FILES:
+                        saved = save_uploaded_file(request.FILES[file_key])
+                        sig_file_paths[file_key] = saved
+                        item['_resolved_path'] = saved
+                # Re-encode with resolved paths for the utility
+                signatures_json = _json.dumps(placements)
+
             input_path = save_uploaded_file(uploaded_file)
             output_path = sign_pdf(
                 input_path, uploaded_file.name,
@@ -1556,6 +1601,7 @@ def convert_file(request, tool_slug):
                 page_number=page_number,
                 x=sig_x, y=sig_y,
                 width=sig_width, height=sig_height,
+                signatures_json=signatures_json if signatures_json else None,
             )
             try:
                 os.remove(input_path)
@@ -1564,6 +1610,12 @@ def convert_file(request, tool_slug):
             if sig_image_path:
                 try:
                     os.remove(sig_image_path)
+                except OSError:
+                    pass
+            # Clean up any resolved signature files
+            for fp in sig_file_paths.values():
+                try:
+                    os.remove(fp)
                 except OSError:
                     pass
             return create_cleanup_response(output_path, content_type='application/pdf')
