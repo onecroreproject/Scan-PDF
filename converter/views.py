@@ -3,6 +3,10 @@ Views for the file converter application.
 """
 import os
 import mimetypes
+import json
+import time
+import urllib.request
+import urllib.parse
 from pathlib import Path
 from django.shortcuts import render
 from django.http import JsonResponse, FileResponse, Http404
@@ -59,6 +63,8 @@ from .utils import (
     redact_pdf,
     merge_word_files,
 )
+
+_CURRENCY_CACHE = {'base': None, 'rates': None, 'updated_at': 0}
 
 
 class FileCleanupResponse(FileResponse):
@@ -1749,3 +1755,68 @@ def speedtest_upload(request):
 def custom_404_view(request, exception=None):
     """Custom view for handling 404 errors."""
     return render(request, '404.html', status=404)
+
+
+@csrf_exempt
+def currency_rates(request):
+    """
+    Optional privacy-safe live currency rates endpoint.
+    No user conversion data is accepted or stored.
+    """
+    supported = ['INR', 'USD', 'EUR', 'GBP', 'AED', 'JPY', 'SGD', 'AUD', 'CAD', 'CNY']
+    base = (request.GET.get('base') or 'USD').upper()
+    if base not in supported:
+        return JsonResponse({'error': 'Unsupported base currency.'}, status=400)
+
+    now = time.time()
+    # Runtime memory cache only (not persisted on disk/db)
+    if (
+        _CURRENCY_CACHE['base'] == base
+        and _CURRENCY_CACHE['rates']
+        and (now - _CURRENCY_CACHE['updated_at']) < 300
+    ):
+        return JsonResponse({
+            'mode': 'live',
+            'base': base,
+            'rates': _CURRENCY_CACHE['rates'],
+            'last_updated': _CURRENCY_CACHE['updated_at'],
+        })
+
+    api_key = os.environ.get('EXCHANGE_RATE_API_KEY')
+    api_url = os.environ.get('EXCHANGE_RATE_API_URL')
+    # If env vars are not configured, client should use fallback rates.
+    if not api_key or not api_url:
+        return JsonResponse({
+            'mode': 'fallback',
+            'base': base,
+            'message': 'Live API not configured.',
+        }, status=503)
+
+    try:
+        query = urllib.parse.urlencode({'base': base, 'symbols': ','.join(supported)})
+        url = f"{api_url}?{query}"
+        req = urllib.request.Request(url, headers={'apikey': api_key})
+        with urllib.request.urlopen(req, timeout=6) as resp:
+            payload = json.loads(resp.read().decode('utf-8'))
+
+        rates = payload.get('rates') or {}
+        filtered = {code: float(rates[code]) for code in supported if code in rates}
+        filtered[base] = 1.0
+        if len(filtered) < 2:
+            raise ValueError('Insufficient rates from live API.')
+
+        _CURRENCY_CACHE['base'] = base
+        _CURRENCY_CACHE['rates'] = filtered
+        _CURRENCY_CACHE['updated_at'] = now
+        return JsonResponse({
+            'mode': 'live',
+            'base': base,
+            'rates': filtered,
+            'last_updated': now,
+        })
+    except Exception:
+        return JsonResponse({
+            'mode': 'fallback',
+            'base': base,
+            'message': 'Live rates unavailable.',
+        }, status=503)
