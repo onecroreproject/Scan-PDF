@@ -132,6 +132,7 @@
         convert: document.getElementById('uc-convert'),
         result: document.getElementById('uc-result'),
         meta: document.getElementById('uc-meta'),
+        allResultsBody: document.getElementById('uc-all-results-body'),
     };
 
     function formatNumber(num) {
@@ -152,6 +153,20 @@
     function setResult(value, meta = '') {
         el.result.textContent = value;
         el.meta.textContent = meta;
+    }
+
+    function setAllResults(rows) {
+        el.allResultsBody.innerHTML = '';
+        rows.forEach((row) => {
+            const tr = document.createElement('tr');
+            const td1 = document.createElement('td');
+            const td2 = document.createElement('td');
+            td1.textContent = row.label;
+            td2.textContent = row.value;
+            tr.appendChild(td1);
+            tr.appendChild(td2);
+            el.allResultsBody.appendChild(tr);
+        });
     }
 
     function renderSidebar() {
@@ -264,6 +279,11 @@
         const toCfg = units[key][el.to.value];
         const result = amount * (fromCfg.factor / toCfg.factor);
         setResult(`${formatNumber(result)} ${toCfg.label}`, `1 ${fromCfg.label} = ${formatNumber(fromCfg.factor / toCfg.factor)} ${toCfg.label}`);
+        const rows = Object.entries(units[key]).map(([, cfg]) => ({
+            label: cfg.label,
+            value: formatNumber(amount * (fromCfg.factor / cfg.factor)),
+        }));
+        setAllResults(rows);
     }
 
     function convertTemperature() {
@@ -280,6 +300,13 @@
         if (to === 'f') result = celsius * (9 / 5) + 32;
         if (to === 'k') result = celsius + 273.15;
         setResult(`${formatNumber(result)} ${temperatureUnits[to]}`, 'Formula-based conversion');
+        const rows = Object.entries(temperatureUnits).map(([unitKey, label]) => {
+            let value = celsius;
+            if (unitKey === 'f') value = celsius * (9 / 5) + 32;
+            if (unitKey === 'k') value = celsius + 273.15;
+            return { label, value: formatNumber(value) };
+        });
+        setAllResults(rows);
     }
 
     function convertCurrency() {
@@ -298,6 +325,12 @@
             ? `Last updated: ${new Date(state.currencyLastUpdated * 1000).toLocaleString()}`
             : 'Last updated: fallback mode';
         setResult(`${formatNumber(result)} ${to}`, `${source} | ${stamp}`);
+        const rows = currencyOrder.map((code) => {
+            const rate = state.currencyRates[code];
+            const value = rate ? amount * (rate / fromRate) : NaN;
+            return { label: code, value: formatNumber(value) };
+        });
+        setAllResults(rows);
     }
 
     function getOffsetMs(timestamp, timeZone) {
@@ -363,6 +396,11 @@
         const targetDisplay = formatInZone(utcMs, toZone);
         const sourceDisplay = formatInZone(utcMs, fromZone);
         setResult(targetDisplay, `${fromZone}: ${sourceDisplay}`);
+        const rows = timezones.map((zone) => ({
+            label: zone,
+            value: formatInZone(utcMs, zone),
+        }));
+        setAllResults(rows);
     }
 
     function convertCurrent() {
@@ -377,6 +415,7 @@
     function resetCurrent() {
         setError('');
         setResult('-', '');
+        setAllResults([]);
         if (categoryConfig(state.current).type === 'timezone') {
             el.tzDatetime.value = defaultDateTimeLocal();
             el.tzFrom.value = 'UTC';
