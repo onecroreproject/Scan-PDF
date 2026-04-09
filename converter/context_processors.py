@@ -19,12 +19,13 @@ def tools_processor(request):
         'ai-tools': 'AI Generation',
         'other': 'Utilities',
         'download': 'Video Download',
+        'audio-tools': 'Audio Editor',
     }
 
     # Define the desired ordering of categories
     CATEGORY_ORDER = [
         'convert', 'pdf-tools', 'image-tools',
-        'generate', 'ai-tools', 'other', 'download',
+        'generate', 'ai-tools', 'other', 'download', 'audio-tools'
     ]
 
     for slug, data in TOOLS.items():
