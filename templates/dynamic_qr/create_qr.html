@@ -1,0 +1,385 @@
+{% extends 'converter/base.html' %}
+{% load static %}
+
+{% block content %}
+<div class="dqr-container" style="max-width: 1200px; margin: 0 auto; padding: 24px 15px;">
+    <!-- Header -->
+    <div class="dqr-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 24px; gap: 16px; flex-wrap: wrap;">
+        <div class="dqr-header-info" style="flex: 1; min-width: 250px;">
+            <h1 style="font-size: 1.75rem; font-weight: 900; color: #1e293b; margin: 0; letter-spacing: -0.04em; line-height: 1.1;">✨ Create Dynamic QR</h1>
+            <p style="color: #64748b; font-size: 14px; margin-top: 6px; font-weight: 500;">Design your dynamic QR. Update destination later.</p>
+        </div>
+        <div class="dqr-header-actions">
+            <a href="{% url 'dynamic_qr:dashboard' %}" class="btn-outline">
+                <i data-lucide="layout-dashboard" style="width:16px;height:16px"></i>
+                Dashboard
+            </a>
+        </div>
+    </div>
+
+    <div class="generator-grid" style="display: grid; grid-template-columns: 1.5fr 1fr; gap: 30px;">
+        <!-- Left: Options (Accordions) -->
+        <div class="generator-options">
+            
+            <!-- Accordion 1: Content -->
+            <div class="accordion-item active" id="acc-content">
+                <div class="accordion-header" onclick="toggleAccordion('acc-content')">
+                    <div style="display:flex; align-items:center; gap:12px;">
+                        <div class="acc-icon-box" style="background: #e0e7ff; color: #4338ca;"><i data-lucide="link" class="w-5 h-5"></i></div>
+                        <span class="acc-title">QR Content</span>
+                    </div>
+                    <i data-lucide="chevron-down" class="acc-chevron"></i>
+                </div>
+                <div class="accordion-content">
+                    <div class="field-group">
+                        <label class="field-label">QR Code Name (Internal Reference)</label>
+                        <input type="text" id="qr-name" class="field" placeholder="e.g. My Website QR" oninput="updatePreview()">
+                    </div>
+                    
+                    <div class="field-group">
+                        <label class="field-label">Select QR Type</label>
+                        <div class="type-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; margin-bottom: 20px;">
+                            <button type="button" class="type-opt active" onclick="setQRType('url', this)"><i data-lucide="link"></i><span>URL</span></button>
+                            <button type="button" class="type-opt" onclick="setQRType('text', this)"><i data-lucide="type"></i><span>Text</span></button>
+                            <button type="button" class="type-opt" onclick="setQRType('email', this)"><i data-lucide="mail"></i><span>Email</span></button>
+                            <button type="button" class="type-opt" onclick="setQRType('vcard', this)"><i data-lucide="contact-2"></i><span>vCard</span></button>
+                            <button type="button" class="type-opt" onclick="setQRType('wifi', this)"><i data-lucide="wifi"></i><span>WiFi</span></button>
+                            <button type="button" class="type-opt" onclick="setQRType('phone', this)"><i data-lucide="phone"></i><span>Phone</span></button>
+                            <button type="button" class="type-opt" onclick="setQRType('sms', this)"><i data-lucide="message-square"></i><span>SMS</span></button>
+                            <button type="button" class="type-opt" onclick="setQRType('location', this)"><i data-lucide="map-pin"></i><span>Location</span></button>
+                        </div>
+                    </div>
+
+                    <!-- Dynamic Inputs based on type -->
+                    <div id="dynamic-inputs">
+                        <div class="field-group type-input" id="input-url">
+                            <label class="field-label">Website URL</label>
+                            <input type="url" id="data-url" class="field" placeholder="https://example.com" oninput="updatePreview()">
+                        </div>
+                        <!-- Other types are hidden/shown by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Accordion 2: Colors -->
+            <div class="accordion-item" id="acc-colors">
+                <div class="accordion-header" onclick="toggleAccordion('acc-colors')">
+                    <div style="display:flex; align-items:center; gap:12px;">
+                        <div class="acc-icon-box" style="background: #fef3c7; color: #d97706;"><i data-lucide="palette" class="w-5 h-5"></i></div>
+                        <span class="acc-title">Design Colors</span>
+                    </div>
+                    <i data-lucide="chevron-down" class="acc-chevron"></i>
+                </div>
+                <div class="accordion-content">
+                    <div style="display:grid; grid-template-columns: 1fr 1fr; gap:20px;">
+                        <div class="field-group">
+                            <label class="field-label">Foreground Color</label>
+                            <div class="color-picker-wrap">
+                                <input type="color" id="qr-fg" value="#000000" oninput="updatePreview()">
+                                <input type="text" class="color-hex" value="#000000" readonly>
+                            </div>
+                        </div>
+                        <div class="field-group">
+                            <label class="field-label">Background Color</label>
+                            <div class="color-picker-wrap">
+                                <input type="color" id="qr-bg" value="#ffffff" oninput="updatePreview()">
+                                <input type="text" class="color-hex" value="#ffffff" readonly>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Accordion 3: Style & Logo -->
+            <div class="accordion-item" id="acc-style">
+                <div class="accordion-header" onclick="toggleAccordion('acc-style')">
+                    <div style="display:flex; align-items:center; gap:12px;">
+                        <div class="acc-icon-box" style="background: #dcfce7; color: #16a34a;"><i data-lucide="layout" class="w-5 h-5"></i></div>
+                        <span class="acc-title">Extra Customization</span>
+                    </div>
+                    <i data-lucide="chevron-down" class="acc-chevron"></i>
+                </div>
+                <div class="accordion-content">
+                    <div class="field-group">
+                        <label class="field-label">Body Pattern</label>
+                        <div class="shape-grid">
+                            <label class="shape-opt"><input type="radio" name="body" value="square" checked onchange="updatePreview()"><div><i data-lucide="square" class="w-4 h-4"></i></div></label>
+                            <label class="shape-opt"><input type="radio" name="body" value="circle" onchange="updatePreview()"><div><i data-lucide="circle" class="w-4 h-4"></i></div></label>
+                            <label class="shape-opt"><input type="radio" name="body" value="rounded" onchange="updatePreview()"><div><i data-lucide="toy-brick" class="w-4 h-4"></i></div></label>
+                        </div>
+                    </div>
+                    <div class="field-group">
+                        <label class="field-label">Upload Logo (Optional)</label>
+                        <input type="file" id="qr-logo" class="field" accept="image/*" onchange="updatePreview()">
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-top: 30px;">
+                <button class="btn-glow" style="width:100%; height: 56px; font-size: 1.1rem;" onclick="createDynamicQR()">
+                    <i data-lucide="plus" style="width:20px;height:20px"></i>
+                    Create Dynamic QR Code
+                </button>
+            </div>
+
+        </div>
+
+        <!-- Right: Preview -->
+        <div class="generator-preview">
+            <div class="preview-card" style="position: sticky; top: 100px; background: white; border-radius: 24px; padding: 24px; box-shadow: 0 20px 50px rgba(0,0,0,0.08); text-align: center; border: 1px solid #f1f5f9;">
+                <div id="preview-title" style="font-weight: 800; color: #1e293b; margin-bottom: 16px; font-size: 1.1rem;">Live Preview</div>
+                <div class="preview-img-wrap" style="width: 240px; height: 240px; background: #f8fafc; border-radius: 20px; margin: 0 auto; display: flex; align-items: center; justify-content: center; overflow: hidden; border: 1px solid #e2e8f0; position:relative;">
+                    <img id="qr-preview-img" src="" style="width: 100%; height: 100%; object-fit: contain; display:none;">
+                    <div id="preview-placeholder" style="color: #94a3b8; font-size: 0.85rem; text-align: center; padding: 20px;">
+                        <i data-lucide="qr-code" style="width:40px; height:40px; margin-bottom:10px; opacity:0.3;"></i>
+                        <p>Fill in details to see<br>your dynamic QR</p>
+                    </div>
+                    <div id="preview-loader" class="loader-overlay hidden">
+                        <div class="spinner"></div>
+                    </div>
+                </div>
+                <div style="margin-top: 24px; color: #64748b; font-size: 0.9rem; line-height: 1.6;">
+                    Scanning this QR will redirect to your destination.<br><strong>You can change the destination later!</strong>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Styles for full page generator -->
+<style>
+    .accordion-item { border: 1px solid #e2e8f0; border-radius: 16px; margin-bottom: 12px; background: white; overflow: hidden; transition: all 0.3s ease; }
+    .accordion-item.active { border-color: #818cf8; box-shadow: 0 10px 20px rgba(99, 102, 241, 0.05); }
+    .accordion-header { padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; user-select: none; }
+    .acc-icon-box { width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+    .acc-title { font-weight: 700; color: #1e293b; font-size: 0.95rem; }
+    .acc-chevron { transition: transform 0.3s ease; color: #94a3b8; width: 18px; height: 18px; }
+    .accordion-item.active .acc-chevron { transform: rotate(180deg); color: #818cf8; }
+    .accordion-content { padding: 0 18px 18px 18px; display: none; }
+    .accordion-item.active .accordion-content { display: block; }
+ 
+    .field-group { margin-bottom: 16px; }
+    .field-label { display: block; font-size: 0.8rem; font-weight: 700; color: #64748b; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.05em; }
+    .field { width: 100%; padding: 10px 14px; border: 1px solid #e2e8f0; border-radius: 10px; font-size: 0.95rem; color: #1e293b; transition: all 0.3s; }
+    .field:focus { outline: none; border-color: #818cf8; box-shadow: 0 0 0 4px rgba(129, 140, 248, 0.1); }
+
+    .type-opt { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px 8px; display: flex; flex-direction: column; align-items: center; gap: 8px; cursor: pointer; transition: all 0.3s; }
+    .type-opt i { width: 20px; height: 20px; color: #64748b; }
+    .type-opt span { font-size: 0.75rem; font-weight: 700; color: #64748b; }
+    .type-opt:hover { background: #f1f5f9; }
+    .type-opt.active { background: #eef2ff; border-color: #818cf8; }
+    .type-opt.active i, .type-opt.active span { color: #818cf8; }
+
+    .color-picker-wrap { display: flex; align-items: center; gap: 10px; }
+    input[type="color"] { width: 40px; height: 40px; padding: 0; border: none; border-radius: 8px; cursor: pointer; }
+    .color-hex { flex: 1; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; font-family: monospace; font-size: 0.9rem; background: #f8fafc; }
+
+    .shape-grid { display: flex; gap: 12px; }
+    .shape-opt { cursor: pointer; }
+    .shape-opt input { display: none; }
+    .shape-opt div { width: 44px; height: 44px; border: 1px solid #e2e8f0; border-radius: 10px; display: flex; align-items: center; justify-content: center; background: #f8fafc; color: #64748b; transition: all 0.3s; }
+    .shape-opt input:checked + div { background: #eef2ff; border-color: #818cf8; color: #818cf8; box-shadow: 0 4px 12px rgba(99, 102, 241, 0.15); }
+
+    .btn-glow { background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); color: white; border: none; border-radius: 12px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; gap: 10px; cursor: pointer; transition: all 0.3s ease; box-shadow: 0 10px 20px rgba(99, 102, 241, 0.2); text-decoration: none; }
+    .btn-glow:hover { transform: translateY(-2px); box-shadow: 0 15px 30px rgba(99, 102, 241, 0.3); opacity: 0.9; }
+    .btn-outline { background: white; color: #64748b; border: 1px solid #e2e8f0; padding: 10px 16px; border-radius: 10px; font-weight: 600; display: inline-flex; align-items: center; gap: 8px; text-decoration: none; font-size: 0.9rem; transition: all 0.2s; }
+    .btn-outline:hover { background: #f8fafc; border-color: #cbd5e1; color: #1e293b; }
+
+    .loader-overlay { position: absolute; inset: 0; background: rgba(255,255,255,0.7); display: flex; items-center: center; justify-content: center; backdrop-filter: blur(2px); transition: opacity 0.3s; }
+    .hidden { display: none !important; }
+    .spinner { width: 32px; height: 32px; border: 4px solid #e2e8f0; border-top-color: #818cf8; border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* Mobile scaling */
+    @media (max-width: 992px) {
+        .generator-grid { grid-template-columns: 1fr; gap: 30px; }
+        .generator-preview { order: -1; }
+        .preview-card { position: static !important; max-width: 100%; padding: 24px !important; }
+        .dqr-header { text-align: left; }
+        .dqr-header-info h1 { font-size: 1.5rem !important; }
+    }
+    @media (max-width: 640px) {
+        .dqr-container { padding: 15px 12px !important; }
+        .type-grid { grid-template-columns: repeat(2, 1fr) !important; gap: 8px !important; }
+        .accordion-header { padding: 16px; }
+        .accordion-content { padding: 0 16px 16px 16px; }
+        .shape-grid { justify-content: center; flex-wrap: wrap; }
+    }
+</style>
+
+<!-- Scripts -->
+<script>
+    let currentType = 'url';
+    const CSRF = "{{ csrf_token }}";
+
+    function toggleAccordion(id) {
+        const item = document.getElementById(id);
+        const isActive = item.classList.contains('active');
+        // Optional: Close others
+        // document.querySelectorAll('.accordion-item').forEach(i => i.classList.remove('active'));
+        if (isActive) item.classList.remove('active');
+        else item.classList.add('active');
+    }
+
+    function setQRType(type, btn) {
+        currentType = type;
+        document.querySelectorAll('.type-opt').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderInputs();
+        updatePreview();
+    }
+
+    function renderInputs() {
+        const wrap = document.getElementById('dynamic-inputs');
+        let html = '';
+        if (typeConfigs[currentType]) {
+            typeConfigs[currentType].fields.forEach(f => {
+                html += `
+                    <div class="field-group">
+                        <label class="field-label">${f.label}</label>
+                        <input type="${f.type}" id="data-${f.name}" class="field" placeholder="${f.placeholder || ''}" oninput="updatePreview()">
+                    </div>
+                `;
+            });
+        }
+        wrap.innerHTML = html;
+    }
+
+    const typeConfigs = {
+        url: { fields: [{ name: 'url', label: 'Website URL', type: 'url', placeholder: 'https://example.com' }] },
+        text: { fields: [{ name: 'text', label: 'Message Text', type: 'text', placeholder: 'Hello world...' }] },
+        email: { fields: [
+            { name: 'email', label: 'Recipient Email', type: 'email', placeholder: 'hi@example.com' },
+            { name: 'subject', label: 'Subject', type: 'text' },
+            { name: 'body', label: 'Message', type: 'text' }
+        ]},
+        vcard: { fields: [
+            { name: 'fname', label: 'First Name', type: 'text' },
+            { name: 'lname', label: 'Last Name', type: 'text' },
+            { name: 'phone', label: 'Phone Number', type: 'text' },
+            { name: 'email', label: 'Email Address', type: 'email' }
+        ]},
+        wifi: { fields: [
+            { name: 'ssid', label: 'Network Name (SSID)', type: 'text' },
+            { name: 'pass', label: 'Password', type: 'text' },
+            { name: 'sec', label: 'Security (plain/WEP/WPA)', type: 'text' }
+        ]},
+        phone: { fields: [{ name: 'phone', label: 'Phone Number', type: 'tel', placeholder: '+1 234...' }] },
+        sms: { fields: [
+            { name: 'phone', label: 'Phone Number', type: 'tel' },
+            { name: 'message', label: 'Message', type: 'text' }
+        ]},
+        location: { fields: [
+            { name: 'lat', label: 'Latitude', type: 'text', placeholder: '51.5074' },
+            { name: 'lng', label: 'Longitude', type: 'text', placeholder: '-0.1278' }
+        ]}
+    };
+
+    let previewTimer;
+    function updatePreview() {
+        clearTimeout(previewTimer);
+        previewTimer = setTimeout(async () => {
+            const qrData = {};
+            typeConfigs[currentType].fields.forEach(f => {
+                const el = document.getElementById(`data-${f.name}`);
+                if (el) qrData[f.name] = el.value;
+            });
+            
+            // For preview, we use a dummy "preview" text or the actual first field
+            const previewText = Object.values(qrData)[0] || 'Preview';
+            const fg = document.getElementById('qr-fg').value;
+            const bg = document.getElementById('qr-bg').value;
+            const style = document.querySelector('input[name="body"]:checked').value;
+            
+            // UI
+            document.getElementById('preview-loader').classList.remove('hidden');
+            
+            try {
+                const fd = new FormData();
+                fd.append('text', previewText);
+                fd.append('fg_color', fg);
+                fd.append('bg_color', bg);
+                fd.append('style', style);
+                fd.append('csrfmiddlewaretoken', CSRF);
+                
+                const logoFile = document.getElementById('qr-logo').files[0];
+                if (logoFile) fd.append('logo', logoFile);
+
+                const resp = await fetch('{% url "dynamic_qr:generate_image" %}', { method: 'POST', body: fd });
+                const blob = await resp.blob();
+                const url = URL.createObjectURL(blob);
+                
+                document.getElementById('qr-preview-img').src = url;
+                document.getElementById('qr-preview-img').style.display = 'block';
+                document.getElementById('preview-placeholder').style.display = 'none';
+            } catch(e) {}
+            document.getElementById('preview-loader').classList.add('hidden');
+        }, 500);
+    }
+
+    async function createDynamicQR() {
+        const qrName = document.getElementById('qr-name').value.trim();
+        const qrData = {};
+        typeConfigs[currentType].fields.forEach(f => {
+            const el = document.getElementById(`data-${f.name}`);
+            if (el) qrData[f.name] = el.value;
+        });
+
+        if (!qrName) { showToast('Please enter a name for your QR.', 'error'); return; }
+        
+        // Find a destination URL fallback (most types will redirect to a landing page by our views)
+        let destination = '';
+        if (currentType === 'url') destination = qrData.url;
+        else destination = '#'; // Let the system handle landing page
+
+        const fg = document.getElementById('qr-fg').value;
+        const bg = document.getElementById('qr-bg').value;
+        const style = document.querySelector('input[name="body"]:checked').value;
+        const logo = document.getElementById('qr-logo').files[0];
+
+        const fd = new FormData();
+        fd.append('qr_name', qrName);
+        fd.append('qr_type', currentType);
+        fd.append('destination_url', destination);
+        fd.append('qr_data', JSON.stringify(qrData));
+        fd.append('fg_color', fg);
+        fd.append('bg_color', bg);
+        fd.append('body_style', style);
+        if (logo) fd.append('logo', logo);
+        fd.append('csrfmiddlewaretoken', CSRF);
+
+        showToast('Saving your Dynamic QR...');
+        try {
+            const resp = await fetch('{% url "dynamic_qr:create" %}', { method: 'POST', body: fd });
+            const data = await resp.json();
+            if (data.success) {
+                showToast('Successfully created! Redirecting...', 'success');
+                setTimeout(() => window.location.href = "{% url 'dynamic_qr:dashboard' %}", 1000);
+            } else {
+                showToast(data.error || 'Failed to save', 'error');
+            }
+        } catch(e) { showToast('Network error', 'error'); }
+    }
+
+    function showToast(msg, type = 'success') {
+        let t = document.getElementById('toast');
+        if (!t) {
+            t = document.createElement('div');
+            t.id = 'toast';
+            t.style = 'position:fixed; bottom:30px; left:50%; transform:translateX(-50%); padding:12px 24px; border-radius:12px; color:white; z-index:10000; font-weight:700; transition: all 0.3s;';
+            document.body.appendChild(t);
+        }
+        t.textContent = msg;
+        t.style.display = 'block';
+        t.style.background = type === 'error' ? '#ef4444' : '#0f172a';
+        setTimeout(() => { t.style.display = 'none'; }, 3000);
+    }
+
+    // Init
+    window.onload = () => {
+        renderInputs();
+        lucide.createIcons();
+        updatePreview();
+    };
+</script>
+{% endblock %}

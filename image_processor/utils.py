@@ -8,8 +8,24 @@ from PIL import Image, ImageFilter, ImageEnhance, ImageDraw, ImageFont
 import numpy as np
 import cv2
 
-# Functionality for video and gif processing
-from moviepy.editor import VideoFileClip, ImageSequenceClip, ImageClip, AudioFileClip, concatenate_videoclips
+from converter.media_binaries import ensure_ffmpeg_configured
+
+
+def _moviepy():
+    """
+    Import MoviePy lazily so IMAGEIO_FFMPEG_EXE (set by ensure_ffmpeg_configured)
+    is in place before imageio/moviepy initialize their ffmpeg wiring.
+    """
+    ensure_ffmpeg_configured()
+    from moviepy.editor import (  # type: ignore
+        VideoFileClip,
+        ImageSequenceClip,
+        ImageClip,
+        AudioFileClip,
+        concatenate_videoclips,
+    )
+
+    return VideoFileClip, ImageSequenceClip, ImageClip, AudioFileClip, concatenate_videoclips
 
 def ensure_media_dirs():
     """Ensure temporary upload and output directories exist."""
@@ -194,6 +210,7 @@ def merge_images(input_paths, original_name, direction='horizontal'):
 # ═══════════════════════════════════════════════════════════════
 
 def change_gif_speed(input_path, original_name, speed_factor=1.0):
+    VideoFileClip, _, _, _, _ = _moviepy()
     clip = VideoFileClip(input_path)
     new_clip = clip.fx(lambda c: c.speedx(float(speed_factor)))
     output_path = get_output_path(original_name, 'gif', '_speed_changed')
@@ -201,6 +218,7 @@ def change_gif_speed(input_path, original_name, speed_factor=1.0):
     return output_path
 
 def extract_image_from_video(input_path, original_name, timestamp=1.0):
+    VideoFileClip, _, _, _, _ = _moviepy()
     clip = VideoFileClip(input_path)
     frame = clip.get_frame(float(timestamp))
     output_path = get_output_path(original_name, 'jpg', f'_frame_{timestamp}')
@@ -213,6 +231,7 @@ def image_to_video(input_paths, original_name, fps=24, img_duration=3, audio_pat
     Creates a video from a sequence of images with custom duration and optional audio.
     """
     try:
+        _, _, ImageClip, AudioFileClip, concatenate_videoclips = _moviepy()
         clips = []
         duration = float(img_duration)
         

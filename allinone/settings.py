@@ -34,6 +34,7 @@ INSTALLED_APPS = [
     'converter',
     'image_processor',
     'audio_processor',
+    'dynamic_qr',
 ]
 
 MIDDLEWARE = [
@@ -99,6 +100,41 @@ MEDIA_ROOT = os.path.join(tempfile.gettempdir(), 'scanpdf_media_root')
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# Email configuration for Dynamic QR OTP (Gmail SMTP)
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = os.environ.get('EMAIL_HOST_USER', '')      # your Gmail address
+EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '')  # Gmail app password
+DEFAULT_FROM_EMAIL = os.environ.get('EMAIL_HOST_USER', 'noreply@scanpdf.co.in')
+
 # File upload settings
 FILE_UPLOAD_MAX_MEMORY_SIZE = 52428800  # 50 MB
 DATA_UPLOAD_MAX_MEMORY_SIZE = 52428800  # 50 MB
+
+# -----------------------------------------------------------------------------
+# Local media tool binaries (FFmpeg)
+# -----------------------------------------------------------------------------
+import warnings
+
+
+def _binary_name(base: str) -> str:
+    return f"{base}.exe" if os.name == "nt" else base
+
+
+# Preferred: bundle binaries inside the project:
+# - Windows: ffmpeg/bin/ffmpeg.exe + ffmpeg/bin/ffprobe.exe
+# - Linux:   ffmpeg/bin/ffmpeg     + ffmpeg/bin/ffprobe
+FFMPEG_BIN_DIR = BASE_DIR / "ffmpeg" / "bin"
+FFMPEG_PATH = str(FFMPEG_BIN_DIR / _binary_name("ffmpeg"))
+FFPROBE_PATH = str(FFMPEG_BIN_DIR / _binary_name("ffprobe"))
+
+# Optional: if you created ffmpeg/bin but forgot the binaries, fail loudly in DEBUG.
+if FFMPEG_BIN_DIR.exists():
+    if DEBUG:
+        if not Path(FFMPEG_PATH).exists():
+            raise RuntimeError(f"FFmpeg not found at {FFMPEG_PATH}")
+    else:
+        if not Path(FFMPEG_PATH).exists():
+            warnings.warn(f"FFmpeg not found at {FFMPEG_PATH}; falling back to PATH/imageio-ffmpeg")

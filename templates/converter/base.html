@@ -287,7 +287,7 @@
                                             </a>
                                             <a href="{% url 'image_processor:tool_page' 'pdf-converter' %}" class="flex items-center gap-3 p-3 rounded-xl hover:bg-brand-50/50 group/item transition-all border border-transparent hover:border-brand-100">
                                                 <div class="w-8 h-8 rounded-lg bg-surface-50 flex items-center justify-center group-hover/item:bg-white shadow-sm transition-colors">
-                                                    <i data-lucide="file-pdf" class="w-4 h-4 text-brand-600"></i>
+                                                    <i data-lucide="file-text" class="w-4 h-4 text-brand-600"></i>
                                                 </div>
                                                 <span class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">PDF Converter</span>
                                             </a>
@@ -315,6 +315,15 @@
                             </div>
                         </div>
 
+                        <!-- Dynamic QR Link -->
+                        <a href="/qr/dashboard/"
+                            class="flex items-center gap-2 px-4 py-2 text-[13px] font-black uppercase tracking-widest transition-all rounded-xl hover:scale-105"
+                            style="background: linear-gradient(135deg, #f59e0b, #ef4444); color: white; box-shadow: 0 4px 15px rgba(245,158,11,0.3); position: relative;">
+                            <i data-lucide="qr-code" class="w-4 h-4"></i>
+                            Dynamic QR
+                            <span style="position:absolute;top:-6px;right:-6px;background:#dc2626;color:white;font-size:7px;font-weight:900;padding:2px 5px;border-radius:6px;letter-spacing:0.1em;line-height:1;">NEW</span>
+                        </a>
+
                     </div>
 
                     <!-- Search Bar: Properly Aligned Right -->
@@ -337,6 +346,20 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- DQR User Logout (Desktop) -->
+                    {% if request.session.is_dqr_user %}
+                    <div class="flex-shrink-0">
+                        <form id="navbar-logout-form" action="{% url 'dynamic_qr:logout' %}" method="POST" style="display:none;">
+                            {% csrf_token %}
+                        </form>
+                        <a href="#" onclick="event.preventDefault(); document.getElementById('navbar-logout-form').submit();" 
+                           class="flex items-center gap-2 px-4 py-2 text-[12px] font-black uppercase tracking-widest text-surface-500 hover:text-red-500 transition-all border border-surface-100 rounded-xl hover:bg-red-50">
+                            <i data-lucide="log-out" class="w-4 h-4"></i>
+                            Logout
+                        </a>
+                    </div>
+                    {% endif %}
                 </div>
 
                 <!-- Mobile Hamburger -->
@@ -378,6 +401,20 @@
                         class="flex items-center gap-3 px-4 py-3 rounded-2xl text-surface-700 hover:text-brand-600 hover:bg-brand-50/60 transition-all font-bold text-sm">
                         <i data-lucide="grid-3x3" class="w-5 h-5"></i>All Tools
                     </a>
+                    <a href="/qr/dashboard/"
+                        class="flex items-center gap-3 px-4 py-3 rounded-2xl font-bold text-sm transition-all"
+                        style="background: linear-gradient(135deg, #fef3c7, #fee2e2); color: #92400e;">
+                        <i data-lucide="qr-code" class="w-5 h-5" style="color:#f59e0b"></i>
+                        Dynamic QR
+                        <span style="background:linear-gradient(135deg,#f59e0b,#ef4444);color:white;font-size:8px;font-weight:900;padding:2px 8px;border-radius:10px;margin-left:auto;letter-spacing:0.1em;">NEW</span>
+                    </a>
+
+                    {% if request.session.is_dqr_user %}
+                    <a href="#" onclick="event.preventDefault(); document.getElementById('navbar-logout-form').submit();"
+                        class="flex items-center gap-3 px-4 py-3 rounded-2xl text-red-600 hover:bg-red-50 transition-all font-bold text-sm">
+                        <i data-lucide="log-out" class="w-5 h-5"></i>Logout
+                    </a>
+                    {% endif %}
 
                     <div class="px-4 py-2 border-b border-surface-50 mt-6 mb-2">
                         <span class="text-[10px] font-bold text-surface-400 uppercase tracking-widest block">Core PDF

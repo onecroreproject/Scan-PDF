@@ -1,0 +1,48 @@
+{% extends 'dynamic_qr/auth_base.html' %}
+
+{% block title %}Login — Dynamic QR{% endblock %}
+
+{% block auth_header %}
+<h1>Dynamic QR Login</h1>
+<p>Sign in to manage your dynamic QR codes</p>
+{% endblock %}
+
+{% block auth_content %}
+    {% if error %}
+    <div class="error-box">
+        <i data-lucide="alert-circle" style="width:18px;height:18px;color:#f87171;flex-shrink:0"></i>
+        <p>{{ error }}</p>
+    </div>
+    {% endif %}
+
+    <form method="POST" action="{% url 'dynamic_qr:login' %}">
+        {% csrf_token %}
+        <div class="field-group">
+            <label class="field-label">Username or Email</label>
+            <input type="text" name="username" class="dqr-field" placeholder="Enter username or email" autocomplete="username" required>
+        </div>
+        <div class="field-group">
+            <label class="field-label">Password</label>
+            <div class="password-wrap">
+                <input type="password" name="password" class="dqr-field" placeholder="••••••••" autocomplete="current-password" required>
+                <button type="button" class="toggle-pass">
+                    <i data-lucide="eye" style="width:18px;height:18px"></i>
+                </button>
+            </div>
+        </div>
+        <div style="text-align:right;margin-bottom:20px;">
+            <a href="{% url 'dynamic_qr:forgot_password' %}" style="color:#818cf8;font-size:12px;font-weight:600;text-decoration:none;">Forgot Password?</a>
+        </div>
+        <button type="submit" class="btn-primary">
+            <span style="display:flex;align-items:center;justify-content:center;gap:8px">
+                <i data-lucide="log-in" style="width:18px;height:18px"></i>
+                Sign In
+            </span>
+        </button>
+    </form>
+
+    <div class="auth-links">
+        <span style="color:rgba(255,255,255,0.4)">Don't have an account?</span>
+        <a href="{% url 'dynamic_qr:register' %}" style="color:#818cf8;font-weight:700;">Create Account</a>
+    </div>
+{% endblock %}
