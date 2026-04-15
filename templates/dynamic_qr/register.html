@@ -1,0 +1,64 @@
+{% extends 'dynamic_qr/auth_base.html' %}
+
+{% block title %}Register — Dynamic QR{% endblock %}
+
+{% block auth_header %}
+<h1>Create Account</h1>
+<p>Register to create dynamic QR codes</p>
+{% endblock %}
+
+{% block auth_content %}
+    {% if form.errors %}
+    <div class="error-box">
+        <i data-lucide="alert-circle" style="width:18px;height:18px;color:#f87171;flex-shrink:0"></i>
+        <div>
+            {% for field, errors in form.errors.items %}
+                {% for error in errors %}
+                <p>{{ error }}</p>
+                {% endfor %}
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+
+    <form method="POST" action="{% url 'dynamic_qr:register' %}">
+        {% csrf_token %}
+        <div class="field-group">
+            <label class="field-label">Username</label>
+            <input type="text" name="username" class="dqr-field" placeholder="Choose a username" value="{{ form.username.value|default:'' }}" required>
+        </div>
+        <div class="field-group">
+            <label class="field-label">Email Address</label>
+            <input type="email" name="email" class="dqr-field" placeholder="your@email.com" value="{{ form.email.value|default:'' }}" required>
+        </div>
+        <div class="field-group">
+            <label class="field-label">Password</label>
+            <div class="password-wrap">
+                <input type="password" name="password1" class="dqr-field" placeholder="Create a strong password" required>
+                <button type="button" class="toggle-pass">
+                    <i data-lucide="eye" style="width:18px;height:18px"></i>
+                </button>
+            </div>
+        </div>
+        <div class="field-group">
+            <label class="field-label">Confirm Password</label>
+            <div class="password-wrap">
+                <input type="password" name="password2" class="dqr-field" placeholder="Confirm your password" required>
+                <button type="button" class="toggle-pass">
+                    <i data-lucide="eye" style="width:18px;height:18px"></i>
+                </button>
+            </div>
+        </div>
+        <button type="submit" class="btn-primary">
+            <span style="display:flex;align-items:center;justify-content:center;gap:8px">
+                <i data-lucide="rocket" style="width:18px;height:18px"></i>
+                Create Account
+            </span>
+        </button>
+    </form>
+
+    <div class="auth-links">
+        <span style="color:rgba(255,255,255,0.4)">Already have an account?</span>
+        <a href="{% url 'dynamic_qr:login' %}" style="color:#818cf8;font-weight:700;">Sign In</a>
+    </div>
+{% endblock %}

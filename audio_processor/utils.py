@@ -5,8 +5,8 @@ import shutil
 import glob
 from pydub import AudioSegment
 from pydub.effects import speedup
-import imageio_ffmpeg
 from converter.utils import format_download_name, ensure_media_dirs
+from converter.media_binaries import ensure_ffmpeg_configured, resolve_ffmpeg_paths, configure_pydub
 
 def _binary_name(base):
     return f"{base}.exe" if os.name == "nt" else base
@@ -30,7 +30,13 @@ def _get_winget_ffmpeg_bin_dir():
 
 
 def _configure_audio_binaries():
-    """Configure ffmpeg/ffprobe paths for pydub, with Windows-safe fallbacks."""
+    """Configure ffmpeg/ffprobe paths for pydub, preferring project-local binaries."""
+    # Central resolver (project-local ffmpeg/bin first, then env/PATH/imageio-ffmpeg).
+    ffmpeg_path, ffprobe_path = ensure_ffmpeg_configured()
+    if ffmpeg_path:
+        return
+
+    # Backward-compatible fallbacks (kept for safety).
     env_ffmpeg = os.environ.get("FFMPEG_BINARY")
     env_ffprobe = os.environ.get("FFPROBE_BINARY")
 
@@ -47,7 +53,10 @@ def _configure_audio_binaries():
     if which_ffmpeg:
         ffmpeg_candidates.append(which_ffmpeg)
     try:
-        ffmpeg_candidates.append(imageio_ffmpeg.get_ffmpeg_exe())
+        # Use the same resolver logic for imageio-ffmpeg.
+        resolved, _ = resolve_ffmpeg_paths()
+        if resolved:
+            ffmpeg_candidates.append(resolved)
     except Exception:
         pass
 
@@ -79,10 +88,7 @@ def _configure_audio_binaries():
         os.environ['PATH'] = bin_dir + os.pathsep + current_path if current_path else bin_dir
 
     # pydub binary configuration
-    AudioSegment.converter = ffmpeg_path
-    AudioSegment.ffmpeg = ffmpeg_path
-    if ffprobe_path:
-        AudioSegment.ffprobe = ffprobe_path
+    configure_pydub(ffmpeg_path, ffprobe_path)
 
 
 def _load_audio_segment(input_path):

@@ -1,0 +1,179 @@
+{% extends 'converter/base.html' %}
+{% load static %}
+
+{% block title %}Dynamic Content — ScanPDF{% endblock %}
+
+{% block extra_head %}
+<style>
+    .landing-bg {
+        min-height: 100vh;
+        background: radial-gradient(circle at top right, #f8fafc 0%, #f1f5f9 100%);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        padding: 40px 20px;
+    }
+    .landing-card {
+        width: 100%;
+        max-width: 500px;
+        background: white;
+        border-radius: 32px;
+        box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.08);
+        border: 1px solid rgba(0,0,0,0.03);
+        overflow: hidden;
+        animation: slideUp 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+    @keyframes slideUp {
+        from { opacity: 0; transform: translateY(40px) scale(0.95); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .card-header {
+        background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%);
+        padding: 60px 40px;
+        text-align: center;
+        position: relative;
+        overflow: hidden;
+    }
+    .card-header::after {
+        content: '';
+        position: absolute;
+        top: 0; left: 0; right: 0; bottom: 0;
+        background: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 86c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zm66-3c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zm-46-4c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zm37-39c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23ffffff' fill-opacity='0.1' fill-rule='evenodd'/%3E%3C/svg%3E");
+    }
+    .icon-box {
+        width: 80px; height: 80px;
+        background: white;
+        border-radius: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 20px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        z-index: 10;
+        position: relative;
+    }
+    .icon-box i { color: #6366f1; width: 40px; height: 40px; }
+    .card-header h1 {
+        font-size: 24px; font-weight: 900; color: white;
+        letter-spacing: -0.02em; z-index: 10; position: relative;
+    }
+    .card-body { padding: 40px; }
+    .info-item { margin-bottom: 24px; }
+    .info-item:last-child { margin-bottom: 0; }
+    .label {
+        display: block; font-size: 11px; font-weight: 800;
+        text-transform: uppercase; letter-spacing: 0.1em;
+        color: #94a3b8; margin-bottom: 4px;
+    }
+    .value {
+        font-size: 16px; font-weight: 700; color: #1e293b;
+        line-height: 1.5;
+    }
+    .btn-action {
+        width: 100%; padding: 16px; border-radius: 16px;
+        background: #6366f1; color: white;
+        font-weight: 800; font-size: 14px; text-transform: uppercase;
+        letter-spacing: 0.05em; text-align: center;
+        border: none; cursor: pointer; transition: all 0.3s;
+        display: block; text-decoration: none; margin-top: 32px;
+        box-shadow: 0 8px 25px rgba(99, 102, 241, 0.3);
+    }
+    .btn-action:hover {
+        background: #4f46e5; transform: translateY(-2px);
+        box-shadow: 0 12px 30px rgba(99, 102, 241, 0.4);
+    }
+    .vcard-grid {
+        display: grid; grid-template-columns: 1fr 1fr; gap: 20px;
+    }
+    .wifi-badge {
+        display: inline-flex; align-items: center; gap: 8px;
+        padding: 5px 12px; border-radius: 20px;
+        background: #f1f5f9; font-size: 12px; font-weight: 700; color: #475569;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="landing-bg">
+    <div class="landing-card">
+        <div class="card-header">
+            <div class="icon-box">
+                {% if qr.qr_type == 'text' %}<i data-lucide="align-left"></i>
+                {% elif qr.qr_type == 'wifi' %}<i data-lucide="wifi"></i>
+                {% elif qr.qr_type == 'vcard' %}<i data-lucide="contact"></i>
+                {% elif qr.qr_type == 'location' %}<i data-lucide="map-pin"></i>
+                {% else %}<i data-lucide="info"></i>
+                {% endif %}
+            </div>
+            <h1>{{ qr.qr_name }}</h1>
+        </div>
+
+        <div class="card-body">
+            {% if qr.qr_type == 'text' %}
+                <div class="info-item">
+                    <span class="label">Message</span>
+                    <div class="value" style="white-space: pre-wrap;">{{ qr.qr_data.text }}</div>
+                </div>
+            {% elif qr.qr_type == 'wifi' %}
+                <div class="info-item">
+                    <span class="label">Network Name (SSID)</span>
+                    <div class="value">{{ qr.qr_data.ssid }}</div>
+                </div>
+                <div class="info-item">
+                    <span class="label">Password</span>
+                    <div class="value">••••••••</div>
+                </div>
+                <div class="info-item">
+                    <span class="label">Security Type</span>
+                    <div class="wifi-badge">{{ qr.qr_data.encryption }}</div>
+                </div>
+                <p style="font-size:12px;color:#94a3b8;text-align:center;margin-top:20px;">Please check your device's WiFi settings to connect manually.</p>
+            {% elif qr.qr_type == 'vcard' %}
+                <div class="vcard-grid">
+                    <div class="info-item">
+                        <span class="label">Name</span>
+                        <div class="value">{{ qr.qr_data.first_name }} {{ qr.qr_data.last_name }}</div>
+                    </div>
+                    {% if qr.qr_data.organization %}
+                    <div class="info-item">
+                        <span class="label">Organization</span>
+                        <div class="value">{{ qr.qr_data.organization }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+                {% if qr.qr_data.email %}
+                <div class="info-item">
+                    <span class="label">Email</span>
+                    <div class="value">{{ qr.qr_data.email }}</div>
+                </div>
+                {% endif %}
+                {% if qr.qr_data.phone_mobile %}
+                <div class="info-item">
+                    <span class="label">Phone</span>
+                    <div class="value">{{ qr.qr_data.phone_mobile }}</div>
+                </div>
+                {% endif %}
+                <a href="#" class="btn-action">Add to Contacts</a>
+            {% elif qr.qr_type == 'location' %}
+                <div class="vcard-grid">
+                    <div class="info-item">
+                        <span class="label">Latitude</span>
+                        <div class="value">{{ qr.qr_data.latitude }}</div>
+                    </div>
+                    <div class="info-item">
+                        <span class="label">Longitude</span>
+                        <div class="value">{{ qr.qr_data.longitude }}</div>
+                    </div>
+                </div>
+                <a href="https://www.google.com/maps/search/?api=1&query={{ qr.qr_data.latitude }},{{ qr.qr_data.longitude }}" target="_blank" class="btn-action">
+                    Open in Maps
+                </a>
+            {% endif %}
+            
+            <p style="text-align:center;margin-top:40px;font-size:11px;color:#cbd5e1;font-weight:700;text-transform:uppercase;letter-spacing:1px;">
+                Powered by ScanPDF Dynamic QR
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
