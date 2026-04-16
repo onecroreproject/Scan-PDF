@@ -114,6 +114,36 @@ class DynamicQRCode(models.Model):
         self.scan_count += 1
         self.save(update_fields=['scan_count'])
 
+    def get_static_content(self, request=None):
+        """
+        Determines the content to be encoded in the QR code.
+        Returns the direct data for hardware-bound types (Wifi, vCard) 
+        and the updateable redirect URL for content-bound types (Text, Web, Files).
+        """
+        # 1. Hardware-Bound Types (Must be static to trigger phone features)
+        data = self.qr_data or {}
+        if self.qr_type == 'wifi':
+            ssid = data.get('ssid', '')
+            pw = data.get('password', '')
+            enc = data.get('encryption', 'WPA')
+            return f"WIFI:S:{ssid};T:{enc};P:{pw};;"
+        if self.qr_type == 'location':
+            lat = data.get('latitude', '0')
+            lon = data.get('longitude', '0')
+            return f"geo:{lat},{lon}"
+        if self.qr_type == 'vcard' and data.get('first_name'):
+            fn = data.get('first_name')
+            ln = data.get('last_name', '')
+            org = data.get('organization', '')
+            tel = data.get('phone_mobile', '')
+            email = data.get('email', '')
+            return f"BEGIN:VCARD\nVERSION:3.0\nN:{ln};{fn};;;\nFN:{fn} {ln}\nORG:{org}\nTEL;TYPE=CELL:{tel}\nEMAIL:{email}\nEND:VCARD"
+
+        # 2. Content-Bound Types (Use redirect URL to allow updates after printing)
+        if request:
+            return request.build_absolute_uri(f'/qr/r/{self.short_code}/')
+        return f"/qr/r/{self.short_code}/"
+
 
 class QRAnalytics(models.Model):
     """

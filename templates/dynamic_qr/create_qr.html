@@ -204,8 +204,6 @@
         
         <!-- Hidden Inputs for logic -->
         <input type="hidden" name="qr_type" id="selected-type" value="url">
-        <input type="hidden" name="destination_url" id="final-destination">
-        <input type="hidden" name="qr_data" id="final-qr-data">
     </form>
 {% endblock %}
 
@@ -364,9 +362,26 @@ async function updatePreview() {
     const bg = document.querySelector('input[name="bg_color"]').value;
     const style = document.querySelector('select[name="body_style"]').value;
     
-    // Use an sample text for preview
-    const sampleText = "https://scanpdf.com/preview";
-    const previewUrl = `{% url 'dynamic_qr:generate_image' %}?text=${encodeURIComponent(sampleText)}&fg_color=${encodeURIComponent(fg)}&bg_color=${encodeURIComponent(bg)}&style=${style}`;
+    // Determine what would actually be encoded
+    const selectedType = document.getElementById('selected-type').value;
+    let actualContent = "https://scanpdf.com/preview"; // fallback
+    
+    if (['url', 'youtube', 'facebook', 'instagram', 'tiktok', 'x-twitter', 'snapchat', 'pinterest', 'linkedin', 'google-forms', 'google-doc', 'google-sheets', 'google-review', 'play-market', 'app-store', 'paypal', 'amazon', 'venmo', 'spotify', 'office-365', 'custom-url'].includes(selectedType)) {
+        actualContent = document.querySelector('input[name="destination_url"]')?.value || "https://example.com";
+    } else if (selectedType === 'text') {
+        actualContent = document.querySelector('textarea[name="text"]')?.value || "Sample Text";
+    } else if (selectedType === 'wifi') {
+        const ssid = document.querySelector('input[name="ssid"]')?.value || "WiFi";
+        const pass = document.querySelector('input[name="password"]')?.value || "";
+        const enc = document.querySelector('input[name="encryption"]')?.value || "WPA";
+        actualContent = `WIFI:S:${ssid};T:${enc};P:${pass};;`;
+    } else if (selectedType === 'phone') {
+        actualContent = `tel:${document.querySelector('input[name="phone"]')?.value || ""}`;
+    } else if (selectedType === 'sms') {
+        actualContent = `smsto:${document.querySelector('input[name="phone"]')?.value || ""}:${document.querySelector('textarea[name="message"]')?.value || ""}`;
+    }
+
+    const previewUrl = `{% url 'dynamic_qr:generate_image' %}?text=${encodeURIComponent(actualContent)}&fg_color=${encodeURIComponent(fg)}&bg_color=${encodeURIComponent(bg)}&style=${style}`;
     img.src = previewUrl;
 }
 

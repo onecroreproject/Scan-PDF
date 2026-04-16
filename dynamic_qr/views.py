@@ -371,6 +371,9 @@ def dqr_dashboard_view(request):
         from django.db.models import Sum
         total_scans = all_qrs.aggregate(Sum('scan_count'))['scan_count__sum'] or 0
 
+        for qr in recent_qrs:
+            qr.qr_content = qr.get_static_content(request)
+
         return render(request, 'dynamic_qr/dashboard.html', {
             'qr_codes': recent_qrs,
             'total_active': total_active,
@@ -395,6 +398,9 @@ def dqr_all_qrs_view(request):
         page_number = request.GET.get('page')
         page_obj = paginator.get_page(page_number)
         
+        for qr in page_obj:
+            qr.qr_content = qr.get_static_content(request)
+            
         return render(request, 'dynamic_qr/all_qrs.html', {
             'page_obj': page_obj,
             'total_count': all_qrs.count()
@@ -450,14 +456,14 @@ def dqr_create_view(request):
         file_content=file_content,
     )
 
-    # Build the redirect URL that the QR code will point to
-    redirect_url = request.build_absolute_uri(f'/qr/r/{qr.short_code}/')
+    # Build the static content that the QR code will contain
+    qr_content = qr.get_static_content(request)
 
     return JsonResponse({
         'success': True,
         'qr_id': str(qr.id),
         'short_code': qr.short_code,
-        'redirect_url': redirect_url,
+        'redirect_url': qr_content,
         'qr_name': qr.qr_name,
         'qr_type': qr.qr_type,
     })
@@ -513,22 +519,22 @@ def dqr_edit_view(request, qr_id):
 
         # If AJAX request, return JSON
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
-            redirect_url = request.build_absolute_uri(f'/qr/r/{qr.short_code}/')
+            qr_content = qr.get_static_content(request)
             return JsonResponse({
                 'success': True,
                 'qr_id': str(qr.id),
                 'short_code': qr.short_code,
-                'redirect_url': redirect_url,
+                'redirect_url': qr_content,
                 'qr_name': qr.qr_name,
                 'qr_type': qr.qr_type,
             })
 
         return redirect('dynamic_qr:dashboard')
 
-    redirect_url = request.build_absolute_uri(f'/qr/r/{qr.short_code}/')
+    qr_content = qr.get_static_content(request)
     return render(request, 'dynamic_qr/edit_qr.html', {
         'qr': qr,
-        'redirect_url': redirect_url,
+        'redirect_url': qr_content,
     })
 
 
@@ -629,10 +635,10 @@ def dqr_analytics_view(request, qr_id):
 def dqr_details_view(request, qr_id):
     """Quick details view with download options."""
     qr = get_object_or_404(DynamicQRCode, id=qr_id, user=request.user)
-    redirect_url = request.build_absolute_uri(f'/qr/r/{qr.short_code}/')
+    qr_content = qr.get_static_content(request)
     return render(request, 'dynamic_qr/details.html', {
         'qr': qr,
-        'redirect_url': redirect_url,
+        'redirect_url': qr_content,
     })
 
 
@@ -707,11 +713,16 @@ def dqr_redirect_view(request, short_code):
     elif qr.destination_url:
         target_url = qr.destination_url
 
+    # Instant Redirect for URL/Social/File types
     if qr.qr_type in redirect_types and target_url:
         return HttpResponseRedirect(target_url)
     
-    # For other types (text, wifi, vcard, calendar, etc.), show the content on a clean landing page
-    return render(request, 'dynamic_qr/landing.html', {
+    # Direct Display for Text/Wi-Fi/vCard (if accessed via link)
+    template = 'dynamic_qr/landing.html'
+    if qr.qr_type == 'text':
+        template = 'dynamic_qr/landing_direct.html'
+
+    return render(request, template, {
         'qr': qr,
         'is_preview': False
     })
@@ -795,8 +806,8 @@ def dqr_download_view(request, qr_id):
     from converter.utils import generate_qr_code
     from converter.views import create_cleanup_response
 
-    # Redefine redirect URL pointing to our redirector
-    redirect_url = request.build_absolute_uri(f'/qr/r/{qr.short_code}/')
+    # Use get_static_content to encode the raw data directly, bypassing redirects
+    qr_content = qr.get_static_content(request)
     
     # Path to existing logo if any
     logo_path = None
@@ -805,7 +816,7 @@ def dqr_download_view(request, qr_id):
 
     # Use the helper from converter.utils
     output_path = generate_qr_code(
-        redirect_url,
+        qr_content,
         fg_color=qr.fg_color,
         bg_color=qr.bg_color,
         style=qr.body_style,
