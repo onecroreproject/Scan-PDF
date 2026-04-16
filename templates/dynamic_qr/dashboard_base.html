@@ -1,0 +1,172 @@
+{% extends 'converter/base.html' %}
+{% load static %}
+
+{% block extra_head %}
+<style>
+    /* Dashboard Layout */
+    .dashboard-layout {
+        display: flex;
+        min-height: calc(100vh - 64px);
+        background: #f8fafc;
+    }
+    
+    .sidebar {
+        width: 210px;
+        background: white;
+        border-right: 1px solid #e2e8f0;
+        position: fixed;
+        top: 70px;
+        bottom: 0;
+        left: 0;
+        z-index: 40;
+        padding: 24px 12px;
+        display: none;
+    }
+    @media (min-width: 768px) { .sidebar { display: block; } }
+
+    .main-content {
+        flex: 1;
+        padding: 40px 24px;
+        transition: all 0.3s;
+        min-height: calc(100vh - 70px);
+        display: flex;
+        flex-direction: column;
+    }
+    @media (min-width: 768px) { .main-content { margin-left: 210px; } }
+
+    /* Custom Header */
+    .dashboard-nav {
+        height: 70px;
+        background: white;
+        border-bottom: 1px solid #e2e8f0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0 24px;
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        z-index: 50;
+    }
+
+    /* Navigation Links */
+    .nav-link {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 10px 14px;
+        border-radius: 10px;
+        color: #64748b;
+        font-size: 13px;
+        font-weight: 600;
+        transition: all 0.2s;
+        margin-bottom: 2px;
+    }
+    .nav-link:hover { background: #f1f5f9; color: #1e293b; }
+    .nav-link.active { background: #eff6ff; color: #3b82f6; }
+    .nav-link i { width: 18px; height: 18px; }
+
+    /* Profile Section */
+    .profile-pill {
+        display: flex; align-items: center; gap: 12px; padding: 6px 6px 6px 16px;
+        background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 99px;
+    }
+    .profile-info { text-align: right; }
+    .profile-name { font-size: 13px; font-weight: 800; color: #1e293b; line-height: 1.2; }
+    .profile-role { font-size: 10px; color: #64748b; font-weight: 600; text-transform: uppercase; }
+    .profile-avatar {
+        width: 34px; height: 34px; border-radius: 50%;
+        background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+        color: white; display: flex; align-items: center; justify-content: center;
+        font-weight: 900; font-size: 13px;
+    }
+
+    /* Mobile Toggle */
+    .mobile-toggle { display: block; }
+    @media (min-width: 768px) { .mobile-toggle { display: none; } }
+
+    {% block dqr_style %}{% endblock %}
+</style>
+{% endblock %}
+
+{% block navbar %}
+<nav class="dashboard-nav">
+    <div class="flex items-center gap-4">
+        <button class="mobile-toggle p-2 text-surface-500" onclick="toggleSidebar()">
+            <i data-lucide="menu"></i>
+        </button>
+        <a href="{% url 'converter:home' %}" class="flex items-center gap-2">
+            <img src="{% static 'images/logo.png' %}" alt="Logo" class="h-9">
+        </a>
+    </div>
+
+    <div class="flex items-center gap-6">
+        <div class="profile-pill">
+            <div class="profile-info hidden sm:block">
+                <p class="profile-name">{{ user.username }}</p>
+                <p class="profile-role">Free Member</p>
+            </div>
+            <div class="profile-avatar">
+                {{ user.username|first|upper }}
+            </div>
+        </div>
+    </div>
+</nav>
+{% endblock %}
+
+{% block content %}
+<div class="dashboard-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar" id="dashboard-sidebar">
+        <div class="space-y-6">
+            <div>
+                <p class="text-[10px] font-bold text-surface-400 uppercase tracking-widest mb-3 px-4">Management</p>
+                <a href="{% url 'dynamic_qr:dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                    <i data-lucide="layout-dashboard"></i> Dashboard
+                </a>
+                
+                <a href="{% url 'dynamic_qr:all_qrs' %}" class="nav-link {% if request.resolver_match.url_name == 'all_qrs' %}active{% endif %}">
+                    <i data-lucide="list"></i> All QR
+                </a>
+               
+                <a href="{% url 'dynamic_qr:create' %}" class="nav-link {% if request.resolver_match.url_name == 'create' %}active{% endif %}">
+                    <i data-lucide="plus-circle"></i> Create New QR
+                </a>
+            </div>
+
+            <div>
+                <p class="text-[10px] font-bold text-surface-400 uppercase tracking-widest mb-3 px-4">Account</p>
+                <form id="sidebar-logout-form" action="{% url 'dynamic_qr:logout' %}" method="POST" style="display:none;">
+                    {% csrf_token %}
+                </form>
+                <a href="#" onclick="event.preventDefault(); document.getElementById('sidebar-logout-form').submit();" class="nav-link text-red-500 hover:bg-red-50">
+                    <i data-lucide="log-out"></i> Sign Out
+                </a>
+            </div>
+            
+            <div class="pt-6 mt-6 border-t border-surface-50">
+                <a href="{% url 'converter:home' %}" class="nav-link">
+                    <i data-lucide="home"></i> Main Site
+                </a>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        {% block dqr_content %}{% endblock %}
+    </main>
+</div>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    function toggleSidebar() {
+        const sidebar = document.getElementById('dashboard-sidebar');
+        sidebar.style.display = (sidebar.style.display === 'block') ? 'none' : 'block';
+    }
+    lucide.createIcons();
+    {% block dqr_scripts %}{% endblock %}
+</script>
+{% endblock %}

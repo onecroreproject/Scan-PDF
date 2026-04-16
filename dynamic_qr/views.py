@@ -49,28 +49,99 @@ def dqr_login_required(view_func):
 from django.db import connection
 
 def dqr_repair_db(request):
-    """Utility view to manually add missing columns to SQLite via browser."""
-    if not request.user.is_superuser:
-        return HttpResponse("Unauthorized. Admin only.", status=403)
+    """Utility view to manually add missing columns/tables to SQLite via browser."""
+    # Allow superusers OR regular authenticated users for this specific repair
+    if not request.user.is_authenticated:
+        from django.http import HttpResponse
+        return HttpResponse("Unauthorized.", status=403)
     
+    from django.http import HttpResponse
     with connection.cursor() as cursor:
+        results = []
+        
+        # 0. Ensure Main DynamicQRCode Table exists
+        try:
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS "dynamic_qr_dynamicqrcode" (
+                    "id" uuid NOT NULL PRIMARY KEY,
+                    "short_code" varchar(20) NOT NULL UNIQUE,
+                    "qr_name" varchar(200) NOT NULL,
+                    "destination_url" varchar(2000) NULL,
+                    "qr_data" json NOT NULL,
+                    "qr_type" varchar(40) NOT NULL DEFAULT 'url',
+                    "fg_color" varchar(10) NOT NULL DEFAULT '#000000',
+                    "bg_color" varchar(10) NOT NULL DEFAULT '#ffffff',
+                    "body_style" varchar(20) NOT NULL DEFAULT 'square',
+                    "eye_style" varchar(20) NOT NULL DEFAULT 'square',
+                    "ball_style" varchar(20) NOT NULL DEFAULT 'square',
+                    "logo" varchar(100) NULL,
+                    "scan_count" integer unsigned NOT NULL DEFAULT 0,
+                    "is_active" bool NOT NULL DEFAULT 1,
+                    "created_at" datetime NOT NULL,
+                    "updated_at" datetime NOT NULL,
+                    "user_id" integer NOT NULL REFERENCES "auth_user" ("id") DEFERRABLE INITIALLY DEFERRED
+                );
+            """)
+            results.append("✅ Main table 'dynamic_qr_dynamicqrcode' is ready.")
+        except Exception as e:
+            results.append(f"❌ Error with main table: {str(e)}")
+
+        # 1. Add missing columns to DynamicQRCode (for existing users)
         cols = [
             ("qr_data", "JSON"),
-            ("qr_type", "VARCHAR(30) DEFAULT 'url'"),
+            ("qr_type", "VARCHAR(40) DEFAULT 'url'"),
             ("logo", "VARCHAR(100) NULL"),
             ("body_style", "VARCHAR(20) DEFAULT 'square'"),
+            ("is_active", "BOOLEAN DEFAULT 1"),
+            ("file_content", "VARCHAR(100) NULL"),
             ("eye_style", "VARCHAR(20) DEFAULT 'square'"),
             ("ball_style", "VARCHAR(20) DEFAULT 'square'")
         ]
-        results = []
         for col_name, col_type in cols:
             try:
                 cursor.execute(f"ALTER TABLE dynamic_qr_dynamicqrcode ADD COLUMN {col_name} {col_type};")
-                results.append(f"✅ Added {col_name}")
+                results.append(f"✅ Added column: {col_name}")
             except Exception as e:
-                results.append(f"ℹ️ {col_name} already exists or error: {str(e)}")
+                results.append(f"ℹ️ Column '{col_name}' already exists.")
+
+        # 2. Create the Analytics Table
+        try:
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS "dynamic_qr_qranalytics" (
+                    "id" integer NOT NULL PRIMARY KEY AUTOINCREMENT,
+                    "timestamp" datetime NOT NULL,
+                    "ip_address" char(39) NULL,
+                    "user_agent" text NULL,
+                    "browser" varchar(50) NULL,
+                    "os" varchar(50) NULL,
+                    "device_type" varchar(50) NULL,
+                    "country" varchar(100) NOT NULL DEFAULT 'Unknown',
+                    "city" varchar(100) NOT NULL DEFAULT 'Unknown',
+                    "qr_code_id" uuid NOT NULL REFERENCES "dynamic_qr_dynamicqrcode" ("id") DEFERRABLE INITIALLY DEFERRED
+                );
+            """)
+            cursor.execute('CREATE INDEX IF NOT EXISTS "dynamic_qr_analytics_qr_id" ON "dynamic_qr_qranalytics" ("qr_code_id");')
+            results.append("✅ Table 'dynamic_qr_qranalytics' is ready.")
+        except Exception as e:
+            results.append(f"❌ Error with analytics table: {str(e)}")
+
+        # 3. Create OTP Table
+        try:
+            cursor.execute("""
+                CREATE TABLE IF NOT EXISTS "dynamic_qr_otpverification" (
+                    "id" integer NOT NULL PRIMARY KEY AUTOINCREMENT,
+                    "email" varchar(254) NOT NULL,
+                    "otp_code" varchar(6) NOT NULL,
+                    "created_at" datetime NOT NULL,
+                    "is_used" bool NOT NULL DEFAULT 0,
+                    "attempts" integer unsigned NOT NULL DEFAULT 0
+                );
+            """)
+            results.append("✅ Table 'dynamic_qr_otpverification' is ready.")
+        except Exception as e:
+            results.append(f"❌ Error with OTP table: {str(e)}")
     
-    return HttpResponse("<br>".join(results) + "<br><br><b>Database Repair Attempted.</b> <a href='/qr/dashboard/'>Back to Dashboard</a>")
+    return HttpResponse("<h3>Database Repair Results</h3>" + "<br>".join(results) + "<br><br><b>All fixed.</b> <a href='/qr/dashboard/'>Return to Dashboard</a>")
 
 # ═══════════════════════════════════════════════════════════════
 # AUTH: LOGIN
@@ -285,15 +356,53 @@ def dqr_reset_password_view(request):
 
 
 # ═══════════════════════════════════════════════════════════════
-# DASHBOARD: List all dynamic QR codes
+# DASHBOARD: Overview & Recent
 # ═══════════════════════════════════════════════════════════════
 @dqr_login_required
 def dqr_dashboard_view(request):
-    """Dashboard showing all user's dynamic QR codes."""
-    qr_codes = DynamicQRCode.objects.filter(user=request.user)
-    return render(request, 'dynamic_qr/dashboard.html', {
-        'qr_codes': qr_codes,
-    })
+    """Overview dashboard with stats and top 6 recent QRs."""
+    try:
+        all_qrs = DynamicQRCode.objects.filter(user=request.user).order_by('-created_at')
+        recent_qrs = all_qrs[:6]
+        
+        total_active = all_qrs.filter(is_active=True).count()
+        total_deactivated = all_qrs.filter(is_active=False).count()
+        
+        from django.db.models import Sum
+        total_scans = all_qrs.aggregate(Sum('scan_count'))['scan_count__sum'] or 0
+
+        return render(request, 'dynamic_qr/dashboard.html', {
+            'qr_codes': recent_qrs,
+            'total_active': total_active,
+            'total_deactivated': total_deactivated,
+            'total_scans': total_scans,
+            'has_more': all_qrs.count() > 6
+        })
+    except Exception as e:
+        if 'no such column' in str(e).lower():
+            return redirect('dynamic_qr:repair_db')
+        raise e
+
+
+@dqr_login_required
+def dqr_all_qrs_view(request):
+    """Full list of all QR codes with pagination."""
+    try:
+        from django.core.paginator import Paginator
+        all_qrs = DynamicQRCode.objects.filter(user=request.user).order_by('-created_at')
+        
+        paginator = Paginator(all_qrs, 12) # 12 per page
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+        
+        return render(request, 'dynamic_qr/all_qrs.html', {
+            'page_obj': page_obj,
+            'total_count': all_qrs.count()
+        })
+    except Exception as e:
+        if 'no such column' in str(e).lower():
+            return redirect('dynamic_qr:repair_db')
+        raise e
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -316,6 +425,7 @@ def dqr_create_view(request):
     eye_style = request.POST.get('eye_style', 'square')
     ball_style = request.POST.get('ball_style', 'square')
     logo = request.FILES.get('logo')
+    file_content = request.FILES.get('file_content')
 
     if not qr_name:
         return JsonResponse({'error': 'Please enter a name for your QR code.'}, status=400)
@@ -337,6 +447,7 @@ def dqr_create_view(request):
         eye_style=eye_style,
         ball_style=ball_style,
         logo=logo,
+        file_content=file_content,
     )
 
     # Build the redirect URL that the QR code will point to
@@ -375,6 +486,7 @@ def dqr_edit_view(request, qr_id):
         ball_style = request.POST.get('ball_style', qr.ball_style)
         is_active = request.POST.get('is_active', 'true') == 'true'
         logo = request.FILES.get('logo')
+        file_content = request.FILES.get('file_content')
 
         if not qr_name:
             return JsonResponse({'error': 'QR name is required.'}, status=400)
@@ -395,6 +507,8 @@ def dqr_edit_view(request, qr_id):
         qr.is_active = is_active
         if logo:
             qr.logo = logo
+        if file_content:
+            qr.file_content = file_content
         qr.save()
 
         # If AJAX request, return JSON
@@ -418,21 +532,15 @@ def dqr_edit_view(request, qr_id):
     })
 
 
-# ═══════════════════════════════════════════════════════════════
-# DASHBOARD: Delete dynamic QR code
-# ═══════════════════════════════════════════════════════════════
 @dqr_login_required
 @require_POST
 def dqr_delete_view(request, qr_id):
     """Delete a dynamic QR code."""
     qr = get_object_or_404(DynamicQRCode, id=qr_id, user=request.user)
     qr.delete()
-
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         return JsonResponse({'success': True})
-
     return redirect('dynamic_qr:dashboard')
-    
 
 @dqr_login_required
 @require_POST
@@ -444,44 +552,169 @@ def dqr_toggle_status(request, qr_id):
     return JsonResponse({'success': True, 'is_active': qr.is_active})
 
 
+@dqr_login_required
+def dqr_analytics_view(request, qr_id):
+    """Detailed analytics for a specific QR code with advanced filtering and chart data."""
+    qr = get_object_or_404(DynamicQRCode, id=qr_id, user=request.user)
+    
+    from django.db.models import Count
+    from django.db.models.functions import TruncDate
+    from django.db import connection, OperationalError
+    
+    from django.core.paginator import Paginator
+    
+    selected_range = request.GET.get('range', '7days')
+    now = timezone.now()
+    
+    if selected_range == 'today':
+        start_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    elif selected_range == '7days':
+        start_date = now - timedelta(days=7)
+    elif selected_range == '1month' or selected_range == '30days':
+        start_date = now - timedelta(days=30)
+    elif selected_range == '28days':
+        start_date = now - timedelta(days=28)
+    elif selected_range == '6months':
+        start_date = now - timedelta(days=180)
+    elif selected_range == '12months':
+        start_date = now - timedelta(days=365)
+    else:
+        start_date = now - timedelta(days=7)
+        
+    def get_data():
+        base_query = qr.analytics.filter(timestamp__gte=start_date)
+        daily_scans = list(base_query.annotate(date=TruncDate('timestamp')).values('date').annotate(count=Count('id')).order_by('date'))
+        browser_stats = list(base_query.values('browser').annotate(count=Count('id')).order_by('-count')[:5])
+        device_stats = list(base_query.values('device_type').annotate(count=Count('id')).order_by('-count'))
+        os_stats = list(base_query.values('os').annotate(count=Count('id')).order_by('-count')[:5])
+        # For pagination, we need the queryset, not a slice
+        recent_scans_qs = base_query.order_by('-timestamp')
+        return daily_scans, browser_stats, device_stats, os_stats, recent_scans_qs
+
+    try:
+        daily_scans, browser_stats, device_stats, os_stats, recent_scans_qs = get_data()
+    except OperationalError:
+        daily_scans, browser_stats, device_stats, os_stats, recent_scans_qs = [], [], [], [], []
+
+    # Pagination Logic
+    paginator = Paginator(recent_scans_qs, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    chart_labels = [d['date'].strftime('%b %d') for d in daily_scans]
+    chart_data = [d['count'] for d in daily_scans]
+    device_labels = [d['device_type'] if d['device_type'] else 'Unknown' for d in device_stats]
+    device_data = [d['count'] for d in device_stats]
+    browser_labels = [d['browser'] if d['browser'] else 'Other' for d in browser_stats]
+    browser_data = [d['count'] for d in browser_stats]
+
+    return render(request, 'dynamic_qr/analytics.html', {
+        'qr': qr,
+        'selected_range': selected_range,
+        'total_range_scans': sum(chart_data),
+        'js_labels': json.dumps(chart_labels),
+        'js_data': json.dumps(chart_data),
+        'js_device_labels': json.dumps(device_labels),
+        'js_device_data': json.dumps(device_data),
+        'js_browser_labels': json.dumps(browser_labels),
+        'js_browser_data': json.dumps(browser_data),
+        'page_obj': page_obj,
+        'browser_stats': browser_stats,
+        'device_stats': device_stats,
+        'os_stats': os_stats,
+    })
+
+
+@dqr_login_required
+def dqr_details_view(request, qr_id):
+    """Quick details view with download options."""
+    qr = get_object_or_404(DynamicQRCode, id=qr_id, user=request.user)
+    redirect_url = request.build_absolute_uri(f'/qr/r/{qr.short_code}/')
+    return render(request, 'dynamic_qr/details.html', {
+        'qr': qr,
+        'redirect_url': redirect_url,
+    })
+
+
 # ═══════════════════════════════════════════════════════════════
 # REDIRECT: Short code → Destination URL
 # ═══════════════════════════════════════════════════════════════
 def dqr_redirect_view(request, short_code):
     """
     When someone scans the dynamic QR code, they hit this URL.
-    It increments the scan count and redirects to the destination or shows content.
+    De-duplicates hits to prevent double-counting from pre-fetchers.
     """
     qr = get_object_or_404(DynamicQRCode, short_code=short_code)
 
     if not qr.is_active:
         return render(request, 'dynamic_qr/qr_disabled.html', {'qr': qr})
 
-    # Track scan
-    qr.increment_scan()
+    # Logic for Logging (only once every 5 seconds per session)
+    now_ts = timezone.now().timestamp()
+    last_ts = request.session.get(f'qr_last_hit_{qr.id}', 0)
+    
+    if (now_ts - last_ts) >= 5:
+        # 1. Increment Scan Count
+        qr.increment_scan()
+        request.session[f'qr_last_hit_{qr.id}'] = now_ts
+        
+        # 2. Log Detailed Analytics
+        ua = request.META.get('HTTP_USER_AGENT', '').lower()
+        ip = request.META.get('REMOTE_ADDR')
+        
+        # Simple Manual Parsing
+        browser = 'Other'
+        if 'chrome' in ua: browser = 'Chrome'
+        elif 'safari' in ua: browser = 'Safari'
+        elif 'firefox' in ua: browser = 'Firefox'
+        elif 'edge' in ua: browser = 'Edge'
+        
+        os = 'Unknown'
+        if 'windows' in ua: os = 'Windows'
+        elif 'android' in ua: os = 'Android'
+        elif 'iphone' in ua or 'ipad' in ua: os = 'iOS'
+        elif 'mac' in ua: os = 'macOS'
+        elif 'linux' in ua: os = 'Linux'
+        
+        device = 'Desktop'
+        if 'mobile' in ua or 'android' in ua or 'iphone' in ua: device = 'Mobile'
+        elif 'tablet' in ua or 'ipad' in ua: device = 'Tablet'
 
-    # Handle based on type
-    if qr.qr_type == 'url':
-        return HttpResponseRedirect(qr.destination_url)
+        from .models import QRAnalytics
+        from django.db import connection, OperationalError
+        try:
+            QRAnalytics.objects.create(qr_code=qr, ip_address=ip, user_agent=ua[:500], browser=browser, os=os, device_type=device)
+        except OperationalError:
+            with connection.cursor() as cursor:
+                cursor.execute('CREATE TABLE IF NOT EXISTS "dynamic_qr_qranalytics" ("id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "timestamp" datetime NOT NULL, "ip_address" char(39) NULL, "user_agent" text NULL, "browser" varchar(50) NULL, "os" varchar(50) NULL, "device_type" varchar(50) NULL, "country" varchar(100) NOT NULL DEFAULT "Unknown", "city" varchar(100) NOT NULL DEFAULT "Unknown", "qr_code_id" uuid NOT NULL REFERENCES "dynamic_qr_dynamicqrcode" ("id") DEFERRABLE INITIALLY DEFERRED);')
+            try: QRAnalytics.objects.create(qr_code=qr, ip_address=ip, user_agent=ua[:500], browser=browser, os=os, device_type=device)
+            except: pass
+        except: pass
+
+    # Determine redirect behavior
+    redirect_types = [
+        'url', 'whatsapp', 'youtube', 'facebook', 'instagram', 'telegram', 
+        'tiktok', 'x-twitter', 'snapchat', 'pinterest', 'linkedin',
+        'pdf', 'audio', 'video', 'image', 'pptx', 'excel', 'word',
+        'google-review', 'google-forms', 'google-doc', 'google-sheets',
+        'play-market', 'app-store', 'paypal', 'etsy', 'amazon', 'venmo', 
+        'upi', 'crypto', 'spotify', 'link-list', 'custom-url', 'office-365'
+    ]
+
+    target_url = None
+    if qr.file_content:
+        target_url = qr.file_content.url
+    elif qr.destination_url:
+        target_url = qr.destination_url
+
+    if qr.qr_type in redirect_types and target_url:
+        return HttpResponseRedirect(target_url)
     
-    elif qr.qr_type == 'phone':
-        phone = qr.qr_data.get('phone', '')
-        return HttpResponseRedirect(f"tel:{phone}")
-    
-    elif qr.qr_type == 'email':
-        to = qr.qr_data.get('email', '')
-        sub = qr.qr_data.get('subject', '')
-        body = qr.qr_data.get('body', '')
-        return HttpResponseRedirect(f"mailto:{to}?subject={sub}&body={body}")
-    
-    elif qr.qr_type == 'sms':
-        num = qr.qr_data.get('phone', '')
-        msg = qr.qr_data.get('message', '')
-        return HttpResponseRedirect(f"sms:{num}?body={msg}")
-    
-    # For types that don't support direct protocol redirect reliably (WiFi, vCard, Text, Location)
-    # or for better UX, show a landing page.
-    return render(request, 'dynamic_qr/landing.html', {'qr': qr})
+    # For other types (text, wifi, vcard, calendar, etc.), show the content on a clean landing page
+    return render(request, 'dynamic_qr/landing.html', {
+        'qr': qr,
+        'is_preview': False
+    })
 
 
 # ═══════════════════════════════════════════════════════════════

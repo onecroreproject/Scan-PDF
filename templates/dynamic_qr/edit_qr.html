@@ -1,445 +1,398 @@
-{% extends 'converter/base.html' %}
+{% extends 'dynamic_qr/dashboard_base.html' %}
 {% load static %}
 
 {% block title %}Edit QR: {{ qr.qr_name }} — ScanPDF{% endblock %}
 
-{% block extra_head %}
-<!-- Cropper.js for logo editing -->
-<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.6.1/cropper.min.css" />
-<style>
-    /* ── Layout & Background ── */
-    .edit-page {
-        min-height: 100vh; background: #f1f5f9; padding: 40px 20px;
-        background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
-        background-size: 20px 20px;
+{% block dqr_style %}
+    /* Same core styles as create_qr for consistency */
+    .create-grid { display: grid; grid-template-columns: 1fr 320px; gap: 32px; }
+    @media (max-width: 1200px) { .create-grid { grid-template-columns: 1fr; } }
+
+    .cat-nav {
+        display: flex; gap: 6px; margin-bottom: 24px; padding-bottom: 8px;
+        overflow-x: auto; white-space: nowrap; scrollbar-width: none;
     }
-    .edit-container { max-width: 1200px; margin: 0 auto; }
-    
-    /* ── Accordion System ── */
-    .acc-card { background: white; border-radius: 20px; border: 1px solid #e2e8f0; margin-bottom: 20px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.03); }
-    .acc-head { width: 100%; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; cursor: pointer; background: white; border: none; outline: none; transition: background 0.2s; }
-    .acc-head:hover { background: #f8fafc; }
-    .acc-head.open { border-bottom: 1px solid #f1f5f9; }
-    .acc-title { display: flex; align-items: center; gap: 10px; font-size: 11px; font-weight: 900; color: #1e293b; text-transform: uppercase; letter-spacing: 0.1em; }
-    .acc-body { display: none; padding: 18px 20px; animation: slideDown 0.3s ease-out forwards; }
-    .acc-body.open { display: block; }
-    @keyframes slideDown { from { opacity: 0; transform: translateY(-5px); } to { opacity: 1; transform: translateY(0); } }
-    .acc-arrow { transition: transform 0.3s; color: #94a3b8; flex-shrink: 0; }
-    .acc-head.open .acc-arrow { transform: rotate(180deg); }
-
-    /* ── Form Fields ── */
-    .field-group { margin-bottom: 20px; }
-    .field-label { display: block; font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; color: #64748b; margin-bottom: 8px; }
-    .field { width: 100%; padding: 14px 18px; border-radius: 14px; border: 2px solid #e2e8f0; background: #f8fafc; font-size: 14px; font-weight: 600; color: #1e293b; outline: none; transition: all 0.3s; }
-    .field:focus { border-color: #6366f1; background: white; box-shadow: 0 0 0 4px rgba(99,102,241,0.1); }
-    
-    /* ── Subforms ── */
-    .edit-subform { display: none; }
-    .edit-subform.active { display: block; animation: fadeIn 0.4s ease; }
-    .hidden { display: none !important; }
-    
-    /* ── Preview Card ── */
-    .preview-card { background: white; border-radius: 20px; border: 1px solid #e2e8f0; padding: 20px; position: sticky; top: 20px; box-shadow: 0 10px 30px rgba(0,0,0,0.05); }
-    .qr-preview-box { width: 100%; aspect-ratio: 1; max-width: 280px; margin: 0 auto 16px; border-radius: 16px; background: #f8fafc; border: 2px dashed #e2e8f0; display: flex; align-items: center; justify-content: center; position: relative; }
-    .qr-preview-box img { width: 100%; height: 100%; object-fit: contain; padding: 12px; }
-    
-    /* ── Design Options ── */
-    .shape-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 12px; }
-    .shape-opt input { display: none; }
-    .shape-opt div { padding: 8px; border-radius: 12px; border: 2px solid #e2e8f0; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; background: #f8fafc; }
-    .shape-opt input:checked + div { border-color: #6366f1; background: #eef2ff; transform: scale(1.05); }
-    
-    .color-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-    .color-wrap { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 12px; background: #f8fafc; border: 1px solid #e2e8f0; }
-    .color-input { width: 36px; height: 36px; border: none; background: none; cursor: pointer; padding: 0; }
-    .color-input::-webkit-color-swatch-wrapper { padding: 0; }
-    .color-input::-webkit-color-swatch { border-radius: 8px; border: 1px solid rgba(0,0,0,0.1); }
-
-    /* ── Buttons ── */
-    .btn-save { width: 100%; padding: 14px; border-radius: 14px; background: linear-gradient(135deg, #6366f1 0%, #a855f7 100%); color: white; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; border: none; cursor: pointer; box-shadow: 0 8px 25px rgba(99,102,241,0.3); transition: all 0.3s; }
-    .btn-save:hover { transform: translateY(-2px); box-shadow: 0 12px 35px rgba(99,102,241,0.4); }
-    .btn-save:disabled { opacity: 0.7; cursor: not-allowed; transform: none; }
-
-    .toggle-switch { position: relative; width: 44px; height: 24px; }
-    .toggle-switch input { opacity: 0; width: 0; height: 0; }
-    .toggle-slider { position: absolute; inset: 0; background: #cbd5e1; border-radius: 99px; cursor: pointer; transition: 0.3s; }
-    .toggle-slider::before { content: ''; position: absolute; width: 18px; height: 18px; border-radius: 50%; background: white; left: 3px; top: 3px; transition: 0.3s; }
-    .toggle-switch input:checked + .toggle-slider { background: #22c55e; }
-    .toggle-switch input:checked + .toggle-slider::before { transform: translateX(20px); }
-
-    .toast { position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%); background: #1e293b; color: white; padding: 14px 28px; border-radius: 99px; font-size: 13px; font-weight: 700; box-shadow: 0 10px 40px rgba(0,0,0,0.2); z-index: 1000; display: none; animation: popUp 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28); }
-    @keyframes popUp { from { opacity: 0; transform: translate(-50%, 20px); } to { opacity: 1; transform: translate(-50%, 0); } }
-
-    @media (max-width: 992px) {
-        .edit-grid { grid-template-columns: 1fr !important; gap: 24px !important; }
-        .preview-card { position: static; margin-bottom: 30px; }
-        .edit-header-row { flex-direction: column; align-items: stretch !important; gap: 16px; }
-        .edit-header-row h1 { font-size: 22px !important; line-height: 1.2; word-wrap: break-word; }
+    .cat-btn {
+        padding: 8px 16px; background: white; border: 1px solid #f1f5f9;
+        border-radius: 99px; font-size: 11px; font-weight: 800; color: #64748b;
+        transition: 0.3s; cursor: pointer;
     }
-    @media (max-width: 640px) {
-        .edit-page { padding: 15px 12px; }
-        .edit-header-row h1 { font-size: 20px !important; }
-        .acc-head { padding: 14px 18px; }
-        .acc-body { padding: 16px; }
-        .color-grid { grid-template-columns: 1fr; }
-        .shape-grid { grid-template-columns: repeat(3, 80px); justify-content: start; }
+    .cat-btn:hover { background: #f8fafc; border-color: #e2e8f0; }
+    .cat-btn.active { background: #6366f1; color: white; border-color: #6366f1; box-shadow: 0 10px 20px -5px rgba(99, 102, 241, 0.3); }
+
+    .types-grid {
+        display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+        gap: 10px; transition: 0.3s;
     }
-</style>
+    .type-tile {
+        background: white; border: 2px solid #f1f5f9; border-radius: 16px;
+        padding: 12px 8px; text-align: center; transition: all 0.3s;
+        cursor: pointer; position: relative;
+    }
+    .type-tile:hover { transform: translateY(-4px); border-color: #6366f1; }
+    .type-tile.active { border-color: #6366f1; background: #fcfdfe; }
+    .type-tile.active::after {
+        content: '\2713'; position: absolute; top: 8px; right: 8px;
+        width: 16px; height: 16px; background: #6366f1; color: white;
+        border-radius: 50%; font-size: 8px; display: flex; align-items: center; justify-content: center;
+    }
+    
+    .tile-icon {
+        width: 36px; height: 36px; margin: 0 auto 10px;
+        display: flex; align-items: center; justify-content: center;
+        border-radius: 12px;
+    }
+    .tile-icon i { width: 18px; height: 18px; }
+    .type-tile.active .tile-icon { background: #6366f1 !important; color: white !important; }
+    .tile-label { font-size: 10.5px; font-weight: 800; color: #1e293b; line-height: 1.2; display: block; }
+
+    .form-card { background: white; border-radius: 20px; border: 1px solid #f1f5f9; padding: 24px; }
+    .form-group label { display: block; font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; color: #94a3b8; margin-bottom: 8px; }
+    .form-input {
+        width: 100%; height: 48px; background: #f8fafc; border: 1px solid #f1f5f9;
+        border-radius: 12px; padding: 0 16px; font-size: 14px; font-weight: 600; transition: 0.3s;
+    }
+    .form-input:focus { background: white; border-color: #6366f1; outline: none; }
+
+    .preview-card { position: sticky; top: 100px; background: #0f172a; border-radius: 32px; padding: 32px; text-align: center; color: white; }
+    .qr-vessel { width: 100%; aspect-ratio: 1; background: white; border-radius: 24px; margin-bottom: 24px; padding: 20px; }
+    .qr-vessel img { width: 100%; height: 100%; object-fit: contain; }
+
+    .btn-save {
+        width: 100%; height: 56px; background: #facc15; color: #0f172a; border-radius: 16px;
+        font-size: 14px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em;
+        display: flex; align-items: center; justify-content: center; gap: 10px;
+        box-shadow: 0 10px 25px rgba(250, 204, 21, 0.2); transition: all 0.3s;
+    }
+    .btn-save:hover { background: #f59e0b; transform: translateY(-2px); }
+
+    .toggle-active { display: flex; align-items: center; gap: 12px; background: #1e293b; padding: 12px 20px; border-radius: 16px; margin-bottom: 24px; }
+    .switch { position: relative; width: 44px; height: 24px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; inset: 0; background: #475569; border-radius: 34px; cursor: pointer; transition: .4s; }
+    .slider:before { content: ""; position: absolute; height: 18px; width: 18px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: .4s; }
+    input:checked + .slider { background: #22c55e; }
+    input:checked + .slider:before { transform: translateX(20px); }
 {% endblock %}
 
-{% block content %}
-<div class="edit-page" style="padding: 24px 20px;">
-    <div class="edit-container">
-        
-        <div class="edit-header-row" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;">
-            <div>
-                <a href="{% url 'dynamic_qr:dashboard' %}" style="color:#64748b;font-size:12px;font-weight:700;text-decoration:none;display:flex;align-items:center;gap:6px;margin-bottom:8px;">
-                    <i data-lucide="arrow-left" style="width:14px;height:14px"></i> Back to Dashboard
-                </a>
-                <h1 style="font-size:28px;font-weight:900;color:#1e293b;letter-spacing:-0.03em;">✏️ Edit Dynamic QR</h1>
-            </div>
-            <div style="display:flex;align-items:center;gap:12px;background:white;padding:10px 16px;border-radius:14px;border:1px solid #e2e8f0;">
-                <span style="font-size:11px;font-weight:800;color:#64748b;text-transform:uppercase;letter-spacing:0.05em;">QR Status</span>
-                <div class="toggle-switch">
-                    <input type="checkbox" id="edit-active" {% if qr.is_active %}checked{% endif %}>
-                    <span class="toggle-slider"></span>
-                </div>
-            </div>
+{% block dqr_content %}
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
+        <div>
+            <a href="{% url 'dynamic_qr:dashboard' %}" class="inline-flex items-center gap-2 text-indigo-600 font-black text-xs uppercase tracking-widest mb-4 hover:translate-x-[-4px] transition-transform">
+                <i data-lucide="arrow-left" class="w-4 h-4"></i> Back to Dashboard
+            </a>
+            <h1 class="text-3xl font-black text-slate-900 tracking-tight">Edit QR Asset</h1>
+            <p class="text-slate-500 font-bold mt-1 text-sm">Managing Engine: <span class="text-indigo-600">{{ qr.get_qr_type_display }}</span></p>
         </div>
-
-        <div class="edit-grid" style="display:grid;grid-template-columns: 1fr 400px; gap:40px; align-items: start;">
-            
-            <!-- RIGHT: PREVIEW & STATS (Moved On Top for Mobile via CSS order) -->
-            <div class="preview-card" style="order: 1;">
-                <h2 style="font-size:12px;font-weight:900;color:#1e293b;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:20px;display:flex;align-items:center;gap:8px;">
-                    <i data-lucide="eye" style="width:16px;height:16px;color:#6366f1"></i> Live Preview
-                </h2>
-                <div class="qr-preview-box">
-                    <img id="preview-img" src="">
-                    <div id="preview-loading" class="absolute inset-0 flex items-center justify-center bg-white/80 hidden">
-                        <i data-lucide="refresh-cw" class="w-8 h-8 text-indigo-500 animate-spin"></i>
-                    </div>
-                </div>
-                
-                <div style="padding:12px;background:#f8fafc;border-radius:14px;border:1px solid #e2e8f0;margin-bottom:12px;">
-                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-                        <span style="font-size:10px;font-weight:800;color:#64748b;text-transform:uppercase;">Short Link</span>
-                        <button onclick="copyLink()" class="text-indigo-600 font-bold text-[9px] uppercase hover:underline">Copy</button>
-                    </div>
-                    <div id="short-url" style="font-size:13px;font-weight:700;color:#1e293b;word-break:break-all;">{{ redirect_url }}</div>
-                </div>
-
-                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-                    <div style="padding:16px;background:#f0fdf4;border-radius:14px;border:1px solid #bbf7d0;text-align:center;">
-                        <div style="font-size:24px;font-weight:900;color:#16a34a;">{{ qr.scan_count }}</div>
-                        <div style="font-size:10px;font-weight:800;color:#15803d;text-transform:uppercase;margin-top:2px;">Scans</div>
-                    </div>
-                    <button onclick="regeneratePreview()" style="background:white;border:2px solid #e2e8f0;border-radius:14px;display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:pointer;transition:0.2s;hover:border-indigo-500">
-                        <i data-lucide="refresh-cw" style="width:20px;height:20px;color:#64748b"></i>
-                        <span style="font-size:9px;font-weight:800;color:#64748b;text-transform:uppercase;margin-top:4px;">Refresh</span>
-                    </button>
-                </div>
-            </div>
-
-            <!-- LEFT: FORM CONFIGURATION -->
-            <div class="space-y-4" style="order: 2;">
-                
-                <!-- ACCORDION: BASIC INFO -->
-                <div class="acc-card">
-                    <button class="acc-head open" onclick="toggleAcc(this)">
-                        <div class="acc-title"><i data-lucide="file-edit" style="width:18px;height:18px;color:#6366f1"></i> Basic Identity</div>
-                        <i data-lucide="chevron-down" class="acc-arrow" style="width:16px;height:16px"></i>
-                    </button>
-                    <div class="acc-body open">
-                        <div class="field-group">
-                            <label class="field-label">QR Code Name</label>
-                            <input type="text" id="edit-name" class="field" value="{{ qr.qr_name }}" placeholder="e.g. My Website QR">
-                        </div>
-                        <div class="field-group">
-                            <label class="field-label">Update QR Type</label>
-                            <select id="edit-type" class="field" onchange="switchEditSubForm(this.value)">
-                                <option value="url" {% if qr.qr_type == 'url' %}selected{% endif %}>URL (Website)</option>
-                                <option value="text" {% if qr.qr_type == 'text' %}selected{% endif %}>Plain Text</option>
-                                <option value="email" {% if qr.qr_type == 'email' %}selected{% endif %}>Email</option>
-                                <option value="phone" {% if qr.qr_type == 'phone' %}selected{% endif %}>Phone</option>
-                                <option value="sms" {% if qr.qr_type == 'sms' %}selected{% endif %}>SMS</option>
-                                <option value="vcard" {% if qr.qr_type == 'vcard' %}selected{% endif %}>vCard (Contact)</option>
-                                <option value="wifi" {% if qr.qr_type == 'wifi' %}selected{% endif %}>WiFi</option>
-                                <option value="location" {% if qr.qr_type == 'location' %}selected{% endif %}>Location</option>
-                            </select>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- ACCORDION: CONTENT DATA -->
-                <div class="acc-card">
-                    <button class="acc-head open" onclick="toggleAcc(this)">
-                        <div class="acc-title"><i data-lucide="database" style="width:18px;height:18px;color:#6366f1"></i> QR Content</div>
-                        <i data-lucide="chevron-down" class="acc-arrow" style="width:16px;height:16px"></i>
-                    </button>
-                    <div class="acc-body open">
-                        <div id="edit-subforms">
-                            <!-- URL -->
-                            <div id="eform-url" class="edit-subform {% if qr.qr_type == 'url' %}active{% endif %}">
-                                <label class="field-label">Destination URL</label>
-                                <input id="edit-url" type="url" class="field" value="{{ qr.destination_url }}" placeholder="https://example.com">
-                            </div>
-                            <!-- TEXT -->
-                            <div id="eform-text" class="edit-subform {% if qr.qr_type == 'text' %}active{% endif %}">
-                                <label class="field-label">Text Content</label>
-                                <textarea id="edit-text" class="field" style="min-height:140px;resize:none" placeholder="Enter text here...">{{ qr.qr_data.text }}</textarea>
-                            </div>
-                            <!-- EMAIL -->
-                            <div id="eform-email" class="edit-subform {% if qr.qr_type == 'email' %}active{% endif %} space-y-4">
-                                <div><label class="field-label">Recipient Email</label><input id="edit-email-to" class="field" value="{{ qr.qr_data.email }}"></div>
-                                <div><label class="field-label">Subject</label><input id="edit-email-sub" class="field" value="{{ qr.qr_data.subject }}"></div>
-                                <div><label class="field-label">Message</label><textarea id="edit-email-body" class="field" style="min-height:80px">{{ qr.qr_data.body }}</textarea></div>
-                            </div>
-                            <!-- PHONE -->
-                            <div id="eform-phone" class="edit-subform {% if qr.qr_type == 'phone' %}active{% endif %}">
-                                <label class="field-label">Phone Number</label>
-                                <input id="edit-phone" class="field" value="{{ qr.qr_data.phone }}" placeholder="+91...">
-                            </div>
-                            <!-- SMS -->
-                            <div id="eform-sms" class="edit-subform {% if qr.qr_type == 'sms' %}active{% endif %} space-y-4">
-                                <input id="edit-sms-num" class="field" value="{{ qr.qr_data.phone }}" placeholder="Phone Number">
-                                <textarea id="edit-sms-msg" class="field" placeholder="Message content...">{{ qr.qr_data.message }}</textarea>
-                            </div>
-                            <!-- VCARD -->
-                            <div id="eform-vcard" class="edit-subform {% if qr.qr_type == 'vcard' %}active{% endif %} space-y-3">
-                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
-                                    <input id="edit-vc-fn" class="field" placeholder="First Name" value="{{ qr.qr_data.first_name }}">
-                                    <input id="edit-vc-ln" class="field" placeholder="Last Name" value="{{ qr.qr_data.last_name }}">
-                                </div>
-                                <input id="edit-vc-org" class="field" placeholder="Organization" value="{{ qr.qr_data.organization }}">
-                                <input id="edit-vc-email" class="field" placeholder="Email Address" value="{{ qr.qr_data.email }}">
-                                <input id="edit-vc-pm" class="field" placeholder="Mobile Number" value="{{ qr.qr_data.phone_mobile }}">
-                            </div>
-                            <!-- WIFI -->
-                            <div id="eform-wifi" class="edit-subform {% if qr.qr_type == 'wifi' %}active{% endif %} space-y-3">
-                                <input id="edit-wifi-ssid" class="field" placeholder="Network SSID" value="{{ qr.qr_data.ssid }}">
-                                <input id="edit-wifi-pass" class="field" placeholder="Password" value="{{ qr.qr_data.password }}">
-                                <select id="edit-wifi-enc" class="field">
-                                    <option value="WPA" {% if qr.qr_data.encryption == 'WPA' %}selected{% endif %}>WPA/WPA2</option>
-                                    <option value="WEP" {% if qr.qr_data.encryption == 'WEP' %}selected{% endif %}>WEP</option>
-                                    <option value="nopass" {% if qr.qr_data.encryption == 'nopass' %}selected{% endif %}>Open</option>
-                                </select>
-                            </div>
-                            <!-- LOCATION -->
-                            <div id="eform-location" class="edit-subform {% if qr.qr_type == 'location' %}active{% endif %} space-y-3">
-                                <input id="edit-loc-lat" class="field" placeholder="Latitude" value="{{ qr.qr_data.latitude }}">
-                                <input id="edit-loc-lng" class="field" placeholder="Longitude" value="{{ qr.qr_data.longitude }}">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- ACCORDION: DESIGN SETTINGS -->
-                <div class="acc-card">
-                    <button class="acc-head" onclick="toggleAcc(this)">
-                        <div class="acc-title"><i data-lucide="palette" style="width:18px;height:18px;color:#6366f1"></i> Design Style</div>
-                        <i data-lucide="chevron-down" class="acc-arrow" style="width:16px;height:16px"></i>
-                    </button>
-                    <div class="acc-body">
-                        <div class="color-grid mb-6">
-                            <div class="color-wrap">
-                                <input type="color" id="edit-fg" class="color-input" value="{{ qr.fg_color }}">
-                                <span class="field-label" style="margin:0">Foreground</span>
-                            </div>
-                            <div class="color-wrap">
-                                <input type="color" id="edit-bg" class="color-input" value="{{ qr.bg_color }}">
-                                <span class="field-label" style="margin:0">Background</span>
-                            </div>
-                        </div>
-                        
-                        <div class="field-group">
-                            <label class="field-label">Body Shape</label>
-                            <div class="shape-grid">
-                                <label class="shape-opt"><input type="radio" name="body" value="square" {% if qr.body_style == 'square' %}checked{% endif %}><div><i data-lucide="square" class="w-4 h-4"></i></div></label>
-                                <label class="shape-opt"><input type="radio" name="body" value="circle" {% if qr.body_style == 'circle' %}checked{% endif %}><div><i data-lucide="circle" class="w-4 h-4"></i></div></label>
-                                <label class="shape-opt"><input type="radio" name="body" value="rounded" {% if qr.body_style == 'rounded' %}checked{% endif %}><div><i data-lucide="toy-brick" class="w-4 h-4"></i></div></label>
-                            </div>
-                        </div>
-
-                        <div class="field-group">
-                            <label class="field-label">Update Logo</label>
-                            <input type="file" id="edit-logo" class="field" accept="image/*">
-                            {% if qr.logo %}
-                            <p style="font-size:10px;color:#64748b;margin-top:6px;">Current: <a href="{{ qr.logo.url }}" target="_blank" class="text-indigo-600">View Logo</a></p>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
-
-                <button class="btn-save" id="save-btn" onclick="saveChanges()">
-                    <span style="display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px">
-                        <span style="display:flex;align-items:center;gap:8px"><i data-lucide="save" style="width:18px;height:18px"></i> Save Changes</span>
-                        <p style="text-align:center;margin-top:4px;font-size:10px;color:#94a3b8;font-weight:600;line-height:1.4;">
-                        QR image remains static.<br>Updates are instant.
-                        </p>
-                    </span>
-                </button>
-            </div>
-
-            </div>
+        
+        <div class="toggle-active">
+            <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Operation Status</span>
+            <label class="switch">
+                <input type="checkbox" id="is-active-toggle" {% if qr.is_active %}checked{% endif %}>
+                <span class="slider"></span>
+            </label>
         </div>
     </div>
-</div>
 
-<div class="toast" id="toast"></div>
+    <!-- Category Nav -->
+    <div class="cat-nav">
+        <div class="cat-btn active" data-cat="all">All Engines</div>
+        <div class="cat-btn" data-cat="basic">Basic & Connect</div>
+        <div class="cat-btn" data-cat="social">Social Media</div>
+        <div class="cat-btn" data-cat="files">Files & Assets</div>
+        <div class="cat-btn" data-cat="business">Business & Pay</div>
+        <div class="cat-btn" data-cat="platforms">Cloud Platforms</div>
+        <div class="cat-btn" data-cat="comm">Comm & Utility</div>
+    </div>
 
+    <form id="edit-qr-form" enctype="multipart/form-data">
+        <div class="create-grid">
+            <div class="space-y-10">
+                <!-- Type Selection -->
+                <div id="types-grid" class="types-grid"></div>
+
+                <!-- Content Settings -->
+                <div class="form-card">
+                    <div class="flex items-center gap-4 mb-6 border-b border-slate-50 pb-4">
+                        <div class="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center">
+                            <i data-lucide="settings" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-black text-slate-900">Configure Content</h3>
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Short Code: {{ qr.short_code }}</p>
+                        </div>
+                    </div>
+
+                    <div class="space-y-6">
+                        <div class="form-group">
+                            <label>Friendly Name</label>
+                            <input type="text" name="qr_name" class="form-input" value="{{ qr.qr_name }}" required>
+                        </div>
+                        <div id="dynamic-fields" class="space-y-6"></div>
+                    </div>
+                </div>
+
+                <!-- Design Settings -->
+                <div class="form-card">
+                    <div class="flex items-center gap-4 mb-6 border-b border-slate-50 pb-4">
+                        <div class="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center">
+                            <i data-lucide="palette" class="w-5 h-5"></i>
+                        </div>
+                        <h3 class="text-lg font-black text-slate-900">Branding & Style</h3>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="form-group">
+                            <label>Foreground Color</label>
+                            <div class="flex items-center gap-4">
+                                <input type="color" name="fg_color" value="{{ qr.fg_color }}" class="w-12 h-12 border-none rounded-xl cursor-pointer">
+                                <input type="text" class="form-input" value="{{ qr.fg_color }}">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Background Color</label>
+                            <div class="flex items-center gap-4">
+                                <input type="color" name="bg_color" value="{{ qr.bg_color }}" class="w-12 h-12 border-none rounded-xl cursor-pointer">
+                                <input type="text" class="form-input" value="{{ qr.bg_color }}">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label>Body Style</label>
+                            <select name="body_style" class="form-input">
+                                <option value="square" {% if qr.body_style == 'square' %}selected{% endif %}>Square</option>
+                                <option value="rounded" {% if qr.body_style == 'rounded' %}selected{% endif %}>Rounded</option>
+                                <option value="extra-rounded" {% if qr.body_style == 'extra-rounded' %}selected{% endif %}>Extra Rounded</option>
+                                <option value="dots" {% if qr.body_style == 'dots' %}selected{% endif %}>Dots</option>
+                                <option value="classy" {% if qr.body_style == 'classy' %}selected{% endif %}>Classy</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Update Center Logo</label>
+                            <input type="file" name="logo" class="form-input py-3" accept="image/*">
+                            {% if qr.logo %}<p class="text-[10px] font-bold text-slate-400 mt-2">Current logo active</p>{% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Preview Sidebar -->
+            <div class="space-y-6">
+                <div class="preview-card">
+                    <h4 class="text-[10px] font-black uppercase tracking-[0.2em] mb-6 text-yellow-400">Live Asset Preview</h4>
+                    <div class="qr-vessel">
+                        <img id="qr-preview-img" src="{% url 'dynamic_qr:generate_image' %}?text={{ redirect_url|urlencode }}&fg_color={{ qr.fg_color|urlencode }}&bg_color={{ qr.bg_color|urlencode }}&style={{ qr.body_style }}" alt="QR Code">
+                    </div>
+                    
+                    <button type="submit" class="btn-save" id="submit-btn">
+                        <i data-lucide="save" class="w-6 h-6"></i>
+                        Update Asset
+                    </button>
+                    
+                    <div class="mt-8 p-4 bg-slate-800 rounded-2xl text-left border border-slate-700">
+                        <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Redirection Link</p>
+                        <p class="text-xs font-mono font-bold text-slate-300 truncate">{{ redirect_url }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <input type="hidden" name="qr_type" id="selected-type" value="{{ qr.qr_type }}">
+        <input type="hidden" name="destination_url" id="final-destination" value="{{ qr.destination_url }}">
+        <input type="hidden" name="qr_data" id="final-qr-data">
+    </form>
 {% endblock %}
 
-{% block extra_scripts %}
-<script>
-    const CSRF = '{{ csrf_token }}';
-    const QR_ID = '{{ qr.id }}';
-    const REDIRECT_URL = '{{ redirect_url }}';
+{% block dqr_scripts %}
+// Same engine definitions as create_qr
+const QR_ENGINES = [
+    { id: 'url', label: 'URL / Link', icon: 'link', cat: 'basic', color: '#6366f1', bg: '#f5f3ff' },
+    { id: 'text', label: 'Plain Text', icon: 'type', cat: 'basic', color: '#64748b', bg: '#f1f5f9' },
+    { id: 'wifi', label: 'Wi-Fi', icon: 'wifi', cat: 'basic', color: '#0ea5e9', bg: '#f0f9ff' },
+    { id: 'location', label: 'Location', icon: 'map-pin', cat: 'basic', color: '#f43f5e', bg: '#fff1f2' },
+    { id: 'whatsapp', label: 'WhatsApp', icon: 'message-circle', cat: 'social', color: '#22c55e', bg: '#f0fdf4' },
+    { id: 'youtube', label: 'YouTube', icon: 'youtube', cat: 'social', color: '#ef4444', bg: '#fef2f2' },
+    { id: 'facebook', label: 'Facebook', icon: 'facebook', cat: 'social', color: '#3b82f6', bg: '#eff6ff' },
+    { id: 'instagram', label: 'Instagram', icon: 'instagram', cat: 'social', color: '#d946ef', bg: '#fdf4ff' },
+    { id: 'telegram', label: 'Telegram', icon: 'send', cat: 'social', color: '#0ea5e9', bg: '#f0f9ff' },
+    { id: 'tiktok', label: 'TikTok', icon: 'music', cat: 'social', color: '#000000', bg: '#f8fafc' },
+    { id: 'x-twitter', label: 'X / Twitter', icon: 'twitter', cat: 'social', color: '#000000', bg: '#f8fafc' },
+    { id: 'snapchat', label: 'Snapchat', icon: 'ghost', cat: 'social', color: '#eab308', bg: '#fefce8' },
+    { id: 'pinterest', label: 'Pinterest', icon: 'layout-grid', cat: 'social', color: '#ef4444', bg: '#fef2f2' },
+    { id: 'linkedin', label: 'LinkedIn', icon: 'linkedin', cat: 'social', color: '#2563eb', bg: '#eff6ff' },
+    { id: 'pdf', label: 'PDF File', icon: 'file-text', cat: 'files', color: '#ef4444', bg: '#fef2f2' },
+    { id: 'audio', label: 'Audio / MP3', icon: 'headphones', cat: 'files', color: '#8b5cf6', bg: '#f5f3ff' },
+    { id: 'video', label: 'Video / MP4', icon: 'monitor-play', cat: 'files', color: '#ec4899', bg: '#fdf2f8' },
+    { id: 'image', label: 'Image', icon: 'image', cat: 'files', color: '#10b981', bg: '#ecfdf5' },
+    { id: 'word', label: 'Word Doc', icon: 'file-text', cat: 'files', color: '#10b981', bg: '#ecfdf5' },
+    { id: 'excel', label: 'Excel Sheet', icon: 'file-spreadsheet', cat: 'files', color: '#10b981', bg: '#ecfdf5' },
+    { id: 'pptx', label: 'PowerPoint', icon: 'presentation', cat: 'files', color: '#10b981', bg: '#ecfdf5' },
+    { id: 'google-review', label: 'Google Review', icon: 'star', cat: 'business', color: '#f59e0b', bg: '#fffbe3' },
+    { id: 'play-market', label: 'Play Market', icon: 'play-circle', cat: 'business', color: '#10b981', bg: '#ecfdf5' },
+    { id: 'app-store', label: 'App Store', icon: 'smartphone', cat: 'business', color: '#64748b', bg: '#f1f5f9' },
+    { id: 'paypal', label: 'PayPal', icon: 'wallet', cat: 'business', color: '#1d4ed8', bg: '#ebf5ff' },
+    { id: 'amazon', label: 'Amazon', icon: 'shopping-cart', cat: 'business', color: '#ff9900', bg: '#fff7e6' },
+    { id: 'venmo', label: 'Venmo', icon: 'dollar-sign', cat: 'business', color: '#3d95ce', bg: '#eefaff' },
+    { id: 'upi', label: 'UPI Pay', icon: 'credit-card', cat: 'business', color: '#6739b7', bg: '#f2e8ff' },
+    { id: 'crypto', label: 'Crypto', icon: 'bitcoin', cat: 'business', color: '#f7931a', bg: '#fff9f2' },
+    { id: 'google-forms', label: 'Google Forms', icon: 'clipboard-list', cat: 'platforms', color: '#8b5cf6', bg: '#f5f3ff' },
+    { id: 'google-doc', label: 'Google Doc', icon: 'file-text', cat: 'platforms', color: '#3b82f6', bg: '#eff6ff' },
+    { id: 'spotify', label: 'Spotify', icon: 'disc', cat: 'platforms', color: '#1ed760', bg: '#e8fdf0' },
+    { id: 'office-365', label: 'Office 365', icon: 'box', cat: 'platforms', color: '#d83b01', bg: '#fff1ed' },
+    { id: 'email', label: 'Email', icon: 'mail', cat: 'comm', color: '#6366f1', bg: '#f5f3ff' },
+    { id: 'phone', label: 'Phone Call', icon: 'phone', cat: 'comm', color: '#10b981', bg: '#ecfdf5' },
+    { id: 'sms', label: 'SMS', icon: 'message-square', cat: 'comm', color: '#6366f1', bg: '#f5f3ff' },
+    { id: 'vcard', label: 'vCard', icon: 'user-circle-2', cat: 'comm', color: '#64748b', bg: '#f1f5f9' },
+    { id: 'calendar', label: 'Calendar', icon: 'calendar', cat: 'comm', color: '#ef4444', bg: '#fef2f2' },
+    { id: 'link-list', label: 'List of Links', icon: 'layers', cat: 'comm', color: '#8b5cf6', bg: '#f5f3ff' },
+    { id: 'custom-url', label: 'Custom URL', icon: 'external-link', cat: 'comm', color: '#64748b', bg: '#f1f5f9' },
+];
 
-    function toggleAcc(btn) {
-        const body = btn.nextElementSibling;
-        const isOpen = body.classList.contains('open');
-        
-        // Optional: close other accordions
-        // document.querySelectorAll('.acc-body').forEach(b => b.classList.remove('open'));
-        // document.querySelectorAll('.acc-head').forEach(h => h.classList.remove('open'));
+const EXISTING_DATA = {{ qr.qr_data|safe }};
 
-        if (isOpen) {
-            body.classList.remove('open');
-            btn.classList.remove('open');
-        } else {
-            body.classList.add('open');
-            btn.classList.add('open');
-        }
-    }
-
-    function switchEditSubForm(type) {
-        document.querySelectorAll('.edit-subform').forEach(f => {
-            f.classList.remove('active');
-            f.classList.add('hidden');
-        });
-        const current = document.getElementById('eform-' + type);
-        if (current) {
-            current.classList.remove('hidden');
-            current.classList.add('active');
-        }
-    }
-
-    function showToast(msg, type = 'success') {
-        const t = document.getElementById('toast');
-        t.textContent = msg;
-        t.style.display = 'block';
-        t.style.background = type === 'error' ? '#ef4444' : '#1e293b';
-        setTimeout(() => { t.style.display = 'none'; }, 3000);
-    }
-
-    async function saveChanges() {
-        const btn = document.getElementById('save-btn');
-        const type = document.getElementById('edit-type').value;
-        let dUrl = '';
-        let dData = {};
-
-        // Data collection
-        if (type === 'url') dUrl = document.getElementById('edit-url').value.trim();
-        else if (type === 'text') dData.text = document.getElementById('edit-text').value.trim();
-        else if (type === 'email') {
-            dData.email = document.getElementById('edit-email-to').value.trim();
-            dData.subject = document.getElementById('edit-email-sub').value.trim();
-            dData.body = document.getElementById('edit-email-body').value.trim();
-        } else if (type === 'phone') dData.phone = document.getElementById('edit-phone').value.trim();
-        else if (type === 'sms') {
-            dData.phone = document.getElementById('edit-sms-num').value.trim();
-            dData.message = document.getElementById('edit-sms-msg').value.trim();
-        } else if (type === 'vcard') {
-            dData.first_name = document.getElementById('edit-vc-fn').value.trim();
-            dData.last_name = document.getElementById('edit-vc-ln').value.trim();
-            dData.organization = document.getElementById('edit-vc-org').value.trim();
-            dData.email = document.getElementById('edit-vc-email').value.trim();
-            dData.phone_mobile = document.getElementById('edit-vc-pm').value.trim();
-        } else if (type === 'wifi') {
-            dData.ssid = document.getElementById('edit-wifi-ssid').value.trim();
-            dData.password = document.getElementById('edit-wifi-pass').value.trim();
-            dData.encryption = document.getElementById('edit-wifi-enc').value;
-        } else if (type === 'location') {
-            dData.latitude = document.getElementById('edit-loc-lat').value.trim();
-            dData.longitude = document.getElementById('edit-loc-lng').value.trim();
-        }
-
-        btn.disabled = true;
-        const orig = btn.innerHTML;
-        btn.innerHTML = 'Saving Changes...';
-
-        try {
-            const fd = new FormData();
-            fd.append('qr_name', document.getElementById('edit-name').value.trim());
-            fd.append('qr_type', type);
-            fd.append('destination_url', dUrl);
-            fd.append('qr_data', JSON.stringify(dData));
-            fd.append('fg_color', document.getElementById('edit-fg').value);
-            fd.append('bg_color', document.getElementById('edit-bg').value);
-            fd.append('is_active', document.getElementById('edit-active').checked ? 'true' : 'false');
-            fd.append('body_style', document.querySelector('input[name="body"]:checked').value);
-            const logoInp = document.getElementById('edit-logo');
-            if (logoInp.files[0]) fd.append('logo', logoInp.files[0]);
-            fd.append('csrfmiddlewaretoken', CSRF);
-
-            const resp = await fetch(`/qr/edit/${QR_ID}/`, {
-                method: 'POST',
-                body: fd,
-                headers: { 'X-Requested-With': 'XMLHttpRequest' },
-            });
-            const data = await resp.json();
-
-            if (data.success) {
-                showToast('Changes saved! ✅');
-                regeneratePreview();
-            } else {
-                showToast(data.error || 'Update failed', 'error');
-            }
-        } catch (err) {
-            showToast('Network error while saving.', 'error');
-        } finally {
-            btn.disabled = false;
-            btn.innerHTML = orig;
-            lucide.createIcons();
-        }
-    }
-
-    async function regeneratePreview() {
-        const loading = document.getElementById('preview-loading');
-        loading.classList.remove('hidden');
-
-        const fd = new FormData();
-        fd.append('text', REDIRECT_URL);
-        fd.append('fg_color', document.getElementById('edit-fg').value);
-        fd.append('bg_color', document.getElementById('edit-bg').value);
-        fd.append('style', document.querySelector('input[name="body"]:checked').value);
-        fd.append('eye_style', 'square'); // Fixed index for now
-        fd.append('ball_style', 'square');
-        fd.append('output_format', 'png');
-        fd.append('csrfmiddlewaretoken', CSRF);
-
-        try {
-            const resp = await fetch('{% url "dynamic_qr:generate_image" %}', { method: 'POST', body: fd });
-            const blob = await resp.blob();
-            document.getElementById('preview-img').src = URL.createObjectURL(blob);
-        } catch (err) {
-            console.error(err);
-        } finally {
-            loading.classList.add('hidden');
-        }
-    }
-
-    function copyLink() {
-        navigator.clipboard.writeText(document.getElementById('short-url').textContent).then(() => {
-            showToast('Link copied! 📋');
-        });
-    }
-
-    // Init Lucid icons and Initial Preview
-    document.addEventListener('DOMContentLoaded', () => {
-        lucide.createIcons();
-        regeneratePreview();
+function renderTiles(cat = 'all') {
+    const grid = document.getElementById('types-grid');
+    grid.innerHTML = '';
+    const currentType = document.getElementById('selected-type').value;
+    
+    QR_ENGINES.forEach(engine => {
+        if (cat !== 'all' && engine.cat !== cat) return;
+        const tile = document.createElement('div');
+        tile.className = `type-tile ${engine.id === currentType ? 'active' : ''}`;
+        tile.innerHTML = `
+            <div class="tile-icon" style="background: ${engine.bg}; color: ${engine.color};">
+                <i data-lucide="${engine.icon}"></i>
+            </div>
+            <span class="tile-label">${engine.label}</span>
+        `;
+        tile.onclick = () => selectType(engine.id);
+        grid.appendChild(tile);
     });
-</script>
+    lucide.createIcons();
+}
+
+function selectType(type) {
+    document.getElementById('selected-type').value = type;
+    renderTiles(document.querySelector('.cat-btn.active').dataset.cat);
+    renderFields(type);
+}
+
+function renderFields(type) {
+    const container = document.getElementById('dynamic-fields');
+    container.innerHTML = '';
+
+    const addField = (label, name, fieldType = 'text', placeholder = '', required = true, initial = '') => {
+        const group = document.createElement('div');
+        group.className = 'form-group';
+        
+        let value = initial || EXISTING_DATA[name] || '';
+        if (name === 'destination_url') value = '{{ qr.destination_url }}';
+
+        if (fieldType === 'file') {
+             group.innerHTML = `<label>${label}</label><input type="file" name="file_content" class="form-input py-3">
+             <p class="text-[9px] text-slate-400 mt-1 uppercase tracking-widest">Leave blank to keep existing file</p>`;
+        } else if (fieldType === 'textarea') {
+            group.innerHTML = `<label>${label}</label><textarea name="${name}" class="form-input py-4 h-32" placeholder="${placeholder}" ${required ? 'required' : ''}>${value}</textarea>`;
+        } else {
+            group.innerHTML = `<label>${label}</label><input type="${fieldType}" name="${name}" class="form-input" placeholder="${placeholder}" value="${value}" ${required ? 'required' : ''}>`;
+        }
+        container.appendChild(group);
+    };
+
+    if (['url', 'youtube', 'facebook', 'instagram', 'tiktok', 'x-twitter', 'snapchat', 'pinterest', 'linkedin', 'google-forms', 'google-doc', 'google-sheets', 'google-review', 'play-market', 'app-store', 'paypal', 'amazon', 'venmo', 'spotify', 'office-365', 'custom-url'].includes(type)) {
+        addField('Target URL / Link', 'destination_url', 'url', 'https://example.com/your-content');
+    } else if (type === 'text') {
+        addField('Plain Text Content', 'text', 'textarea');
+    } else if (type === 'whatsapp' || type === 'telegram') {
+        addField('Phone Number', 'phone', 'tel');
+        addField('Message', 'message', 'textarea', '', false);
+    } else if (type === 'phone') {
+        addField('Phone Number', 'phone', 'tel');
+    } else if (type === 'sms') {
+        addField('Recipient Number', 'phone', 'tel');
+        addField('Default Message', 'message', 'textarea');
+    } else if (type === 'email') {
+        addField('Email Address', 'email', 'email');
+        addField('Subject', 'subject', 'text');
+        addField('Message Body', 'body', 'textarea');
+    } else if (type === 'wifi') {
+        addField('Network Name (SSID)', 'ssid', 'text');
+        addField('Password', 'password', 'text');
+        addField('Security', 'encryption', 'text');
+    } else if (type === 'location') {
+        addField('Latitude', 'latitude', 'text');
+        addField('Longitude', 'longitude', 'text');
+    } else if (['pdf', 'audio', 'video', 'image', 'word', 'excel', 'pptx'].includes(type)) {
+        addField(`Upload New ${type.toUpperCase()}`, 'file_content', 'file');
+    } else if (type === 'vcard') {
+        addField('First Name', 'first_name', 'text');
+        addField('Last Name', 'last_name', 'text');
+        addField('Organization', 'organization', 'text', '', false);
+        addField('Mobile Phone', 'phone_mobile', 'tel');
+        addField('Email', 'email', 'email');
+    } else if (type === 'link-list') {
+        addField('Link List JSON', 'links', 'textarea');
+    } else if (type === 'upi') {
+        addField('UPI ID', 'upi_id', 'text');
+        addField('Payee Name', 'name', 'text');
+        addField('Amount', 'amount', 'number', '', false);
+    }
+}
+
+document.querySelectorAll('.cat-btn').forEach(btn => {
+    btn.onclick = () => {
+        document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderTiles(btn.dataset.cat);
+    };
+});
+
+document.getElementById('edit-qr-form').onsubmit = async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const dataObj = {};
+    const dynamicFields = document.getElementById('dynamic-fields').querySelectorAll('input, textarea, select');
+    dynamicFields.forEach(field => {
+        if (field.name !== 'file_content' && field.name !== 'destination_url') {
+            dataObj[field.name] = field.value;
+        }
+    });
+
+    const selectedType = document.getElementById('selected-type').value;
+    if ((selectedType === 'whatsapp' || selectedType === 'telegram') && !formData.get('destination_url')) {
+        const phone = dataObj.phone || '';
+        const base = selectedType === 'whatsapp' ? 'https://wa.me/' : 'https://t.me/';
+        const msg = selectedType === 'whatsapp' ? `?text=${encodeURIComponent(dataObj.message || '')}` : '';
+        formData.set('destination_url', `${base}${phone}${msg}`);
+    }
+
+    formData.set('qr_data', JSON.stringify(dataObj));
+    formData.append('is_active', document.getElementById('is-active-toggle').checked ? 'true' : 'false');
+    
+    const submitBtn = document.getElementById('submit-btn');
+    submitBtn.disabled = true;
+    submitBtn.innerHTML = '<i data-lucide="refresh-cw" class="w-5 h-5 animate-spin"></i> Updating...';
+    lucide.createIcons();
+
+    try {
+        const response = await fetch('{% url "dynamic_qr:edit" qr.id %}', {
+            method: 'POST',
+            body: formData,
+            headers: { 'X-CSRFToken': '{{ csrf_token }}', 'X-Requested-With': 'XMLHttpRequest' }
+        });
+        const result = await response.json();
+        if (result.success) {
+            window.location.href = '{% url "dynamic_qr:dashboard" %}';
+        } else {
+            alert(result.error);
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = '<i data-lucide="save" class="w-6 h-6"></i> Update Asset';
+        }
+    } catch (err) {
+        alert('Update failed.');
+        submitBtn.disabled = false;
+    }
+};
+
+renderTiles();
+renderFields('{{ qr.qr_type }}');
 {% endblock %}

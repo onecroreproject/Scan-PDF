@@ -22,18 +22,67 @@ class DynamicQRCode(models.Model):
 
     # QR content
     qr_name = models.CharField(max_length=200, help_text="A friendly name for this QR code")
-    qr_type = models.CharField(max_length=30, default='url', choices=[
-        ('url', 'URL'),
-        ('text', 'Text'),
-        ('email', 'Email'),
-        ('phone', 'Phone'),
-        ('sms', 'SMS'),
-        ('wifi', 'WiFi'),
-        ('vcard', 'vCard'),
-        ('location', 'Location'),
-    ])
+    QR_TYPES = [
+        # Basic
+        ('url', 'URL / Link'),
+        ('text', 'Text Content'),
+        ('wifi', 'Wi-Fi Network'),
+        ('location', 'Map / Location'),
+        
+        # Social & Media
+        ('whatsapp', 'WhatsApp'),
+        ('youtube', 'YouTube'),
+        ('facebook', 'Facebook'),
+        ('instagram', 'Instagram'),
+        ('telegram', 'Telegram'),
+        ('tiktok', 'TikTok'),
+        ('x-twitter', 'X / Twitter'),
+        ('snapchat', 'Snapchat'),
+        ('pinterest', 'Pinterest'),
+        ('linkedin', 'LinkedIn'),
+        
+        # Files (Uploads)
+        ('pdf', 'PDF Document'),
+        ('audio', 'Audio / MP3'),
+        ('video', 'Video / MP4'),
+        ('image', 'Image / Photo'),
+        ('pptx', 'PowerPoint (PPTX)'),
+        ('excel', 'Excel (XLSX)'),
+        ('word', 'Word (DOCX)'),
+        
+        # Communication & Utility
+        ('email', 'Email Address'),
+        ('phone', 'Phone Call'),
+        ('sms', 'SMS Message'),
+        ('vcard', 'vCard (Contact)'),
+        ('calendar', 'Calendar Event'),
+        ('booking', 'Booking / Appt'),
+        
+        # Business & Payments
+        ('google-review', 'Google Review'),
+        ('google-forms', 'Google Forms'),
+        ('google-doc', 'Google Doc'),
+        ('google-sheets', 'Google Sheets'),
+        ('play-market', 'Play Market'),
+        ('app-store', 'App Store'),
+        ('paypal', 'PayPal'),
+        ('etsy', 'Etsy Shop'),
+        ('amazon', 'Amazon Product'),
+        ('venmo', 'Venmo'),
+        ('upi', 'UPI Payment'),
+        ('crypto', 'Crypto Payment'),
+        ('spotify', 'Spotify'),
+        
+        # Advanced
+        ('link-list', 'List of Links'),
+        ('custom-url', 'Custom Short URL'),
+        ('office-365', 'Office 365'),
+        ('2d-barcode', '2D Barcode'),
+    ]
+    qr_type = models.CharField(max_length=40, default='url', choices=QR_TYPES)
     destination_url = models.URLField(max_length=2000, blank=True, null=True, help_text="Primary URL for direct redirect types")
     qr_data = models.JSONField(default=dict, blank=True, help_text="Structured data for non-URL QR types")
+    file_content = models.FileField(upload_to='dynamic_qr_contents/', null=True, blank=True, help_text="File associated with PDF, Audio, Video, etc.")
 
     # Design options stored as JSON
     fg_color = models.CharField(max_length=10, default='#000000')
@@ -64,6 +113,30 @@ class DynamicQRCode(models.Model):
     def increment_scan(self):
         self.scan_count += 1
         self.save(update_fields=['scan_count'])
+
+
+class QRAnalytics(models.Model):
+    """
+    Tracks individual scan events for dynamic QR codes.
+    Stores metadata like IP address, user agent, and device type.
+    """
+    qr_code = models.ForeignKey(DynamicQRCode, on_delete=models.CASCADE, related_name='analytics')
+    timestamp = models.DateTimeField(auto_now_add=True)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    user_agent = models.TextField(null=True, blank=True)
+    browser = models.CharField(max_length=50, null=True, blank=True)
+    os = models.CharField(max_length=50, null=True, blank=True)
+    device_type = models.CharField(max_length=50, null=True, blank=True, help_text="Mobile, Tablet, Desktop")
+    country = models.CharField(max_length=100, default='Unknown')
+    city = models.CharField(max_length=100, default='Unknown')
+
+    class Meta:
+        ordering = ['-timestamp']
+        verbose_name = 'QR Analytics'
+        verbose_name_plural = 'QR Analytics'
+
+    def __str__(self):
+        return f"Scan for {self.qr_code.qr_name} at {self.timestamp}"
 
 
 class OTPVerification(models.Model):

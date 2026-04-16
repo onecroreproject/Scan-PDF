@@ -1,0 +1,181 @@
+{% extends 'dynamic_qr/dashboard_base.html' %}
+{% load static %}
+
+{% block title %}All QR Assets — ScanPDF{% endblock %}
+
+{% block dqr_style %}
+    .qr-card {
+        background: white; border-radius: 20px; border: 1px solid #f1f5f9;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); position: relative;
+        overflow: hidden;
+    }
+    .qr-card:hover { transform: translateY(-4px); border-color: #6366f1; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.05); }
+    
+    .qr-badge {
+        font-size: 8px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em;
+        padding: 4px 8px; border-radius: 6px;
+    }
+    .badge-active { background: #ecfdf5; color: #10b981; }
+    .badge-paused { background: #f8fafc; color: #94a3b8; }
+{% endblock %}
+
+{% block dqr_content %}
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
+        <div>
+            <h1 class="text-3xl font-black text-slate-900 tracking-tight">Your Asset Library</h1>
+            <p class="text-slate-500 font-bold mt-1 text-sm">Managing <span class="text-indigo-600">{{ total_count }}</span> active deployments</p>
+        </div>
+        
+        <a href="{% url 'dynamic_qr:create' %}" class="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-2xl font-black transition-all hover:bg-indigo-700 shadow-lg shadow-indigo-100">
+            <i data-lucide="plus" class="w-5 h-5"></i> Create New Asset
+        </a>
+    </div>
+
+    {% if page_obj %}
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-12">
+        {% for qr in page_obj %}
+        {% with redirect_url=request.scheme|add:"://"|add:request.get_host|add:"/qr/r/"|add:qr.short_code|add:"/" %}
+        <div class="qr-card">
+            <div class="p-4">
+                <div class="flex items-start justify-between mb-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 bg-slate-50 rounded-xl p-2 border border-slate-100 flex items-center justify-center">
+                            <img src="{% url 'dynamic_qr:generate_image' %}?text={{ redirect_url|urlencode }}&fg_color={{ qr.fg_color|urlencode }}&bg_color={{ qr.bg_color|urlencode }}&style={{ qr.body_style }}" class="w-full h-full object-contain opacity-80">
+                        </div>
+                        <div>
+                            <h3 class="text-[13px] font-black text-slate-900 truncate max-w-[120px]">{{ qr.qr_name }}</h3>
+                            <div class="flex items-center gap-2 mt-0.5">
+                                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{{ qr.qr_type }}</span>
+                                <span class="w-1 h-1 rounded-full bg-slate-200"></span>
+                                <span class="text-[9px] font-mono font-bold text-indigo-500">{{ qr.short_code }}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <span class="qr-badge {% if qr.is_active %}badge-active{% else %}badge-paused{% endif %}">
+                        {% if qr.is_active %}• Active{% else %}Paused{% endif %}
+                    </span>
+                </div>
+
+                <!-- Stats Snippet -->
+                <div class="grid grid-cols-2 gap-2 mb-4">
+                    <div class="bg-slate-50/50 p-2.5 rounded-xl border border-slate-50">
+                        <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Scans</p>
+                        <p class="text-sm font-black text-slate-900">{{ qr.scan_count }}</p>
+                    </div>
+                    <div class="bg-slate-50/50 p-2.5 rounded-xl border border-slate-50">
+                        <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Code ID</p>
+                        <p class="text-[10px] font-mono font-bold text-slate-700 truncate">{{ qr.short_code }}</p>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="grid grid-cols-4 gap-2">
+                    <a href="{% url 'dynamic_qr:analytics' qr.id %}" class="h-9 bg-slate-50 hover:bg-indigo-50 text-slate-500 hover:text-indigo-600 rounded-lg flex items-center justify-center border border-slate-100 transition-all" title="Analytics">
+                        <i data-lucide="bar-chart" class="w-4 h-4"></i>
+                    </a>
+                    <a href="{% url 'dynamic_qr:edit' qr.id %}" class="h-9 bg-slate-50 hover:bg-slate-100 text-slate-500 rounded-lg flex items-center justify-center border border-slate-100 transition-all" title="Edit">
+                        <i data-lucide="pencil" class="w-4 h-4"></i>
+                    </a>
+                    <button onclick="toggleStatus('{{ qr.id }}')" 
+                            class="h-9 bg-slate-50 hover:bg-slate-100 {% if qr.is_active %}text-emerald-500{% else %}text-slate-400{% endif %} rounded-lg flex items-center justify-center border border-slate-100 transition-all" title="Toggle Status">
+                        <i data-lucide="power" class="w-4 h-4"></i>
+                    </button>
+                    <button onclick="deleteQR('{{ qr.id }}')" 
+                            class="h-9 bg-slate-50 hover:bg-red-50 text-slate-400 hover:text-red-500 rounded-lg flex items-center justify-center border border-slate-100 transition-all" title="Delete">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        {% endwith %}
+        {% endfor %}
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <div class="flex items-center justify-center gap-4 py-8 border-t border-slate-100">
+        {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}" class="w-10 h-10 bg-white border border-slate-200 rounded-xl flex items-center justify-center text-slate-600 hover:bg-slate-50 transition-all">
+            <i data-lucide="chevron-left" class="w-5 h-5"></i>
+        </a>
+        {% endif %}
+
+        <span class="text-xs font-black text-slate-400 uppercase tracking-widest">
+            Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+        </span>
+
+        {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}" class="w-10 h-10 bg-white border border-slate-200 rounded-xl flex items-center justify-center text-slate-600 hover:bg-slate-50 transition-all">
+            <i data-lucide="chevron-right" class="w-5 h-5"></i>
+        </a>
+        {% endif %}
+    </div>
+    {% endif %}
+
+    {% else %}
+    <div class="bg-white rounded-[40px] border border-dashed border-slate-200 p-20 text-center">
+        <div class="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-8">
+            <i data-lucide="qr-code" class="w-10 h-10 text-slate-300"></i>
+        </div>
+        <h3 class="text-2xl font-black text-slate-900 mb-2">Library is Empty</h3>
+        <p class="text-slate-500 font-medium mb-10 max-w-sm mx-auto">Create your first trackable QR code to start building your library.</p>
+        <a href="{% url 'dynamic_qr:create' %}" class="inline-flex items-center gap-2 px-8 py-4 bg-indigo-600 text-white rounded-2xl font-black transition-transform hover:scale-105">
+            Create New QR Asset
+        </a>
+    </div>
+    {% endif %}
+    <!-- Toast -->
+    <div id="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] hidden">
+        <div class="bg-slate-900 text-white px-8 py-4 rounded-2xl shadow-2xl flex items-center gap-4 animate-bounce-in">
+            <div class="w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center">
+                <i data-lucide="check" class="w-3 h-3"></i>
+            </div>
+            <span class="font-black text-xs uppercase tracking-widest" id="toast-message">Success!</span>
+        </div>
+    </div>
+{% endblock %}
+
+{% block dqr_scripts %}
+    <script>
+    async function toggleStatus(qrId) {
+        try {
+            const response = await fetch(`/qr/toggle-status/${qrId}/`, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+            });
+            if (response.ok) {
+                location.reload();
+            } else {
+                showToast('Action Failed', true);
+            }
+        } catch (err) {
+            console.error('Failed to toggle status');
+        }
+    }
+
+    async function deleteQR(qrId) {
+        if (!confirm('Are you sure you want to delete this QR code?')) return;
+        try {
+            const response = await fetch(`/qr/delete/${qrId}/`, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+            });
+            if (response.ok) {
+                location.reload();
+            } else {
+                showToast('Delete Action Failed', true);
+            }
+        } catch (err) {
+            console.error('Failed to delete QR');
+        }
+    }
+
+    function showToast(message, isError = false) {
+        const toast = document.getElementById('toast');
+        const msg = document.getElementById('toast-message');
+        msg.textContent = message;
+        toast.classList.remove('hidden');
+        setTimeout(() => toast.classList.add('hidden'), 3000);
+    }
+    </script>
+{% endblock %}

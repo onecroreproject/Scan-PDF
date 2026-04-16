@@ -4,14 +4,22 @@
 {% block extra_head %}
 <style>
     .auth-page-wrapper {
-        min-height: calc(100vh - 70px);
+        height: calc(100vh - 120px); /* Adjusting for header and footer */
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 40px 20px;
-        background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
+        padding: 0 20px;
+        background: #f8fafc;
         position: relative;
         overflow: hidden;
+    }
+
+    /* Fixed single-page layout */
+    body {
+        overflow: hidden;
+        height: 100vh;
+        display: flex;
+        flex-direction: column;
     }
 
     /* Animated background orbs */
@@ -20,85 +28,101 @@
         position: absolute;
         border-radius: 50%;
         filter: blur(80px);
-        opacity: 0.3;
+        opacity: 0.15;
         animation: float 8s ease-in-out infinite;
+        pointer-events: none;
     }
     .auth-page-wrapper::before {
-        width: 400px; height: 400px;
-        background: radial-gradient(circle, #6366f1, transparent);
-        top: -100px; left: -100px;
+        width: 300px; height: 300px;
+        background: radial-gradient(circle, #8b5cf6, transparent);
+        top: -50px; left: -50px;
     }
     .auth-page-wrapper::after {
-        width: 350px; height: 350px;
-        background: radial-gradient(circle, #a855f7, transparent);
-        bottom: -80px; right: -80px;
+        width: 250px; height: 250px;
+        background: radial-gradient(circle, #c4b5fd, transparent);
+        bottom: -40px; right: -40px;
         animation-delay: 4s;
     }
 
     @keyframes float {
         0%, 100% { transform: translateY(0) scale(1); }
-        50% { transform: translateY(-30px) scale(1.05); }
+        50% { transform: translateY(-20px) scale(1.05); }
     }
 
     .auth-card {
         position: relative;
         z-index: 10;
         width: 100%;
-        max-width: 440px;
-        background: rgba(255, 255, 255, 0.03);
-        backdrop-filter: blur(40px);
-        -webkit-backdrop-filter: blur(40px);
-        border: 1px solid rgba(255, 255, 255, 0.08);
-        border-radius: 28px;
-        padding: 48px 40px;
-        box-shadow: 0 32px 64px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.06);
-        animation: cardIn 0.6s ease-out;
+        max-width: 380px;
+        background: white;
+        border: 1px solid #e2e8f0;
+        border-radius: 20px;
+        padding: 24px 28px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+        animation: cardIn 0.5s ease-out;
+        margin: auto;
     }
     @keyframes cardIn {
-        from { opacity: 0; transform: translateY(30px) scale(0.95); }
-        to { opacity: 1; transform: translateY(0) scale(1); }
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
     }
 
-    .auth-logo { text-align: center; margin-bottom: 32px; }
+    .auth-logo { text-align: center; margin-bottom: 20px; }
     .auth-logo .icon-wrap {
-        width: 64px; height: 64px;
-        background: linear-gradient(135deg, #6366f1, #a855f7);
-        border-radius: 18px;
+        width: 44px; height: 44px;
+        background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+        border-radius: 12px;
         display: inline-flex;
         align-items: center; justify-content: center;
-        margin-bottom: 16px;
-        box-shadow: 0 8px 32px rgba(99, 102, 241, 0.4);
+        margin-bottom: 10px;
+        box-shadow: 0 8px 16px rgba(124, 58, 237, 0.2);
     }
-    .auth-logo .icon-wrap i { color: white; }
-    .auth-logo h1 { font-size: 22px; font-weight: 900; color: white; letter-spacing: -0.02em; }
-    .auth-logo p { font-size: 13px; color: rgba(255, 255, 255, 0.45); margin-top: 6px; }
+    .auth-logo .icon-wrap i { width: 22px; height: 22px; color: white; }
+    .auth-logo h1 { font-size: 18px; font-weight: 900; color: #1e293b; letter-spacing: -0.02em; }
+    .auth-logo p { font-size: 11px; color: #64748b; margin-top: 2px; }
 
     .dqr-field {
-        width: 100%; padding: 14px 18px; border-radius: 14px;
-        border: 2px solid rgba(255, 255, 255, 0.08);
-        background: rgba(255, 255, 255, 0.04);
-        color: white; font-size: 14px; font-weight: 500; outline: none;
-        transition: all 0.3s ease;
+        width: 100%; padding: 10px 14px; border-radius: 10px;
+        border: 2px solid #e2e8f0;
+        background: #f8fafc;
+        color: #1e293b; font-size: 14px; font-weight: 500; outline: none;
+        transition: all 0.2s ease;
     }
-    .dqr-field::placeholder { color: rgba(255, 255, 255, 0.25); }
-    .dqr-field:focus { border-color: #6366f1; background: rgba(99, 102, 241, 0.06); }
+    .dqr-field::placeholder { color: #94a3b8; }
+    .dqr-field:focus { border-color: #8b5cf6; background: white; box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.1); }
 
-    .field-group { margin-bottom: 20px; }
-    .field-label { display: block; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: rgba(255, 255, 255, 0.5); margin-bottom: 8px; }
+    .field-group { margin-bottom: 12px; }
+    .field-label { display: block; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: #64748b; margin-bottom: 4px; }
+
+    .password-wrap { position: relative; }
+    .toggle-pass {
+        position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
+        background: none; border: none; color: #94a3b8;
+        cursor: pointer; padding: 4px; display: flex; align-items: center;
+    }
+    .toggle-pass:hover { color: #8b5cf6; }
 
     .btn-primary {
-        width: 100%; padding: 16px; border: none; border-radius: 14px;
-        background: linear-gradient(135deg, #6366f1, #a855f7);
-        color: white; font-size: 14px; font-weight: 800; text-transform: uppercase;
-        letter-spacing: 0.12em; cursor: pointer; transition: all 0.3s ease;
+        width: 100%; padding: 12px; border: none; border-radius: 10px;
+        background: linear-gradient(135deg, #8b5cf6, #7c3aed);
+        color: white; font-size: 13px; font-weight: 800; text-transform: uppercase;
+        letter-spacing: 0.1em; cursor: pointer; transition: all 0.3s ease;
     }
-    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(99, 102, 241, 0.5); }
+    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(124, 58, 237, 0.3); }
 
-    .auth-links { text-align: center; margin-top: 24px; }
-    .auth-links a { color: rgba(255, 255, 255, 0.4); font-size: 13px; text-decoration: none; transition: color 0.2s; }
-    .auth-links a:hover { color: #818cf8; }
+    .auth-links { text-align: center; margin-top: 16px; }
+    .auth-links a { color: #64748b; font-size: 12px; text-decoration: none; transition: color 0.2s; }
+    .auth-links a:hover { color: #8b5cf6; }
 
-    .error-box { background: rgba(239, 68, 68, 0.12); border: 1px solid rgba(239, 68, 68, 0.25); border-radius: 12px; padding: 12px 16px; margin-bottom: 20px; color: #fca5a5; font-size: 13px; display: flex; align-items: center; gap: 10px; }
+    .error-box { background: #fee2e2; border: 1px solid #ef4444; border-radius: 10px; padding: 8px 12px; margin-bottom: 12px; color: #b91c1c; font-size: 11px; display: flex; align-items: center; gap: 8px; }
+    .success-box { background: #dcfce7; border: 1px solid #22c55e; border-radius: 10px; padding: 8px 12px; margin-bottom: 12px; color: #15803d; font-size: 11px; display: flex; align-items: center; gap: 8px; }
+
+    @media (max-height: 600px) {
+        .auth-card { padding: 16px 20px; max-width: 340px; }
+        .auth-logo { margin-bottom: 12px; }
+        .auth-logo .icon-wrap { width: 36px; height: 36px; margin-bottom: 6px; }
+        .btn-primary { padding: 10px; }
+    }
 </style>
 {% block extra_style %}{% endblock %}
 {% endblock %}
@@ -107,10 +131,11 @@
 <div class="auth-page-wrapper">
     <div class="auth-card">
         <div class="auth-logo">
+            {% block auth_header %}
             <div class="icon-wrap">
                 <i data-lucide="qr-code"></i>
             </div>
-            {% block auth_header %}{% endblock %}
+            {% endblock %}
         </div>
         
         {% block auth_content %}{% endblock %}

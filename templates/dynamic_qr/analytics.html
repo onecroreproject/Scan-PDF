@@ -1,0 +1,329 @@
+{% extends 'dynamic_qr/dashboard_base.html' %}
+{% load static %}
+
+{% block title %}Analytics: {{ qr.qr_name }} — ScanPDF{% endblock %}
+
+{% block dqr_style %}
+    .analytics-card {
+        background: white; border-radius: 20px; border: 1px solid #f1f5f9; padding: 24px;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); height: 100%;
+    }
+    .metric-pill {
+        background: white; border: 1px solid #f1f5f9; border-radius: 20px; padding: 20px;
+        display: flex; flex-direction: column; gap: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+    }
+    .metric-value { font-size: 24px; font-weight: 900; color: #0f172a; line-height: 1; }
+    .metric-label { font-size: 10px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.1em; }
+
+    .filter-btn {
+        padding: 6px 14px; border-radius: 10px; font-size: 12px; font-weight: 800;
+        transition: all 0.2s; border: 1px solid transparent;
+    }
+    .filter-btn.active {
+        background: #4f46e5; color: white; box-shadow: 0 4px 10px rgba(79, 70, 229, 0.2);
+    }
+    .filter-btn:not(.active) {
+        background: #f8fafc; color: #64748b; border-color: #f1f5f9;
+    }
+    .filter-btn:not(.active):hover {
+        background: #f1f5f9; color: #0f172a;
+    }
+
+    .scan-log-table { width: 100%; border-collapse: separate; border-spacing: 0; }
+    .scan-log-table th { text-align: left; padding: 12px 16px; font-size: 10px; font-weight: 800; color: #64748b; text-transform: uppercase; border-bottom: 2px solid #f8fafc; }
+    .scan-log-table td { padding: 14px 16px; font-size: 12px; color: #1e293b; border-bottom: 1px solid #f8fafc; }
+    
+    .chart-label-pill {
+        display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px;
+        background: #f8fafc; border-radius: 8px; font-size: 11px; font-weight: 700; color: #475569;
+    }
+{% endblock %}
+
+{% block dqr_content %}
+    <!-- Header with Back Button -->
+    <div class="mb-8">
+        <a href="{% url 'dynamic_qr:dashboard' %}" class="inline-flex items-center gap-2 text-slate-400 font-black text-[10px] uppercase tracking-widest hover:text-indigo-600 transition-colors mb-4">
+            <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i> Back to Dashboard
+        </a>
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div>
+                <h1 class="text-2xl font-black text-slate-900 tracking-tight">Performance Insights</h1>
+                <p class="text-slate-500 font-bold text-xs mt-1">Analytics for <span class="text-indigo-600">"{{ qr.qr_name }}"</span></p>
+            </div>
+            
+            <!-- Filter Bar -->
+            <div class="flex flex-wrap items-center gap-2 bg-white p-1.5 rounded-2xl border border-slate-100 shadow-sm">
+                <a href="?range=today" class="filter-btn {% if selected_range == 'today' %}active{% endif %}">Today</a>
+                <a href="?range=7days" class="filter-btn {% if selected_range == '7days' %}active{% endif %}">7 Days</a>
+                <a href="?range=28days" class="filter-btn {% if selected_range == '28days' %}active{% endif %}">28 Days</a>
+                <a href="?range=1month" class="filter-btn {% if selected_range == '1month' %}active{% endif %}">1 Month</a>
+                <a href="?range=6months" class="filter-btn {% if selected_range == '6months' %}active{% endif %}">6 Months</a>
+                <a href="?range=12months" class="filter-btn {% if selected_range == '12months' %}active{% endif %}">12 Months</a>
+                <button class="filter-btn opacity-50 cursor-not-allowed">Custom</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Overview Metrics -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div class="metric-pill">
+            <span class="metric-label">Range Scans</span>
+            <span class="metric-value">{{ total_range_scans }}</span>
+        </div>
+        <div class="metric-pill">
+            <span class="metric-label">All-Time Scans</span>
+            <span class="metric-value">{{ qr.scan_count }}</span>
+        </div>
+        <div class="metric-pill">
+            <span class="metric-label">Log Entries</span>
+            <span class="metric-value">{{ page_obj.paginator.count }}</span>
+        </div>
+        <div class="metric-pill">
+            <span class="metric-label">Status</span>
+            <span class="text-sm font-black uppercase tracking-widest {% if qr.is_active %}text-emerald-500{% else %}text-slate-400{% endif %}">
+                {% if qr.is_active %}Live{% else %}Paused{% endif %}
+            </span>
+        </div>
+    </div>
+
+    <!-- Main Charts Grid -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+        <!-- Scan Trends (Line/Area Chart) -->
+        <div class="lg:col-span-2">
+            <div class="analytics-card">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h3 class="text-sm font-black text-slate-900">Scan Trends</h3>
+                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Activity over time</p>
+                    </div>
+                </div>
+                <div class="h-[300px] w-full">
+                    <canvas id="trendsChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Devices (Pie/Doughnut Chart) -->
+        <div>
+            <div class="analytics-card">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h3 class="text-sm font-black text-slate-900">Device Types</h3>
+                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Mobile vs Desktop</p>
+                    </div>
+                </div>
+                <div class="h-[300px] w-full flex items-center justify-center">
+                    <canvas id="deviceChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Browsers (Bar Chart) -->
+        <div>
+            <div class="analytics-card">
+                <h3 class="text-sm font-black text-slate-900 mb-6">Top Browsers</h3>
+                <div class="h-[250px] w-full">
+                    <canvas id="browserChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Operating Systems -->
+        <div class="lg:col-span-2">
+            <div class="analytics-card">
+                <div class="flex items-center justify-between mb-6">
+                    <h3 class="text-sm font-black text-slate-900">Popular Operating Systems</h3>
+                    <div class="flex gap-2">
+                        {% for os in os_stats %}
+                        <span class="chart-label-pill">{{ os.os }}</span>
+                        {% endfor %}
+                    </div>
+                </div>
+                <div class="space-y-4">
+                    {% for os in os_stats %}
+                    {% widthratio os.count total_range_scans 100 as pct %}
+                    <div class="space-y-1">
+                        <div class="flex items-center justify-between text-[11px] font-bold">
+                            <span class="text-slate-600">{{ os.os }}</span>
+                            <span class="text-slate-900">{{ os.count }} hits ({{ pct }}%)</span>
+                        </div>
+                        <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
+                            <div class="bg-indigo-500 h-full rounded-full" style="width: {{ pct }}%"></div>
+                        </div>
+                    </div>
+                    {% empty %}
+                    <div class="text-center py-10 text-slate-300 italic text-sm">No OS data available for this range</div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Detailed Scan Log -->
+    <div class="analytics-card mb-10">
+        <div class="flex items-center justify-between mb-8">
+            <div>
+                <h3 class="text-sm font-black text-slate-900">Recent Activity Logs</h3>
+                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Showing latest scan data</p>
+            </div>
+            <button onclick="window.print()" class="px-4 py-2 bg-slate-50 border border-slate-100 rounded-lg text-slate-500 font-black text-[10px] uppercase tracking-widest hover:bg-slate-100 transition-all flex items-center gap-2">
+                <i data-lucide="printer" class="w-3.5 h-3.5"></i> Print Report
+            </button>
+        </div>
+        
+        <div class="overflow-x-auto">
+            <table class="scan-log-table">
+                <thead>
+                    <tr>
+                        <th>Date & Time</th>
+                        <th>Device</th>
+                        <th>Browser / OS</th>
+                        <th>IP Address</th>
+                        <th>Location</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for scan in page_obj %}
+                    <tr class="hover:bg-slate-50/50 transition-colors">
+                        <td class="font-black text-slate-900 whitespace-nowrap">{{ scan.timestamp|date:"M d, H:i:s" }}</td>
+                        <td>
+                            <div class="flex items-center gap-2">
+                                <div class="w-7 h-7 rounded-lg {% if scan.device_type == 'Mobile' %}bg-blue-50 text-blue-500{% elif scan.device_type == 'Tablet' %}bg-amber-50 text-amber-500{% else %}bg-slate-100 text-slate-400{% endif %} flex items-center justify-center">
+                                    <i data-lucide="{% if scan.device_type == 'Mobile' %}smartphone{% elif scan.device_type == 'Tablet' %}tablet{% else %}monitor{% endif %}" class="w-3.5 h-3.5"></i>
+                                </div>
+                                <span class="font-bold text-slate-700">{{ scan.device_type }}</span>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="flex flex-col">
+                                <span class="font-bold text-slate-900">{{ scan.browser }}</span>
+                                <span class="text-[10px] text-slate-400 font-bold uppercase">{{ scan.os }}</span>
+                            </div>
+                        </td>
+                        <td class="font-mono text-[11px] text-slate-500">{{ scan.ip_address }}</td>
+                        <td class="text-slate-400 text-[11px] font-medium">{{ scan.city }}, {{ scan.country }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center py-20 text-slate-300 italic">
+                            <i data-lucide="info" class="w-10 h-10 mx-auto mb-4 opacity-20"></i>
+                            <p>No scan history available for the selected period.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        {% if page_obj.has_other_pages %}
+        <div class="mt-8 flex items-center justify-between border-t border-slate-50 pt-6">
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+            </p>
+            <div class="flex gap-2">
+                {% if page_obj.has_previous %}
+                <a href="?range={{ selected_range }}&page={{ page_obj.previous_page_number }}" class="px-4 py-2 bg-white border border-slate-100 rounded-lg text-slate-600 font-bold text-xs hover:bg-slate-50 transition-all flex items-center gap-2">
+                    <i data-lucide="chevron-left" class="w-3.5 h-3.5"></i> Previous
+                </a>
+                {% endif %}
+                
+                {% if page_obj.has_next %}
+                <a href="?range={{ selected_range }}&page={{ page_obj.next_page_number }}" class="px-4 py-2 bg-indigo-600 text-white rounded-lg font-bold text-xs hover:bg-indigo-700 transition-all flex items-center gap-2">
+                    Next <i data-lucide="chevron-right" class="w-3.5 h-3.5"></i>
+                </a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Chart Scripts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        // Set global defaults
+        Chart.defaults.font.family = "'Inter', sans-serif";
+        Chart.defaults.font.weight = 'bold';
+        Chart.defaults.color = '#64748b';
+
+        // 1. Trends Chart (Line/Area)
+        const ctxTrends = document.getElementById('trendsChart').getContext('2d');
+        const trendsGradient = ctxTrends.createLinearGradient(0, 0, 0, 300);
+        trendsGradient.addColorStop(0, 'rgba(79, 70, 229, 0.2)');
+        trendsGradient.addColorStop(1, 'rgba(79, 70, 229, 0)');
+
+        new Chart(ctxTrends, {
+            type: 'line',
+            data: {
+                labels: {{ js_labels|safe }},
+                datasets: [{
+                    label: 'Scans',
+                    data: {{ js_data|safe }},
+                    borderColor: '#4f46e5',
+                    borderWidth: 3,
+                    backgroundColor: trendsGradient,
+                    fill: true,
+                    tension: 0.4,
+                    pointBackgroundColor: '#4f46e5',
+                    pointRadius: 4,
+                    pointHoverRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, grid: { borderDash: [5, 5] }, ticks: { stepSize: 1 } },
+                    x: { grid: { display: false } }
+                }
+            }
+        });
+
+        // 2. Device Chart (Doughnut)
+        new Chart(document.getElementById('deviceChart'), {
+            type: 'doughnut',
+            data: {
+                labels: {{ js_device_labels|safe }},
+                datasets: [{
+                    data: {{ js_device_data|safe }},
+                    backgroundColor: ['#4f46e5', '#10b981', '#f59e0b', '#6366f1'],
+                    borderWidth: 0,
+                    hoverOffset: 10
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '75%',
+                plugins: {
+                    legend: { position: 'bottom', labels: { usePointStyle: true, padding: 20 } }
+                }
+            }
+        });
+
+        // 3. Browser Chart (Bar)
+        new Chart(document.getElementById('browserChart'), {
+            type: 'bar',
+            data: {
+                labels: {{ js_browser_labels|safe }},
+                datasets: [{
+                    label: 'Browser Hits',
+                    data: {{ js_browser_data|safe }},
+                    backgroundColor: '#e2e8f0',
+                    hoverBackgroundColor: '#4f46e5',
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    x: { beginAtZero: true, grid: { display: false } },
+                    y: { grid: { display: false } }
+                }
+            }
+        });
+    </script>
+{% endblock %}

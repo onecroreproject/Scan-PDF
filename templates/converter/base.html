@@ -79,8 +79,8 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
         rel="stylesheet">
 
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
+    <!-- Lucide Icons (Pinned to v0.263.0 for Brand Icon Support) -->
+    <script src="https://unpkg.com/lucide@0.263.0/dist/umd/lucide.min.js"></script>
 
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
 
@@ -88,8 +88,8 @@
 </head>
 
 <body class="bg-white text-surface-800 font-sans antialiased min-h-screen flex flex-col">
-
     <!-- ═══════════════ NAVBAR ═══════════════ -->
+    {% block navbar %}
     <header id="navbar" class="fixed top-0 left-0 right-0 z-50 bg-white shadow-card transition-all duration-300">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex items-center justify-between h-[70px]">
@@ -315,14 +315,28 @@
                             </div>
                         </div>
 
-                        <!-- Dynamic QR Link -->
-                        <a href="/qr/dashboard/"
-                            class="flex items-center gap-2 px-4 py-2 text-[13px] font-black uppercase tracking-widest transition-all rounded-xl hover:scale-105"
-                            style="background: linear-gradient(135deg, #f59e0b, #ef4444); color: white; box-shadow: 0 4px 15px rgba(245,158,11,0.3); position: relative;">
-                            <i data-lucide="qr-code" class="w-4 h-4"></i>
-                            Dynamic QR
-                            <span style="position:absolute;top:-6px;right:-6px;background:#dc2626;color:white;font-size:7px;font-weight:900;padding:2px 5px;border-radius:6px;letter-spacing:0.1em;line-height:1;">NEW</span>
-                        </a>
+                        <!-- Important Tools Dropdown -->
+                        <div class="relative group">
+                            <button
+                                class="flex items-center gap-1.5 px-4 py-2 text-[14px] font-black text-surface-900 transition-all uppercase tracking-widest hover:text-brand-600">
+                                Important Tools <i data-lucide="chevron-down"
+                                    class="w-4 h-4 transition-transform group-hover:rotate-180"></i>
+                            </button>
+                            <!-- Dropdown Content -->
+                            <div
+                                class="absolute top-[100%] left-0 w-64 bg-white border border-surface-100 shadow-mega rounded-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 translate-y-2 group-hover:translate-y-0 z-50 overflow-hidden py-3">
+                                <a href="/qr/dashboard/"
+                                    class="flex items-center gap-3 px-6 py-3 hover:bg-brand-50 transition-all group/item">
+                                    <div class="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center group-hover/item:bg-orange-100 transition-colors">
+                                        <i data-lucide="qr-code" class="w-5 h-5 text-orange-600"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-sm font-bold text-surface-900 group-hover/item:text-brand-600">Dynamic QR</p>
+                                        <p class="text-[10px] text-surface-400">Trackable QR Codes</p>
+                                    </div>
+                                </a>
+                            </div>
+                        </div>
 
                     </div>
 
@@ -401,12 +415,15 @@
                         class="flex items-center gap-3 px-4 py-3 rounded-2xl text-surface-700 hover:text-brand-600 hover:bg-brand-50/60 transition-all font-bold text-sm">
                         <i data-lucide="grid-3x3" class="w-5 h-5"></i>All Tools
                     </a>
+                    
+                    <!-- Mobile Important Tools -->
+                    <div class="px-4 py-2 border-b border-surface-50 mt-4 mb-2">
+                        <span class="text-[10px] font-bold text-surface-400 uppercase tracking-widest">Important Tools</span>
+                    </div>
                     <a href="/qr/dashboard/"
-                        class="flex items-center gap-3 px-4 py-3 rounded-2xl font-bold text-sm transition-all"
-                        style="background: linear-gradient(135deg, #fef3c7, #fee2e2); color: #92400e;">
-                        <i data-lucide="qr-code" class="w-5 h-5" style="color:#f59e0b"></i>
+                        class="flex items-center gap-3 px-4 py-3 rounded-2xl text-surface-700 hover:text-brand-600 hover:bg-brand-50/60 transition-all font-bold text-sm">
+                        <i data-lucide="qr-code" class="w-5 h-5 text-orange-600"></i>
                         Dynamic QR
-                        <span style="background:linear-gradient(135deg,#f59e0b,#ef4444);color:white;font-size:8px;font-weight:900;padding:2px 8px;border-radius:10px;margin-left:auto;letter-spacing:0.1em;">NEW</span>
                     </a>
 
                     {% if request.session.is_dqr_user %}
@@ -438,6 +455,7 @@
             </div>
         </div>
     </header>
+    {% endblock %}
 
     <!-- Main Content -->
     <main class="pt-[70px] flex-grow">
@@ -445,26 +463,28 @@
     </main>
 
     <!-- ═══════════════ FOOTER ═══════════════ -->
-    <footer class="bg-surface-50 border-t border-surface-100">
+    {% block footer %}
+    <footer class="bg-surface-50 border-t border-surface-100 mt-auto">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="py-8 sm:py-12 grid grid-cols-1 gap-6 sm:grid-cols-3 sm:gap-8 items-center">
+            <div class="py-4 grid grid-cols-1 gap-4 sm:grid-cols-3 items-center">
                 <!-- Brand -->
-                <div class="text-xs text-surface-400 text-center sm:text-left">
-                    <h1>DLK Groups Powered By ScanPDF</h1>
+                <div class="text-[10px] text-surface-400 text-center sm:text-left font-bold uppercase tracking-widest">
+                    DLK Groups Powered By ScanPDF
                 </div>
 
                 <!-- Links -->
                 <div class="flex items-center justify-center gap-4 sm:gap-6">
-
+                    <!-- Optional: minimalist links if needed -->
                 </div>
 
                 <!-- Copyright -->
-                <p class="text-xs text-surface-400 text-center sm:text-right">
+                <p class="text-[10px] text-surface-400 text-center sm:text-right font-bold uppercase tracking-widest">
                     &copy; 2026 ScanPDF. All rights reserved.
                 </p>
             </div>
         </div>
     </footer>
+    {% endblock %}
 
     <!-- Tools Data -->
     {{ all_tools_metadata|json_script:"tools-data" }}
