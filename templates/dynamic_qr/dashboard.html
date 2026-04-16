@@ -102,7 +102,7 @@
     {% if qr_codes %}
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         {% for qr in qr_codes %}
-        {% with redirect_url=request.scheme|add:"://"|add:request.get_host|add:"/qr/r/"|add:qr.short_code|add:"/" %}
+        {% with redirect_url=qr.qr_content %}
         <div class="qr-card bg-white border border-slate-100 p-5 flex flex-col relative" id="qr-card-{{ qr.id }}">
             <!-- Status Flag -->
             <div class="absolute top-5 right-5">

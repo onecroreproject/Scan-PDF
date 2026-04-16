@@ -34,7 +34,7 @@
     {% if page_obj %}
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-12">
         {% for qr in page_obj %}
-        {% with redirect_url=request.scheme|add:"://"|add:request.get_host|add:"/qr/r/"|add:qr.short_code|add:"/" %}
+        {% with redirect_url=qr.qr_content %}
         <div class="qr-card">
             <div class="p-4">
                 <div class="flex items-start justify-between mb-4">

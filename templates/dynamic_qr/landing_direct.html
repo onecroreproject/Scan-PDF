@@ -1,0 +1,27 @@
+{% extends 'converter/base.html' %}
+{% load static %}
+
+{% block title %}{{ qr.qr_name }} — Direct View{% endblock %}
+
+{% block extra_head %}
+<style>
+    body { background: #ffffff; color: #0f172a; margin: 0; display: flex; align-items: center; justify-content: center; min-height: 100vh; padding: 40px; font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+    .content-viewer { max-width: 600px; width: 100%; text-align: center; animation: fadeIn 0.8s ease-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+    .text-body { font-size: 24px; font-weight: 700; line-height: 1.5; white-space: pre-wrap; word-break: break-word; color: #1e293b; }
+    .meta-tag { margin-top: 40px; font-size: 10px; font-weight: 900; color: #cbd5e1; text-transform: uppercase; letter-spacing: 0.25em; border-top: 1px solid #f1f5f9; pt-8: ; padding-top: 24px; }
+    
+    @media (prefers-color-scheme: dark) {
+        body { background: #0f172a; color: #f8fafc; }
+        .text-body { color: #f1f5f9; }
+        .meta-tag { border-color: #1e293b; color: #475569; }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="content-viewer">
+    <div class="text-body">{{ qr.qr_data.text }}</div>
+    <div class="meta-tag">Direct Content View • ScanPDF Static Engine</div>
+</div>
+{% endblock %}
