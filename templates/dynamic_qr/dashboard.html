@@ -1,646 +1,342 @@
-{% extends 'converter/base.html' %}
+{% extends 'dynamic_qr/dashboard_base.html' %}
 {% load static %}
 
 {% block title %}Dynamic QR Dashboard — ScanPDF{% endblock %}
 
-{% block extra_head %}
-<style>
-    .dqr-hero {
-        background: linear-gradient(135deg, #0f0c29 0%, #302b63 50%, #24243e 100%);
-        padding: 48px 0 32px;
-        position: relative;
-        overflow: hidden;
-    }
-    .dqr-hero::before {
-        content: '';
-        position: absolute;
-        width: 300px; height: 300px;
-        background: radial-gradient(circle, rgba(99,102,241,0.3), transparent);
-        top: -50px; right: -50px;
-        border-radius: 50%;
-        filter: blur(60px);
-    }
-    .dqr-container { max-width: 1100px; margin: 0 auto; padding: 0 20px; }
-
-    .dqr-header {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        flex-wrap: wrap;
-        gap: 16px;
-    }
-    .dqr-header h1 {
-        font-size: 28px; font-weight: 900;
-        color: white; letter-spacing: -0.02em;
-    }
-    .dqr-header p {
-        color: rgba(255,255,255,0.45);
-        font-size: 14px; font-weight: 400; margin-top: 4px;
-    }
-    .dqr-header-actions {
-        display: flex; gap: 12px; align-items: center;
-    }
-    .btn-glow {
-        display: inline-flex; align-items: center; gap: 8px;
-        padding: 12px 24px; border-radius: 14px;
-        background: linear-gradient(135deg, #6366f1, #a855f7);
-        color: white; font-size: 13px; font-weight: 800;
-        text-transform: uppercase; letter-spacing: 0.08em;
-        border: none; cursor: pointer;
-        box-shadow: 0 8px 32px rgba(99,102,241,0.3);
-        transition: all 0.3s; text-decoration: none;
-    }
-    .btn-glow:hover { transform: translateY(-2px); box-shadow: 0 12px 40px rgba(99,102,241,0.5); }
-    .btn-outline {
-        display: inline-flex; align-items: center; gap: 6px;
-        padding: 10px 20px; border-radius: 12px;
-        background: rgba(255,255,255,0.05);
-        border: 1px solid rgba(255,255,255,0.1);
-        color: rgba(255,255,255,0.6);
-        font-size: 12px; font-weight: 700; cursor: pointer;
-        transition: all 0.2s; text-decoration: none;
-    }
-    .btn-outline:hover { background: rgba(255,255,255,0.1); color: white; }
-
-    /* Stats */
-    .stats-row {
-        display: grid;
-        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-        gap: 16px;
-        margin-top: 24px;
-    }
-    .stat-card {
-        background: rgba(255,255,255,0.04);
-        border: 1px solid rgba(255,255,255,0.06);
-        border-radius: 16px;
-        padding: 20px 24px;
-        backdrop-filter: blur(20px);
-    }
-    .stat-card .stat-label {
-        font-size: 11px; font-weight: 700; text-transform: uppercase;
-        letter-spacing: 0.1em; color: rgba(255,255,255,0.35);
-        margin-bottom: 8px;
-    }
-    .stat-card .stat-value {
-        font-size: 28px; font-weight: 900; color: white;
-    }
-    .stat-card .stat-icon { color: #818cf8; }
-
-    /* QR Grid */
-    .qr-grid {
-        display: grid;
-        grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
-        gap: 20px;
-        padding: 32px 0 60px;
-    }
+{% block dqr_style %}
+    /* Custom styles that aren't easily done with Tailwind */
     .qr-card {
-        background: white;
-        border-radius: 20px;
-        border: 1px solid #e2e8f0;
-        overflow: hidden;
-        transition: all 0.3s;
-        box-shadow: 0 4px 20px rgba(0,0,0,0.04);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border-radius: 20px !important;
     }
     .qr-card:hover {
         transform: translateY(-4px);
-        box-shadow: 0 12px 40px rgba(0,0,0,0.08);
-        border-color: #c7d2fe;
+        box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);
     }
-    .qr-card-header {
-        display: flex; align-items: center; gap: 14px;
-        padding: 20px 24px;
-        border-bottom: 1px solid #f1f5f9;
+    .status-active-pulse { position: relative; }
+    .status-active-pulse::after {
+        content: ''; position: absolute; top: 0; right: 0; width: 100%; height: 100%;
+        border-radius: inherit; background: currentColor;
+        animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite; opacity: 0.2;
     }
-    .qr-card-icon {
-        width: 44px; height: 44px;
-        background: linear-gradient(135deg, #6366f1, #a855f7);
-        border-radius: 12px;
-        display: flex; align-items: center; justify-content: center;
-        flex-shrink: 0;
+    @keyframes pulse {
+        0%, 100% { transform: scale(1); opacity: 0.2; }
+        50% { transform: scale(1.5); opacity: 0; }
     }
-    .qr-card-icon i { color: white; }
-    .qr-card-title { font-size: 16px; font-weight: 800; color: #1e293b; }
-    .qr-card-code {
-        font-size: 11px; font-weight: 600;
-        color: #94a3b8; font-family: monospace;
-    }
-    .qr-card-status {
-        display: inline-flex; align-items: center; gap: 4px;
-        font-size: 10px; font-weight: 800; text-transform: uppercase;
-        letter-spacing: 0.08em; padding: 4px 10px; border-radius: 20px;
-    }
-    .qr-card-status.active { background: #dcfce7; color: #16a34a; }
-    .qr-card-status.inactive { background: #fee2e2; color: #dc2626; }
-
-    .qr-card-body { padding: 20px 24px; }
-    .qr-card-url {
-        display: flex; align-items: center; gap: 8px;
-        padding: 10px 14px; border-radius: 10px;
-        background: #f8fafc; border: 1px solid #e2e8f0;
-        margin-bottom: 16px;
-    }
-    .qr-card-url span {
-        flex: 1; font-size: 12px; font-weight: 500;
-        color: #475569; overflow: hidden;
-        text-overflow: ellipsis; white-space: nowrap;
-    }
-    .qr-card-url i { color: #94a3b8; flex-shrink: 0; }
-
-    .qr-card-stats {
-        display: flex; gap: 16px; margin-bottom: 16px;
-    }
-    .qr-card-stats .qr-stat {
-        display: flex; align-items: center; gap: 6px;
-        font-size: 12px; color: #64748b; font-weight: 600;
-    }
-    .qr-card-stats .qr-stat i { width: 14px; height: 14px; }
-    .qr-card-stats .qr-stat strong { color: #1e293b; font-weight: 900; }
-
-    .qr-card-actions {
-        display: flex; gap: 8px;
-        padding: 16px 24px;
-        border-top: 1px solid #f1f5f9;
-    }
-    .qr-card-actions a, .qr-card-actions button {
-        flex: 1; padding: 10px; border-radius: 10px;
-        font-size: 11px; font-weight: 800; text-transform: uppercase;
-        letter-spacing: 0.06em; text-align: center;
-        border: none; cursor: pointer; transition: all 0.2s;
-        display: inline-flex; align-items: center; justify-content: center; gap: 6px;
-        text-decoration: none;
-    }
-    .qr-card-actions .btn-edit {
-        background: #eef2ff; color: #4f46e5;
-    }
-    .qr-card-actions .btn-edit:hover { background: #e0e7ff; }
-    .qr-card-actions .btn-delete {
-        background: #fef2f2; color: #dc2626;
-    }
-    .qr-card-actions .btn-delete:hover { background: #fee2e2; }
-
-    /* Empty state */
-    .empty-state {
-        text-align: center; padding: 80px 20px;
-    }
-    .empty-state .icon-wrap {
-        width: 80px; height: 80px;
-        background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
-        border-radius: 24px;
-        display: inline-flex; align-items: center; justify-content: center;
-        margin-bottom: 24px;
-    }
-    .empty-state h2 { font-size: 22px; font-weight: 900; color: #1e293b; margin-bottom: 8px; }
-    .empty-state p { font-size: 14px; color: #94a3b8; max-width: 400px; margin: 0 auto 24px; }
-
-    /* Create Modal */
-    .modal-overlay {
-        display: none; position: fixed; inset: 0; z-index: 200;
-        background: rgba(0,0,0,0.6); backdrop-filter: blur(8px);
-        align-items: center; justify-content: center; padding: 20px;
-    }
-    .modal-overlay.open { display: flex; }
-    .modal-card {
-        width: 100%; max-width: 520px;
-        background: white; border-radius: 24px; overflow: hidden;
-        box-shadow: 0 32px 80px rgba(0,0,0,0.3);
-        animation: modalIn 0.3s ease-out;
-    }
-    @keyframes modalIn { from { opacity:0; transform: translateY(20px) scale(0.95); } to { opacity:1; transform: none; } }
-    .modal-header {
-        display: flex; align-items: center; justify-content: space-between;
-        padding: 24px 28px; border-bottom: 1px solid #f1f5f9;
-    }
-    .modal-header h2 { font-size: 18px; font-weight: 900; color: #1e293b; }
-    .modal-close {
-        width: 36px; height: 36px; border-radius: 10px;
-        border: none; background: #f1f5f9; cursor: pointer;
-        display: flex; align-items: center; justify-content: center;
-        color: #64748b; transition: all 0.2s;
-    }
-    .modal-close:hover { background: #fee2e2; color: #dc2626; }
-    .modal-body { padding: 28px; }
-    .modal-field {
-        width: 100%; padding: 14px 18px; border-radius: 14px;
-        border: 2px solid #e2e8f0; background: #f8fafc;
-        font-size: 14px; font-weight: 500; outline: none;
-        transition: all 0.3s; font-family: 'Inter', sans-serif;
-        color: #1e293b;
-    }
-    .modal-field::placeholder { color: #94a3b8; }
-    .modal-field:focus {
-        border-color: #6366f1; background: white;
-        box-shadow: 0 0 0 4px rgba(99,102,241,0.1);
-    }
-    .modal-label {
-        display: block; font-size: 11px; font-weight: 800;
-        text-transform: uppercase; letter-spacing: 0.1em;
-        color: #64748b; margin-bottom: 8px;
-    }
-    .modal-group { margin-bottom: 20px; }
-    .modal-footer {
-        display: flex; gap: 12px;
-        padding: 20px 28px; border-top: 1px solid #f1f5f9;
-    }
-    .modal-footer button {
-        flex: 1; padding: 14px; border-radius: 14px;
-        font-size: 13px; font-weight: 800; text-transform: uppercase;
-        letter-spacing: 0.08em; border: none; cursor: pointer;
-        transition: all 0.2s; font-family: 'Inter', sans-serif;
-    }
-    .modal-footer .btn-cancel {
-        background: #f1f5f9; color: #64748b;
-    }
-    .modal-footer .btn-cancel:hover { background: #e2e8f0; }
-    .modal-footer .btn-create {
-        background: linear-gradient(135deg, #6366f1, #a855f7);
-        color: white; box-shadow: 0 4px 20px rgba(99,102,241,0.3);
-    }
-    .modal-footer .btn-create:hover { transform: translateY(-1px); box-shadow: 0 8px 30px rgba(99,102,241,0.4); }
-
-    /* Design options in modal */
-    .design-row {
-        display: grid; grid-template-columns: 1fr 1fr; gap: 12px;
-    }
-    .color-input-wrap {
-        display: flex; align-items: center; gap: 10px;
-    }
-    .color-input-wrap input[type="color"] {
-        width: 42px; height: 42px; border: 2px solid #e2e8f0;
-        border-radius: 10px; cursor: pointer; padding: 2px;
-        background: transparent;
-    }
-    .color-input-wrap input[type="color"]::-webkit-color-swatch-wrapper { padding: 0; }
-    .color-input-wrap input[type="color"]::-webkit-color-swatch { border: none; border-radius: 6px; }
-
-    /* Mobile adjustments */
-    @media (max-width: 992px) {
-        .dqr-header { text-align: left; flex-direction: column; align-items: stretch !important; gap: 20px; }
-        .dqr-header h1 { font-size: 22px; line-height: 1.2; word-break: break-word; }
-        .qr-grid { grid-template-columns: 1fr; }
-        .stats-row { grid-template-columns: 1fr; }
-        .qr-card-actions { flex-direction: row; }
-        .btn-glow { width: 100%; justify-content: center; }
-        .qr-card-stats { flex-wrap: wrap; }
-    }
-    @media (max-width: 640px) {
-        .dqr-hero { padding: 30px 0 20px; }
-        .qr-card-actions { flex-direction: column; }
-        .qr-card-header { padding: 16px 20px; }
-        .qr-card-body { padding: 16px 20px; }
-        .btn-glow { padding: 10px 20px; font-size: 12px; }
-    }
-
-    .toast {
-        position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%);
-        background: #1e293b; color: white;
-        padding: 16px 24px; border-radius: 99px;
-        font-size: 13px; font-weight: 700;
-        box-shadow: 0 12px 40px rgba(0,0,0,0.3);
-        z-index: 3000; display: none;
-        animation: toastIn 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28);
-    }
-    @keyframes toastIn { from { opacity:0; transform: translate(-50%, 20px); } to { opacity:1; transform: translate(-50%, 0); } }
-
-    .btn-action-icon {
-        width: 32px; height: 32px; border-radius: 8px;
-        display: flex; align-items: center; justify-content: center;
-        background: #f1f5f9; color: #64748b; border: none;
-        cursor: pointer; transition: all 0.2s;
-    }
-    .btn-action-icon:hover { background: #e2e8f0; color: #1e293b; }
-</style>
+    .stat-card { border-radius: 20px !important; padding: 20px !important; }
+    .stat-icon { width: 44px !important; height: 44px !important; margin-bottom: 12px !important; }
+    .stat-icon i { width: 20px !important; height: 20px !important; }
+    .stat-value { font-size: 1.875rem !important; } /* 30px */
 {% endblock %}
 
-{% block content %}
-<!-- Hero Section -->
-<div class="dqr-hero">
-    <div class="dqr-container">
-        <div class="dqr-header">
-            <div>
-                <h1>🔗 Dynamic QR Dashboard</h1>
-                <p>Welcome back, <strong style="color:#818cf8">{{ user.username }}</strong>! Manage your dynamic QR codes.</p>
-            </div>
-            <div class="dqr-header-actions">
-                <a href="{% url 'dynamic_qr:create' %}" class="btn-glow">
-                    <i data-lucide="plus" style="width:18px;height:18px"></i>
-                    New Dynamic QR
-                </a>
-            </div>
+{% block dqr_content %}
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
+        <div>
+            <h1 class="text-2xl font-black text-slate-900 tracking-tight">QR Dashboard</h1>
+            <p class="text-slate-500 font-bold text-xs mt-1">Manage and track your high-end dynamic QR assets.</p>
         </div>
-        <div class="stats-row">
-            <div class="stat-card">
-                <div class="stat-label">Total QR Codes</div>
-                <div style="display:flex;align-items:center;gap:12px;">
-                    <i data-lucide="qr-code" class="stat-icon" style="width:24px;height:24px"></i>
-                    <span class="stat-value">{{ qr_codes|length }}</span>
-                </div>
+        <a href="{% url 'dynamic_qr:create' %}" class="inline-flex items-center justify-center gap-2 px-6 h-12 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-black text-sm transition-all shadow-lg hover:-translate-y-1 group">
+            <i data-lucide="plus-circle" class="w-4 h-4 group-hover:rotate-90 transition-transform"></i>
+            New QR Asset
+        </a>
+    </div>
+
+    <!-- Stats Row -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
+        <!-- Total Assets -->
+        <div class="bg-white stat-card border border-slate-100 shadow-sm">
+            <div class="stat-icon bg-indigo-50 text-indigo-600 rounded-lg flex items-center justify-center">
+                <i data-lucide="qr-code"></i>
             </div>
-            <div class="stat-card">
-                <div class="stat-label">Total Scans</div>
-                <div style="display:flex;align-items:center;gap:12px;">
-                    <i data-lucide="scan-line" class="stat-icon" style="width:24px;height:24px"></i>
-                    <span class="stat-value" id="total-scans">0</span>
-                </div>
+            <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Total</p>
+            <h3 class="stat-value font-black text-slate-900">{{ qr_codes|length }}</h3>
+        </div>
+
+        <!-- Active Codes -->
+        <div class="bg-white stat-card border border-slate-100 shadow-sm">
+            <div class="stat-icon bg-emerald-50 text-emerald-600 rounded-lg flex items-center justify-center">
+                <i data-lucide="check-circle"></i>
             </div>
-            <div class="stat-card">
-                <div class="stat-label">Active QR Codes</div>
-                <div style="display:flex;align-items:center;gap:12px;">
-                    <i data-lucide="check-circle" class="stat-icon" style="width:24px;height:24px;color:#22c55e"></i>
-                    <span class="stat-value" id="active-count">0</span>
-                </div>
+            <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Active</p>
+            <h3 class="stat-value font-black text-slate-900">{{ total_active }}</h3>
+        </div>
+
+        <!-- Deactivated -->
+        <div class="bg-white stat-card border border-slate-100 shadow-sm">
+            <div class="stat-icon bg-slate-50 text-slate-500 rounded-lg flex items-center justify-center">
+                <i data-lucide="power-off"></i>
+            </div>
+            <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Paused</p>
+            <h3 class="stat-value font-black text-slate-900">{{ total_deactivated }}</h3>
+        </div>
+
+        <!-- Total Scans -->
+        <div class="bg-white stat-card border border-slate-100 shadow-sm">
+            <div class="stat-icon bg-amber-50 text-amber-600 rounded-lg flex items-center justify-center">
+                <i data-lucide="activity"></i>
+            </div>
+            <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Scans</p>
+            <h3 class="stat-value font-black text-slate-900">{{ total_scans }}</h3>
+        </div>
+    </div>
+
+    <!-- List Section -->
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <h2 class="text-xl font-black text-slate-900 tracking-tight">Recent Assets</h2>
+        </div>
+        <div class="flex items-center gap-4">
+             {% if has_more %}
+             <a href="{% url 'dynamic_qr:all_qrs' %}" class="px-4 py-2 bg-indigo-50 text-indigo-600 rounded-xl border border-indigo-100 font-black text-[10px] uppercase tracking-widest hover:bg-indigo-600 hover:text-white transition-all">
+                View All Assets
+             </a>
+             {% endif %}
+             <div class="hidden sm:flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-xl border border-slate-100 text-slate-500 font-bold text-xs">
+                <i data-lucide="calendar" class="w-4 h-4"></i>
+                Latest 6
             </div>
         </div>
     </div>
-</div>
 
-<!-- QR Cards Grid -->
-<div class="dqr-container">
     {% if qr_codes %}
-    <div class="qr-grid">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         {% for qr in qr_codes %}
-        <div class="qr-card" id="qr-card-{{ qr.id }}">
-            <div class="qr-card-header">
-                <div class="qr-card-icon" style="padding:4px;background:white;border:1px solid #e2e8f0;">
-                    <img src="{% url 'dynamic_qr:generate_image' %}?text={{ request.scheme }}://{{ request.get_host }}/qr/r/{{ qr.short_code }}/&fg_color={{ qr.fg_color|urlencode }}&bg_color={{ qr.bg_color|urlencode }}&style={{ qr.body_style }}" 
-                         style="width:100%;height:100%;object-fit:contain;" alt="QR">
-                </div>
-                <div style="flex:1;min-width:0;">
-                    <div class="qr-card-title">{{ qr.qr_name }}</div>
-                    <div class="qr-card-code">{{ qr.short_code }}</div>
-                </div>
-                <div style="cursor:pointer;" onclick="toggleStatus('{{ qr.id }}')" title="Click to {% if qr.is_active %}Deactivate{% else %}Activate{% endif %}">
-                    {% if qr.is_active %}
-                    <span class="qr-card-status active" id="status-badge-{{ qr.id }}">
-                        <i data-lucide="circle" style="width:8px;height:8px;fill:currentColor"></i> Active
+        {% with redirect_url=request.scheme|add:"://"|add:request.get_host|add:"/qr/r/"|add:qr.short_code|add:"/" %}
+        <div class="qr-card bg-white border border-slate-100 p-5 flex flex-col relative" id="qr-card-{{ qr.id }}">
+            <!-- Status Flag -->
+            <div class="absolute top-5 right-5">
+                {% if qr.is_active %}
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-[10px] font-black uppercase tracking-wider">
+                        <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full status-active-pulse"></span>
+                        Active
                     </span>
-                    {% else %}
-                    <span class="qr-card-status inactive" id="status-badge-{{ qr.id }}">
-                        <i data-lucide="circle" style="width:8px;height:8px;fill:currentColor"></i> Deactivated
+                {% else %}
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-100 text-slate-400 rounded-full text-[10px] font-black uppercase tracking-wider">
+                        Paused
                     </span>
-                    {% endif %}
-                </div>
+                {% endif %}
             </div>
-            <div class="qr-card-body">
-                <div class="qr-card-url">
-                    <i data-lucide="{% if qr.qr_type == 'url' %}link{% elif qr.qr_type == 'wifi' %}wifi{% elif qr.qr_type == 'phone' %}phone{% elif qr.qr_type == 'vcard' %}contact{% else %}file-text{% endif %}" style="width:14px;height:14px"></i>
-                    <span>
-                        {% if qr.qr_type == 'url' %}{{ qr.destination_url }}
-                        {% elif qr.qr_type == 'text' %}Text: {{ qr.qr_data.text|truncatechars:30 }}
-                        {% elif qr.qr_type == 'wifi' %}WiFi: {{ qr.qr_data.ssid }}
-                        {% elif qr.qr_type == 'phone' %}Phone: {{ qr.qr_data.phone }}
-                        {% elif qr.qr_type == 'vcard' %}Contact: {{ qr.qr_data.first_name }} {{ qr.qr_data.last_name }}
-                        {% elif qr.qr_type == 'email' %}Email: {{ qr.qr_data.email }}
-                        {% elif qr.qr_type == 'sms' %}SMS: {{ qr.qr_data.phone }}
-                        {% elif qr.qr_type == 'location' %}Location: {{ qr.qr_data.latitude }}, {{ qr.qr_data.longitude }}
-                        {% endif %}
-                    </span>
+
+            <div class="flex items-start gap-4 mb-4">
+                <!-- QR Visual -->
+                <div class="w-16 h-16 bg-slate-50 rounded-xl p-2 border border-slate-100 overflow-hidden flex-shrink-0">
+                    <img src="{% url 'dynamic_qr:generate_image' %}?text={{ redirect_url|urlencode }}&fg_color={{ qr.fg_color|urlencode }}&bg_color={{ qr.bg_color|urlencode }}&style={{ qr.body_style }}" 
+                         id="qr-img-{{ qr.id }}"
+                         class="w-full h-full object-contain"
+                         alt="QR">
                 </div>
-                <div class="qr-card-stats">
-                    <div class="qr-stat">
-                        <i data-lucide="scan-line"></i>
-                        <span><strong>{{ qr.scan_count }}</strong> scans</span>
-                    </div>
-                    <div style="flex:1"></div>
-                    <div style="display:flex;gap:6px;position:relative;" class="dl-group">
-                        <!-- Download Dropdown -->
-                        <div style="position:relative;">
-                            <button class="btn-action-icon" title="Download Image" onclick="toggleDownloadMenu('{{ qr.id }}')">
-                                <i data-lucide="download" style="width:16px;height:16px"></i>
-                            </button>
-                            <div id="dl-menu-{{ qr.id }}" class="dl-menu hidden" style="position:absolute;bottom:40px;right:0;background:white;border:1px solid #e2e8f0;border-radius:12px;box-shadow:0 10px 30px rgba(0,0,0,0.1);z-index:100;width:80px;overflow:hidden;">
-                                <button onclick="downloadQR('{{ qr.id }}', 'png')" style="width:100%;padding:8px;font-size:10px;font-weight:800;border:none;background:none;cursor:pointer;hover:background:#f8fafc;display:block;">PNG</button>
-                                <button onclick="downloadQR('{{ qr.id }}', 'jpg')" style="width:100%;padding:8px;font-size:10px;font-weight:800;border:none;background:none;cursor:pointer;hover:background:#f8fafc;display:block;border-top:1px solid #f1f5f9;">JPG</button>
-                                <button onclick="downloadQR('{{ qr.id }}', 'svg')" style="width:100%;padding:8px;font-size:10px;font-weight:800;border:none;background:none;cursor:pointer;hover:background:#f8fafc;display:block;border-top:1px solid #f1f5f9;">SVG</button>
-                            </div>
-                        </div>
-                        <button class="btn-action-icon" title="Copy QR Image" onclick="copyQRImage('{{ qr.id }}')">
-                            <i data-lucide="copy" style="width:16px;height:16px"></i>
-                        </button>
-                        <button class="btn-action-icon" title="Share QR Image" onclick="shareQRImage('{{ qr.id }}', '{{ qr.qr_name|escapejs }}')">
-                            <i data-lucide="share-2" style="width:16px;height:16px"></i>
-                        </button>
+                
+                <div class="flex-1 min-width-0">
+                    <h3 class="text-sm font-black text-slate-900 truncate mb-1">{{ qr.qr_name }}</h3>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-100 text-slate-600 rounded-lg text-[10px] font-black uppercase tracking-wider">
+                            {% if qr.qr_type == 'url' or qr.qr_type == 'custom-url' %}<i data-lucide="link-2" class="w-3 h-3"></i>
+                            {% elif qr.qr_type == 'wifi' %}<i data-lucide="wifi" class="w-3 h-3"></i>
+                            {% elif qr.qr_type == 'text' %}<i data-lucide="type" class="w-3 h-3"></i>
+                            {% elif qr.qr_type == 'vcard' %}<i data-lucide="user" class="w-3 h-3"></i>
+                            {% elif qr.qr_type == 'youtube' %}<i data-lucide="youtube" class="w-3 h-3 text-red-500"></i>
+                            {% elif qr.qr_type == 'facebook' %}<i data-lucide="facebook" class="w-3 h-3 text-blue-600"></i>
+                            {% elif qr.qr_type == 'instagram' %}<i data-lucide="instagram" class="w-3 h-3 text-pink-500"></i>
+                            {% elif qr.qr_type == 'linkedin' %}<i data-lucide="linkedin" class="w-3 h-3 text-blue-700"></i>
+                            {% elif qr.qr_type == 'x-twitter' %}<i data-lucide="twitter" class="w-3 h-3"></i>
+                            {% elif qr.qr_type == 'pdf' %}<i data-lucide="file-text" class="w-3 h-3 text-red-500"></i>
+                            {% elif qr.qr_type == 'image' %}<i data-lucide="image" class="w-3 h-3 text-emerald-500"></i>
+                            {% else %}<i data-lucide="box" class="w-3 h-3"></i>
+                            {% endif %}
+                            {{ qr.qr_type }}
+                        </span>
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-indigo-50 text-indigo-600 rounded-lg text-[10px] font-black uppercase tracking-wider font-mono">
+                            {{ qr.short_code }}
+                        </span>
                     </div>
                 </div>
             </div>
-            <div class="qr-card-actions">
-                <a href="{% url 'dynamic_qr:edit' qr.id %}" class="btn-edit">
-                    <i data-lucide="pencil" style="width:14px;height:14px"></i> Edit
-                </a>
-                <button class="btn-delete" onclick="deleteQR('{{ qr.id }}', '{{ qr.qr_name|escapejs }}')">
-                    <i data-lucide="trash-2" style="width:14px;height:14px"></i> Delete
-                </button>
+
+            <!-- Meta Stats -->
+            <div class="bg-slate-50 rounded-xl p-3 flex items-center justify-around gap-2 mb-4">
+                <div class="text-center">
+                    <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest">Scans</p>
+                    <p class="text-sm font-black text-slate-900">{{ qr.scan_count }}</p>
+                </div>
+                <div class="w-px h-6 bg-slate-200"></div>
+                <div class="text-center">
+                    <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest">ID</p>
+                    <p class="text-sm font-black text-slate-900 font-mono">{{ qr.short_code }}</p>
+                </div>
+            </div>
+
+            <!-- Action Hub -->
+            <div class="space-y-3">
+                <!-- Primary Download with Hover Menu -->
+                <div class="relative group/dl">
+                    <button class="w-full h-10 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg flex items-center justify-center gap-2 font-black text-[10px] uppercase tracking-widest transition-all">
+                        <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                        Download
+                        <i data-lucide="chevron-down" class="w-3 h-3 opacity-50"></i>
+                    </button>
+                    <!-- Bridge to prevent menu hiding on move -->
+                    <div class="absolute top-10 left-0 w-full h-4 bg-transparent group-hover/dl:block hidden"></div>
+                    <!-- Hover Menu -->
+                    <div class="absolute top-10 left-0 w-full bg-white border border-slate-100 rounded-xl shadow-xl opacity-0 invisible group-hover/dl:opacity-100 group-hover/dl:visible transition-all z-20 overflow-hidden py-1.5 translate-y-1 group-hover/dl:translate-y-0">
+                        <a href="{% url 'dynamic_qr:download' qr.id %}?format=png" class="flex items-center gap-2 px-3 py-2 hover:bg-indigo-50 text-slate-700 hover:text-indigo-600 transition-colors font-bold text-[10px]">
+                            <span class="w-6 h-6 rounded bg-blue-50 text-blue-500 flex items-center justify-center text-[8px] font-black">PNG</span> Image
+                        </a>
+                        <a href="{% url 'dynamic_qr:download' qr.id %}?format=jpg" class="flex items-center gap-2 px-3 py-2 hover:bg-indigo-50 text-slate-700 hover:text-indigo-600 transition-colors font-bold text-[10px]">
+                            <span class="w-6 h-6 rounded bg-orange-50 text-orange-500 flex items-center justify-center text-[8px] font-black">JPG</span> HighQ
+                        </a>
+                        <a href="{% url 'dynamic_qr:download' qr.id %}?format=svg" class="flex items-center gap-2 px-3 py-2 hover:bg-indigo-50 text-slate-700 hover:text-indigo-600 transition-colors font-bold text-[10px]">
+                            <span class="w-6 h-6 rounded bg-emerald-50 text-emerald-500 flex items-center justify-center text-[8px] font-black">SVG</span> Vector
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Secondary Action Grid -->
+                <div class="grid grid-cols-4 gap-1.5">
+                    <a href="{% url 'dynamic_qr:details' qr.id %}" class="h-8 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg flex items-center justify-center border border-slate-100" title="View">
+                        <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+                    </a>
+                    <a href="{% url 'dynamic_qr:edit' qr.id %}" class="h-8 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg flex items-center justify-center border border-slate-100" title="Edit Asset">
+                        <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+                    </a>
+                    <a href="{% url 'dynamic_qr:analytics' qr.id %}" class="h-8 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg flex items-center justify-center border border-slate-100" title="Stats">
+                        <i data-lucide="bar-chart" class="w-3.5 h-3.5"></i>
+                    </a>
+                    <button onclick="copyQRImage('{% url 'dynamic_qr:generate_image' %}?text={{ redirect_url|urlencode }}&fg_color={{ qr.fg_color|urlencode }}&bg_color={{ qr.bg_color|urlencode }}&style={{ qr.body_style }}&output_format=png')" 
+                            class="h-8 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg flex items-center justify-center border border-slate-100" title="Copy">
+                        <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                    </button>
+                    <button onclick="shareQRImage('{% url 'dynamic_qr:generate_image' %}?text={{ redirect_url|urlencode }}&fg_color={{ qr.fg_color|urlencode }}&bg_color={{ qr.bg_color|urlencode }}&style={{ qr.body_style }}&output_format=png', '{{ qr.qr_name|escapejs }}')" 
+                            class="h-8 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg flex items-center justify-center border border-slate-100" title="Share">
+                        <i data-lucide="share-2" class="w-3.5 h-3.5"></i>
+                    </button>
+                    <button onclick="toggleStatus('{{ qr.id }}')" 
+                            class="h-8 bg-slate-50 hover:bg-slate-100 {% if qr.is_active %}text-emerald-600{% else %}text-slate-400{% endif %} rounded-lg flex items-center justify-center border border-slate-100" title="Status">
+                        <i data-lucide="power" class="w-3.5 h-3.5"></i>
+                    </button>
+                    <button onclick="deleteQR('{{ qr.id }}')" 
+                            class="h-8 bg-slate-50 hover:bg-red-50 text-slate-400 hover:text-red-600 rounded-lg flex items-center justify-center border border-slate-100 col-span-2 group" title="Delete">
+                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                        <span class="text-[8px] font-black uppercase ml-1">Del</span>
+                    </button>
+                </div>
             </div>
         </div>
+        {% endwith %}
         {% endfor %}
     </div>
     {% else %}
-    <div class="empty-state">
-        <div class="icon-wrap">
-            <i data-lucide="qr-code" style="width:36px;height:36px;color:#4f46e5"></i>
+    <div class="bg-white rounded-[40px] border border-dashed border-slate-200 p-20 text-center">
+        <div class="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-8">
+            <i data-lucide="qr-code" class="w-10 h-10 text-slate-300"></i>
         </div>
-        <h2>No Dynamic QR Codes Yet</h2>
-        <p>Create your first dynamic QR code to get started. You can edit the destination URL anytime!</p>
-        <button class="btn-glow" href="{% url 'dynamic_qr:create' %}">
-            <i data-lucide="plus" style="width:18px;height:18px"></i>
-            Create Your First QR
-        </button>
+        <h3 class="text-2xl font-black text-slate-900 mb-2">No Dynamic QR Codes Yet</h3>
+        <p class="text-slate-500 font-medium mb-10 max-w-sm mx-auto">Start creating trackable, customizable QR codes in seconds and see engagement live.</p>
+        <a href="{% url 'dynamic_qr:create' %}" class="inline-flex items-center gap-2 px-8 py-4 bg-indigo-600 text-white rounded-2xl font-black transition-transform hover:scale-105">
+            <i data-lucide="zap"></i> Create Your First QR
+        </a>
     </div>
-{% endif %}
-</div>
-
-</div>
-
-<!-- Delete Confirm Modal -->
-<div class="modal-overlay" id="delete-modal">
-    <div class="modal-card" style="max-width:400px;">
-        <div class="modal-header" style="border-bottom-color:#fee2e2;">
-            <h2 style="color:#dc2626;">⚠️ Delete QR Code</h2>
-            <button class="modal-close" onclick="closeDeleteModal()">
-                <i data-lucide="x" style="width:18px;height:18px"></i>
-            </button>
-        </div>
-        <div class="modal-body" style="text-align:center;">
-            <p style="font-size:14px;color:#475569;">Are you sure you want to delete <strong id="delete-name" style="color:#dc2626;"></strong>?</p>
-            <p style="font-size:12px;color:#94a3b8;margin-top:8px;">This action cannot be undone. The QR code will stop working immediately.</p>
-        </div>
-        <div class="modal-footer">
-            <button class="btn-cancel" onclick="closeDeleteModal()">Cancel</button>
-            <button class="btn-create" id="delete-confirm" onclick="confirmDelete()" style="background:linear-gradient(135deg,#ef4444,#dc2626);box-shadow:0 4px 20px rgba(239,68,68,0.3);">
-                Delete Forever
-            </button>
-        </div>
-    </div>
-</div>
-
-<!-- Toast -->
-<div class="toast" id="toast"></div>
-
-{% endblock %}
-
-{% block extra_scripts %}
-<script>
-    const CSRF = '{{ csrf_token }}';
-
-    // Stats
-    {% if qr_codes %}
-    let totalScans = 0, activeCount = 0;
-    {% for qr in qr_codes %}
-        totalScans += {{ qr.scan_count }};
-        {% if qr.is_active %}activeCount++;{% endif %}
-    {% endfor %}
-    document.getElementById('total-scans').textContent = totalScans;
-    document.getElementById('active-count').textContent = activeCount;
     {% endif %}
 
-    // No more create modal JS needed
+    <!-- Copy Image Toast -->
+    <div id="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] hidden">
+        <div class="bg-slate-900 text-white px-8 py-4 rounded-2xl shadow-2xl flex items-center gap-4 animate-bounce-in">
+            <div class="w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center">
+                <i data-lucide="check" class="w-3 h-3"></i>
+            </div>
+            <span class="font-black text-xs uppercase tracking-widest" id="toast-message">Image Copied!</span>
+        </div>
+    </div>
+{% endblock %}
 
-    // Action Handlers
-    function toggleDownloadMenu(id) {
-        document.querySelectorAll('.dl-menu').forEach(m => { if(m.id !== 'dl-menu-'+id) m.classList.add('hidden') });
-        document.getElementById('dl-menu-' + id).classList.toggle('hidden');
-    }
-
-    function downloadQR(qrId, format) {
-        window.location.href = `/qr/download/${qrId}/?format=${format}`;
-        document.getElementById('dl-menu-' + qrId).classList.add('hidden');
-    }
-
-    async function shareQRImage(qrId, name) {
-        showToast('Preparing image for sharing...');
+{% block dqr_scripts %}
+    async function copyQRImage(imageUrl) {
         try {
-            // Fetch the image blob from our download endpoint
-            const resp = await fetch(`/qr/download/${qrId}/?format=png`);
-            if (!resp.ok) throw new Error();
-            const blob = await resp.blob();
-            const file = new File([blob], `QR_${name}.png`, { type: blob.type });
-
-            if (navigator.share && navigator.canShare && navigator.canShare({ files: [file] })) {
-                await navigator.share({
-                    files: [file],
-                    title: 'QR Code: ' + name,
-                    text: 'Here is the QR code for ' + name
-                });
-            } else {
-                // Fallback to link sharing
-                const shortUrl = document.getElementById('qr-card-'+qrId).querySelector('.qr-card-url span').textContent;
-                shareQR(name, shortUrl);
-            }
-        } catch (err) {
-            showToast('Failed to share image. Try copying link instead.', 'error');
-        }
-    }
-
-    async function copyQRImage(qrId) {
-        showToast('Preparing QR image...');
-        try {
-            const resp = await fetch(`/qr/download/${qrId}/?format=png`);
-            if (!resp.ok) throw new Error();
-            const blob = await resp.blob();
+            showToast('Processing Image...', false);
+            const response = await fetch(imageUrl);
+            const blob = await response.blob();
             
-            // ClipboardItem requires a Map of mime:blob
-            const item = new ClipboardItem({ 'image/png': blob });
-            await navigator.clipboard.write([item]);
-            showToast('QR Image copied to clipboard! 📋');
+            if (window.ClipboardItem) {
+                const item = new ClipboardItem({ 'image/png': blob });
+                await navigator.clipboard.write([item]);
+                showToast('QR Image Copied to Clipboard!');
+            } else {
+                throw new Error('ClipboardItem not supported');
+            }
         } catch (err) {
             console.error(err);
-            showToast('Clipboard error. Make sure you are using HTTPS.', 'error');
+            showToast('Failed to copy image.', true);
         }
     }
 
-    // Legacy fallback or link sharing if needed
-    function shareQR(name, url) {
-        if (navigator.share) {
-            navigator.share({
-                title: 'QR Code: ' + name,
-                text: 'Here is the QR code for ' + name,
-                url: url
-            });
-        }
-    }
-
-    // Delete Modal
-    let deleteId = null;
-    function deleteQR(id, name) {
-        deleteId = id;
-        document.getElementById('delete-name').textContent = name;
-        document.getElementById('delete-modal').classList.add('open');
-    }
-    function closeDeleteModal() {
-        document.getElementById('delete-modal').classList.remove('open');
-        deleteId = null;
-    }
-    async function confirmDelete() {
-        if (!deleteId) return;
-        const btn = document.getElementById('delete-confirm');
-        btn.disabled = true;
-        btn.textContent = 'Deleting...';
-
+    async function shareQRImage(imageUrl, title) {
         try {
-            const fd = new FormData();
-            fd.append('csrfmiddlewaretoken', CSRF);
+            showToast('Preparing for Share...', false);
+            const response = await fetch(imageUrl);
+            const blob = await response.blob();
+            const file = new File([blob], 'qr_code.png', { type: 'image/png' });
 
-            const resp = await fetch(`/qr/delete/${deleteId}/`, {
-                method: 'POST',
-                body: fd,
-                headers: { 'X-Requested-With': 'XMLHttpRequest' },
-            });
-            const data = await resp.json();
-
-            if (data.success) {
-                document.getElementById('qr-card-' + deleteId).remove();
-                closeDeleteModal();
-                showToast('QR code deleted successfully.');
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                await navigator.share({
+                    title: title,
+                    text: 'Check out this QR Code!',
+                    files: [file]
+                });
             } else {
-                showToast('Failed to delete.', 'error');
+                // Fallback: Copy link
+                const shortUrl = imageUrl.split('text=')[1].split('&')[0];
+                navigator.clipboard.writeText(decodeURIComponent(shortUrl));
+                showToast('Sharing not supported. Link copied instead.');
             }
         } catch (err) {
-            showToast('Network error.', 'error');
-        } finally {
-            btn.disabled = false;
-            btn.textContent = 'Delete Forever';
+            console.error('Sharing failed', err);
+            showToast('Sharing failed.', true);
         }
     }
 
     async function toggleStatus(qrId) {
         try {
-            const fd = new FormData();
-            fd.append('csrfmiddlewaretoken', CSRF);
-            const resp = await fetch(`/qr/toggle-status/${qrId}/`, {
+            const response = await fetch(`/qr/toggle-status/${qrId}/`, {
                 method: 'POST',
-                body: fd,
-                headers: { 'X-Requested-With': 'XMLHttpRequest' }
+                headers: { 'X-CSRFToken': '{{ csrf_token }}' }
             });
-            const data = await resp.json();
-            if (data.success) {
-                const badge = document.getElementById('status-badge-' + qrId);
-                if (data.is_active) {
-                    badge.className = 'qr-card-status active';
-                    badge.innerHTML = '<i data-lucide="circle" style="width:8px;height:8px;fill:currentColor"></i> Active';
-                    badge.parentElement.title = 'Click to Deactivate';
-                } else {
-                    badge.className = 'qr-card-status inactive';
-                    badge.innerHTML = '<i data-lucide="circle" style="width:8px;height:8px;fill:currentColor"></i> Deactivated';
-                    badge.parentElement.title = 'Click to Activate';
-                }
-                lucide.createIcons();
-                showToast(data.is_active ? 'QR Code Activated! ✅' : 'QR Code Deactivated! ⏸️');
-                
-                // Update active count
-                let activeCount = parseInt(document.getElementById('active-count').textContent);
-                document.getElementById('active-count').textContent = data.is_active ? activeCount + 1 : activeCount - 1;
+            if (response.ok) {
+                location.reload();
+            } else {
+                showToast('Action Failed', true);
             }
         } catch (err) {
-            showToast('Failed to toggle status.', 'error');
+            console.error('Failed to toggle status');
         }
     }
 
-    // Toast
-    function showToast(msg, type = 'success') {
-        const t = document.getElementById('toast');
-        t.textContent = msg;
-        t.style.display = 'block';
-        t.style.background = type === 'error' ? '#dc2626' : '#1e293b';
-        setTimeout(() => { t.style.display = 'none'; }, 3000);
+    async function deleteQR(qrId) {
+        if (!confirm('Are you sure you want to delete/archive this QR code? This action cannot be undone.')) return;
+        
+        try {
+            const response = await fetch(`/qr/delete/${qrId}/`, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+            });
+            if (response.ok) {
+                const card = document.getElementById(`qr-card-${qrId}`);
+                card.style.opacity = '0';
+                card.style.transform = 'scale(0.9)';
+                setTimeout(() => card.remove(), 400);
+                showToast('QR Code deleted successfully');
+            } else {
+                showToast('Delete Action Failed', true);
+            }
+        } catch (err) {
+            console.error('Failed to delete QR');
+        }
     }
-</script>
+
+    function showToast(message, isError = false) {
+        const toast = document.getElementById('toast');
+        const msg = document.getElementById('toast-message');
+        msg.textContent = message;
+        toast.classList.remove('hidden');
+        setTimeout(() => toast.classList.add('hidden'), 3000);
+    }
 {% endblock %}

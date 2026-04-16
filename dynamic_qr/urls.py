@@ -14,9 +14,12 @@ urlpatterns = [
 
     # Dashboard
     path('dashboard/', views.dqr_dashboard_view, name='dashboard'),
+    path('all/', views.dqr_all_qrs_view, name='all_qrs'),
     path('create/', views.dqr_create_view, name='create'),
     path('edit/<uuid:qr_id>/', views.dqr_edit_view, name='edit'),
     path('delete/<uuid:qr_id>/', views.dqr_delete_view, name='delete'),
+    path('details/<uuid:qr_id>/', views.dqr_details_view, name='details'),
+    path('analytics/<uuid:qr_id>/', views.dqr_analytics_view, name='analytics'),
     path('toggle-status/<uuid:qr_id>/', views.dqr_toggle_status, name='toggle_status'),
     path('download/<uuid:qr_id>/', views.dqr_download_view, name='download'),
 
