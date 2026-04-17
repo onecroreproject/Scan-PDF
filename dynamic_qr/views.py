@@ -697,9 +697,12 @@ def dqr_edit_view(request, qr_id):
         return redirect('dynamic_qr:dashboard')
 
     qr_content = qr.get_static_content(request)
+    import json
     return render(request, 'dynamic_qr/edit_qr.html', {
         'qr': qr,
         'redirect_url': qr_content,
+        'qr_data_json': json.dumps(qr.qr_data if qr.qr_data else {}),
+        'design_options_json': json.dumps(qr.design_options if qr.design_options else {}),
     })
 
 
@@ -911,25 +914,41 @@ def dqr_auth_status(request):
 def dqr_generate_image(request):
     """Generate the QR code image for a dynamic QR entry."""
     data = request.POST if request.method == 'POST' else request.GET
+    qr_id = data.get('qr_id')
+    qr_obj = None
+    if qr_id:
+        qr_obj = get_object_or_404(DynamicQRCode, id=qr_id, user=request.user)
 
     from converter.utils import generate_qr_code, get_output_path
     from converter.views import create_cleanup_response
 
-    text = data.get('text', 'https://scanpdf.com')
-    fg_color = data.get('fg_color', '#000000')
-    bg_color = data.get('bg_color', '#ffffff')
-    style = data.get('style', 'square')
-    eye_style = data.get('eye_style', 'square')
-    ball_style = data.get('ball_style', 'square')
+    text = data.get('text')
+    if not text:
+        if qr_obj: text = qr_obj.get_static_content(request)
+        else: text = 'https://scanpdf.com'
+        
+    fg_color = data.get('fg_color', qr_obj.fg_color if qr_obj else '#000000')
+    bg_color = data.get('bg_color', qr_obj.bg_color if qr_obj else '#ffffff')
+    style = data.get('style', qr_obj.body_style if qr_obj else 'square')
+    eye_style = data.get('eye_style', qr_obj.eye_style if qr_obj else 'square')
+    ball_style = data.get('ball_style', qr_obj.ball_style if qr_obj else 'square')
     output_format = data.get('output_format', 'png')
 
     try:
         from converter.utils import save_uploaded_file
         logo_path = None
         
-        # 1. Preset Logo
+        # Determine Design Options
+        design_options = data.get('design_options')
+        if not design_options and qr_obj:
+            design_options = json.dumps(qr_obj.design_options if qr_obj.design_options else {})
+        elif not design_options:
+            design_options = '{}'
+
+        # Logo Logic
+        # 1. Preset Logo (passed via param)
         brand = data.get('logo')
-        if brand and brand != 'none':
+        if brand and brand not in ('none', 'existing', ''):
             domain_map = {
                 'facebook': 'facebook.com', 'instagram': 'instagram.com', 'youtube': 'youtube.com',
                 'whatsapp': 'whatsapp.com', 'linkedin': 'linkedin.com', 'telegram': 'telegram.org',
@@ -952,7 +971,7 @@ def dqr_generate_image(request):
                         logo_path = tmp
                 except: pass
 
-        # 2. Base64 Cropped Logo
+        # 2. Base64 Cropped Logo (from POST preview)
         if not logo_path:
             logo_cropped = data.get('logo_cropped')
             if logo_cropped and logo_cropped.startswith('data:image'):
@@ -966,11 +985,26 @@ def dqr_generate_image(request):
                     logo_path = tmp
                 except: pass
 
-        # 3. File Upload
+        # 3. Existing Logo from Database (if qr_id provided and no new logo in params)
+        if not logo_path and qr_obj:
+            if qr_obj.logo:
+                try:
+                    if os.path.exists(qr_obj.logo.path):
+                        logo_path = qr_obj.logo.path
+                except:
+                    pass
+            # Also check design options for preset logos if not in main logo field
+            if not logo_path and qr_obj.design_options:
+                brand_id = qr_obj.design_options.get('logo_preset')
+                if brand_id and brand_id != 'none' and not logo_path:
+                    # Retry brand resolution logic if needed or just trust that it should have been 
+                    # handled by the brand block if passed in data.
+                    pass
+
+        # 4. Manual File Upload
         if not logo_path and 'logo' in request.FILES:
             logo_path = save_uploaded_file(request.FILES['logo'])
 
-        design_options = data.get('design_options', '{}')
         output_path = generate_qr_code(
             text, fg_color=fg_color, bg_color=bg_color,
             style=style, eye_style=eye_style, ball_style=ball_style,
@@ -1018,7 +1052,8 @@ def dqr_download_view(request, qr_id):
         eye_style=qr.eye_style,
         ball_style=qr.ball_style,
         logo_path=logo_path,
-        output_format=fmt
+        output_format=fmt,
+        design_options=qr.design_options
     )
     
     ct = 'image/png'
