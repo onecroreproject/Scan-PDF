@@ -881,9 +881,9 @@ def dqr_redirect_view(request, short_code):
     elif qr.destination_url:
         target_url = qr.destination_url
 
-    # Instant Redirect for URL/Social/File types
-    if qr.qr_type in redirect_types and target_url:
-        return HttpResponseRedirect(target_url)
+    # Instant Redirect block REMOVED to allow landing page display for all types
+    # if qr.qr_type in redirect_types and target_url:
+    #     return HttpResponseRedirect(target_url)
     
     # Direct Display for Text/Wi-Fi/vCard (if accessed via link)
     template = 'dynamic_qr/landing.html'

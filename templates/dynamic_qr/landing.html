@@ -191,6 +191,17 @@
                     <div class="grid grid-cols-1 gap-3" id="link-list-container">
                         <!-- JS handled link list -->
                     </div>
+                {% elif qr.destination_url or qr.file_content %}
+                    <div class="data-item text-center">
+                        <span class="data-label">Embedded Destination</span>
+                        <div class="data-value text-xs font-bold text-slate-400 mt-2 truncate px-4">
+                            {% if qr.file_content %}{{ qr.file_content.name }}{% else %}{{ qr.destination_url }}{% endif %}
+                        </div>
+                        <div class="mt-8 pt-8 border-t border-slate-50">
+                            <i data-lucide="shield-check" class="w-12 h-12 text-emerald-500 mx-auto opacity-20"></i>
+                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mt-4">Verified Safe Destination</p>
+                        </div>
+                    </div>
                 {% endif %}
             </div>
 
@@ -212,6 +223,10 @@
                     <i data-lucide="info" class="w-5 h-5 text-indigo-500"></i>
                     <p class="text-[10px] font-bold text-indigo-700 uppercase tracking-widest text-left leading-relaxed">Most devices will automatically detect the network while scanning this QR direct.</p>
                 </div>
+            {% elif qr.destination_url %}
+                <a href="{{ qr.destination_url }}" class="btn-hero-action font-black"><i data-lucide="external-link"></i> Visit Website</a>
+            {% elif qr.file_content %}
+                <a href="{{ qr.file_content.url }}" class="btn-hero-action font-black"><i data-lucide="file-down"></i> View Content</a>
             {% endif %}
 
             <p class="footer-tag">Verified Scan • ScanPDF Secure</p>
