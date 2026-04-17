@@ -17,6 +17,7 @@ urlpatterns = [
     path('all/', views.dqr_all_qrs_view, name='all_qrs'),
     path('create/', views.dqr_create_view, name='create'),
     path('short-url/', views.dqr_short_url_view, name='short_url'),
+    path('short-url/analytics/<uuid:qr_id>/', views.dqr_short_url_analytics_view, name='short_url_analytics'),
     path('edit/<uuid:qr_id>/', views.dqr_edit_view, name='edit'),
     path('delete/<uuid:qr_id>/', views.dqr_delete_view, name='delete'),
     path('details/<uuid:qr_id>/', views.dqr_details_view, name='details'),

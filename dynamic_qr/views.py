@@ -495,40 +495,125 @@ def dqr_create_view(request):
 
 @dqr_login_required
 def dqr_short_url_view(request):
-    """Specialized tool for simple URL shortening."""
+    """Specialized tool for Short URLs: List and Create."""
     if request.method == 'GET':
-        return render(request, 'dynamic_qr/short_url.html')
+        short_urls = DynamicQRCode.objects.filter(user=request.user, qr_type='custom-url').order_by('-created_at')
+        return render(request, 'dynamic_qr/short_url.html', {
+            'short_urls': short_urls
+        })
     
     try:
+        qr_id = request.POST.get('qr_id')
         qr_name = request.POST.get('qr_name', 'Short URL').strip()
         destination_url = request.POST.get('destination_url', '').strip()
+        regenerate = request.POST.get('regenerate_code') == 'on'
         
         if not destination_url:
             return JsonResponse({'error': 'URL is required.'}, status=400)
         
-        # Simple validation: ensure it starts with http
         if not destination_url.startswith(('http://', 'https://')):
             destination_url = 'https://' + destination_url
         
         qr_data = {'destination_url': destination_url}
         
-        # We use 'custom-url' type for simple short links
-        qr = DynamicQRCode.objects.create(
-            user=request.user,
-            qr_name=qr_name,
-            qr_type='custom-url',
-            destination_url=destination_url,
-            qr_data=qr_data,
-            design_options={}
-        )
+        if qr_id:
+            # Update existing
+            qr = get_object_or_404(DynamicQRCode, id=qr_id, user=request.user)
+            qr.qr_name = qr_name
+            qr.destination_url = destination_url
+            qr.qr_data = qr_data
+            if regenerate:
+                from .models import generate_short_code
+                qr.short_code = generate_short_code()
+            qr.save()
+        else:
+            # Create new
+            qr = DynamicQRCode.objects.create(
+                user=request.user,
+                qr_name=qr_name,
+                qr_type='custom-url',
+                destination_url=destination_url,
+                qr_data=qr_data,
+                design_options={}
+            )
         
         return JsonResponse({
             'success': True, 
             'id': str(qr.id), 
-            'short_url': request.build_absolute_uri(f"/qr/r/{qr.short_code}/")
+            'short_url': request.build_absolute_uri(f"/qr/r/{qr.short_code}/"),
+            'qr_name': qr.qr_name,
+            'created_at': qr.created_at.strftime('%Y-%m-%d %H:%M'),
+            'scan_count': qr.scan_count
         })
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)
+
+
+@dqr_login_required
+def dqr_short_url_analytics_view(request, qr_id):
+    """Detailed analytics for a specific Short URL, matching QR excellence."""
+    qr = get_object_or_404(DynamicQRCode, id=qr_id, user=request.user, qr_type='custom-url')
+    
+    from django.db.models import Count
+    from django.db.models.functions import TruncDate
+    from django.db import connection, OperationalError
+    from django.core.paginator import Paginator
+    import json
+    
+    selected_range = request.GET.get('range', '7days')
+    now = timezone.now()
+    
+    if selected_range == 'today':
+        start_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
+    elif selected_range == '7days':
+        start_date = now - timedelta(days=7)
+    elif selected_range == '1month' or selected_range == '30days':
+        start_date = now - timedelta(days=30)
+    elif selected_range == '12months':
+        start_date = now - timedelta(days=365)
+    else:
+        start_date = now - timedelta(days=7)
+        
+    def get_data():
+        base_query = qr.analytics.filter(timestamp__gte=start_date)
+        daily_scans = list(base_query.annotate(date=TruncDate('timestamp')).values('date').annotate(count=Count('id')).order_by('date'))
+        browser_stats = list(base_query.values('browser').annotate(count=Count('id')).order_by('-count')[:5])
+        device_stats = list(base_query.values('device_type').annotate(count=Count('id')).order_by('-count'))
+        os_stats = list(base_query.values('os').annotate(count=Count('id')).order_by('-count')[:5])
+        recent_scans_qs = base_query.order_by('-timestamp')
+        return daily_scans, browser_stats, device_stats, os_stats, recent_scans_qs
+
+    try:
+        daily_scans, browser_stats, device_stats, os_stats, recent_scans_qs = get_data()
+    except OperationalError:
+        daily_scans, browser_stats, device_stats, os_stats, recent_scans_qs = [], [], [], [], []
+
+    paginator = Paginator(recent_scans_qs, 10)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    chart_labels = [d['date'].strftime('%b %d') for d in daily_scans]
+    chart_data = [d['count'] for d in daily_scans]
+    device_labels = [d['device_type'] if d['device_type'] else 'Unknown' for d in device_stats]
+    device_data = [d['count'] for d in device_stats]
+    browser_labels = [d['browser'] if d['browser'] else 'Other' for d in browser_stats]
+    browser_data = [d['count'] for d in browser_stats]
+
+    return render(request, 'dynamic_qr/short_url_analytics.html', {
+        'qr': qr,
+        'selected_range': selected_range,
+        'total_range_scans': sum(chart_data),
+        'js_labels': json.dumps(chart_labels),
+        'js_data': json.dumps(chart_data),
+        'js_device_labels': json.dumps(device_labels),
+        'js_device_data': json.dumps(device_data),
+        'js_browser_labels': json.dumps(browser_labels),
+        'js_browser_data': json.dumps(browser_data),
+        'page_obj': page_obj,
+        'browser_stats': browser_stats,
+        'device_stats': device_stats,
+        'os_stats': os_stats,
+    })
 
 
 # ═══════════════════════════════════════════════════════════════

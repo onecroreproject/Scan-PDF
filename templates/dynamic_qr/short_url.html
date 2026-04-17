@@ -2,105 +2,221 @@
 {% load static %}
 
 {% block dqr_style %}
-    .shortener-card {
-        background: white; border-radius: 24px; padding: 40px;
-        box-shadow: 0 10px 40px -10px rgba(0,0,0,0.05);
-        max-width: 800px; margin: 40px auto;
+    .qr-card {
+        background: white; border-radius: 20px; border: 1px solid #f1f5f9;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); position: relative;
+        overflow: hidden;
     }
-    .input-wrapper {
-        display: flex; gap: 12px; background: #f8fafc; border: 2px solid #f1f5f9;
-        border-radius: 20px; padding: 8px 8px 8px 24px; transition: 0.3s;
-        align-items: center;
-    }
-    .input-wrapper:focus-within { border-color: #6366f1; background: white; box-shadow: 0 0 0 4px rgba(99,102,241,0.1); }
-    .short-input {
-        flex: 1; border: none; background: transparent; outline: none;
-        font-size: 16px; font-weight: 600; color: #1e293b; padding: 12px 0;
-    }
-    .short-input::placeholder { color: #94a3b8; }
+    .qr-card:hover { transform: translateY(-4px); border-color: #6366f1; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.05); }
     
-    .shorten-btn {
-        background: linear-gradient(135deg, #6366f1, #4f46e5); color: white;
-        padding: 14px 28px; border-radius: 16px; font-weight: 800;
-        display: flex; align-items: center; gap: 10px; transition: 0.3s;
+    .qr-badge {
+        font-size: 8px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em;
+        padding: 4px 8px; border-radius: 6px;
     }
-    .shorten-btn:hover { transform: translateY(-2px); box-shadow: 0 10px 20px -5px rgba(79,70,229,0.4); }
+    .badge-active { background: #ecfdf5; color: #10b981; }
+    .badge-paused { background: #f8fafc; color: #94a3b8; }
 
-    .result-card {
-        margin-top: 32px; padding: 24px; border-radius: 20px;
-        background: #f0fdf4; border: 1px solid #bbf7d0;
-        display: none; transform: translateY(10px); opacity: 0; transition: 0.4s;
+    .new-btn {
+        background: linear-gradient(135deg, #6366f1, #4f46e5); color: white;
+        padding: 12px 24px; border-radius: 12px; font-weight: 800;
+        display: flex; align-items: center; gap: 8px; box-shadow: 0 10px 15px -3px rgba(79,70,229,0.3);
     }
-    .result-card.show { display: block; transform: translateY(0); opacity: 1; }
     
-    .alias-input {
-        margin-bottom: 24px; display: block; width: 100%;
-        background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px;
-        padding: 10px 16px; font-size: 13px; font-weight: 600;
+    /* Modal */
+    .modal {
+        display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6);
+        backdrop-filter: blur(8px); z-index: 100; align-items: center; justify-content: center; padding: 20px;
     }
+    .modal-content {
+        background: white; width: 100%; max-width: 500px; border-radius: 28px; padding: 36px;
+        box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+    }
+    .form-input-custom {
+        width: 100%; padding: 14px 18px; border: 2px solid #f1f5f9; border-radius: 14px;
+        font-weight: 600; font-size: 15px; outline: none; transition: 0.3s; margin-top: 4px;
+    }
+    .form-input-custom:focus { border-color: #6366f1; background: #fcfcff; }
+
+    /* Toggle Switch */
+    .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; cursor: pointer; inset: 0; background: #e2e8f0; transition: .4s; border-radius: 34px; }
+    .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background: white; transition: .4s; border-radius: 50%; }
+    input:checked + .slider { background: #6366f1; }
+    input:checked + .slider:before { transform: translateX(20px); }
 {% endblock %}
 
 {% block dqr_content %}
-    <div class="mb-8">
-        <h1 class="text-3xl font-black text-slate-900 tracking-tight">Short URL Maker</h1>
-        <p class="text-slate-500 font-bold mt-1 text-sm">Create trackable, professional short links in seconds.</p>
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
+        <div>
+            <h1 class="text-3xl font-black text-slate-900 tracking-tight">Short Link Manager</h1>
+            <p class="text-slate-500 font-bold mt-1 text-sm">Managing your trackable Link deployments</p>
+        </div>
+        
+        <button onclick="openCreateModal()" class="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-2xl font-black transition-all hover:bg-indigo-700 shadow-lg shadow-indigo-100">
+            <i data-lucide="plus" class="w-5 h-5"></i> Create New Link
+        </button>
     </div>
 
-    <div class="shortener-card">
-        <div class="mb-10 text-center">
-            <div class="w-16 h-16 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-                <i data-lucide="link-2" class="w-8 h-8"></i>
-            </div>
-            <h2 class="text-2xl font-black text-slate-900">Paste your long link</h2>
-            <p class="text-slate-400 font-bold text-sm">All short links created here come with free analytics.</p>
-        </div>
-
-        <form id="shortener-form">
-            {% csrf_token %}
-            <div class="mb-6">
-                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-2 px-2">Friendly Alias (Optional)</label>
-                <input type="text" name="qr_name" class="alias-input" placeholder="e.g. My Website Link">
-            </div>
-
-            <div class="input-wrapper">
-                <i data-lucide="globe" class="text-slate-400 w-5 h-5"></i>
-                <input type="url" name="destination_url" class="short-input" placeholder="https://your-very-long-url.com/something..." required>
-                <button type="submit" class="shorten-btn" id="submit-btn">
-                    <span>Shorten</span>
-                    <i data-lucide="arrow-right" class="w-4 h-4"></i>
-                </button>
-            </div>
-        </form>
-
-        <div id="result-area" class="result-card">
-            <p class="text-[10px] font-black text-emerald-600 uppercase tracking-widest mb-3">Your link is ready!</p>
-            <div class="flex items-center gap-4 bg-white p-4 rounded-xl border border-emerald-100 shadow-sm transition-all hover:shadow-md">
-                <div class="flex-1 overflow-hidden">
-                    <p id="short-url-text" class="text-slate-900 font-black truncate text-lg"></p>
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-12" id="url-grid">
+        {% for item in short_urls %}
+        <div class="qr-card">
+            <div class="p-4">
+                <div class="flex items-start justify-between mb-4">
+                    <div class="flex items-center gap-3">
+                        <div class="w-12 h-12 bg-indigo-50 rounded-xl p-2 border border-indigo-100 flex items-center justify-center">
+                            <i data-lucide="link" class="w-6 h-6 text-indigo-600"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-[13px] font-black text-slate-900 truncate max-w-[120px]" title="{{ item.qr_name }}">{{ item.qr_name }}</h3>
+                            <div class="flex items-center gap-2 mt-0.5">
+                                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Short URL</span>
+                                <span class="w-1 h-1 rounded-full bg-slate-200"></span>
+                                <span class="text-[9px] font-mono font-bold text-indigo-500">{{ item.short_code }}</span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <button onclick="copyToClipboard()" class="p-3 bg-slate-50 text-slate-600 rounded-lg hover:bg-slate-100 transition-colors" title="Copy link">
-                    <i data-lucide="copy" class="w-5 h-5" id="copy-icon"></i>
-                </button>
-                <a id="details-link" href="#" class="p-3 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition-colors" title="View Analytics">
-                    <i data-lucide="bar-chart-3" class="w-5 h-5"></i>
-                </a>
+
+                <!-- Link Display -->
+                <div class="mb-4 bg-slate-50 p-2.5 rounded-xl border border-slate-50 relative group/link">
+                    <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Your Link</p>
+                    <p class="text-[10px] font-black text-slate-900 truncate pr-6" id="url-{{ item.id }}">
+                        {{ request.scheme }}://{{ request.get_host }}/qr/r/{{ item.short_code }}
+                    </p>
+                    <button onclick="copyUrl('url-{{ item.id }}')" class="absolute top-1/2 -translate-y-1/2 right-2 text-indigo-600 hover:text-indigo-800 opacity-0 group-hover/link:opacity-100 transition-opacity">
+                        <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                    </button>
+                </div>
+
+                <!-- Stats Snippet -->
+                <div class="grid grid-cols-2 gap-2 mb-4">
+                    <div class="bg-slate-50/50 p-2.5 rounded-xl border border-slate-50">
+                        <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Clicks</p>
+                        <p class="text-sm font-black text-slate-900">{{ item.scan_count }}</p>
+                    </div>
+                    <div class="bg-slate-50/50 p-2.5 rounded-xl border border-slate-50">
+                        <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Target</p>
+                        <p class="text-[10px] font-bold text-slate-700 truncate">{{ item.destination_url }}</p>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <div class="grid grid-cols-5 gap-1.5">
+                    <a href="{% url 'dynamic_qr:details' item.id %}" class="h-9 bg-slate-50 hover:bg-slate-100 text-slate-500 rounded-lg flex items-center justify-center border border-slate-100 transition-all" title="View Details">
+                        <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+                    </a>
+                    <a href="{% url 'dynamic_qr:short_url_analytics' item.id %}" class="h-9 bg-slate-50 hover:bg-indigo-50 text-slate-500 hover:text-indigo-600 rounded-lg flex items-center justify-center border border-slate-100 transition-all" title="Analytics">
+                        <i data-lucide="bar-chart-3" class="w-3.5 h-3.5"></i>
+                    </a>
+                    <button onclick="openEditModal('{{ item.id }}', '{{ item.qr_name|escapejs }}', '{{ item.destination_url|escapejs }}')" class="h-9 bg-slate-50 hover:bg-slate-100 text-slate-500 rounded-lg flex items-center justify-center border border-slate-100 transition-all" title="Edit">
+                        <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+                    </button>
+                    <button onclick="shareUrl('{{ request.scheme }}://{{ request.get_host }}/qr/r/{{ item.short_code }}')" 
+                            class="h-9 bg-slate-50 hover:bg-slate-100 text-slate-500 rounded-lg flex items-center justify-center border border-slate-100 transition-all" title="Share">
+                        <i data-lucide="share-2" class="w-3.5 h-3.5"></i>
+                    </button>
+                    <a href="{% url 'dynamic_qr:download' item.id %}" 
+                            class="h-9 bg-slate-50 hover:bg-slate-100 text-slate-500 rounded-lg flex items-center justify-center border border-slate-100 transition-all" title="Download QR">
+                        <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                    </a>
+                </div>
             </div>
+        </div>
+        {% empty %}
+        <div class="col-span-full py-24 text-center bg-white rounded-[40px] border border-dashed border-slate-200">
+            <div class="w-20 h-20 bg-indigo-50 text-indigo-200 rounded-3xl flex items-center justify-center mx-auto mb-6">
+                <i data-lucide="link" class="w-10 h-10"></i>
+            </div>
+            <h3 class="text-2xl font-black text-slate-900 mb-2">No Links Found</h3>
+            <p class="text-slate-500 font-medium mb-10 max-w-sm mx-auto">Shorten your first URL to see it displayed here using our premium card layout.</p>
+            <button onclick="openCreateModal()" class="new-btn mx-auto">Create Now</button>
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- Create/Edit Modal -->
+    <div id="url-modal" class="modal">
+        <div class="modal-content">
+            <div class="flex justify-between items-center mb-8">
+                <h3 class="text-2xl font-black text-slate-900" id="modal-title">Create Short URL</h3>
+                <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x"></i></button>
+            </div>
+            
+            <form id="shortener-form" class="space-y-6">
+                {% csrf_token %}
+                <input type="hidden" name="qr_id" id="form-qr-id">
+                
+                <div>
+                    <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest block px-1">Name</label>
+                    <input type="text" name="qr_name" id="form-qr-name" class="form-input-custom" placeholder="e.g. Personal Portfolio" required>
+                </div>
+                
+                <div>
+                    <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest block px-1">Destination URL</label>
+                    <input type="url" name="destination_url" id="form-dest-url" class="form-input-custom" placeholder="https://..." required>
+                </div>
+
+                <div id="regenerate-option" style="display: none;" class="bg-slate-50 p-5 rounded-2xl flex items-center justify-between border border-slate-100">
+                    <div>
+                        <p class="font-black text-slate-900 text-sm">Change QR Code?</p>
+                        <p class="text-[10px] font-bold text-slate-400">Generates a fresh short code and QR image.</p>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" name="regenerate_code" id="form-regen">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                
+                <div class="pt-4">
+                    <button type="submit" class="new-btn w-full justify-center py-4 text-lg" id="submit-btn">
+                        <span>Save Link</span>
+                        <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </form>
         </div>
     </div>
 {% endblock %}
 
 {% block dqr_scripts %}
+    const modal = document.getElementById('url-modal');
     const form = document.getElementById('shortener-form');
-    const resultArea = document.getElementById('result-area');
-    const shortUrlText = document.getElementById('short-url-text');
-    const detailsLink = document.getElementById('details-link');
-    const btnText = document.querySelector('#submit-btn span');
+    let isEdit = false;
+
+    function openCreateModal() {
+        isEdit = false;
+        document.getElementById('modal-title').innerText = 'Create Short URL';
+        document.getElementById('form-qr-id').value = '';
+        form.reset();
+        document.getElementById('regenerate-option').style.display = 'none';
+        modal.style.display = 'flex';
+    }
+
+    function openEditModal(id, name, url) {
+        isEdit = true;
+        document.getElementById('modal-title').innerText = 'Edit Link';
+        document.getElementById('form-qr-id').value = id;
+        document.getElementById('form-qr-name').value = name;
+        document.getElementById('form-dest-url').value = url;
+        document.getElementById('regenerate-option').style.display = 'flex';
+        modal.style.display = 'flex';
+    }
+
+    function closeModal() {
+        modal.style.display = 'none';
+    }
+
+    window.onclick = function(event) {
+        if (event.target == modal) closeModal();
+    }
 
     form.onsubmit = async (e) => {
         e.preventDefault();
-        
+        const btn = document.getElementById('submit-btn');
+        const btnText = btn.querySelector('span');
         btnText.innerText = 'Creating...';
-        document.getElementById('submit-btn').disabled = true;
+        btn.disabled = true;
 
         const formData = new FormData(form);
         try {
@@ -109,45 +225,32 @@
                 body: formData
             });
             const data = await response.json();
-            
             if (data.success) {
-                shortUrlText.innerText = data.short_url;
-                detailsLink.href = `/qr/details/${data.id}/`;
-                resultArea.classList.add('show');
-                
-                // Reset form state
-                btnText.innerText = 'Shorten';
-                document.getElementById('submit-btn').disabled = false;
-                
-                // Scroll to result
-                resultArea.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                location.reload();
             } else {
-                alert(data.error || 'Something went wrong');
-                btnText.innerText = 'Shorten';
-                document.getElementById('submit-btn').disabled = false;
+                alert(data.error || 'Error saving link');
+                btn.disabled = false;
+                btnText.innerText = 'Save Link';
             }
         } catch (error) {
             console.error(error);
-            alert('Server error. Please try again.');
-            btnText.innerText = 'Shorten';
-            document.getElementById('submit-btn').disabled = false;
+            btn.disabled = false;
+            btnText.innerText = 'Save Link';
         }
     };
 
-    function copyToClipboard() {
-        const text = shortUrlText.innerText;
+    function copyUrl(id) {
+        const text = document.getElementById(id).innerText.trim();
         navigator.clipboard.writeText(text).then(() => {
-            const icon = document.getElementById('copy-icon');
-            const originalIcon = icon.getAttribute('data-lucide');
-            
-            // Temporary success indicator
-            icon.setAttribute('data-lucide', 'check');
-            lucide.createIcons();
-            
-            setTimeout(() => {
-                icon.setAttribute('data-lucide', 'copy');
-                lucide.createIcons();
-            }, 2000);
+            alert('Short link copied!');
         });
+    }
+
+    function shareUrl(url) {
+        if (navigator.share) {
+            navigator.share({ title: 'Short Link', url: url });
+        } else {
+            alert('Link: ' + url);
+        }
     }
 {% endblock %}
