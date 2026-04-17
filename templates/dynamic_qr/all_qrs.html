@@ -187,7 +187,6 @@
 {% endblock %}
 
 {% block dqr_scripts %}
-    <script>
     async function toggleStatus(qrId) {
         try {
             const response = await fetch(`/qr/toggle-status/${qrId}/`, {
@@ -228,5 +227,4 @@
         toast.classList.remove('hidden');
         setTimeout(() => toast.classList.add('hidden'), 3000);
     }
-    </script>
 {% endblock %}
