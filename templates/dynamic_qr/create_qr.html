@@ -790,40 +790,73 @@
         updatePreview();
     }
 
+    let previewTimeout = null;
     async function updatePreview() {
-        const options = {
-            error_correction: document.querySelector('.ec-option.active').dataset.ec,
-            logo_circular: document.getElementById('logo-circular-toggle').checked,
-            logo_size: document.getElementById('logo-size-range').value,
-            logo_background: document.getElementById('logo-background-toggle').checked,
-            frame_style: document.querySelector('.frame-item.active').dataset.val,
-            frame_text: document.getElementById('frame-text-input').value,
-            frame_font: document.getElementById('text-font').value,
-            frame_text_color: document.getElementById('text-color').value,
-            bg_transparent: document.getElementById('bg-transparent-toggle').checked
-        };
-        document.getElementById('design-options-input').value = JSON.stringify(options);
+        if (previewTimeout) clearTimeout(previewTimeout);
+        previewTimeout = setTimeout(async () => {
+            const options = {
+                error_correction: document.querySelector('.ec-option.active').dataset.ec,
+                logo_circular: document.getElementById('logo-circular-toggle').checked,
+                logo_size: document.getElementById('logo-size-range').value,
+                logo_background: document.getElementById('logo-background-toggle').checked,
+                frame_style: document.querySelector('.frame-item.active').dataset.val,
+                frame_text: document.getElementById('frame-text-input').value,
+                frame_font: document.getElementById('text-font').value,
+                frame_text_color: document.getElementById('text-color').value,
+                bg_transparent: document.getElementById('bg-transparent-toggle').checked
+            };
+            document.getElementById('design-options-input').value = JSON.stringify(options);
 
-        // Preview URL
-        const fg = document.getElementById('fg-text')?.value || '#000000';
-        const bg = document.getElementById('bg-text')?.value || '#ffffff';
-        const style = document.querySelector('#body-patterns .pattern-item.active')?.dataset.val || 'square';
-        const eye_style = document.querySelector('#eye-patterns .pattern-item.active')?.dataset.val || 'square';
-        const ball_style = document.querySelector('#ball-patterns .pattern-item.active')?.dataset.val || 'square';
+            const fg = document.getElementById('fg-text')?.value || '#000000';
+            const bg = document.getElementById('bg-text')?.value || '#ffffff';
+            const style = document.querySelector('#body-patterns .pattern-item.active')?.dataset.val || 'square';
+            const eye_style = document.querySelector('#eye-patterns .pattern-item.active')?.dataset.val || 'square';
+            const ball_style = document.querySelector('#ball-patterns .pattern-item.active')?.dataset.val || 'square';
 
-        let content = "https://scanpdf.com/preview";
-        const selectedType = document.getElementById('selected-type').value;
-        const destInput = document.querySelector('input[name="destination_url"]');
-        if (destInput && destInput.value.trim()) {
-            content = destInput.value;
-        } else {
-            // Check other primary fields
-            const mainField = document.querySelector('#dynamic-fields input, #dynamic-fields textarea');
-            if (mainField && mainField.value.trim()) content = mainField.value;
-        }
+            let content = "https://scanpdf.com/preview";
+            const destInput = document.querySelector('input[name="destination_url"]');
+            if (destInput && destInput.value.trim()) {
+                content = destInput.value;
+            } else {
+                const mainField = document.querySelector('#dynamic-fields input, #dynamic-fields textarea');
+                if (mainField && mainField.value.trim()) content = mainField.value;
+            }
 
-        const url = `{% url 'dynamic_qr:generate_image' %}?text=${encodeURIComponent(content)}&fg_color=${encodeURIComponent(fg)}&bg_color=${encodeURIComponent(bg)}&style=${style}&eye_style=${eye_style}&ball_style=${ball_style}&design_options=${encodeURIComponent(JSON.stringify(options))}`;
-        document.getElementById('qr-preview-img').src = url;
+            const formData = new FormData();
+            formData.append('text', content);
+            formData.append('fg_color', fg);
+            formData.append('bg_color', bg);
+            formData.append('style', style);
+            formData.append('eye_style', eye_style);
+            formData.append('ball_style', ball_style);
+            formData.append('design_options', JSON.stringify(options));
+
+            const logoItem = document.querySelector('.logo-item.active');
+            if (logoItem && logoItem.dataset.val !== 'none') {
+                if (logoItem.dataset.val === 'custom') {
+                    const cropped = document.getElementById('logo-cropped-data').value;
+                    if (cropped) formData.append('logo_cropped', cropped);
+                } else {
+                    formData.append('logo', logoItem.dataset.val);
+                }
+            }
+
+            try {
+                const response = await fetch('{% url "dynamic_qr:generate_image" %}', {
+                    method: 'POST',
+                    body: formData,
+                    headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+                });
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = URL.createObjectURL(blob);
+                    const img = document.getElementById('qr-preview-img');
+                    const oldUrl = img.src;
+                    img.src = url;
+                    if (oldUrl.startsWith('blob:')) URL.revokeObjectURL(oldUrl);
+                }
+            } catch (e) { console.error("Preview failed", e); }
+        }, 250);
     }
 
     document.querySelectorAll('.cat-btn').forEach(btn => {

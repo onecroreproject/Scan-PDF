@@ -121,7 +121,7 @@
             <div class="flex items-start gap-4 mb-4">
                 <!-- QR Visual -->
                 <div class="w-16 h-16 bg-slate-50 rounded-xl p-2 border border-slate-100 overflow-hidden flex-shrink-0">
-                    <img src="{% url 'dynamic_qr:generate_image' %}?text={{ redirect_url|urlencode }}&fg_color={{ qr.fg_color|urlencode }}&bg_color={{ qr.bg_color|urlencode }}&style={{ qr.body_style }}" 
+                    <img src="{% url 'dynamic_qr:generate_image' %}?qr_id={{ qr.id }}" 
                          id="qr-img-{{ qr.id }}"
                          class="w-full h-full object-contain"
                          alt="QR">
@@ -202,11 +202,11 @@
                     <a href="{% url 'dynamic_qr:analytics' qr.id %}" class="h-8 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg flex items-center justify-center border border-slate-100" title="Stats">
                         <i data-lucide="bar-chart" class="w-3.5 h-3.5"></i>
                     </a>
-                    <button onclick="copyQRImage('{% url 'dynamic_qr:generate_image' %}?text={{ redirect_url|urlencode }}&fg_color={{ qr.fg_color|urlencode }}&bg_color={{ qr.bg_color|urlencode }}&style={{ qr.body_style }}&output_format=png')" 
+                    <button onclick="copyQRImage('{% url 'dynamic_qr:generate_image' %}?qr_id={{ qr.id }}&output_format=png')" 
                             class="h-8 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg flex items-center justify-center border border-slate-100" title="Copy">
                         <i data-lucide="copy" class="w-3.5 h-3.5"></i>
                     </button>
-                    <button onclick="shareQRImage('{% url 'dynamic_qr:generate_image' %}?text={{ redirect_url|urlencode }}&fg_color={{ qr.fg_color|urlencode }}&bg_color={{ qr.bg_color|urlencode }}&style={{ qr.body_style }}&output_format=png', '{{ qr.qr_name|escapejs }}')" 
+                    <button onclick="shareQRImage('{% url 'dynamic_qr:generate_image' %}?qr_id={{ qr.id }}&output_format=png', '{{ qr.qr_name|escapejs }}')" 
                             class="h-8 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg flex items-center justify-center border border-slate-100" title="Share">
                         <i data-lucide="share-2" class="w-3.5 h-3.5"></i>
                     </button>

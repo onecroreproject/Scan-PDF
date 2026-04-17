@@ -3156,6 +3156,8 @@ def generate_qr_code(text, box_size=10, border=4, fg_color="#000000", bg_color="
     from PIL import Image, ImageDraw, ImageColor, ImageOps, ImageFont
     import math
     import json
+    import os
+    import io
 
     if design_options and isinstance(design_options, str):
         try:
@@ -3222,98 +3224,94 @@ def generate_qr_code(text, box_size=10, border=4, fg_color="#000000", bg_color="
     if fmt not in ("png", "jpg", "jpeg", "svg"):
         fmt = "png"
     
-    if fmt == "svg":
-        ext = "svg"
-    else:
-        ext = "jpg" if fmt in ("jpg", "jpeg") else "png"
-        
+    is_svg = (fmt == "svg")
+    ext = "svg" if is_svg else ("jpg" if fmt in ("jpg", "jpeg") else "png")
     output_path = get_output_path("qr_code", ext)
 
-    if fmt == "svg":
-        import qrcode.image.svg
-        # For SVG we use the standard qrcode SVG factory
-        # Note: Monkey features are currently only supported for raster outputs
-        factory = qrcode.image.svg.SvgPathImage
-        img = qrcode.make(text, image_factory=factory, error_correction=qrcode.constants.ERROR_CORRECT_H)
-        # We can't easily draw the logo or custom shapes on the factory image without a lot of XML manipulation, 
-        # so we provide the base vector QR for professional use.
-        img.save(output_path)
-        return output_path
-
-    bg_rgb = ImageColor.getcolor(bg_color, "RGB")
-    fg_rgb = ImageColor.getcolor(fg_color, "RGB")
-
-    if bg_transparent:
-        canvas = Image.new("RGBA", (img_px, img_px), (0, 0, 0, 0))
+    if is_svg:
+        svg_elements = []
+        svg_header = f'<?xml version="1.0" encoding="UTF-8" standalone="no"?>\n'
+        svg_header += f'<svg width="{img_px}" height="{img_px}" viewBox="0 0 {img_px} {img_px}" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">\n'
+        if not bg_transparent:
+            svg_elements.append(f'  <rect width="100%" height="100%" fill="{bg_color}" />')
     else:
-        canvas = Image.new("RGBA", (img_px, img_px), (*bg_rgb, 255))
-    
-    draw = ImageDraw.Draw(canvas)
+        bg_rgb = ImageColor.getcolor(bg_color, "RGB")
+        fg_rgb = ImageColor.getcolor(fg_color, "RGB")
+        if bg_transparent:
+            canvas = Image.new("RGBA", (img_px, img_px), (0, 0, 0, 0))
+        else:
+            canvas = Image.new("RGBA", (img_px, img_px), (*bg_rgb, 255))
+        draw = ImageDraw.Draw(canvas)
 
     # ── Drawing helpers ──
-    def _square(x1, y1, x2, y2, color):
-        draw.rectangle([x1, y1, x2, y2], fill=color)
+    def _rect(x1, y1, x2, y2, color, radius=0):
+        if is_svg:
+            r_attr = f' rx="{radius}" ry="{radius}"' if radius > 0 else ''
+            svg_elements.append(f'  <rect x="{x1}" y="{y1}" width="{x2-x1}" height="{y2-y1}" fill="{color}"{r_attr} />')
+        else:
+            if radius > 0: draw.rounded_rectangle([x1, y1, x2, y2], radius=radius, fill=color)
+            else: draw.rectangle([x1, y1, x2, y2], fill=color)
 
-    def _circle(x1, y1, x2, y2, color):
-        draw.ellipse([x1+1, y1+1, x2-1, y2-1], fill=color)
+    def _ellip(x1, y1, x2, y2, color):
+        if is_svg:
+            rx = (x2-x1)/2
+            ry = (y2-y1)/2
+            svg_elements.append(f'  <ellipse cx="{x1+rx}" cy="{y1+ry}" rx="{rx}" ry="{ry}" fill="{color}" />')
+        else:
+            draw.ellipse([x1, y1, x2, y2], fill=color)
 
-    def _rounded(x1, y1, x2, y2, color):
-        r = max((x2-x1)//3, 2)
-        draw.rounded_rectangle([x1, y1, x2, y2], radius=r, fill=color)
+    def _poly(pts, color):
+        if is_svg:
+            ps = " ".join([f"{p[0]},{p[1]}" for p in pts])
+            svg_elements.append(f'  <polygon points="{ps}" fill="{color}" />')
+        else:
+            draw.polygon(pts, fill=color)
 
+    # Wrap old helpers to use new generic rect/ellip
+    def _square(x1, y1, x2, y2, color): _rect(x1, y1, x2, y2, color)
+    def _circle(x1, y1, x2, y2, color): _ellip(x1+1, y1+1, x2-1, y2-1, color)
+    def _rounded(x1, y1, x2, y2, color): _rect(x1, y1, x2, y2, color, radius=max((x2-x1)//3, 2))
     def _diamond(x1, y1, x2, y2, color):
         cx, cy = (x1+x2)//2, (y1+y2)//2
-        draw.polygon([(cx, y1), (x2, cy), (cx, y2), (x1, cy)], fill=color)
+        _poly([(cx, y1), (x2, cy), (cx, y2), (x1, cy)], color)
 
     def _dot(x1, y1, x2, y2, color):
-        """Small circle with gap"""
         m = (x2-x1)//5
-        draw.ellipse([x1+m, y1+m, x2-m, y2-m], fill=color)
+        _ellip(x1+m, y1+m, x2-m, y2-m, color)
 
     def _small_sq(x1, y1, x2, y2, color):
-        """Gapped small square"""
         m = (x2-x1)//5
-        draw.rectangle([x1+m, y1+m, x2-m, y2-m], fill=color)
+        _rect(x1+m, y1+m, x2-m, y2-m, color)
 
     def _hline(x1, y1, x2, y2, color):
-        """Horizontal dash"""
         m = (x2-x1)//4
-        draw.rectangle([x1, y1+m, x2, y2-m], fill=color)
+        _rect(x1, y1+m, x2, y2-m, color)
 
     def _vline(x1, y1, x2, y2, color):
-        """Vertical dash"""
         m = (x2-x1)//4
-        draw.rectangle([x1+m, y1, x2-m, y2], fill=color)
+        _rect(x1+m, y1, x2-m, y2, color)
 
     def _star(x1, y1, x2, y2, color):
-        """4-pointed star"""
         cx, cy = (x1+x2)//2, (y1+y2)//2
-        s = (x2-x1)//2
-        q = s//3
-        pts = [(cx, y1), (cx+q, cy-q), (x2, cy), (cx+q, cy+q),
-               (cx, y2), (cx-q, cy+q), (x1, cy), (cx-q, cy-q)]
-        draw.polygon(pts, fill=color)
+        s = (x2-x1)//2; q = s//3
+        _poly([(cx, y1), (cx+q, cy-q), (x2, cy), (cx+q, cy+q), (cx, y2), (cx-q, cy+q), (x1, cy), (cx-q, cy-q)], color)
 
     def _cross(x1, y1, x2, y2, color):
-        """Plus/cross shape"""
         t = (x2-x1)//3
-        draw.rectangle([x1+t, y1, x2-t, y2], fill=color)
-        draw.rectangle([x1, y1+t, x2, y2-t], fill=color)
+        _rect(x1+t, y1, x2-t, y2, color)
+        _rect(x1, y1+t, x2, y2-t, color)
 
     def _leaf(x1, y1, x2, y2, color):
-        """Leaf: two diagonally opposite rounded corners"""
-        r = (x2-x1)//2
-        draw.rounded_rectangle([x1, y1, x2, y2], radius=r, fill=color)
+        _rect(x1, y1, x2, y2, color, radius=(x2-x1)//2)
 
     def _clover(x1, y1, x2, y2, color):
-        """Four-leaf clover"""
         cx, cy = (x1+x2)//2, (y1+y2)//2
         r = (x2-x1)//4
         for dx, dy in [(-1,-1),(1,-1),(-1,1),(1,1)]:
             ox, oy = cx + dx*r, cy + dy*r
-            draw.ellipse([ox-r, oy-r, ox+r, oy+r], fill=color)
+            _ellip(ox-r, oy-r, ox+r, oy+r, color)
 
-    # Map style names to drawing functions
+    # Style mapping
     body_map = {
         'square': _square, 'rounded': _rounded, 'circle': _circle,
         'diamond': _diamond, 'dot': _dot, 'small-square': _small_sq,
@@ -3322,94 +3320,96 @@ def generate_qr_code(text, box_size=10, border=4, fg_color="#000000", bg_color="
     }
     fn_body = body_map.get(style, _square)
 
-    # ── Eye shape helper (for complete finder-pattern rendering) ──
     def _eye_shape(x1, y1, x2, y2, s, color):
-        if s == 'circle':
-            draw.ellipse([x1, y1, x2, y2], fill=color)
-        elif s == 'rounded':
-            r = max((x2 - x1) // 5, 4)
-            draw.rounded_rectangle([x1, y1, x2, y2], radius=r, fill=color)
+        if s == 'circle': _ellip(x1, y1, x2, y2, color)
+        elif s == 'rounded': _rect(x1, y1, x2, y2, color, radius=max((x2-x1)//5, 4))
         elif s == 'diamond':
-            cx, cy = (x1 + x2) // 2, (y1 + y2) // 2
-            draw.polygon([(cx, y1), (x2, cy), (cx, y2), (x1, cy)], fill=color)
-        elif s == 'leaf':
-            r = (x2 - x1) // 2
-            draw.rounded_rectangle([x1, y1, x2, y2], radius=r, fill=color)
-        else:
-            draw.rectangle([x1, y1, x2, y2], fill=color)
+            cx, cy = (x1+x2)//2, (y1+y2)//2
+            _poly([(cx, y1), (x2, cy), (cx, y2), (x1, cy)], color)
+        elif s == 'leaf': _rect(x1, y1, x2, y2, color, radius=(x2-x1)//2)
+        else: _rect(x1, y1, x2, y2, color)
 
-    # ── Identify eye regions to skip during body rendering ──
     eye_corners = [(0, 0), (0, modules - 7), (modules - 7, 0)]
-
     def in_eye(r, c):
         for (er, ec) in eye_corners:
-            if er <= r < er + 7 and ec <= c < ec + 7:
-                return True
+            if er <= r < er + 7 and ec <= c < ec + 7: return True
         return False
 
-    # ── 3. Draw BODY modules (skip all eye regions) ──
+    # Draw body
+    c_fg = fg_color if is_svg else fg_rgb
+    c_bg = bg_color if is_svg else bg_rgb
+
+    def is_timing(r, c):
+        return r == 6 or c == 6
+
     for r_idx, row in enumerate(matrix):
         for c_idx, val in enumerate(row):
-            if not val or in_eye(r_idx, c_idx):
-                continue
-            px = (c_idx + pad) * cell
-            py = (r_idx + pad) * cell
-            fn_body(px, py, px + cell - 1, py + cell - 1, fg_rgb)
+            if not val or in_eye(r_idx, c_idx): continue
+            
+            px, py = (c_idx + pad) * cell, (r_idx + pad) * cell
+            
+            if is_timing(r_idx, c_idx):
+                # Always draw timing patterns as squares for scannability
+                _square(px, py, px + cell - 1, py + cell - 1, c_fg)
+            else:
+                fn_body(px, py, px + cell - 1, py + cell - 1, c_fg)
 
-    # ── 4. Draw COMPLETE finder patterns as single shapes ──
-    # This guarantees the 1:1:3:1:1 ratio scanners require.
+    # Draw Eyes
     for (er, ec) in eye_corners:
-        ox = (ec + pad) * cell
-        oy = (er + pad) * cell
-        s7 = 7 * cell - 1   # outer 7×7 boundary
-        s5 = 5 * cell - 1   # inner white 5×5
-        s3 = 3 * cell - 1   # ball 3×3
+        ox, oy = (ec + pad) * cell, (er + pad) * cell
+        s7, s5, s3 = 7*cell-1, 5*cell-1, 3*cell-1
+        _eye_shape(ox, oy, ox + s7, oy + s7, eye_style, c_fg)
+        _eye_shape(ox + cell, oy + cell, ox + cell + s5, oy + cell + s5, eye_style, c_bg)
+        _eye_shape(ox + 2*cell, oy + 2*cell, ox + 2*cell + s3, oy + 2*cell + s3, ball_style, c_fg)
 
-        # Layer 1: Outer frame — solid fill
-        _eye_shape(ox, oy, ox + s7, oy + s7, eye_style, fg_rgb)
-        # Layer 2: White cutout — creates the frame ring
-        _eye_shape(ox + cell, oy + cell, ox + cell + s5, oy + cell + s5, eye_style, bg_rgb)
-        # Layer 3: Inner ball — solid fill
-        _eye_shape(ox + 2 * cell, oy + 2 * cell, ox + 2 * cell + s3, oy + 2 * cell + s3, ball_style, fg_rgb)
-
-    # ── 5. Logo ──
+    # Logo
     if logo_path and os.path.exists(logo_path):
         try:
             logo = Image.open(logo_path).convert("RGBA")
-            
-            # Use size factor from design options
             max_logo = int(img_px * logo_size_factor)
             logo.thumbnail((max_logo, max_logo), Image.Resampling.LANCZOS)
             
-            # Circular Masking
             if circular_logo:
                 size = logo.size
                 mask = Image.new('L', size, 0)
-                draw_mask = ImageDraw.Draw(mask)
-                draw_mask.ellipse((0, 0) + size, fill=255)
+                ImageDraw.Draw(mask).ellipse((0, 0) + size, fill=255)
                 logo = ImageOps.fit(logo, size, centering=(0.5, 0.5))
                 logo.putalpha(mask)
 
-            lx = (img_px - logo.width) // 2
-            ly = (img_px - logo.height) // 2
+            lx, ly = (img_px - logo.width) // 2, (img_px - logo.height) // 2
             
             if logo_background:
-                pad_px = 10
-                bg_box = Image.new("RGBA", (logo.width + pad_px * 2, logo.height + pad_px * 2), (*bg_rgb, 255))
-                if circular_logo:
-                    # Circular background box
-                    box_mask = Image.new('L', bg_box.size, 0)
-                    draw_box_mask = ImageDraw.Draw(box_mask)
-                    draw_box_mask.ellipse((0, 0) + bg_box.size, fill=255)
-                    bg_box.putalpha(box_mask)
-                
-                bx = (img_px - bg_box.width) // 2
-                by = (img_px - bg_box.height) // 2
-                canvas.paste(bg_box, (bx, by), bg_box)
+                p_px = 10
+                if is_svg:
+                    if circular_logo:
+                        rx = (logo.width + p_px*2)/2
+                        svg_elements.append(f'  <circle cx="{lx+logo.width/2}" cy="{ly+logo.height/2}" r="{rx}" fill="{bg_color}" />')
+                    else:
+                        svg_elements.append(f'  <rect x="{lx-p_px}" y="{ly-p_px}" width="{logo.width+p_px*2}" height="{logo.height+p_px*2}" fill="{bg_color}" />')
+                else:
+                    bg_box = Image.new("RGBA", (logo.width + p_px * 2, logo.height + p_px * 2), (*bg_rgb, 255))
+                    if circular_logo:
+                        m = Image.new('L', bg_box.size, 0)
+                        ImageDraw.Draw(m).ellipse((0, 0) + bg_box.size, fill=255)
+                        bg_box.putalpha(m)
+                    canvas.alpha_composite(bg_box, (lx - p_px, ly - p_px))
 
-            canvas.paste(logo, (lx, ly), logo)
+            if is_svg:
+                import base64
+                buffer = io.BytesIO()
+                logo.save(buffer, format="PNG")
+                b64 = base64.b64encode(buffer.getvalue()).decode()
+                svg_elements.append(f'  <image x="{lx}" y="{ly}" width="{logo.width}" height="{logo.height}" xlink:href="data:image/png;base64,{b64}" />')
+            else:
+                canvas.alpha_composite(logo, (lx, ly))
         except Exception:
             pass
+
+    # Finalize
+    if is_svg:
+        with open(output_path, 'w', encoding='utf-8') as f:
+            f.write(svg_header + "\n".join(svg_elements) + "\n</svg>")
+        return output_path
 
     # ── 6. Frame & Additional Text ──
     if (frame_style and frame_style != 'none') or frame_text:

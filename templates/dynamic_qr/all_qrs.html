@@ -7,7 +7,6 @@
     .qr-card {
         background: white; border-radius: 20px; border: 1px solid #f1f5f9;
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); position: relative;
-        overflow: hidden;
     }
     .qr-card:hover { transform: translateY(-4px); border-color: #6366f1; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.05); }
     
@@ -34,55 +33,107 @@
     {% if page_obj %}
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-12">
         {% for qr in page_obj %}
-        {% with redirect_url=qr.qr_content %}
-        <div class="qr-card">
-            <div class="p-4">
-                <div class="flex items-start justify-between mb-4">
-                    <div class="flex items-center gap-3">
-                        <div class="w-12 h-12 bg-slate-50 rounded-xl p-2 border border-slate-100 flex items-center justify-center">
-                            <img src="{% url 'dynamic_qr:generate_image' %}?text={{ redirect_url|urlencode }}&fg_color={{ qr.fg_color|urlencode }}&bg_color={{ qr.bg_color|urlencode }}&style={{ qr.body_style }}" class="w-full h-full object-contain opacity-80">
-                        </div>
-                        <div>
-                            <h3 class="text-[13px] font-black text-slate-900 truncate max-w-[120px]">{{ qr.qr_name }}</h3>
-                            <div class="flex items-center gap-2 mt-0.5">
-                                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">{{ qr.qr_type }}</span>
-                                <span class="w-1 h-1 rounded-full bg-slate-200"></span>
-                                <span class="text-[9px] font-mono font-bold text-indigo-500">{{ qr.short_code }}</span>
-                            </div>
-                        </div>
-                    </div>
-                    <span class="qr-badge {% if qr.is_active %}badge-active{% else %}badge-paused{% endif %}">
-                        {% if qr.is_active %}• Active{% else %}Paused{% endif %}
+        {% with redirect_url=qr.get_static_content %}
+        <div class="qr-card bg-white border border-slate-100 p-5 flex flex-col relative" id="qr-card-{{ qr.id }}">
+            <!-- Status Flag -->
+            <div class="absolute top-5 right-5">
+                {% if qr.is_active %}
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-[10px] font-black uppercase tracking-wider">
+                        <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full status-active-pulse"></span>
+                        Active
                     </span>
+                {% else %}
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-100 text-slate-400 rounded-full text-[10px] font-black uppercase tracking-wider">
+                        Paused
+                    </span>
+                {% endif %}
+            </div>
+
+            <div class="flex items-start gap-4 mb-4">
+                <!-- QR Visual icon -->
+                <div class="w-16 h-16 bg-slate-50 rounded-xl p-2 border border-slate-100 overflow-hidden flex-shrink-0">
+                    <img src="{% url 'dynamic_qr:generate_image' %}?qr_id={{ qr.id }}" 
+                         id="qr-img-{{ qr.id }}"
+                         class="w-full h-full object-contain"
+                         alt="QR">
+                </div>
+                
+                <div class="flex-1 min-width-0">
+                    <h3 class="text-sm font-black text-slate-900 truncate mb-1">{{ qr.qr_name }}</h3>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-100 text-slate-600 rounded-lg text-[10px] font-black uppercase tracking-wider">
+                            <span class="text-slate-400"><i data-lucide="type" class="w-3 h-3"></i></span>
+                            {{ qr.qr_type }}
+                        </span>
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-indigo-50 text-indigo-600 rounded-lg text-[10px] font-black uppercase tracking-wider font-mono">
+                            {{ qr.short_code }}
+                        </span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Stats card -->
+            <div class="bg-slate-50 rounded-xl p-3 flex items-center justify-around gap-2 mb-4">
+                <div class="text-center">
+                    <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest">Scans</p>
+                    <p class="text-sm font-black text-slate-900">{{ qr.scan_count }}</p>
+                </div>
+                <div class="w-px h-6 bg-slate-200"></div>
+                <div class="text-center">
+                    <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest">ID</p>
+                    <p class="text-sm font-black text-slate-900 font-mono text-[11px] truncate w-20">{{ qr.short_code }}</p>
+                </div>
+            </div>
+
+            <div class="space-y-3">
+                <!-- Download button group -->
+                <div class="relative group/dl">
+                    <button class="w-full h-10 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg flex items-center justify-center gap-2 font-black text-[10px] uppercase tracking-widest transition-all shadow-md">
+                        <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                        Download
+                        <i data-lucide="chevron-down" class="w-3 h-3 opacity-50"></i>
+                    </button>
+                    <!-- Download menu -->
+                    <div class="absolute top-10 left-0 w-full bg-white border border-slate-100 rounded-xl shadow-xl opacity-0 invisible group-hover/dl:opacity-100 group-hover/dl:visible transition-all z-[50] overflow-hidden py-1.5 translate-y-1 group-hover/dl:translate-y-0">
+                        <a href="{% url 'dynamic_qr:download' qr.id %}?format=png" class="flex items-center gap-2 px-3 py-2 hover:bg-indigo-50 text-slate-700 hover:text-indigo-600 transition-colors font-bold text-[10px]">
+                            <span class="w-6 h-6 rounded bg-blue-50 text-blue-500 flex items-center justify-center text-[8px] font-black">PNG</span> Image
+                        </a>
+                        <a href="{% url 'dynamic_qr:download' qr.id %}?format=jpg" class="flex items-center gap-2 px-3 py-2 hover:bg-indigo-50 text-slate-700 hover:text-indigo-600 transition-colors font-bold text-[10px]">
+                            <span class="w-6 h-6 rounded bg-orange-50 text-orange-500 flex items-center justify-center text-[8px] font-black">JPG</span> HighQ
+                        </a>
+                        <a href="{% url 'dynamic_qr:download' qr.id %}?format=svg" class="flex items-center gap-2 px-3 py-2 hover:bg-indigo-50 text-slate-700 hover:text-indigo-600 transition-colors font-bold text-[10px]">
+                            <span class="w-6 h-6 rounded bg-emerald-50 text-emerald-500 flex items-center justify-center text-[8px] font-black">SVG</span> Vector
+                        </a>
+                    </div>
                 </div>
 
-                <!-- Stats Snippet -->
-                <div class="grid grid-cols-2 gap-2 mb-4">
-                    <div class="bg-slate-50/50 p-2.5 rounded-xl border border-slate-50">
-                        <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Scans</p>
-                        <p class="text-sm font-black text-slate-900">{{ qr.scan_count }}</p>
-                    </div>
-                    <div class="bg-slate-50/50 p-2.5 rounded-xl border border-slate-50">
-                        <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Code ID</p>
-                        <p class="text-[10px] font-mono font-bold text-slate-700 truncate">{{ qr.short_code }}</p>
-                    </div>
-                </div>
-
-                <!-- Actions -->
-                <div class="grid grid-cols-4 gap-2">
-                    <a href="{% url 'dynamic_qr:analytics' qr.id %}" class="h-9 bg-slate-50 hover:bg-indigo-50 text-slate-500 hover:text-indigo-600 rounded-lg flex items-center justify-center border border-slate-100 transition-all" title="Analytics">
-                        <i data-lucide="bar-chart" class="w-4 h-4"></i>
+                <!-- Action grid -->
+                <div class="grid grid-cols-4 gap-1.5">
+                    <a href="{% url 'dynamic_qr:details' qr.id %}" class="h-8 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg flex items-center justify-center border border-slate-100" title="View">
+                        <i data-lucide="eye" class="w-3.5 h-3.5"></i>
                     </a>
-                    <a href="{% url 'dynamic_qr:edit' qr.id %}" class="h-9 bg-slate-50 hover:bg-slate-100 text-slate-500 rounded-lg flex items-center justify-center border border-slate-100 transition-all" title="Edit">
-                        <i data-lucide="pencil" class="w-4 h-4"></i>
+                    <a href="{% url 'dynamic_qr:edit' qr.id %}" class="h-8 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg flex items-center justify-center border border-slate-100" title="Edit Asset">
+                        <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
                     </a>
+                    <a href="{% url 'dynamic_qr:analytics' qr.id %}" class="h-8 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg flex items-center justify-center border border-slate-100" title="Stats">
+                        <i data-lucide="bar-chart" class="w-3.5 h-3.5"></i>
+                    </a>
+                    <button onclick="copyQRImage('{% url 'dynamic_qr:generate_image' %}?qr_id={{ qr.id }}&output_format=png')" 
+                            class="h-8 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg flex items-center justify-center border border-slate-100" title="Copy">
+                        <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                    </button>
+                    <button onclick="shareQRImage('{% url 'dynamic_qr:generate_image' %}?qr_id={{ qr.id }}&output_format=png', '{{ qr.qr_name|escapejs }}')" 
+                            class="h-8 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg flex items-center justify-center border border-slate-100" title="Share">
+                        <i data-lucide="share-2" class="w-3.5 h-3.5"></i>
+                    </button>
                     <button onclick="toggleStatus('{{ qr.id }}')" 
-                            class="h-9 bg-slate-50 hover:bg-slate-100 {% if qr.is_active %}text-emerald-500{% else %}text-slate-400{% endif %} rounded-lg flex items-center justify-center border border-slate-100 transition-all" title="Toggle Status">
-                        <i data-lucide="power" class="w-4 h-4"></i>
+                            class="h-8 bg-slate-50 hover:bg-slate-100 {% if qr.is_active %}text-emerald-600{% else %}text-slate-400{% endif %} rounded-lg flex items-center justify-center border border-slate-100" title="Status">
+                        <i data-lucide="power" class="w-3.5 h-3.5"></i>
                     </button>
                     <button onclick="deleteQR('{{ qr.id }}')" 
-                            class="h-9 bg-slate-50 hover:bg-red-50 text-slate-400 hover:text-red-500 rounded-lg flex items-center justify-center border border-slate-100 transition-all" title="Delete">
-                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                            class="h-8 bg-slate-50 hover:bg-red-50 text-slate-400 hover:text-red-600 rounded-lg flex items-center justify-center border border-slate-100 col-span-2 group" title="Delete">
+                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                        <span class="text-[8px] font-black uppercase ml-1">Del</span>
                     </button>
                 </div>
             </div>

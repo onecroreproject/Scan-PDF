@@ -20,9 +20,9 @@
     .type-tile.active .tile-icon { background: #6366f1 !important; color: white !important; }
     .tile-label { font-size: 11px; font-weight: 800; color: #1e293b; }
 
-    .form-card { background: white; border-radius: 24px; border: 1px solid #f1f5f9; padding: 32px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.01); margin-bottom: 32px; }
-    .form-group label { display: block; font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; color: #94a3b8; margin-bottom: 10px; }
-    .form-input { width: 100%; height: 52px; background: #f8fafc; border: 1px solid #f1f5f9; border-radius: 14px; padding: 0 18px; font-size: 15px; font-weight: 600; transition: 0.3s; }
+    .form-card { background: white; border-radius: 20px; border: 1px solid #f1f5f9; padding: 24px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.01); margin-bottom: 24px; }
+    .form-group label { display: block; font-size: 9px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; color: #94a3b8; margin-bottom: 8px; }
+    .form-input { width: 100%; height: 48px; background: #f8fafc; border: 1px solid #f1f5f9; border-radius: 12px; padding: 0 16px; font-size: 14px; font-weight: 600; transition: 0.3s; }
     .form-input:focus { background: white; border-color: #6366f1; outline: none; }
 
     .design-tabs { display: flex; gap: 4px; background: #f1f5f9; padding: 4px; border-radius: 14px; margin-bottom: 24px; overflow-x: auto; }
@@ -137,11 +137,11 @@
                     </div>
 
                     <div class="design-tabs">
-                        <div class="design-tab active" data-tab="patterns">Patterns</div>
-                        <div class="design-tab" data-tab="frames">Frames</div>
-                        <div class="design-tab" data-tab="colors">Colors</div>
+                        <div class="design-tab active" data-tab="patterns">Pattern</div>
+                        <div class="design-tab" data-tab="frames">Frame</div>
+                        <div class="design-tab" data-tab="colors">Color</div>
                         <div class="design-tab" data-tab="logo">Logo</div>
-                        <div class="design-tab" data-tab="text">Additional Text</div>
+                        <div class="design-tab" data-tab="text">Text</div>
                     </div>
 
                     <div class="design-view" id="view-patterns">
@@ -275,8 +275,8 @@
         'Devices & Tech': ['mobile', 'tablet', 'monitor'],
     };
     
-    const EXISTING_DATA = {{ qr.qr_data|safe }};
-    const DESIGN_OPTIONS = {{ qr.design_options|safe|default:"{}" }};
+    const EXISTING_DATA = JSON.parse('{{ qr_data_json|escapejs }}');
+    const DESIGN_OPTIONS = JSON.parse('{{ design_options_json|escapejs }}');
     let cropper = null;
 
     function init() {
@@ -286,7 +286,7 @@
         renderPresetLogos();
         lucide.createIcons();
         applyDesignOptions();
-        renderFields('{{ qr.qr_type }}');
+        renderFields('{{ qr.qr_type|escapejs }}');
         updatePreview();
         
         document.querySelectorAll('.design-tab').forEach(tab => {
@@ -298,7 +298,25 @@
             };
         });
 
-        ['fg-picker', 'bg-picker', 'fg-text', 'bg-text', 'bg-transparent-toggle', 'logo-size-range', 'logo-background-toggle', 'logo-circular-toggle', 'frame-text-input', 'text-font', 'text-color', 'text-size'].forEach(id => {
+        // Color sync
+        document.getElementById('fg-picker').oninput = (e) => {
+            document.getElementById('fg-text').value = e.target.value;
+            updatePreview();
+        };
+        document.getElementById('bg-picker').oninput = (e) => {
+            document.getElementById('bg-text').value = e.target.value;
+            updatePreview();
+        };
+        document.getElementById('fg-text').oninput = (e) => {
+            document.getElementById('fg-picker').value = e.target.value;
+            updatePreview();
+        };
+        document.getElementById('bg-text').oninput = (e) => {
+            document.getElementById('bg-picker').value = e.target.value;
+            updatePreview();
+        };
+
+        ['bg-transparent-toggle', 'logo-size-range', 'logo-background-toggle', 'logo-circular-toggle', 'frame-text-input', 'text-font', 'text-color', 'text-size'].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.oninput = updatePreview;
         });
@@ -468,6 +486,22 @@
     function renderPresetLogos() {
         const grid = document.getElementById('preset-logos');
         grid.innerHTML = `<div class="logo-item" data-val="none"><i data-lucide="slash" class="w-5 h-5"></i></div>`;
+        
+        // Add existing logo from DB if it exists
+        const existingLogoUrl = '{% if qr.logo %}{{ qr.logo.url|escapejs }}{% endif %}';
+        if (existingLogoUrl) {
+            const existingItem = document.createElement('div');
+            existingItem.className = 'logo-item active'; // Activate by default
+            existingItem.dataset.val = 'existing';
+            existingItem.innerHTML = `<img src="${existingLogoUrl}" style="width: 100%; height: 100%; object-fit: contain;">`;
+            existingItem.onclick = () => {
+                document.querySelectorAll('.logo-item').forEach(i => i.classList.remove('active'));
+                existingItem.classList.add('active');
+                updatePreview();
+            };
+            grid.appendChild(existingItem);
+        }
+
         BRAND_LOGOS.forEach(brand => {
             const item = document.createElement('div');
             item.className = 'logo-item';
@@ -511,7 +545,7 @@
             const group = document.createElement('div');
             group.className = 'form-group';
             let val = initial || EXISTING_DATA[name] || '';
-            if(name === 'destination_url') val = '{{ qr.destination_url }}';
+            if(name === 'destination_url') val = '{{ qr.destination_url|escapejs }}';
             
             if (fieldType === 'file') group.innerHTML = `<label>${label}</label><input type="file" name="file_content" class="form-input py-3">`;
             else if (fieldType === 'textarea') group.innerHTML = `<label>${label}</label><textarea name="${name}" class="form-input py-4 h-32">${val}</textarea>`;
@@ -526,38 +560,65 @@
         else if (type === 'location') { addField('Latitude', 'latitude'); addField('Longitude', 'longitude'); }
     }
 
+    let previewTimeout = null;
     async function updatePreview() {
-        const options = {
-            error_correction: document.querySelector('.ec-option.active')?.dataset.ec || 'H',
-            logo_circular: document.getElementById('logo-circular-toggle').checked,
-            logo_size: document.getElementById('logo-size-range').value,
-            logo_background: document.getElementById('logo-background-toggle').checked,
-            frame_style: document.querySelector('.frame-item.active')?.dataset.val || 'none',
-            frame_text: document.getElementById('frame-text-input').value,
-            frame_font: document.getElementById('text-font').value,
-            frame_text_color: document.getElementById('text-color').value,
-            bg_transparent: document.getElementById('bg-transparent-toggle').checked
-        };
-        document.getElementById('design-options-input').value = JSON.stringify(options);
-        const fg = document.getElementById('fg-text')?.value || '{{ qr.fg_color }}';
-        const bg = document.getElementById('bg-text')?.value || '{{ qr.bg_color }}';
-        const style = document.querySelector('#body-patterns .pattern-item.active')?.dataset.val || 'square';
-        const eye = document.querySelector('#eye-patterns .pattern-item.active')?.dataset.val || 'square';
-        const ball = document.querySelector('#ball-patterns .pattern-item.active')?.dataset.val || 'square';
-        
-        const logoItem = document.querySelector('.logo-item.active');
-        let logoParam = '';
-        if (logoItem && logoItem.dataset.val !== 'none') {
-            if (logoItem.dataset.val === 'custom') {
-                // For custom, we might not be able to pass easily via GET if it's large, 
-                // but we can try passing the base64 if it's small or just wait for save.
-            } else {
-                logoParam = `&logo=${logoItem.dataset.val}`;
-            }
-        }
+        if (previewTimeout) clearTimeout(previewTimeout);
+        previewTimeout = setTimeout(async () => {
+            const options = {
+                error_correction: document.querySelector('.ec-option.active')?.dataset.ec || 'H',
+                logo_circular: document.getElementById('logo-circular-toggle').checked,
+                logo_size: document.getElementById('logo-size-range').value,
+                logo_background: document.getElementById('logo-background-toggle').checked,
+                frame_style: document.querySelector('.frame-item.active')?.dataset.val || 'none',
+                frame_text: document.getElementById('frame-text-input').value,
+                frame_font: document.getElementById('text-font').value,
+                frame_text_color: document.getElementById('text-color').value,
+                bg_transparent: document.getElementById('bg-transparent-toggle').checked
+            };
+            document.getElementById('design-options-input').value = JSON.stringify(options);
+            
+            const fg = document.getElementById('fg-text')?.value || '{{ qr.fg_color|escapejs }}';
+            const bg = document.getElementById('bg-text')?.value || '{{ qr.bg_color|escapejs }}';
+            const style = document.querySelector('#body-patterns .pattern-item.active')?.dataset.val || 'square';
+            const eye = document.querySelector('#eye-patterns .pattern-item.active')?.dataset.val || 'square';
+            const ball = document.querySelector('#ball-patterns .pattern-item.active')?.dataset.val || 'square';
+            
+            const formData = new FormData();
+            formData.append('qr_id', '{{ qr.id }}');
+            formData.append('text', '{{ redirect_url|escapejs }}');
+            formData.append('fg_color', fg);
+            formData.append('bg_color', bg);
+            formData.append('style', style);
+            formData.append('eye_style', eye);
+            formData.append('ball_style', ball);
+            formData.append('design_options', JSON.stringify(options));
 
-        const url = `{% url 'dynamic_qr:generate_image' %}?text={{ redirect_url|urlencode }}&fg_color=${encodeURIComponent(fg)}&bg_color=${encodeURIComponent(bg)}&style=${style}&eye_style=${eye}&ball_style=${ball}&design_options=${encodeURIComponent(JSON.stringify(options))}${logoParam}`;
-        document.getElementById('qr-preview-img').src = url;
+            const logoItem = document.querySelector('.logo-item.active');
+            if (logoItem && logoItem.dataset.val !== 'none') {
+                if (logoItem.dataset.val === 'custom') {
+                    const cropped = document.getElementById('logo-cropped-data').value;
+                    if (cropped) formData.append('logo_cropped', cropped);
+                } else {
+                    formData.append('logo', logoItem.dataset.val);
+                }
+            }
+
+            try {
+                const response = await fetch('{% url "dynamic_qr:generate_image" %}', {
+                    method: 'POST',
+                    body: formData,
+                    headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+                });
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const url = URL.createObjectURL(blob);
+                    const img = document.getElementById('qr-preview-img');
+                    const oldUrl = img.src;
+                    img.src = url;
+                    if (oldUrl.startsWith('blob:')) URL.revokeObjectURL(oldUrl);
+                }
+            } catch (e) { console.error("Preview failed", e); }
+        }, 250);
     }
 
     document.getElementById('edit-qr-form').onsubmit = async (e) => {
