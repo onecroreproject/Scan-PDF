@@ -4,89 +4,92 @@
 {% block title %}Edit QR: {{ qr.qr_name }} — ScanPDF{% endblock %}
 
 {% block dqr_style %}
-    /* Same core styles as create_qr for consistency */
-    .create-grid { display: grid; grid-template-columns: 1fr 320px; gap: 32px; }
+    /* Reuse core styles from create_qr */
+    .create-grid { display: grid; grid-template-columns: 1fr 340px; gap: 32px; align-items: start; }
     @media (max-width: 1200px) { .create-grid { grid-template-columns: 1fr; } }
 
-    .cat-nav {
-        display: flex; gap: 6px; margin-bottom: 24px; padding-bottom: 8px;
-        overflow-x: auto; white-space: nowrap; scrollbar-width: none;
-    }
-    .cat-btn {
-        padding: 8px 16px; background: white; border: 1px solid #f1f5f9;
-        border-radius: 99px; font-size: 11px; font-weight: 800; color: #64748b;
-        transition: 0.3s; cursor: pointer;
-    }
-    .cat-btn:hover { background: #f8fafc; border-color: #e2e8f0; }
+    .cat-nav { display: flex; gap: 8px; margin-bottom: 24px; padding-bottom: 8px; overflow-x: auto; white-space: nowrap; scrollbar-width: none; }
+    .cat-btn { padding: 10px 20px; background: white; border: 1px solid #f1f5f9; border-radius: 99px; font-size: 11px; font-weight: 800; color: #64748b; cursor: pointer; transition: 0.3s; }
     .cat-btn.active { background: #6366f1; color: white; border-color: #6366f1; box-shadow: 0 10px 20px -5px rgba(99, 102, 241, 0.3); }
 
-    .types-grid {
-        display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
-        gap: 10px; transition: 0.3s;
-    }
-    .type-tile {
-        background: white; border: 2px solid #f1f5f9; border-radius: 16px;
-        padding: 12px 8px; text-align: center; transition: all 0.3s;
-        cursor: pointer; position: relative;
-    }
-    .type-tile:hover { transform: translateY(-4px); border-color: #6366f1; }
+    .types-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 12px; margin-bottom: 32px; }
+    .type-tile { background: white; border: 2px solid #f1f5f9; border-radius: 20px; padding: 16px 10px; text-align: center; cursor: pointer; transition: 0.3s; position: relative; }
     .type-tile.active { border-color: #6366f1; background: #fcfdfe; }
-    .type-tile.active::after {
-        content: '\2713'; position: absolute; top: 8px; right: 8px;
-        width: 16px; height: 16px; background: #6366f1; color: white;
-        border-radius: 50%; font-size: 8px; display: flex; align-items: center; justify-content: center;
-    }
-    
-    .tile-icon {
-        width: 36px; height: 36px; margin: 0 auto 10px;
-        display: flex; align-items: center; justify-content: center;
-        border-radius: 12px;
-    }
-    .tile-icon i { width: 18px; height: 18px; }
+    .type-tile.active::after { content: '\2713'; position: absolute; top: 10px; right: 10px; width: 18px; height: 18px; background: #6366f1; color: white; border-radius: 50%; font-size: 9px; display: flex; align-items: center; justify-content: center; }
+    .tile-icon { width: 44px; height: 44px; margin: 0 auto 12px; display: flex; align-items: center; justify-content: center; border-radius: 14px; }
     .type-tile.active .tile-icon { background: #6366f1 !important; color: white !important; }
-    .tile-label { font-size: 10.5px; font-weight: 800; color: #1e293b; line-height: 1.2; display: block; }
+    .tile-label { font-size: 11px; font-weight: 800; color: #1e293b; }
 
-    .form-card { background: white; border-radius: 20px; border: 1px solid #f1f5f9; padding: 24px; }
-    .form-group label { display: block; font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; color: #94a3b8; margin-bottom: 8px; }
-    .form-input {
-        width: 100%; height: 48px; background: #f8fafc; border: 1px solid #f1f5f9;
-        border-radius: 12px; padding: 0 16px; font-size: 14px; font-weight: 600; transition: 0.3s;
-    }
+    .form-card { background: white; border-radius: 24px; border: 1px solid #f1f5f9; padding: 32px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.01); margin-bottom: 32px; }
+    .form-group label { display: block; font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; color: #94a3b8; margin-bottom: 10px; }
+    .form-input { width: 100%; height: 52px; background: #f8fafc; border: 1px solid #f1f5f9; border-radius: 14px; padding: 0 18px; font-size: 15px; font-weight: 600; transition: 0.3s; }
     .form-input:focus { background: white; border-color: #6366f1; outline: none; }
 
-    .preview-card { position: sticky; top: 100px; background: #0f172a; border-radius: 32px; padding: 32px; text-align: center; color: white; }
-    .qr-vessel { width: 100%; aspect-ratio: 1; background: white; border-radius: 24px; margin-bottom: 24px; padding: 20px; }
+    .design-tabs { display: flex; gap: 4px; background: #f1f5f9; padding: 4px; border-radius: 14px; margin-bottom: 24px; overflow-x: auto; }
+    .design-tab { flex: 1; min-width: 100px; padding: 10px; text-align: center; font-size: 11px; font-weight: 800; border-radius: 10px; cursor: pointer; transition: 0.3s; color: #64748b; }
+    .design-tab.active { background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: white; box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.3); }
+
+    .pattern-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 10px; }
+    .pattern-item { aspect-ratio: 1; border: 2px solid #f1f5f9; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; background: white; position: relative; }
+    .pattern-item.active { border-color: #6366f1; background: #f5f3ff; }
+    .pattern-item.active::after { content: '\2713'; position: absolute; top: 4px; right: 4px; width: 12px; height: 12px; background: #6366f1; color: white; border-radius: 50%; font-size: 7px; display: flex; align-items: center; justify-content: center; }
+
+    .frame-cat-title { font-size: 12px; font-weight: 900; color: #1e293b; margin: 24px 0 12px; }
+    .frame-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 12px; }
+    .frame-item { aspect-ratio: 0.8; border: 2px solid #f1f5f9; border-radius: 14px; cursor: pointer; background: #f8fafc; transition: 0.3s; overflow: hidden; position: relative; }
+    .frame-item.active { border-color: #6366f1; background: #fff; }
+    .frame-thumb { width: 100%; height: 100%; object-fit: contain; padding: 10px; }
+
+    .color-row { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
+    .color-picker { width: 52px; height: 52px; border: none; border-radius: 14px; cursor: pointer; padding: 0; background: none; }
+
+    .logo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(50px, 1fr)); gap: 10px; margin-bottom: 20px; }
+    .logo-item { aspect-ratio: 1; border: 2px solid #f1f5f9; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; background: white; transition: 0.3s; padding: 8px; }
+    .logo-item.active { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1); }
+    .logo-item img { width: 100%; height: 100%; object-fit: contain; }
+
+    .btn-upload { width: 100%; padding: 14px; background: #f1f5f9; color: #475569; border: 2px dashed #e2e8f0; border-radius: 14px; font-size: 13px; font-weight: 800; cursor: pointer; }
+
+    .preview-card { position: sticky; top: 100px; background: #0f172a; border-radius: 36px; padding: 40px; text-align: center; color: white; box-shadow: 0 40px 100px -20px rgba(15, 23, 42, 0.4); }
+    .qr-vessel { width: 100%; aspect-ratio: 1; background: white; border-radius: 28px; margin-bottom: 32px; padding: 24px; }
     .qr-vessel img { width: 100%; height: 100%; object-fit: contain; }
 
-    .btn-save {
-        width: 100%; height: 56px; background: #facc15; color: #0f172a; border-radius: 16px;
-        font-size: 14px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em;
-        display: flex; align-items: center; justify-content: center; gap: 10px;
-        box-shadow: 0 10px 25px rgba(250, 204, 21, 0.2); transition: all 0.3s;
-    }
-    .btn-save:hover { background: #f59e0b; transform: translateY(-2px); }
+    .btn-save { width: 100%; height: 64px; background: #facc15; color: #0f172a; border-radius: 18px; font-size: 15px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em; box-shadow: 0 10px 30px rgba(250, 204, 21, 0.2); transition: 0.3s; cursor: pointer; }
+    .btn-save:hover { background: #f59e0b; transform: translateY(-3px); }
 
-    .toggle-active { display: flex; align-items: center; gap: 12px; background: #1e293b; padding: 12px 20px; border-radius: 16px; margin-bottom: 24px; }
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 1000; display: none; align-items: center; justify-content: center; padding: 20px; }
+    .modal-content { background: white; border-radius: 24px; width: 100%; max-width: 600px; padding: 32px; }
+    .cropper-container { width: 100%; aspect-ratio: 1; background: #f1f5f9; border-radius: 16px; overflow: hidden; margin-bottom: 24px; }
+
+    .toggle-active { display: flex; align-items: center; gap: 12px; background: #1e293b; padding: 12px 20px; border-radius: 16px; margin-bottom: 32px; width: fit-content; }
     .switch { position: relative; width: 44px; height: 24px; }
     .switch input { opacity: 0; width: 0; height: 0; }
     .slider { position: absolute; inset: 0; background: #475569; border-radius: 34px; cursor: pointer; transition: .4s; }
     .slider:before { content: ""; position: absolute; height: 18px; width: 18px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: .4s; }
     input:checked + .slider { background: #22c55e; }
     input:checked + .slider:before { transform: translateX(20px); }
+
+    .ec-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+    .ec-option { padding: 12px 8px; border: 1px solid #f1f5f9; border-radius: 12px; text-align: center; cursor: pointer; transition: 0.3s; }
+    .ec-option.active { background: #f5f3ff; border-color: #6366f1; }
+    .ec-name { display: block; font-size: 11px; font-weight: 800; color: #1e293b; }
+    .ec-desc { display: block; font-size: 8px; color: #94a3b8; margin-top: 4px; }
 {% endblock %}
 
 {% block dqr_content %}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
         <div>
             <a href="{% url 'dynamic_qr:dashboard' %}" class="inline-flex items-center gap-2 text-indigo-600 font-black text-xs uppercase tracking-widest mb-4 hover:translate-x-[-4px] transition-transform">
                 <i data-lucide="arrow-left" class="w-4 h-4"></i> Back to Dashboard
             </a>
             <h1 class="text-3xl font-black text-slate-900 tracking-tight">Edit QR Asset</h1>
-            <p class="text-slate-500 font-bold mt-1 text-sm">Managing Engine: <span class="text-indigo-600">{{ qr.get_qr_type_display }}</span></p>
+            <p class="text-slate-500 font-bold mt-1 text-sm">Engine: <span class="text-indigo-600">{{ qr.get_qr_type_display }}</span> — Code: {{ qr.short_code }}</p>
         </div>
         
         <div class="toggle-active">
-            <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Operation Status</span>
+            <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Active Status</span>
             <label class="switch">
                 <input type="checkbox" id="is-active-toggle" {% if qr.is_active %}checked{% endif %}>
                 <span class="slider"></span>
@@ -94,12 +97,10 @@
         </div>
     </div>
 
-    <!-- Category Nav -->
     <div class="cat-nav">
         <div class="cat-btn active" data-cat="all">All Engines</div>
         <div class="cat-btn" data-cat="basic">Basic & Connect</div>
         <div class="cat-btn" data-cat="social">Social Media</div>
-        <div class="cat-btn" data-cat="files">Files & Assets</div>
         <div class="cat-btn" data-cat="business">Business & Pay</div>
         <div class="cat-btn" data-cat="platforms">Cloud Platforms</div>
         <div class="cat-btn" data-cat="comm">Comm & Utility</div>
@@ -107,290 +108,481 @@
 
     <form id="edit-qr-form" enctype="multipart/form-data">
         <div class="create-grid">
-            <div class="space-y-10">
-                <!-- Type Selection -->
-                <div id="types-grid" class="types-grid"></div>
+            <div class="space-y-8">
+                <div class="types-grid" id="types-grid"></div>
 
-                <!-- Content Settings -->
                 <div class="form-card">
-                    <div class="flex items-center gap-4 mb-6 border-b border-slate-50 pb-4">
-                        <div class="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center">
-                            <i data-lucide="settings" class="w-5 h-5"></i>
+                    <div class="flex items-center gap-4 mb-8 border-b border-slate-50 pb-6">
+                        <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center">
+                            <i data-lucide="settings" class="w-6 h-6"></i>
                         </div>
-                        <div>
-                            <h3 class="text-lg font-black text-slate-900">Configure Content</h3>
-                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Short Code: {{ qr.short_code }}</p>
-                        </div>
+                        <h3 class="text-xl font-black text-slate-900">Configure Content</h3>
                     </div>
 
-                    <div class="space-y-6">
+                    <div class="space-y-8">
                         <div class="form-group">
                             <label>Friendly Name</label>
                             <input type="text" name="qr_name" class="form-input" value="{{ qr.qr_name }}" required>
                         </div>
-                        <div id="dynamic-fields" class="space-y-6"></div>
+                        <div id="dynamic-fields" class="space-y-8"></div>
                     </div>
                 </div>
 
-                <!-- Design Settings -->
                 <div class="form-card">
-                    <div class="flex items-center gap-4 mb-6 border-b border-slate-50 pb-4">
-                        <div class="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center">
-                            <i data-lucide="palette" class="w-5 h-5"></i>
+                    <div class="flex items-center gap-4 mb-8 border-b border-slate-50 pb-6">
+                        <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center">
+                            <i data-lucide="palette" class="w-6 h-6"></i>
                         </div>
-                        <h3 class="text-lg font-black text-slate-900">Branding & Style</h3>
+                        <h3 class="text-xl font-black text-slate-900">Visual Styling</h3>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="form-group">
-                            <label>Foreground Color</label>
-                            <div class="flex items-center gap-4">
-                                <input type="color" name="fg_color" value="{{ qr.fg_color }}" class="w-12 h-12 border-none rounded-xl cursor-pointer">
-                                <input type="text" class="form-input" value="{{ qr.fg_color }}">
+                    <div class="design-tabs">
+                        <div class="design-tab active" data-tab="patterns">Patterns</div>
+                        <div class="design-tab" data-tab="frames">Frames</div>
+                        <div class="design-tab" data-tab="colors">Colors</div>
+                        <div class="design-tab" data-tab="logo">Logo</div>
+                        <div class="design-tab" data-tab="text">Additional Text</div>
+                    </div>
+
+                    <div class="design-view" id="view-patterns">
+                        <div class="space-y-8">
+                            <div><label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-4">Body Pattern</label><div class="pattern-grid" id="body-patterns"></div></div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div><label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-4">External Eye</label><div class="pattern-grid" id="eye-patterns"></div></div>
+                                <div><label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-4">Internal Eye (Ball)</label><div class="pattern-grid" id="ball-patterns"></div></div>
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-4">Scannability Level</label>
+                                <div class="ec-grid">
+                                    <div class="ec-option" data-ec="H"><span class="ec-name">Best</span><span class="ec-desc">30% Damage</span></div>
+                                    <div class="ec-option" data-ec="Q"><span class="ec-name">High</span><span class="ec-desc">25% Damage</span></div>
+                                    <div class="ec-option" data-ec="M"><span class="ec-name">Medium</span><span class="ec-desc">15% Damage</span></div>
+                                    <div class="ec-option" data-ec="L"><span class="ec-name">Smallest</span><span class="ec-desc">7% Damage</span></div>
+                                </div>
                             </div>
                         </div>
-                        <div class="form-group">
-                            <label>Background Color</label>
-                            <div class="flex items-center gap-4">
-                                <input type="color" name="bg_color" value="{{ qr.bg_color }}" class="w-12 h-12 border-none rounded-xl cursor-pointer">
-                                <input type="text" class="form-input" value="{{ qr.bg_color }}">
+                    </div>
+
+                    <div class="design-view hidden" id="view-frames"><div id="frames-container"></div></div>
+                    <div class="design-view hidden" id="view-colors">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div class="form-group"><label>Foreground</label><div class="color-row"><input type="color" id="fg-picker" value="{{ qr.fg_color }}" class="color-picker"><input type="text" name="fg_color" id="fg-text" class="form-input" value="{{ qr.fg_color }}"></div></div>
+                            <div class="form-group"><label>Background</label><div class="color-row"><input type="color" id="bg-picker" value="{{ qr.bg_color }}" class="color-picker"><input type="text" name="bg_color" id="bg-text" class="form-input" value="{{ qr.bg_color }}"></div>
+                                <div class="switch-group"><label class="switch"><input type="checkbox" id="bg-transparent-toggle"><span class="slider"></span></label><span class="text-[11px] font-bold text-slate-500">Transparent</span></div>
                             </div>
                         </div>
-                        <div class="form-group">
-                            <label>Body Style</label>
-                            <select name="body_style" class="form-input">
-                                <option value="square" {% if qr.body_style == 'square' %}selected{% endif %}>Square</option>
-                                <option value="rounded" {% if qr.body_style == 'rounded' %}selected{% endif %}>Rounded</option>
-                                <option value="extra-rounded" {% if qr.body_style == 'extra-rounded' %}selected{% endif %}>Extra Rounded</option>
-                                <option value="dots" {% if qr.body_style == 'dots' %}selected{% endif %}>Dots</option>
-                                <option value="classy" {% if qr.body_style == 'classy' %}selected{% endif %}>Classy</option>
-                            </select>
+                    </div>
+                    <div class="design-view hidden" id="view-logo">
+                        <div class="space-y-8">
+                            <div><label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-4">Presets</label><div class="logo-grid" id="preset-logos"></div></div>
+                            <button type="button" class="btn-upload" onclick="document.getElementById('logo-upload').click()">Upload & Crop</button><input type="file" id="logo-upload" class="hidden" accept="image/*">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div class="form-group"><label>Logo Size</label><input type="range" id="logo-size-range" min="0.1" max="0.35" step="0.01" value="0.22" class="w-full"></div>
+                                <div class="space-y-4">
+                                    <div class="switch-group"><label class="switch"><input type="checkbox" id="logo-background-toggle" checked><span class="slider"></span></label><span class="text-[11px] font-bold text-slate-500">Logo Box</span></div>
+                                    <div class="switch-group"><label class="switch"><input type="checkbox" id="logo-circular-toggle" checked><span class="slider"></span></label><span class="text-[11px] font-bold text-slate-500">Circular</span></div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label>Update Center Logo</label>
-                            <input type="file" name="logo" class="form-input py-3" accept="image/*">
-                            {% if qr.logo %}<p class="text-[10px] font-bold text-slate-400 mt-2">Current logo active</p>{% endif %}
+                    </div>
+                    <div class="design-view hidden" id="view-text">
+                        <div class="space-y-8">
+                            <div class="form-group"><label>Branding Text</label><input type="text" id="frame-text-input" class="form-input"></div>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div class="form-group"><label>Font</label><select id="text-font" class="form-input"><option value="arial.ttf">Arial</option><option value="roboto.ttf">Roboto</option></select></div>
+                                <div class="form-group"><label>Color</label><input type="color" id="text-color" value="#000000" class="color-picker w-full"></div>
+                                <div class="form-group"><label>Size</label><select id="text-size" class="form-input"><option value="auto">Auto</option><option value="30">Small</option><option value="45">Medium</option><option value="60">Large</option></select></div>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <!-- Preview Sidebar -->
             <div class="space-y-6">
                 <div class="preview-card">
-                    <h4 class="text-[10px] font-black uppercase tracking-[0.2em] mb-6 text-yellow-400">Live Asset Preview</h4>
-                    <div class="qr-vessel">
-                        <img id="qr-preview-img" src="{% url 'dynamic_qr:generate_image' %}?text={{ redirect_url|urlencode }}&fg_color={{ qr.fg_color|urlencode }}&bg_color={{ qr.bg_color|urlencode }}&style={{ qr.body_style }}" alt="QR Code">
-                    </div>
-                    
-                    <button type="submit" class="btn-save" id="submit-btn">
-                        <i data-lucide="save" class="w-6 h-6"></i>
-                        Update Asset
-                    </button>
-                    
-                    <div class="mt-8 p-4 bg-slate-800 rounded-2xl text-left border border-slate-700">
-                        <p class="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-1">Redirection Link</p>
-                        <p class="text-xs font-mono font-bold text-slate-300 truncate">{{ redirect_url }}</p>
-                    </div>
+                    <h4 class="text-[10px] font-black uppercase tracking-[0.2em] mb-8 text-yellow-400">Live Update</h4>
+                    <div class="qr-vessel"><img id="qr-preview-img" src="" alt="QR"></div>
+                    <button type="submit" class="btn-save" id="submit-btn"><i data-lucide="save" class="w-6 h-6"></i> Update Asset</button>
                 </div>
             </div>
         </div>
-
+        
         <input type="hidden" name="qr_type" id="selected-type" value="{{ qr.qr_type }}">
+        <input type="hidden" name="design_options" id="design-options-input">
+        <input type="hidden" name="logo_cropped" id="logo-cropped-data">
     </form>
+
+    <div class="modal-overlay" id="cropper-modal"><div class="modal-content"><h3 class="text-xl font-black mb-6">Crop Logo</h3><div class="cropper-container"><img id="crop-image" src=""></div><div class="flex gap-4"><button type="button" class="flex-1 h-14 bg-slate-100 rounded-xl" onclick="closeCropper()">Cancel</button><button type="button" class="flex-1 h-14 bg-indigo-600 text-white rounded-xl" onclick="applyCrop()">Apply</button></div></div></div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 {% endblock %}
 
 {% block dqr_scripts %}
-// Same engine definitions as create_qr
-const QR_ENGINES = [
-    { id: 'url', label: 'URL / Link', icon: 'link', cat: 'basic', color: '#6366f1', bg: '#f5f3ff' },
-    { id: 'text', label: 'Plain Text', icon: 'type', cat: 'basic', color: '#64748b', bg: '#f1f5f9' },
-    { id: 'wifi', label: 'Wi-Fi', icon: 'wifi', cat: 'basic', color: '#0ea5e9', bg: '#f0f9ff' },
-    { id: 'location', label: 'Location', icon: 'map-pin', cat: 'basic', color: '#f43f5e', bg: '#fff1f2' },
-    { id: 'whatsapp', label: 'WhatsApp', icon: 'message-circle', cat: 'social', color: '#22c55e', bg: '#f0fdf4' },
-    { id: 'youtube', label: 'YouTube', icon: 'youtube', cat: 'social', color: '#ef4444', bg: '#fef2f2' },
-    { id: 'facebook', label: 'Facebook', icon: 'facebook', cat: 'social', color: '#3b82f6', bg: '#eff6ff' },
-    { id: 'instagram', label: 'Instagram', icon: 'instagram', cat: 'social', color: '#d946ef', bg: '#fdf4ff' },
-    { id: 'telegram', label: 'Telegram', icon: 'send', cat: 'social', color: '#0ea5e9', bg: '#f0f9ff' },
-    { id: 'tiktok', label: 'TikTok', icon: 'music', cat: 'social', color: '#000000', bg: '#f8fafc' },
-    { id: 'x-twitter', label: 'X / Twitter', icon: 'twitter', cat: 'social', color: '#000000', bg: '#f8fafc' },
-    { id: 'snapchat', label: 'Snapchat', icon: 'ghost', cat: 'social', color: '#eab308', bg: '#fefce8' },
-    { id: 'pinterest', label: 'Pinterest', icon: 'layout-grid', cat: 'social', color: '#ef4444', bg: '#fef2f2' },
-    { id: 'linkedin', label: 'LinkedIn', icon: 'linkedin', cat: 'social', color: '#2563eb', bg: '#eff6ff' },
-    { id: 'pdf', label: 'PDF File', icon: 'file-text', cat: 'files', color: '#ef4444', bg: '#fef2f2' },
-    { id: 'audio', label: 'Audio / MP3', icon: 'headphones', cat: 'files', color: '#8b5cf6', bg: '#f5f3ff' },
-    { id: 'video', label: 'Video / MP4', icon: 'monitor-play', cat: 'files', color: '#ec4899', bg: '#fdf2f8' },
-    { id: 'image', label: 'Image', icon: 'image', cat: 'files', color: '#10b981', bg: '#ecfdf5' },
-    { id: 'word', label: 'Word Doc', icon: 'file-text', cat: 'files', color: '#10b981', bg: '#ecfdf5' },
-    { id: 'excel', label: 'Excel Sheet', icon: 'file-spreadsheet', cat: 'files', color: '#10b981', bg: '#ecfdf5' },
-    { id: 'pptx', label: 'PowerPoint', icon: 'presentation', cat: 'files', color: '#10b981', bg: '#ecfdf5' },
-    { id: 'google-review', label: 'Google Review', icon: 'star', cat: 'business', color: '#f59e0b', bg: '#fffbe3' },
-    { id: 'play-market', label: 'Play Market', icon: 'play-circle', cat: 'business', color: '#10b981', bg: '#ecfdf5' },
-    { id: 'app-store', label: 'App Store', icon: 'smartphone', cat: 'business', color: '#64748b', bg: '#f1f5f9' },
-    { id: 'paypal', label: 'PayPal', icon: 'wallet', cat: 'business', color: '#1d4ed8', bg: '#ebf5ff' },
-    { id: 'amazon', label: 'Amazon', icon: 'shopping-cart', cat: 'business', color: '#ff9900', bg: '#fff7e6' },
-    { id: 'venmo', label: 'Venmo', icon: 'dollar-sign', cat: 'business', color: '#3d95ce', bg: '#eefaff' },
-    { id: 'upi', label: 'UPI Pay', icon: 'credit-card', cat: 'business', color: '#6739b7', bg: '#f2e8ff' },
-    { id: 'crypto', label: 'Crypto', icon: 'bitcoin', cat: 'business', color: '#f7931a', bg: '#fff9f2' },
-    { id: 'google-forms', label: 'Google Forms', icon: 'clipboard-list', cat: 'platforms', color: '#8b5cf6', bg: '#f5f3ff' },
-    { id: 'google-doc', label: 'Google Doc', icon: 'file-text', cat: 'platforms', color: '#3b82f6', bg: '#eff6ff' },
-    { id: 'spotify', label: 'Spotify', icon: 'disc', cat: 'platforms', color: '#1ed760', bg: '#e8fdf0' },
-    { id: 'office-365', label: 'Office 365', icon: 'box', cat: 'platforms', color: '#d83b01', bg: '#fff1ed' },
-    { id: 'email', label: 'Email', icon: 'mail', cat: 'comm', color: '#6366f1', bg: '#f5f3ff' },
-    { id: 'phone', label: 'Phone Call', icon: 'phone', cat: 'comm', color: '#10b981', bg: '#ecfdf5' },
-    { id: 'sms', label: 'SMS', icon: 'message-square', cat: 'comm', color: '#6366f1', bg: '#f5f3ff' },
-    { id: 'vcard', label: 'vCard', icon: 'user-circle-2', cat: 'comm', color: '#64748b', bg: '#f1f5f9' },
-    { id: 'calendar', label: 'Calendar', icon: 'calendar', cat: 'comm', color: '#ef4444', bg: '#fef2f2' },
-    { id: 'link-list', label: 'List of Links', icon: 'layers', cat: 'comm', color: '#8b5cf6', bg: '#f5f3ff' },
-    { id: 'custom-url', label: 'Custom URL', icon: 'external-link', cat: 'comm', color: '#64748b', bg: '#f1f5f9' },
-];
+    const QR_ENGINES = [
+        { id: 'url', label: 'URL / Link', icon: 'link', cat: 'basic', color: '#6366f1', bg: '#f5f3ff' },
+        { id: 'text', label: 'Plain Text', icon: 'type', cat: 'basic', color: '#64748b', bg: '#f1f5f9' },
+        { id: 'wifi', label: 'Wi-Fi', icon: 'wifi', cat: 'basic', color: '#0ea5e9', bg: '#f0f9ff' },
+        { id: 'location', label: 'Location', icon: 'map-pin', cat: 'basic', color: '#f43f5e', bg: '#fff1f2' },
+        { id: 'whatsapp', label: 'WhatsApp', icon: 'message-circle', cat: 'social', color: '#22c55e', bg: '#f0fdf4' },
+        { id: 'youtube', label: 'YouTube', icon: 'youtube', cat: 'social', color: '#ef4444', bg: '#fef2f2' },
+        { id: 'facebook', label: 'Facebook', icon: 'facebook', cat: 'social', color: '#3b82f6', bg: '#eff6ff' },
+        { id: 'instagram', label: 'Instagram', icon: 'instagram', cat: 'social', color: '#d946ef', bg: '#fdf4ff' },
+        { id: 'telegram', label: 'Telegram', icon: 'send', cat: 'social', color: '#0ea5e9', bg: '#f0f9ff' },
+        { id: 'tiktok', label: 'TikTok', icon: 'music', cat: 'social', color: '#000000', bg: '#f8fafc' },
+        { id: 'x-twitter', label: 'X / Twitter', icon: 'twitter', cat: 'social', color: '#000000', bg: '#f8fafc' },
+        { id: 'snapchat', label: 'Snapchat', icon: 'ghost', cat: 'social', color: '#eab308', bg: '#fefce8' },
+        { id: 'pinterest', label: 'Pinterest', icon: 'layout-grid', cat: 'social', color: '#ef4444', bg: '#fef2f2' },
+        { id: 'linkedin', label: 'LinkedIn', icon: 'linkedin', cat: 'social', color: '#2563eb', bg: '#eff6ff' },
+        { id: 'google-review', label: 'Google Review', icon: 'star', cat: 'business', color: '#f59e0b', bg: '#fffbe3' },
+        { id: 'google-forms', label: 'Google Forms', icon: 'clipboard-list', cat: 'platforms', color: '#8b5cf6', bg: '#f5f3ff' },
+        { id: 'google-doc', label: 'Google Doc', icon: 'file-text', cat: 'platforms', color: '#3b82f6', bg: '#eff6ff' },
+        { id: 'email', label: 'Email', icon: 'mail', cat: 'comm', color: '#6366f1', bg: '#f5f3ff' },
+        { id: 'phone', label: 'Phone Call', icon: 'phone', cat: 'comm', color: '#10b981', bg: '#ecfdf5' },
+        { id: 'sms', label: 'SMS', icon: 'message-square', cat: 'comm', color: '#6366f1', bg: '#f5f3ff' },
+        { id: 'vcard', label: 'vCard', icon: 'user-circle-2', cat: 'comm', color: '#64748b', bg: '#f1f5f9' },
+        { id: 'calendar', label: 'Calendar', icon: 'calendar', cat: 'comm', color: '#ef4444', bg: '#fef2f2' },
+        { id: 'link-list', label: 'List of Links', icon: 'layers', cat: 'comm', color: '#8b5cf6', bg: '#f5f3ff' },
+        { id: 'custom-url', label: 'Custom URL', icon: 'external-link', cat: 'comm', color: '#64748b', bg: '#f1f5f9' },
+    ];
 
-const EXISTING_DATA = {{ qr.qr_data|safe }};
-
-function renderTiles(cat = 'all') {
-    const grid = document.getElementById('types-grid');
-    grid.innerHTML = '';
-    const currentType = document.getElementById('selected-type').value;
+    const BODY_STYLES = ['square', 'rounded', 'circle', 'diamond', 'dot', 'small-square', 'hline', 'vline', 'star', 'cross', 'leaf', 'clover'];
+    const EYE_STYLES = ['square', 'circle', 'rounded', 'diamond', 'leaf'];
+    const BRAND_LOGOS = [
+        { id: 'facebook', domain: 'facebook.com' },
+        { id: 'instagram', domain: 'instagram.com' },
+        { id: 'youtube', domain: 'youtube.com' },
+        { id: 'whatsapp', domain: 'whatsapp.com' },
+        { id: 'linkedin', domain: 'linkedin.com' },
+        { id: 'telegram', domain: 'telegram.org' },
+        { id: 'x', domain: 'x.com' },
+        { id: 'tiktok', domain: 'tiktok.com' },
+        { id: 'snapchat', domain: 'snapchat.com' },
+        { id: 'pinterest', domain: 'pinterest.com' },
+        { id: 'spotify', domain: 'spotify.com' },
+        { id: 'apple', domain: 'apple.com' },
+        { id: 'google', domain: 'google.com' },
+        { id: 'amazon', domain: 'amazon.com' },
+        { id: 'paypal', domain: 'paypal.com' },
+        { id: 'discord', domain: 'discord.com' },
+        { id: 'reddit', domain: 'reddit.com' },
+        { id: 'slack', domain: 'slack.com' },
+        { id: 'github', domain: 'github.com' },
+        { id: 'microsoft', domain: 'microsoft.com' }
+    ];
+    const FRAME_CATEGORIES = {
+        'Standard / Clean': ['std-1', 'std-2', 'std-3', 'std-4', 'std-5'],
+        'Festivals & Events': ['holi', 'brazil', 'thanksgiving', 'harvest'],
+        'Devices & Tech': ['mobile', 'tablet', 'monitor'],
+    };
     
-    QR_ENGINES.forEach(engine => {
-        if (cat !== 'all' && engine.cat !== cat) return;
-        const tile = document.createElement('div');
-        tile.className = `type-tile ${engine.id === currentType ? 'active' : ''}`;
-        tile.innerHTML = `
-            <div class="tile-icon" style="background: ${engine.bg}; color: ${engine.color};">
-                <i data-lucide="${engine.icon}"></i>
-            </div>
-            <span class="tile-label">${engine.label}</span>
-        `;
-        tile.onclick = () => selectType(engine.id);
-        grid.appendChild(tile);
-    });
-    lucide.createIcons();
-}
+    const EXISTING_DATA = {{ qr.qr_data|safe }};
+    const DESIGN_OPTIONS = {{ qr.design_options|safe|default:"{}" }};
+    let cropper = null;
 
-function selectType(type) {
-    document.getElementById('selected-type').value = type;
-    renderTiles(document.querySelector('.cat-btn.active').dataset.cat);
-    renderFields(type);
-}
-
-function renderFields(type) {
-    const container = document.getElementById('dynamic-fields');
-    container.innerHTML = '';
-
-    const addField = (label, name, fieldType = 'text', placeholder = '', required = true, initial = '') => {
-        const group = document.createElement('div');
-        group.className = 'form-group';
+    function init() {
+        renderTypes();
+        renderPatterns();
+        renderFrames();
+        renderPresetLogos();
+        lucide.createIcons();
+        applyDesignOptions();
+        renderFields('{{ qr.qr_type }}');
+        updatePreview();
         
-        let value = initial || EXISTING_DATA[name] || '';
-        if (name === 'destination_url') value = '{{ qr.destination_url }}';
+        document.querySelectorAll('.design-tab').forEach(tab => {
+            tab.onclick = () => {
+                document.querySelectorAll('.design-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.design-view').forEach(v => v.classList.add('hidden'));
+                tab.classList.add('active');
+                document.getElementById(`view-${tab.dataset.tab}`).classList.remove('hidden');
+            };
+        });
 
-        if (fieldType === 'file') {
-             group.innerHTML = `<label>${label}</label><input type="file" name="file_content" class="form-input py-3">
-             <p class="text-[9px] text-slate-400 mt-1 uppercase tracking-widest">Leave blank to keep existing file</p>`;
-        } else if (fieldType === 'textarea') {
-            group.innerHTML = `<label>${label}</label><textarea name="${name}" class="form-input py-4 h-32" placeholder="${placeholder}" ${required ? 'required' : ''}>${value}</textarea>`;
+        ['fg-picker', 'bg-picker', 'fg-text', 'bg-text', 'bg-transparent-toggle', 'logo-size-range', 'logo-background-toggle', 'logo-circular-toggle', 'frame-text-input', 'text-font', 'text-color', 'text-size'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.oninput = updatePreview;
+        });
+
+        document.querySelectorAll('.ec-option').forEach(opt => {
+            opt.onclick = () => {
+                document.querySelectorAll('.ec-option').forEach(o => o.classList.remove('active'));
+                opt.classList.add('active');
+                updatePreview();
+            };
+        });
+
+        document.getElementById('logo-upload').onchange = (e) => {
+            if (e.target.files && e.target.files[0]) {
+                const reader = new FileReader();
+                reader.onload = (re) => openCropper(re.target.result);
+                reader.readAsDataURL(e.target.files[0]);
+            }
+        };
+    }
+
+    function applyDesignOptions() {
+        const opts = DESIGN_OPTIONS;
+        if (opts.error_correction) {
+            document.querySelectorAll('.ec-option').forEach(o => {
+                if(o.dataset.ec === opts.error_correction) o.classList.add('active');
+                else o.classList.remove('active');
+            });
+        } else { document.querySelector('.ec-option[data-ec="H"]').classList.add('active'); }
+        
+        if (opts.logo_circular !== undefined) document.getElementById('logo-circular-toggle').checked = opts.logo_circular;
+        if (opts.logo_size !== undefined) document.getElementById('logo-size-range').value = opts.logo_size;
+        if (opts.logo_background !== undefined) document.getElementById('logo-background-toggle').checked = opts.logo_background;
+        if (opts.bg_transparent !== undefined) document.getElementById('bg-transparent-toggle').checked = opts.bg_transparent;
+        if (opts.frame_text) document.getElementById('frame-text-input').value = opts.frame_text;
+        
+        // Patterns
+        const bStyle = '{{ qr.body_style }}' || 'square';
+        const eStyle = '{{ qr.eye_style }}' || 'square';
+        const baStyle = '{{ qr.ball_style }}' || 'square';
+        
+        document.querySelector(`#body-patterns .pattern-item[data-val="${bStyle}"]`)?.classList.add('active');
+        document.querySelector(`#eye-patterns .pattern-item[data-val="${eStyle}"]`)?.classList.add('active');
+        document.querySelector(`#ball-patterns .pattern-item[data-val="${baStyle}"]`)?.classList.add('active');
+    }
+
+    function renderTypes() {
+        const grid = document.getElementById('types-grid');
+        grid.innerHTML = '';
+        QR_ENGINES.forEach(engine => {
+            const tile = document.createElement('div');
+            tile.className = `type-tile ${engine.id === document.getElementById('selected-type').value ? 'active' : ''}`;
+            tile.innerHTML = `<div class="tile-icon" style="background: ${engine.bg}; color: ${engine.color};"><i data-lucide="${engine.icon}"></i></div><span class="tile-label">${engine.label}</span>`;
+            tile.onclick = () => selectType(engine.id);
+            grid.appendChild(tile);
+        });
+        lucide.createIcons();
+    }
+
+    function selectType(type) {
+        document.getElementById('selected-type').value = type;
+        renderTypes();
+        renderFields(type);
+        updatePreview();
+    }
+
+    function getPatternIcon(style, type) {
+        let color = '#6366f1'; // Default Indigo
+        if (style === 'square' || style === 'rounded') color = '#6366f1';
+        if (style === 'circle' || style === 'dot') color = '#22c55e'; // Green
+        if (style === 'diamond' || style === 'star') color = '#f59e0b'; // Amber
+        if (style === 'leaf' || style === 'clover') color = '#10b981'; // Emerald
+        if (style === 'hline' || style === 'vline' || style === 'cross') color = '#ef4444'; // Red
+
+        if (type === 'body') {
+            if (style === 'square') return `<rect x="5" y="5" width="14" height="14" fill="${color}" rx="1"/>`;
+            if (style === 'rounded') return `<rect x="5" y="5" width="14" height="14" fill="${color}" rx="4"/>`;
+            if (style === 'circle') return `<circle cx="12" cy="12" r="7" fill="${color}"/>`;
+            if (style === 'diamond') return `<path d="M12 4 L20 12 L12 20 L4 12 Z" fill="${color}"/>`;
+            if (style === 'dot') return `<circle cx="12" cy="12" r="4" fill="${color}"/>`;
+            if (style === 'small-square') return `<rect x="8" y="8" width="8" height="8" fill="${color}"/>`;
+            if (style === 'hline') return `<rect x="4" y="10" width="16" height="4" fill="${color}" rx="1"/>`;
+            if (style === 'vline') return `<rect x="10" y="4" width="4" height="16" fill="${color}" rx="1"/>`;
+            if (style === 'star') return `<path d="M12 4 L14 10 L20 10 L15 14 L17 20 L12 16 L7 20 L9 14 L4 10 L10 10 Z" fill="${color}"/>`;
+            if (style === 'cross') return `<path d="M9 4 H15 V9 H20 V15 H15 V20 H9 V15 H4 V9 H9 Z" fill="${color}"/>`;
+            if (style === 'leaf') return `<path d="M12 4 Q20 4 20 12 Q20 20 12 20 Q4 20 4 12 Q4 4 12 4" fill="${color}"/>`;
+            if (style === 'clover') return `<path d="M12 12 Q12 4 8 4 Q4 4 4 8 Q4 12 12 12 Q20 12 20 16 Q20 20 16 20 Q12 20 12 12 Z" fill="${color}"/>`;
         } else {
-            group.innerHTML = `<label>${label}</label><input type="${fieldType}" name="${name}" class="form-input" placeholder="${placeholder}" value="${value}" ${required ? 'required' : ''}>`;
+            if (style === 'square') return `<rect x="4" y="4" width="16" height="16" stroke="${color}" stroke-width="2" fill="none" rx="1"/>`;
+            if (style === 'circle') return `<circle cx="12" cy="12" r="8" stroke="${color}" stroke-width="2" fill="none"/>`;
+            if (style === 'rounded') return `<rect x="4" y="4" width="16" height="16" stroke="${color}" stroke-width="2" fill="none" rx="5"/>`;
+            if (style === 'diamond') return `<path d="M12 4 L20 12 L12 20 L4 12 Z" stroke="${color}" stroke-width="2" fill="none"/>`;
+            if (style === 'leaf') return `<path d="M12 4 Q20 4 20 12 Q20 20 12 20 Q4 20 4 12 Q4 4 12 4" stroke="${color}" stroke-width="2" fill="none"/>`;
         }
-        container.appendChild(group);
-    };
-
-    if (['url', 'youtube', 'facebook', 'instagram', 'tiktok', 'x-twitter', 'snapchat', 'pinterest', 'linkedin', 'google-forms', 'google-doc', 'google-sheets', 'google-review', 'play-market', 'app-store', 'paypal', 'amazon', 'venmo', 'spotify', 'office-365', 'custom-url'].includes(type)) {
-        addField('Target URL / Link', 'destination_url', 'url', 'https://example.com/your-content');
-    } else if (type === 'text') {
-        addField('Plain Text Content', 'text', 'textarea');
-    } else if (type === 'whatsapp' || type === 'telegram') {
-        addField('Phone Number', 'phone', 'tel');
-        addField('Message', 'message', 'textarea', '', false);
-    } else if (type === 'phone') {
-        addField('Phone Number', 'phone', 'tel');
-    } else if (type === 'sms') {
-        addField('Recipient Number', 'phone', 'tel');
-        addField('Default Message', 'message', 'textarea');
-    } else if (type === 'email') {
-        addField('Email Address', 'email', 'email');
-        addField('Subject', 'subject', 'text');
-        addField('Message Body', 'body', 'textarea');
-    } else if (type === 'wifi') {
-        addField('Network Name (SSID)', 'ssid', 'text');
-        addField('Password', 'password', 'text');
-        addField('Security', 'encryption', 'text');
-    } else if (type === 'location') {
-        addField('Latitude', 'latitude', 'text');
-        addField('Longitude', 'longitude', 'text');
-    } else if (['pdf', 'audio', 'video', 'image', 'word', 'excel', 'pptx'].includes(type)) {
-        addField(`Upload New ${type.toUpperCase()}`, 'file_content', 'file');
-    } else if (type === 'vcard') {
-        addField('First Name', 'first_name', 'text');
-        addField('Last Name', 'last_name', 'text');
-        addField('Organization', 'organization', 'text', '', false);
-        addField('Mobile Phone', 'phone_mobile', 'tel');
-        addField('Email', 'email', 'email');
-    } else if (type === 'link-list') {
-        addField('Link List JSON', 'links', 'textarea');
-    } else if (type === 'upi') {
-        addField('UPI ID', 'upi_id', 'text');
-        addField('Payee Name', 'name', 'text');
-        addField('Amount', 'amount', 'number', '', false);
-    }
-}
-
-document.querySelectorAll('.cat-btn').forEach(btn => {
-    btn.onclick = () => {
-        document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        renderTiles(btn.dataset.cat);
-    };
-});
-
-document.getElementById('edit-qr-form').onsubmit = async (e) => {
-    e.preventDefault();
-    const formData = new FormData(e.target);
-    const dataObj = {};
-    const dynamicFields = document.getElementById('dynamic-fields').querySelectorAll('input, textarea, select');
-    dynamicFields.forEach(field => {
-        if (field.name !== 'file_content' && field.name !== 'destination_url') {
-            dataObj[field.name] = field.value;
-        }
-    });
-
-    const selectedType = document.getElementById('selected-type').value;
-    if ((selectedType === 'whatsapp' || selectedType === 'telegram') && !formData.get('destination_url')) {
-        const phone = dataObj.phone || '';
-        const base = selectedType === 'whatsapp' ? 'https://wa.me/' : 'https://t.me/';
-        const msg = selectedType === 'whatsapp' ? `?text=${encodeURIComponent(dataObj.message || '')}` : '';
-        formData.set('destination_url', `${base}${phone}${msg}`);
+        return `<rect x="4" y="4" width="16" height="16" fill="${color}" opacity="0.2"/>`;
     }
 
-    formData.set('qr_data', JSON.stringify(dataObj));
-    formData.append('is_active', document.getElementById('is-active-toggle').checked ? 'true' : 'false');
-    
-    const submitBtn = document.getElementById('submit-btn');
-    submitBtn.disabled = true;
-    submitBtn.innerHTML = '<i data-lucide="refresh-cw" class="w-5 h-5 animate-spin"></i> Updating...';
-    lucide.createIcons();
+    function renderPatterns() {
+        const grids = {'body-patterns': 'body', 'eye-patterns': 'eye', 'ball-patterns': 'ball'};
+        Object.keys(grids).forEach(id => {
+            const grid = document.getElementById(id);
+            const styleList = (id === 'body-patterns') ? BODY_STYLES : EYE_STYLES;
+            styleList.forEach(s => {
+                const item = document.createElement('div');
+                item.className = 'pattern-item';
+                item.dataset.val = s;
+                item.innerHTML = `<svg viewBox="0 0 24 24" class="w-8 h-8">${getPatternIcon(s, grids[id])}</svg>`;
+                item.onclick = () => {
+                    document.querySelectorAll(`#${id} .pattern-item`).forEach(i => i.classList.remove('active'));
+                    item.classList.add('active');
+                    updatePreview();
+                };
+                grid.appendChild(item);
+            });
+        });
+    }
 
-    try {
+    function renderFrames() {
+        const container = document.getElementById('frames-container');
+        if (!container) return;
+        container.innerHTML = '';
+        
+        Object.keys(FRAME_CATEGORIES).forEach((cat, idx) => {
+            const section = document.createElement('div');
+            section.innerHTML = `<div class="frame-cat-title">${cat}</div>`;
+            const grid = document.createElement('div');
+            grid.className = 'frame-grid';
+            
+            if (idx === 0) {
+                const noFrame = document.createElement('div');
+                noFrame.className = 'frame-item active';
+                noFrame.dataset.val = 'none';
+                noFrame.innerHTML = `<div class="frame-thumb bg-slate-50 flex items-center justify-center text-[10px] font-black text-slate-400">NONE</div>`;
+                noFrame.onclick = () => {
+                    document.querySelectorAll('.frame-item').forEach(i => i.classList.remove('active'));
+                    noFrame.classList.add('active');
+                    updatePreview();
+                };
+                grid.appendChild(noFrame);
+            }
+
+            FRAME_CATEGORIES[cat].forEach(f => {
+                const item = document.createElement('div');
+                item.className = 'frame-item';
+                item.dataset.val = f;
+                item.innerHTML = `
+                    <div class="frame-thumb bg-indigo-50/30 flex flex-col items-center justify-center p-2">
+                        <div class="w-full h-12 border-4 border-indigo-200 rounded-lg flex items-center justify-center bg-white">
+                            <i data-lucide="qr-code" class="w-4 h-4 text-indigo-400"></i>
+                        </div>
+                        <span class="text-[8px] font-black text-indigo-900/40 mt-2 uppercase">${f}</span>
+                    </div>
+                `;
+                item.onclick = () => {
+                    document.querySelectorAll('.frame-item').forEach(i => i.classList.remove('active'));
+                    item.classList.add('active');
+                    updatePreview();
+                };
+                grid.appendChild(item);
+            });
+            section.appendChild(grid);
+            container.appendChild(section);
+        });
+        lucide.createIcons();
+    }
+
+    function renderPresetLogos() {
+        const grid = document.getElementById('preset-logos');
+        grid.innerHTML = `<div class="logo-item" data-val="none"><i data-lucide="slash" class="w-5 h-5"></i></div>`;
+        BRAND_LOGOS.forEach(brand => {
+            const item = document.createElement('div');
+            item.className = 'logo-item';
+            item.dataset.val = brand.id;
+            item.innerHTML = `<img src="https://www.google.com/s2/favicons?sz=64&domain=${brand.domain}" style="width: 24px; height: 24px; border-radius: 4px;">`;
+            item.onclick = () => {
+                document.querySelectorAll('.logo-item').forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+                updatePreview();
+            };
+            grid.appendChild(item);
+        });
+        lucide.createIcons();
+    }
+
+    function openCropper(src) {
+        const modal = document.getElementById('cropper-modal');
+        const img = document.getElementById('crop-image');
+        img.src = src; modal.style.display = 'flex';
+        if (cropper) cropper.destroy();
+        cropper = new Cropper(img, { aspectRatio: 1, viewMode: 1 });
+    }
+    function closeCropper() { document.getElementById('cropper-modal').style.display = 'none'; }
+    function applyCrop() {
+        const dataUrl = cropper.getCroppedCanvas({width:512, height:512}).toDataURL('image/png');
+        document.getElementById('logo-cropped-data').value = dataUrl;
+        const grid = document.getElementById('preset-logos');
+        const item = document.createElement('div');
+        item.className = 'logo-item active';
+        item.dataset.val = 'custom';
+        item.innerHTML = `<img src="${dataUrl}">`;
+        document.querySelectorAll('.logo-item').forEach(i => i.classList.remove('active'));
+        grid.insertBefore(item, grid.children[1]);
+        closeCropper(); updatePreview();
+    }
+
+    function renderFields(type) {
+        const container = document.getElementById('dynamic-fields');
+        container.innerHTML = '';
+        const addField = (label, name, fieldType = 'text', initial = '') => {
+            const group = document.createElement('div');
+            group.className = 'form-group';
+            let val = initial || EXISTING_DATA[name] || '';
+            if(name === 'destination_url') val = '{{ qr.destination_url }}';
+            
+            if (fieldType === 'file') group.innerHTML = `<label>${label}</label><input type="file" name="file_content" class="form-input py-3">`;
+            else if (fieldType === 'textarea') group.innerHTML = `<label>${label}</label><textarea name="${name}" class="form-input py-4 h-32">${val}</textarea>`;
+            else group.innerHTML = `<label>${label}</label><input type="${fieldType}" name="${name}" class="form-input" value="${val}">`;
+            container.appendChild(group);
+        };
+        // Reuse create_qr field logic
+        if (['url', 'youtube', 'facebook', 'instagram', 'tiktok', 'x-twitter', 'snapchat', 'pinterest', 'linkedin', 'google-review', 'custom-url'].includes(type)) addField('Target URL', 'destination_url', 'url');
+        else if (type === 'text') addField('Text Content', 'text', 'textarea');
+        else if (['whatsapp', 'telegram'].includes(type)) { addField('Phone', 'phone', 'tel'); addField('Message', 'message', 'textarea'); }
+        else if (type === 'wifi') { addField('SSID', 'ssid'); addField('Password', 'password'); }
+        else if (type === 'location') { addField('Latitude', 'latitude'); addField('Longitude', 'longitude'); }
+    }
+
+    async function updatePreview() {
+        const options = {
+            error_correction: document.querySelector('.ec-option.active')?.dataset.ec || 'H',
+            logo_circular: document.getElementById('logo-circular-toggle').checked,
+            logo_size: document.getElementById('logo-size-range').value,
+            logo_background: document.getElementById('logo-background-toggle').checked,
+            frame_style: document.querySelector('.frame-item.active')?.dataset.val || 'none',
+            frame_text: document.getElementById('frame-text-input').value,
+            frame_font: document.getElementById('text-font').value,
+            frame_text_color: document.getElementById('text-color').value,
+            bg_transparent: document.getElementById('bg-transparent-toggle').checked
+        };
+        document.getElementById('design-options-input').value = JSON.stringify(options);
+        const fg = document.getElementById('fg-text')?.value || '{{ qr.fg_color }}';
+        const bg = document.getElementById('bg-text')?.value || '{{ qr.bg_color }}';
+        const style = document.querySelector('#body-patterns .pattern-item.active')?.dataset.val || 'square';
+        const eye = document.querySelector('#eye-patterns .pattern-item.active')?.dataset.val || 'square';
+        const ball = document.querySelector('#ball-patterns .pattern-item.active')?.dataset.val || 'square';
+        
+        const logoItem = document.querySelector('.logo-item.active');
+        let logoParam = '';
+        if (logoItem && logoItem.dataset.val !== 'none') {
+            if (logoItem.dataset.val === 'custom') {
+                // For custom, we might not be able to pass easily via GET if it's large, 
+                // but we can try passing the base64 if it's small or just wait for save.
+            } else {
+                logoParam = `&logo=${logoItem.dataset.val}`;
+            }
+        }
+
+        const url = `{% url 'dynamic_qr:generate_image' %}?text={{ redirect_url|urlencode }}&fg_color=${encodeURIComponent(fg)}&bg_color=${encodeURIComponent(bg)}&style=${style}&eye_style=${eye}&ball_style=${ball}&design_options=${encodeURIComponent(JSON.stringify(options))}${logoParam}`;
+        document.getElementById('qr-preview-img').src = url;
+    }
+
+    document.getElementById('edit-qr-form').onsubmit = async (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        const dataObj = {};
+        const dynamicFields = document.getElementById('dynamic-fields').querySelectorAll('input, textarea');
+        dynamicFields.forEach(f => { if(f.name !== 'file_content') dataObj[f.name] = f.value; });
+        formData.set('qr_data', JSON.stringify(dataObj));
+        formData.set('body_style', document.querySelector('#body-patterns .pattern-item.active')?.dataset.val || 'square');
+        formData.set('eye_style', document.querySelector('#eye-patterns .pattern-item.active')?.dataset.val || 'square');
+        formData.set('ball_style', document.querySelector('#ball-patterns .pattern-item.active')?.dataset.val || 'square');
+        formData.append('is_active', document.getElementById('is-active-toggle').checked ? 'true' : 'false');
+
+        const btn = document.getElementById('submit-btn');
+        btn.disabled = true; btn.innerHTML = 'Updating...';
+        
         const response = await fetch('{% url "dynamic_qr:edit" qr.id %}', {
-            method: 'POST',
-            body: formData,
+            method: 'POST', body: formData,
             headers: { 'X-CSRFToken': '{{ csrf_token }}', 'X-Requested-With': 'XMLHttpRequest' }
         });
-        const result = await response.json();
-        if (result.success) {
-            window.location.href = '{% url "dynamic_qr:dashboard" %}';
-        } else {
-            alert(result.error);
-            submitBtn.disabled = false;
-            submitBtn.innerHTML = '<i data-lucide="save" class="w-6 h-6"></i> Update Asset';
-        }
-    } catch (err) {
-        alert('Update failed.');
-        submitBtn.disabled = false;
+        const res = await response.json();
+        if(res.success) window.location.href = '{% url "dynamic_qr:dashboard" %}';
+        else { alert(res.error); btn.disabled = false; btn.innerHTML = 'Update Asset'; }
     }
-};
 
-renderTiles();
-renderFields('{{ qr.qr_type }}');
+    init();
 {% endblock %}

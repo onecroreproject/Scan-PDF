@@ -3146,18 +3146,65 @@ def balance_chemical_equation(equation_str):
 # ═══════════════════════════════════════════════════════════════
 def generate_qr_code(text, box_size=10, border=4, fg_color="#000000", bg_color="#ffffff",
                      logo_path=None, style="square", gradient_type=None,
-                     eye_style="square", ball_style="square", output_format="png"):
+                     eye_style="square", ball_style="square", output_format="png",
+                     design_options=None):
     """
-    Professional QR Code Engine — Full QRCode Monkey feature parity.
-    Supports 8+ body styles, 6+ eye/ball styles, logo embeds, and PNG/JPG output.
+    Professional QR Code Engine — Full Customization.
+    Supports frames, eye/ball patterns, circular logos, and additional branding text.
     """
     import qrcode
-    from PIL import Image, ImageDraw, ImageColor
+    from PIL import Image, ImageDraw, ImageColor, ImageOps, ImageFont
     import math
+    import json
+
+    if design_options and isinstance(design_options, str):
+        try:
+            design_options = json.loads(design_options)
+        except:
+            design_options = {}
+    elif not design_options:
+        design_options = {}
+
+    # Extract design options
+    error_correction = design_options.get('error_correction', 'H')
+    ec_map = {
+        'L': qrcode.constants.ERROR_CORRECT_L,
+        'M': qrcode.constants.ERROR_CORRECT_M,
+        'Q': qrcode.constants.ERROR_CORRECT_Q,
+        'H': qrcode.constants.ERROR_CORRECT_H,
+    }
+    ec_level = ec_map.get(error_correction.upper(), qrcode.constants.ERROR_CORRECT_H)
+
+    circular_logo = design_options.get('logo_circular', True)
+    logo_size_factor = float(design_options.get('logo_size', 0.22))
+    logo_background = design_options.get('logo_background', True)
+    
+    frame_style = design_options.get('frame_style', None)
+    frame_text = design_options.get('frame_text', '')
+    frame_font_name = design_options.get('frame_font', 'arial.ttf')
+    frame_text_color = design_options.get('frame_text_color', '#000000')
+    
+    bg_transparent = design_options.get('bg_transparent', False)
+
+    # Resolve Brand Logos
+    if logo_path and not os.path.exists(logo_path):
+        # Check if it's a brand name
+        brand_map = {
+            'facebook': 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/facebook.svg',
+            # etc...
+        }
+        # For simplicity, we can fetch from a local path if we had them or just ignore for now
+        # Actually, let's look for brand icons in static/images/logos
+        local_brand_path = os.path.join(settings.BASE_DIR, 'static', 'images', 'logos', f"{logo_path}.png")
+        if os.path.exists(local_brand_path):
+            logo_path = local_brand_path
+        elif logo_path in ['facebook', 'instagram', 'youtube', 'whatsapp', 'linkedin', 'telegram', 'x-twitter', 'tiktok', 'snapchat', 'pinterest']:
+            # Maybe we have some default ones in the media root or static
+            pass
 
     # ── 1. Build QR matrix ──
     qr = qrcode.QRCode(
-        error_correction=qrcode.constants.ERROR_CORRECT_H,
+        error_correction=ec_level,
         box_size=1, border=0,
     )
     qr.add_data(text)
@@ -3196,7 +3243,11 @@ def generate_qr_code(text, box_size=10, border=4, fg_color="#000000", bg_color="
     bg_rgb = ImageColor.getcolor(bg_color, "RGB")
     fg_rgb = ImageColor.getcolor(fg_color, "RGB")
 
-    canvas = Image.new("RGB", (img_px, img_px), bg_rgb)
+    if bg_transparent:
+        canvas = Image.new("RGBA", (img_px, img_px), (0, 0, 0, 0))
+    else:
+        canvas = Image.new("RGBA", (img_px, img_px), (*bg_rgb, 255))
+    
     draw = ImageDraw.Draw(canvas)
 
     # ── Drawing helpers ──
@@ -3325,21 +3376,89 @@ def generate_qr_code(text, box_size=10, border=4, fg_color="#000000", bg_color="
     if logo_path and os.path.exists(logo_path):
         try:
             logo = Image.open(logo_path).convert("RGBA")
-            max_logo = int(img_px * 0.22)
+            
+            # Use size factor from design options
+            max_logo = int(img_px * logo_size_factor)
             logo.thumbnail((max_logo, max_logo), Image.Resampling.LANCZOS)
-            pad_px = 10
-            bg_box = Image.new("RGBA", (logo.width + pad_px * 2, logo.height + pad_px * 2), (*bg_rgb, 255))
-            bx = (img_px - bg_box.width) // 2
-            by = (img_px - bg_box.height) // 2
-            canvas.paste(bg_box, (bx, by), bg_box)
+            
+            # Circular Masking
+            if circular_logo:
+                size = logo.size
+                mask = Image.new('L', size, 0)
+                draw_mask = ImageDraw.Draw(mask)
+                draw_mask.ellipse((0, 0) + size, fill=255)
+                logo = ImageOps.fit(logo, size, centering=(0.5, 0.5))
+                logo.putalpha(mask)
+
             lx = (img_px - logo.width) // 2
             ly = (img_px - logo.height) // 2
+            
+            if logo_background:
+                pad_px = 10
+                bg_box = Image.new("RGBA", (logo.width + pad_px * 2, logo.height + pad_px * 2), (*bg_rgb, 255))
+                if circular_logo:
+                    # Circular background box
+                    box_mask = Image.new('L', bg_box.size, 0)
+                    draw_box_mask = ImageDraw.Draw(box_mask)
+                    draw_box_mask.ellipse((0, 0) + bg_box.size, fill=255)
+                    bg_box.putalpha(box_mask)
+                
+                bx = (img_px - bg_box.width) // 2
+                by = (img_px - bg_box.height) // 2
+                canvas.paste(bg_box, (bx, by), bg_box)
+
             canvas.paste(logo, (lx, ly), logo)
         except Exception:
             pass
 
-    # ── 6. Save ──
+    # ── 6. Frame & Additional Text ──
+    if (frame_style and frame_style != 'none') or frame_text:
+        try:
+            # We increase canvas to fit the frame or text
+            extra_h = 100 if frame_text else 0
+            frame_margin = 80 if frame_style and frame_style != 'none' else 0
+            
+            final_w = img_px + frame_margin * 2
+            final_h = img_px + frame_margin * 2 + extra_h
+            
+            new_canvas = Image.new("RGBA", (final_w, final_h), (0,0,0,0) if bg_transparent else (*bg_rgb, 255))
+            
+            # Draw frame if image exists
+            frame_path = os.path.join(settings.BASE_DIR, 'static', 'images', 'frames', f"{frame_style}.png")
+            if os.path.exists(frame_path):
+                frame_img = Image.open(frame_path).convert("RGBA")
+                frame_img = frame_img.resize((final_w, final_h), Image.Resampling.LANCZOS)
+                new_canvas.paste(frame_img, (0, 0), frame_img)
+            elif frame_style and frame_style != 'none':
+                # Simple color frame fallback
+                f_draw = ImageDraw.Draw(new_canvas)
+                f_draw.rectangle([10, 10, final_w-10, final_h-10], outline=fg_rgb, width=15)
+
+            # Paste QR in center
+            new_canvas.paste(canvas, (frame_margin, frame_margin), canvas)
+            
+            # Draw additional text
+            if frame_text:
+                t_draw = ImageDraw.Draw(new_canvas)
+                try:
+                    font = ImageFont.truetype(frame_font_name, 40)
+                except:
+                    font = ImageFont.load_default()
+                
+                t_bbox = t_draw.textbbox((0,0), frame_text, font=font)
+                tw = t_bbox[2] - t_bbox[0]
+                tx = (final_w - tw) // 2
+                ty = final_h - extra_h // 2 - 20
+                t_draw.text((tx, ty), frame_text, fill=frame_text_color, font=font)
+            
+            canvas = new_canvas
+        except Exception:
+            pass
+
+    # ── 7. Save ──
     if ext == "jpg":
+        if canvas.mode == "RGBA":
+            canvas = canvas.convert("RGB")
         canvas.save(output_path, "JPEG", quality=95)
     else:
         canvas.save(output_path, "PNG")

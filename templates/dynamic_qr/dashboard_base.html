@@ -130,8 +130,8 @@
                     <i data-lucide="list"></i> All QR
                 </a>
                
-                <a href="{% url 'dynamic_qr:create' %}" class="nav-link {% if request.resolver_match.url_name == 'create' %}active{% endif %}">
-                    <i data-lucide="plus-circle"></i> Create New QR
+                <a href="{% url 'dynamic_qr:short_url' %}" class="nav-link {% if request.resolver_match.url_name == 'short_url' %}active{% endif %}">
+                    <i data-lucide="link"></i> Short URL
                 </a>
             </div>
 

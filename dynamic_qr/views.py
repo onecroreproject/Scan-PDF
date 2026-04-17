@@ -95,7 +95,8 @@ def dqr_repair_db(request):
             ("is_active", "BOOLEAN DEFAULT 1"),
             ("file_content", "VARCHAR(100) NULL"),
             ("eye_style", "VARCHAR(20) DEFAULT 'square'"),
-            ("ball_style", "VARCHAR(20) DEFAULT 'square'")
+            ("ball_style", "VARCHAR(20) DEFAULT 'square'"),
+            ("design_options", "JSON NULL")
         ]
         for col_name, col_type in cols:
             try:
@@ -430,8 +431,23 @@ def dqr_create_view(request):
     body_style = request.POST.get('body_style', 'square')
     eye_style = request.POST.get('eye_style', 'square')
     ball_style = request.POST.get('ball_style', 'square')
+    design_data_json = request.POST.get('design_options', '{}')
     logo = request.FILES.get('logo')
+    logo_cropped = request.POST.get('logo_cropped')
     file_content = request.FILES.get('file_content')
+
+    if logo_cropped and logo_cropped.startswith('data:image'):
+        from django.core.files.base import ContentFile
+        import base64
+        import uuid
+        try:
+            format, imgstr = logo_cropped.split(';base64,')
+            ext = 'png'.split('/')[-1] # Fallback to png usually
+            if '/svg+xml' in format: ext = 'svg'
+            elif '/jpeg' in format: ext = 'jpg'
+            logo = ContentFile(base64.b64decode(imgstr), name=f"logo_{uuid.uuid4()}.{ext}")
+        except:
+            pass
 
     if not qr_name:
         return JsonResponse({'error': 'Please enter a name for your QR code.'}, status=400)
@@ -440,6 +456,11 @@ def dqr_create_view(request):
         qr_data = json.loads(qr_data_json)
     except:
         qr_data = {}
+
+    try:
+        design_options = json.loads(design_data_json)
+    except:
+        design_options = {}
 
     qr = DynamicQRCode.objects.create(
         user=request.user,
@@ -454,6 +475,7 @@ def dqr_create_view(request):
         ball_style=ball_style,
         logo=logo,
         file_content=file_content,
+        design_options=design_options
     )
 
     # Build the static content that the QR code will contain
@@ -469,6 +491,44 @@ def dqr_create_view(request):
     })
 
     return JsonResponse({'error': 'POST required.'}, status=405)
+
+
+@dqr_login_required
+def dqr_short_url_view(request):
+    """Specialized tool for simple URL shortening."""
+    if request.method == 'GET':
+        return render(request, 'dynamic_qr/short_url.html')
+    
+    try:
+        qr_name = request.POST.get('qr_name', 'Short URL').strip()
+        destination_url = request.POST.get('destination_url', '').strip()
+        
+        if not destination_url:
+            return JsonResponse({'error': 'URL is required.'}, status=400)
+        
+        # Simple validation: ensure it starts with http
+        if not destination_url.startswith(('http://', 'https://')):
+            destination_url = 'https://' + destination_url
+        
+        qr_data = {'destination_url': destination_url}
+        
+        # We use 'custom-url' type for simple short links
+        qr = DynamicQRCode.objects.create(
+            user=request.user,
+            qr_name=qr_name,
+            qr_type='custom-url',
+            destination_url=destination_url,
+            qr_data=qr_data,
+            design_options={}
+        )
+        
+        return JsonResponse({
+            'success': True, 
+            'id': str(qr.id), 
+            'short_url': request.build_absolute_uri(f"/qr/r/{qr.short_code}/")
+        })
+    except Exception as e:
+        return JsonResponse({'error': str(e)}, status=500)
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -491,8 +551,23 @@ def dqr_edit_view(request, qr_id):
         eye_style = request.POST.get('eye_style', qr.eye_style)
         ball_style = request.POST.get('ball_style', qr.ball_style)
         is_active = request.POST.get('is_active', 'true') == 'true'
+        design_data_json = request.POST.get('design_options', '{}')
         logo = request.FILES.get('logo')
+        logo_cropped = request.POST.get('logo_cropped')
         file_content = request.FILES.get('file_content')
+
+        if logo_cropped and logo_cropped.startswith('data:image'):
+            from django.core.files.base import ContentFile
+            import base64
+            import uuid
+            try:
+                format, imgstr = logo_cropped.split(';base64,')
+                ext = 'png'
+                if '/svg' in format: ext = 'svg'
+                elif '/jpeg' in format: ext = 'jpg'
+                logo = ContentFile(base64.b64decode(imgstr), name=f"logo_{uuid.uuid4()}.{ext}")
+            except:
+                pass
 
         if not qr_name:
             return JsonResponse({'error': 'QR name is required.'}, status=400)
@@ -505,6 +580,11 @@ def dqr_edit_view(request, qr_id):
         except:
             pass
             
+        try:
+            qr.design_options = json.loads(design_data_json)
+        except:
+            pass
+
         qr.fg_color = fg_color
         qr.bg_color = bg_color
         qr.body_style = body_style
@@ -750,7 +830,7 @@ def dqr_generate_image(request):
     from converter.utils import generate_qr_code, get_output_path
     from converter.views import create_cleanup_response
 
-    text = data.get('text', '')
+    text = data.get('text', 'https://scanpdf.com')
     fg_color = data.get('fg_color', '#000000')
     bg_color = data.get('bg_color', '#ffffff')
     style = data.get('style', 'square')
@@ -758,38 +838,68 @@ def dqr_generate_image(request):
     ball_style = data.get('ball_style', 'square')
     output_format = data.get('output_format', 'png')
 
-    if not text:
-        return JsonResponse({'error': 'No QR content provided.'}, status=400)
-
     try:
         from converter.utils import save_uploaded_file
         logo_path = None
-        if 'logo' in request.FILES:
+        
+        # 1. Preset Logo
+        brand = data.get('logo')
+        if brand and brand != 'none':
+            domain_map = {
+                'facebook': 'facebook.com', 'instagram': 'instagram.com', 'youtube': 'youtube.com',
+                'whatsapp': 'whatsapp.com', 'linkedin': 'linkedin.com', 'telegram': 'telegram.org',
+                'x': 'x.com', 'tiktok': 'tiktok.com', 'snapchat': 'snapchat.com',
+                'pinterest': 'pinterest.com', 'spotify': 'spotify.com', 'apple': 'apple.com',
+                'google': 'google.com', 'amazon': 'amazon.com', 'paypal': 'paypal.com',
+                'discord': 'discord.com', 'reddit': 'reddit.com', 'slack': 'slack.com',
+                'github': 'github.com', 'microsoft': 'microsoft.com'
+            }
+            if brand in domain_map:
+                try:
+                    import requests
+                    icon_url = f"https://www.google.com/s2/favicons?sz=128&domain={domain_map[brand]}"
+                    r = requests.get(icon_url, timeout=5)
+                    if r.status_code == 200:
+                        import uuid
+                        tmp = os.path.join(settings.MEDIA_ROOT, 'temp', f"b_{uuid.uuid4()}.png")
+                        os.makedirs(os.path.dirname(tmp), exist_ok=True)
+                        with open(tmp, 'wb') as f: f.write(r.content)
+                        logo_path = tmp
+                except: pass
+
+        # 2. Base64 Cropped Logo
+        if not logo_path:
+            logo_cropped = data.get('logo_cropped')
+            if logo_cropped and logo_cropped.startswith('data:image'):
+                import base64
+                import uuid
+                try:
+                    _, imgstr = logo_cropped.split(';base64,')
+                    tmp = os.path.join(settings.MEDIA_ROOT, 'temp', f"c_{uuid.uuid4()}.png")
+                    os.makedirs(os.path.dirname(tmp), exist_ok=True)
+                    with open(tmp, 'wb') as f: f.write(base64.b64decode(imgstr))
+                    logo_path = tmp
+                except: pass
+
+        # 3. File Upload
+        if not logo_path and 'logo' in request.FILES:
             logo_path = save_uploaded_file(request.FILES['logo'])
 
+        design_options = data.get('design_options', '{}')
         output_path = generate_qr_code(
-            text,
-            fg_color=fg_color,
-            bg_color=bg_color,
-            style=style,
-            eye_style=eye_style,
-            ball_style=ball_style,
-            logo_path=logo_path,
-            output_format=output_format,
+            text, fg_color=fg_color, bg_color=bg_color,
+            style=style, eye_style=eye_style, ball_style=ball_style,
+            logo_path=logo_path, output_format=output_format,
+            design_options=design_options
         )
 
-        if logo_path and os.path.exists(logo_path):
-            try:
-                os.remove(logo_path)
-            except OSError:
-                pass
+        if logo_path and os.path.exists(logo_path) and 'temp' in logo_path:
+            try: os.remove(logo_path)
+            except: pass
 
         ct = 'image/png'
-        if output_format.lower() in ('jpg', 'jpeg'):
-            ct = 'image/jpeg'
-        elif output_format.lower() == 'svg':
-            ct = 'image/svg+xml'
-
+        if output_format.lower() in ('jpg', 'jpeg'): ct = 'image/jpeg'
+        elif output_format.lower() == 'svg': ct = 'image/svg+xml'
         return create_cleanup_response(output_path, content_type=ct)
     except Exception as e:
         return JsonResponse({'error': str(e)}, status=500)

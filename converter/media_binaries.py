@@ -133,23 +133,6 @@ def resolve_ffmpeg_paths(base_dir: Path | None = None) -> tuple[str | None, str 
     return ffmpeg_path, ffprobe_path
 
 
-def configure_pydub(ffmpeg_path: str | None, ffprobe_path: str | None) -> None:
-    if not ffmpeg_path:
-        return
-    from pydub import AudioSegment  # type: ignore
-
-    bin_dir = str(Path(ffmpeg_path).parent)
-    current_path = os.environ.get("PATH", "")
-    path_parts = current_path.split(os.pathsep) if current_path else []
-    if bin_dir not in path_parts:
-        os.environ["PATH"] = bin_dir + os.pathsep + current_path if current_path else bin_dir
-
-    AudioSegment.converter = ffmpeg_path
-    AudioSegment.ffmpeg = ffmpeg_path
-    if ffprobe_path:
-        AudioSegment.ffprobe = ffprobe_path
-
-
 def configure_moviepy(ffmpeg_path: str | None) -> None:
     if not ffmpeg_path:
         return
@@ -160,11 +143,10 @@ def configure_moviepy(ffmpeg_path: str | None) -> None:
 @lru_cache(maxsize=1)
 def ensure_ffmpeg_configured() -> tuple[str | None, str | None]:
     """
-    Resolve FFmpeg paths once per process and configure both Pydub and MoviePy.
+    Resolve FFmpeg paths once per process and configure MoviePy.
     Safe to call multiple times.
     """
     ffmpeg_path, ffprobe_path = resolve_ffmpeg_paths()
     configure_moviepy(ffmpeg_path)
-    configure_pydub(ffmpeg_path, ffprobe_path)
     return ffmpeg_path, ffprobe_path
 

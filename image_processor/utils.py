@@ -6,7 +6,6 @@ import tempfile
 from pathlib import Path
 from PIL import Image, ImageFilter, ImageEnhance, ImageDraw, ImageFont
 import numpy as np
-import cv2
 
 from converter.media_binaries import ensure_ffmpeg_configured
 

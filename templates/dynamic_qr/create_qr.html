@@ -5,16 +5,16 @@
 
 {% block dqr_style %}
     /* Layout */
-    .create-grid { display: grid; grid-template-columns: 1fr 320px; gap: 32px; }
+    .create-grid { display: grid; grid-template-columns: 1fr 340px; gap: 32px; align-items: start; }
     @media (max-width: 1200px) { .create-grid { grid-template-columns: 1fr; } }
 
     /* Category Navigation */
     .cat-nav {
-        display: flex; gap: 6px; margin-bottom: 24px; padding-bottom: 8px;
+        display: flex; gap: 8px; margin-bottom: 24px; padding-bottom: 8px;
         overflow-x: auto; white-space: nowrap; scrollbar-width: none;
     }
     .cat-btn {
-        padding: 8px 16px; background: white; border: 1px solid #f1f5f9;
+        padding: 10px 20px; background: white; border: 1px solid #f1f5f9;
         border-radius: 99px; font-size: 11px; font-weight: 800; color: #64748b;
         transition: 0.3s; cursor: pointer;
     }
@@ -22,80 +22,158 @@
     .cat-btn.active { background: #6366f1; color: white; border-color: #6366f1; box-shadow: 0 10px 20px -5px rgba(99, 102, 241, 0.3); }
 
     /* Type Tiles */
-    .types-container { margin-bottom: 32px; }
     .types-grid {
-        display: grid; grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
-        gap: 10px; transition: 0.3s;
+        display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        gap: 12px; margin-bottom: 32px;
     }
     .type-tile {
-        background: white; border: 2px solid #f1f5f9; border-radius: 16px;
-        padding: 12px 8px; text-align: center; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        background: white; border: 2px solid #f1f5f9; border-radius: 20px;
+        padding: 16px 10px; text-align: center; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
         cursor: pointer; position: relative;
     }
     .type-tile:hover { transform: translateY(-4px); border-color: #6366f1; box-shadow: 0 10px 20px -10px rgba(0,0,0,0.05); }
     .type-tile.active { border-color: #6366f1; background: #fcfdfe; }
     .type-tile.active::after {
-        content: '\2713'; position: absolute; top: 8px; right: 8px;
-        width: 16px; height: 16px; background: #6366f1; color: white;
-        border-radius: 50%; font-size: 8px; display: flex; align-items: center; justify-content: center;
+        content: '\2713'; position: absolute; top: 10px; right: 10px;
+        width: 18px; height: 18px; background: #6366f1; color: white;
+        border-radius: 50%; font-size: 9px; display: flex; align-items: center; justify-content: center;
     }
-    
-    .tile-icon {
-        width: 36px; height: 36px; margin: 0 auto 10px;
-        display: flex; align-items: center; justify-content: center;
-        border-radius: 12px; transition: 0.3s;
-    }
-    .tile-icon i { width: 18px; height: 18px; }
+    .tile-icon { width: 44px; height: 44px; margin: 0 auto 12px; display: flex; align-items: center; justify-content: center; border-radius: 14px; }
     .type-tile.active .tile-icon { background: #6366f1 !important; color: white !important; }
-    .tile-label { font-size: 10.5px; font-weight: 800; color: #1e293b; line-height: 1.2; display: block; }
+    .tile-label { font-size: 11px; font-weight: 800; color: #1e293b; line-height: 1.2; }
 
-    /* Form Card */
+    /* Cards */
     .form-card {
-        background: white; border-radius: 20px; border: 1px solid #f1f5f9;
-        padding: 24px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.01);
+        background: white; border-radius: 24px; border: 1px solid #f1f5f9;
+        padding: 32px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.01);
+        margin-bottom: 32px;
     }
-    .form-group label { display: block; font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; color: #94a3b8; margin-bottom: 8px; }
+    .form-group label { display: block; font-size: 10px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em; color: #94a3b8; margin-bottom: 10px; }
     .form-input {
-        width: 100%; height: 48px; background: #f8fafc; border: 1px solid #f1f5f9;
-        border-radius: 12px; padding: 0 16px; font-size: 14px; font-weight: 600;
+        width: 100%; height: 52px; background: #f8fafc; border: 1px solid #f1f5f9;
+        border-radius: 14px; padding: 0 18px; font-size: 15px; font-weight: 600;
         transition: 0.3s;
     }
     .form-input:focus { background: white; border-color: #6366f1; outline: none; box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1); }
 
-    /* Live Preview */
+    /* Customization Tabs */
+    .design-tabs { display: flex; gap: 4px; background: #f1f5f9; padding: 4px; border-radius: 14px; margin-bottom: 24px; overflow-x: auto; }
+    .design-tab {
+        flex: 1; min-width: 100px; padding: 10px; text-align: center; font-size: 11px; font-weight: 800;
+        border-radius: 10px; cursor: pointer; transition: 0.3s; color: #64748b;
+    }
+    .design-tab.active { background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: white; box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.3); }
+
+    /* Pattern Grids */
+    .pattern-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 10px; }
+    .pattern-item {
+        aspect-ratio: 1; border: 2px solid #f1f5f9; border-radius: 12px; cursor: pointer;
+        display: flex; align-items: center; justify-content: center; background: white; transition: 0.3s;
+        padding: 8px; position: relative;
+    }
+    .pattern-item:hover { border-color: #6366f1; background: #f8fafc; }
+    .pattern-item.active { border-color: #6366f1; background: #f5f3ff; }
+    .pattern-item.active::after {
+        content: '\2713'; position: absolute; top: 4px; right: 4px;
+        width: 12px; height: 12px; background: #6366f1; color: white;
+        border-radius: 50%; font-size: 7px; display: flex; align-items: center; justify-content: center;
+    }
+    .pattern-svg { width: 100%; height: 100%; color: #1e293b; }
+
+    /* Frame Grid */
+    .frame-cat-title { font-size: 12px; font-weight: 900; color: #1e293b; margin: 24px 0 12px; display: flex; align-items: center; justify-content: space-between; }
+    .frame-toggle i { transition: 0.3s; }
+    .frame-toggle.collapsed i { transform: rotate(-90deg); }
+    .frame-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 12px; }
+    .frame-item {
+        aspect-ratio: 0.8; border: 2px solid #f1f5f9; border-radius: 14px; cursor: pointer;
+        background: #f8fafc; transition: 0.3s; overflow: hidden; position: relative;
+    }
+    .frame-item:hover { border-color: #6366f1; transform: scale(1.05); }
+    .frame-item.active { border-color: #6366f1; background: #fff; }
+    .frame-thumb { width: 100%; height: 100%; object-fit: contain; padding: 10px; }
+
+    /* Color Pickers */
+    .color-row { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
+    .color-input-wrapper { display: flex; align-items: center; gap: 12px; flex: 1; }
+    .color-picker { width: 52px; height: 52px; border: none; border-radius: 14px; cursor: pointer; padding: 0; background: none; }
+
+    /* Logo Section */
+    .logo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(50px, 1fr)); gap: 10px; margin-bottom: 20px; }
+    .logo-item {
+        aspect-ratio: 1; border: 2px solid #f1f5f9; border-radius: 12px; cursor: pointer;
+        display: flex; align-items: center; justify-content: center; background: white; transition: 0.3s; padding: 8px;
+    }
+    .logo-item:hover { border-color: #6366f1; }
+    .logo-item.active { border-color: #6366f1; box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1); }
+    .logo-item img { width: 100%; height: 100%; object-fit: contain; }
+
+    /* Button Styles */
+    .btn-upload {
+        width: 100%; padding: 14px; background: #f1f5f9; color: #475569; border: 2px dashed #e2e8f0;
+        border-radius: 14px; font-size: 13px; font-weight: 800; cursor: pointer; transition: 0.3s;
+        display: flex; align-items: center; justify-content: center; gap: 10px;
+    }
+    .btn-upload:hover { background: #f8fafc; border-color: #6366f1; color: #6366f1; }
+
+    /* Preview Sidebar */
     .preview-card {
-        position: sticky; top: 100px; background: #0f172a; border-radius: 32px;
-        padding: 32px; text-align: center; color: white;
+        position: sticky; top: 100px; background: #0f172a; border-radius: 36px;
+        padding: 40px; text-align: center; color: white; box-shadow: 0 40px 100px -20px rgba(15, 23, 42, 0.4);
     }
     .qr-vessel {
-        width: 100%; aspect-ratio: 1; background: white; border-radius: 24px;
-        margin-bottom: 24px; display: flex; align-items: center; justify-content: center;
-        padding: 20px; position: relative;
+        width: 100%; aspect-ratio: 1; background: white; border-radius: 28px;
+        margin-bottom: 32px; display: flex; align-items: center; justify-content: center;
+        padding: 24px; position: relative; overflow: hidden;
     }
     .qr-vessel img { width: 100%; height: 100%; object-fit: contain; }
 
     .btn-create {
-        width: 100%; height: 56px; background: #6366f1; color: white; border-radius: 16px;
-        font-size: 14px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.1em;
-        display: flex; align-items: center; justify-content: center; gap: 10px;
-        box-shadow: 0 10px 25px rgba(99, 102, 241, 0.2); transition: all 0.3s;
+        width: 100%; height: 64px; background: #6366f1; color: white; border-radius: 18px;
+        font-size: 15px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em;
+        display: flex; align-items: center; justify-content: center; gap: 12px;
+        box-shadow: 0 10px 30px rgba(99, 102, 241, 0.3); transition: all 0.3s;
     }
-    .btn-create:hover { background: #4f46e5; transform: translateY(-2px); box-shadow: 0 15px 35px rgba(99, 102, 241, 0.3); }
-    .btn-create:disabled { opacity: 0.5; cursor: not-allowed; }
+    .btn-create:hover { background: #4f46e5; transform: translateY(-3px); box-shadow: 0 20px 40px rgba(99, 102, 241, 0.4); }
+    .btn-create:disabled { opacity: 0.4; cursor: not-allowed; transform: none; }
+
+    /* Cropper Modal */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 1000; display: none; align-items: center; justify-content: center; padding: 20px; }
+    .modal-content { background: white; border-radius: 24px; width: 100%; max-width: 600px; padding: 32px; }
+    .cropper-container { width: 100%; aspect-ratio: 1; background: #f1f5f9; border-radius: 16px; overflow: hidden; margin-bottom: 24px; }
+    #crop-image { max-width: 100%; }
+
+    /* Switch */
+    .switch-group { display: flex; align-items: center; gap: 12px; }
+    .switch { position: relative; width: 44px; height: 24px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .slider { position: absolute; inset: 0; background: #e2e8f0; border-radius: 34px; cursor: pointer; transition: .4s; }
+    .slider:before { content: ""; position: absolute; height: 18px; width: 18px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: .4s; }
+    input:checked + .slider { background: #6366f1; }
+    input:checked + .slider:before { transform: translateX(20px); }
+
+    .ec-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+    .ec-option {
+        padding: 12px 8px; border: 1px solid #f1f5f9; border-radius: 12px; text-align: center; cursor: pointer; transition: 0.3s;
+    }
+    .ec-option:hover { border-color: #6366f1; }
+    .ec-option.active { background: #f5f3ff; border-color: #6366f1; }
+    .ec-name { display: block; font-size: 11px; font-weight: 800; color: #1e293b; }
+    .ec-desc { display: block; font-size: 8px; color: #94a3b8; margin-top: 4px; }
 {% endblock %}
 
 {% block dqr_content %}
-    <div class="mb-8">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+    
+    <div class="mb-10">
         <h1 class="text-3xl font-black text-slate-900 tracking-tight">Generate Dynamic Content</h1>
         <p class="text-slate-500 font-bold mt-1 text-sm">Pick your engine, then customize your high-end dynamic QR asset.</p>
     </div>
 
-    <!-- Category Nav -->
     <div class="cat-nav">
         <div class="cat-btn active" data-cat="all">All Engines</div>
         <div class="cat-btn" data-cat="basic">Basic & Connect</div>
         <div class="cat-btn" data-cat="social">Social Media</div>
-        <div class="cat-btn" data-cat="files">Files & Assets</div>
         <div class="cat-btn" data-cat="business">Business & Pay</div>
         <div class="cat-btn" data-cat="platforms">Cloud Platforms</div>
         <div class="cat-btn" data-cat="comm">Comm & Utility</div>
@@ -103,80 +181,199 @@
 
     <form id="create-qr-form" enctype="multipart/form-data">
         <div class="create-grid">
-            <!-- Main Content Area -->
-            <div class="space-y-10">
-                <!-- Step 1: Select Type -->
-                <div class="types-container">
-                    <div id="types-grid" class="types-grid">
-                        <!-- Types will be injected here via JS for cleaner grouping -->
-                    </div>
-                </div>
+            <div class="space-y-8">
+                <!-- Engine Selection -->
+                <div class="types-grid" id="types-grid"></div>
 
-                <!-- Step 2: Content Fields -->
+                <!-- Content Fields -->
                 <div class="form-card">
-                    <div class="flex items-center gap-4 mb-6 border-b border-slate-50 pb-4">
-                        <div class="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center">
-                            <i data-lucide="edit" class="w-5 h-5"></i>
+                    <div class="flex items-center gap-4 mb-8 border-b border-slate-50 pb-6">
+                        <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center">
+                            <i data-lucide="edit-3" class="w-6 h-6"></i>
                         </div>
                         <div>
-                            <h3 class="text-lg font-black text-slate-900">Define Content</h3>
-                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5" id="type-indicator">Current Selection: URL</p>
+                            <h3 class="text-xl font-black text-slate-900">Define Content</h3>
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5" id="type-indicator">Selection: URL</p>
                         </div>
                     </div>
 
-                    <div class="space-y-6">
+                    <div class="space-y-8">
                         <div class="form-group">
                             <label>Friendly Name / Alias</label>
                             <input type="text" name="qr_name" class="form-input" placeholder="e.g., Summer Campaign PDF" required>
                         </div>
-
-                        <!-- Dynamic Fields Container -->
-                        <div id="dynamic-fields" class="space-y-6">
-                            <!-- Field inputs will appear here based on selected type -->
-                        </div>
+                        <div id="dynamic-fields" class="space-y-8"></div>
                     </div>
                 </div>
 
-                <!-- Step 3: Visual Design -->
+                <!-- Design & Customization -->
                 <div class="form-card">
-                    <div class="flex items-center gap-4 mb-6 border-b border-slate-50 pb-4">
-                        <div class="w-10 h-10 bg-indigo-50 text-indigo-600 rounded-xl flex items-center justify-center">
-                            <i data-lucide="palette" class="w-5 h-5"></i>
+                    <div class="flex items-center gap-4 mb-8 border-b border-slate-50 pb-6">
+                        <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center">
+                            <i data-lucide="palette" class="w-6 h-6"></i>
                         </div>
                         <div>
-                            <h3 class="text-lg font-black text-slate-900">Branding & Style</h3>
-                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Customize appearance</p>
+                            <h3 class="text-xl font-black text-slate-900">Visual Styling</h3>
+                            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">Customize your asset</p>
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div class="form-group">
-                            <label>Foreground Color</label>
-                            <div class="flex items-center gap-4">
-                                <input type="color" name="fg_color" value="#000000" class="w-12 h-12 border-none rounded-xl cursor-pointer">
-                                <input type="text" id="fg-text" class="form-input" value="#000000" placeholder="#000000">
+                    <div class="design-tabs">
+                        <div class="design-tab active" data-tab="patterns">Patterns</div>
+                        <div class="design-tab" data-tab="frames">Frames</div>
+                        <div class="design-tab" data-tab="colors">Colors</div>
+                        <div class="design-tab" data-tab="logo">Logo</div>
+                        <div class="design-tab" data-tab="text">Additional Text</div>
+                    </div>
+
+                    <!-- Patterns View -->
+                    <div class="design-view" id="view-patterns">
+                        <div class="space-y-8">
+                            <div>
+                                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-4">Body Pattern</label>
+                                <div class="pattern-grid" id="body-patterns"></div>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div>
+                                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-4">External Eye</label>
+                                    <div class="pattern-grid" id="eye-patterns"></div>
+                                </div>
+                                <div>
+                                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-4">Internal Eye (Ball)</label>
+                                    <div class="pattern-grid" id="ball-patterns"></div>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-4">Scannability Level (ECC)</label>
+                                <div class="ec-grid">
+                                    <div class="ec-option active" data-ec="H">
+                                        <span class="ec-name">Best</span>
+                                        <span class="ec-desc">30% Damage Resist</span>
+                                    </div>
+                                    <div class="ec-option" data-ec="Q">
+                                        <span class="ec-name">High</span>
+                                        <span class="ec-desc">25% Damage Resist</span>
+                                    </div>
+                                    <div class="ec-option" data-ec="M">
+                                        <span class="ec-name">Medium</span>
+                                        <span class="ec-desc">15% Damage Resist</span>
+                                    </div>
+                                    <div class="ec-option" data-ec="L">
+                                        <span class="ec-name">Smallest</span>
+                                        <span class="ec-desc">7% Damage Resist</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                        <div class="form-group">
-                            <label>Background Color</label>
-                            <div class="flex items-center gap-4">
-                                <input type="color" name="bg_color" value="#ffffff" class="w-12 h-12 border-none rounded-xl cursor-pointer">
-                                <input type="text" id="bg-text" class="form-input" value="#ffffff" placeholder="#ffffff">
+                    </div>
+
+                    <!-- Frames View -->
+                    <div class="design-view hidden" id="view-frames">
+                        <div id="frames-container"></div>
+                    </div>
+
+                    <!-- Colors View -->
+                    <div class="design-view hidden" id="view-colors">
+                        <div class="space-y-8">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div class="form-group">
+                                    <label>Foreground Color</label>
+                                    <div class="color-row">
+                                        <input type="color" id="fg-picker" value="#000000" class="color-picker">
+                                        <input type="text" name="fg_color" id="fg-text" class="form-input" value="#000000">
+                                    </div>
+                                </div>
+                                <div class="form-group">
+                                    <label>Background Color</label>
+                                    <div class="color-row">
+                                        <input type="color" id="bg-picker" value="#ffffff" class="color-picker">
+                                        <input type="text" name="bg_color" id="bg-text" class="form-input" value="#ffffff">
+                                    </div>
+                                    <div class="switch-group mt-2">
+                                        <label class="switch">
+                                            <input type="checkbox" id="bg-transparent-toggle">
+                                            <span class="slider"></span>
+                                        </label>
+                                        <span class="text-[11px] font-bold text-slate-500">Transparent Background</span>
+                                    </div>
+                                </div>
                             </div>
                         </div>
-                        <div class="form-group">
-                            <label>Body Style</label>
-                            <select name="body_style" class="form-input">
-                                <option value="square">Square</option>
-                                <option value="rounded">Rounded</option>
-                                <option value="extra-rounded">Extra Rounded</option>
-                                <option value="dots">Dots</option>
-                                <option value="classy">Classy</option>
-                            </select>
+                    </div>
+
+                    <!-- Logo View -->
+                    <div class="design-view hidden" id="view-logo">
+                        <div class="space-y-8">
+                            <div>
+                                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-4">Preset Brand Logos</label>
+                                <div class="logo-grid" id="preset-logos"></div>
+                            </div>
+                            
+                            <div class="p-6 bg-slate-50 rounded-2xl border border-slate-100">
+                                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-4">Upload Custom Logo</label>
+                                <button type="button" class="btn-upload" onclick="document.getElementById('logo-upload').click()">
+                                    <i data-lucide="upload-cloud" class="w-5 h-5"></i>
+                                    Select & Crop Image
+                                </button>
+                                <input type="file" id="logo-upload" class="hidden" accept="image/*">
+                                <p class="text-[9px] text-slate-400 mt-3 text-center uppercase tracking-widest font-bold">Suggested: Square PNG, Transparent</p>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div class="form-group">
+                                    <label>Logo Size</label>
+                                    <input type="range" id="logo-size-range" min="0.1" max="0.35" step="0.01" value="0.22" class="w-100 h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-indigo-600">
+                                </div>
+                                <div class="space-y-4 pt-4">
+                                    <div class="switch-group">
+                                        <label class="switch">
+                                            <input type="checkbox" id="logo-background-toggle" checked>
+                                            <span class="slider"></span>
+                                        </label>
+                                        <span class="text-[11px] font-bold text-slate-500">Logo Background Box</span>
+                                    </div>
+                                    <div class="switch-group">
+                                        <label class="switch">
+                                            <input type="checkbox" id="logo-circular-toggle" checked>
+                                            <span class="slider"></span>
+                                        </label>
+                                        <span class="text-[11px] font-bold text-slate-500">Circular Shape (Recommended)</span>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="form-group">
-                            <label>Center Logo (Optional)</label>
-                            <input type="file" name="logo" class="form-input py-3" accept="image/*">
+                    </div>
+
+                    <!-- Text View -->
+                    <div class="design-view hidden" id="view-text">
+                        <div class="space-y-8">
+                            <div class="form-group">
+                                <label>Branding Text (Bottom)</label>
+                                <input type="text" id="frame-text-input" class="form-input" placeholder="e.g., Scan to Explore">
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div class="form-group">
+                                    <label>Font</label>
+                                    <select id="text-font" class="form-input">
+                                        <option value="arial.ttf">Arial</option>
+                                        <option value="roboto.ttf">Roboto</option>
+                                        <option value="outfit.ttf">Outfit</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label>Text Color</label>
+                                    <input type="color" id="text-color" value="#000000" class="color-picker w-full">
+                                </div>
+                                <div class="form-group">
+                                    <label>Font Size</label>
+                                    <select id="text-size" class="form-input">
+                                        <option value="auto">Auto</option>
+                                        <option value="30">Small</option>
+                                        <option value="45">Medium</option>
+                                        <option value="60">Large</option>
+                                    </select>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -185,7 +382,7 @@
             <!-- Preview Sidebar -->
             <div class="space-y-6">
                 <div class="preview-card">
-                    <h4 class="text-[10px] font-black uppercase tracking-[0.2em] mb-6 text-indigo-400">Production Preview</h4>
+                    <h4 class="text-[10px] font-black uppercase tracking-[0.2em] mb-8 text-indigo-400">Production Asset Preview</h4>
                     <div class="qr-vessel">
                         <img id="qr-preview-img" src="{% url 'dynamic_qr:generate_image' %}?text=https://scanpdf.com&fg_color=%23000000&bg_color=%23ffffff&style=square" alt="QR Preview">
                     </div>
@@ -196,248 +393,481 @@
                     </button>
                     
                     <p class="mt-8 text-[11px] font-bold text-slate-500 uppercase tracking-widest leading-loose">
-                        Scan current status to test logic.<br>Tracking active on production.
+                        Scan preview to test logic.<br>Tracking active on production.
                     </p>
                 </div>
             </div>
         </div>
         
-        <!-- Hidden Inputs for logic -->
         <input type="hidden" name="qr_type" id="selected-type" value="url">
+        <input type="hidden" name="design_options" id="design-options-input">
+        <input type="hidden" name="logo_cropped" id="logo-cropped-data">
     </form>
+
+    <!-- Cropper Modal -->
+    <div class="modal-overlay" id="cropper-modal">
+        <div class="modal-content">
+            <h3 class="text-xl font-black text-slate-900 mb-6">Crop Your Logo</h3>
+            <div class="cropper-container">
+                <img id="crop-image" src="">
+            </div>
+            <div class="flex gap-4">
+                <button type="button" class="flex-1 h-14 bg-slate-100 text-slate-600 rounded-xl font-bold" onclick="closeCropper()">Cancel</button>
+                <button type="button" class="flex-1 h-14 bg-indigo-600 text-white rounded-xl font-black uppercase tracking-widest" onclick="applyCrop()">Apply & Use</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 {% endblock %}
 
 {% block dqr_scripts %}
-const QR_ENGINES = [
-    { id: 'url', label: 'URL / Link', icon: 'link', cat: 'basic', color: '#6366f1', bg: '#f5f3ff' },
-    { id: 'text', label: 'Plain Text', icon: 'type', cat: 'basic', color: '#64748b', bg: '#f1f5f9' },
-    { id: 'wifi', label: 'Wi-Fi', icon: 'wifi', cat: 'basic', color: '#0ea5e9', bg: '#f0f9ff' },
-    { id: 'location', label: 'Location', icon: 'map-pin', cat: 'basic', color: '#f43f5e', bg: '#fff1f2' },
+    const QR_ENGINES = [
+        { id: 'url', label: 'URL / Link', icon: 'link', cat: 'basic', color: '#6366f1', bg: '#f5f3ff' },
+        { id: 'text', label: 'Plain Text', icon: 'type', cat: 'basic', color: '#64748b', bg: '#f1f5f9' },
+        { id: 'wifi', label: 'Wi-Fi', icon: 'wifi', cat: 'basic', color: '#0ea5e9', bg: '#f0f9ff' },
+        { id: 'location', label: 'Location', icon: 'map-pin', cat: 'basic', color: '#f43f5e', bg: '#fff1f2' },
+        { id: 'whatsapp', label: 'WhatsApp', icon: 'message-circle', cat: 'social', color: '#22c55e', bg: '#f0fdf4' },
+        { id: 'youtube', label: 'YouTube', icon: 'youtube', cat: 'social', color: '#ef4444', bg: '#fef2f2' },
+        { id: 'facebook', label: 'Facebook', icon: 'facebook', cat: 'social', color: '#3b82f6', bg: '#eff6ff' },
+        { id: 'instagram', label: 'Instagram', icon: 'instagram', cat: 'social', color: '#d946ef', bg: '#fdf4ff' },
+        { id: 'telegram', label: 'Telegram', icon: 'send', cat: 'social', color: '#0ea5e9', bg: '#f0f9ff' },
+        { id: 'tiktok', label: 'TikTok', icon: 'music', cat: 'social', color: '#000000', bg: '#f8fafc' },
+        { id: 'x-twitter', label: 'X / Twitter', icon: 'twitter', cat: 'social', color: '#000000', bg: '#f8fafc' },
+        { id: 'snapchat', label: 'Snapchat', icon: 'ghost', cat: 'social', color: '#eab308', bg: '#fefce8' },
+        { id: 'pinterest', label: 'Pinterest', icon: 'layout-grid', cat: 'social', color: '#ef4444', bg: '#fef2f2' },
+        { id: 'linkedin', label: 'LinkedIn', icon: 'linkedin', cat: 'social', color: '#2563eb', bg: '#eff6ff' },
+        { id: 'google-review', label: 'Google Review', icon: 'star', cat: 'business', color: '#f59e0b', bg: '#fffbe3' },
+        { id: 'google-forms', label: 'Google Forms', icon: 'clipboard-list', cat: 'platforms', color: '#8b5cf6', bg: '#f5f3ff' },
+        { id: 'google-doc', label: 'Google Doc', icon: 'file-text', cat: 'platforms', color: '#3b82f6', bg: '#eff6ff' },
+        { id: 'email', label: 'Email', icon: 'mail', cat: 'comm', color: '#6366f1', bg: '#f5f3ff' },
+        { id: 'phone', label: 'Phone Call', icon: 'phone', cat: 'comm', color: '#10b981', bg: '#ecfdf5' },
+        { id: 'sms', label: 'SMS', icon: 'message-square', cat: 'comm', color: '#6366f1', bg: '#f5f3ff' },
+        { id: 'vcard', label: 'vCard', icon: 'user-circle-2', cat: 'comm', color: '#64748b', bg: '#f1f5f9' },
+        { id: 'calendar', label: 'Calendar', icon: 'calendar', cat: 'comm', color: '#ef4444', bg: '#fef2f2' },
+        { id: 'link-list', label: 'List of Links', icon: 'layers', cat: 'comm', color: '#8b5cf6', bg: '#f5f3ff' },
+        { id: 'custom-url', label: 'Custom URL', icon: 'external-link', cat: 'comm', color: '#64748b', bg: '#f1f5f9' },
+    ];
 
-    { id: 'whatsapp', label: 'WhatsApp', icon: 'message-circle', cat: 'social', color: '#22c55e', bg: '#f0fdf4' },
-    { id: 'youtube', label: 'YouTube', icon: 'youtube', cat: 'social', color: '#ef4444', bg: '#fef2f2' },
-    { id: 'facebook', label: 'Facebook', icon: 'facebook', cat: 'social', color: '#3b82f6', bg: '#eff6ff' },
-    { id: 'instagram', label: 'Instagram', icon: 'instagram', cat: 'social', color: '#d946ef', bg: '#fdf4ff' },
-    { id: 'telegram', label: 'Telegram', icon: 'send', cat: 'social', color: '#0ea5e9', bg: '#f0f9ff' },
-    { id: 'tiktok', label: 'TikTok', icon: 'music', cat: 'social', color: '#000000', bg: '#f8fafc' },
-    { id: 'x-twitter', label: 'X / Twitter', icon: 'twitter', cat: 'social', color: '#000000', bg: '#f8fafc' },
-    { id: 'snapchat', label: 'Snapchat', icon: 'ghost', cat: 'social', color: '#eab308', bg: '#fefce8' },
-    { id: 'pinterest', label: 'Pinterest', icon: 'layout-grid', cat: 'social', color: '#ef4444', bg: '#fef2f2' },
-    { id: 'linkedin', label: 'LinkedIn', icon: 'linkedin', cat: 'social', color: '#2563eb', bg: '#eff6ff' },
-
-    { id: 'pdf', label: 'PDF File', icon: 'file-text', cat: 'files', color: '#ef4444', bg: '#fef2f2' },
-    { id: 'audio', label: 'Audio / MP3', icon: 'headphones', cat: 'files', color: '#8b5cf6', bg: '#f5f3ff' },
-    { id: 'video', label: 'Video / MP4', icon: 'monitor-play', cat: 'files', color: '#ec4899', bg: '#fdf2f8' },
-    { id: 'image', label: 'Image', icon: 'image', cat: 'files', color: '#10b981', bg: '#ecfdf5' },
-    { id: 'word', label: 'Word Doc', icon: 'file-text', cat: 'files', color: '#10b981', bg: '#ecfdf5' },
-    { id: 'excel', label: 'Excel Sheet', icon: 'file-spreadsheet', cat: 'files', color: '#10b981', bg: '#ecfdf5' },
-    { id: 'pptx', label: 'PowerPoint', icon: 'presentation', cat: 'files', color: '#10b981', bg: '#ecfdf5' },
-
-    { id: 'google-review', label: 'Google Review', icon: 'star', cat: 'business', color: '#f59e0b', bg: '#fffbe3' },
-    { id: 'play-market', label: 'Play Market', icon: 'play-circle', cat: 'business', color: '#10b981', bg: '#ecfdf5' },
-    { id: 'app-store', label: 'App Store', icon: 'smartphone', cat: 'business', color: '#64748b', bg: '#f1f5f9' },
-    { id: 'paypal', label: 'PayPal', icon: 'wallet', cat: 'business', color: '#1d4ed8', bg: '#ebf5ff' },
-    { id: 'amazon', label: 'Amazon', icon: 'shopping-cart', cat: 'business', color: '#ff9900', bg: '#fff7e6' },
-    { id: 'venmo', label: 'Venmo', icon: 'dollar-sign', cat: 'business', color: '#3d95ce', bg: '#eefaff' },
-    { id: 'upi', label: 'UPI Pay', icon: 'credit-card', cat: 'business', color: '#6739b7', bg: '#f2e8ff' },
-    { id: 'crypto', label: 'Crypto', icon: 'bitcoin', cat: 'business', color: '#f7931a', bg: '#fff9f2' },
-
-    { id: 'google-forms', label: 'Google Forms', icon: 'clipboard-list', cat: 'platforms', color: '#8b5cf6', bg: '#f5f3ff' },
-    { id: 'google-doc', label: 'Google Doc', icon: 'file-text', cat: 'platforms', color: '#3b82f6', bg: '#eff6ff' },
-    { id: 'spotify', label: 'Spotify', icon: 'disc', cat: 'platforms', color: '#1ed760', bg: '#e8fdf0' },
-    { id: 'office-365', label: 'Office 365', icon: 'box', cat: 'platforms', color: '#d83b01', bg: '#fff1ed' },
-
-    { id: 'email', label: 'Email', icon: 'mail', cat: 'comm', color: '#6366f1', bg: '#f5f3ff' },
-    { id: 'phone', label: 'Phone Call', icon: 'phone', cat: 'comm', color: '#10b981', bg: '#ecfdf5' },
-    { id: 'sms', label: 'SMS', icon: 'message-square', cat: 'comm', color: '#6366f1', bg: '#f5f3ff' },
-    { id: 'vcard', label: 'vCard', icon: 'user-circle-2', cat: 'comm', color: '#64748b', bg: '#f1f5f9' },
-    { id: 'calendar', label: 'Calendar', icon: 'calendar', cat: 'comm', color: '#ef4444', bg: '#fef2f2' },
-    { id: 'link-list', label: 'List of Links', icon: 'layers', cat: 'comm', color: '#8b5cf6', bg: '#f5f3ff' },
-    { id: 'custom-url', label: 'Custom URL', icon: 'external-link', cat: 'comm', color: '#64748b', bg: '#f1f5f9' },
-];
-
-function renderTiles(cat = 'all') {
-    const grid = document.getElementById('types-grid');
-    grid.innerHTML = '';
-    
-    QR_ENGINES.forEach(engine => {
-        if (cat !== 'all' && engine.cat !== cat) return;
-        
-        const tile = document.createElement('div');
-        tile.className = `type-tile ${engine.id === document.getElementById('selected-type').value ? 'active' : ''}`;
-        tile.innerHTML = `
-            <div class="tile-icon" style="background: ${engine.bg}; color: ${engine.color};">
-                <i data-lucide="${engine.icon}"></i>
-            </div>
-            <span class="tile-label">${engine.label}</span>
-        `;
-        tile.onclick = () => selectType(engine.id);
-        grid.appendChild(tile);
-    });
-    lucide.createIcons();
-}
-
-function selectType(type) {
-    document.getElementById('selected-type').value = type;
-    document.getElementById('type-indicator').textContent = `Current Selection: ${type.toUpperCase()}`;
-    document.querySelectorAll('.type-tile').forEach(t => t.classList.remove('active'));
-    renderTiles(document.querySelector('.cat-btn.active').dataset.cat);
-    renderFields(type);
-    validateForm();
-}
-
-function renderFields(type) {
-    const container = document.getElementById('dynamic-fields');
-    container.innerHTML = '';
-
-    const addField = (label, name, type = 'text', placeholder = '', required = true) => {
-        const group = document.createElement('div');
-        group.className = 'form-group';
-        
-        if (type === 'file') {
-             group.innerHTML = `<label>${label}</label><input type="file" name="file_content" class="form-input py-3" required>`;
-        } else if (type === 'textarea') {
-            group.innerHTML = `<label>${label}</label><textarea name="${name}" class="form-input py-4 h-32" placeholder="${placeholder}" ${required ? 'required' : ''}></textarea>`;
-        } else {
-            group.innerHTML = `<label>${label}</label><input type="${type}" name="${name}" class="form-input" placeholder="${placeholder}" ${required ? 'required' : ''}>`;
-        }
-        container.appendChild(group);
+    const BODY_STYLES = ['square', 'rounded', 'circle', 'diamond', 'dot', 'small-square', 'hline', 'vline', 'star', 'cross', 'leaf', 'clover'];
+    const EYE_STYLES = ['square', 'circle', 'rounded', 'diamond', 'leaf'];
+    const BRAND_LOGOS = [
+        { id: 'facebook', domain: 'facebook.com' },
+        { id: 'instagram', domain: 'instagram.com' },
+        { id: 'youtube', domain: 'youtube.com' },
+        { id: 'whatsapp', domain: 'whatsapp.com' },
+        { id: 'linkedin', domain: 'linkedin.com' },
+        { id: 'telegram', domain: 'telegram.org' },
+        { id: 'x', domain: 'x.com' },
+        { id: 'tiktok', domain: 'tiktok.com' },
+        { id: 'snapchat', domain: 'snapchat.com' },
+        { id: 'pinterest', domain: 'pinterest.com' },
+        { id: 'spotify', domain: 'spotify.com' },
+        { id: 'apple', domain: 'apple.com' },
+        { id: 'google', domain: 'google.com' },
+        { id: 'amazon', domain: 'amazon.com' },
+        { id: 'paypal', domain: 'paypal.com' },
+        { id: 'discord', domain: 'discord.com' },
+        { id: 'reddit', domain: 'reddit.com' },
+        { id: 'slack', domain: 'slack.com' },
+        { id: 'github', domain: 'github.com' },
+        { id: 'microsoft', domain: 'microsoft.com' }
+    ];
+    const FRAME_CATEGORIES = {
+        'Standard / Clean': ['std-1', 'std-2', 'std-3', 'std-4', 'std-5'],
+        'Festivals & Events': ['holi', 'brazil', 'thanksgiving', 'harvest'],
+        'Devices & Tech': ['mobile', 'tablet', 'monitor'],
     };
 
-    if (['url', 'youtube', 'facebook', 'instagram', 'tiktok', 'x-twitter', 'snapchat', 'pinterest', 'linkedin', 'google-forms', 'google-doc', 'google-sheets', 'google-review', 'play-market', 'app-store', 'paypal', 'amazon', 'venmo', 'spotify', 'office-365', 'custom-url'].includes(type)) {
-        addField('Target URL / Link', 'destination_url', 'url', 'https://example.com/your-content');
-    } else if (type === 'text') {
-        addField('Plain Text Content', 'text', 'textarea', 'Type your text here...');
-    } else if (type === 'whatsapp' || type === 'telegram') {
-        addField('Phone Number (Optional)', 'phone', 'tel', '+1234567890', false);
-        addField('Message', 'message', 'textarea', 'Type your message...', false);
-    } else if (type === 'phone') {
-        addField('Phone Number', 'phone', 'tel', '+1234567890');
-    } else if (type === 'sms') {
-        addField('Recipient Number', 'phone', 'tel', '+1234567890');
-        addField('Default Message', 'message', 'textarea', 'Hello...');
-    } else if (type === 'email') {
-        addField('Email Address', 'email', 'email', 'user@example.com');
-        addField('Subject', 'subject', 'text', 'QR Inquiry');
-        addField('Message Body', 'body', 'textarea', 'Hello...');
-    } else if (type === 'wifi') {
-        addField('Network Name (SSID)', 'ssid', 'text', 'My WiFi');
-        addField('Password', 'password', 'text', '••••••••');
-        addField('Security', 'encryption', 'text', 'WPA/WPA2');
-    } else if (type === 'location') {
-        addField('Latitude', 'latitude', 'text', '40.7128');
-        addField('Longitude', 'longitude', 'text', '-74.0060');
-    } else if (['pdf', 'audio', 'video', 'image', 'word', 'excel', 'pptx'].includes(type)) {
-        addField(`Select ${type.toUpperCase()} File`, 'file_content', 'file');
-    } else if (type === 'vcard') {
-        addField('First Name', 'first_name', 'text');
-        addField('Last Name', 'last_name', 'text');
-        addField('Organization', 'organization', 'text', '', false);
-        addField('Mobile Phone', 'phone_mobile', 'tel');
-        addField('Email', 'email', 'email');
-    } else if (type === 'link-list') {
-        addField('Link List JSON', 'links', 'textarea', '[{"title": "Website", "url": "https://..."}, ...]');
-    } else if (type === 'upi') {
-        addField('UPI ID', 'upi_id', 'text', 'user@upi');
-        addField('Payee Name', 'name', 'text');
-        addField('Amount (Optional)', 'amount', 'number', '0.00', false);
-    }
-    
-    // Auto-update indicator
-    const inputs = container.querySelectorAll('input, select, textarea');
-    inputs.forEach(input => input.addEventListener('input', validateForm));
-}
+    let cropper = null;
+    let selectedLogoUrl = null;
 
-function validateForm() {
-    const form = document.getElementById('create-qr-form');
-    const submitBtn = document.getElementById('submit-btn');
-    const isValid = form.checkValidity();
-    submitBtn.disabled = !isValid;
-    updatePreview();
-}
-
-async function updatePreview() {
-    const img = document.getElementById('qr-preview-img');
-    const fg = document.querySelector('input[name="fg_color"]').value;
-    const bg = document.querySelector('input[name="bg_color"]').value;
-    const style = document.querySelector('select[name="body_style"]').value;
-    
-    // Determine what would actually be encoded
-    const selectedType = document.getElementById('selected-type').value;
-    let actualContent = "https://scanpdf.com/preview"; // fallback
-    
-    if (['url', 'youtube', 'facebook', 'instagram', 'tiktok', 'x-twitter', 'snapchat', 'pinterest', 'linkedin', 'google-forms', 'google-doc', 'google-sheets', 'google-review', 'play-market', 'app-store', 'paypal', 'amazon', 'venmo', 'spotify', 'office-365', 'custom-url'].includes(selectedType)) {
-        actualContent = document.querySelector('input[name="destination_url"]')?.value || "https://example.com";
-    } else if (selectedType === 'text') {
-        actualContent = document.querySelector('textarea[name="text"]')?.value || "Sample Text";
-    } else if (selectedType === 'wifi') {
-        const ssid = document.querySelector('input[name="ssid"]')?.value || "WiFi";
-        const pass = document.querySelector('input[name="password"]')?.value || "";
-        const enc = document.querySelector('input[name="encryption"]')?.value || "WPA";
-        actualContent = `WIFI:S:${ssid};T:${enc};P:${pass};;`;
-    } else if (selectedType === 'phone') {
-        actualContent = `tel:${document.querySelector('input[name="phone"]')?.value || ""}`;
-    } else if (selectedType === 'sms') {
-        actualContent = `smsto:${document.querySelector('input[name="phone"]')?.value || ""}:${document.querySelector('textarea[name="message"]')?.value || ""}`;
-    }
-
-    const previewUrl = `{% url 'dynamic_qr:generate_image' %}?text=${encodeURIComponent(actualContent)}&fg_color=${encodeURIComponent(fg)}&bg_color=${encodeURIComponent(bg)}&style=${style}`;
-    img.src = previewUrl;
-}
-
-document.querySelectorAll('.cat-btn').forEach(btn => {
-    btn.onclick = () => {
-        document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-        renderTiles(btn.dataset.cat);
-    };
-});
-
-document.getElementById('create-qr-form').onsubmit = async (e) => {
-    e.preventDefault();
-    const formData = new FormData(e.target);
-    
-    // Construct qr_data JSON
-    const dataObj = {};
-    const dynamicFields = document.getElementById('dynamic-fields').querySelectorAll('input, textarea, select');
-    dynamicFields.forEach(field => {
-        if (field.name !== 'file_content') {
-            dataObj[field.name] = field.value;
-        }
-    });
-
-    // Special logic for Social URLs if they were built via fields
-    const selectedType = document.getElementById('selected-type').value;
-    if (selectedType === 'whatsapp' && !formData.get('destination_url')) {
-        const phone = dataObj.phone || '';
-        const msg = encodeURIComponent(dataObj.message || '');
-        formData.set('destination_url', `https://wa.me/${phone}?text=${msg}`);
-    } else if (selectedType === 'telegram' && !formData.get('destination_url')) {
-        const phone = dataObj.phone || '';
-        formData.set('destination_url', `https://t.me/${phone}`);
-    }
-
-    formData.set('qr_data', JSON.stringify(dataObj));
-    
-    try {
-        const response = await fetch('{% url "dynamic_qr:create" %}', {
-            method: 'POST',
-            body: formData,
-            headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+    function init() {
+        renderTypes();
+        renderPatterns();
+        renderFrames();
+        renderPresetLogos();
+        lucide.createIcons();
+        selectType('url');
+        
+        // Tab system
+        document.querySelectorAll('.design-tab').forEach(tab => {
+            tab.onclick = () => {
+                document.querySelectorAll('.design-tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.design-view').forEach(v => v.classList.add('hidden'));
+                tab.classList.add('active');
+                document.getElementById(`view-${tab.dataset.tab}`).classList.remove('hidden');
+            };
         });
-        const result = await response.json();
-        if (result.success) {
-            window.location.href = '{% url "dynamic_qr:dashboard" %}';
-        } else {
-            alert(result.error);
-        }
-    } catch (err) {
-        alert('Creation failed. Please check your data.');
-    }
-};
 
-// Initial Render
-renderTiles();
-selectType('url');
-validateForm();
+        // Color sync
+        document.getElementById('fg-picker').oninput = (e) => {
+            document.getElementById('fg-text').value = e.target.value;
+            updatePreview();
+        };
+        document.getElementById('bg-picker').oninput = (e) => {
+            document.getElementById('bg-text').value = e.target.value;
+            updatePreview();
+        };
+        document.getElementById('fg-text').oninput = (e) => {
+            document.getElementById('fg-picker').value = e.target.value;
+            updatePreview();
+        };
+        document.getElementById('bg-text').oninput = (e) => {
+            document.getElementById('bg-picker').value = e.target.value;
+            updatePreview();
+        };
+
+        // Other design updates
+        ['bg-transparent-toggle', 'logo-size-range', 'logo-background-toggle', 'logo-circular-toggle', 'frame-text-input', 'text-font', 'text-color', 'text-size'].forEach(id => {
+            document.getElementById(id).oninput = updatePreview;
+        });
+
+        document.querySelectorAll('.ec-option').forEach(opt => {
+            opt.onclick = () => {
+                document.querySelectorAll('.ec-option').forEach(o => o.classList.remove('active'));
+                opt.classList.add('active');
+                updatePreview();
+            };
+        });
+
+        // Logo Upload
+        document.getElementById('logo-upload').onchange = (e) => {
+            if (e.target.files && e.target.files[0]) {
+                const reader = new FileReader();
+                reader.onload = (re) => {
+                    openCropper(re.target.result);
+                };
+                reader.readAsDataURL(e.target.files[0]);
+            }
+        };
+    }
+
+    function renderTypes(cat = 'all') {
+        const grid = document.getElementById('types-grid');
+        grid.innerHTML = '';
+        QR_ENGINES.forEach(engine => {
+            if (cat !== 'all' && engine.cat !== cat) return;
+            const tile = document.createElement('div');
+            tile.className = `type-tile ${engine.id === document.getElementById('selected-type').value ? 'active' : ''}`;
+            tile.innerHTML = `<div class="tile-icon" style="background: ${engine.bg}; color: ${engine.color};"><i data-lucide="${engine.icon}"></i></div><span class="tile-label">${engine.label}</span>`;
+            tile.onclick = () => selectType(engine.id);
+            grid.appendChild(tile);
+        });
+        lucide.createIcons();
+    }
+
+    function selectType(type) {
+        document.getElementById('selected-type').value = type;
+        document.getElementById('type-indicator').textContent = `Selection: ${type.toUpperCase()}`;
+        renderTypes(document.querySelector('.cat-btn.active').dataset.cat);
+        renderFields(type);
+        updatePreview();
+    }
+
+    function getPatternIcon(style, type) {
+        let color = '#6366f1'; // Default Indigo
+        if (style === 'square' || style === 'rounded') color = '#6366f1';
+        if (style === 'circle' || style === 'dot') color = '#22c55e'; // Green
+        if (style === 'diamond' || style === 'star') color = '#f59e0b'; // Amber
+        if (style === 'leaf' || style === 'clover') color = '#10b981'; // Emerald
+        if (style === 'hline' || style === 'vline' || style === 'cross') color = '#ef4444'; // Red
+
+        if (type === 'body') {
+            if (style === 'square') return `<rect x="5" y="5" width="14" height="14" fill="${color}" rx="1"/>`;
+            if (style === 'rounded') return `<rect x="5" y="5" width="14" height="14" fill="${color}" rx="4"/>`;
+            if (style === 'circle') return `<circle cx="12" cy="12" r="7" fill="${color}"/>`;
+            if (style === 'diamond') return `<path d="M12 4 L20 12 L12 20 L4 12 Z" fill="${color}"/>`;
+            if (style === 'dot') return `<circle cx="12" cy="12" r="4" fill="${color}"/>`;
+            if (style === 'small-square') return `<rect x="8" y="8" width="8" height="8" fill="${color}"/>`;
+            if (style === 'hline') return `<rect x="4" y="10" width="16" height="4" fill="${color}" rx="1"/>`;
+            if (style === 'vline') return `<rect x="10" y="4" width="4" height="16" fill="${color}" rx="1"/>`;
+            if (style === 'star') return `<path d="M12 4 L14 10 L20 10 L15 14 L17 20 L12 16 L7 20 L9 14 L4 10 L10 10 Z" fill="${color}"/>`;
+            if (style === 'cross') return `<path d="M9 4 H15 V9 H20 V15 H15 V20 H9 V15 H4 V9 H9 Z" fill="${color}"/>`;
+            if (style === 'leaf') return `<path d="M12 4 Q20 4 20 12 Q20 20 12 20 Q4 20 4 12 Q4 4 12 4" fill="${color}"/>`;
+            if (style === 'clover') return `<path d="M12 12 Q12 4 8 4 Q4 4 4 8 Q4 12 12 12 Q20 12 20 16 Q20 20 16 20 Q12 20 12 12 Z" fill="${color}"/>`;
+        } else {
+            if (style === 'square') return `<rect x="4" y="4" width="16" height="16" stroke="${color}" stroke-width="2" fill="none" rx="1"/>`;
+            if (style === 'circle') return `<circle cx="12" cy="12" r="8" stroke="${color}" stroke-width="2" fill="none"/>`;
+            if (style === 'rounded') return `<rect x="4" y="4" width="16" height="16" stroke="${color}" stroke-width="2" fill="none" rx="5"/>`;
+            if (style === 'diamond') return `<path d="M12 4 L20 12 L12 20 L4 12 Z" stroke="${color}" stroke-width="2" fill="none"/>`;
+            if (style === 'leaf') return `<path d="M12 4 Q20 4 20 12 Q20 20 12 20 Q4 20 4 12 Q4 4 12 4" stroke="${color}" stroke-width="2" fill="none"/>`;
+        }
+        return `<rect x="4" y="4" width="16" height="16" fill="${color}" opacity="0.2"/>`;
+    }
+
+    function renderPatterns() {
+        const bodyGrid = document.getElementById('body-patterns');
+        BODY_STYLES.forEach(s => {
+            const item = document.createElement('div');
+            item.className = 'pattern-item ' + (s === 'square' ? 'active' : '');
+            item.dataset.val = s;
+            item.innerHTML = `<svg viewBox="0 0 24 24" class="w-8 h-8">${getPatternIcon(s, 'body')}</svg>`;
+            item.onclick = () => {
+                document.querySelectorAll('#body-patterns .pattern-item').forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+                updatePreview();
+            };
+            bodyGrid.appendChild(item);
+        });
+
+        ['eye-patterns', 'ball-patterns'].forEach(gridId => {
+            const grid = document.getElementById(gridId);
+            const type = gridId.includes('eye') ? 'eye' : 'ball';
+            EYE_STYLES.forEach(s => {
+                const item = document.createElement('div');
+                item.className = 'pattern-item ' + (s === 'square' ? 'active' : '');
+                item.dataset.val = s;
+                item.innerHTML = `<svg viewBox="0 0 24 24" class="w-8 h-8">${getPatternIcon(s, type)}</svg>`;
+                item.onclick = () => {
+                    document.querySelectorAll(`#${gridId} .pattern-item`).forEach(i => i.classList.remove('active'));
+                    item.classList.add('active');
+                    updatePreview();
+                };
+                grid.appendChild(item);
+            });
+        });
+    }
+
+    function renderFrames() {
+        const container = document.getElementById('frames-container');
+        container.innerHTML = '';
+        
+        Object.keys(FRAME_CATEGORIES).forEach((cat, idx) => {
+            const section = document.createElement('div');
+            section.innerHTML = `<div class="frame-cat-title">${cat}</div>`;
+            const grid = document.createElement('div');
+            grid.className = 'frame-grid';
+            
+            if (idx === 0) {
+                const noFrame = document.createElement('div');
+                noFrame.className = 'frame-item active';
+                noFrame.dataset.val = 'none';
+                noFrame.innerHTML = `<div class="frame-thumb bg-slate-50 flex items-center justify-center text-[10px] font-black text-slate-400">NONE</div>`;
+                noFrame.onclick = () => {
+                    document.querySelectorAll('.frame-item').forEach(i => i.classList.remove('active'));
+                    noFrame.classList.add('active');
+                    updatePreview();
+                };
+                grid.appendChild(noFrame);
+            }
+
+            FRAME_CATEGORIES[cat].forEach(f => {
+                const item = document.createElement('div');
+                item.className = 'frame-item';
+                item.dataset.val = f;
+                item.innerHTML = `
+                    <div class="frame-thumb bg-indigo-50/30 flex flex-col items-center justify-center p-2">
+                        <div class="w-full h-12 border-4 border-indigo-200 rounded-lg flex items-center justify-center bg-white">
+                            <i data-lucide="qr-code" class="w-4 h-4 text-indigo-400"></i>
+                        </div>
+                        <span class="text-[8px] font-black text-indigo-900/40 mt-2 uppercase">${f}</span>
+                    </div>
+                `;
+                item.onclick = () => {
+                    document.querySelectorAll('.frame-item').forEach(i => i.classList.remove('active'));
+                    item.classList.add('active');
+                    updatePreview();
+                };
+                grid.appendChild(item);
+            });
+            section.appendChild(grid);
+            container.appendChild(section);
+        });
+        lucide.createIcons();
+    }
+
+    function renderPresetLogos() {
+        const grid = document.getElementById('preset-logos');
+        grid.innerHTML = `<div class="logo-item active" data-val="none"><i data-lucide="slash" class="w-5 h-5 text-slate-300"></i></div>`;
+        BRAND_LOGOS.forEach(brand => {
+            const item = document.createElement('div');
+            item.className = 'logo-item';
+            item.dataset.val = brand.id;
+            item.innerHTML = `<img src="https://www.google.com/s2/favicons?sz=64&domain=${brand.domain}" style="width: 24px; height: 24px; border-radius: 4px;">`;
+            item.onclick = () => {
+                document.querySelectorAll('.logo-item').forEach(i => i.classList.remove('active'));
+                item.classList.add('active');
+                selectedLogoUrl = item.querySelector('img').src;
+                updatePreview();
+            };
+            grid.appendChild(item);
+        });
+        lucide.createIcons();
+    }
+
+    function openCropper(src) {
+        const modal = document.getElementById('cropper-modal');
+        const img = document.getElementById('crop-image');
+        img.src = src;
+        modal.style.display = 'flex';
+        
+        if (cropper) cropper.destroy();
+        cropper = new Cropper(img, {
+            aspectRatio: 1,
+            viewMode: 1,
+            guides: true,
+            background: false,
+        });
+    }
+
+    function closeCropper() {
+        document.getElementById('cropper-modal').style.display = 'none';
+        if (cropper) cropper.destroy();
+    }
+
+    function applyCrop() {
+        const canvas = cropper.getCroppedCanvas({ width: 512, height: 512 });
+        const dataUrl = canvas.toDataURL('image/png');
+        document.getElementById('logo-cropped-data').value = dataUrl;
+        
+        // Add to presets
+        const grid = document.getElementById('preset-logos');
+        const item = document.createElement('div');
+        item.className = 'logo-item active';
+        item.dataset.val = 'custom';
+        item.innerHTML = `<img src="${dataUrl}">`;
+        document.querySelectorAll('.logo-item').forEach(i => i.classList.remove('active'));
+        grid.insertBefore(item, grid.children[1]);
+        
+        selectedLogoUrl = dataUrl;
+        closeCropper();
+        updatePreview();
+    }
+
+    function renderFields(type) {
+        const container = document.getElementById('dynamic-fields');
+        container.innerHTML = '';
+        const addField = (label, name, fieldType = 'text', placeholder = '', required = true) => {
+            const group = document.createElement('div');
+            group.className = 'form-group';
+            if (fieldType === 'file') {
+                 group.innerHTML = `<label>${label}</label><input type="file" name="file_content" class="form-input py-3" required>`;
+            } else if (fieldType === 'textarea') {
+                group.innerHTML = `<label>${label}</label><textarea name="${name}" class="form-input py-4 " style="height:120px" placeholder="${placeholder}" ${required ? 'required' : ''}></textarea>`;
+            } else {
+                group.innerHTML = `<label>${label}</label><input type="${fieldType}" name="${name}" class="form-input" placeholder="${placeholder}" ${required ? 'required' : ''}>`;
+            }
+            container.appendChild(group);
+            const input = group.querySelector('input, textarea');
+            input.addEventListener('input', validateForm);
+        };
+
+        if (['url', 'youtube', 'facebook', 'instagram', 'tiktok', 'x-twitter', 'snapchat', 'pinterest', 'linkedin', 'google-forms', 'google-doc', 'google-sheets', 'google-review', 'custom-url'].includes(type)) {
+            addField('Target URL / Link', 'destination_url', 'url', 'https://example.com/your-content');
+        } else if (type === 'text') {
+            addField('Plain Text Content', 'text', 'textarea', 'Type your text here...');
+        } else if (['whatsapp', 'telegram'].includes(type)) {
+            addField('Phone Number', 'phone', 'tel', '+1234567890');
+            addField('Message', 'message', 'textarea', 'Hello...', false);
+        } else if (type === 'phone') {
+            addField('Phone Number', 'phone', 'tel', '+1234567890');
+        } else if (type === 'sms') {
+            addField('Recipient Number', 'phone', 'tel', '+1234567890');
+            addField('Default Message', 'message', 'textarea', 'Hello...');
+        } else if (type === 'email') {
+            addField('Email Address', 'email', 'email', 'user@example.com');
+            addField('Subject', 'subject', 'text', 'QR Inquiry');
+            addField('Message Body', 'body', 'textarea', 'Hello...');
+        } else if (type === 'wifi') {
+            addField('Network Name (SSID)', 'ssid', 'text', 'My WiFi');
+            addField('Password', 'password', 'text', '••••••••');
+            addField('Security', 'encryption', 'text', 'WPA/WPA2');
+        } else if (type === 'location') {
+            addField('Latitude', 'latitude', 'text', '40.7128');
+            addField('Longitude', 'longitude', 'text', '-74.0060');
+        } else if (type === 'vcard') {
+            addField('First Name', 'first_name', 'text');
+            addField('Last Name', 'last_name', 'text');
+            addField('Mobile Phone', 'phone_mobile', 'tel');
+            addField('Email', 'email', 'email');
+        }
+    }
+
+    function validateForm() {
+        const form = document.getElementById('create-qr-form');
+        document.getElementById('submit-btn').disabled = !form.checkValidity();
+        updatePreview();
+    }
+
+    async function updatePreview() {
+        const options = {
+            error_correction: document.querySelector('.ec-option.active').dataset.ec,
+            logo_circular: document.getElementById('logo-circular-toggle').checked,
+            logo_size: document.getElementById('logo-size-range').value,
+            logo_background: document.getElementById('logo-background-toggle').checked,
+            frame_style: document.querySelector('.frame-item.active').dataset.val,
+            frame_text: document.getElementById('frame-text-input').value,
+            frame_font: document.getElementById('text-font').value,
+            frame_text_color: document.getElementById('text-color').value,
+            bg_transparent: document.getElementById('bg-transparent-toggle').checked
+        };
+        document.getElementById('design-options-input').value = JSON.stringify(options);
+
+        // Preview URL
+        const fg = document.getElementById('fg-text')?.value || '#000000';
+        const bg = document.getElementById('bg-text')?.value || '#ffffff';
+        const style = document.querySelector('#body-patterns .pattern-item.active')?.dataset.val || 'square';
+        const eye_style = document.querySelector('#eye-patterns .pattern-item.active')?.dataset.val || 'square';
+        const ball_style = document.querySelector('#ball-patterns .pattern-item.active')?.dataset.val || 'square';
+
+        let content = "https://scanpdf.com/preview";
+        const selectedType = document.getElementById('selected-type').value;
+        const destInput = document.querySelector('input[name="destination_url"]');
+        if (destInput && destInput.value.trim()) {
+            content = destInput.value;
+        } else {
+            // Check other primary fields
+            const mainField = document.querySelector('#dynamic-fields input, #dynamic-fields textarea');
+            if (mainField && mainField.value.trim()) content = mainField.value;
+        }
+
+        const url = `{% url 'dynamic_qr:generate_image' %}?text=${encodeURIComponent(content)}&fg_color=${encodeURIComponent(fg)}&bg_color=${encodeURIComponent(bg)}&style=${style}&eye_style=${eye_style}&ball_style=${ball_style}&design_options=${encodeURIComponent(JSON.stringify(options))}`;
+        document.getElementById('qr-preview-img').src = url;
+    }
+
+    document.querySelectorAll('.cat-btn').forEach(btn => {
+        btn.onclick = () => {
+            document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderTypes(btn.dataset.cat);
+        };
+    });
+
+    document.getElementById('create-qr-form').onsubmit = async (e) => {
+        e.preventDefault();
+        const formData = new FormData(e.target);
+        
+        // Construct qr_data
+        const dataObj = {};
+        const dynamicFields = document.getElementById('dynamic-fields').querySelectorAll('input, textarea, select');
+        dynamicFields.forEach(field => {
+            if (field.name !== 'file_content') dataObj[field.name] = field.value;
+        });
+        
+        const type = formData.get('qr_type');
+        if (['whatsapp', 'telegram'].includes(type) && !formData.get('destination_url')) {
+            const phone = dataObj.phone || '';
+            const msg = encodeURIComponent(dataObj.message || '');
+            formData.set('destination_url', type === 'whatsapp' ? `https://wa.me/${phone}?text=${msg}` : `https://t.me/${phone}`);
+        }
+
+        formData.set('qr_data', JSON.stringify(dataObj));
+        formData.set('body_style', document.querySelector('#body-patterns .pattern-item.active').dataset.val);
+        formData.set('eye_style', document.querySelector('#eye-patterns .pattern-item.active').dataset.val);
+        formData.set('ball_style', document.querySelector('#ball-patterns .pattern-item.active').dataset.val);
+        
+        try {
+            const response = await fetch('{% url "dynamic_qr:create" %}', {
+                method: 'POST',
+                body: formData,
+                headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+            });
+            const result = await response.json();
+            if (result.success) window.location.href = '{% url "dynamic_qr:dashboard" %}';
+            else alert(result.error);
+        } catch (err) { alert('Creation failed.'); }
+    };
+
+    init();
 {% endblock %}
