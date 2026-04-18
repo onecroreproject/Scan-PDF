@@ -18,24 +18,37 @@
         background: white;
         border-right: 1px solid #e2e8f0;
         position: fixed;
-        top: 70px;
+        top: var(--nav-h, 70px);
         bottom: 0;
         left: 0;
         z-index: 40;
         padding: 24px 12px;
         display: none;
+        transition: transform 0.25s ease;
     }
     @media (min-width: 768px) { .sidebar { display: block; } }
 
     .main-content {
         flex: 1;
         padding: 40px 24px;
-        transition: all 0.3s;
-        min-height: calc(100vh - 70px);
+        transition: margin-left 0.25s ease;
+        min-height: calc(100vh - var(--nav-h, 70px));
         display: flex;
         flex-direction: column;
     }
     @media (min-width: 768px) { .main-content { margin-left: 210px; } }
+
+    .sidebar.desktop-collapsed {
+        transform: translateX(-100%);
+    }
+    @media (min-width: 768px) {
+        .main-content.sidebar-hidden {
+            margin-left: 0;
+        }
+        footer.sidebar-hidden {
+            margin-left: 0 !important;
+        }
+    }
 
     /* Custom Header */
     .dashboard-nav {
@@ -98,7 +111,7 @@
 <style>
     /* Adjust Dashboard Layout for main navbar */
     .dashboard-layout { margin-top: 0; }
-    .sidebar { top: 70px; }
+    .sidebar { top: var(--nav-h, 70px); }
     .main-content { margin-top: 0; }
     
     /* Ensure the mobile toggle is available for the sidebar */
@@ -110,8 +123,8 @@
         }
     }
 </style>
-<div class="md:hidden">
-    <!-- Inline Mobile Toggle for Dashboard when main navbar is present -->
+<div>
+    <!-- Sidebar toggle available on mobile + desktop -->
     <button class="fixed top-[18px] left-4 z-[60] p-2 text-surface-500 bg-white/80 backdrop-blur rounded-lg border border-slate-100 shadow-sm" onclick="toggleSidebar()">
         <i data-lucide="menu" class="w-5 h-5"></i>
     </button>
@@ -160,6 +173,17 @@
 <script>
     function toggleSidebar() {
         const sidebar = document.getElementById('dashboard-sidebar');
+        const mainContent = document.querySelector('.main-content');
+        const pageFooter = document.querySelector('footer');
+        const isDesktop = window.matchMedia('(min-width: 768px)').matches;
+
+        if (isDesktop) {
+            sidebar.classList.toggle('desktop-collapsed');
+            mainContent.classList.toggle('sidebar-hidden');
+            if (pageFooter) pageFooter.classList.toggle('sidebar-hidden');
+            return;
+        }
+
         sidebar.style.display = (sidebar.style.display === 'block') ? 'none' : 'block';
     }
     lucide.createIcons();

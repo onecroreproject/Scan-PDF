@@ -5,14 +5,37 @@
 
 {% block dqr_style %}
     /* Layout */
-    .create-grid { display: grid; grid-template-columns: 1fr 340px; gap: 32px; align-items: start; }
-    @media (max-width: 1200px) { .create-grid { grid-template-columns: 1fr; } }
+    .create-grid { display: grid; grid-template-columns: 1fr 340px; gap: 24px; align-items: start; max-height: calc(100vh - 180px); }
+    @media (max-width: 1200px) { .create-grid { grid-template-columns: 1fr; max-height: none; } }
+
+    .content-scroll-area {
+        height: 100%;
+        overflow-y: auto;
+        padding-right: 8px;
+        scrollbar-width: thin;
+    }
+    .content-scroll-area::-webkit-scrollbar { width: 4px; }
+    .content-scroll-area::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 4px; }
+
+    #selection-header {
+        display: none;
+        align-items: center;
+        justify-content: space-between;
+        background: white;
+        padding: 16px 24px;
+        border-radius: 20px;
+        border: 1px solid #f1f5f9;
+        margin-bottom: 24px;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02);
+    }
 
     /* Category Navigation */
     .cat-nav {
         display: flex; gap: 8px; margin-bottom: 24px; padding-bottom: 8px;
         overflow-x: auto; white-space: nowrap; scrollbar-width: none;
+        -ms-overflow-style: none;
     }
+    .cat-nav::-webkit-scrollbar { display: none; }
     .cat-btn {
         padding: 10px 20px; background: white; border: 1px solid #f1f5f9;
         border-radius: 99px; font-size: 11px; font-weight: 800; color: #64748b;
@@ -152,25 +175,40 @@
     input:checked + .slider { background: #6366f1; }
     input:checked + .slider:before { transform: translateX(20px); }
 
-    .ec-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-    .ec-option {
-        padding: 12px 8px; border: 1px solid #f1f5f9; border-radius: 12px; text-align: center; cursor: pointer; transition: 0.3s;
+    .ec-grid { display: none; } /* Hidden as per request */
+    
+    .section-hidden { display: none; opacity: 0; transform: translateY(20px); transition: all 0.5s ease; }
+    .section-visible { display: block; opacity: 1; transform: translateY(0); }
+    
+    .nested-color-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; }
+    .color-card { background: #f8fafc; padding: 16px; border-radius: 16px; border: 1px solid #f1f5f9; transition: 0.3s; }
+    .color-card:hover { border-color: #6366f1; background: white; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05); }
+    
+    .pattern-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(50px, 1fr)); gap: 8px; max-height: 180px; overflow-y: auto; padding-right: 4px; }
+    .pattern-grid::-webkit-scrollbar { width: 3px; }
+    .pattern-grid::-webkit-scrollbar-thumb { background: #e2e8f0; border-radius: 3px; }
+    
+    .compact-active .cat-nav, .compact-active .types-grid { display: none !important; }
+    .compact-active #selection-header { display: flex !important; }
+    .compact-active .mb-10 { display: none !important; }
+    
+    .preview-card {
+        position: sticky; top: 0; background: #0f172a; border-radius: 32px;
+        padding: 32px; text-align: center; color: white; box-shadow: 0 40px 100px -20px rgba(15, 23, 42, 0.4);
     }
-    .ec-option:hover { border-color: #6366f1; }
-    .ec-option.active { background: #f5f3ff; border-color: #6366f1; }
-    .ec-name { display: block; font-size: 11px; font-weight: 800; color: #1e293b; }
-    .ec-desc { display: block; font-size: 8px; color: #94a3b8; margin-top: 4px; }
+    .qr-vessel { margin-bottom: 24px; padding: 20px; border-radius: 24px; }
+    .btn-create { height: 56px; border-radius: 16px; font-size: 13px; }
 {% endblock %}
 
 {% block dqr_content %}
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
     
-    <div class="mb-10">
+    <div class="mb-10" id="main-header">
         <h1 class="text-3xl font-black text-slate-900 tracking-tight">Generate Dynamic Content</h1>
         <p class="text-slate-500 font-bold mt-1 text-sm">Pick your engine, then customize your high-end dynamic QR asset.</p>
     </div>
 
-    <div class="cat-nav">
+    <div class="cat-nav" id="cat-nav-container">
         <div class="cat-btn active" data-cat="all">All Engines</div>
         <div class="cat-btn" data-cat="basic">Basic & Connect</div>
         <div class="cat-btn" data-cat="social">Social Media</div>
@@ -179,14 +217,25 @@
         <div class="cat-btn" data-cat="comm">Comm & Utility</div>
     </div>
 
+    <div id="selection-header">
+        <div class="flex items-center gap-4">
+            <div id="selected-engine-icon" class="w-10 h-10 rounded-xl flex items-center justify-center text-white"></div>
+            <div>
+                <h4 id="selected-engine-label" class="text-sm font-black text-slate-900"></h4>
+                <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Active Engine</p>
+            </div>
+        </div>
+        <button type="button" onclick="resetEngineSelection()" class="text-[10px] font-black text-indigo-600 uppercase tracking-widest px-4 py-2 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition-colors">Change Type</button>
+    </div>
+
     <form id="create-qr-form" enctype="multipart/form-data">
         <div class="create-grid">
-            <div class="space-y-8">
+            <div class="content-scroll-area">
                 <!-- Engine Selection -->
                 <div class="types-grid" id="types-grid"></div>
 
                 <!-- Content Fields -->
-                <div class="form-card">
+                <div id="content-section" class="form-card section-hidden">
                     <div class="flex items-center gap-4 mb-8 border-b border-slate-50 pb-6">
                         <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center">
                             <i data-lucide="edit-3" class="w-6 h-6"></i>
@@ -207,7 +256,7 @@
                 </div>
 
                 <!-- Design & Customization -->
-                <div class="form-card">
+                <div id="design-section" class="form-card section-hidden">
                     <div class="flex items-center gap-4 mb-8 border-b border-slate-50 pb-6">
                         <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center">
                             <i data-lucide="palette" class="w-6 h-6"></i>
@@ -226,42 +275,38 @@
                         <div class="design-tab" data-tab="text">Additional Text</div>
                     </div>
 
-                    <!-- Patterns View -->
                     <div class="design-view" id="view-patterns">
                         <div class="space-y-8">
                             <div>
-                                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-4">Body Pattern</label>
+                                <div class="flex items-center justify-between mb-4">
+                                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Body Pattern</label>
+                                    <div class="flex items-center gap-2">
+                                        <input type="color" id="fg-picker-inline" value="#000000" class="w-6 h-6 border-none cursor-pointer p-0 bg-transparent">
+                                        <span class="text-[9px] font-bold text-slate-400 uppercase">Color</span>
+                                    </div>
+                                </div>
                                 <div class="pattern-grid" id="body-patterns"></div>
                             </div>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                                 <div>
-                                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-4">External Eye</label>
+                                    <div class="flex items-center justify-between mb-4">
+                                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block">External Eye</label>
+                                        <div class="flex items-center gap-2">
+                                            <input type="color" id="eye-outer-picker-inline" value="#000000" class="w-6 h-6 border-none cursor-pointer p-0 bg-transparent">
+                                            <span class="text-[9px] font-bold text-slate-400 uppercase">Color</span>
+                                        </div>
+                                    </div>
                                     <div class="pattern-grid" id="eye-patterns"></div>
                                 </div>
                                 <div>
-                                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-4">Internal Eye (Ball)</label>
+                                    <div class="flex items-center justify-between mb-4">
+                                        <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block">Internal Eye (Ball)</label>
+                                        <div class="flex items-center gap-2">
+                                            <input type="color" id="eye-inner-picker-inline" value="#000000" class="w-6 h-6 border-none cursor-pointer p-0 bg-transparent">
+                                            <span class="text-[9px] font-bold text-slate-400 uppercase">Color</span>
+                                        </div>
+                                    </div>
                                     <div class="pattern-grid" id="ball-patterns"></div>
-                                </div>
-                            </div>
-                            <div>
-                                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-4">Scannability Level (ECC)</label>
-                                <div class="ec-grid">
-                                    <div class="ec-option active" data-ec="H">
-                                        <span class="ec-name">Best</span>
-                                        <span class="ec-desc">30% Damage Resist</span>
-                                    </div>
-                                    <div class="ec-option" data-ec="Q">
-                                        <span class="ec-name">High</span>
-                                        <span class="ec-desc">25% Damage Resist</span>
-                                    </div>
-                                    <div class="ec-option" data-ec="M">
-                                        <span class="ec-name">Medium</span>
-                                        <span class="ec-desc">15% Damage Resist</span>
-                                    </div>
-                                    <div class="ec-option" data-ec="L">
-                                        <span class="ec-name">Smallest</span>
-                                        <span class="ec-desc">7% Damage Resist</span>
-                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -275,26 +320,43 @@
                     <!-- Colors View -->
                     <div class="design-view hidden" id="view-colors">
                         <div class="space-y-8">
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                <div class="form-group">
-                                    <label>Foreground Color</label>
+                            <div class="nested-color-grid">
+                                <div class="color-card">
+                                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-4">Body Color</label>
                                     <div class="color-row">
                                         <input type="color" id="fg-picker" value="#000000" class="color-picker">
-                                        <input type="text" name="fg_color" id="fg-text" class="form-input" value="#000000">
+                                        <input type="text" name="fg_color" id="fg-text" class="form-input text-xs" value="#000000">
                                     </div>
                                 </div>
-                                <div class="form-group">
-                                    <label>Background Color</label>
+
+                                <div class="color-card">
+                                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-4">Eye Color (Outer)</label>
+                                    <div class="color-row">
+                                        <input type="color" id="eye-outer-picker" value="#000000" class="color-picker">
+                                        <input type="text" id="eye-outer-text" class="form-input text-xs" value="#000000">
+                                    </div>
+                                </div>
+
+                                <div class="color-card">
+                                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-4">Eye Color (Inner)</label>
+                                    <div class="color-row">
+                                        <input type="color" id="eye-inner-picker" value="#000000" class="color-picker">
+                                        <input type="text" id="eye-inner-text" class="form-input text-xs" value="#000000">
+                                    </div>
+                                </div>
+
+                                <div class="color-card">
+                                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-4">Background</label>
                                     <div class="color-row">
                                         <input type="color" id="bg-picker" value="#ffffff" class="color-picker">
-                                        <input type="text" name="bg_color" id="bg-text" class="form-input" value="#ffffff">
+                                        <input type="text" name="bg_color" id="bg-text" class="form-input text-xs" value="#ffffff">
                                     </div>
-                                    <div class="switch-group mt-2">
+                                    <div class="switch-group mt-4 pt-4 border-t border-slate-100">
                                         <label class="switch">
                                             <input type="checkbox" id="bg-transparent-toggle">
                                             <span class="slider"></span>
                                         </label>
-                                        <span class="text-[11px] font-bold text-slate-500">Transparent Background</span>
+                                        <span class="text-[10px] font-black text-slate-400 uppercase">Transparent</span>
                                     </div>
                                 </div>
                             </div>
@@ -449,8 +511,8 @@
         { id: 'custom-url', label: 'Custom URL', icon: 'external-link', cat: 'comm', color: '#64748b', bg: '#f1f5f9' },
     ];
 
-    const BODY_STYLES = ['square', 'rounded', 'circle', 'diamond', 'dot', 'small-square', 'hline', 'vline', 'star', 'cross', 'leaf', 'clover'];
-    const EYE_STYLES = ['square', 'circle', 'rounded', 'diamond', 'leaf'];
+    const BODY_STYLES = ['square', 'rounded', 'circle', 'diamond', 'dot', 'small-square', 'hline', 'vline', 'star', 'cross', 'leaf', 'clover', 'hexagon', 'octagon'];
+    const EYE_STYLES = ['square', 'circle', 'rounded', 'diamond', 'leaf', 'dot', 'star', 'small-square', 'hexagon', 'octagon'];
     const BRAND_LOGOS = [
         { id: 'facebook', domain: 'facebook.com' },
         { id: 'instagram', domain: 'instagram.com' },
@@ -488,7 +550,7 @@
         renderFrames();
         renderPresetLogos();
         lucide.createIcons();
-        selectType('url');
+        // selectType('url'); // Don't auto-select as per new requirement to hide sections initially
         
         // Tab system
         document.querySelectorAll('.design-tab').forEach(tab => {
@@ -500,35 +562,33 @@
             };
         });
 
-        // Color sync
-        document.getElementById('fg-picker').oninput = (e) => {
-            document.getElementById('fg-text').value = e.target.value;
-            updatePreview();
+        // Color sync across tabs
+        const syncColor = (pickerId, textId, inlineId) => {
+            const p = document.getElementById(pickerId);
+            const t = document.getElementById(textId);
+            const i = document.getElementById(inlineId);
+            
+            const updateAll = (val) => {
+                if(p) p.value = val;
+                if(t) t.value = val;
+                if(i) i.value = val;
+                renderPatterns(); // Refresh icons with new color
+                updatePreview();
+            };
+
+            if(p) p.oninput = (e) => updateAll(e.target.value);
+            if(t) t.oninput = (e) => updateAll(e.target.value);
+            if(i) i.oninput = (e) => updateAll(e.target.value);
         };
-        document.getElementById('bg-picker').oninput = (e) => {
-            document.getElementById('bg-text').value = e.target.value;
-            updatePreview();
-        };
-        document.getElementById('fg-text').oninput = (e) => {
-            document.getElementById('fg-picker').value = e.target.value;
-            updatePreview();
-        };
-        document.getElementById('bg-text').oninput = (e) => {
-            document.getElementById('bg-picker').value = e.target.value;
-            updatePreview();
-        };
+        syncColor('fg-picker', 'fg-text', 'fg-picker-inline');
+        syncColor('bg-picker', 'bg-text', null);
+        syncColor('eye-outer-picker', 'eye-outer-text', 'eye-outer-picker-inline');
+        syncColor('eye-inner-picker', 'eye-inner-text', 'eye-inner-picker-inline');
 
         // Other design updates
         ['bg-transparent-toggle', 'logo-size-range', 'logo-background-toggle', 'logo-circular-toggle', 'frame-text-input', 'text-font', 'text-color', 'text-size'].forEach(id => {
-            document.getElementById(id).oninput = updatePreview;
-        });
-
-        document.querySelectorAll('.ec-option').forEach(opt => {
-            opt.onclick = () => {
-                document.querySelectorAll('.ec-option').forEach(o => o.classList.remove('active'));
-                opt.classList.add('active');
-                updatePreview();
-            };
+            const el = document.getElementById(id);
+            if (el) el.oninput = updatePreview;
         });
 
         // Logo Upload
@@ -558,20 +618,73 @@
     }
 
     function selectType(type) {
+        const engine = QR_ENGINES.find(e => e.id === type);
+        if (!engine) return;
+
         document.getElementById('selected-type').value = type;
         document.getElementById('type-indicator').textContent = `Selection: ${type.toUpperCase()}`;
+        
+        // Update selection header
+        const headerIcon = document.getElementById('selected-engine-icon');
+        headerIcon.style.background = engine.color;
+        headerIcon.innerHTML = `<i data-lucide="${engine.icon}" class="w-6 h-6"></i>`;
+        document.getElementById('selected-engine-label').textContent = engine.label;
+        lucide.createIcons({ attrs: { class: 'w-6 h-6' }, nameAttr: 'data-lucide' });
+
         renderTypes(document.querySelector('.cat-btn.active').dataset.cat);
         renderFields(type);
+        
+        // Toggle compact view
+        document.body.classList.add('compact-active');
+
+        // Animated reveal of sections
+        const sections = ['content-section', 'design-section'];
+        sections.forEach((id, idx) => {
+            const el = document.getElementById(id);
+            el.classList.add('section-visible');
+            el.classList.remove('section-hidden');
+            el.style.display = 'block';
+            setTimeout(() => {
+                el.style.opacity = '1';
+                el.style.transform = 'translateY(0)';
+            }, 50 * idx);
+        });
+
         updatePreview();
+
+        // BRAND SYNC: Auto-select logo if matching engine (e.g. WhatsApp, Facebook)
+        // Only if currently no logo is selected (dataset.val === 'none')
+        const currentLogo = document.querySelector('.logo-item.active');
+        if (currentLogo && (currentLogo.dataset.val === 'none' || !selectedLogoUrl)) {
+            const brandId = (type === 'x-twitter') ? 'x' : type; // Handle renaming
+            const brandItem = document.querySelector(`.logo-item[data-val="${brandId}"]`);
+            if (brandItem) {
+                document.querySelectorAll('.logo-item').forEach(i => i.classList.remove('active'));
+                brandItem.classList.add('active');
+                selectedLogoUrl = brandItem.querySelector('img').src;
+                updatePreview();
+            }
+        }
+    }
+
+    function resetEngineSelection() {
+        document.body.classList.remove('compact-active');
+        const sections = ['content-section', 'design-section'];
+        sections.forEach(id => {
+            const el = document.getElementById(id);
+            el.classList.remove('section-visible');
+            el.classList.add('section-hidden');
+            el.style.display = 'none';
+        });
+        document.getElementById('selected-type').value = '';
+        renderTypes(document.querySelector('.cat-btn.active').dataset.cat);
     }
 
     function getPatternIcon(style, type) {
-        let color = '#6366f1'; // Default Indigo
-        if (style === 'square' || style === 'rounded') color = '#6366f1';
-        if (style === 'circle' || style === 'dot') color = '#22c55e'; // Green
-        if (style === 'diamond' || style === 'star') color = '#f59e0b'; // Amber
-        if (style === 'leaf' || style === 'clover') color = '#10b981'; // Emerald
-        if (style === 'hline' || style === 'vline' || style === 'cross') color = '#ef4444'; // Red
+        let color = '#6366f1'; 
+        if (type === 'body') color = document.getElementById('fg-picker-inline').value;
+        if (type === 'eye') color = document.getElementById('eye-outer-picker-inline').value;
+        if (type === 'ball') color = document.getElementById('eye-inner-picker-inline').value;
 
         if (type === 'body') {
             if (style === 'square') return `<rect x="5" y="5" width="14" height="14" fill="${color}" rx="1"/>`;
@@ -586,21 +699,30 @@
             if (style === 'cross') return `<path d="M9 4 H15 V9 H20 V15 H15 V20 H9 V15 H4 V9 H9 Z" fill="${color}"/>`;
             if (style === 'leaf') return `<path d="M12 4 Q20 4 20 12 Q20 20 12 20 Q4 20 4 12 Q4 4 12 4" fill="${color}"/>`;
             if (style === 'clover') return `<path d="M12 12 Q12 4 8 4 Q4 4 4 8 Q4 12 12 12 Q20 12 20 16 Q20 20 16 20 Q12 20 12 12 Z" fill="${color}"/>`;
+            if (style === 'hexagon') return `<path d="M12 4 L19 8 V16 L12 20 L5 16 V8 Z" fill="${color}"/>`;
+            if (style === 'octagon') return `<path d="M8 4 H16 L20 8 V16 L16 20 H8 L4 16 V8 Z" fill="${color}"/>`;
         } else {
             if (style === 'square') return `<rect x="4" y="4" width="16" height="16" stroke="${color}" stroke-width="2" fill="none" rx="1"/>`;
             if (style === 'circle') return `<circle cx="12" cy="12" r="8" stroke="${color}" stroke-width="2" fill="none"/>`;
             if (style === 'rounded') return `<rect x="4" y="4" width="16" height="16" stroke="${color}" stroke-width="2" fill="none" rx="5"/>`;
             if (style === 'diamond') return `<path d="M12 4 L20 12 L12 20 L4 12 Z" stroke="${color}" stroke-width="2" fill="none"/>`;
             if (style === 'leaf') return `<path d="M12 4 Q20 4 20 12 Q20 20 12 20 Q4 20 4 12 Q4 4 12 4" stroke="${color}" stroke-width="2" fill="none"/>`;
+            if (style === 'hexagon') return `<path d="M12 4 L19 8 V16 L12 20 L5 16 V8 Z" stroke="${color}" stroke-width="2" fill="none"/>`;
+            if (style === 'octagon') return `<path d="M8 4 H16 L20 8 V16 L16 20 H8 L4 16 V8 Z" stroke="${color}" stroke-width="2" fill="none"/>`;
+            if (style === 'star') return `<path d="M12 4 L14 10 L20 10 L15 14 L17 20 L12 16 L7 20 L9 14 L4 10 L10 10 Z" stroke="${color}" stroke-width="2" fill="none"/>`;
+            if (style === 'dot') return `<circle cx="12" cy="12" r="5" stroke="${color}" stroke-width="2" fill="none"/>`;
+            if (style === 'small-square') return `<rect x="7" y="7" width="10" height="10" stroke="${color}" stroke-width="2" fill="none"/>`;
+            if (style === 'clover') return `<path d="M12 12 Q12 4 8 4 Q4 4 4 8 Q4 12 12 12 Q20 12 20 16 Q20 20 16 20 Q12 20 12 12 Z" stroke="${color}" stroke-width="2" fill="none"/>`;
         }
         return `<rect x="4" y="4" width="16" height="16" fill="${color}" opacity="0.2"/>`;
     }
 
     function renderPatterns() {
         const bodyGrid = document.getElementById('body-patterns');
+        bodyGrid.innerHTML = '';
         BODY_STYLES.forEach(s => {
             const item = document.createElement('div');
-            item.className = 'pattern-item ' + (s === 'square' ? 'active' : '');
+            item.className = 'pattern-item ' + (document.querySelector('#body-patterns .pattern-item.active')?.dataset.val === s ? 'active' : (s === 'square' && !document.querySelector('#body-patterns .pattern-item.active') ? 'active' : ''));
             item.dataset.val = s;
             item.innerHTML = `<svg viewBox="0 0 24 24" class="w-8 h-8">${getPatternIcon(s, 'body')}</svg>`;
             item.onclick = () => {
@@ -614,9 +736,11 @@
         ['eye-patterns', 'ball-patterns'].forEach(gridId => {
             const grid = document.getElementById(gridId);
             const type = gridId.includes('eye') ? 'eye' : 'ball';
+            const currentActive = document.querySelector(`#${gridId} .pattern-item.active`)?.dataset.val;
+            grid.innerHTML = '';
             EYE_STYLES.forEach(s => {
                 const item = document.createElement('div');
-                item.className = 'pattern-item ' + (s === 'square' ? 'active' : '');
+                item.className = 'pattern-item ' + (currentActive === s ? 'active' : (!currentActive && s === 'square' ? 'active' : ''));
                 item.dataset.val = s;
                 item.innerHTML = `<svg viewBox="0 0 24 24" class="w-8 h-8">${getPatternIcon(s, type)}</svg>`;
                 item.onclick = () => {
@@ -686,9 +810,12 @@
             item.dataset.val = brand.id;
             item.innerHTML = `<img src="https://www.google.com/s2/favicons?sz=64&domain=${brand.domain}" style="width: 24px; height: 24px; border-radius: 4px;">`;
             item.onclick = () => {
+                // Clear custom logo if selecting preset
+                document.getElementById('logo-cropped-data').value = '';
+                selectedLogoUrl = item.querySelector('img').src;
+                
                 document.querySelectorAll('.logo-item').forEach(i => i.classList.remove('active'));
                 item.classList.add('active');
-                selectedLogoUrl = item.querySelector('img').src;
                 updatePreview();
             };
             grid.appendChild(item);
@@ -786,7 +913,10 @@
 
     function validateForm() {
         const form = document.getElementById('create-qr-form');
-        document.getElementById('submit-btn').disabled = !form.checkValidity();
+        const submitBtn = document.getElementById('submit-btn');
+        if (form && submitBtn) {
+            submitBtn.disabled = !form.checkValidity();
+        }
         updatePreview();
     }
 
@@ -795,7 +925,7 @@
         if (previewTimeout) clearTimeout(previewTimeout);
         previewTimeout = setTimeout(async () => {
             const options = {
-                error_correction: document.querySelector('.ec-option.active').dataset.ec,
+                error_correction: 'H',
                 logo_circular: document.getElementById('logo-circular-toggle').checked,
                 logo_size: document.getElementById('logo-size-range').value,
                 logo_background: document.getElementById('logo-background-toggle').checked,
@@ -803,8 +933,18 @@
                 frame_text: document.getElementById('frame-text-input').value,
                 frame_font: document.getElementById('text-font').value,
                 frame_text_color: document.getElementById('text-color').value,
-                bg_transparent: document.getElementById('bg-transparent-toggle').checked
+                bg_transparent: document.getElementById('bg-transparent-toggle').checked,
+                eye_color_outer: document.getElementById('eye-outer-text').value,
+                eye_color_inner: document.getElementById('eye-inner-text').value
             };
+
+            const activeLogoItem = document.querySelector('.logo-item.active');
+            const activeLogoVal = activeLogoItem ? activeLogoItem.dataset.val : 'none';
+            if (activeLogoVal && activeLogoVal !== 'none' && activeLogoVal !== 'custom') {
+                options.logo_preset = activeLogoVal;
+            } else {
+                options.logo_preset = 'none';
+            }
             document.getElementById('design-options-input').value = JSON.stringify(options);
 
             const fg = document.getElementById('fg-text')?.value || '#000000';
@@ -830,6 +970,8 @@
             formData.append('eye_style', eye_style);
             formData.append('ball_style', ball_style);
             formData.append('design_options', JSON.stringify(options));
+            formData.append('eye_color_outer', options.eye_color_outer);
+            formData.append('eye_color_inner', options.eye_color_inner);
 
             const logoItem = document.querySelector('.logo-item.active');
             if (logoItem && logoItem.dataset.val !== 'none') {
@@ -889,6 +1031,8 @@
         formData.set('body_style', document.querySelector('#body-patterns .pattern-item.active').dataset.val);
         formData.set('eye_style', document.querySelector('#eye-patterns .pattern-item.active').dataset.val);
         formData.set('ball_style', document.querySelector('#ball-patterns .pattern-item.active').dataset.val);
+        formData.set('eye_color_outer', document.getElementById('eye-outer-text').value);
+        formData.set('eye_color_inner', document.getElementById('eye-inner-text').value);
         
         try {
             const response = await fetch('{% url "dynamic_qr:create" %}', {

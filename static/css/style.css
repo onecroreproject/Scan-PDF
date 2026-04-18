@@ -91,6 +91,10 @@ html {
     -moz-osx-font-smoothing: grayscale;
 }
 
+:root {
+    --nav-h: 70px;
+}
+
 body {
     text-rendering: optimizeLegibility;
     /* Prevent horizontal overflow on mobile */
@@ -101,6 +105,14 @@ body {
 
 #navbar {
     background: transparent;
+}
+
+/* Ensure Logo has a fallback size if Tailwind fails */
+.img-logo, #navbar img {
+    height: 48px !important;
+    width: auto !important;
+    min-width: 120px;
+    object-contain: contain;
 }
 
 #navbar.scrolled {

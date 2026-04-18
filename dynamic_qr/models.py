@@ -119,10 +119,18 @@ class DynamicQRCode(models.Model):
     def get_static_content(self, request=None):
         """
         Determines the content to be encoded in the QR code.
-        Returns the direct data for hardware-bound types (Wifi, vCard) 
-        and the updateable redirect URL for content-bound types (Text, Web, Files).
+        Always return the stable dynamic redirect URL so old downloaded QR images
+        continue to resolve the latest edited content.
         """
-        # 1. Hardware-Bound Types (Must be static to trigger phone features)
+        if request:
+            return request.build_absolute_uri(f'/qr/r/{self.short_code}/')
+        return f"/qr/r/{self.short_code}/"
+
+    def get_raw_payload(self):
+        """
+        Helper to get the raw protocol payload (WIFI:..., BEGIN:VCARD..., etc.)
+        for use in landing pages or manual downloads.
+        """
         data = self.qr_data or {}
         if self.qr_type == 'wifi':
             ssid = data.get('ssid', '')
@@ -140,11 +148,24 @@ class DynamicQRCode(models.Model):
             tel = data.get('phone_mobile', '')
             email = data.get('email', '')
             return f"BEGIN:VCARD\nVERSION:3.0\nN:{ln};{fn};;;\nFN:{fn} {ln}\nORG:{org}\nTEL;TYPE=CELL:{tel}\nEMAIL:{email}\nEND:VCARD"
+        if self.qr_type == 'phone':
+            phone = data.get('phone', '') or data.get('phone_mobile', '')
+            return f"tel:{phone}" if phone else ''
+        if self.qr_type == 'sms':
+            phone = data.get('phone', '')
+            message = data.get('message', '')
+            return f"sms:{phone}?body={message}" if phone else ''
+        if self.qr_type == 'email':
+            email = data.get('email', '')
+            subject = data.get('subject', '')
+            body = data.get('body', '')
+            if email:
+                return f"mailto:{email}?subject={subject}&body={body}"
+            return ''
+        if self.qr_type == 'text':
+            return data.get('text', '')
+        return self.destination_url or ''
 
-        # 2. Content-Bound Types (Use redirect URL to allow updates after printing)
-        if request:
-            return request.build_absolute_uri(f'/qr/r/{self.short_code}/')
-        return f"/qr/r/{self.short_code}/"
 
 
 class QRAnalytics(models.Model):
