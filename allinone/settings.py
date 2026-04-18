@@ -10,16 +10,12 @@ load_dotenv(os.path.join(BASE_DIR, '.env'))
 
 SECRET_KEY = 'django-insecure-change-this-in-production-x9$k2m!q@w3e4r5t6y7u8i9o0p'
 
-DEBUG = True
+DEBUG = os.environ.get('DEBUG', 'True').lower() == 'true'
 
 ALLOWED_HOSTS = ['*']
 
 # CSRF security for production (Required for POST requests on HTTPS)
-CSRF_TRUSTED_ORIGINS = [
-    'https://scanpdf.co.in',
-    'https://www.scanpdf.co.in',
-    'http://scanpdf.co.in',
-]
+
 
 # Security settings
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
@@ -94,6 +90,14 @@ USE_TZ = True
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+if DEBUG:
+    STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
+else:
+    STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
+# Allow WhiteNoise to serve files directly from STATICFILES_DIRS in development.
+WHITENOISE_USE_FINDERS = True
+WHITENOISE_AUTOREFRESH = DEBUG
 
 # Media files (Redirected to system temp to keep project folder clean)
 import tempfile

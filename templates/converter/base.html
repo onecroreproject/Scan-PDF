@@ -14,12 +14,11 @@
     <title>{{ page_title|default:"ScanPDF" }}</title>
 
     <!-- Favicon -->
-    <link rel="shortcut icon" href="{% static 'favicon.ico' %}" type="image/x-icon">
-    <link rel="icon" href="{% static 'favicon.ico' %}" type="image/x-icon">
-    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'images/favicon.png' %}?v=4">
-    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'images/favicon.png' %}?v=4">
-    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'images/favicon.png' %}?v=4">
-    <link rel="icon" type="image/png" sizes="192x192" href="{% static 'images/favicon.png' %}?v=4">
+    <link rel="icon" href="{% static 'favicon.ico' %}?v=5" sizes="any">
+    <link rel="icon" type="image/png" sizes="32x32" href="{% static 'images/favicon.png' %}?v=5">
+    <link rel="icon" type="image/png" sizes="16x16" href="{% static 'images/favicon.png' %}?v=5">
+    <link rel="apple-touch-icon" sizes="180x180" href="{% static 'images/favicon.png' %}?v=5">
+    <link rel="shortcut icon" href="{% static 'favicon.ico' %}?v=5" type="image/x-icon">
 
     <!-- Tailwind CSS via CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -83,6 +82,28 @@
     <script src="https://unpkg.com/lucide@0.263.0/dist/umd/lucide.min.js"></script>
 
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
+    
+    <style>
+        /* Critical Fallbacks for when Tailwind CDN is slow/blocked */
+        .invisible { visibility: hidden !important; }
+        .group:hover .group-hover\:visible { visibility: visible !important; }
+        .opacity-0 { opacity: 0 !important; }
+        .group:hover .group-hover\:opacity-100 { opacity: 1 !important; }
+        
+        /* Ensure mega menus don't show by default if Tailwind fails */
+        #mega-menu-all-pdf, #mega-menu-image-tools {
+            visibility: hidden;
+            opacity: 0;
+            pointer-events: none;
+        }
+        .group:hover #mega-menu-all-pdf, 
+        .group:hover #mega-menu-image-tools {
+            visibility: visible;
+            opacity: 1;
+            pointer-events: auto;
+            display: block; /* Fallback for layout */
+        }
+    </style>
 
     {% block extra_head %}{% endblock %}
 </head>
@@ -97,7 +118,8 @@
                 <a href="{% url 'converter:home' %}" class="flex items-center gap-2 group flex-shrink-0"
                     aria-label="ScanPDF Home">
                     <img src="{% static 'images/logo.png' %}" alt="ScanPDFLogo"
-                        class="h-10 sm:h-12 w-auto object-contain transition-transform group-hover:scale-105">
+                        class="h-10 sm:h-12 w-auto object-contain transition-transform group-hover:scale-105"
+                        style="height: 48px; min-width: 120px;">
                 </a>
 
                 <!-- Desktop Nav: Properly Aligned -->
@@ -112,7 +134,7 @@
                                     class="w-4 h-4 transition-transform group-hover:rotate-180"></i>
                             </button>
                             <!-- Mega Menu Content: EXHAUSTIVE LIST (DYNAMIC) -->
-                            <div
+                            <div id="mega-menu-all-pdf"
                                 class="fixed top-[70px] left-1/2 -translate-x-1/2 w-[95vw] max-w-7xl bg-white border border-surface-100 shadow-mega rounded-3xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 translate-y-2 group-hover:translate-y-0 z-50 overflow-hidden">
                                 <div
                                     class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 divide-x divide-surface-100 max-h-[70vh] overflow-y-auto">
@@ -155,7 +177,7 @@
                                     class="w-4 h-4 transition-transform group-hover:rotate-180"></i>
                             </button>
                             <!-- Mega Menu Content -->
-                            <div
+                            <div id="mega-menu-image-tools"
                                 class="fixed top-[70px] left-1/2 -translate-x-1/2 w-[95vw] max-w-7xl bg-white border border-surface-100 shadow-mega rounded-3xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 translate-y-2 group-hover:translate-y-0 z-50 overflow-hidden">
                                 <div
                                     class="grid grid-cols-1 md:grid-cols-2 divide-x divide-surface-100 max-h-[70vh] overflow-y-auto p-8 gap-10">
@@ -315,26 +337,40 @@
                             </div>
                         </div>
 
-                        <!-- Important Tools Dropdown -->
+                        <!-- Important Tools (Styled like Image Tools mega) -->
                         <div class="relative group">
                             <button
                                 class="flex items-center gap-1.5 px-4 py-2 text-[14px] font-black text-surface-900 transition-all uppercase tracking-widest hover:text-brand-600">
-                                Important Tools <i data-lucide="chevron-down"
+                                QR Tools <i data-lucide="chevron-down"
                                     class="w-4 h-4 transition-transform group-hover:rotate-180"></i>
                             </button>
-                            <!-- Dropdown Content -->
-                            <div
-                                class="absolute top-[100%] left-0 w-64 bg-white border border-surface-100 shadow-mega rounded-2xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 translate-y-2 group-hover:translate-y-0 z-50 overflow-hidden py-3">
-                                <a href="/qr/dashboard/"
-                                    class="flex items-center gap-3 px-6 py-3 hover:bg-brand-50 transition-all group/item">
-                                    <div class="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center group-hover/item:bg-orange-100 transition-colors">
-                                        <i data-lucide="qr-code" class="w-5 h-5 text-orange-600"></i>
-                                    </div>
-                                    <div>
-                                        <p class="text-sm font-bold text-surface-900 group-hover/item:text-brand-600">Dynamic QR</p>
-                                        <p class="text-[10px] text-surface-400">Trackable QR Codes</p>
-                                    </div>
-                                </a>
+                            <div id="mega-menu-important-tools"
+                                class="fixed top-[70px] left-1/2 -translate-x-1/2 w-[95vw] max-w-4xl bg-white border border-surface-100 shadow-mega rounded-3xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 translate-y-2 group-hover:translate-y-0 z-50 overflow-hidden">
+                                <div class="p-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                    <a href="{% if request.session.is_dqr_user %}{% url 'dynamic_qr:dashboard' %}{% else %}{% url 'dynamic_qr:login' %}{% endif %}"
+                                        class="flex items-center gap-4 p-4 rounded-2xl hover:bg-brand-50/50 transition-all border border-surface-100 hover:border-brand-200 group/item">
+                                        <div class="w-12 h-12 rounded-2xl bg-orange-50 flex items-center justify-center group-hover/item:bg-orange-100 transition-colors">
+                                            <i data-lucide="qr-code" class="w-6 h-6 text-orange-600"></i>
+                                        </div>
+                                        <div class="flex-1">
+                                            <p class="text-[13px] font-black text-surface-900 group-hover/item:text-brand-600">Dynamic QR</p>
+                                            <p class="text-[10px] text-surface-400 font-bold uppercase tracking-widest">Login required</p>
+                                        </div>
+                                        <i data-lucide="chevron-right" class="w-5 h-5 text-surface-300 group-hover/item:translate-x-1 group-hover/item:text-brand-400 transition-all"></i>
+                                    </a>
+
+                                    <a href="{% if request.session.is_dqr_user %}{% url 'dynamic_qr:short_url' %}{% else %}{% url 'dynamic_qr:login' %}{% endif %}"
+                                        class="flex items-center gap-4 p-4 rounded-2xl hover:bg-brand-50/50 transition-all border border-surface-100 hover:border-brand-200 group/item">
+                                        <div class="w-12 h-12 rounded-2xl bg-indigo-50 flex items-center justify-center group-hover/item:bg-indigo-100 transition-colors">
+                                            <i data-lucide="link" class="w-6 h-6 text-indigo-600"></i>
+                                        </div>
+                                        <div class="flex-1">
+                                            <p class="text-[13px] font-black text-surface-900 group-hover/item:text-brand-600">Short URL</p>
+                                            <p class="text-[10px] text-surface-400 font-bold uppercase tracking-widest">Login required</p>
+                                        </div>
+                                        <i data-lucide="chevron-right" class="w-5 h-5 text-surface-300 group-hover/item:translate-x-1 group-hover/item:text-brand-400 transition-all"></i>
+                                    </a>
+                                </div>
                             </div>
                         </div>
 
@@ -420,10 +456,15 @@
                     <div class="px-4 py-2 border-b border-surface-50 mt-4 mb-2">
                         <span class="text-[10px] font-bold text-surface-400 uppercase tracking-widest">Important Tools</span>
                     </div>
-                    <a href="/qr/dashboard/"
+                    <a href="{% if request.session.is_dqr_user %}{% url 'dynamic_qr:dashboard' %}{% else %}{% url 'dynamic_qr:login' %}{% endif %}"
                         class="flex items-center gap-3 px-4 py-3 rounded-2xl text-surface-700 hover:text-brand-600 hover:bg-brand-50/60 transition-all font-bold text-sm">
                         <i data-lucide="qr-code" class="w-5 h-5 text-orange-600"></i>
                         Dynamic QR
+                    </a>
+                    <a href="{% if request.session.is_dqr_user %}{% url 'dynamic_qr:short_url' %}{% else %}{% url 'dynamic_qr:login' %}{% endif %}"
+                        class="flex items-center gap-3 px-4 py-3 rounded-2xl text-surface-700 hover:text-brand-600 hover:bg-brand-50/60 transition-all font-bold text-sm">
+                        <i data-lucide="link" class="w-5 h-5 text-indigo-600"></i>
+                        Short URL
                     </a>
 
                     {% if request.session.is_dqr_user %}
@@ -458,7 +499,7 @@
     {% endblock %}
 
     <!-- Main Content -->
-    <main class="pt-[70px] flex-grow">
+    <main class="flex-grow" style="padding-top: var(--nav-h, 70px);">
         {% block content %}{% endblock %}
     </main>
 

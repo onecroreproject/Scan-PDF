@@ -12,7 +12,7 @@ import os
 from datetime import timedelta
 
 from django.shortcuts import render, redirect, get_object_or_404
-from django.http import JsonResponse, HttpResponseRedirect
+from django.http import JsonResponse, HttpResponseRedirect, HttpResponse
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.models import User
 from django.contrib.auth.decorators import login_required
@@ -31,6 +31,9 @@ from .forms import (
     ResetPasswordForm,
     DynamicQRForm,
 )
+import requests
+import uuid
+import base64
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -363,7 +366,8 @@ def dqr_reset_password_view(request):
 def dqr_dashboard_view(request):
     """Overview dashboard with stats and top 6 recent QRs."""
     try:
-        all_qrs = DynamicQRCode.objects.filter(user=request.user).order_by('-created_at')
+        # Exclude Short URL items (custom-url) from QR dashboard.
+        all_qrs = DynamicQRCode.objects.filter(user=request.user).exclude(qr_type='custom-url').order_by('-created_at')
         recent_qrs = all_qrs[:6]
         
         total_active = all_qrs.filter(is_active=True).count()
@@ -393,7 +397,8 @@ def dqr_all_qrs_view(request):
     """Full list of all QR codes with pagination."""
     try:
         from django.core.paginator import Paginator
-        all_qrs = DynamicQRCode.objects.filter(user=request.user).order_by('-created_at')
+        # Exclude Short URL items (custom-url) from QR library.
+        all_qrs = DynamicQRCode.objects.filter(user=request.user).exclude(qr_type='custom-url').order_by('-created_at')
         
         paginator = Paginator(all_qrs, 12) # 12 per page
         page_number = request.GET.get('page')
@@ -477,6 +482,19 @@ def dqr_create_view(request):
         file_content=file_content,
         design_options=design_options
     )
+
+    # --- Permanent Logo Persistence (Preset caching) ---
+    if not qr.logo and qr.design_options and qr.design_options.get('logo_preset'):
+        preset = qr.design_options.get('logo_preset')
+        if preset and preset != 'none':
+            try:
+                target_icon = os.path.join(settings.MEDIA_ROOT, 'brand_icons', f"{preset}.png")
+                if os.path.exists(target_icon) and os.path.getsize(target_icon) > 0:
+                    from django.core.files import File
+                    with open(target_icon, 'rb') as f:
+                        qr.logo.save(f"{preset}_preset.png", File(f), save=False)
+                    qr.save()
+            except: pass
 
     # Build the static content that the QR code will contain
     qr_content = qr.get_static_content(request)
@@ -657,13 +675,62 @@ def dqr_edit_view(request, qr_id):
         if not qr_name:
             return JsonResponse({'error': 'QR name is required.'}, status=400)
 
+        # Parse incoming structured payload with safe fallbacks.
+        try:
+            incoming_data = json.loads(qr_data_json) if qr_data_json else {}
+        except Exception:
+            incoming_data = {}
+
+        if not isinstance(incoming_data, dict):
+            incoming_data = {}
+
+        # Build data from raw POST fields when front-end payload is missing/incomplete.
+        fallback_data = {
+            'text': request.POST.get('text', '').strip(),
+            'phone': request.POST.get('phone', '').strip(),
+            'phone_mobile': request.POST.get('phone_mobile', '').strip(),
+            'email': request.POST.get('email', '').strip(),
+            'subject': request.POST.get('subject', '').strip(),
+            'body': request.POST.get('body', '').strip(),
+            'message': request.POST.get('message', '').strip(),
+            'ssid': request.POST.get('ssid', '').strip(),
+            'password': request.POST.get('password', '').strip(),
+            'encryption': request.POST.get('encryption', '').strip(),
+            'latitude': request.POST.get('latitude', '').strip(),
+            'longitude': request.POST.get('longitude', '').strip(),
+            'first_name': request.POST.get('first_name', '').strip(),
+            'last_name': request.POST.get('last_name', '').strip(),
+            'organization': request.POST.get('organization', '').strip(),
+            'destination_url': request.POST.get('destination_url', '').strip(),
+        }
+        # Remove empty fallback keys.
+        fallback_data = {k: v for k, v in fallback_data.items() if v}
+        if fallback_data:
+            incoming_data = {**fallback_data, **incoming_data}
+
         qr.qr_name = qr_name
         qr.qr_type = qr_type
-        qr.destination_url = destination_url
-        try:
-            qr.qr_data = json.loads(qr_data_json)
-        except:
-            pass
+
+        # Keep destination_url aligned with selected type.
+        url_types = {
+            'url', 'custom-url', 'youtube', 'facebook', 'instagram', 'telegram',
+            'tiktok', 'x-twitter', 'snapchat', 'pinterest', 'linkedin',
+            'google-review', 'google-forms', 'google-doc', 'google-sheets',
+            'play-market', 'app-store', 'paypal', 'etsy', 'amazon', 'venmo',
+            'upi', 'crypto', 'spotify', 'link-list', 'office-365'
+        }
+        if qr_type in url_types:
+            qr.destination_url = destination_url or incoming_data.get('destination_url', '')
+        else:
+            qr.destination_url = ''
+
+        # Normalize type-specific data so redirect resolver never gets empty payload.
+        if qr_type == 'phone' and not incoming_data.get('phone'):
+            incoming_data['phone'] = incoming_data.get('phone_mobile', '')
+        if qr_type == 'vcard' and not incoming_data.get('phone_mobile'):
+            incoming_data['phone_mobile'] = incoming_data.get('phone', '')
+
+        qr.qr_data = incoming_data
             
         try:
             qr.design_options = json.loads(design_data_json)
@@ -676,10 +743,21 @@ def dqr_edit_view(request, qr_id):
         qr.eye_style = eye_style
         qr.ball_style = ball_style
         qr.is_active = is_active
+        # --- Permanent Logo Persistence ---
         if logo:
             qr.logo = logo
-        if file_content:
-            qr.file_content = file_content
+        elif qr.design_options and qr.design_options.get('logo_preset'):
+            preset = qr.design_options.get('logo_preset')
+            if preset and preset != 'none':
+                # If we have a preset but NO logo file, try to cache it from the preset to the logo field
+                try:
+                    target_icon = os.path.join(settings.MEDIA_ROOT, 'brand_icons', f"{preset}.png")
+                    if os.path.exists(target_icon) and os.path.getsize(target_icon) > 0:
+                        from django.core.files import File
+                        with open(target_icon, 'rb') as f:
+                            qr.logo.save(f"{preset}_preset.png", File(f), save=False)
+                except: pass
+        
         qr.save()
 
         # If AJAX request, return JSON
@@ -697,11 +775,17 @@ def dqr_edit_view(request, qr_id):
         return redirect('dynamic_qr:dashboard')
 
     qr_content = qr.get_static_content(request)
+    
+    # Merge existing data for dynamic fields
+    content_data = dict(qr.qr_data if qr.qr_data else {})
+    if qr.destination_url:
+        content_data['destination_url'] = qr.destination_url
+        
     import json
     return render(request, 'dynamic_qr/edit_qr.html', {
         'qr': qr,
         'redirect_url': qr_content,
-        'qr_data_json': json.dumps(qr.qr_data if qr.qr_data else {}),
+        'content_data': json.dumps(content_data),
         'design_options_json': json.dumps(qr.design_options if qr.design_options else {}),
     })
 
@@ -865,6 +949,13 @@ def dqr_redirect_view(request, short_code):
             except: pass
         except: pass
 
+    def _no_cache(response):
+        # Prevent stale scan results after edits on the same short code.
+        response['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+        response['Pragma'] = 'no-cache'
+        response['Expires'] = '0'
+        return response
+
     # Determine redirect behavior
     redirect_types = [
         'url', 'whatsapp', 'youtube', 'facebook', 'instagram', 'telegram', 
@@ -875,25 +966,63 @@ def dqr_redirect_view(request, short_code):
         'upi', 'crypto', 'spotify', 'link-list', 'custom-url', 'office-365'
     ]
 
+    # 1. Direct vCard Download (Most direct experience for contacts)
+    if qr.qr_type == 'vcard':
+        vcard_data = qr.get_raw_payload()
+        response = HttpResponse(vcard_data, content_type='text/vcard')
+        response['Content-Disposition'] = f'attachment; filename="{qr.qr_name or "contact"}.vcf"'
+        return _no_cache(response)
+
+    # 2. Files & URLs Redirect (Direct Redirect)
     target_url = None
     if qr.file_content:
         target_url = qr.file_content.url
     elif qr.destination_url:
         target_url = qr.destination_url
 
-    # Instant Redirect block REMOVED to allow landing page display for all types
-    # if qr.qr_type in redirect_types and target_url:
-    #     return HttpResponseRedirect(target_url)
+    if target_url and qr.qr_type in redirect_types:
+        return _no_cache(HttpResponseRedirect(target_url))
     
-    # Direct Display for Text/Wi-Fi/vCard (if accessed via link)
-    template = 'dynamic_qr/landing.html'
-    if qr.qr_type == 'text':
-        template = 'dynamic_qr/landing_direct.html'
+    # 3. Protocol payload handling (tel:, sms:, mailto:, geo:, etc.)
+    payload = qr.get_raw_payload()
+    # Extra fallback for legacy entries where values were stored with mixed keys.
+    if not payload:
+        data = qr.qr_data or {}
+        if qr.qr_type == 'phone':
+            phone = data.get('phone') or data.get('phone_mobile')
+            payload = f"tel:{phone}" if phone else ''
+        elif qr.qr_type == 'sms':
+            phone = data.get('phone') or data.get('phone_mobile')
+            msg = data.get('message', '')
+            payload = f"sms:{phone}?body={msg}" if phone else ''
+        elif qr.qr_type in ('url', 'custom-url'):
+            payload = data.get('destination_url') or qr.destination_url or ''
+        elif qr.qr_type == 'text':
+            payload = data.get('text', '')
 
-    return render(request, template, {
-        'qr': qr,
-        'is_preview': False
-    })
+    if payload:
+        if payload.startswith(('http://', 'https://')):
+            return _no_cache(HttpResponseRedirect(payload))
+
+        if payload.startswith(('tel:', 'sms:', 'mailto:', 'geo:')):
+            # Django blocks these schemes in HttpResponseRedirect; set Location directly.
+            protocol_redirect = HttpResponse(status=302)
+            protocol_redirect['Location'] = payload
+            return _no_cache(protocol_redirect)
+
+        content_type = 'text/plain; charset=utf-8'
+        if qr.qr_type == 'wifi':
+            content_type = 'text/plain; charset=utf-8'
+        elif qr.qr_type == 'location':
+            content_type = 'text/uri-list; charset=utf-8'
+        return _no_cache(HttpResponse(payload, content_type=content_type))
+
+    # Last safety fallback: if URL exists but type mismatched, still honor it.
+    if qr.destination_url:
+        return _no_cache(HttpResponseRedirect(qr.destination_url))
+
+    return _no_cache(HttpResponse("No QR content configured.", status=404, content_type='text/plain; charset=utf-8'))
+
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -918,6 +1047,8 @@ def dqr_generate_image(request):
     qr_obj = None
     if qr_id:
         qr_obj = get_object_or_404(DynamicQRCode, id=qr_id, user=request.user)
+        if qr_obj.qr_type == 'custom-url':
+            return JsonResponse({'error': 'Short URL does not generate a QR code.'}, status=400)
 
     from converter.utils import generate_qr_code, get_output_path
     from converter.views import create_cleanup_response
@@ -927,11 +1058,11 @@ def dqr_generate_image(request):
         if qr_obj: text = qr_obj.get_static_content(request)
         else: text = 'https://scanpdf.com'
         
-    fg_color = data.get('fg_color', qr_obj.fg_color if qr_obj else '#000000')
-    bg_color = data.get('bg_color', qr_obj.bg_color if qr_obj else '#ffffff')
-    style = data.get('style', qr_obj.body_style if qr_obj else 'square')
-    eye_style = data.get('eye_style', qr_obj.eye_style if qr_obj else 'square')
-    ball_style = data.get('ball_style', qr_obj.ball_style if qr_obj else 'square')
+    fg_color = data.get('fg_color') or (qr_obj.fg_color if qr_obj else '#000000')
+    bg_color = data.get('bg_color') or (qr_obj.bg_color if qr_obj else '#ffffff')
+    style = data.get('style') or (qr_obj.body_style if qr_obj else 'square')
+    eye_style = data.get('eye_style') or (qr_obj.eye_style if qr_obj else 'square')
+    ball_style = data.get('ball_style') or (qr_obj.ball_style if qr_obj else 'square')
     output_format = data.get('output_format', 'png')
 
     try:
@@ -945,63 +1076,77 @@ def dqr_generate_image(request):
         elif not design_options:
             design_options = '{}'
 
-        # Logo Logic
-        # 1. Preset Logo (passed via param)
-        brand = data.get('logo')
-        if brand and brand not in ('none', 'existing', ''):
+        # --- Dynamic Logo Resolution Pipeline ---
+        logo_path = None
+        brand_id = data.get('logo') # Selection from UI
+        
+        # 1. Parse design_options from request ONLY (highest priority for live updates)
+        try:
+            req_design = json.loads(design_options) if design_options else {}
+            if req_design.get('logo_preset'):
+                brand_id = req_design.get('logo_preset')
+        except: 
+            req_design = {}
+
+        # 2. Fallback to persistent logo_preset from DB
+        if (not brand_id or brand_id == 'existing') and qr_obj:
+            if qr_obj.design_options:
+                brand_id = qr_obj.design_options.get('logo_preset')
+
+        # 3. Handle Brand Presets (Auto-detect and cache)
+        if brand_id and brand_id not in ('none', 'existing', ''):
             domain_map = {
                 'facebook': 'facebook.com', 'instagram': 'instagram.com', 'youtube': 'youtube.com',
                 'whatsapp': 'whatsapp.com', 'linkedin': 'linkedin.com', 'telegram': 'telegram.org',
-                'x': 'x.com', 'tiktok': 'tiktok.com', 'snapchat': 'snapchat.com',
+                'twitter': 'twitter.com', 'x': 'x.com', 'tiktok': 'tiktok.com', 'snapchat': 'snapchat.com',
                 'pinterest': 'pinterest.com', 'spotify': 'spotify.com', 'apple': 'apple.com',
                 'google': 'google.com', 'amazon': 'amazon.com', 'paypal': 'paypal.com',
                 'discord': 'discord.com', 'reddit': 'reddit.com', 'slack': 'slack.com',
                 'github': 'github.com', 'microsoft': 'microsoft.com'
             }
-            if brand in domain_map:
+            target_domain = domain_map.get(brand_id)
+            if target_domain:
                 try:
-                    import requests
-                    icon_url = f"https://www.google.com/s2/favicons?sz=128&domain={domain_map[brand]}"
-                    r = requests.get(icon_url, timeout=5)
-                    if r.status_code == 200:
-                        import uuid
-                        tmp = os.path.join(settings.MEDIA_ROOT, 'temp', f"b_{uuid.uuid4()}.png")
-                        os.makedirs(os.path.dirname(tmp), exist_ok=True)
-                        with open(tmp, 'wb') as f: f.write(r.content)
-                        logo_path = tmp
-                except: pass
+                    icon_dir = os.path.join(settings.MEDIA_ROOT, 'brand_icons')
+                    os.makedirs(icon_dir, exist_ok=True)
+                    icon_path = os.path.join(icon_dir, f"{brand_id}.png")
+                    
+                    # Persistent Cache: Download once, reuse forever
+                    if not os.path.exists(icon_path) or os.path.getsize(icon_path) == 0:
+                        icon_url = f"https://www.google.com/s2/favicons?sz=128&domain={target_domain}"
+                        h = {
+                            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+                            'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8'
+                        }
+                        # Use verify=False to bypass local SSL certificate issues if necessary
+                        r = requests.get(icon_url, headers=h, timeout=12, verify=False)
+                        if r.status_code == 200:
+                            with open(icon_path, 'wb') as f: f.write(r.content)
+                    
+                    if os.path.exists(icon_path) and os.path.getsize(icon_path) > 0:
+                        logo_path = icon_path
+                except Exception as e:
+                    print(f"[QR LOGO ERROR] Failed to resolve {brand_id}: {e}")
 
-        # 2. Base64 Cropped Logo (from POST preview)
-        if not logo_path:
-            logo_cropped = data.get('logo_cropped')
-            if logo_cropped and logo_cropped.startswith('data:image'):
-                import base64
-                import uuid
-                try:
-                    _, imgstr = logo_cropped.split(';base64,')
-                    tmp = os.path.join(settings.MEDIA_ROOT, 'temp', f"c_{uuid.uuid4()}.png")
-                    os.makedirs(os.path.dirname(tmp), exist_ok=True)
-                    with open(tmp, 'wb') as f: f.write(base64.b64decode(imgstr))
-                    logo_path = tmp
-                except: pass
+        # 4. Handle Cropped Blob (Highest priority for creation/edit preview)
+        if data.get('logo_cropped') and data.get('logo_cropped').startswith('data:image'):
+            try:
+                base64_data = data.get('logo_cropped').split(';base64,')[1]
+                tmp_dir = os.path.join(settings.MEDIA_ROOT, 'temp_previews')
+                os.makedirs(tmp_dir, exist_ok=True)
+                logo_path = os.path.join(tmp_dir, f"p_{uuid.uuid4().hex[:8]}.png")
+                with open(logo_path, 'wb') as f: 
+                    f.write(base64.b64decode(base64_data))
+            except: pass
 
-        # 3. Existing Logo from Database (if qr_id provided and no new logo in params)
-        if not logo_path and qr_obj:
-            if qr_obj.logo:
-                try:
-                    if os.path.exists(qr_obj.logo.path):
-                        logo_path = qr_obj.logo.path
-                except:
-                    pass
-            # Also check design options for preset logos if not in main logo field
-            if not logo_path and qr_obj.design_options:
-                brand_id = qr_obj.design_options.get('logo_preset')
-                if brand_id and brand_id != 'none' and not logo_path:
-                    # Retry brand resolution logic if needed or just trust that it should have been 
-                    # handled by the brand block if passed in data.
-                    pass
+        # 5. Fallback: Database-saved primary logo (Persistent Fallback)
+        if not logo_path and qr_obj and qr_obj.logo:
+            try:
+                if os.path.exists(qr_obj.logo.path):
+                    logo_path = qr_obj.logo.path
+            except: pass
 
-        # 4. Manual File Upload
+        # 6. Manual Preview Upload
         if not logo_path and 'logo' in request.FILES:
             logo_path = save_uploaded_file(request.FILES['logo'])
 
@@ -1009,7 +1154,9 @@ def dqr_generate_image(request):
             text, fg_color=fg_color, bg_color=bg_color,
             style=style, eye_style=eye_style, ball_style=ball_style,
             logo_path=logo_path, output_format=output_format,
-            design_options=design_options
+            design_options=design_options,
+            eye_color_outer=data.get('eye_color_outer'),
+            eye_color_inner=data.get('eye_color_inner')
         )
 
         if logo_path and os.path.exists(logo_path) and 'temp' in logo_path:
@@ -1028,6 +1175,8 @@ def dqr_generate_image(request):
 def dqr_download_view(request, qr_id):
     """Generate and return the QR image for a specific dynamic QR code in requested format."""
     qr = get_object_or_404(DynamicQRCode, id=qr_id, user=request.user)
+    if qr.qr_type == 'custom-url':
+        return JsonResponse({'error': 'Short URL does not generate a QR code.'}, status=400)
     fmt = request.GET.get('format', 'png').lower()
     if fmt not in ('png', 'jpg', 'jpeg', 'svg'):
         fmt = 'png'
@@ -1038,10 +1187,43 @@ def dqr_download_view(request, qr_id):
     # Use get_static_content to encode the raw data directly, bypassing redirects
     qr_content = qr.get_static_content(request)
     
-    # Path to existing logo if any
+    # Fix logo resolution for download (Sync with generate_image logic)
     logo_path = None
     if qr.logo and os.path.exists(qr.logo.path):
         logo_path = qr.logo.path
+    
+    if not logo_path and qr.design_options:
+        brand_id = qr.design_options.get('logo_preset')
+        if brand_id and brand_id not in ('none', 'existing', ''):
+            domain_map = {
+                'facebook': 'facebook.com', 'instagram': 'instagram.com', 'youtube': 'youtube.com',
+                'whatsapp': 'whatsapp.com', 'linkedin': 'linkedin.com', 'telegram': 'telegram.org',
+                'x': 'x.com', 'tiktok': 'tiktok.com', 'snapchat': 'snapchat.com',
+                'pinterest': 'pinterest.com', 'spotify': 'spotify.com', 'apple': 'apple.com',
+                'google': 'google.com', 'amazon': 'amazon.com', 'paypal': 'paypal.com',
+                'discord': 'discord.com', 'reddit': 'reddit.com', 'slack': 'slack.com',
+                'github': 'github.com', 'microsoft': 'microsoft.com'
+            }
+            if brand_id in domain_map:
+                try:
+                    icon_dir = os.path.join(settings.MEDIA_ROOT, 'brand_icons')
+                    os.makedirs(icon_dir, exist_ok=True)
+                    icon_path = os.path.join(icon_dir, f"{brand_id}.png")
+                    
+                    if not os.path.exists(icon_path):
+                        icon_url = f"https://www.google.com/s2/favicons?sz=128&domain={domain_map[brand_id]}"
+                        headers = {'User-Agent': 'Mozilla/5.0'}
+                        r = requests.get(icon_url, headers=headers, timeout=5)
+                        if r.status_code == 200:
+                            with open(icon_path, 'wb') as f: f.write(r.content)
+                    
+                    if os.path.exists(icon_path):
+                        logo_path = icon_path
+                except: pass
+
+    # Extract per-element colors if available
+    eye_color_outer = qr.design_options.get('eye_color_outer') if qr.design_options else None
+    eye_color_inner = qr.design_options.get('eye_color_inner') if qr.design_options else None
 
     # Use the helper from converter.utils
     output_path = generate_qr_code(
@@ -1053,7 +1235,9 @@ def dqr_download_view(request, qr_id):
         ball_style=qr.ball_style,
         logo_path=logo_path,
         output_format=fmt,
-        design_options=qr.design_options
+        design_options=qr.design_options,
+        eye_color_outer=eye_color_outer,
+        eye_color_inner=eye_color_inner
     )
     
     ct = 'image/png'

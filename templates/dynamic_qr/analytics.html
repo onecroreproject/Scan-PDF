@@ -87,9 +87,9 @@
     </div>
 
     <!-- Main Charts Grid -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+    <div class="grid grid-cols-1 gap-6 mb-8">
         <!-- Scan Trends (Line/Area Chart) -->
-        <div class="lg:col-span-2">
+        <div>
             <div class="analytics-card">
                 <div class="flex items-center justify-between mb-6">
                     <div>
@@ -97,63 +97,8 @@
                         <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Activity over time</p>
                     </div>
                 </div>
-                <div class="h-[300px] w-full">
+                <div class="h-[350px] w-full">
                     <canvas id="trendsChart"></canvas>
-                </div>
-            </div>
-        </div>
-
-        <!-- Devices (Pie/Doughnut Chart) -->
-        <div>
-            <div class="analytics-card">
-                <div class="flex items-center justify-between mb-6">
-                    <div>
-                        <h3 class="text-sm font-black text-slate-900">Device Types</h3>
-                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Mobile vs Desktop</p>
-                    </div>
-                </div>
-                <div class="h-[300px] w-full flex items-center justify-center">
-                    <canvas id="deviceChart"></canvas>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Browsers (Bar Chart) -->
-        <div>
-            <div class="analytics-card">
-                <h3 class="text-sm font-black text-slate-900 mb-6">Top Browsers</h3>
-                <div class="h-[250px] w-full">
-                    <canvas id="browserChart"></canvas>
-                </div>
-            </div>
-        </div>
-
-        <!-- Operating Systems -->
-        <div class="lg:col-span-2">
-            <div class="analytics-card">
-                <div class="flex items-center justify-between mb-6">
-                    <h3 class="text-sm font-black text-slate-900">Popular Operating Systems</h3>
-                    <div class="flex gap-2">
-                        {% for os in os_stats %}
-                        <span class="chart-label-pill">{{ os.os }}</span>
-                        {% endfor %}
-                    </div>
-                </div>
-                <div class="space-y-4">
-                    {% for os in os_stats %}
-                    {% widthratio os.count total_range_scans 100 as pct %}
-                    <div class="space-y-1">
-                        <div class="flex items-center justify-between text-[11px] font-bold">
-                            <span class="text-slate-600">{{ os.os }}</span>
-                            <span class="text-slate-900">{{ os.count }} hits ({{ pct }}%)</span>
-                        </div>
-                        <div class="w-full bg-slate-100 h-2 rounded-full overflow-hidden">
-                            <div class="bg-indigo-500 h-full rounded-full" style="width: {{ pct }}%"></div>
-                        </div>
-                    </div>
-                    {% empty %}
-                    <div class="text-center py-10 text-slate-300 italic text-sm">No OS data available for this range</div>
-                    {% endfor %}
                 </div>
             </div>
         </div>
@@ -275,53 +220,6 @@
                 scales: {
                     y: { beginAtZero: true, grid: { borderDash: [5, 5] }, ticks: { stepSize: 1 } },
                     x: { grid: { display: false } }
-                }
-            }
-        });
-
-        // 2. Device Chart (Doughnut)
-        new Chart(document.getElementById('deviceChart'), {
-            type: 'doughnut',
-            data: {
-                labels: {{ js_device_labels|safe }},
-                datasets: [{
-                    data: {{ js_device_data|safe }},
-                    backgroundColor: ['#4f46e5', '#10b981', '#f59e0b', '#6366f1'],
-                    borderWidth: 0,
-                    hoverOffset: 10
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                cutout: '75%',
-                plugins: {
-                    legend: { position: 'bottom', labels: { usePointStyle: true, padding: 20 } }
-                }
-            }
-        });
-
-        // 3. Browser Chart (Bar)
-        new Chart(document.getElementById('browserChart'), {
-            type: 'bar',
-            data: {
-                labels: {{ js_browser_labels|safe }},
-                datasets: [{
-                    label: 'Browser Hits',
-                    data: {{ js_browser_data|safe }},
-                    backgroundColor: '#e2e8f0',
-                    hoverBackgroundColor: '#4f46e5',
-                    borderRadius: 6
-                }]
-            },
-            options: {
-                indexAxis: 'y',
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
-                scales: {
-                    x: { beginAtZero: true, grid: { display: false } },
-                    y: { grid: { display: false } }
                 }
             }
         });

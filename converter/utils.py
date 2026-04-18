@@ -2968,10 +2968,10 @@ def add_image_watermark(input_path, original_name, watermark_text='SAMPLE',
 
     try:
         font = ImageFont.truetype("arial.ttf", font_size)
-    except (IOError, OSError):
+    except:
         font = ImageFont.load_default()
 
-    # Parse colour
+    # Parse color
     hex_color = color.lstrip('#')
     r_c = int(hex_color[0:2], 16)
     g_c = int(hex_color[2:4], 16)
@@ -2992,7 +2992,7 @@ def add_image_watermark(input_path, original_name, watermark_text='SAMPLE',
             txt_draw.text((x, y), watermark_text, fill=fill, font=font)
 
     txt_layer = txt_layer.rotate(45, expand=False)
-    # Crop to image size (centred)
+    # Crop to image size (centered)
     cx, cy = txt_layer.width // 2, txt_layer.height // 2
     left = cx - img.width // 2
     top = cy - img.height // 2
@@ -3008,21 +3008,14 @@ def add_image_watermark(input_path, original_name, watermark_text='SAMPLE',
 # 28. COMPRESS IMAGE
 # ═══════════════════════════════════════════════════════════════
 def compress_image(input_path, original_name, quality=60):
-    """Compress a JPEG image to reduce file size.
-
-    *quality* should be 1–100; lower = smaller file.
-    """
+    """Compress a JPEG image to reduce file size."""
     from PIL import Image
-
     quality = int(quality)
     quality = max(1, min(quality, 100))
-
     output_path = get_output_path(original_name, 'jpg', suffix='_compressed')
-
     img = Image.open(input_path)
     if img.mode in ('RGBA', 'P', 'LA'):
         img = img.convert('RGB')
-
     img.save(output_path, 'JPEG', quality=quality, optimize=True)
     return output_path
 
@@ -3031,126 +3024,64 @@ def compress_image(input_path, original_name, quality=60):
 # 29. CROP IMAGE
 # ═══════════════════════════════════════════════════════════════
 def crop_image(input_path, original_name, crop_x=0, crop_y=0, crop_width=0, crop_height=0):
-    """Crop an image to the specified rectangle (x, y, width, height in pixels).
-
-    If crop_width or crop_height is 0 the original dimension is used.
-    """
+    """Crop an image to the specified rectangle."""
     from PIL import Image
-
-    crop_x = int(crop_x)
-    crop_y = int(crop_y)
-    crop_width = int(crop_width)
-    crop_height = int(crop_height)
-
+    crop_x, crop_y = int(crop_x), int(crop_y)
+    crop_width, crop_height = int(crop_width), int(crop_height)
     output_path = get_output_path(original_name, 'jpg', suffix='_cropped')
-
     img = Image.open(input_path)
     if img.mode in ('RGBA', 'P', 'LA'):
         img = img.convert('RGB')
-
     w, h = img.size
-    if crop_width <= 0:
-        crop_width = w - crop_x
-    if crop_height <= 0:
-        crop_height = h - crop_y
-
-    # Clamp to image bounds
+    if crop_width <= 0: crop_width = w - crop_x
+    if crop_height <= 0: crop_height = h - crop_y
     left = max(0, min(crop_x, w - 1))
     upper = max(0, min(crop_y, h - 1))
     right = min(w, left + crop_width)
     lower = min(h, upper + crop_height)
-
-    if right <= left or lower <= upper:
-        raise Exception("Invalid crop dimensions — the crop area is empty.")
-
     img = img.crop((left, upper, right, lower))
     img.save(output_path, 'JPEG', quality=92, optimize=True)
     return output_path
-
 
 
 # ═══════════════════════════════════════════════════════════════
 # 31. CHEMICAL EQUATION BALANCER
 # ═══════════════════════════════════════════════════════════════
 def balance_chemical_equation(equation_str):
-    """Balance a chemical equation string (e.g., 'H2 + O2 = H2O')."""
+    """Balance a chemical equation string."""
     from chempy import balance_stoichiometry
     import re
-
     try:
-        # Normalize subscripts (unicode to normal digits)
         sub_trans = str.maketrans('₀₁₂₃₄₅₆₇₈₉', '0123456789')
-        eq_normalized = equation_str.translate(sub_trans)
-
-        # Normalize arrows
-        eq_normalized = eq_normalized.replace('→', '=').replace('->', '=').replace('>', '=')
-
-        # Split equation into reactants and products
-        if '=' not in eq_normalized:
-            raise ValueError("Equation must contain '=' or '→' between reactants and products.")
-            
+        eq_normalized = equation_str.translate(sub_trans).replace('→', '=').replace('->', '=').replace('>', '=')
+        if '=' not in eq_normalized: raise ValueError("Invalid format.")
         parts = eq_normalized.split('=')
-        if len(parts) != 2:
-            raise ValueError("Invalid format. Use 'Reactants = Products'.")
-
         def strip_coeff(side_str):
-            # Split by '+' and normalize
             items = filter(None, [s.strip() for s in side_str.replace('+', ' + ').split(' + ')])
-            cleaned = []
-            for s in items:
-                # Replace common typo 0 (zero) with O (Oxygen) in common cases
-                # Only if it's like H20 or 02
-                s_fixed = re.sub(r'([A-Z])0', r'\1O', s) # H20 -> H2O
-                s_fixed = re.sub(r'^0', r'O', s_fixed)   # 02 -> O2
-                
-                # Strip leading coefficient
-                m = re.match(r'^(\d+)?(.*)$', s_fixed)
-                formula = m.group(2).strip() if m else s_fixed
-                if formula:
-                    cleaned.append(formula)
-            return cleaned
-
-        reactants = strip_coeff(parts[0])
-        products = strip_coeff(parts[1])
-
-        if not reactants or not products:
-            raise ValueError("Missing reactants or products.")
-
-        # Balance the stoichiometry - use lists to keep it predictable
+            return [re.sub(r'([A-Z])0', r'\1O', s).strip() for s in items]
+        reactants, products = strip_coeff(parts[0]), strip_coeff(parts[1])
         reac, prod = balance_stoichiometry(reactants, products)
-        
-        # Build the balanced string
         def format_side(side_dict):
-            # Sort keys to keep output consistent
             items = []
             for formula in sorted(side_dict.keys()):
                 count = side_dict[formula]
                 coeff = str(count) if count > 1 else ""
                 items.append(f"{coeff}{formula}")
             return ' + '.join(items)
-
-        balanced_eq = f"{format_side(reac)} = {format_side(prod)}"
-        return balanced_eq
+        return f"{format_side(reac)} = {format_side(prod)}"
     except Exception as e:
-        # Avoid showing cryptic pyparsing/regex errors to the user
-        msg = str(e)
-        if any(keyword in msg for keyword in ["Expected", "found", "char", "line", "col"]):
-            msg = "Incorrect formula detected. Ensure you use CAPITAL symbols (e.g., 'H2O' instead of 'h2o') and proper numbers."
-        elif "Linear system" in msg:
-            msg = "Equation could not be balanced. Double check your reactants/products."
-        raise Exception(msg)
+        raise Exception(f"Balance error: {e}")
 
 
 # ═══════════════════════════════════════════════════════════════
 # 32. QR CODE GENERATOR
 # ═══════════════════════════════════════════════════════════════
-def generate_qr_code(text, box_size=10, border=4, fg_color="#000000", bg_color="#ffffff",
+def generate_qr_code(text, box_size=12, border=4, fg_color="#000000", bg_color="#ffffff",
                      logo_path=None, style="square", gradient_type=None,
                      eye_style="square", ball_style="square", output_format="png",
-                     design_options=None):
+                     design_options=None, eye_color_outer=None, eye_color_inner=None):
     """
-    Professional QR Code Engine — Full Customization.
-    Supports frames, eye/ball patterns, circular logos, and additional branding text.
+    Professional QR Code Engine — Scannability Fixed with Logo & Frame support — REFACTORED.
     """
     import qrcode
     from PIL import Image, ImageDraw, ImageColor, ImageOps, ImageFont
@@ -3158,72 +3089,40 @@ def generate_qr_code(text, box_size=10, border=4, fg_color="#000000", bg_color="
     import json
     import os
     import io
+    from django.conf import settings
 
     if design_options and isinstance(design_options, str):
-        try:
-            design_options = json.loads(design_options)
-        except:
-            design_options = {}
-    elif not design_options:
-        design_options = {}
+        try: design_options = json.loads(design_options)
+        except: design_options = {}
+    elif not design_options: design_options = {}
 
-    # Extract design options
-    error_correction = design_options.get('error_correction', 'H')
-    ec_map = {
-        'L': qrcode.constants.ERROR_CORRECT_L,
-        'M': qrcode.constants.ERROR_CORRECT_M,
-        'Q': qrcode.constants.ERROR_CORRECT_Q,
-        'H': qrcode.constants.ERROR_CORRECT_H,
-    }
-    ec_level = ec_map.get(error_correction.upper(), qrcode.constants.ERROR_CORRECT_H)
-
+    ec_level = qrcode.constants.ERROR_CORRECT_H 
     circular_logo = design_options.get('logo_circular', True)
-    logo_size_factor = float(design_options.get('logo_size', 0.22))
+    # Keep logos conservative for scan reliability.
+    try:
+        logo_size_factor = float(design_options.get('logo_size', 0.16))
+    except Exception:
+        logo_size_factor = 0.16
+    logo_size_factor = max(0.10, min(logo_size_factor, 0.18))
     logo_background = design_options.get('logo_background', True)
-    
-    frame_style = design_options.get('frame_style', None)
-    frame_text = design_options.get('frame_text', '')
-    frame_font_name = design_options.get('frame_font', 'arial.ttf')
-    frame_text_color = design_options.get('frame_text_color', '#000000')
-    
-    bg_transparent = design_options.get('bg_transparent', False)
+    # Transparent backgrounds can reduce real-world scan reliability.
+    bg_transparent = False
 
-    # Resolve Brand Logos
-    if logo_path and not os.path.exists(logo_path):
-        # Check if it's a brand name
-        brand_map = {
-            'facebook': 'https://cdn.jsdelivr.net/npm/simple-icons@v11/icons/facebook.svg',
-            # etc...
-        }
-        # For simplicity, we can fetch from a local path if we had them or just ignore for now
-        # Actually, let's look for brand icons in static/images/logos
-        local_brand_path = os.path.join(settings.BASE_DIR, 'static', 'images', 'logos', f"{logo_path}.png")
-        if os.path.exists(local_brand_path):
-            logo_path = local_brand_path
-        elif logo_path in ['facebook', 'instagram', 'youtube', 'whatsapp', 'linkedin', 'telegram', 'x-twitter', 'tiktok', 'snapchat', 'pinterest']:
-            # Maybe we have some default ones in the media root or static
-            pass
-
-    # ── 1. Build QR matrix ──
-    qr = qrcode.QRCode(
-        error_correction=ec_level,
-        box_size=1, border=0,
-    )
+    # 1. Build QR matrix
+    qr = qrcode.QRCode(error_correction=ec_level, box_size=1, border=0)
     qr.add_data(text)
     qr.make(fit=True)
     matrix = qr.get_matrix()
     modules = len(matrix)
 
-    # ── 2. Dimensions ──
-    pad = int(border)
-    cell = 30
+    # 2. Dimensions
+    pad = 4 
+    cell = 18 
     img_cells = modules + 2 * pad
     img_px = img_cells * cell
 
     fmt = output_format.lower().strip()
-    if fmt not in ("png", "jpg", "jpeg", "svg"):
-        fmt = "png"
-    
+    if fmt not in ("png", "jpg", "jpeg", "svg"): fmt = "png"
     is_svg = (fmt == "svg")
     ext = "svg" if is_svg else ("jpg" if fmt in ("jpg", "jpeg") else "png")
     output_path = get_output_path("qr_code", ext)
@@ -3232,18 +3131,14 @@ def generate_qr_code(text, box_size=10, border=4, fg_color="#000000", bg_color="
         svg_elements = []
         svg_header = f'<?xml version="1.0" encoding="UTF-8" standalone="no"?>\n'
         svg_header += f'<svg width="{img_px}" height="{img_px}" viewBox="0 0 {img_px} {img_px}" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">\n'
-        if not bg_transparent:
-            svg_elements.append(f'  <rect width="100%" height="100%" fill="{bg_color}" />')
+        if not bg_transparent: svg_elements.append(f'  <rect width="100%" height="100%" fill="{bg_color}" />')
     else:
-        bg_rgb = ImageColor.getcolor(bg_color, "RGB")
-        fg_rgb = ImageColor.getcolor(fg_color, "RGB")
-        if bg_transparent:
-            canvas = Image.new("RGBA", (img_px, img_px), (0, 0, 0, 0))
-        else:
-            canvas = Image.new("RGBA", (img_px, img_px), (*bg_rgb, 255))
+        bg_rgb, fg_rgb = ImageColor.getcolor(bg_color, "RGB"), ImageColor.getcolor(fg_color, "RGB")
+        canvas = Image.new("RGBA", (img_px, img_px), (0, 0, 0, 0) if bg_transparent else (*bg_rgb, 255))
         draw = ImageDraw.Draw(canvas)
 
     # ── Drawing helpers ──
+
     def _rect(x1, y1, x2, y2, color, radius=0):
         if is_svg:
             r_attr = f' rx="{radius}" ry="{radius}"' if radius > 0 else ''
@@ -3311,13 +3206,27 @@ def generate_qr_code(text, box_size=10, border=4, fg_color="#000000", bg_color="
             ox, oy = cx + dx*r, cy + dy*r
             _ellip(ox-r, oy-r, ox+r, oy+r, color)
 
+    def _hexagon(x1, y1, x2, y2, color):
+        cx, cy = (x1+x2)//2, (y1+y2)//2
+        w, h = (x2-x1)//2, (y2-y1)//2
+        _poly([(cx, y1), (x2, cy-h//2), (x2, cy+h//2), (cx, y2), (x1, cy+h//2), (x1, cy-h//2)], color)
+
+    def _octagon(x1, y1, x2, y2, color):
+        cx, cy = (x1+x2)//2, (y1+y2)//2
+        w, h = (x2-x1)//2, (y2-y1)//2
+        o = w // 3
+        _poly([(cx-o, y1), (cx+o, y1), (x2, cy-o), (x2, cy+o), (cx+o, y2), (cx-o, y2), (x1, cy+o), (x1, cy-o)], color)
+
     # Style mapping
     body_map = {
         'square': _square, 'rounded': _rounded, 'circle': _circle,
         'diamond': _diamond, 'dot': _dot, 'small-square': _small_sq,
         'hline': _hline, 'vline': _vline, 'star': _star,
         'cross': _cross, 'leaf': _leaf, 'clover': _clover,
+        'hexagon': _hexagon, 'octagon': _octagon,
     }
+    # Keep customization visible while preserving scanner-safe defaults elsewhere.
+    # If an unknown style is provided, fall back to square.
     fn_body = body_map.get(style, _square)
 
     def _eye_shape(x1, y1, x2, y2, s, color):
@@ -3327,6 +3236,25 @@ def generate_qr_code(text, box_size=10, border=4, fg_color="#000000", bg_color="
             cx, cy = (x1+x2)//2, (y1+y2)//2
             _poly([(cx, y1), (x2, cy), (cx, y2), (x1, cy)], color)
         elif s == 'leaf': _rect(x1, y1, x2, y2, color, radius=(x2-x1)//2)
+        elif s == 'hexagon':
+            cx, cy = (x1+x2)//2, (y1+y2)//2
+            w, h = (x2-x1)//2, (y2-y1)//2
+            _poly([(cx, y1), (x2, cy-h//2), (x2, cy+h//2), (cx, y2), (x1, cy+h//2), (x1, cy-h//2)], color)
+        elif s == 'octagon':
+            cx, cy = (x1+x2)//2, (y1+y2)//2
+            w, h = (x2-x1)//2, (y2-y1)//2
+            o = w // 3
+            _poly([(cx-o, y1), (cx+o, y1), (x2, cy-o), (x2, cy+o), (cx+o, y2), (cx-o, y2), (x1, cy+o), (x1, cy-o)], color)
+        elif s == 'dot':
+            m = (x2-x1)//4
+            _ellip(x1+m, y1+m, x2-m, y2-m, color)
+        elif s == 'star':
+            cx, cy = (x1+x2)//2, (y1+y2)//2
+            s_val = (x2-x1)//2; q = s_val//3
+            _poly([(cx, y1), (cx+q, cy-q), (x2, cy), (cx+q, cy+q), (cx, y2), (cx-q, cy+q), (x1, cy), (cx-q, cy-q)], color)
+        elif s == 'small-square':
+            m = (x2-x1)//4
+            _rect(x1+m, y1+m, x2-m, y2-m, color)
         else: _rect(x1, y1, x2, y2, color)
 
     eye_corners = [(0, 0), (0, modules - 7), (modules - 7, 0)]
@@ -3338,6 +3266,17 @@ def generate_qr_code(text, box_size=10, border=4, fg_color="#000000", bg_color="
     # Draw body
     c_fg = fg_color if is_svg else fg_rgb
     c_bg = bg_color if is_svg else bg_rgb
+    
+    # Per-element colors from design_options or direct params
+    c_eye_outer = eye_color_outer or design_options.get('eye_color_outer') or fg_color
+    c_eye_inner = eye_color_inner or design_options.get('eye_color_inner') or fg_color
+    
+    if not is_svg:
+        c_eye_outer_rgb = ImageColor.getcolor(c_eye_outer, "RGB")
+        c_eye_inner_rgb = ImageColor.getcolor(c_eye_inner, "RGB")
+    else:
+        c_eye_outer_rgb = c_eye_outer
+        c_eye_inner_rgb = c_eye_inner
 
     def is_timing(r, c):
         return r == 6 or c == 6
@@ -3350,17 +3289,28 @@ def generate_qr_code(text, box_size=10, border=4, fg_color="#000000", bg_color="
             
             if is_timing(r_idx, c_idx):
                 # Always draw timing patterns as squares for scannability
-                _square(px, py, px + cell - 1, py + cell - 1, c_fg)
+                _square(px, py, px + cell, py + cell, c_fg)
             else:
-                fn_body(px, py, px + cell - 1, py + cell - 1, c_fg)
+                fn_body(px, py, px + cell, py + cell, c_fg)
+
 
     # Draw Eyes
     for (er, ec) in eye_corners:
         ox, oy = (ec + pad) * cell, (er + pad) * cell
-        s7, s5, s3 = 7*cell-1, 5*cell-1, 3*cell-1
-        _eye_shape(ox, oy, ox + s7, oy + s7, eye_style, c_fg)
-        _eye_shape(ox + cell, oy + cell, ox + cell + s5, oy + cell + s5, eye_style, c_bg)
-        _eye_shape(ox + 2*cell, oy + 2*cell, ox + 2*cell + s3, oy + 2*cell + s3, ball_style, c_fg)
+        # Standard QR Eye: 7x7 outer, 5x5 middle (bg), 3x3 inner (ball)
+        s7, s5, s3 = 7 * cell, 5 * cell, 3 * cell
+        
+        # Outer
+        # Apply selected eye/ball styles; fallback to square when unknown.
+        resolved_eye_style = eye_style if eye_style in body_map else 'square'
+        resolved_ball_style = ball_style if ball_style in body_map else 'square'
+
+        _eye_shape(ox, oy, ox + s7, oy + s7, resolved_eye_style, c_eye_outer_rgb)
+        # Middle (Background)
+        _eye_shape(ox + cell, oy + cell, ox + cell + s5, oy + cell + s5, resolved_eye_style, c_bg)
+        # Inner (Ball)
+        _eye_shape(ox + 2*cell, oy + 2*cell, ox + 2*cell + s3, oy + 2*cell + s3, resolved_ball_style, c_eye_inner_rgb)
+
 
     # Logo
     if logo_path and os.path.exists(logo_path):
@@ -3379,7 +3329,7 @@ def generate_qr_code(text, box_size=10, border=4, fg_color="#000000", bg_color="
             lx, ly = (img_px - logo.width) // 2, (img_px - logo.height) // 2
             
             if logo_background:
-                p_px = 10
+                p_px = 6
                 if is_svg:
                     if circular_logo:
                         rx = (logo.width + p_px*2)/2
@@ -3405,64 +3355,66 @@ def generate_qr_code(text, box_size=10, border=4, fg_color="#000000", bg_color="
         except Exception:
             pass
 
-    # Finalize
-    if is_svg:
-        with open(output_path, 'w', encoding='utf-8') as f:
-            f.write(svg_header + "\n".join(svg_elements) + "\n</svg>")
-        return output_path
-
     # ── 6. Frame & Additional Text ──
-    if (frame_style and frame_style != 'none') or frame_text:
+    if (design_options.get('frame_style') and design_options.get('frame_style') != 'none') or design_options.get('frame_text'):
         try:
-            # We increase canvas to fit the frame or text
+            from django.conf import settings
+            frame_style = design_options.get('frame_style')
+            frame_text = design_options.get('frame_text', '')
+            
+            # Dimensions for frame
+            frame_margin = 120 if frame_style and frame_style != 'none' else 0
             extra_h = 100 if frame_text else 0
-            frame_margin = 80 if frame_style and frame_style != 'none' else 0
             
             final_w = img_px + frame_margin * 2
             final_h = img_px + frame_margin * 2 + extra_h
             
-            new_canvas = Image.new("RGBA", (final_w, final_h), (0,0,0,0) if bg_transparent else (*bg_rgb, 255))
-            
-            # Draw frame if image exists
-            frame_path = os.path.join(settings.BASE_DIR, 'static', 'images', 'frames', f"{frame_style}.png")
-            if os.path.exists(frame_path):
-                frame_img = Image.open(frame_path).convert("RGBA")
-                frame_img = frame_img.resize((final_w, final_h), Image.Resampling.LANCZOS)
-                new_canvas.paste(frame_img, (0, 0), frame_img)
-            elif frame_style and frame_style != 'none':
-                # Simple color frame fallback
-                f_draw = ImageDraw.Draw(new_canvas)
-                f_draw.rectangle([10, 10, final_w-10, final_h-10], outline=fg_rgb, width=15)
-
-            # Paste QR in center
-            new_canvas.paste(canvas, (frame_margin, frame_margin), canvas)
-            
-            # Draw additional text
-            if frame_text:
-                t_draw = ImageDraw.Draw(new_canvas)
-                try:
-                    font = ImageFont.truetype(frame_font_name, 40)
-                except:
-                    font = ImageFont.load_default()
+            if is_svg:
+                # SVG Frame scaling is complex, we skip it for now to avoid breaking viewports
+                pass
+            else:
+                new_canvas = Image.new("RGBA", (final_w, final_h), (0,0,0,0) if bg_transparent else (*bg_rgb, 255))
+                # Paste the QR in the middle
+                new_canvas.paste(canvas, (frame_margin, frame_margin), canvas)
                 
-                t_bbox = t_draw.textbbox((0,0), frame_text, font=font)
-                tw = t_bbox[2] - t_bbox[0]
-                tx = (final_w - tw) // 2
-                ty = final_h - extra_h // 2 - 20
-                t_draw.text((tx, ty), frame_text, fill=frame_text_color, font=font)
-            
-            canvas = new_canvas
-        except Exception:
-            pass
+                # Draw Frame image if exists
+                f_path = os.path.join(settings.BASE_DIR, 'static', 'images', 'frames', f"{frame_style}.png")
+                if os.path.exists(f_path):
+                    f_img = Image.open(f_path).convert("RGBA")
+                    f_img = f_img.resize((final_w, final_h), Image.Resampling.LANCZOS)
+                    new_canvas.paste(f_img, (0, 0), f_img)
+                
+                # Draw Frame Text
+                if frame_text:
+                    f_draw = ImageDraw.Draw(new_canvas)
+                    f_size = int(final_w / 12)
+                    try: f_font = ImageFont.truetype("arial.ttf", f_size)
+                    except: f_font = ImageFont.load_default()
+                    
+                    # Center text
+                    bbox = f_draw.textbbox((0,0), frame_text, font=f_font)
+                    tw = bbox[2] - bbox[0]
+                    f_draw.text(((final_w - tw)/2, final_h - extra_h/1.2), frame_text, font=f_font, fill=design_options.get('frame_text_color', '#000000'))
+                
+                canvas = new_canvas
+        except Exception as e:
+            print(f"Frame Error: {e}")
 
-    # ── 7. Save ──
-    if ext == "jpg":
-        if canvas.mode == "RGBA":
-            canvas = canvas.convert("RGB")
-        canvas.save(output_path, "JPEG", quality=95)
+    # Finalize
+    if is_svg:
+        with open(output_path, 'w', encoding='utf-8') as f:
+            f.write(svg_header + "\n".join(svg_elements) + "\n</svg>")
     else:
-        canvas.save(output_path, "PNG")
+        # Save PNG/JPG
+        if fmt in ("jpg", "jpeg"):
+            canvas.convert("RGB").save(output_path, "JPEG", quality=95)
+        else:
+            canvas.save(output_path, "PNG")
+    
     return output_path
+
+    # [Unreachable duplicate block removed]
+
 
 
 # ═══════════════════════════════════════════════════════════════

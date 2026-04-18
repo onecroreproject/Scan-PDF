@@ -1,6 +1,7 @@
 from django import forms
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import AuthenticationForm
+from django.contrib.auth.password_validation import validate_password
 
 
 class DynamicQRLoginForm(AuthenticationForm):
@@ -73,6 +74,11 @@ class DynamicQRRegisterForm(forms.ModelForm):
         p2 = cleaned_data.get('password2')
         if p1 and p2 and p1 != p2:
             self.add_error('password2', 'Passwords do not match.')
+        if p1:
+            try:
+                validate_password(p1)
+            except forms.ValidationError as e:
+                self.add_error('password1', e)
         return cleaned_data
 
     def save(self, commit=True):
@@ -128,6 +134,11 @@ class ResetPasswordForm(forms.Form):
         p2 = cleaned_data.get('confirm_password')
         if p1 and p2 and p1 != p2:
             self.add_error('confirm_password', 'Passwords do not match.')
+        if p1:
+            try:
+                validate_password(p1)
+            except forms.ValidationError as e:
+                self.add_error('new_password', e)
         return cleaned_data
 
 

@@ -11,9 +11,10 @@
     .qr-large-vessel {
         width: 100%; max-width: 220px; aspect-ratio: 1; background: #f8fafc; border-radius: 24px;
         border: 1px solid #f1f5f9; margin-bottom: 20px; display: flex; align-items: center; justify-content: center;
-        padding: 20px; position: relative; overflow: hidden;
+        padding: 20px; position: relative;
     }
     .qr-large-vessel img { width: 100%; height: 100%; object-fit: contain; }
+    .img-logo { width: 100%; height: 100%; object-fit: contain; }
 
     .property-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px; margin-bottom: 24px; }
     .prop-item { display: flex; flex-direction: column; gap: 2px; }
@@ -60,7 +61,7 @@
         <div class="lg:col-span-4 xl:col-span-4">
             <div class="details-card text-center">
                 <div class="qr-large-vessel mx-auto">
-                    <img src="{% url 'dynamic_qr:generate_image' %}?qr_id={{ qr.id }}" id="main-qr-img" alt="QR Code">
+                    <img src="{% url 'dynamic_qr:generate_image' %}?qr_id={{ qr.id }}&v={{ qr.updated_at.timestamp }}" id="main-qr-img" alt="QR Code">
                 </div>
                 
                 <a href="{% url 'dynamic_qr:analytics' qr.id %}" class="btn-analytics-hero mb-4">
@@ -68,10 +69,10 @@
                 </a>
 
                 <div class="action-row">
-                    <button onclick="copyQRImage('{% url 'dynamic_qr:generate_image' %}?qr_id={{ qr.id }}&output_format=png')" class="btn-secondary-action">
+                    <button onclick="copyQRImage('{% url 'dynamic_qr:generate_image' %}?qr_id={{ qr.id }}&output_format=png&v={{ qr.updated_at.timestamp }}')" class="btn-secondary-action">
                         <i data-lucide="copy" class="w-4 h-4"></i> Copy
                     </button>
-                    <button onclick="shareQRImage('{% url 'dynamic_qr:generate_image' %}?qr_id={{ qr.id }}&output_format=png', '{{ qr.qr_name|escapejs }}')" class="btn-secondary-action">
+                    <button onclick="shareQRImage('{% url 'dynamic_qr:generate_image' %}?qr_id={{ qr.id }}&output_format=png&v={{ qr.updated_at.timestamp }}', '{{ qr.qr_name|escapejs }}')" class="btn-secondary-action">
                         <i data-lucide="share-2" class="w-4 h-4"></i> Share
                     </button>
                 </div>
@@ -169,7 +170,6 @@
             </div>
             <span id="toast-message">Copied to clipboard</span>
         </div>
-    </div>
 {% endblock %}
 
 {% block dqr_scripts %}

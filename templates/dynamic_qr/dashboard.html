@@ -121,7 +121,7 @@
             <div class="flex items-start gap-4 mb-4">
                 <!-- QR Visual -->
                 <div class="w-16 h-16 bg-slate-50 rounded-xl p-2 border border-slate-100 overflow-hidden flex-shrink-0">
-                    <img src="{% url 'dynamic_qr:generate_image' %}?qr_id={{ qr.id }}" 
+                    <img src="{% url 'dynamic_qr:generate_image' %}?qr_id={{ qr.id }}&v={{ qr.updated_at.timestamp }}" 
                          id="qr-img-{{ qr.id }}"
                          class="w-full h-full object-contain"
                          alt="QR">
@@ -168,29 +168,6 @@
 
             <!-- Action Hub -->
             <div class="space-y-3">
-                <!-- Primary Download with Hover Menu -->
-                <div class="relative group/dl">
-                    <button class="w-full h-10 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg flex items-center justify-center gap-2 font-black text-[10px] uppercase tracking-widest transition-all">
-                        <i data-lucide="download" class="w-3.5 h-3.5"></i>
-                        Download
-                        <i data-lucide="chevron-down" class="w-3 h-3 opacity-50"></i>
-                    </button>
-                    <!-- Bridge to prevent menu hiding on move -->
-                    <div class="absolute top-10 left-0 w-full h-4 bg-transparent group-hover/dl:block hidden"></div>
-                    <!-- Hover Menu -->
-                    <div class="absolute top-10 left-0 w-full bg-white border border-slate-100 rounded-xl shadow-xl opacity-0 invisible group-hover/dl:opacity-100 group-hover/dl:visible transition-all z-20 overflow-hidden py-1.5 translate-y-1 group-hover/dl:translate-y-0">
-                        <a href="{% url 'dynamic_qr:download' qr.id %}?format=png" class="flex items-center gap-2 px-3 py-2 hover:bg-indigo-50 text-slate-700 hover:text-indigo-600 transition-colors font-bold text-[10px]">
-                            <span class="w-6 h-6 rounded bg-blue-50 text-blue-500 flex items-center justify-center text-[8px] font-black">PNG</span> Image
-                        </a>
-                        <a href="{% url 'dynamic_qr:download' qr.id %}?format=jpg" class="flex items-center gap-2 px-3 py-2 hover:bg-indigo-50 text-slate-700 hover:text-indigo-600 transition-colors font-bold text-[10px]">
-                            <span class="w-6 h-6 rounded bg-orange-50 text-orange-500 flex items-center justify-center text-[8px] font-black">JPG</span> HighQ
-                        </a>
-                        <a href="{% url 'dynamic_qr:download' qr.id %}?format=svg" class="flex items-center gap-2 px-3 py-2 hover:bg-indigo-50 text-slate-700 hover:text-indigo-600 transition-colors font-bold text-[10px]">
-                            <span class="w-6 h-6 rounded bg-emerald-50 text-emerald-500 flex items-center justify-center text-[8px] font-black">SVG</span> Vector
-                        </a>
-                    </div>
-                </div>
-
                 <!-- Secondary Action Grid -->
                 <div class="grid grid-cols-4 gap-1.5">
                     <a href="{% url 'dynamic_qr:details' qr.id %}" class="h-8 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg flex items-center justify-center border border-slate-100" title="View">
@@ -202,11 +179,11 @@
                     <a href="{% url 'dynamic_qr:analytics' qr.id %}" class="h-8 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg flex items-center justify-center border border-slate-100" title="Stats">
                         <i data-lucide="bar-chart" class="w-3.5 h-3.5"></i>
                     </a>
-                    <button onclick="copyQRImage('{% url 'dynamic_qr:generate_image' %}?qr_id={{ qr.id }}&output_format=png')" 
+                    <button onclick="copyQRImage('{% url 'dynamic_qr:generate_image' %}?qr_id={{ qr.id }}&output_format=png&v={{ qr.updated_at.timestamp }}')" 
                             class="h-8 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg flex items-center justify-center border border-slate-100" title="Copy">
                         <i data-lucide="copy" class="w-3.5 h-3.5"></i>
                     </button>
-                    <button onclick="shareQRImage('{% url 'dynamic_qr:generate_image' %}?qr_id={{ qr.id }}&output_format=png', '{{ qr.qr_name|escapejs }}')" 
+                    <button onclick="shareQRImage('{% url 'dynamic_qr:generate_image' %}?qr_id={{ qr.id }}&output_format=png&v={{ qr.updated_at.timestamp }}', '{{ qr.qr_name|escapejs }}')" 
                             class="h-8 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg flex items-center justify-center border border-slate-100" title="Share">
                         <i data-lucide="share-2" class="w-3.5 h-3.5"></i>
                     </button>
@@ -219,6 +196,38 @@
                         <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
                         <span class="text-[8px] font-black uppercase ml-1">Del</span>
                     </button>
+                </div>
+
+                <!-- Primary Download with Hover Menu -->
+                <div class="relative group">
+                    <a href="{% url 'dynamic_qr:download' qr.id %}?format=png" class="w-full h-10 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg flex items-center justify-center gap-2 font-black text-[10px] uppercase tracking-widest transition-all shadow-md z-10">
+                        <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                        <span>Download Asset</span>
+                        <div class="w-px h-3 bg-white/20 mx-1"></div>
+                        <i data-lucide="chevron-up" class="w-3 h-3 opacity-70"></i>
+                    </a>
+                    
+                    <!-- Bridge to keep menu open while moving mouse -->
+                    <div class="absolute bottom-full left-0 w-full h-4 bg-transparent group-hover:block hidden translate-y-1"></div>
+                    
+                    <!-- Hover Menu (Opens Upwards) -->
+                    <div class="absolute bottom-full left-0 w-full bg-slate-900 border border-slate-800 rounded-xl shadow-2xl opacity-0 group-hover:opacity-100 transition-all z-[100] overflow-hidden py-1.5 mb-2 translate-y-2 group-hover:translate-y-0 pointer-events-none group-hover:pointer-events-auto">
+                        <div class="px-3 py-1.5 border-b border-slate-800 mb-1">
+                            <span class="text-[8px] font-black text-slate-500 uppercase tracking-[0.2em]">Select Format</span>
+                        </div>
+                        <a href="{% url 'dynamic_qr:download' qr.id %}?format=png" class="flex items-center gap-3 px-3 py-2.5 hover:bg-slate-800 text-slate-300 hover:text-white transition-all font-bold text-[10px]">
+                            <span class="w-8 h-6 rounded bg-blue-500/10 text-blue-400 flex items-center justify-center text-[8px] font-black border border-blue-500/20 uppercase">PNG</span> 
+                            <span>Portable Image</span>
+                        </a>
+                        <a href="{% url 'dynamic_qr:download' qr.id %}?format=jpg" class="flex items-center gap-3 px-3 py-2.5 hover:bg-slate-800 text-slate-300 hover:text-white transition-all font-bold text-[10px]">
+                            <span class="w-8 h-6 rounded bg-orange-500/10 text-orange-400 flex items-center justify-center text-[8px] font-black border border-orange-500/20 uppercase">JPG</span> 
+                            <span>High Quality</span>
+                        </a>
+                        <a href="{% url 'dynamic_qr:download' qr.id %}?format=svg" class="flex items-center gap-3 px-3 py-2.5 hover:bg-slate-800 text-slate-300 hover:text-white transition-all font-bold text-[10px]">
+                            <span class="w-8 h-6 rounded bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-[8px] font-black border border-emerald-500/20 uppercase">SVG</span> 
+                            <span>Vector Asset</span>
+                        </a>
+                    </div>
                 </div>
             </div>
         </div>

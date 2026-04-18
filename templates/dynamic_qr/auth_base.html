@@ -4,20 +4,18 @@
 {% block extra_head %}
 <style>
     .auth-page-wrapper {
-        height: calc(100vh - 120px); /* Adjusting for header and footer */
+        min-height: calc(100vh - 140px); /* Using min-height to allow expansion */
         display: flex;
         align-items: center;
         justify-content: center;
-        padding: 0 20px;
+        padding: 40px 20px; /* Added more padding for breathing room */
         background: #f8fafc;
         position: relative;
-        overflow: hidden;
     }
 
-    /* Fixed single-page layout */
+    /* Responsive layout */
     body {
-        overflow: hidden;
-        height: 100vh;
+        min-height: 100vh;
         display: flex;
         flex-direction: column;
     }

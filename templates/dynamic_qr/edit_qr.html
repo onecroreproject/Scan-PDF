@@ -54,20 +54,28 @@
     .qr-vessel { width: 100%; aspect-ratio: 1; background: white; border-radius: 28px; margin-bottom: 32px; padding: 24px; }
     .qr-vessel img { width: 100%; height: 100%; object-fit: contain; }
 
-    .btn-save { width: 100%; height: 64px; background: #facc15; color: #0f172a; border-radius: 18px; font-size: 15px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.15em; box-shadow: 0 10px 30px rgba(250, 204, 21, 0.2); transition: 0.3s; cursor: pointer; }
-    .btn-save:hover { background: #f59e0b; transform: translateY(-3px); }
+    .btn-save { 
+        width: 100%; height: 60px; 
+        background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); 
+        color: white; border: none; border-radius: 20px; 
+        font-size: 14px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em;
+        display: flex; align-items: center; justify-content: center; gap: 12px;
+        box-shadow: 0 10px 25px -5px rgba(99, 102, 241, 0.4); 
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); cursor: pointer; 
+    }
+    .btn-save:hover { transform: translateY(-3px); box-shadow: 0 20px 30px -10px rgba(99, 102, 241, 0.5); filter: brightness(1.1); }
+    .btn-save:disabled { background: #e2e8f0; color: #94a3b8; box-shadow: none; cursor: not-allowed; }
+
+    .btn-change {
+        padding: 8px 16px; background: white; border: 1.5px solid #e2e8f0;
+        border-radius: 12px; font-size: 11px; font-weight: 800; color: #64748b;
+        display: flex; align-items: center; gap: 8px; transition: 0.3s; cursor: pointer;
+    }
+    .btn-change:hover { border-color: #6366f1; color: #6366f1; background: #f5f3ff; }
 
     .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 1000; display: none; align-items: center; justify-content: center; padding: 20px; }
     .modal-content { background: white; border-radius: 24px; width: 100%; max-width: 600px; padding: 32px; }
     .cropper-container { width: 100%; aspect-ratio: 1; background: #f1f5f9; border-radius: 16px; overflow: hidden; margin-bottom: 24px; }
-
-    .toggle-active { display: flex; align-items: center; gap: 12px; background: #1e293b; padding: 12px 20px; border-radius: 16px; margin-bottom: 32px; width: fit-content; }
-    .switch { position: relative; width: 44px; height: 24px; }
-    .switch input { opacity: 0; width: 0; height: 0; }
-    .slider { position: absolute; inset: 0; background: #475569; border-radius: 34px; cursor: pointer; transition: .4s; }
-    .slider:before { content: ""; position: absolute; height: 18px; width: 18px; left: 3px; bottom: 3px; background: white; border-radius: 50%; transition: .4s; }
-    input:checked + .slider { background: #22c55e; }
-    input:checked + .slider:before { transform: translateX(20px); }
 
     .ec-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
     .ec-option { padding: 12px 8px; border: 1px solid #f1f5f9; border-radius: 12px; text-align: center; cursor: pointer; transition: 0.3s; }
@@ -81,19 +89,11 @@
 
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
         <div>
-            <a href="{% url 'dynamic_qr:dashboard' %}" class="inline-flex items-center gap-2 text-indigo-600 font-black text-xs uppercase tracking-widest mb-4 hover:translate-x-[-4px] transition-transform">
-                <i data-lucide="arrow-left" class="w-4 h-4"></i> Back to Dashboard
+            <a href="{% url 'dynamic_qr:dashboard' %}" class="inline-flex items-center gap-2 text-indigo-600 font-black text-[10px] uppercase tracking-widest mb-4 hover:translate-x-[-4px] transition-all">
+                <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i> Back to Dashboard
             </a>
             <h1 class="text-3xl font-black text-slate-900 tracking-tight">Edit QR Asset</h1>
-            <p class="text-slate-500 font-bold mt-1 text-sm">Engine: <span class="text-indigo-600">{{ qr.get_qr_type_display }}</span> — Code: {{ qr.short_code }}</p>
-        </div>
-        
-        <div class="toggle-active">
-            <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Active Status</span>
-            <label class="switch">
-                <input type="checkbox" id="is-active-toggle" {% if qr.is_active %}checked{% endif %}>
-                <span class="slider"></span>
-            </label>
+            <p class="text-slate-500 font-bold mt-1 text-sm">Update content while keeping same design & link.</p>
         </div>
     </div>
 
@@ -107,114 +107,161 @@
     </div>
 
     <form id="edit-qr-form" enctype="multipart/form-data">
-        <div class="create-grid">
-            <div class="space-y-8">
-                <div class="types-grid" id="types-grid"></div>
-
-                <div class="form-card">
-                    <div class="flex items-center gap-4 mb-8 border-b border-slate-50 pb-6">
-                        <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center">
-                            <i data-lucide="settings" class="w-6 h-6"></i>
-                        </div>
-                        <h3 class="text-xl font-black text-slate-900">Configure Content</h3>
+    <div class="create-grid" id="edit-studio">
+        <div>
+            <div id="selection-header" class="form-card flex items-center justify-between border-slate-100 bg-white">
+                <div class="flex items-center gap-5">
+                    <div id="selected-engine-icon" class="w-14 h-14 rounded-2xl flex items-center justify-center text-white shadow-xl">
+                        <i data-lucide="link" class="w-7 h-7"></i>
                     </div>
-
-                    <div class="space-y-8">
-                        <div class="form-group">
-                            <label>Friendly Name</label>
-                            <input type="text" name="qr_name" class="form-input" value="{{ qr.qr_name }}" required>
+                    <div>
+                        <span id="selected-engine-label" class="block text-lg font-black text-slate-900 tracking-tight">{{ qr.get_qr_type_display }}</span>
+                        <div class="flex items-center gap-2 mt-1">
+                            <span class="text-[9px] font-black text-slate-400 uppercase tracking-widest bg-slate-100 px-2 py-0.5 rounded">ID: {{ qr.short_code }}</span>
+                            <span class="text-[9px] font-black text-indigo-400 uppercase tracking-widest bg-indigo-50 px-2 py-0.5 rounded">Content Studio</span>
                         </div>
-                        <div id="dynamic-fields" class="space-y-8"></div>
+                    </div>
+                </div>
+                <button type="button" class="btn-change" onclick="resetEngineSelection()">
+                    <i data-lucide="refresh-ccw" class="w-3.5 h-3.5"></i> 
+                    <span>Switch Type</span>
+                </button>
+            </div>
+
+            <div id="type-selection-area" style="display:none;">
+                <div class="types-grid" id="types-grid"></div>
+            </div>
+
+            <div id="content-section" class="section-visible">
+                <div class="design-tabs">
+                    <div class="design-tab active" data-tab="content">Content</div>
+                    <div class="design-tab" data-tab="colors">Colors</div>
+                    <div class="design-tab" data-tab="patterns">Patterns</div>
+                    <div class="design-tab" data-tab="branding">Logo</div>
+                </div>
+
+                <div class="form-card tab-content" id="tab-content">
+                    <div class="flex items-center gap-3 mb-8">
+                        <div class="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600">
+                            <i data-lucide="edit-3" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xs font-black text-slate-900 uppercase tracking-widest">Update Content</h3>
+                            <p class="text-[10px] text-slate-400 font-bold">QR link and design parameters are preserved.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group mb-6">
+                        <label>Asset Name Reference</label>
+                        <input type="text" name="qr_name" class="form-input" value="{{ qr.qr_name }}" required>
+                    </div>
+                    
+                    <div id="dynamic-fields" class="space-y-6"></div>
+                </div>
+
+                <div class="form-card tab-content hidden" id="tab-colors">
+                    <div class="flex items-center gap-3 mb-8">
+                        <div class="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600">
+                            <i data-lucide="palette" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xs font-black text-slate-900 uppercase tracking-widest">Color Studio</h3>
+                            <p class="text-[10px] text-slate-400 font-bold">Contrast is key for scannability.</p>
+                        </div>
+                    </div>
+                    
+                    <div class="color-row">
+                        <div>
+                            <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-2">Foreground</label>
+                            <input type="color" id="fg-color-picker" class="color-picker" value="{{ qr.fg_color }}">
+                        </div>
+                        <div>
+                            <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-2">Background</label>
+                            <input type="color" id="bg-color-picker" class="color-picker" value="{{ qr.bg_color }}">
+                        </div>
                     </div>
                 </div>
 
-                <div class="form-card">
-                    <div class="flex items-center gap-4 mb-8 border-b border-slate-50 pb-6">
-                        <div class="w-12 h-12 bg-indigo-50 text-indigo-600 rounded-2xl flex items-center justify-center">
-                            <i data-lucide="palette" class="w-6 h-6"></i>
+                <div class="form-card tab-content hidden" id="tab-patterns">
+                    <div class="flex items-center gap-3 mb-8">
+                        <div class="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600">
+                            <i data-lucide="grid-3x3" class="w-5 h-5"></i>
                         </div>
-                        <h3 class="text-xl font-black text-slate-900">Visual Styling</h3>
+                        <div>
+                            <h3 class="text-xs font-black text-slate-900 uppercase tracking-widest">Patterns</h3>
+                            <p class="text-[10px] text-slate-400 font-bold">Select body and eye shapes.</p>
+                        </div>
+                    </div>
+                    
+                    <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-4">Body Style</label>
+                    <div class="pattern-grid mb-8" id="body-patterns">
+                        <div class="pattern-item {% if qr.body_style == 'square' %}active{% endif %}" data-style="square">Square</div>
+                        <div class="pattern-item {% if qr.body_style == 'circle' %}active{% endif %}" data-style="circle">Circle</div>
+                        <div class="pattern-item {% if qr.body_style == 'rounded' %}active{% endif %}" data-style="rounded">Rounded</div>
+                        <div class="pattern-item {% if qr.body_style == 'dot' %}active{% endif %}" data-style="dot">Dots</div>
+                        <div class="pattern-item {% if qr.body_style == 'diamond' %}active{% endif %}" data-style="diamond">Diamond</div>
+                        <div class="pattern-item {% if qr.body_style == 'leaf' %}active{% endif %}" data-style="leaf">Leaf</div>
                     </div>
 
-                    <div class="design-tabs">
-                        <div class="design-tab active" data-tab="patterns">Pattern</div>
-                        <div class="design-tab" data-tab="frames">Frame</div>
-                        <div class="design-tab" data-tab="colors">Color</div>
-                        <div class="design-tab" data-tab="logo">Logo</div>
-                        <div class="design-tab" data-tab="text">Text</div>
+                    <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-4">Eye Style</label>
+                    <div class="pattern-grid mb-8" id="eye-patterns">
+                        <div class="pattern-item {% if qr.eye_style == 'square' %}active{% endif %}" data-style="square">Square</div>
+                        <div class="pattern-item {% if qr.eye_style == 'circle' %}active{% endif %}" data-style="circle">Circle</div>
+                        <div class="pattern-item {% if qr.eye_style == 'rounded' %}active{% endif %}" data-style="rounded">Rounded</div>
+                        <div class="pattern-item {% if qr.eye_style == 'leaf' %}active{% endif %}" data-style="leaf">Leaf</div>
                     </div>
 
-                    <div class="design-view" id="view-patterns">
-                        <div class="space-y-8">
-                            <div><label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-4">Body Pattern</label><div class="pattern-grid" id="body-patterns"></div></div>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                <div><label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-4">External Eye</label><div class="pattern-grid" id="eye-patterns"></div></div>
-                                <div><label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-4">Internal Eye (Ball)</label><div class="pattern-grid" id="ball-patterns"></div></div>
-                            </div>
-                            <div>
-                                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-4">Scannability Level</label>
-                                <div class="ec-grid">
-                                    <div class="ec-option" data-ec="H"><span class="ec-name">Best</span><span class="ec-desc">30% Damage</span></div>
-                                    <div class="ec-option" data-ec="Q"><span class="ec-name">High</span><span class="ec-desc">25% Damage</span></div>
-                                    <div class="ec-option" data-ec="M"><span class="ec-name">Medium</span><span class="ec-desc">15% Damage</span></div>
-                                    <div class="ec-option" data-ec="L"><span class="ec-name">Smallest</span><span class="ec-desc">7% Damage</span></div>
-                                </div>
-                            </div>
-                        </div>
+                    <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-4">Inner Ball Style</label>
+                    <div class="pattern-grid" id="ball-patterns">
+                        <div class="pattern-item {% if qr.ball_style == 'square' %}active{% endif %}" data-style="square">Square</div>
+                        <div class="pattern-item {% if qr.ball_style == 'circle' %}active{% endif %}" data-style="circle">Circle</div>
                     </div>
+                </div>
 
-                    <div class="design-view hidden" id="view-frames"><div id="frames-container"></div></div>
-                    <div class="design-view hidden" id="view-colors">
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                            <div class="form-group"><label>Foreground</label><div class="color-row"><input type="color" id="fg-picker" value="{{ qr.fg_color }}" class="color-picker"><input type="text" name="fg_color" id="fg-text" class="form-input" value="{{ qr.fg_color }}"></div></div>
-                            <div class="form-group"><label>Background</label><div class="color-row"><input type="color" id="bg-picker" value="{{ qr.bg_color }}" class="color-picker"><input type="text" name="bg_color" id="bg-text" class="form-input" value="{{ qr.bg_color }}"></div>
-                                <div class="switch-group"><label class="switch"><input type="checkbox" id="bg-transparent-toggle"><span class="slider"></span></label><span class="text-[11px] font-bold text-slate-500">Transparent</span></div>
-                            </div>
+                <div class="form-card tab-content hidden" id="tab-branding">
+                    <div class="flex items-center gap-3 mb-8">
+                        <div class="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center text-indigo-600">
+                            <i data-lucide="image" class="w-5 h-5"></i>
+                        </div>
+                        <div>
+                            <h3 class="text-xs font-black text-slate-900 uppercase tracking-widest">Logo Previews</h3>
+                            <p class="text-[10px] text-slate-400 font-bold">Select brand or upload.</p>
                         </div>
                     </div>
-                    <div class="design-view hidden" id="view-logo">
-                        <div class="space-y-8">
-                            <div><label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-4">Presets</label><div class="logo-grid" id="preset-logos"></div></div>
-                            <button type="button" class="btn-upload" onclick="document.getElementById('logo-upload').click()">Upload & Crop</button><input type="file" id="logo-upload" class="hidden" accept="image/*">
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                                <div class="form-group"><label>Logo Size</label><input type="range" id="logo-size-range" min="0.1" max="0.35" step="0.01" value="0.22" class="w-full"></div>
-                                <div class="space-y-4">
-                                    <div class="switch-group"><label class="switch"><input type="checkbox" id="logo-background-toggle" checked><span class="slider"></span></label><span class="text-[11px] font-bold text-slate-500">Logo Box</span></div>
-                                    <div class="switch-group"><label class="switch"><input type="checkbox" id="logo-circular-toggle" checked><span class="slider"></span></label><span class="text-[11px] font-bold text-slate-500">Circular</span></div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                    <div class="design-view hidden" id="view-text">
-                        <div class="space-y-8">
-                            <div class="form-group"><label>Branding Text</label><input type="text" id="frame-text-input" class="form-input"></div>
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                <div class="form-group"><label>Font</label><select id="text-font" class="form-input"><option value="arial.ttf">Arial</option><option value="roboto.ttf">Roboto</option></select></div>
-                                <div class="form-group"><label>Color</label><input type="color" id="text-color" value="#000000" class="color-picker w-full"></div>
-                                <div class="form-group"><label>Size</label><select id="text-size" class="form-input"><option value="auto">Auto</option><option value="30">Small</option><option value="45">Medium</option><option value="60">Large</option></select></div>
-                            </div>
-                        </div>
+                    <div class="logo-grid">
+                        <div class="logo-item {% if not qr.design_options.logo_preset or qr.design_options.logo_preset == 'none' %}active{% endif %}" data-brand="none">None</div>
+                        <div class="logo-item {% if qr.design_options.logo_preset == 'facebook' %}active{% endif %}" data-brand="facebook"><img src="https://www.google.com/s2/favicons?sz=64&domain=facebook.com"></div>
+                        <div class="logo-item {% if qr.design_options.logo_preset == 'instagram' %}active{% endif %}" data-brand="instagram"><img src="https://www.google.com/s2/favicons?sz=64&domain=instagram.com"></div>
+                        <div class="logo-item {% if qr.design_options.logo_preset == 'youtube' %}active{% endif %}" data-brand="youtube"><img src="https://www.google.com/s2/favicons?sz=64&domain=youtube.com"></div>
+                        <div class="logo-item {% if qr.design_options.logo_preset == 'whatsapp' %}active{% endif %}" data-brand="whatsapp"><img src="https://www.google.com/s2/favicons?sz=64&domain=whatsapp.com"></div>
+                        <div class="logo-item {% if qr.design_options.logo_preset == 'linkedin' %}active{% endif %}" data-brand="linkedin"><img src="https://www.google.com/s2/favicons?sz=64&domain=linkedin.com"></div>
                     </div>
                 </div>
             </div>
 
-            <div class="space-y-6">
-                <div class="preview-card">
-                    <h4 class="text-[10px] font-black uppercase tracking-[0.2em] mb-8 text-yellow-400">Live Update</h4>
-                    <div class="qr-vessel"><img id="qr-preview-img" src="" alt="QR"></div>
-                    <button type="submit" class="btn-save" id="submit-btn"><i data-lucide="save" class="w-6 h-6"></i> Update Asset</button>
+        </div>
+
+        <div class="space-y-6">
+            <div class="preview-card bg-slate-900">
+                <h4 class="text-[10px] font-black uppercase tracking-[0.2em] mb-8 text-slate-400">Live Content Preview</h4>
+                <div class="qr-vessel">
+                    <img id="qr-preview-img" src="{% url 'dynamic_qr:generate_image' %}?qr_id={{ qr.id }}" alt="QR Preview">
                 </div>
+                
+                <button type="submit" class="btn-save" id="submit-btn" disabled>
+                    <i data-lucide="check-circle-2" class="w-5 h-5"></i> 
+                    <span>Update Asset</span>
+                </button>
+                
+                <p class="mt-8 text-[11px] font-bold text-slate-500 uppercase tracking-widest leading-loose">
+                    Changes reflect instantly for all users.
+                </p>
             </div>
         </div>
-        
-        <input type="hidden" name="qr_type" id="selected-type" value="{{ qr.qr_type }}">
-        <input type="hidden" name="design_options" id="design-options-input">
-        <input type="hidden" name="logo_cropped" id="logo-cropped-data">
+    </div>
+    
+    <input type="hidden" name="qr_type" id="selected-type" value="{{ qr.qr_type }}">
     </form>
-
-    <div class="modal-overlay" id="cropper-modal"><div class="modal-content"><h3 class="text-xl font-black mb-6">Crop Logo</h3><div class="cropper-container"><img id="crop-image" src=""></div><div class="flex gap-4"><button type="button" class="flex-1 h-14 bg-slate-100 rounded-xl" onclick="closeCropper()">Cancel</button><button type="button" class="flex-1 h-14 bg-indigo-600 text-white rounded-xl" onclick="applyCrop()">Apply</button></div></div></div>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
 {% endblock %}
 
 {% block dqr_scripts %}
@@ -236,137 +283,101 @@
         { id: 'google-review', label: 'Google Review', icon: 'star', cat: 'business', color: '#f59e0b', bg: '#fffbe3' },
         { id: 'google-forms', label: 'Google Forms', icon: 'clipboard-list', cat: 'platforms', color: '#8b5cf6', bg: '#f5f3ff' },
         { id: 'google-doc', label: 'Google Doc', icon: 'file-text', cat: 'platforms', color: '#3b82f6', bg: '#eff6ff' },
+        { id: 'google-sheets', label: 'Google Sheets', icon: 'table', cat: 'platforms', color: '#10b981', bg: '#ecfdf5' },
         { id: 'email', label: 'Email', icon: 'mail', cat: 'comm', color: '#6366f1', bg: '#f5f3ff' },
         { id: 'phone', label: 'Phone Call', icon: 'phone', cat: 'comm', color: '#10b981', bg: '#ecfdf5' },
         { id: 'sms', label: 'SMS', icon: 'message-square', cat: 'comm', color: '#6366f1', bg: '#f5f3ff' },
         { id: 'vcard', label: 'vCard', icon: 'user-circle-2', cat: 'comm', color: '#64748b', bg: '#f1f5f9' },
-        { id: 'calendar', label: 'Calendar', icon: 'calendar', cat: 'comm', color: '#ef4444', bg: '#fef2f2' },
-        { id: 'link-list', label: 'List of Links', icon: 'layers', cat: 'comm', color: '#8b5cf6', bg: '#f5f3ff' },
-        { id: 'custom-url', label: 'Custom URL', icon: 'external-link', cat: 'comm', color: '#64748b', bg: '#f1f5f9' },
     ];
-
-    const BODY_STYLES = ['square', 'rounded', 'circle', 'diamond', 'dot', 'small-square', 'hline', 'vline', 'star', 'cross', 'leaf', 'clover'];
-    const EYE_STYLES = ['square', 'circle', 'rounded', 'diamond', 'leaf'];
-    const BRAND_LOGOS = [
-        { id: 'facebook', domain: 'facebook.com' },
-        { id: 'instagram', domain: 'instagram.com' },
-        { id: 'youtube', domain: 'youtube.com' },
-        { id: 'whatsapp', domain: 'whatsapp.com' },
-        { id: 'linkedin', domain: 'linkedin.com' },
-        { id: 'telegram', domain: 'telegram.org' },
-        { id: 'x', domain: 'x.com' },
-        { id: 'tiktok', domain: 'tiktok.com' },
-        { id: 'snapchat', domain: 'snapchat.com' },
-        { id: 'pinterest', domain: 'pinterest.com' },
-        { id: 'spotify', domain: 'spotify.com' },
-        { id: 'apple', domain: 'apple.com' },
-        { id: 'google', domain: 'google.com' },
-        { id: 'amazon', domain: 'amazon.com' },
-        { id: 'paypal', domain: 'paypal.com' },
-        { id: 'discord', domain: 'discord.com' },
-        { id: 'reddit', domain: 'reddit.com' },
-        { id: 'slack', domain: 'slack.com' },
-        { id: 'github', domain: 'github.com' },
-        { id: 'microsoft', domain: 'microsoft.com' }
-    ];
-    const FRAME_CATEGORIES = {
-        'Standard / Clean': ['std-1', 'std-2', 'std-3', 'std-4', 'std-5'],
-        'Festivals & Events': ['holi', 'brazil', 'thanksgiving', 'harvest'],
-        'Devices & Tech': ['mobile', 'tablet', 'monitor'],
-    };
     
-    const EXISTING_DATA = JSON.parse('{{ qr_data_json|escapejs }}');
-    const DESIGN_OPTIONS = JSON.parse('{{ design_options_json|escapejs }}');
-    let cropper = null;
+    const EXISTING_DATA = {{ content_data|safe }};
+    const QR_DESIGN = {
+        fg: '{{ qr.fg_color|escapejs }}',
+        bg: '{{ qr.bg_color|escapejs }}',
+        style: '{{ qr.body_style|escapejs }}',
+        eye: '{{ qr.eye_style|escapejs }}',
+        ball: '{{ qr.ball_style|escapejs }}',
+        design_options: {{ design_options_json|safe }}
+    };
 
     function init() {
         renderTypes();
-        renderPatterns();
-        renderFrames();
-        renderPresetLogos();
-        lucide.createIcons();
-        applyDesignOptions();
-        renderFields('{{ qr.qr_type|escapejs }}');
-        updatePreview();
+        selectType('{{ qr.qr_type|escapejs }}');
         
+        // Design Tab Handling
         document.querySelectorAll('.design-tab').forEach(tab => {
             tab.onclick = () => {
                 document.querySelectorAll('.design-tab').forEach(t => t.classList.remove('active'));
-                document.querySelectorAll('.design-view').forEach(v => v.classList.add('hidden'));
+                document.querySelectorAll('.tab-content').forEach(c => c.classList.add('hidden'));
                 tab.classList.add('active');
-                document.getElementById(`view-${tab.dataset.tab}`).classList.remove('hidden');
+                document.getElementById(`tab-${tab.dataset.tab}`).classList.remove('hidden');
             };
         });
 
-        // Color sync
-        document.getElementById('fg-picker').oninput = (e) => {
-            document.getElementById('fg-text').value = e.target.value;
-            updatePreview();
-        };
-        document.getElementById('bg-picker').oninput = (e) => {
-            document.getElementById('bg-text').value = e.target.value;
-            updatePreview();
-        };
-        document.getElementById('fg-text').oninput = (e) => {
-            document.getElementById('fg-picker').value = e.target.value;
-            updatePreview();
-        };
-        document.getElementById('bg-text').oninput = (e) => {
-            document.getElementById('bg-picker').value = e.target.value;
-            updatePreview();
-        };
-
-        ['bg-transparent-toggle', 'logo-size-range', 'logo-background-toggle', 'logo-circular-toggle', 'frame-text-input', 'text-font', 'text-color', 'text-size'].forEach(id => {
-            const el = document.getElementById(id);
-            if (el) el.oninput = updatePreview;
-        });
-
-        document.querySelectorAll('.ec-option').forEach(opt => {
-            opt.onclick = () => {
-                document.querySelectorAll('.ec-option').forEach(o => o.classList.remove('active'));
-                opt.classList.add('active');
+        // Style Pickers
+        document.getElementById('fg-color-picker').oninput = (e) => { QR_DESIGN.fg = e.target.value; updatePreview(); };
+        document.getElementById('bg-color-picker').oninput = (e) => { QR_DESIGN.bg = e.target.value; updatePreview(); };
+        
+        document.querySelectorAll('#body-patterns .pattern-item').forEach(item => {
+            item.onclick = () => {
+                document.querySelectorAll('#body-patterns .pattern-item').forEach(p => p.classList.remove('active'));
+                item.classList.add('active');
+                QR_DESIGN.style = item.dataset.style;
                 updatePreview();
             };
         });
 
-        document.getElementById('logo-upload').onchange = (e) => {
-            if (e.target.files && e.target.files[0]) {
-                const reader = new FileReader();
-                reader.onload = (re) => openCropper(re.target.result);
-                reader.readAsDataURL(e.target.files[0]);
-            }
-        };
+        document.querySelectorAll('#eye-patterns .pattern-item').forEach(item => {
+            item.onclick = () => {
+                document.querySelectorAll('#eye-patterns .pattern-item').forEach(p => p.classList.remove('active'));
+                item.classList.add('active');
+                QR_DESIGN.eye = item.dataset.style;
+                updatePreview();
+            };
+        });
+
+        document.querySelectorAll('#ball-patterns .pattern-item').forEach(item => {
+            item.onclick = () => {
+                document.querySelectorAll('#ball-patterns .pattern-item').forEach(p => p.classList.remove('active'));
+                item.classList.add('active');
+                QR_DESIGN.ball = item.dataset.style;
+                updatePreview();
+            };
+        });
+
+        document.querySelectorAll('.logo-item').forEach(item => {
+            item.onclick = () => {
+                document.querySelectorAll('.logo-item').forEach(l => l.classList.remove('active'));
+                item.classList.add('active');
+                QR_DESIGN.design_options.logo_preset = item.dataset.brand;
+                updatePreview();
+            };
+        });
+
+        // Category navigation
+        document.querySelectorAll('.cat-nav .cat-btn').forEach(btn => {
+            btn.onclick = () => {
+                document.querySelectorAll('.cat-nav .cat-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                renderTypes(btn.dataset.cat);
+            };
+        });
+        
+        lucide.createIcons();
     }
 
-    function applyDesignOptions() {
-        const opts = DESIGN_OPTIONS;
-        if (opts.error_correction) {
-            document.querySelectorAll('.ec-option').forEach(o => {
-                if(o.dataset.ec === opts.error_correction) o.classList.add('active');
-                else o.classList.remove('active');
-            });
-        } else { document.querySelector('.ec-option[data-ec="H"]').classList.add('active'); }
-        
-        if (opts.logo_circular !== undefined) document.getElementById('logo-circular-toggle').checked = opts.logo_circular;
-        if (opts.logo_size !== undefined) document.getElementById('logo-size-range').value = opts.logo_size;
-        if (opts.logo_background !== undefined) document.getElementById('logo-background-toggle').checked = opts.logo_background;
-        if (opts.bg_transparent !== undefined) document.getElementById('bg-transparent-toggle').checked = opts.bg_transparent;
-        if (opts.frame_text) document.getElementById('frame-text-input').value = opts.frame_text;
-        
-        // Patterns
-        const bStyle = '{{ qr.body_style }}' || 'square';
-        const eStyle = '{{ qr.eye_style }}' || 'square';
-        const baStyle = '{{ qr.ball_style }}' || 'square';
-        
-        document.querySelector(`#body-patterns .pattern-item[data-val="${bStyle}"]`)?.classList.add('active');
-        document.querySelector(`#eye-patterns .pattern-item[data-val="${eStyle}"]`)?.classList.add('active');
-        document.querySelector(`#ball-patterns .pattern-item[data-val="${baStyle}"]`)?.classList.add('active');
+    function resetEngineSelection() {
+        document.getElementById('selection-header').style.display = 'none';
+        document.getElementById('content-section').style.display = 'none';
+        document.getElementById('type-selection-area').style.display = 'block';
+        document.querySelector('.cat-nav').style.display = 'flex';
     }
 
-    function renderTypes() {
+    function renderTypes(cat = 'all') {
         const grid = document.getElementById('types-grid');
         grid.innerHTML = '';
         QR_ENGINES.forEach(engine => {
+            if (cat !== 'all' && engine.cat !== cat) return;
             const tile = document.createElement('div');
             tile.className = `type-tile ${engine.id === document.getElementById('selected-type').value ? 'active' : ''}`;
             tile.innerHTML = `<div class="tile-icon" style="background: ${engine.bg}; color: ${engine.color};"><i data-lucide="${engine.icon}"></i></div><span class="tile-label">${engine.label}</span>`;
@@ -378,271 +389,142 @@
 
     function selectType(type) {
         document.getElementById('selected-type').value = type;
-        renderTypes();
+        document.getElementById('type-selection-area').style.display = 'none';
+        document.querySelector('.cat-nav').style.display = 'none';
+        document.getElementById('selection-header').style.display = 'flex';
+        document.getElementById('content-section').style.display = 'block';
+        
+        let engine = QR_ENGINES.find(e => e.id === type);
+        if(!engine) engine = { label: 'Custom Content', icon: 'link', color: '#6366f1' };
+        document.getElementById('selected-engine-label').innerText = engine.label;
+        document.getElementById('selected-engine-icon').style.background = engine.color;
+        document.getElementById('selected-engine-icon').innerHTML = `<i data-lucide="${engine.icon}" class="w-7 h-7"></i>`;
+        
         renderFields(type);
-        updatePreview();
-    }
-
-    function getPatternIcon(style, type) {
-        let color = '#6366f1'; // Default Indigo
-        if (style === 'square' || style === 'rounded') color = '#6366f1';
-        if (style === 'circle' || style === 'dot') color = '#22c55e'; // Green
-        if (style === 'diamond' || style === 'star') color = '#f59e0b'; // Amber
-        if (style === 'leaf' || style === 'clover') color = '#10b981'; // Emerald
-        if (style === 'hline' || style === 'vline' || style === 'cross') color = '#ef4444'; // Red
-
-        if (type === 'body') {
-            if (style === 'square') return `<rect x="5" y="5" width="14" height="14" fill="${color}" rx="1"/>`;
-            if (style === 'rounded') return `<rect x="5" y="5" width="14" height="14" fill="${color}" rx="4"/>`;
-            if (style === 'circle') return `<circle cx="12" cy="12" r="7" fill="${color}"/>`;
-            if (style === 'diamond') return `<path d="M12 4 L20 12 L12 20 L4 12 Z" fill="${color}"/>`;
-            if (style === 'dot') return `<circle cx="12" cy="12" r="4" fill="${color}"/>`;
-            if (style === 'small-square') return `<rect x="8" y="8" width="8" height="8" fill="${color}"/>`;
-            if (style === 'hline') return `<rect x="4" y="10" width="16" height="4" fill="${color}" rx="1"/>`;
-            if (style === 'vline') return `<rect x="10" y="4" width="4" height="16" fill="${color}" rx="1"/>`;
-            if (style === 'star') return `<path d="M12 4 L14 10 L20 10 L15 14 L17 20 L12 16 L7 20 L9 14 L4 10 L10 10 Z" fill="${color}"/>`;
-            if (style === 'cross') return `<path d="M9 4 H15 V9 H20 V15 H15 V20 H9 V15 H4 V9 H9 Z" fill="${color}"/>`;
-            if (style === 'leaf') return `<path d="M12 4 Q20 4 20 12 Q20 20 12 20 Q4 20 4 12 Q4 4 12 4" fill="${color}"/>`;
-            if (style === 'clover') return `<path d="M12 12 Q12 4 8 4 Q4 4 4 8 Q4 12 12 12 Q20 12 20 16 Q20 20 16 20 Q12 20 12 12 Z" fill="${color}"/>`;
-        } else {
-            if (style === 'square') return `<rect x="4" y="4" width="16" height="16" stroke="${color}" stroke-width="2" fill="none" rx="1"/>`;
-            if (style === 'circle') return `<circle cx="12" cy="12" r="8" stroke="${color}" stroke-width="2" fill="none"/>`;
-            if (style === 'rounded') return `<rect x="4" y="4" width="16" height="16" stroke="${color}" stroke-width="2" fill="none" rx="5"/>`;
-            if (style === 'diamond') return `<path d="M12 4 L20 12 L12 20 L4 12 Z" stroke="${color}" stroke-width="2" fill="none"/>`;
-            if (style === 'leaf') return `<path d="M12 4 Q20 4 20 12 Q20 20 12 20 Q4 20 4 12 Q4 4 12 4" stroke="${color}" stroke-width="2" fill="none"/>`;
-        }
-        return `<rect x="4" y="4" width="16" height="16" fill="${color}" opacity="0.2"/>`;
-    }
-
-    function renderPatterns() {
-        const grids = {'body-patterns': 'body', 'eye-patterns': 'eye', 'ball-patterns': 'ball'};
-        Object.keys(grids).forEach(id => {
-            const grid = document.getElementById(id);
-            const styleList = (id === 'body-patterns') ? BODY_STYLES : EYE_STYLES;
-            styleList.forEach(s => {
-                const item = document.createElement('div');
-                item.className = 'pattern-item';
-                item.dataset.val = s;
-                item.innerHTML = `<svg viewBox="0 0 24 24" class="w-8 h-8">${getPatternIcon(s, grids[id])}</svg>`;
-                item.onclick = () => {
-                    document.querySelectorAll(`#${id} .pattern-item`).forEach(i => i.classList.remove('active'));
-                    item.classList.add('active');
-                    updatePreview();
-                };
-                grid.appendChild(item);
-            });
-        });
-    }
-
-    function renderFrames() {
-        const container = document.getElementById('frames-container');
-        if (!container) return;
-        container.innerHTML = '';
-        
-        Object.keys(FRAME_CATEGORIES).forEach((cat, idx) => {
-            const section = document.createElement('div');
-            section.innerHTML = `<div class="frame-cat-title">${cat}</div>`;
-            const grid = document.createElement('div');
-            grid.className = 'frame-grid';
-            
-            if (idx === 0) {
-                const noFrame = document.createElement('div');
-                noFrame.className = 'frame-item active';
-                noFrame.dataset.val = 'none';
-                noFrame.innerHTML = `<div class="frame-thumb bg-slate-50 flex items-center justify-center text-[10px] font-black text-slate-400">NONE</div>`;
-                noFrame.onclick = () => {
-                    document.querySelectorAll('.frame-item').forEach(i => i.classList.remove('active'));
-                    noFrame.classList.add('active');
-                    updatePreview();
-                };
-                grid.appendChild(noFrame);
-            }
-
-            FRAME_CATEGORIES[cat].forEach(f => {
-                const item = document.createElement('div');
-                item.className = 'frame-item';
-                item.dataset.val = f;
-                item.innerHTML = `
-                    <div class="frame-thumb bg-indigo-50/30 flex flex-col items-center justify-center p-2">
-                        <div class="w-full h-12 border-4 border-indigo-200 rounded-lg flex items-center justify-center bg-white">
-                            <i data-lucide="qr-code" class="w-4 h-4 text-indigo-400"></i>
-                        </div>
-                        <span class="text-[8px] font-black text-indigo-900/40 mt-2 uppercase">${f}</span>
-                    </div>
-                `;
-                item.onclick = () => {
-                    document.querySelectorAll('.frame-item').forEach(i => i.classList.remove('active'));
-                    item.classList.add('active');
-                    updatePreview();
-                };
-                grid.appendChild(item);
-            });
-            section.appendChild(grid);
-            container.appendChild(section);
-        });
         lucide.createIcons();
-    }
-
-    function renderPresetLogos() {
-        const grid = document.getElementById('preset-logos');
-        grid.innerHTML = `<div class="logo-item" data-val="none"><i data-lucide="slash" class="w-5 h-5"></i></div>`;
-        
-        // Add existing logo from DB if it exists
-        const existingLogoUrl = '{% if qr.logo %}{{ qr.logo.url|escapejs }}{% endif %}';
-        if (existingLogoUrl) {
-            const existingItem = document.createElement('div');
-            existingItem.className = 'logo-item active'; // Activate by default
-            existingItem.dataset.val = 'existing';
-            existingItem.innerHTML = `<img src="${existingLogoUrl}" style="width: 100%; height: 100%; object-fit: contain;">`;
-            existingItem.onclick = () => {
-                document.querySelectorAll('.logo-item').forEach(i => i.classList.remove('active'));
-                existingItem.classList.add('active');
-                updatePreview();
-            };
-            grid.appendChild(existingItem);
-        }
-
-        BRAND_LOGOS.forEach(brand => {
-            const item = document.createElement('div');
-            item.className = 'logo-item';
-            item.dataset.val = brand.id;
-            item.innerHTML = `<img src="https://www.google.com/s2/favicons?sz=64&domain=${brand.domain}" style="width: 24px; height: 24px; border-radius: 4px;">`;
-            item.onclick = () => {
-                document.querySelectorAll('.logo-item').forEach(i => i.classList.remove('active'));
-                item.classList.add('active');
-                updatePreview();
-            };
-            grid.appendChild(item);
-        });
-        lucide.createIcons();
-    }
-
-    function openCropper(src) {
-        const modal = document.getElementById('cropper-modal');
-        const img = document.getElementById('crop-image');
-        img.src = src; modal.style.display = 'flex';
-        if (cropper) cropper.destroy();
-        cropper = new Cropper(img, { aspectRatio: 1, viewMode: 1 });
-    }
-    function closeCropper() { document.getElementById('cropper-modal').style.display = 'none'; }
-    function applyCrop() {
-        const dataUrl = cropper.getCroppedCanvas({width:512, height:512}).toDataURL('image/png');
-        document.getElementById('logo-cropped-data').value = dataUrl;
-        const grid = document.getElementById('preset-logos');
-        const item = document.createElement('div');
-        item.className = 'logo-item active';
-        item.dataset.val = 'custom';
-        item.innerHTML = `<img src="${dataUrl}">`;
-        document.querySelectorAll('.logo-item').forEach(i => i.classList.remove('active'));
-        grid.insertBefore(item, grid.children[1]);
-        closeCropper(); updatePreview();
+        validateForm();
     }
 
     function renderFields(type) {
         const container = document.getElementById('dynamic-fields');
         container.innerHTML = '';
-        const addField = (label, name, fieldType = 'text', initial = '') => {
+        const isOriginalType = (type === '{{ qr.qr_type|escapejs }}');
+        
+        const addField = (label, name, fieldType = 'text', placeholder = '', required = true) => {
             const group = document.createElement('div');
             group.className = 'form-group';
-            let val = initial || EXISTING_DATA[name] || '';
-            if(name === 'destination_url') val = '{{ qr.destination_url|escapejs }}';
-            
-            if (fieldType === 'file') group.innerHTML = `<label>${label}</label><input type="file" name="file_content" class="form-input py-3">`;
-            else if (fieldType === 'textarea') group.innerHTML = `<label>${label}</label><textarea name="${name}" class="form-input py-4 h-32">${val}</textarea>`;
-            else group.innerHTML = `<label>${label}</label><input type="${fieldType}" name="${name}" class="form-input" value="${val}">`;
+            let val = (isOriginalType && EXISTING_DATA[name]) ? EXISTING_DATA[name] : '';
+            if (fieldType === 'textarea') group.innerHTML = `<label>${label}</label><textarea name="${name}" class="form-input py-4 h-32" placeholder="${placeholder}" ${required ? 'required' : ''}>${val}</textarea>`;
+            else group.innerHTML = `<label>${label}</label><input type="${fieldType}" name="${name}" class="form-input" value="${val}" placeholder="${placeholder}" ${required ? 'required' : ''}>`;
             container.appendChild(group);
+            group.querySelector('input, textarea').addEventListener('input', validateForm);
         };
-        // Reuse create_qr field logic
-        if (['url', 'youtube', 'facebook', 'instagram', 'tiktok', 'x-twitter', 'snapchat', 'pinterest', 'linkedin', 'google-review', 'custom-url'].includes(type)) addField('Target URL', 'destination_url', 'url');
-        else if (type === 'text') addField('Text Content', 'text', 'textarea');
-        else if (['whatsapp', 'telegram'].includes(type)) { addField('Phone', 'phone', 'tel'); addField('Message', 'message', 'textarea'); }
-        else if (type === 'wifi') { addField('SSID', 'ssid'); addField('Password', 'password'); }
-        else if (type === 'location') { addField('Latitude', 'latitude'); addField('Longitude', 'longitude'); }
+
+        if (['url', 'youtube', 'facebook', 'instagram', 'tiktok', 'x-twitter', 'snapchat', 'pinterest', 'linkedin', 'google-forms', 'google-doc', 'google-sheets', 'google-review', 'custom-url'].includes(type)) {
+            addField('Target Link', 'destination_url', 'url', 'https://');
+        } else if (type === 'text') {
+            addField('Plain Text', 'text', 'textarea', 'Content...');
+        } else if (type === 'wifi') {
+            addField('SSID', 'ssid');
+            addField('Password', 'password');
+            addField('Encryption', 'encryption', 'text', 'WPA', false);
+        } else if (type === 'phone') {
+            addField('Phone Number', 'phone', 'tel', '+1234567890');
+        } else if (type === 'sms') {
+            addField('Recipient Number', 'phone', 'tel', '+1234567890');
+            addField('Message', 'message', 'textarea', 'Hello...');
+        } else if (type === 'email') {
+            addField('Email Address', 'email', 'email', 'user@example.com');
+            addField('Subject', 'subject', 'text', 'Subject', false);
+            addField('Message Body', 'body', 'textarea', 'Write your message...', false);
+        } else if (type === 'location') {
+            addField('Latitude', 'latitude', 'text', '40.7128');
+            addField('Longitude', 'longitude', 'text', '-74.0060');
+        } else if (type === 'vcard') {
+            addField('First Name', 'first_name');
+            addField('Last Name', 'last_name', 'text', '', false);
+            addField('Organization', 'organization', 'text', '', false);
+            addField('Phone', 'phone_mobile', 'tel');
+            addField('Email', 'email', 'email', 'user@example.com', false);
+        }
     }
 
-    let previewTimeout = null;
-    async function updatePreview() {
-        if (previewTimeout) clearTimeout(previewTimeout);
-        previewTimeout = setTimeout(async () => {
-            const options = {
-                error_correction: document.querySelector('.ec-option.active')?.dataset.ec || 'H',
-                logo_circular: document.getElementById('logo-circular-toggle').checked,
-                logo_size: document.getElementById('logo-size-range').value,
-                logo_background: document.getElementById('logo-background-toggle').checked,
-                frame_style: document.querySelector('.frame-item.active')?.dataset.val || 'none',
-                frame_text: document.getElementById('frame-text-input').value,
-                frame_font: document.getElementById('text-font').value,
-                frame_text_color: document.getElementById('text-color').value,
-                bg_transparent: document.getElementById('bg-transparent-toggle').checked
-            };
-            document.getElementById('design-options-input').value = JSON.stringify(options);
-            
-            const fg = document.getElementById('fg-text')?.value || '{{ qr.fg_color|escapejs }}';
-            const bg = document.getElementById('bg-text')?.value || '{{ qr.bg_color|escapejs }}';
-            const style = document.querySelector('#body-patterns .pattern-item.active')?.dataset.val || 'square';
-            const eye = document.querySelector('#eye-patterns .pattern-item.active')?.dataset.val || 'square';
-            const ball = document.querySelector('#ball-patterns .pattern-item.active')?.dataset.val || 'square';
-            
+    function validateForm() {
+        const form = document.getElementById('edit-qr-form');
+        document.getElementById('submit-btn').disabled = !form.checkValidity();
+        updatePreview();
+    }
+
+    let previewTimer = null;
+    function updatePreview() {
+        if (previewTimer) clearTimeout(previewTimer);
+        previewTimer = setTimeout(async () => {
             const formData = new FormData();
             formData.append('qr_id', '{{ qr.id }}');
-            formData.append('text', '{{ redirect_url|escapejs }}');
-            formData.append('fg_color', fg);
-            formData.append('bg_color', bg);
-            formData.append('style', style);
-            formData.append('eye_style', eye);
-            formData.append('ball_style', ball);
-            formData.append('design_options', JSON.stringify(options));
-
-            const logoItem = document.querySelector('.logo-item.active');
-            if (logoItem && logoItem.dataset.val !== 'none') {
-                if (logoItem.dataset.val === 'custom') {
-                    const cropped = document.getElementById('logo-cropped-data').value;
-                    if (cropped) formData.append('logo_cropped', cropped);
-                } else {
-                    formData.append('logo', logoItem.dataset.val);
-                }
-            }
+            formData.append('text', 'https://scanpdf.com/preview');
+            formData.append('fg_color', QR_DESIGN.fg);
+            formData.append('bg_color', QR_DESIGN.bg);
+            formData.append('style', QR_DESIGN.style);
+            formData.append('eye_style', QR_DESIGN.eye);
+            formData.append('ball_style', QR_DESIGN.ball);
+            formData.append('design_options', JSON.stringify(QR_DESIGN.design_options));
+            formData.append('qr_id', '{{ qr.id }}');
 
             try {
                 const response = await fetch('{% url "dynamic_qr:generate_image" %}', {
-                    method: 'POST',
-                    body: formData,
+                    method: 'POST', body: formData,
                     headers: { 'X-CSRFToken': '{{ csrf_token }}' }
                 });
                 if (response.ok) {
                     const blob = await response.blob();
-                    const url = URL.createObjectURL(blob);
-                    const img = document.getElementById('qr-preview-img');
-                    const oldUrl = img.src;
-                    img.src = url;
-                    if (oldUrl.startsWith('blob:')) URL.revokeObjectURL(oldUrl);
+                    document.getElementById('qr-preview-img').src = URL.createObjectURL(blob);
                 }
-            } catch (e) { console.error("Preview failed", e); }
-        }, 250);
+            } catch (e) { console.error("Preview Update Failed", e); }
+        }, 500);
     }
 
     document.getElementById('edit-qr-form').onsubmit = async (e) => {
         e.preventDefault();
         const formData = new FormData(e.target);
+        const selectedType = document.getElementById('selected-type').value;
+
+        // Build structured qr_data from currently visible dynamic fields.
         const dataObj = {};
-        const dynamicFields = document.getElementById('dynamic-fields').querySelectorAll('input, textarea');
-        dynamicFields.forEach(f => { if(f.name !== 'file_content') dataObj[f.name] = f.value; });
+        document.querySelectorAll('#dynamic-fields input, #dynamic-fields textarea, #dynamic-fields select').forEach(field => {
+            if (field.name) dataObj[field.name] = field.value;
+        });
+
         formData.set('qr_data', JSON.stringify(dataObj));
-        formData.set('body_style', document.querySelector('#body-patterns .pattern-item.active')?.dataset.val || 'square');
-        formData.set('eye_style', document.querySelector('#eye-patterns .pattern-item.active')?.dataset.val || 'square');
-        formData.set('ball_style', document.querySelector('#ball-patterns .pattern-item.active')?.dataset.val || 'square');
-        formData.append('is_active', document.getElementById('is-active-toggle').checked ? 'true' : 'false');
+
+        // Prevent stale URL from previous type switches (e.g., text -> phone).
+        const urlTypes = ['url', 'youtube', 'facebook', 'instagram', 'tiktok', 'x-twitter', 'snapchat', 'pinterest', 'linkedin', 'google-forms', 'google-doc', 'google-sheets', 'google-review', 'custom-url'];
+        if (!urlTypes.includes(selectedType)) {
+            formData.set('destination_url', '');
+        }
+
+        formData.append('fg_color', QR_DESIGN.fg);
+        formData.append('bg_color', QR_DESIGN.bg);
+        formData.append('body_style', QR_DESIGN.style);
+        formData.append('eye_style', QR_DESIGN.eye);
+        formData.append('ball_style', QR_DESIGN.ball);
+        formData.append('design_options', JSON.stringify(QR_DESIGN.design_options));
 
         const btn = document.getElementById('submit-btn');
-        btn.disabled = true; btn.innerHTML = 'Updating...';
-        
-        const response = await fetch('{% url "dynamic_qr:edit" qr.id %}', {
-            method: 'POST', body: formData,
-            headers: { 'X-CSRFToken': '{{ csrf_token }}', 'X-Requested-With': 'XMLHttpRequest' }
-        });
-        const res = await response.json();
-        if(res.success) window.location.href = '{% url "dynamic_qr:dashboard" %}';
-        else { alert(res.error); btn.disabled = false; btn.innerHTML = 'Update Asset'; }
+        const orig = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> Saving...';
+        lucide.createIcons();
+
+        try {
+            const r = await fetch('{% url "dynamic_qr:edit" qr.id %}', {
+                method: 'POST', body: formData,
+                headers: { 'X-CSRFToken': '{{ csrf_token }}', 'X-Requested-With': 'XMLHttpRequest' }
+            });
+            const res = await r.json();
+            if (res.success) window.location.href = '{% url "dynamic_qr:dashboard" %}';
+            else alert(res.error || "Save Failed");
+        } catch(e) { alert("Network Error"); }
+        finally { btn.disabled = false; btn.innerHTML = orig; lucide.createIcons(); }
     }
 
     init();

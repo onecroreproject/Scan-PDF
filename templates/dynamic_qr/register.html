@@ -34,16 +34,22 @@
         <div class="field-group">
             <label class="field-label">Password</label>
             <div class="password-wrap">
-                <input type="password" name="password1" class="dqr-field" placeholder="Create a strong password" required>
+                <input type="password" name="password1" id="password1" class="dqr-field" placeholder="Create a strong password" required>
                 <button type="button" class="toggle-pass">
                     <i data-lucide="eye" style="width:18px;height:18px"></i>
                 </button>
+            </div>
+            <div style="display:flex;gap:10px;margin-top:8px;align-items:center;">
+                <button type="button" id="gen-pass" class="btn-primary" style="width:auto;padding:8px 12px;font-size:11px;letter-spacing:0.08em;">
+                    Generate Password
+                </button>
+                <span id="pass-hint" style="font-size:11px;color:#64748b;font-weight:600;"></span>
             </div>
         </div>
         <div class="field-group">
             <label class="field-label">Confirm Password</label>
             <div class="password-wrap">
-                <input type="password" name="password2" class="dqr-field" placeholder="Confirm your password" required>
+                <input type="password" name="password2" id="password2" class="dqr-field" placeholder="Confirm your password" required>
                 <button type="button" class="toggle-pass">
                     <i data-lucide="eye" style="width:18px;height:18px"></i>
                 </button>
@@ -61,4 +67,46 @@
         <span style="color:#64748b">Already have an account?</span>
         <a href="{% url 'dynamic_qr:login' %}" style="color:#8b5cf6;font-weight:700;">Sign In</a>
     </div>
+{% endblock %}
+
+{% block auth_scripts %}
+<script>
+    function genStrongPassword(len = 16) {
+        const lower = "abcdefghijklmnopqrstuvwxyz";
+        const upper = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        const nums = "0123456789";
+        const syms = "!@#$%^&*()-_=+[]{};:,.?/|";
+        const all = lower + upper + nums + syms;
+
+        const pick = (s) => s[Math.floor(Math.random() * s.length)];
+        let pwd = pick(lower) + pick(upper) + pick(nums) + pick(syms);
+        while (pwd.length < len) pwd += pick(all);
+        return pwd.split('').sort(() => Math.random() - 0.5).join('');
+    }
+
+    function strengthHint(p) {
+        const rules = [
+            { ok: p.length >= 12, msg: "12+ chars" },
+            { ok: /[A-Z]/.test(p), msg: "uppercase" },
+            { ok: /[a-z]/.test(p), msg: "lowercase" },
+            { ok: /[0-9]/.test(p), msg: "number" },
+            { ok: /[^A-Za-z0-9]/.test(p), msg: "symbol" },
+        ];
+        const passed = rules.filter(r => r.ok).length;
+        return `${passed}/5 rules met: ` + rules.map(r => (r.ok ? "✓" : "✗") + " " + r.msg).join(", ");
+    }
+
+    const p1 = document.getElementById('password1');
+    const p2 = document.getElementById('password2');
+    const hint = document.getElementById('pass-hint');
+    const genBtn = document.getElementById('gen-pass');
+
+    if (p1 && hint) p1.addEventListener('input', () => hint.textContent = strengthHint(p1.value));
+    if (genBtn && p1 && p2) genBtn.addEventListener('click', () => {
+        const pwd = genStrongPassword(16);
+        p1.value = pwd;
+        p2.value = pwd;
+        hint.textContent = strengthHint(pwd);
+    });
+</script>
 {% endblock %}
