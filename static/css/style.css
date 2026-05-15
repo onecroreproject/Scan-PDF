@@ -97,6 +97,8 @@ html {
 
 body {
     text-rendering: optimizeLegibility;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-size: 15px;
     /* Prevent horizontal overflow on mobile */
     overflow-x: hidden;
 }
@@ -107,12 +109,30 @@ body {
     background: transparent;
 }
 
+/* Keep navbar layout stable even if utility CSS has delay */
+.navbar-row {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.desktop-nav {
+    display: none;
+}
+
+@media (min-width: 768px) {
+    .desktop-nav {
+        display: flex;
+    }
+}
+
 /* Ensure Logo has a fallback size if Tailwind fails */
-.img-logo, #navbar img {
-    height: 48px !important;
-    width: auto !important;
+.navbar img, .img-logo {
+    height: 48px;
+    width: auto;
     min-width: 120px;
-    object-contain: contain;
+    object-fit: contain;
 }
 
 #navbar.scrolled {

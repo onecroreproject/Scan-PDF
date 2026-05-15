@@ -19,13 +19,12 @@ def tools_processor(request):
         'generate': 'Smart Creators',
         'ai-tools': 'AI Generation',
         'other': 'Utilities',
-        'download': 'Video Download',
         'audio-tools': 'Audio Editor',
     }
 
     CATEGORY_ORDER = [
         'convert', 'pdf-tools', 'image-tools', 'image-pro', 'image-conv',
-        'generate', 'ai-tools', 'other', 'download', 'audio-tools'
+        'generate', 'ai-tools', 'other', 'audio-tools'
     ]
 
     for slug, data in all_combined.items():
@@ -57,16 +56,37 @@ def tools_processor(request):
         if cat not in ordered:
             ordered[cat] = info
 
+    # Prepare metadata for search
+    metadata = {
+        slug: {
+            'title': data['title'],
+            'icon': data['icon'],
+            'description': data.get('description', ''),
+            'slug': slug,
+            'url': reverse('image_processor:tool_page', args=[slug]) if slug in IMAGE_TOOLS else reverse('converter:convert_page', args=[slug])
+        }
+        for slug, data in all_combined.items()
+    }
+
+    # Manually add Dynamic QR and Short URL to search
+    is_dqr_user = request.session.get('is_dqr_user', False)
+    
+    metadata['dynamic-qr'] = {
+        'title': 'Dynamic QR',
+        'icon': 'qr-code',
+        'description': 'Create and manage trackable dynamic QR codes with analytics.',
+        'slug': 'dynamic-qr',
+        'url': reverse('dynamic_qr:dashboard') if is_dqr_user else reverse('dynamic_qr:login')
+    }
+    metadata['short-url'] = {
+        'title': 'Short URL',
+        'icon': 'link',
+        'description': 'Shorten URLs and track clicks with detailed analytics.',
+        'slug': 'short-url',
+        'url': reverse('dynamic_qr:short_url') if is_dqr_user else reverse('dynamic_qr:login')
+    }
+
     return {
         'grouped_tools': ordered,
-        'all_tools_metadata': {
-            slug: {
-                'title': data['title'],
-                'icon': data['icon'],
-                'description': data.get('description', ''),
-                'slug': slug,
-                'url': reverse('image_processor:tool_page', args=[slug]) if slug in IMAGE_TOOLS else reverse('converter:convert_page', args=[slug])
-            }
-            for slug, data in all_combined.items()
-        }
+        'all_tools_metadata': metadata,
     }

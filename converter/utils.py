@@ -8,7 +8,6 @@ import tempfile
 from pathlib import Path
 
 from django.conf import settings
-import google.generativeai as genai
 from dotenv import load_dotenv
 import time
 
@@ -3548,69 +3547,47 @@ def run_speed_test():
 
 
 # ═══════════════════════════════════════════════════════════════
-# AI: STORY GENERATOR (Gemini SDK)
+# STORY GENERATOR (Local, no external AI dependency)
 # ═══════════════════════════════════════════════════════════════
 def generate_story(genre="Science Fiction", prompt=""):
-    """
-    Final ultimate robustness fix for Gemini API 404s.
-    Uses 'rest' transport for better Windows/Network compatibility.
-    """
-    api_key = os.getenv("GEMINI_API_KEY")
-    if not api_key:
-        raise ValueError("GEMINI_API_KEY not found in .env file.")
-    
-    import google.generativeai as genai
-    # Using 'rest' transport as it is often more reliable than gRPC on some networks
-    genai.configure(api_key=api_key, transport='rest')
-    
-    available_models = []
-    discovery_error = ""
-    
-    try:
-        # Try to dynamically list models first
-        raw_list = genai.list_models()
-        available_models = [m.name for m in raw_list if 'generateContent' in m.supported_generation_methods]
-    except Exception as e:
-        discovery_error = str(e)
-        # If discovery fails, we use a wide-range fallback strategy
-        available_models = [
-            "gemini-1.5-flash", 
-            "models/gemini-1.5-flash",
-            "gemini-1.5-pro",
-            "models/gemini-1.5-pro",
-            "gemini-1.0-pro",
-            "models/gemini-1.0-pro"
+    """Generate a short themed story locally without external APIs."""
+    import random
+
+    clean_genre = (genre or "Creative").strip()
+    if clean_genre.lower() == "none":
+        clean_genre = "Creative"
+    idea = (prompt or "a sudden discovery").strip()
+
+    openings = [
+        f"In a quiet corner of the world, a {idea} changed everything.",
+        f"No one expected {idea} to matter, until the first sign appeared.",
+        f"On an ordinary evening, {idea} opened a door no one had seen before.",
+    ]
+    middles = [
+        f"The {clean_genre.lower()} setting grew tense as small choices became impossible to ignore.",
+        f"Every clue led deeper into a {clean_genre.lower()} mystery that tested courage and trust.",
+        f"With each step, the characters realized the answer was never far away, only hidden in plain sight.",
+    ]
+    twists = [
+        "At the turning point, the greatest obstacle turned out to be fear itself.",
+        "The truth arrived quietly: what they were searching for had been guiding them all along.",
+        "When the final piece clicked into place, the past and present suddenly made perfect sense.",
+    ]
+    endings = [
+        "By dawn, they were not the same people, but they were finally ready for what came next.",
+        "What began as uncertainty ended as purpose, and the story left a mark on everyone involved.",
+        "The journey closed with hope, and the future felt wider than it had the day before.",
+    ]
+
+    story = " ".join(
+        [
+            random.choice(openings),
+            random.choice(middles),
+            random.choice(twists),
+            random.choice(endings),
         ]
-
-    # Deduplicate and sort
-    priority = ["1.5-flash", "1.5-pro", "1.0-pro", "gemini-pro"]
-    final_list = []
-    for p in priority:
-        for m in available_models:
-            if p in m and m not in final_list:
-                final_list.append(m)
-    
-    if not final_list:
-        final_list = available_models # Fallback to whatever we found
-        
-    # Construct Story Prompt
-    clean_genre = genre if genre and genre.lower() != "none" else "Creative"
-    safe_prompt = f"Write a professional {clean_genre} story. Ideas: {prompt if prompt else 'A sudden discovery'}. Length: ~200 words."
-
-    last_err = ""
-    for model_name in final_list:
-        try:
-            model = genai.GenerativeModel(model_name)
-            response = model.generate_content(safe_prompt)
-            if response and hasattr(response, 'text') and response.text:
-                return response.text
-        except Exception as e:
-            last_err = str(e)
-            continue
-            
-    # If we reached here, the key is likely invalid or the API is not enabled
-    error_detail = discovery_error if discovery_error else last_err
-    raise Exception(f"Gemini API Error: Access denied or Service not enabled. Please go to https://aistudio.google.com/ to verify your API Key and ensure 'Generative Language API' is enabled. (Detail: {error_detail})")
+    )
+    return story
 
 
 # ═══════════════════════════════════════════════════════════════

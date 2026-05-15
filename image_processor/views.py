@@ -20,8 +20,6 @@ from .utils import (
     crop_image,
     merge_images,
     change_gif_speed,
-    extract_image_from_video,
-    image_to_video,
     convert_image,
     format_download_name
 )
@@ -114,28 +112,6 @@ IMAGE_TOOLS = {
         'color': '#84cc16',
         'gradient': 'from-lime-500 to-lime-700',
     },
-    'extract-frame': {
-        'title': 'Extract Frame',
-        'description': 'Save a specific frame from a video as a high-quality image.',
-        'icon': 'video',
-        'accept': '.mp4,.mov,.avi',
-        'allowed_extensions': ['.mp4', '.mov', '.avi'],
-        'category': 'image-pro',
-        'color': '#0ea5e9',
-        'gradient': 'from-sky-400 to-blue-600',
-    },
-
-    'image-to-video': {
-        'title': 'Image to Video',
-        'description': 'Create a cinematic video from your image sequence with custom audio and timing.',
-        'icon': 'monitor-play',
-        'accept': '.jpg,.jpeg,.png',
-        'allowed_extensions': ['.jpg', '.jpeg', '.png'],
-        'category': 'image-pro',
-        'color': '#7c3aed',
-        'gradient': 'from-violet-500 to-purple-700',
-        'multi_file': True,
-    },
     'merge-images': {
         'title': 'Merge Images',
         'description': 'Combine multiple images side-by-side or stacked.',
@@ -203,7 +179,7 @@ IMAGE_TOOLS = {
     'png-converter': { 'title': 'PNG Converter', 'description': 'Convert any image format to PNG.', 'icon': 'file-image', 'accept': '.jpg,.jpeg,.bmp,.webp,.tiff', 'allowed_extensions': ['.jpg', '.jpeg', '.bmp', '.webp', '.tiff'], 'category': 'image-conv', 'color': '#276749', 'gradient': 'from-green-500 to-emerald-700', 'target': 'png' },
     'bmp-converter': { 'title': 'BMP Converter', 'description': 'Convert any image format to Windows Bitmap.', 'icon': 'file-image', 'accept': '.*', 'allowed_extensions': ['.jpg', '.jpeg', '.png', '.webp'], 'category': 'image-conv', 'color': '#c05621', 'gradient': 'from-orange-500 to-red-500', 'target': 'bmp' },
     'gif-converter': { 'title': 'GIF Converter', 'description': 'Convert static images to GIF format.', 'icon': 'file-image', 'accept': '.*', 'allowed_extensions': ['.jpg', '.jpeg', '.png'], 'category': 'image-conv', 'color': '#6b46c1', 'gradient': 'from-purple-500 to-indigo-700', 'target': 'gif' },
-    'pdf-converter': { 'title': 'PDF Converter', 'description': 'Convert your images directly into a PDF document.', 'icon': 'file-pdf', 'accept': '.*', 'allowed_extensions': ['.jpg', '.jpeg', '.png'], 'category': 'image-conv', 'color': '#dc2626', 'gradient': 'from-red-500 to-red-700', 'target': 'pdf' },
+    'pdf-converter': { 'title': 'PDF Converter', 'description': 'Convert your images directly into a PDF document.', 'icon': 'file-text', 'accept': '.*', 'allowed_extensions': ['.jpg', '.jpeg', '.png'], 'category': 'image-conv', 'color': '#dc2626', 'gradient': 'from-red-500 to-red-700', 'target': 'pdf' },
     'tiff-converter': { 'title': 'TIFF Converter', 'description': 'High-quality TIFF conversion for professional printing.', 'icon': 'file-image', 'accept': '.*', 'allowed_extensions': ['.jpg', '.jpeg', '.png'], 'category': 'image-conv', 'color': '#0d9488', 'gradient': 'from-teal-500 to-teal-700', 'target': 'tiff' },
     'webp-converter': { 'title': 'WEBP Converter', 'description': 'Optimize your images for the web with WEBP format.', 'icon': 'file-image', 'accept': '.*', 'allowed_extensions': ['.jpg', '.jpeg', '.png'], 'category': 'image-conv', 'color': '#0ea5e9', 'gradient': 'from-sky-500 to-sky-700', 'target': 'webp' },
     'dng-converter': { 'title': 'DNG Converter', 'description': 'DNG Digital Negative conversion placeholder.', 'icon': 'file-image', 'accept': '.*', 'allowed_extensions': ['.jpg', '.jpeg', '.png'], 'category': 'image-conv', 'color': '#111827', 'gradient': 'from-gray-700 to-black', 'target': 'tiff' },
@@ -282,22 +258,6 @@ def process_tool(request, tool_slug):
         elif tool_slug == 'change-gif-speed':
             factor = request.POST.get('speed', 1.0)
             output_path = change_gif_speed(input_paths[0], original_name, speed_factor=factor)
-        elif tool_slug == 'extract-frame':
-            ts = request.POST.get('timestamp', 1.0)
-            output_path = extract_image_from_video(input_paths[0], original_name, timestamp=ts)
-
-        elif tool_slug == 'image-to-video':
-            fps = request.POST.get('fps', 24)
-            img_duration = request.POST.get('img_duration', 3)
-            audio_file = request.FILES.get('audio')
-            audio_path = save_uploaded_file(audio_file) if audio_file else None
-            
-            try:
-                output_path = image_to_video(input_paths, original_name, fps=fps, img_duration=img_duration, audio_path=audio_path)
-            finally:
-                if audio_path and os.path.exists(audio_path):
-                    try: os.remove(audio_path)
-                    except: pass
         
         # --- Converters ---
         elif tool_slug.endswith('-converter'):

@@ -17,14 +17,13 @@ def _moviepy():
     """
     ensure_ffmpeg_configured()
     from moviepy.editor import (  # type: ignore
-        VideoFileClip,
         ImageSequenceClip,
         ImageClip,
         AudioFileClip,
         concatenate_videoclips,
     )
 
-    return VideoFileClip, ImageSequenceClip, ImageClip, AudioFileClip, concatenate_videoclips
+    return ImageSequenceClip, ImageClip, AudioFileClip, concatenate_videoclips
 
 def ensure_media_dirs():
     """Ensure temporary upload and output directories exist."""
@@ -216,59 +215,6 @@ def change_gif_speed(input_path, original_name, speed_factor=1.0):
     new_clip.write_gif(output_path, fps=clip.fps)
     return output_path
 
-def extract_image_from_video(input_path, original_name, timestamp=1.0):
-    VideoFileClip, _, _, _, _ = _moviepy()
-    clip = VideoFileClip(input_path)
-    frame = clip.get_frame(float(timestamp))
-    output_path = get_output_path(original_name, 'jpg', f'_frame_{timestamp}')
-    img = Image.fromarray(frame)
-    img.save(output_path, quality=95)
-    return output_path
-
-def image_to_video(input_paths, original_name, fps=24, img_duration=3, audio_path=None):
-    """
-    Creates a video from a sequence of images with custom duration and optional audio.
-    """
-    try:
-        _, _, ImageClip, AudioFileClip, concatenate_videoclips = _moviepy()
-        clips = []
-        duration = float(img_duration)
-        
-        for p in input_paths:
-            # Create a clip for each image with specified duration
-            # Use constant duration for simplicity, but could be per-image later
-            clip = ImageClip(p).set_duration(duration)
-            clips.append(clip)
-            
-        final_clip = concatenate_videoclips(clips, method="compose")
-        final_clip.fps = float(fps)
-        
-        if audio_path and os.path.exists(audio_path):
-            audio = AudioFileClip(audio_path)
-            # Loop audio if it's shorter than video, or trim if longer
-            if audio.duration < final_clip.duration:
-                # Use subclip logic if looping is not available directly
-                from moviepy.audio.fx.all import audio_loop
-                audio = audio_loop(audio, duration=final_clip.duration)
-            else:
-                audio = audio.subclip(0, final_clip.duration)
-            
-            final_clip = final_clip.set_audio(audio)
-            
-        output_path = get_output_path(original_name, 'mp4', '_slideshow')
-        final_clip.write_videofile(output_path, codec="libx264", audio_codec="aac", temp_audiofile='temp-audio.m4a', remove_temp=True)
-        
-        # Free resources
-        if final_clip.audio:
-            final_clip.audio.close()
-        final_clip.close()
-        for c in clips:
-            c.close()
-            
-        return output_path
-    except Exception as e:
-        print(f"Error in image_to_video: {str(e)}")
-        raise e
 
 # ═══════════════════════════════════════════════════════════════
 # 3. IMAGE CONVERTERS

@@ -918,7 +918,13 @@ def dqr_redirect_view(request, short_code):
         
         # 2. Log Detailed Analytics
         ua = request.META.get('HTTP_USER_AGENT', '').lower()
-        ip = request.META.get('REMOTE_ADDR')
+        
+        # Get Real IP (handle proxies)
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        if x_forwarded_for:
+            ip = x_forwarded_for.split(',')[0].strip()
+        else:
+            ip = request.META.get('REMOTE_ADDR')
         
         # Simple Manual Parsing
         browser = 'Other'
@@ -938,14 +944,69 @@ def dqr_redirect_view(request, short_code):
         if 'mobile' in ua or 'android' in ua or 'iphone' in ua: device = 'Mobile'
         elif 'tablet' in ua or 'ipad' in ua: device = 'Tablet'
 
+        # Geolocation logic
+        country, country_code, region, city = 'Unknown', 'XX', 'Unknown', 'Unknown'
+        lat, lon = None, None
+        
+        # Check if IP is private/local
+        is_private = False
+        if ip:
+            if ip.startswith(('127.', '192.168.', '10.', '172.16.', '172.17.', '172.18.', '172.19.', '172.20.', '172.21.', '172.22.', '172.23.', '172.24.', '172.25.', '172.26.', '172.27.', '172.28.', '172.29.', '172.30.', '172.31.')) or ip == '::1':
+                is_private = True
+
+        if ip and not is_private:
+            try:
+                import json
+                from urllib.request import urlopen, Request
+                # Using ip-api.com (free for non-commercial use, 45 requests/min)
+                headers = {'User-Agent': 'ScanPDF/1.0'}
+                req = Request(f'http://ip-api.com/json/{ip}?fields=status,country,countryCode,regionName,city,lat,lon', headers=headers)
+                with urlopen(req, timeout=4) as resp:
+                    geo_data = json.loads(resp.read().decode())
+                    if geo_data.get('status') == 'success':
+                        country = geo_data.get('country', 'Unknown')
+                        country_code = geo_data.get('countryCode', 'XX')
+                        region = geo_data.get('regionName', 'Unknown')
+                        city = geo_data.get('city', 'Unknown')
+                        lat = geo_data.get('lat')
+                        lon = geo_data.get('lon')
+            except Exception as e:
+                # Fallback to local server info if API fails
+                pass
+        elif is_private:
+            # For development/internal scans
+            country, country_code, region, city = 'Internal', 'LCL', 'Local Network', 'Private IP'
+            # If in debug mode, we can mock a location for visual testing
+            from django.conf import settings
+            if getattr(settings, 'DEBUG', False):
+                country, country_code, region, city = 'India', 'IN', 'Tamil Nadu', 'Chennai'
+                lat, lon = 13.0827, 80.2707
+
         from .models import QRAnalytics
         from django.db import connection, OperationalError
         try:
-            QRAnalytics.objects.create(qr_code=qr, ip_address=ip, user_agent=ua[:500], browser=browser, os=os, device_type=device)
+            QRAnalytics.objects.create(
+                qr_code=qr, ip_address=ip, user_agent=ua[:500], 
+                browser=browser, os=os, device_type=device,
+                country=country, country_code=country_code, region=region, city=city,
+                latitude=lat, longitude=lon
+            )
         except OperationalError:
-            with connection.cursor() as cursor:
-                cursor.execute('CREATE TABLE IF NOT EXISTS "dynamic_qr_qranalytics" ("id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "timestamp" datetime NOT NULL, "ip_address" char(39) NULL, "user_agent" text NULL, "browser" varchar(50) NULL, "os" varchar(50) NULL, "device_type" varchar(50) NULL, "country" varchar(100) NOT NULL DEFAULT "Unknown", "city" varchar(100) NOT NULL DEFAULT "Unknown", "qr_code_id" uuid NOT NULL REFERENCES "dynamic_qr_dynamicqrcode" ("id") DEFERRABLE INITIALLY DEFERRED);')
-            try: QRAnalytics.objects.create(qr_code=qr, ip_address=ip, user_agent=ua[:500], browser=browser, os=os, device_type=device)
+            # Manual fallback for DB schema mismatch if migrations haven't run
+            try:
+                with connection.cursor() as cursor:
+                    cursor.execute('CREATE TABLE IF NOT EXISTS "dynamic_qr_qranalytics" ("id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "timestamp" datetime NOT NULL, "ip_address" char(39) NULL, "user_agent" text NULL, "browser" varchar(50) NULL, "os" varchar(50) NULL, "device_type" varchar(50) NULL, "country" varchar(100) NOT NULL DEFAULT "Unknown", "country_code" varchar(10) NOT NULL DEFAULT "XX", "region" varchar(100) NOT NULL DEFAULT "Unknown", "city" varchar(100) NOT NULL DEFAULT "Unknown", "latitude" float NULL, "longitude" float NULL, "qr_code_id" uuid NOT NULL REFERENCES "dynamic_qr_dynamicqrcode" ("id") DEFERRABLE INITIALLY DEFERRED);')
+                    # Try to add missing columns if table exists but is old
+                    cols = ["country_code", "region", "latitude", "longitude"]
+                    for col in cols:
+                        try: cursor.execute(f'ALTER TABLE "dynamic_qr_qranalytics" ADD COLUMN "{col}" {"float" if "tude" in col else "varchar(100)"};')
+                        except: pass
+                QRAnalytics.objects.create(
+                    qr_code=qr, ip_address=ip, user_agent=ua[:500], 
+                    browser=browser, os=os, device_type=device,
+                    country=country, country_code=country_code, region=region, city=city,
+                    latitude=lat, longitude=lon
+                )
             except: pass
         except: pass
 

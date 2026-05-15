@@ -39,8 +39,8 @@ AUDIO_TOOLS = {
         'title': 'Audio Editor',
         'description': 'Professional audio editor to trim, cut, change volume, speed, pitch and apply equalizer effects.',
         'icon': 'music',
-        'accept': '.mp3,.wav,.ogg,.m4a,.flac',
-        'allowed_extensions': ['.mp3', '.wav', '.ogg', '.m4a', '.flac'],
+        'accept': '.mp3,.wav,.ogg',
+        'allowed_extensions': ['.mp3', '.wav', '.ogg'],
         'category': 'audio-tools',
         'color': '#10b981',
         'gradient': 'from-emerald-500 to-teal-600',
@@ -81,12 +81,13 @@ def extract_page(request):
     }
     return render(request, 'audio_processor/extract_audio.html', context)
 
+
 @csrf_exempt
 @require_POST
 def process_audio_api(request):
     """API endpoint to process audio files in editor, merge, or extract modes."""
     mode = request.POST.get('mode', 'edit')
-    allowed_output_formats = {'mp3', 'wav', 'ogg', 'm4a', 'flac'}
+    allowed_output_formats = {'mp3', 'wav', 'ogg'}
     output_format = request.POST.get('format', 'mp3').lower()
     if output_format not in allowed_output_formats:
         return JsonResponse({'error': 'Unsupported output format.'}, status=400)
@@ -139,6 +140,7 @@ def process_audio_api(request):
                     os.remove(input_path)
                 except OSError:
                     pass
+
 
     uploaded_file = request.FILES.get('file')
     if not uploaded_file:

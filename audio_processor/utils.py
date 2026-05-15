@@ -50,35 +50,24 @@ def process_audio(input_path, original_name, tool_params):
     except (ValueError, TypeError):
         raise ValueError("Invalid volume value.")
 
-    # 3. Speed
+    # 3. Speed & Pitch (Tempo/Voice Processing)
     try:
-        speed = float(tool_params.get('speed', 1.0))
-        speed = min(max(speed, 0.5), 2.5)
-        if speed != 1.0:
-            clip = clip.fx(vfx.speedx, speed)
+        speed_val = float(tool_params.get('speed', 1.0))
+        pitch_val = float(tool_params.get('pitch', 0)) # -10 to +10 range usually
+        
+        # Combined factor: speed * (1.059 ^ pitch) approximately, 
+        # but since we only have speedx which changes both, we combine them.
+        # Most users expect 'pitch' to be a multiplier of frequency.
+        pitch_factor = 2.0 ** (pitch_val / 12.0) # semitones to factor
+        total_factor = speed_val * pitch_factor
+        
+        if total_factor != 1.0:
+            clip = clip.fx(vfx.speedx, factor=total_factor)
     except (ValueError, TypeError):
-        raise ValueError("Invalid speed value.")
+        pass
 
-    # 4. Pitch (Note: MoviePy doesn't have a high-level pitch shifter without speed change, 
-    # but we can simulate the 'resampling' pitch shift by changing speed and overriding sample rate 
-    # or just use speedx for simplicity if that matches user expectation. 
-    # To match pydub's behavior of 'pitch shift' which actually changes duration:
-    try:
-        pitch = float(tool_params.get('pitch', 0))
-        pitch = min(max(pitch, -12), 12)
-        if pitch != 0:
-            # Shift pitch by changing playback speed (resampling effect)
-            pitch_factor = 2.0 ** (pitch / 12.0)
-            clip = clip.fx(vfx.speedx, pitch_factor)
-    except (ValueError, TypeError):
-        raise ValueError("Invalid pitch value.")
-
-    # 5. Equalizer (Presets)
-    # MoviePy doesn't have built-in frequency filters (lowpass/highpass).
-    # We will skip these or provide a warning if pure MoviePy is required.
-    # Given the constraint "ONLY MoviePy", we omit them unless we implement FFT manually.
-    # For now, we'll log a note and ignore them to keep the project "only MoviePy".
-    # (Pydub used scipy for these, MoviePy doesn't bundle them)
+    # 5. Equalizer (Presets) - MoviePy doesn't have native EQ filters.
+    # To keep "MoviePy only" requirement, we skip advanced EQ.
     
     # 6. Fade in/out
     try:
@@ -99,7 +88,7 @@ def process_audio(input_path, original_name, tool_params):
         clip = clip.fx(vfx.time_mirror)
 
     target_format = tool_params.get('format', 'mp3')
-    if target_format not in {'mp3', 'wav', 'ogg', 'm4a', 'flac'}:
+    if target_format not in {'mp3', 'wav', 'ogg'}:
         clip.close()
         raise ValueError("Unsupported output format.")
 
@@ -144,3 +133,4 @@ def extract_audio_from_video(input_path, original_name, target_format='mp3',
     clip.write_audiofile(output_path, logger=None)
     clip.close()
     return output_path
+

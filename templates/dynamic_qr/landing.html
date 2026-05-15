@@ -124,6 +124,7 @@
 <body>
     <div class="landing-bg">
         <div class="landing-card">
+            {% if qr.qr_type != 'pdf' %}
             <div class="card-header">
                 <div class="icon-vessel">
                     {% if qr.qr_type == 'text' %}<i data-lucide="align-left"></i>
@@ -141,6 +142,7 @@
                     <p>{{ qr.qr_type }} Content</p>
                 </div>
             </div>
+            {% endif %}
 
             <div class="card-body">
                 <div class="content-box">
@@ -188,12 +190,14 @@
                             {% if qr.qr_data.phone_mobile %}<div class="flex items-center gap-4 text-left"><div class="w-10 h-10 rounded-xl bg-slate-100 flex items-center justify-center text-slate-500"><i data-lucide="phone" class="w-4 h-4"></i></div><div><p class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Mobile</p><p class="text-sm font-bold text-slate-900">{{ qr.qr_data.phone_mobile }}</p></div></div>{% endif %}
                         </div>
                     {% elif qr.destination_url or qr.file_content %}
+                        {% if qr.qr_type != 'pdf' %}
                         <div class="data-item text-center">
                             <span class="data-label">Portal Destination</span>
                             <div class="data-value text-xs font-bold text-slate-400 mt-2 truncate px-4">
                                 {% if qr.file_content %}{{ qr.file_content.name }}{% else %}{{ qr.destination_url }}{% endif %}
                             </div>
                         </div>
+                        {% endif %}
                     {% endif %}
                 </div>
 
@@ -211,10 +215,23 @@
                 {% elif qr.destination_url %}
                     <a href="{{ qr.destination_url }}" class="btn-hero-action font-black"><i data-lucide="external-link"></i> Visit Website</a>
                 {% elif qr.file_content %}
-                    <a href="{{ qr.file_content.url }}" class="btn-hero-action font-black"><i data-lucide="file-down"></i> View Content</a>
+                    {% if qr.qr_type == 'pdf' %}
+                        <div class="text-center py-10">
+                            <div class="w-20 h-20 bg-red-50 text-red-500 rounded-3xl flex items-center justify-center mx-auto mb-6">
+                                <i data-lucide="file-text" class="w-10 h-10"></i>
+                            </div>
+                            <h2 class="text-2xl font-black text-slate-900 mb-2">{{ qr.qr_name }}</h2>
+                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-8">Scanned PDF Document</p>
+                            <a href="{{ qr.file_content.url }}" class="btn-hero-action font-black" style="margin-top:0;"><i data-lucide="eye"></i> View PDF Now</a>
+                        </div>
+                    {% else %}
+                        <a href="{{ qr.file_content.url }}" class="btn-hero-action font-black"><i data-lucide="file-down"></i> View Content</a>
+                    {% endif %}
                 {% endif %}
 
+                {% if qr.qr_type != 'pdf' %}
                 <p class="footer-tag">Verified Scan • ScanPDF Secure</p>
+                {% endif %}
             </div>
         </div>
     </div>
