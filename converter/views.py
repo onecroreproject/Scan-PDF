@@ -291,7 +291,7 @@ TOOLS = {
     'ocr-pdf': {
         'title': 'OCR to PDF',
         'description': 'Convert scanned PDFs, Word documents, and images into searchable, selectable PDF documents or extract their text directly.',
-        'icon': 'scan-text',
+        'icon': 'languages',
         'accept': '.pdf,.jpg,.jpeg,.png,.docx',
         'allowed_extensions': ['.pdf', '.jpg', '.jpeg', '.png', '.docx'],
         'converter': ocr_pdf,
@@ -358,7 +358,7 @@ TOOLS = {
     'unlock-pdf': {
         'title': 'Unlock PDF',
         'description': 'Remove password protection from your secured PDF files.',
-        'icon': 'lock-open',
+        'icon': 'unlock',
         'accept': '.pdf',
         'allowed_extensions': ['.pdf'],
         'converter': None,
@@ -555,18 +555,6 @@ TOOLS = {
         'gradient': 'from-teal-400 to-cyan-500',
         'category': 'generate',
     },
-    'image-to-video': {
-        'title': 'AI Video Gen',
-        'description': 'AI Video generation is coming soon! Stay tuned for cinematic video creation.',
-        'icon': 'monitor-play',
-        'accept': None,
-        'allowed_extensions': [],
-        'converter': None,
-        'color': '#8b5cf6',
-        'gradient': 'from-violet-500 to-purple-600',
-        'category': 'ai-tools',
-        'is_coming_soon': True,
-    },
     'story-generator': {
         'title': 'AI Story Generator',
         'description': 'Generate creative stories from different genres using Gemini AI.',
@@ -740,8 +728,6 @@ def convert_page(request, tool_slug):
         template = 'converter/story_generator.html'
     elif tool_slug == 'name-generator':
         template = 'converter/name_generator.html'
-    elif tool_slug == 'image-to-video':
-        template = 'converter/image_to_video.html'
     elif tool_slug == 'sign-pdf':
         template = 'converter/sign_pdf.html'
     elif tool_slug == 'redact-pdf':

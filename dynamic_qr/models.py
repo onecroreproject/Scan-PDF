@@ -181,7 +181,11 @@ class QRAnalytics(models.Model):
     os = models.CharField(max_length=50, null=True, blank=True)
     device_type = models.CharField(max_length=50, null=True, blank=True, help_text="Mobile, Tablet, Desktop")
     country = models.CharField(max_length=100, default='Unknown')
+    country_code = models.CharField(max_length=10, default='XX')
+    region = models.CharField(max_length=100, default='Unknown')
     city = models.CharField(max_length=100, default='Unknown')
+    latitude = models.FloatField(null=True, blank=True)
+    longitude = models.FloatField(null=True, blank=True)
 
     class Meta:
         ordering = ['-timestamp']

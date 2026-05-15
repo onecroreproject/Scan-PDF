@@ -8,10 +8,8 @@
         display: flex;
         min-height: calc(100vh - 64px);
         background: #f8fafc;
-        font-family: 'Inter', sans-serif !important;
+        font-family: 'Inter', sans-serif;
     }
-    
-    * { font-family: 'Inter', sans-serif !important; }
     
     .sidebar {
         width: 210px;
@@ -113,22 +111,7 @@
     .dashboard-layout { margin-top: 0; }
     .sidebar { top: var(--nav-h, 70px); }
     .main-content { margin-top: 0; }
-    
-    /* Ensure the mobile toggle is available for the sidebar */
-    @media (max-width: 767px) {
-        .mobile-dashboard-header {
-            position: fixed; top: 0; left: 0; right: 0; z-index: 60;
-            background: white; height: 50px; border-bottom: 1px solid #f1f5f9;
-            display: flex; align-items: center; padding: 0 16px; gap: 12px;
-        }
-    }
 </style>
-<div>
-    <!-- Sidebar toggle available on mobile + desktop -->
-    <button class="fixed top-[18px] left-4 z-[60] p-2 text-surface-500 bg-white/80 backdrop-blur rounded-lg border border-slate-100 shadow-sm" onclick="toggleSidebar()">
-        <i data-lucide="menu" class="w-5 h-5"></i>
-    </button>
-</div>
 {% endblock %}
 
 {% block content %}

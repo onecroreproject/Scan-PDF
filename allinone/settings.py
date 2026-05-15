@@ -32,6 +32,7 @@ INSTALLED_APPS = [
     'converter',
     'image_processor',
     'audio_processor',
+    'video_processor',
     'dynamic_qr',
 ]
 
@@ -86,18 +87,26 @@ TIME_ZONE = 'Asia/Kolkata'
 USE_I18N = True
 USE_TZ = True
 
-# Static files
+# Static files (CSS, JavaScript, Images)
 STATIC_URL = '/static/'
 STATICFILES_DIRS = [BASE_DIR / 'static']
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+
+# Static files storage
 if DEBUG:
     STATICFILES_STORAGE = 'django.contrib.staticfiles.storage.StaticFilesStorage'
 else:
     STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
-# Allow WhiteNoise to serve files directly from STATICFILES_DIRS in development.
+# WhiteNoise Configuration for maximum reliability
+WHITENOISE_MANIFEST_STRICT = False
 WHITENOISE_USE_FINDERS = True
 WHITENOISE_AUTOREFRESH = DEBUG
+
+# Ensure correct MIME types on all systems (especially Windows)
+import mimetypes
+mimetypes.add_type("text/css", ".css", True)
+mimetypes.add_type("application/javascript", ".js", True)
 
 # Media files (Redirected to system temp to keep project folder clean)
 import tempfile

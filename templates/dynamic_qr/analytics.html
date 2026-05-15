@@ -146,7 +146,12 @@
                             </div>
                         </td>
                         <td class="font-mono text-[11px] text-slate-500">{{ scan.ip_address }}</td>
-                        <td class="text-slate-400 text-[11px] font-medium">{{ scan.city }}, {{ scan.country }}</td>
+                        <td class="text-slate-400 text-[11px] font-medium">
+                            <div class="flex items-center gap-1.5">
+                                <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-600 font-black text-[9px]">{{ scan.country_code }}</span>
+                                {{ scan.city }}{% if scan.region != 'Unknown' %}, {{ scan.region }}{% endif %}
+                            </div>
+                        </td>
                     </tr>
                     {% empty %}
                     <tr>
