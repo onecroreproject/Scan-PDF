@@ -99,8 +99,7 @@ def process_audio_api(request):
         input_paths = [save_uploaded_file(f) for f in files]
         try:
             output_path = merge_audios(input_paths, files[0].name, target_format=output_format)
-            merged_name = f"{Path(files[0].name).stem}_merged.{output_format}"
-            return create_cleanup_response(output_path, filename=merged_name)
+            return create_cleanup_response(output_path, filename=files[0].name)
         except Exception as e:
             return JsonResponse({'error': str(e)}, status=500)
         finally:
@@ -128,8 +127,7 @@ def process_audio_api(request):
                 start=start,
                 end=end,
             )
-            extracted_name = f"{Path(video_file.name).stem}_audio.{output_format}"
-            return create_cleanup_response(output_path, filename=extracted_name)
+            return create_cleanup_response(output_path, filename=video_file.name)
         except ValueError as e:
             return JsonResponse({'error': str(e)}, status=400)
         except Exception as e:
@@ -186,8 +184,7 @@ def process_audio_api(request):
 
     try:
         output_path = process_audio(input_path, uploaded_file.name, tool_params)
-        download_name = f"{Path(uploaded_file.name).stem}_edited.{output_format}"
-        return create_cleanup_response(output_path, filename=download_name)
+        return create_cleanup_response(output_path, filename=uploaded_file.name)
     except ValueError as e:
         return JsonResponse({'error': str(e)}, status=400)
     except Exception as e:

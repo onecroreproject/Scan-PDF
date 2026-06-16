@@ -1,0 +1,38 @@
+# ═══════════════════════════════════════════════════════════════
+# Gunicorn systemd service for ScanPDF
+# Place in /etc/systemd/system/scanpdf-gunicorn.service
+# ═══════════════════════════════════════════════════════════════
+
+[Unit]
+Description=ScanPDF Gunicorn Daemon
+After=network.target
+
+[Service]
+Type=notify
+User=www-data
+Group=www-data
+RuntimeDirectory=scanpdf
+WorkingDirectory=/var/www/scanpdf
+Environment="PATH=/var/www/scanpdf/venv/bin"
+Environment="DJANGO_SETTINGS_MODULE=allinone.settings"
+Environment="PYTHONUNBUFFERED=1"
+ExecStart=/var/www/scanpdf/venv/bin/gunicorn \
+    --access-logfile - \
+    --workers 3 \
+    --worker-class gthread \
+    --threads 2 \
+    --worker-tmp-dir /dev/shm \
+    --bind unix:/run/scanpdf/gunicorn.sock \
+    --timeout 300 \
+    --max-requests 1000 \
+    --max-requests-jitter 100 \
+    allinone.wsgi:application
+ExecReload=/bin/kill -s HUP $MAINPID
+KillMode=mixed
+TimeoutStopSec=5
+PrivateTmp=true
+Restart=on-failure
+RestartSec=5s
+
+[Install]
+WantedBy=multi-user.target

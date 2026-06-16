@@ -1,0 +1,410 @@
+{% extends 'video_processor/base_video.html' %}
+
+{% block extra_tool_head %}
+<style>
+    /* Styling for the custom range sliders and handles to avoid user selection during drag */
+    .no-select {
+        user-select: none;
+        -webkit-user-select: none;
+        -moz-user-select: none;
+        -ms-user-select: none;
+    }
+    
+    .timeline-scrubber {
+        appearance: none;
+        width: 100%;
+        height: 100%;
+        background: transparent;
+        position: absolute;
+        top: 0;
+        left: 0;
+        pointer-events: none;
+    }
+    
+    /* Playhead */
+    .playhead {
+        position: absolute;
+        top: -8px;
+        bottom: -8px;
+        width: 4px;
+        background-color: #ef4444; /* red-500 */
+        z-index: 30;
+        border-radius: 4px;
+        pointer-events: none;
+        box-shadow: 0 0 10px rgba(239, 68, 68, 0.6);
+        transition: left 0.1s linear;
+    }
+    .playhead::after {
+        content: '';
+        position: absolute;
+        top: -4px;
+        left: -4px;
+        width: 12px;
+        height: 12px;
+        background-color: #ef4444;
+        border-radius: 50%;
+    }
+
+    /* Thumb */
+    .timeline-scrubber::-webkit-slider-thumb {
+        appearance: none;
+        pointer-events: auto;
+        width: 24px;
+        height: 48px;
+        background: #8b5cf6; /* brand-500 */
+        border: 2px solid white;
+        border-radius: 6px;
+        cursor: grab;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        position: relative;
+        z-index: 20;
+    }
+    .timeline-scrubber::-moz-range-thumb {
+        pointer-events: auto;
+        width: 24px;
+        height: 48px;
+        background: #8b5cf6;
+        border: 2px solid white;
+        border-radius: 6px;
+        cursor: grab;
+        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+        position: relative;
+        z-index: 20;
+    }
+    .timeline-scrubber:active::-webkit-slider-thumb { cursor: grabbing; transform: scale(1.1); transition: transform 0.1s; }
+    .timeline-scrubber:active::-moz-range-thumb { cursor: grabbing; transform: scale(1.1); transition: transform 0.1s; }
+    
+    /* Highlight */
+    .timeline-highlight {
+        position: absolute;
+        height: 100%;
+        background-color: rgba(139, 92, 246, 0.3); /* brand-500 at 30% */
+        border-top: 2px solid #8b5cf6;
+        border-bottom: 2px solid #8b5cf6;
+        z-index: 10;
+        pointer-events: none;
+    }
+</style>
+{% endblock %}
+
+{% block api_url %}{% url "video_processor:extract_audio_api" %}{% endblock %}
+{% block accepted_files %}.mp4,.mov,.avi,.mkv,.webm,.m4v{% endblock %}
+{% block upload_title %}Upload a video to extract audio{% endblock %}
+{% block upload_subtitle %}MP4, MOV, AVI, MKV, WEBM — Up to 500MB{% endblock %}
+{% block file_icon %}music{% endblock %}
+{% block process_icon %}music{% endblock %}
+{% block process_text %}Extract Audio{% endblock %}
+
+{% block tool_options %}
+<!-- Hidden Initial Upload Area when video is loaded -->
+<div id="trim-placeholder"></div>
+
+<!-- Interactive Video Player and Timeline UI -->
+<div id="trim-ui-container" class="hidden space-y-6">
+    
+    <!-- Video Player -->
+    <div class="relative w-full bg-black rounded-2xl overflow-hidden aspect-video shadow-lg border border-surface-200">
+        <video id="trim-video" class="w-full h-full object-contain" controls controlsList="nodownload"></video>
+    </div>
+
+    <!-- Timeline UI -->
+    <div class="bg-surface-50 p-6 rounded-2xl border border-surface-200 space-y-4">
+        <div class="flex items-center justify-between text-sm font-bold text-surface-700">
+            <span id="current-time-display">00:00.0</span>
+            <span id="duration-display">00:00.0</span>
+        </div>
+        
+        <!-- Custom Timeline Slider -->
+        <div class="relative h-12 bg-surface-200 rounded-xl no-select" id="timeline-container">
+            <!-- Selected Region Highlight -->
+            <div id="timeline-highlight" class="timeline-highlight" style="left: 0%; width: 100%;"></div>
+            <!-- Playhead -->
+            <div id="playhead" class="playhead" style="left: 0%;"></div>
+            
+            <!-- Dual range inputs -->
+            <input type="range" id="slider-start" class="timeline-scrubber" min="0" max="100" value="0" step="0.1">
+            <input type="range" id="slider-end" class="timeline-scrubber" min="0" max="100" value="100" step="0.1">
+        </div>
+
+        <div class="flex items-center justify-between gap-4 mt-4">
+            <button type="button" id="btn-set-start" class="flex-1 bg-white border border-surface-200 hover:border-brand-500 hover:text-brand-600 text-surface-700 font-bold py-2 rounded-xl transition-colors shadow-sm text-sm flex items-center justify-center gap-2">
+                <i data-lucide="scissors" class="w-4 h-4"></i> Set Start
+            </button>
+            
+            <div class="flex items-center gap-2 bg-brand-50 px-4 py-2 rounded-xl border border-brand-100">
+                <i data-lucide="clock" class="w-4 h-4 text-brand-600"></i>
+                <span class="text-sm font-black text-brand-700" id="selection-duration">0.0s</span>
+            </div>
+            
+            <button type="button" id="btn-set-end" class="flex-1 bg-white border border-surface-200 hover:border-brand-500 hover:text-brand-600 text-surface-700 font-bold py-2 rounded-xl transition-colors shadow-sm text-sm flex items-center justify-center gap-2">
+                Set End <i data-lucide="scissors" class="w-4 h-4"></i>
+            </button>
+        </div>
+
+        <!-- Audio Settings -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-6 pt-6 border-t border-surface-200">
+            <div class="space-y-2">
+                <label class="text-[11px] font-black text-surface-400 uppercase tracking-widest flex items-center gap-2">
+                    <i data-lucide="file-audio" class="w-3 h-3"></i> Format
+                </label>
+                <div class="relative">
+                    <select id="input-format" class="w-full appearance-none bg-white border border-surface-200 rounded-xl px-4 py-3 text-sm font-bold text-surface-700 focus:border-brand-500 outline-none transition-all cursor-pointer">
+                        <option value="mp3" selected>MP3</option>
+                        <option value="wav">WAV</option>
+                        <option value="aac">AAC</option>
+                        <option value="m4a">M4A</option>
+                        <option value="ogg">OGG</option>
+                    </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-surface-400">
+                        <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="space-y-2">
+                <label class="text-[11px] font-black text-surface-400 uppercase tracking-widest flex items-center gap-2">
+                    <i data-lucide="bar-chart" class="w-3 h-3"></i> Bitrate (Quality)
+                </label>
+                <div class="relative">
+                    <select id="input-quality" class="w-full appearance-none bg-white border border-surface-200 rounded-xl px-4 py-3 text-sm font-bold text-surface-700 focus:border-brand-500 outline-none transition-all cursor-pointer">
+                        <option value="320k">320 kbps (Highest)</option>
+                        <option value="256k">256 kbps (High)</option>
+                        <option value="192k" selected>192 kbps (Standard)</option>
+                        <option value="128k">128 kbps (Low)</option>
+                    </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-surface-400">
+                        <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="space-y-2">
+                <label class="text-[11px] font-black text-surface-400 uppercase tracking-widest flex items-center gap-2">
+                    <i data-lucide="activity" class="w-3 h-3"></i> Sample Rate
+                </label>
+                <div class="relative">
+                    <select id="input-samplerate" class="w-full appearance-none bg-white border border-surface-200 rounded-xl px-4 py-3 text-sm font-bold text-surface-700 focus:border-brand-500 outline-none transition-all cursor-pointer">
+                        <option value="48000">48000 Hz (Pro)</option>
+                        <option value="44100" selected>44100 Hz (CD)</option>
+                        <option value="32000">32000 Hz</option>
+                        <option value="22050">22050 Hz</option>
+                    </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-surface-400">
+                        <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                    </div>
+                </div>
+            </div>
+
+            <div class="space-y-2">
+                <label class="text-[11px] font-black text-surface-400 uppercase tracking-widest flex items-center gap-2">
+                    <i data-lucide="headphones" class="w-3 h-3"></i> Channels
+                </label>
+                <div class="relative">
+                    <select id="input-channels" class="w-full appearance-none bg-white border border-surface-200 rounded-xl px-4 py-3 text-sm font-bold text-surface-700 focus:border-brand-500 outline-none transition-all cursor-pointer">
+                        <option value="stereo" selected>Stereo</option>
+                        <option value="mono">Mono</option>
+                    </select>
+                    <div class="pointer-events-none absolute inset-y-0 right-0 flex items-center px-4 text-surface-400">
+                        <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Hidden inputs for backend submission -->
+        <div class="hidden">
+            <input type="number" name="start" id="input-start" value="0" min="0" step="0.1">
+            <input type="number" name="end" id="input-end" value="0" min="0" step="0.1">
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block build_form_data %}
+const startVal = parseFloat(document.getElementById('input-start').value);
+const endVal = parseFloat(document.getElementById('input-end').value);
+formData.append('start', startVal);
+formData.append('duration', endVal - startVal);
+formData.append('format', document.getElementById('input-format').value);
+formData.append('quality', document.getElementById('input-quality').value);
+formData.append('sample_rate', document.getElementById('input-samplerate').value);
+formData.append('channels', document.getElementById('input-channels').value);
+{% endblock %}
+
+{% block build_form_data_chunked %}
+const chunkStartVal = parseFloat(document.getElementById('input-start').value);
+const chunkEndVal = parseFloat(document.getElementById('input-end').value);
+formData.append('start', chunkStartVal);
+formData.append('duration', chunkEndVal - chunkStartVal);
+formData.append('format', document.getElementById('input-format').value);
+formData.append('quality', document.getElementById('input-quality').value);
+formData.append('sample_rate', document.getElementById('input-samplerate').value);
+formData.append('channels', document.getElementById('input-channels').value);
+{% endblock %}
+
+{% block on_success %}
+const fmt = document.getElementById('input-format').value;
+downloadLink.download = 'audio.' + fmt;
+
+// Hide video preview on success, show audio player
+document.getElementById('preview-player').classList.add('hidden');
+const audioPreview = document.getElementById('preview-audio');
+audioPreview.classList.remove('hidden');
+audioPreview.src = downloadLink.href;
+{% endblock %}
+
+{% block on_file_selected %}
+const fileUrl = URL.createObjectURL(file);
+const videoEl = document.getElementById('trim-video');
+videoEl.src = fileUrl;
+document.getElementById('trim-placeholder').classList.add('hidden');
+document.getElementById('trim-ui-container').classList.remove('hidden');
+{% endblock %}
+
+{% block on_reset %}
+document.getElementById('trim-placeholder').classList.remove('hidden');
+document.getElementById('trim-ui-container').classList.add('hidden');
+document.getElementById('trim-video').src = "";
+document.getElementById('preview-audio').classList.add('hidden');
+document.getElementById('preview-player').classList.remove('hidden');
+{% endblock %}
+
+{% block extra_tool_scripts %}
+    let videoDuration = 0;
+
+    const video = document.getElementById('trim-video');
+    const sliderStart = document.getElementById('slider-start');
+    const sliderEnd = document.getElementById('slider-end');
+    const highlight = document.getElementById('timeline-highlight');
+    const playhead = document.getElementById('playhead');
+    const inputStart = document.getElementById('input-start');
+    const inputEnd = document.getElementById('input-end');
+    const currentTimeDisplay = document.getElementById('current-time-display');
+    const durationDisplay = document.getElementById('duration-display');
+    const selectionDuration = document.getElementById('selection-duration');
+    const btnSetStart = document.getElementById('btn-set-start');
+    const btnSetEnd = document.getElementById('btn-set-end');
+
+    function formatTime(seconds) {
+        const m = Math.floor(seconds / 60).toString().padStart(2, '0');
+        const s = Math.floor(seconds % 60).toString().padStart(2, '0');
+        const ms = Math.floor((seconds % 1) * 10).toString();
+        return `${m}:${s}.${ms}`;
+    }
+
+    function updateSliderUI() {
+        const startVal = parseFloat(sliderStart.value);
+        const endVal = parseFloat(sliderEnd.value);
+        
+        // Enforce max constraint dynamically based on duration
+        if (videoDuration > 0) {
+            sliderStart.max = videoDuration;
+            sliderEnd.max = videoDuration;
+        }
+
+        // Percentage calculations
+        const max = parseFloat(sliderStart.max) || 100;
+        const startPercent = (startVal / max) * 100;
+        const endPercent = (endVal / max) * 100;
+
+        // Update highlight width and position
+        highlight.style.left = `${startPercent}%`;
+        highlight.style.width = `${endPercent - startPercent}%`;
+
+        // Ensure handles overlay correctly
+        if (startPercent > 50) {
+            sliderStart.style.zIndex = 21;
+            sliderEnd.style.zIndex = 20;
+        } else {
+            sliderStart.style.zIndex = 20;
+            sliderEnd.style.zIndex = 21;
+        }
+
+        // Sync hidden inputs
+        inputStart.value = startVal.toFixed(1);
+        inputEnd.value = endVal.toFixed(1);
+
+        // Update Duration Display
+        selectionDuration.textContent = (endVal - startVal).toFixed(1) + 's';
+    }
+
+    video.addEventListener('loadedmetadata', () => {
+        videoDuration = video.duration;
+        durationDisplay.textContent = formatTime(videoDuration);
+        
+        sliderStart.max = videoDuration;
+        sliderEnd.max = videoDuration;
+        
+        // Auto select entire video by default for audio extraction
+        sliderStart.value = 0;
+        sliderEnd.value = videoDuration;
+        
+        updateSliderUI();
+    });
+
+    video.addEventListener('timeupdate', () => {
+        const time = video.currentTime;
+        currentTimeDisplay.textContent = formatTime(time);
+        
+        const max = videoDuration || 100;
+        const percent = (time / max) * 100;
+        playhead.style.left = `${percent}%`;
+
+        const endVal = parseFloat(sliderEnd.value);
+        const startVal = parseFloat(sliderStart.value);
+
+        // Auto-loop within selected region
+        if (time >= endVal && !video.paused) {
+            video.currentTime = startVal;
+            video.play();
+        } else if (time < startVal && !video.paused) {
+            video.currentTime = startVal;
+        }
+    });
+
+    // Slider Event Listeners
+    sliderStart.addEventListener('input', (e) => {
+        const startVal = parseFloat(e.target.value);
+        const endVal = parseFloat(sliderEnd.value);
+        
+        if (startVal >= endVal) {
+            sliderStart.value = endVal - 0.1;
+        }
+        updateSliderUI();
+        video.currentTime = sliderStart.value;
+    });
+
+    sliderEnd.addEventListener('input', (e) => {
+        const endVal = parseFloat(e.target.value);
+        const startVal = parseFloat(sliderStart.value);
+        
+        if (endVal <= startVal) {
+            sliderEnd.value = startVal + 0.1;
+        }
+        updateSliderUI();
+        video.currentTime = sliderEnd.value;
+    });
+
+    // Button Event Listeners
+    btnSetStart.addEventListener('click', () => {
+        const time = video.currentTime;
+        const endVal = parseFloat(sliderEnd.value);
+        
+        if (time >= endVal) {
+            sliderEnd.value = Math.min(time + 1, videoDuration);
+        }
+        sliderStart.value = time.toFixed(1);
+        updateSliderUI();
+    });
+
+    btnSetEnd.addEventListener('click', () => {
+        const time = video.currentTime;
+        const startVal = parseFloat(sliderStart.value);
+        
+        if (time <= startVal) {
+            sliderStart.value = Math.max(time - 1, 0);
+        }
+        sliderEnd.value = time.toFixed(1);
+        updateSliderUI();
+    });
+{% endblock %}

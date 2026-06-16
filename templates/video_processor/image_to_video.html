@@ -1,0 +1,466 @@
+﻿{% extends 'converter/base.html' %}
+{% load static %}
+
+{% block extra_head %}
+<script src="https://cdnjs.cloudflare.com/ajax/libs/wavesurfer.js/7.7.0/wavesurfer.min.js"></script>
+<script src="https://unpkg.com/wavesurfer.js@7.7.0/dist/plugin/wavesurfer.regions.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+<style>
+.editor-dark{background:#090b10;color:#e2e8f0;}
+.editor-panel{background:#111318;border-color:#1e2433;}
+.editor-border{border-color:#1e2433;}
+.editor-btn{background:#1a1f2e;border:1px solid #2a3344;color:#8fa3c0;transition:all .15s;cursor:pointer;}
+.editor-btn:hover{background:#2a3344;color:#e2e8f0;}
+.editor-btn.active{background:#4f46e5;border-color:#4f46e5;color:#fff;}
+.editor-btn-primary{background:linear-gradient(135deg,#4f46e5,#7c3aed);border:none;color:#fff;transition:all .2s;}
+.editor-btn-primary:hover{background:linear-gradient(135deg,#4338ca,#6d28d9);transform:translateY(-1px);box-shadow:0 4px 20px rgba(79,70,229,.4);}
+.editor-input{background:#0d1017;border:1px solid #1e2433;color:#e2e8f0;}
+.editor-input:focus{border-color:#4f46e5;outline:none;box-shadow:0 0 0 2px rgba(79,70,229,.2);}
+.editor-select{background:#0d1017;border:1px solid #1e2433;color:#e2e8f0;}
+.editor-select:focus{border-color:#4f46e5;outline:none;}
+.track-bg{background:#0d0f15;}
+.clip-block{background:linear-gradient(180deg,#1e3a5f,#1a3356);border:1px solid #3b82f6;border-radius:4px;cursor:grab;position:absolute;height:100%;overflow:hidden;transition:box-shadow .1s;}
+.clip-block:hover{box-shadow:0 0 0 2px rgba(99,102,241,.5);}
+.clip-block.selected{border-color:#818cf8;box-shadow:0 0 0 2px rgba(129,140,248,.5);}
+.clip-block:active{cursor:grabbing;}
+.clip-block img{width:100%;height:100%;object-fit:cover;opacity:.55;}
+.clip-label{position:absolute;bottom:2px;left:4px;font-size:10px;color:#fff;white-space:nowrap;text-shadow:0 1px 3px rgba(0,0,0,.9);pointer-events:none;}
+.resize-handle{position:absolute;top:0;bottom:0;width:8px;cursor:col-resize;z-index:2;background:rgba(99,102,241,.4);}
+.resize-handle:hover{background:rgba(99,102,241,.9);}
+.resize-handle-left{left:0;border-radius:4px 0 0 4px;}
+.resize-handle-right{right:0;border-radius:0 4px 4px 0;}
+.playhead{position:absolute;top:0;bottom:0;width:2px;background:#f43f5e;z-index:10;pointer-events:none;}
+.playhead::before{content:'';position:absolute;top:-6px;left:-5px;width:12px;height:12px;background:#f43f5e;border-radius:50%;}
+.trim-handle{position:absolute;top:0;bottom:0;width:10px;background:#f59e0b;cursor:ew-resize;z-index:5;border-radius:2px;}
+.trim-region{position:absolute;top:0;bottom:0;background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.3);pointer-events:none;}
+.drop-zone{border:2px dashed #2a3344;transition:all .2s;border-radius:10px;}
+.drop-zone.dragover{border-color:#4f46e5;background:rgba(79,70,229,.08);}
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:#090b10;}
+::-webkit-scrollbar-thumb{background:#2a3344;border-radius:3px;}
+input[type="range"]{-webkit-appearance:none;appearance:none;height:4px;background:#1e2433;border-radius:2px;outline:none;}
+input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;background:#6366f1;border-radius:50%;cursor:pointer;border:2px solid #0d1017;}
+input[type="range"]::-moz-range-thumb{width:14px;height:14px;background:#6366f1;border-radius:50%;cursor:pointer;border:2px solid #0d1017;}
+.filter-btn{background:#1a1f2e;border:1px solid #2a3344;color:#8fa3c0;font-size:10px;padding:3px 7px;border-radius:5px;cursor:pointer;transition:all .15s;}
+.filter-btn:hover,.filter-btn.active{background:#4f46e5;border-color:#4f46e5;color:#fff;}
+.tool-btn{width:30px;height:30px;display:flex;align-items:center;justify-content:center;background:#1a1f2e;border:1px solid #2a3344;border-radius:7px;cursor:pointer;color:#8fa3c0;transition:all .15s;}
+.tool-btn:hover,.tool-btn.active{background:#4f46e5;border-color:#4f46e5;color:#fff;}
+#preview-canvas{max-width:100%;max-height:100%;object-fit:contain;}
+.loader{border:3px solid #1e2433;border-top:3px solid #4f46e5;border-radius:50%;width:42px;height:42px;animation:spin 1s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.panel-tab{padding:5px 10px;font-size:10px;font-weight:600;color:#4b5563;cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;white-space:nowrap;}
+.panel-tab.active{color:#818cf8;border-bottom-color:#4f46e5;}
+.img-list-item{background:#111318;border:1px solid #1e2433;border-radius:7px;transition:all .15s;}
+.img-list-item:hover{border-color:#2a3344;}
+.img-list-item.selected-item{border-color:#4f46e5;background:rgba(79,70,229,.07);}
+.undo-redo-btn:disabled{opacity:.3;cursor:not-allowed;}
+.section-label{font-size:9px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#4b5563;}
+@media(max-width:1024px){
+  #left-panel{width:48px;}
+  #left-panel .panel-tab span{display:none;}
+  #left-panel #tab-images>div:first-child{display:none;}
+  #left-panel #tab-audio>div:first-child{display:none;}
+  #left-panel #image-list{display:none;}
+  #left-panel #img-count,#left-panel #total-duration{display:none;}
+  #right-panel{width:56px;}
+  #right-panel .panel-tab span{display:none;}
+  #rtab-settings>div:not(#btn-generate-main){display:none;}
+  #rtab-edit{display:none;}
+}
+@media(max-width:768px){
+  #left-panel{position:fixed;left:0;top:70px;bottom:0;z-index:30;background:#0d0f15;border-right:1px solid #1e2433;}
+  #right-panel{position:fixed;right:0;top:70px;bottom:0;z-index:30;background:#0d0f15;border-left:1px solid #1e2433;}
+  #left-panel .panel-tab{writing-mode:vertical-rl;text-orientation:mixed;padding:10px 5px;}
+  #right-panel .panel-tab{writing-mode:vertical-rl;text-orientation:mixed;padding:10px 5px;}
+  #rtab-settings>div:not(#btn-generate-main){display:none;}
+  #rtab-edit{display:none;}
+  #time-display{display:none!important;}
+  #edit-overlay-tools{display:none!important;}
+}
+@media(max-width:640px){
+  #left-panel{display:none;}
+  #right-panel{display:none;}
+  #btn-undo,#btn-redo,#btn-skip-start,#btn-fullscreen{display:none;}
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="editor-dark min-h-[calc(100vh-70px)] mt-[70px] flex flex-col" id="app">
+
+<!-- TOP HEADER -->
+<header class="h-12 border-b editor-border flex items-center px-3 justify-between flex-shrink-0 z-20" style="background:#0d0f15;">
+  <div class="flex items-center gap-2">
+    <div class="w-7 h-7 rounded-lg bg-indigo-600 flex items-center justify-center flex-shrink-0">
+      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" class="text-white"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+    </div>
+    <span class="font-bold text-sm text-gray-100 hidden sm:block">Image  Video Studio</span>
+  </div>
+  <div class="flex items-center gap-2">
+    <button id="btn-undo" class="undo-redo-btn editor-btn p-1.5 rounded-lg" title="Undo (Ctrl+Z)" disabled>
+      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
+    </button>
+    <button id="btn-redo" class="undo-redo-btn editor-btn p-1.5 rounded-lg" title="Redo (Ctrl+Y)" disabled>
+      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3L21 13"/></svg>
+    </button>
+    <div class="w-px h-5 bg-gray-800 mx-1"></div>
+    <button id="btn-skip-start" class="editor-btn p-1.5 rounded-lg" title="Go to start">
+      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 24 24"><path d="M6 6h2v12H6zm3.5 6 8.5 6V6z"/></svg>
+    </button>
+    <button id="btn-play" class="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold" style="background:linear-gradient(135deg,#4f46e5,#7c3aed);color:#fff;">
+      <svg id="icon-play" xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 24 24"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+      <svg id="icon-pause" class="hidden" xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="currentColor" viewBox="0 0 24 24"><rect x="6" y="4" width="4" height="16"/><rect x="14" y="4" width="4" height="16"/></svg>
+      <span id="play-label">Preview</span>
+    </button>
+    <span id="time-display" class="text-xs font-mono text-gray-400 tabular-nums px-2 hidden sm:block">00:00.0 / 00:00.0</span>
+  </div>
+  <div class="flex items-center gap-2">
+    <button id="btn-fullscreen" class="editor-btn p-1.5 rounded-lg" title="Fullscreen">
+      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M21 8V5a2 2 0 0 0-2-2h-3"/><path d="M3 16v3a2 2 0 0 0 2 2h3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+    </button>
+    <button id="btn-generate" class="editor-btn-primary flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold">
+      <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+      Export
+    </button>
+  </div>
+</header>
+
+<!-- MAIN WORKSPACE -->
+<div class="flex-1 flex overflow-hidden min-h-0">
+
+<!-- LEFT PANEL: Assets -->
+<aside id="left-panel" class="w-52 border-r editor-border flex flex-col flex-shrink-0" style="background:#0d0f15;">
+  <div class="flex border-b editor-border px-1 pt-1 gap-1 flex-shrink-0">
+    <button class="panel-tab active" data-tab="images">Images</button>
+    <button class="panel-tab" data-tab="audio">Audio</button>
+  </div>
+
+  <!-- Images Tab -->
+  <div id="tab-images" class="flex flex-col flex-1 overflow-hidden">
+    <div class="p-2 border-b editor-border flex-shrink-0">
+      <div id="img-drop-zone" class="drop-zone p-3 text-center cursor-pointer">
+        <input type="file" id="img-input" multiple accept=".jpg,.jpeg,.png,.webp,.bmp,.gif,.tiff" class="hidden">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" class="mx-auto text-gray-600 mb-1"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
+        <p class="text-[10px] text-gray-500">Drop images or <span class="text-indigo-400">click</span></p>
+        <p class="text-[9px] text-gray-600 mt-0.5">JPG  PNG  WEBP  GIF</p>
+      </div>
+    </div>
+    <div class="flex-1 overflow-y-auto p-2">
+      <div id="image-list" class="space-y-1.5"></div>
+    </div>
+    <div class="p-2 border-t editor-border text-[9px] text-gray-600 flex justify-between flex-shrink-0">
+      <span id="img-count">0 images</span>
+      <span id="total-duration">0s total</span>
+    </div>
+  </div>
+
+  <!-- Audio Tab -->
+  <div id="tab-audio" class="hidden flex-col flex-1 overflow-hidden">
+    <div class="p-2 border-b editor-border flex-shrink-0">
+      <div id="audio-drop-zone" class="drop-zone p-3 text-center cursor-pointer">
+        <input type="file" id="audio-input" accept=".mp3,.wav,.aac,.ogg,.m4a,.flac" class="hidden">
+        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5" class="mx-auto text-gray-600 mb-1"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+        <p class="text-[10px] text-gray-500">Drop audio or <span class="text-indigo-400">click</span></p>
+        <p class="text-[9px] text-gray-600 mt-0.5">MP3  WAV  AAC  OGG</p>
+      </div>
+      <div id="audio-info" class="hidden mt-2 flex items-center gap-2 p-2 rounded-lg" style="background:#1a1f2e;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" class="text-indigo-400 flex-shrink-0"><path d="M9 18V5l12-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="18" cy="16" r="3"/></svg>
+        <span id="audio-filename" class="text-[10px] text-gray-300 truncate flex-1">audio.mp3</span>
+        <button id="remove-audio" class="text-gray-500 hover:text-red-400 p-0.5">
+          <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="p-2 flex-1 overflow-y-auto">
+      <div id="audio-settings-panel" class="hidden space-y-3">
+        <div>
+          <div class="flex justify-between mb-1"><span class="section-label">Volume</span><span id="volume-value" class="text-[10px] text-indigo-400">100%</span></div>
+          <input id="setting-volume" type="range" min="0" max="200" value="100" class="w-full">
+        </div>
+        <div class="grid grid-cols-2 gap-2">
+          <div>
+            <p class="section-label mb-1">Fade In (s)</p>
+            <input id="setting-fade-in" type="number" min="0" max="10" step="0.5" value="0" class="editor-input w-full rounded-md px-2 py-1 text-xs">
+          </div>
+          <div>
+            <p class="section-label mb-1">Fade Out (s)</p>
+            <input id="setting-fade-out" type="number" min="0" max="10" step="0.5" value="0" class="editor-input w-full rounded-md px-2 py-1 text-xs">
+          </div>
+        </div>
+        <div>
+          <p class="section-label mb-1">If Duration Differs</p>
+          <select id="setting-audio-behavior" class="editor-select w-full rounded-md px-2 py-1.5 text-xs">
+            <option value="trim">Trim video to match audio</option>
+            <option value="loop">Loop audio to match video</option>
+            <option value="silence">Add silence after audio</option>
+          </select>
+        </div>
+        <label class="flex items-center gap-2 cursor-pointer">
+          <input id="setting-sync-duration" type="checkbox" checked class="w-3.5 h-3.5 accent-indigo-500">
+          <span class="text-[10px] text-gray-400">Auto-sync duration</span>
+        </label>
+        <button id="btn-preview-trim" class="editor-btn w-full py-1.5 rounded-lg text-xs font-medium flex items-center justify-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" fill="none" stroke="currentColor" stroke-width="2"><polygon points="5 3 19 12 5 21 5 3"/></svg>
+          Preview Trimmed Audio
+        </button>
+      </div>
+    </div>
+  </div>
+</aside>
+
+<!-- CENTER: Preview + Timeline -->
+<main class="flex-1 flex flex-col min-w-0 overflow-hidden">
+
+  <!-- Preview Area -->
+  <div class="flex-1 bg-black flex items-center justify-center relative overflow-hidden" id="preview-container" style="background:repeating-conic-gradient(#0f1117 0% 25%,#0a0c10 0% 50%) 0 0/20px 20px;">
+    <canvas id="preview-canvas" class="shadow-2xl"></canvas>
+    <div id="preview-placeholder" class="absolute inset-0 flex flex-col items-center justify-center text-gray-600 pointer-events-none">
+      <svg xmlns="http://www.w3.org/2000/svg" width="56" height="56" fill="none" stroke="currentColor" stroke-width="1" class="mb-3 opacity-20"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+      <p class="text-sm opacity-30 font-medium">Upload images to start</p>
+      <p class="text-xs opacity-20 mt-1">Drag & drop onto the left panel</p>
+    </div>
+    <!-- Image edit overlay tools (shown when image selected) -->
+    <div id="edit-overlay-tools" class="absolute top-3 left-1/2 -translate-x-1/2 hidden items-center gap-1.5 px-3 py-1.5 rounded-xl" style="background:rgba(13,15,21,.85);backdrop-filter:blur(12px);border:1px solid #1e2433;">
+      <span class="text-[10px] text-gray-400 mr-1" id="editing-label">Editing:</span>
+      <button class="tool-btn" id="btn-edit-crop" title="Crop"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M6.13 1L6 16a2 2 0 0 0 2 2h15"/><path d="M1 6.13L16 6a2 2 0 0 1 2 2v15"/></svg></button>
+      <button class="tool-btn" id="btn-edit-rotate-l" title="Rotate Left"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg></button>
+      <button class="tool-btn" id="btn-edit-rotate-r" title="Rotate Right"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3L21 13"/></svg></button>
+      <button class="tool-btn" id="btn-edit-flip-h" title="Flip H"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="3" x2="12" y2="21"/><path d="m4 8-4 4 4 4"/><path d="m20 8 4 4-4 4"/></svg></button>
+      <div class="w-px h-4 bg-gray-700 mx-1"></div>
+      <span class="text-[9px] text-gray-500">Zoom</span>
+      <input id="edit-zoom" type="range" min="50" max="200" value="100" class="w-16">
+      <span id="edit-zoom-val" class="text-[9px] text-indigo-400 w-7">100%</span>
+      <div class="w-px h-4 bg-gray-700 mx-1"></div>
+      <button class="tool-btn" id="btn-edit-done" title="Done" style="background:#4f46e5;border-color:#4f46e5;color:#fff;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Timeline -->
+  <div class="border-t editor-border flex flex-col flex-shrink-0" style="height:230px;background:#0b0d12;">
+    <!-- Timeline toolbar -->
+    <div class="h-8 border-b editor-border flex items-center px-2 gap-1.5 flex-shrink-0">
+      <button id="btn-zoom-out" class="editor-btn p-1 rounded" title="Zoom Out">
+        <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" x2="16.65" y1="21" y2="16.65"/><line x1="8" x2="14" y1="11" y2="11"/></svg>
+      </button>
+      <button id="btn-zoom-in" class="editor-btn p-1 rounded" title="Zoom In">
+        <svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" x2="16.65" y1="21" y2="16.65"/><line x1="11" x2="11" y1="8" y2="14"/><line x1="8" x2="14" y1="11" y2="11"/></svg>
+      </button>
+      <span id="zoom-level" class="text-[10px] text-gray-500 font-mono w-9 text-center">50px/s</span>
+      <div class="w-px h-4 bg-gray-800 mx-1"></div>
+      <button id="btn-fit" class="editor-btn px-2 py-0.5 rounded text-[10px] font-medium">Fit</button>
+      <div class="flex-1"></div>
+      <span class="text-[9px] text-gray-600 hidden sm:block">Click timeline to seek  Drag clips to reorder  Drag edges to resize</span>
+    </div>
+    <!-- Scrollable area -->
+    <div class="flex-1 overflow-x-auto overflow-y-hidden relative" id="timeline-scroll">
+      <!-- Ruler -->
+      <div id="timeline-ruler" class="h-6 border-b editor-border relative flex-shrink-0 select-none" style="min-width:100%;">
+        <div id="ruler-labels" class="absolute inset-0 flex items-end pb-1 text-[9px] text-gray-500 font-mono pointer-events-none"></div>
+        <div id="playhead-ruler" class="playhead" style="left:96px;"></div>
+      </div>
+      <!-- Audio track -->
+      <div id="audio-track" class="h-16 border-b editor-border relative flex-shrink-0" style="min-width:100%;">
+        <div class="absolute left-0 top-0 bottom-0 w-24 border-r editor-border flex items-center px-2 bg-[#0b0d12] z-10">
+          <span class="text-[9px] font-bold text-gray-500 uppercase tracking-wide">Audio</span>
+        </div>
+        <div id="waveform-container" class="absolute left-24 right-0 top-0 bottom-0 overflow-hidden"></div>
+        <div id="audio-trim-overlay" class="absolute left-24 right-0 top-0 bottom-0 pointer-events-none hidden">
+          <div id="trim-region" class="trim-region">
+            <span id="trim-duration-label" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[9px] font-bold text-indigo-300 bg-indigo-900/60 px-1.5 py-0.5 rounded pointer-events-none">00:00</span>
+          </div>
+          <div id="trim-start-handle" class="trim-handle" style="left:0;pointer-events:all;"></div>
+          <div id="trim-end-handle" class="trim-handle" style="right:0;pointer-events:all;"></div>
+        </div>
+        <div id="playhead-audio" class="playhead" style="left:96px;"></div>
+      </div>
+      <!-- Image track -->
+      <div id="image-track" class="h-24 border-b editor-border relative flex-shrink-0" style="min-width:100%;">
+        <div class="absolute left-0 top-0 bottom-0 w-24 border-r editor-border flex items-center px-2 bg-[#0b0d12] z-10">
+          <span class="text-[9px] font-bold text-gray-500 uppercase tracking-wide">Images</span>
+        </div>
+        <div id="image-clips-container" class="absolute left-24 right-0 top-0 bottom-0 track-bg relative"></div>
+        <div id="playhead-images" class="playhead" style="left:96px;"></div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- RIGHT PANEL: Settings & Image Editor -->
+<aside id="right-panel" class="w-64 border-l editor-border flex flex-col flex-shrink-0 overflow-y-auto" style="background:#0d0f15;">
+
+  <!-- Tabs -->
+  <div class="flex border-b editor-border px-1 pt-1 gap-1 flex-shrink-0">
+    <button class="panel-tab active" data-rtab="settings">Settings</button>
+    <button class="panel-tab" data-rtab="edit">Edit Image</button>
+  </div>
+
+  <!-- Settings Tab -->
+  <div id="rtab-settings" class="p-3 space-y-4">
+    <div>
+      <p class="section-label mb-2">Video Settings</p>
+      <div class="space-y-2">
+        <div>
+          <label class="text-[10px] text-gray-400 mb-1 block">Output Format</label>
+          <select id="setting-format" class="editor-select w-full rounded-lg px-2 py-1.5 text-xs">
+            <option value="mp4" selected>MP4 (H.264)</option>
+            <option value="webm">WebM (VP9)</option>
+            <option value="gif">Animated GIF</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-[10px] text-gray-400 mb-1 block">Resolution</label>
+          <select id="setting-resolution" class="editor-select w-full rounded-lg px-2 py-1.5 text-xs">
+            <option value="1080p" selected>19201080 (1080p)</option>
+            <option value="720p">1280720 (720p)</option>
+            <option value="480p">854480 (480p)</option>
+            <option value="360p">640360 (360p)</option>
+            <option value="2k">25601440 (2K)</option>
+            <option value="4k">38402160 (4K)</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-[10px] text-gray-400 mb-1 block">Aspect Ratio</label>
+          <select id="setting-aspect" class="editor-select w-full rounded-lg px-2 py-1.5 text-xs">
+            <option value="16:9" selected>16:9 (Landscape)</option>
+            <option value="9:16">9:16 (Portrait / Reels)</option>
+            <option value="1:1">1:1 (Square)</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-[10px] text-gray-400 mb-1 block">FPS</label>
+          <select id="setting-fps" class="editor-select w-full rounded-lg px-2 py-1.5 text-xs">
+            <option value="15">15 fps</option>
+            <option value="24">24 fps</option>
+            <option value="30" selected>30 fps</option>
+            <option value="60">60 fps</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-[10px] text-gray-400 mb-1 block">Transition</label>
+          <select id="setting-transition" class="editor-select w-full rounded-lg px-2 py-1.5 text-xs">
+            <option value="none">None</option>
+            <option value="fade" selected>Fade / Crossfade</option>
+            <option value="slideleft">Slide Left</option>
+            <option value="slideright">Slide Right</option>
+            <option value="slideup">Slide Up</option>
+            <option value="slidedown">Slide Down</option>
+            <option value="wipeleft">Wipe Left</option>
+            <option value="wiperight">Wipe Right</option>
+            <option value="zoom">Zoom (Ken Burns)</option>
+          </select>
+        </div>
+        <div>
+          <label class="text-[10px] text-gray-400 mb-1 block">Default Duration (sec)</label>
+          <input id="setting-duration" type="number" min="0.5" max="60" step="0.5" value="3" class="editor-input w-full rounded-lg px-2 py-1.5 text-xs">
+        </div>
+      </div>
+    </div>
+    <div class="border-t editor-border pt-3">
+      <button id="btn-generate-main" class="editor-btn-primary w-full py-2.5 rounded-xl text-xs font-bold flex items-center justify-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+        Generate Video
+      </button>
+      <p class="text-[9px] text-gray-600 text-center mt-2">Processed locally  auto-deleted after export</p>
+    </div>
+  </div>
+
+  <!-- Image Edit Tab -->
+  <div id="rtab-edit" class="hidden p-3 space-y-3">
+    <div id="no-img-selected" class="text-center py-8 text-gray-600">
+      <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1" class="mx-auto mb-2 opacity-30"><rect width="18" height="18" x="3" y="3" rx="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg>
+      <p class="text-xs opacity-50">Select an image to edit</p>
+    </div>
+    <div id="img-edit-controls" class="hidden space-y-3">
+      <p class="section-label">Transform</p>
+      <div class="flex gap-1.5 flex-wrap">
+        <button class="tool-btn" id="edit-rot-l" title="Rotate -90"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg></button>
+        <button class="tool-btn" id="edit-rot-r" title="Rotate +90"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3L21 13"/></svg></button>
+        <button class="tool-btn" id="edit-flip-h" title="Flip H"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="3" x2="12" y2="21"/><path d="m4 8-4 4 4 4"/><path d="m20 8 4 4-4 4"/></svg></button>
+        <button class="tool-btn" id="edit-flip-v" title="Flip V"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><path d="m8 4 4-4 4 4"/><path d="m8 20 4 4 4-4"/></svg></button>
+        <button class="tool-btn" id="edit-reset" title="Reset all"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 2v6h6"/><path d="M3 13a9 9 0 1 0 3-7.7L3 8"/></svg></button>
+      </div>
+
+      <div>
+        <div class="flex justify-between mb-1"><p class="section-label">Zoom</p><span id="val-zoom" class="text-[10px] text-indigo-400">100%</span></div>
+        <input id="ctrl-zoom" type="range" min="50" max="300" value="100" class="w-full">
+      </div>
+      <div>
+        <div class="flex justify-between mb-1"><p class="section-label">Brightness</p><span id="val-brightness" class="text-[10px] text-indigo-400">0</span></div>
+        <input id="ctrl-brightness" type="range" min="-100" max="100" value="0" class="w-full">
+      </div>
+      <div>
+        <div class="flex justify-between mb-1"><p class="section-label">Contrast</p><span id="val-contrast" class="text-[10px] text-indigo-400">0</span></div>
+        <input id="ctrl-contrast" type="range" min="-100" max="100" value="0" class="w-full">
+      </div>
+      <div>
+        <div class="flex justify-between mb-1"><p class="section-label">Saturation</p><span id="val-saturation" class="text-[10px] text-indigo-400">0</span></div>
+        <input id="ctrl-saturation" type="range" min="-100" max="100" value="0" class="w-full">
+      </div>
+      <div>
+        <div class="flex justify-between mb-1"><p class="section-label">Blur</p><span id="val-blur" class="text-[10px] text-indigo-400">0px</span></div>
+        <input id="ctrl-blur" type="range" min="0" max="20" value="0" class="w-full">
+      </div>
+      <div>
+        <div class="flex justify-between mb-1"><p class="section-label">Opacity</p><span id="val-opacity" class="text-[10px] text-indigo-400">100%</span></div>
+        <input id="ctrl-opacity" type="range" min="0" max="100" value="100" class="w-full">
+      </div>
+
+      <p class="section-label mt-2">Filters</p>
+      <div class="flex flex-wrap gap-1">
+        <button class="filter-btn active" data-filter="none">None</button>
+        <button class="filter-btn" data-filter="grayscale">B&amp;W</button>
+        <button class="filter-btn" data-filter="sepia">Sepia</button>
+        <button class="filter-btn" data-filter="invert">Invert</button>
+        <button class="filter-btn" data-filter="warm">Warm</button>
+        <button class="filter-btn" data-filter="cool">Cool</button>
+        <button class="filter-btn" data-filter="vivid">Vivid</button>
+        <button class="filter-btn" data-filter="fade">Fade</button>
+      </div>
+
+      <button id="btn-apply-edits" class="editor-btn-primary w-full py-2 rounded-lg text-xs font-bold mt-2">Apply to Preview</button>
+    </div>
+  </div>
+</aside>
+
+</div><!-- end workspace -->
+</div><!-- end app -->
+
+<!-- PROCESSING MODAL -->
+<div id="processing-modal" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center" style="backdrop-filter:blur(12px);">
+  <div class="rounded-2xl p-8 max-w-sm w-full text-center shadow-2xl" style="background:rgba(17,19,24,.95);border:1px solid #1e2433;">
+    <div class="loader mx-auto mb-5"></div>
+    <h3 class="text-base font-bold text-white mb-1">Rendering Video</h3>
+    <p class="text-xs text-gray-400 mb-4" id="render-status-text">FFmpeg is generating your video. Please wait.</p>
+    <div class="h-1.5 rounded-full overflow-hidden mb-1" style="background:#1e2433;">
+      <div id="render-progress" class="h-full rounded-full transition-all" style="width:0%;background:linear-gradient(90deg,#4f46e5,#7c3aed);"></div>
+    </div>
+    <p class="text-[10px] text-gray-600 mt-2">Do not close this window</p>
+  </div>
+</div>
+
+<!-- SUCCESS MODAL -->
+<div id="success-modal" class="fixed inset-0 bg-black/80 z-50 hidden flex items-center justify-center" style="backdrop-filter:blur(12px);">
+  <div class="rounded-2xl p-8 max-w-sm w-full text-center shadow-2xl" style="background:rgba(17,19,24,.95);border:1px solid #1e2433;">
+    <div class="w-14 h-14 rounded-full flex items-center justify-center mx-auto mb-4" style="background:rgba(16,185,129,.1);">
+      <svg xmlns="http://www.w3.org/2000/svg" width="28" height="28" fill="none" stroke="#10b981" stroke-width="2.5"><polyline points="20 6 9 17 4 12"/></svg>
+    </div>
+    <h3 class="text-base font-bold text-white mb-1">Video Ready!</h3>
+    <p class="text-xs text-gray-400 mb-5">Your video has been generated successfully.</p>
+    <div class="flex flex-col gap-2">
+      <a id="download-link" href="#" download class="editor-btn-primary py-2.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+        Download Video
+      </a>
+      <button id="btn-new-project" class="editor-btn py-2.5 rounded-xl text-xs font-bold">New Project</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 px-4 py-2.5 rounded-xl text-xs font-semibold z-[9999] hidden shadow-xl" style="backdrop-filter:blur(8px);pointer-events:none;"></div>
+
+<script src="{% static 'js/image-to-video-editor.js' %}"></script>
+{% endblock %}
+        

@@ -1,0 +1,61 @@
+{% extends 'video_processor/base_video.html' %}
+
+{% block api_url %}{% url "video_processor:subtitle_api" %}{% endblock %}
+{% block accepted_files %}.mp4,.mov,.avi,.mkv,.webm,.m4v{% endblock %}
+{% block upload_title %}Upload a video + subtitle file{% endblock %}
+{% block upload_subtitle %}Video: MP4/MOV/AVI/MKV/WEBM | Subtitle: SRT/VTT/ASS{% endblock %}
+{% block process_icon %}subtitles{% endblock %}
+{% block process_text %}Burn Subtitles{% endblock %}
+
+{% block extra_tool_head %}
+<style>
+    .subtitle-upload { margin-top: 1rem; }
+</style>
+{% endblock %}
+
+{% block tool_options %}
+<div class="space-y-4">
+    <div class="space-y-2 subtitle-upload">
+        <label class="text-[11px] font-black text-surface-400 uppercase tracking-widest">Subtitle File</label>
+        <input type="file" name="subtitle" accept=".srt,.vtt,.ass,.ssa" class="w-full bg-white border border-surface-200 rounded-xl px-4 py-3 text-sm font-bold text-surface-700 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-brand-50 file:text-brand-600 hover:file:bg-brand-100 transition-all">
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="space-y-2">
+            <label class="text-[11px] font-black text-surface-400 uppercase tracking-widest">Font Size</label>
+            <input type="number" name="font_size" value="24" min="8" max="72" class="w-full bg-white border border-surface-200 rounded-xl px-4 py-3 text-sm font-bold text-surface-700 focus:border-brand-500 outline-none transition-all">
+        </div>
+        <div class="space-y-2">
+            <label class="text-[11px] font-black text-surface-400 uppercase tracking-widest">Color</label>
+            <input type="color" name="color" value="#ffffff" class="w-full h-[46px] bg-white border border-surface-200 rounded-xl px-2 py-1 cursor-pointer">
+        </div>
+        <div class="space-y-2">
+            <label class="text-[11px] font-black text-surface-400 uppercase tracking-widest">Outline</label>
+            <input type="number" name="outline" value="1" min="0" max="4" class="w-full bg-white border border-surface-200 rounded-xl px-4 py-3 text-sm font-bold text-surface-700 focus:border-brand-500 outline-none transition-all">
+        </div>
+    </div>
+    <div class="space-y-2">
+        <label class="flex items-center gap-2 cursor-pointer">
+            <input type="checkbox" name="bold" value="1" class="w-4 h-4 text-brand-600 rounded border-surface-300 focus:ring-brand-500">
+            <span class="text-sm font-bold text-surface-700">Bold text</span>
+        </label>
+    </div>
+</div>
+{% endblock %}
+
+{% block build_form_data %}
+const subInput = document.querySelector('[name="subtitle"]');
+if (subInput.files.length) {
+    formData.append('subtitle', subInput.files[0]);
+} else {
+    alert('Please upload a subtitle file.');
+    throw new Error('No subtitle file');
+}
+formData.append('font_size', document.querySelector('[name="font_size"]').value);
+formData.append('color', document.querySelector('[name="color"]').value);
+formData.append('outline', document.querySelector('[name="outline"]').value);
+formData.append('bold', document.querySelector('[name="bold"]').checked ? '1' : '0');
+{% endblock %}
+
+{% block on_success %}
+downloadLink.download = 'subtitled.mp4';
+{% endblock %}

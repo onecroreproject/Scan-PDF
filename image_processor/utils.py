@@ -55,15 +55,8 @@ def get_output_path(original_name, new_extension, suffix=''):
     return os.path.join(output_dir, output_name)
 
 def format_download_name(name):
-    """Clean filename for download."""
-    stem = Path(name).stem
-    ext = Path(name).suffix
-    stem = re.sub(r'_[0-9a-fA-F]{4,32}$', '', stem)
-    if not stem.lower().startswith('imageeditor'):
-        stem = f"ImageEditor_{stem}"
-    stem = re.sub(r'[^\w\.\-]', '_', stem)
-    stem = re.sub(r'_{2,}', '_', stem).strip('_')
-    return f"{stem}{ext}"
+    """Return the original filename unchanged."""
+    return os.path.basename(name)
 
 # ═══════════════════════════════════════════════════════════════
 # 1. IMAGE TOOLS
