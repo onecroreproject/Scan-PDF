@@ -1,0 +1,32 @@
+# ═══════════════════════════════════════════════════════════════
+# Celery Worker systemd service
+# Place in /etc/systemd/system/scanpdf-celery.service
+# ═══════════════════════════════════════════════════════════════
+
+[Unit]
+Description=ScanPDF Celery Worker
+After=network.target redis-server.service
+
+[Service]
+Type=forking
+User=www-data
+Group=www-data
+EnvironmentFile=/var/www/scanpdf/.env
+WorkingDirectory=/var/www/scanpdf
+Environment="PATH=/var/www/scanpdf/venv/bin"
+Environment="DJANGO_SETTINGS_MODULE=allinone.settings"
+ExecStart=/var/www/scanpdf/venv/bin/celery \
+    -A allinone \
+    worker \
+    --loglevel=info \
+    --concurrency=2 \
+    --prefetch-multiplier=1 \
+    --max-tasks-per-child=50 \
+    --hostname=scanpdf-worker@%h
+ExecStop=/var/www/scanpdf/venv/bin/celery -A allinone control shutdown
+KillSignal=SIGTERM
+Restart=on-failure
+RestartSec=10s
+
+[Install]
+WantedBy=multi-user.target

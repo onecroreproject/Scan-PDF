@@ -792,7 +792,7 @@ def convert_file(request, tool_slug):
                     pass
 
             return create_cleanup_response(output_path, content_type='application/pdf',
-                                           filename=f"{Path(files[0].name).stem}_merged.pdf")
+                                           filename=files[0].name)
         except Exception as e:
             return JsonResponse({'error': f'Merge failed: {str(e)}'}, status=500)
 
@@ -1170,7 +1170,8 @@ def convert_file(request, tool_slug):
             if html_content:
                 # Case 2: User is downloading the edited content as PDF
                 output_path = edit_pdf(None, "edited.pdf", html_content=html_content)
-                return create_cleanup_response(output_path, content_type='application/pdf', filename="edited_document.pdf")
+                original_name = request.POST.get('original_filename', 'edited_document.pdf')
+                return create_cleanup_response(output_path, content_type='application/pdf', filename=original_name)
             else:
                 # Case 1: Initial upload - convert PDF to editable HTML
                 uploaded_file = request.FILES['file']
@@ -1668,24 +1669,7 @@ def convert_file(request, tool_slug):
         if content_type is None:
             content_type = 'application/octet-stream'
 
-        # Generate a proper filename based on the tool
-        base = Path(uploaded_file.name).stem
-        ext = Path(output_path).suffix
-        slug_to_suffix = {
-            'word-to-pdf': '_converted.pdf',
-            'pptx-to-pdf': '_converted.pdf',
-            'excel-to-pdf': '_converted.pdf',
-            'pdf-to-image': ext,
-            'pdf-to-word': '_converted.docx',
-            'pdf-to-pptx': '_converted.pptx',
-            'pdf-to-excel': '_converted.xlsx',
-            'compress-pdf': '_compressed.pdf',
-            'pdf-to-pdfa': '_pdfa.pdf',
-        }
-        suffix = slug_to_suffix.get(tool_slug, f'_output{ext}')
-        download_name = f"{base}{suffix}"
-
-        return create_cleanup_response(output_path, content_type=content_type, filename=download_name)
+        return create_cleanup_response(output_path, content_type=content_type, filename=uploaded_file.name)
 
     except Exception as e:
         return JsonResponse({

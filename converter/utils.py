@@ -39,35 +39,10 @@ def save_uploaded_file(uploaded_file):
 
 def format_download_name(name):
     """
-    Format the filename for download:
-    1. Prepend 'ScanPDF_'
-    2. Remove internal unique suffixes (like _A1B2 or long hex strings)
-    3. Ensure underscores instead of spaces and special characters
+    Return the original filename unchanged.
+    Preserves the exact uploaded/stored filename with no modification.
     """
-    import re
-    # Extract filename and extension
-    stem = Path(name).stem
-    ext = Path(name).suffix
-
-    # 1. Remove internal unique suffixes (e.g. _A1B2 or _a1b2c3d4e5f6...)
-    # We match an underscore followed by 4 or more hex characters at the end of the stem
-    stem = re.sub(r'_[0-9a-fA-F]{4,32}$', '', stem)
-    
-    # 2. Add 'ScanPDF' prefix if not there
-    if not stem.lower().startswith('scanpdf'):
-        stem = f"ScanPDF_{stem}"
-    elif not stem.startswith('ScanPDF_'):
-        # Normalize the case
-        stem = re.sub(r'^scanpdf_?', 'ScanPDF_', stem, flags=re.IGNORECASE)
-
-    # 3. Replace spaces and all non-alphanumeric (except . - _) with underscores
-    stem = re.sub(r'[^\w\.\-]', '_', stem)
-    # Remove duplicate underscores
-    stem = re.sub(r'_{2,}', '_', stem)
-    # Final cleanup
-    stem = stem.strip('_')
-
-    return f"{stem}{ext}"
+    return os.path.basename(name)
 
 
 def get_output_path(original_name, new_extension, suffix=''):

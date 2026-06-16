@@ -125,8 +125,77 @@ EMAIL_HOST_PASSWORD = os.environ.get('EMAIL_HOST_PASSWORD', '').replace(' ', '')
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 
 # File upload settings
-FILE_UPLOAD_MAX_MEMORY_SIZE = 52428800  # 50 MB
-DATA_UPLOAD_MAX_MEMORY_SIZE = 52428800  # 50 MB
+FILE_UPLOAD_MAX_MEMORY_SIZE = 524288000  # 500 MB - store large uploads on disk
+DATA_UPLOAD_MAX_MEMORY_SIZE = 524288000  # 500 MB
+FILE_UPLOAD_TEMP_DIR = os.path.join(tempfile.gettempdir(), 'scanpdf_uploads')
+os.makedirs(FILE_UPLOAD_TEMP_DIR, exist_ok=True)
+
+# Request timeout for long video processing
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 10000
+
+# ═══════════════════════════════════════════════════════════════
+# CELERY CONFIGURATION
+# ═══════════════════════════════════════════════════════════════
+CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', 'redis://localhost:6379/0')
+CELERY_RESULT_BACKEND = os.environ.get('CELERY_RESULT_BACKEND', 'redis://localhost:6379/0')
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TASK_TRACK_STARTED = True
+CELERY_TASK_TIME_LIMIT = 3600  # 1 hour max per task
+CELERY_WORKER_PREFETCH_MULTIPLIER = 1  # For large file tasks, don't prefetch
+CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
+
+# ═══════════════════════════════════════════════════════════════
+# VIDEO PROCESSOR TEMP DIRECTORIES
+# ═══════════════════════════════════════════════════════════════
+VIDEO_TEMP_ROOT = os.path.join(tempfile.gettempdir(), 'scanpdf_video')
+VIDEO_UPLOADS_DIR = os.path.join(VIDEO_TEMP_ROOT, 'uploads')
+VIDEO_OUTPUTS_DIR = os.path.join(VIDEO_TEMP_ROOT, 'outputs')
+VIDEO_CHUNKS_DIR = os.path.join(VIDEO_TEMP_ROOT, 'chunks')
+os.makedirs(VIDEO_UPLOADS_DIR, exist_ok=True)
+os.makedirs(VIDEO_OUTPUTS_DIR, exist_ok=True)
+os.makedirs(VIDEO_CHUNKS_DIR, exist_ok=True)
+
+# Video cleanup age (seconds)
+VIDEO_TEMP_MAX_AGE = 600  # 10 minutes
+
+# ═══════════════════════════════════════════════════════════════
+# LOGGING
+# ═══════════════════════════════════════════════════════════════
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'verbose': {
+            'format': '{levelname} {asctime} {module} {message}',
+            'style': '{',
+        },
+    },
+    'handlers': {
+        'file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': BASE_DIR / 'logs' / 'video_processor.log',
+            'formatter': 'verbose',
+        },
+        'console': {
+            'level': 'INFO',
+            'class': 'logging.StreamHandler',
+            'formatter': 'verbose',
+        },
+    },
+    'loggers': {
+        'video_processor': {
+            'handlers': ['file', 'console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+    },
+}
+
+# Ensure logs directory exists
+os.makedirs(BASE_DIR / 'logs', exist_ok=True)
 
 # -----------------------------------------------------------------------------
 # Local media tool binaries (FFmpeg)

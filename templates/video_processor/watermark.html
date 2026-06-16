@@ -1,0 +1,60 @@
+{% extends 'video_processor/base_video.html' %}
+
+{% block api_url %}{% url "video_processor:watermark_api" %}{% endblock %}
+{% block accepted_files %}.mp4,.mov,.avi,.mkv,.webm,.m4v{% endblock %}
+{% block upload_title %}Upload a video to watermark{% endblock %}
+{% block upload_subtitle %}MP4, MOV, AVI, MKV, WEBM — Up to 2GB{% endblock %}
+{% block process_icon %}stamp{% endblock %}
+{% block process_text %}Add Watermark{% endblock %}
+
+{% block tool_options %}
+<div class="space-y-4">
+    <div class="space-y-2">
+        <label class="text-[11px] font-black text-surface-400 uppercase tracking-widest">Watermark Text</label>
+        <input type="text" name="text" placeholder="Enter watermark text" class="w-full bg-white border border-surface-200 rounded-xl px-4 py-3 text-sm font-bold text-surface-700 focus:border-brand-500 outline-none transition-all">
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="space-y-2">
+            <label class="text-[11px] font-black text-surface-400 uppercase tracking-widest">Position</label>
+            <select name="position" class="w-full bg-white border border-surface-200 rounded-xl px-4 py-3 text-sm font-bold text-surface-700 focus:border-brand-500 outline-none transition-all">
+                <option value="bottom-right">Bottom Right</option>
+                <option value="bottom-left">Bottom Left</option>
+                <option value="top-right">Top Right</option>
+                <option value="top-left">Top Left</option>
+                <option value="center">Center</option>
+            </select>
+        </div>
+        <div class="space-y-2">
+            <label class="text-[11px] font-black text-surface-400 uppercase tracking-widest">Font Size</label>
+            <input type="number" name="font_size" value="24" min="8" max="200" class="w-full bg-white border border-surface-200 rounded-xl px-4 py-3 text-sm font-bold text-surface-700 focus:border-brand-500 outline-none transition-all">
+        </div>
+        <div class="space-y-2">
+            <label class="text-[11px] font-black text-surface-400 uppercase tracking-widest">Color</label>
+            <input type="color" name="color" value="#ffffff" class="w-full h-[46px] bg-white border border-surface-200 rounded-xl px-2 py-1 cursor-pointer">
+        </div>
+        <div class="space-y-2">
+            <label class="text-[11px] font-black text-surface-400 uppercase tracking-widest">Opacity</label>
+            <input type="range" name="opacity" min="0.1" max="1" step="0.1" value="0.7" class="range-slider" oninput="document.getElementById('opacity-val').textContent = Math.round(this.value*100)+'%'">
+            <div class="text-right text-xs font-bold text-brand-600" id="opacity-val">70%</div>
+        </div>
+    </div>
+    <div class="space-y-2">
+        <label class="text-[11px] font-black text-surface-400 uppercase tracking-widest">Or Use Watermark Image (Optional)</label>
+        <input type="file" name="watermark_image" accept=".png,.jpg,.jpeg,.webp" class="w-full bg-white border border-surface-200 rounded-xl px-4 py-3 text-sm font-bold text-surface-700 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-brand-50 file:text-brand-600 hover:file:bg-brand-100 transition-all">
+    </div>
+</div>
+{% endblock %}
+
+{% block build_form_data %}
+formData.append('text', document.querySelector('[name="text"]').value);
+formData.append('position', document.querySelector('[name="position"]').value);
+formData.append('font_size', document.querySelector('[name="font_size"]').value);
+formData.append('color', document.querySelector('[name="color"]').value);
+formData.append('opacity', document.querySelector('[name="opacity"]').value);
+const img = document.querySelector('[name="watermark_image"]');
+if (img.files.length) formData.append('watermark_image', img.files[0]);
+{% endblock %}
+
+{% block on_success %}
+downloadLink.download = 'watermarked.mp4';
+{% endblock %}

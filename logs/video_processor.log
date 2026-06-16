@@ -1,0 +1,958 @@
+INFO 2026-05-23 10:51:34,022 cleanup CleanupScheduler started
+INFO 2026-05-23 10:53:06,555 cleanup CleanupScheduler started
+INFO 2026-05-23 10:54:09,777 cleanup CleanupScheduler started
+INFO 2026-05-23 10:57:17,699 cleanup CleanupScheduler started
+INFO 2026-05-23 11:00:12,294 cleanup CleanupScheduler started
+INFO 2026-05-23 11:00:14,313 cleanup CleanupScheduler started
+INFO 2026-05-23 11:02:06,223 cleanup CleanupScheduler started
+INFO 2026-05-23 11:02:38,533 cleanup CleanupScheduler started
+INFO 2026-05-23 11:02:40,563 cleanup CleanupScheduler started
+INFO 2026-05-23 11:41:59,476 cleanup CleanupScheduler started
+INFO 2026-05-23 11:42:00,939 cleanup CleanupScheduler started
+INFO 2026-05-23 11:43:52,125 ffmpeg_helpers FFmpeg command: C:\Users\1crore\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-8.1-full_build\bin\ffmpeg.EXE -y -hide_banner -loglevel error -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\addc273b6cad47e5b1930551878dea5e.MOV -threads 0 -c:v libx264 -preset fast -crf 23 -maxrate 2M -bufsize 2M -c:a aac -b:a 128k -movflags +faststart -pix_fmt yuv420p C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\2e51bd1750e84deeac3998f19226ef5a.mp4
+INFO 2026-05-23 11:48:32,410 cleanup CleanupScheduler started
+INFO 2026-05-23 11:48:48,088 cleanup CleanupScheduler started
+INFO 2026-05-23 11:48:57,631 cleanup CleanupScheduler started
+INFO 2026-05-23 11:49:06,212 cleanup CleanupScheduler started
+INFO 2026-05-23 11:49:44,509 cleanup CleanupScheduler started
+INFO 2026-05-23 12:23:23,046 cleanup CleanupScheduler started
+INFO 2026-05-23 12:37:14,266 cleanup CleanupScheduler started
+INFO 2026-05-23 12:39:28,128 cleanup CleanupScheduler started
+INFO 2026-05-23 12:39:29,976 cleanup CleanupScheduler started
+INFO 2026-05-23 12:40:25,946 ffmpeg_helpers FFmpeg command: C:\Users\1crore\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-8.1-full_build\bin\ffmpeg.EXE -y -hide_banner -loglevel error -f concat -safe 0 -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\concat_31b0c4bb8ab748b59177be6782c65c93.txt -vf scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2:black,fps=30,format=yuv420p -c:v libx264 -preset fast -crf 23 -pix_fmt yuv420p -movflags +faststart -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\0adf17f6dab84e69ba0dfc6a8e031353.mp3 -c:a aac -b:a 192k -shortest C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\99be3b6c1a9d4da2a67c7e146a75c0c0.mp4
+ERROR 2026-05-23 12:40:26,277 ffmpeg_helpers FFmpeg error (code 4294967274): Option vf (alias for -filter:v (apply filters to video streams)) cannot be applied to input url C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\0adf17f6dab84e69ba0dfc6a8e031353.mp3 -- you are trying to apply an input option to an output file or vice versa. Move this option before the file it belongs to.
+Error parsing options for input file C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\0adf17f6dab84e69ba0dfc6a8e031353.mp3.
+Error opening input files: Invalid argument
+
+ERROR 2026-05-23 12:40:26,279 views Image to video failed
+Traceback (most recent call last):
+  File "R:\Balakrishnan\1CP_Project\All_In_One_PDF Scan Pdf\Scan-PDF\video_processor\ffmpeg_helpers.py", line 149, in run_ffmpeg
+    raise RuntimeError(f"FFmpeg failed: {stderr[:500]}")
+RuntimeError: FFmpeg failed: Option vf (alias for -filter:v (apply filters to video streams)) cannot be applied to input url C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\0adf17f6dab84e69ba0dfc6a8e031353.mp3 -- you are trying to apply an input option to an output file or vice versa. Move this option before the file it belongs to.
+Error parsing options for input file C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\0adf17f6dab84e69ba0dfc6a8e031353.mp3.
+Error opening input files: Invalid argument
+
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "R:\Balakrishnan\1CP_Project\All_In_One_PDF Scan Pdf\Scan-PDF\video_processor\views.py", line 295, in image_to_video_api
+    run_ffmpeg(cmd, timeout=1800)
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "R:\Balakrishnan\1CP_Project\All_In_One_PDF Scan Pdf\Scan-PDF\video_processor\ffmpeg_helpers.py", line 155, in run_ffmpeg
+    raise RuntimeError(f"FFmpeg execution error: {e}")
+RuntimeError: FFmpeg execution error: FFmpeg failed: Option vf (alias for -filter:v (apply filters to video streams)) cannot be applied to input url C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\0adf17f6dab84e69ba0dfc6a8e031353.mp3 -- you are trying to apply an input option to an output file or vice versa. Move this option before the file it belongs to.
+Error parsing options for input file C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\0adf17f6dab84e69ba0dfc6a8e031353.mp3.
+Error opening input files: Invalid argument
+
+INFO 2026-05-23 12:42:36,720 cleanup CleanupScheduler started
+INFO 2026-05-23 12:43:34,397 cleanup CleanupScheduler started
+INFO 2026-05-23 12:48:04,574 cleanup CleanupScheduler started
+INFO 2026-05-23 12:48:06,224 cleanup CleanupScheduler started
+INFO 2026-05-23 12:48:38,244 ffmpeg_helpers FFmpeg command: C:\Users\1crore\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-8.1-full_build\bin\ffmpeg.EXE -y -hide_banner -loglevel error -f concat -safe 0 -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\concat_88ca2f8c873c4aa3862d20438aebfe17.txt -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\914b98b9076e4a3f873df5e353fb7b1b.mp3 -vf scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2:black,fps=30,format=yuv420p -c:v libx264 -preset fast -crf 23 -pix_fmt yuv420p -movflags +faststart -c:a aac -b:a 192k -shortest C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\e672f8ae13fd4253a9d4f9d256e11532.mp4
+INFO 2026-05-23 12:54:54,219 cleanup CleanupScheduler started
+INFO 2026-05-23 12:55:32,873 cleanup CleanupScheduler started
+INFO 2026-05-23 12:59:15,577 cleanup CleanupScheduler started
+INFO 2026-05-23 13:02:02,130 cleanup CleanupScheduler started
+INFO 2026-05-23 13:02:51,914 cleanup CleanupScheduler started
+INFO 2026-05-23 13:02:53,604 cleanup CleanupScheduler started
+INFO 2026-05-23 13:03:18,696 cleanup CleanupScheduler started
+INFO 2026-05-23 13:10:06,314 cleanup CleanupScheduler started
+INFO 2026-05-23 13:11:53,663 cleanup CleanupScheduler started
+INFO 2026-05-23 13:12:32,259 ffmpeg_helpers FFmpeg command: C:\Users\1crore\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-8.1-full_build\bin\ffmpeg.EXE -y -hide_banner -loglevel error -f concat -safe 0 -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\concat_f7238b42cb8b4b8ab66f068227b04994.txt -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\26f2daf8eaa549358da1041d35625250.mp3 -vf scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2:black,fps=30,format=yuv420p -c:v libx264 -preset fast -crf 23 -pix_fmt yuv420p -movflags +faststart -c:a aac -b:a 192k -shortest C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\c36294b8207f45048f74ba5d2298cff9.mp4
+INFO 2026-05-23 13:16:37,464 cleanup CleanupScheduler started
+INFO 2026-05-23 14:21:39,051 cleanup CleanupScheduler started
+INFO 2026-05-23 14:24:47,189 cleanup CleanupScheduler started
+INFO 2026-05-23 14:24:48,989 cleanup CleanupScheduler started
+INFO 2026-05-23 14:37:24,625 cleanup CleanupScheduler started
+INFO 2026-05-23 15:57:15,112 cleanup CleanupScheduler started
+INFO 2026-05-23 15:57:25,584 cleanup CleanupScheduler started
+INFO 2026-05-23 16:24:17,172 cleanup CleanupScheduler started
+INFO 2026-05-23 16:24:19,210 cleanup CleanupScheduler started
+INFO 2026-05-23 16:29:41,638 ffmpeg_helpers FFmpeg command: C:\Users\1crore\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-8.1-full_build\bin\ffmpeg.EXE -y -hide_banner -loglevel error -loop 1 -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\65c9b2af0e604eb38665e2aa8fa0e4cc.jpeg -vf scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2:black,format=yuv420p,fps=30 -c:v libx264 -preset fast -crf 23 -t 3.0 -an -pix_fmt yuv420p C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\seg_9b9d86a13d144b67a6e644d3397d073a.mp4
+INFO 2026-05-23 16:29:54,783 ffmpeg_helpers FFmpeg command: C:\Users\1crore\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-8.1-full_build\bin\ffmpeg.EXE -y -hide_banner -loglevel error -loop 1 -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\77d8f10aed454f4ca7aa315dee0c0301.jpeg -vf scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2:black,format=yuv420p,fps=30 -c:v libx264 -preset fast -crf 23 -t 3.0 -an -pix_fmt yuv420p C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\seg_6d276f661ef44e5e931d03ec27b7947c.mp4
+INFO 2026-05-23 16:29:59,791 ffmpeg_helpers FFmpeg command: C:\Users\1crore\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-8.1-full_build\bin\ffmpeg.EXE -y -hide_banner -loglevel error -loop 1 -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\77a8c7071223488bb6cb3949d2eac0fa.jpeg -vf scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2:black,format=yuv420p,fps=30 -c:v libx264 -preset fast -crf 23 -t 3.0 -an -pix_fmt yuv420p C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\seg_56ba5bff7a264a25b62808103ffa22a8.mp4
+INFO 2026-05-23 16:30:04,405 ffmpeg_helpers FFmpeg command: C:\Users\1crore\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-8.1-full_build\bin\ffmpeg.EXE -y -hide_banner -loglevel error -loop 1 -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\499d2636303e491bbd96e94ee5c0ed4c.jpeg -vf scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2:black,format=yuv420p,fps=30 -c:v libx264 -preset fast -crf 23 -t 3.0 -an -pix_fmt yuv420p C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\seg_5c5d021626dc43bda6f2fe2c9a12a341.mp4
+INFO 2026-05-23 16:30:08,466 ffmpeg_helpers FFmpeg command: C:\Users\1crore\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-8.1-full_build\bin\ffmpeg.EXE -y -hide_banner -loglevel error -loop 1 -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\7aae782e2a0c4e1f80079330f3df8c00.jpeg -vf scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2:black,format=yuv420p,fps=30 -c:v libx264 -preset fast -crf 23 -t 3.0 -an -pix_fmt yuv420p C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\seg_5cd13234f2bc4556872b045974ba012d.mp4
+INFO 2026-05-23 16:30:12,770 ffmpeg_helpers FFmpeg command: C:\Users\1crore\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-8.1-full_build\bin\ffmpeg.EXE -y -hide_banner -loglevel error -loop 1 -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\e810ecf6b14a40ba814985ac74b382df.jpeg -vf scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2:black,format=yuv420p,fps=30 -c:v libx264 -preset fast -crf 23 -t 3.0 -an -pix_fmt yuv420p C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\seg_ec7e2b925eab4c8cbe4716338bf64e7d.mp4
+INFO 2026-05-23 16:30:15,723 ffmpeg_helpers FFmpeg command: C:\Users\1crore\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-8.1-full_build\bin\ffmpeg.EXE -y -hide_banner -loglevel error -loop 1 -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\df1722c3bd6649d4a24bb562efbafc11.jpeg -vf scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2:black,format=yuv420p,fps=30 -c:v libx264 -preset fast -crf 23 -t 3.0 -an -pix_fmt yuv420p C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\seg_f1319a4d9dba4629921da1873bf0d4a8.mp4
+INFO 2026-05-23 16:30:18,738 ffmpeg_helpers FFmpeg command: C:\Users\1crore\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-8.1-full_build\bin\ffmpeg.EXE -y -hide_banner -loglevel error -loop 1 -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\db22645092e148dca5763181269ec3a2.jpeg -vf scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2:black,format=yuv420p,fps=30 -c:v libx264 -preset fast -crf 23 -t 3.0 -an -pix_fmt yuv420p C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\seg_467b2eb1ec6244e086ae8dc482924fc6.mp4
+INFO 2026-05-23 16:30:22,336 ffmpeg_helpers FFmpeg command: C:\Users\1crore\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-8.1-full_build\bin\ffmpeg.EXE -y -hide_banner -loglevel error -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\seg_9b9d86a13d144b67a6e644d3397d073a.mp4 -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\seg_6d276f661ef44e5e931d03ec27b7947c.mp4 -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\seg_56ba5bff7a264a25b62808103ffa22a8.mp4 -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\seg_5c5d021626dc43bda6f2fe2c9a12a341.mp4 -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\seg_5cd13234f2bc4556872b045974ba012d.mp4 -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\seg_ec7e2b925eab4c8cbe4716338bf64e7d.mp4 -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\seg_f1319a4d9dba4629921da1873bf0d4a8.mp4 -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\seg_467b2eb1ec6244e086ae8dc482924fc6.mp4 -filter_complex [0:v][1:v]xfade=transition=fade:duration=1.0:offset=2.0[tmp1];[tmp1][2:v]xfade=transition=fade:duration=1.0:offset=5.0[tmp2];[tmp2][3:v]xfade=transition=fade:duration=1.0:offset=8.0[tmp3];[tmp3][4:v]xfade=transition=fade:duration=1.0:offset=11.0[tmp4];[tmp4][5:v]xfade=transition=fade:duration=1.0:offset=14.0[tmp5];[tmp5][6:v]xfade=transition=fade:duration=1.0:offset=17.0[tmp6];[tmp6][7:v]xfade=transition=fade:duration=1.0:offset=20.0[outv] -map [outv] -c:v libx264 -preset fast -crf 23 -an -pix_fmt yuv420p C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\dbc467c81af14aa68c871760e9c9c9e1.mp4
+INFO 2026-05-23 16:30:41,586 ffmpeg_helpers FFmpeg command: C:\Users\1crore\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-8.1-full_build\bin\ffmpeg.EXE -y -hide_banner -loglevel error -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\9605fc6e47f94d80b3e40859f06ac648.mp3 -to 261.22449 -c:a aac -b:a 192k -vn C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\audio_50bcdcae50f6410db748c1ebe211a098.m4a
+INFO 2026-05-23 16:31:00,722 ffmpeg_helpers FFmpeg command: C:\Users\1crore\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-8.1-full_build\bin\ffmpeg.EXE -y -hide_banner -loglevel error -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\dbc467c81af14aa68c871760e9c9c9e1.mp4 -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\audio_50bcdcae50f6410db748c1ebe211a098.m4a -c:v copy -c:a aac -b:a 192k -shortest -movflags +faststart C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\dbc467c81af14aa68c871760e9c9c9e1.mp4
+ERROR 2026-05-23 16:31:00,992 ffmpeg_helpers FFmpeg error (code 4294967274): Output C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\dbc467c81af14aa68c871760e9c9c9e1.mp4 same as Input #0 - exiting
+Error opening output file C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\dbc467c81af14aa68c871760e9c9c9e1.mp4.
+Error opening output files: Invalid argument
+
+ERROR 2026-05-23 16:31:00,997 views Image to video failed
+Traceback (most recent call last):
+  File "R:\Balakrishnan\1CP_Project\All_In_One_PDF Scan Pdf\Scan-PDF\video_processor\ffmpeg_helpers.py", line 149, in run_ffmpeg
+    raise RuntimeError(f"FFmpeg failed: {stderr[:500]}")
+RuntimeError: FFmpeg failed: Output C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\dbc467c81af14aa68c871760e9c9c9e1.mp4 same as Input #0 - exiting
+Error opening output file C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\dbc467c81af14aa68c871760e9c9c9e1.mp4.
+Error opening output files: Invalid argument
+
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "R:\Balakrishnan\1CP_Project\All_In_One_PDF Scan Pdf\Scan-PDF\video_processor\views.py", line 317, in image_to_video_api
+    output_path, temp_files = build_image_to_video_command(image_paths, output_path, options)
+                              ~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "R:\Balakrishnan\1CP_Project\All_In_One_PDF Scan Pdf\Scan-PDF\video_processor\ffmpeg_helpers.py", line 374, in build_image_to_video_command
+    run_ffmpeg(merge_cmd, timeout=300)
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^
+  File "R:\Balakrishnan\1CP_Project\All_In_One_PDF Scan Pdf\Scan-PDF\video_processor\ffmpeg_helpers.py", line 155, in run_ffmpeg
+    raise RuntimeError(f"FFmpeg execution error: {e}")
+RuntimeError: FFmpeg execution error: FFmpeg failed: Output C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\dbc467c81af14aa68c871760e9c9c9e1.mp4 same as Input #0 - exiting
+Error opening output file C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\dbc467c81af14aa68c871760e9c9c9e1.mp4.
+Error opening output files: Invalid argument
+
+INFO 2026-05-23 16:44:17,491 cleanup Cleaned 9 old files from C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs
+INFO 2026-05-25 09:46:11,611 cleanup CleanupScheduler started
+INFO 2026-05-25 09:46:14,369 cleanup CleanupScheduler started
+INFO 2026-05-25 09:54:28,106 cleanup CleanupScheduler started
+INFO 2026-05-25 09:55:39,980 ffmpeg_helpers FFmpeg command: C:\Users\1crore\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-8.1-full_build\bin\ffmpeg.EXE -y -hide_banner -loglevel error -loop 1 -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\557e764b70c642f29aff33b0827b640d.jpeg -vf scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2:black,format=yuv420p,fps=30 -c:v libx264 -preset fast -crf 23 -t 3.0 -an -pix_fmt yuv420p C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\seg_efd107d8cf834320a83bb15b9530d487.mp4
+INFO 2026-05-25 09:55:51,643 ffmpeg_helpers FFmpeg command: C:\Users\1crore\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-8.1-full_build\bin\ffmpeg.EXE -y -hide_banner -loglevel error -loop 1 -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\871211cfde6f46cea60bcaa0834e308b.jpeg -vf scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2:black,format=yuv420p,fps=30 -c:v libx264 -preset fast -crf 23 -t 3.0 -an -pix_fmt yuv420p C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\seg_8e255fddc3d4406e8c8b12db754ad285.mp4
+INFO 2026-05-25 09:55:55,513 ffmpeg_helpers FFmpeg command: C:\Users\1crore\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-8.1-full_build\bin\ffmpeg.EXE -y -hide_banner -loglevel error -loop 1 -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\ba16a09b6ba1409facb3fa6546f275a0.jpeg -vf scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2:black,format=yuv420p,fps=30 -c:v libx264 -preset fast -crf 23 -t 3.0 -an -pix_fmt yuv420p C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\seg_694e78728337445b911240cf274d220b.mp4
+INFO 2026-05-25 09:56:00,685 ffmpeg_helpers FFmpeg command: C:\Users\1crore\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-8.1-full_build\bin\ffmpeg.EXE -y -hide_banner -loglevel error -loop 1 -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\a61a04006a4448a9b9fe222956433aa5.jpeg -vf scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2:black,format=yuv420p,fps=30 -c:v libx264 -preset fast -crf 23 -t 3.0 -an -pix_fmt yuv420p C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\seg_ec93be556a8844658a3d4cda6b4ef6d6.mp4
+INFO 2026-05-25 09:56:04,647 ffmpeg_helpers FFmpeg command: C:\Users\1crore\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-8.1-full_build\bin\ffmpeg.EXE -y -hide_banner -loglevel error -loop 1 -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\e9a54a494b4849228381281fc3330a16.jpeg -vf scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2:black,format=yuv420p,fps=30 -c:v libx264 -preset fast -crf 23 -t 3.0 -an -pix_fmt yuv420p C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\seg_f4174666394f4b0e9472e6b962dc9fba.mp4
+INFO 2026-05-25 09:56:07,323 ffmpeg_helpers FFmpeg command: C:\Users\1crore\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-8.1-full_build\bin\ffmpeg.EXE -y -hide_banner -loglevel error -loop 1 -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\dfdc3098d76f42b19a07bf00e9fae252.jpeg -vf scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2:black,format=yuv420p,fps=30 -c:v libx264 -preset fast -crf 23 -t 3.0 -an -pix_fmt yuv420p C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\seg_b0ab2aa801a14c25b1f5b7170c3e7030.mp4
+INFO 2026-05-25 09:56:11,763 ffmpeg_helpers FFmpeg command: C:\Users\1crore\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-8.1-full_build\bin\ffmpeg.EXE -y -hide_banner -loglevel error -loop 1 -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\9edda13880a74a999522ae9c517044ad.jpeg -vf scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2:black,format=yuv420p,fps=30 -c:v libx264 -preset fast -crf 23 -t 3.0 -an -pix_fmt yuv420p C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\seg_02786b21ef3947c580334a7d5fd3f4d4.mp4
+INFO 2026-05-25 09:56:15,186 ffmpeg_helpers FFmpeg command: C:\Users\1crore\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-8.1-full_build\bin\ffmpeg.EXE -y -hide_banner -loglevel error -loop 1 -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\478597e5d3fd4db3b28758a7f9971b0f.jpeg -vf scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2:black,format=yuv420p,fps=30 -c:v libx264 -preset fast -crf 23 -t 3.0 -an -pix_fmt yuv420p C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\seg_9a6790b50a8d44bea2a6a6c9b1d09267.mp4
+INFO 2026-05-25 09:56:17,683 ffmpeg_helpers FFmpeg command: C:\Users\1crore\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-8.1-full_build\bin\ffmpeg.EXE -y -hide_banner -loglevel error -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\seg_efd107d8cf834320a83bb15b9530d487.mp4 -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\seg_8e255fddc3d4406e8c8b12db754ad285.mp4 -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\seg_694e78728337445b911240cf274d220b.mp4 -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\seg_ec93be556a8844658a3d4cda6b4ef6d6.mp4 -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\seg_f4174666394f4b0e9472e6b962dc9fba.mp4 -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\seg_b0ab2aa801a14c25b1f5b7170c3e7030.mp4 -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\seg_02786b21ef3947c580334a7d5fd3f4d4.mp4 -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\seg_9a6790b50a8d44bea2a6a6c9b1d09267.mp4 -filter_complex [0:v][1:v]xfade=transition=fade:duration=1.0:offset=2.0[tmp1];[tmp1][2:v]xfade=transition=fade:duration=1.0:offset=5.0[tmp2];[tmp2][3:v]xfade=transition=fade:duration=1.0:offset=8.0[tmp3];[tmp3][4:v]xfade=transition=fade:duration=1.0:offset=11.0[tmp4];[tmp4][5:v]xfade=transition=fade:duration=1.0:offset=14.0[tmp5];[tmp5][6:v]xfade=transition=fade:duration=1.0:offset=17.0[tmp6];[tmp6][7:v]xfade=transition=fade:duration=1.0:offset=20.0[outv] -map [outv] -c:v libx264 -preset fast -crf 23 -an -pix_fmt yuv420p C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\0cbb33b8a3614166afa2cfe2c1cdc326.mp4
+INFO 2026-05-25 09:56:38,384 ffmpeg_helpers FFmpeg command: C:\Users\1crore\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-8.1-full_build\bin\ffmpeg.EXE -y -hide_banner -loglevel error -to 261.22449 -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\8cc60f71251e4e10afcfdfddbcacf168.mp3 -c:a aac -b:a 192k -vn C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\audio_proc_6080d06148e446dc8ee8fed5a2a225af.m4a
+INFO 2026-05-25 09:57:04,641 ffmpeg_helpers FFmpeg command: C:\Users\1crore\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-8.1-full_build\bin\ffmpeg.EXE -y -hide_banner -loglevel error -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\0cbb33b8a3614166afa2cfe2c1cdc326.mp4 -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\audio_proc_6080d06148e446dc8ee8fed5a2a225af.m4a -c:v copy -c:a aac -b:a 192k -movflags +faststart -shortest C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\final_1556ffde043c4e108737ba4f1beceec8.mp4
+INFO 2026-05-25 09:58:06,125 cleanup CleanupScheduler started
+INFO 2026-05-27 11:01:47,825 cleanup CleanupScheduler started
+INFO 2026-05-27 11:01:49,371 cleanup CleanupScheduler started
+INFO 2026-05-27 11:30:30,147 cleanup CleanupScheduler started
+INFO 2026-05-27 11:30:45,562 cleanup CleanupScheduler started
+INFO 2026-05-27 12:50:04,811 cleanup CleanupScheduler started
+INFO 2026-05-27 12:50:06,965 cleanup CleanupScheduler started
+INFO 2026-05-27 13:14:44,656 cleanup CleanupScheduler started
+INFO 2026-05-27 13:18:04,706 cleanup CleanupScheduler started
+INFO 2026-05-27 13:18:17,928 cleanup CleanupScheduler started
+INFO 2026-05-27 13:27:05,110 cleanup CleanupScheduler started
+INFO 2026-05-27 13:33:00,178 ffmpeg_helpers FFmpeg command: C:\Users\1crore\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-8.1-full_build\bin\ffmpeg.EXE -y -hide_banner -loglevel error -loop 1 -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\4ade6049c3b547949b79dc390efdfcd0.jpeg -vf scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2:black,format=yuv420p,fps=30 -c:v libx264 -preset fast -crf 23 -t 3.0 -an -pix_fmt yuv420p C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\seg_fa3b30b77a2940d88387e19298ae79d7.mp4
+INFO 2026-05-27 13:33:05,709 ffmpeg_helpers FFmpeg command: C:\Users\1crore\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-8.1-full_build\bin\ffmpeg.EXE -y -hide_banner -loglevel error -loop 1 -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\b0045e625cfd45bfa017d105c50e9b7e.jpeg -vf scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2:black,format=yuv420p,fps=30 -c:v libx264 -preset fast -crf 23 -t 3.0 -an -pix_fmt yuv420p C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\seg_c46edad2bd9b4568b1b441e6a340d17e.mp4
+INFO 2026-05-27 13:33:09,106 ffmpeg_helpers FFmpeg command: C:\Users\1crore\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-8.1-full_build\bin\ffmpeg.EXE -y -hide_banner -loglevel error -loop 1 -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\0f4be23a652c416c9e16dfab752b6e9b.jpeg -vf scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2:black,format=yuv420p,fps=30 -c:v libx264 -preset fast -crf 23 -t 3.0 -an -pix_fmt yuv420p C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\seg_121b9cac53c347f386772b316744b21b.mp4
+INFO 2026-05-27 13:33:12,222 ffmpeg_helpers FFmpeg command: C:\Users\1crore\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-8.1-full_build\bin\ffmpeg.EXE -y -hide_banner -loglevel error -loop 1 -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\eaf0fc56e19f48ec9cf0f402d4e9f8fb.jpeg -vf scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2:black,format=yuv420p,fps=30 -c:v libx264 -preset fast -crf 23 -t 3.0 -an -pix_fmt yuv420p C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\seg_c86cba6772254d3b89e5a013a415b019.mp4
+INFO 2026-05-27 13:33:15,257 ffmpeg_helpers FFmpeg command: C:\Users\1crore\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-8.1-full_build\bin\ffmpeg.EXE -y -hide_banner -loglevel error -loop 1 -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\0d6a3121568647ed9a50ffe97aaa21d9.jpeg -vf scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2:black,format=yuv420p,fps=30 -c:v libx264 -preset fast -crf 23 -t 3.0 -an -pix_fmt yuv420p C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\seg_ec20024aa4bc4318a329dcc0efb50417.mp4
+INFO 2026-05-27 13:33:18,024 ffmpeg_helpers FFmpeg command: C:\Users\1crore\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-8.1-full_build\bin\ffmpeg.EXE -y -hide_banner -loglevel error -loop 1 -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\82e0da5ce97e4caeb837e0a120788eb8.jpeg -vf scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2:black,format=yuv420p,fps=30 -c:v libx264 -preset fast -crf 23 -t 3.0 -an -pix_fmt yuv420p C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\seg_eaefd0c6e1704064b1043a235140e44b.mp4
+INFO 2026-05-27 13:33:20,877 ffmpeg_helpers FFmpeg command: C:\Users\1crore\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-8.1-full_build\bin\ffmpeg.EXE -y -hide_banner -loglevel error -loop 1 -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\4796a27260b1499789a1807f52f8ab9e.jpeg -vf scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2:black,format=yuv420p,fps=30 -c:v libx264 -preset fast -crf 23 -t 3.0 -an -pix_fmt yuv420p C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\seg_790fdce0f4964024af7314ce5cda2382.mp4
+INFO 2026-05-27 13:33:23,687 ffmpeg_helpers FFmpeg command: C:\Users\1crore\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-8.1-full_build\bin\ffmpeg.EXE -y -hide_banner -loglevel error -loop 1 -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\14965bb8fcea4550bcb2f1867539df8f.jpeg -vf scale=1920:1080:force_original_aspect_ratio=decrease,pad=1920:1080:(ow-iw)/2:(oh-ih)/2:black,format=yuv420p,fps=30 -c:v libx264 -preset fast -crf 23 -t 3.0 -an -pix_fmt yuv420p C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\seg_b008be4bfefb4fc4b91c920c37dc9479.mp4
+INFO 2026-05-27 13:33:26,543 ffmpeg_helpers FFmpeg command: C:\Users\1crore\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-8.1-full_build\bin\ffmpeg.EXE -y -hide_banner -loglevel error -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\seg_fa3b30b77a2940d88387e19298ae79d7.mp4 -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\seg_c46edad2bd9b4568b1b441e6a340d17e.mp4 -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\seg_121b9cac53c347f386772b316744b21b.mp4 -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\seg_c86cba6772254d3b89e5a013a415b019.mp4 -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\seg_ec20024aa4bc4318a329dcc0efb50417.mp4 -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\seg_eaefd0c6e1704064b1043a235140e44b.mp4 -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\seg_790fdce0f4964024af7314ce5cda2382.mp4 -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\seg_b008be4bfefb4fc4b91c920c37dc9479.mp4 -filter_complex [0:v][1:v]xfade=transition=slideright:duration=1.0:offset=2.0[tmp1];[tmp1][2:v]xfade=transition=slideright:duration=1.0:offset=5.0[tmp2];[tmp2][3:v]xfade=transition=slideright:duration=1.0:offset=8.0[tmp3];[tmp3][4:v]xfade=transition=slideright:duration=1.0:offset=11.0[tmp4];[tmp4][5:v]xfade=transition=slideright:duration=1.0:offset=14.0[tmp5];[tmp5][6:v]xfade=transition=slideright:duration=1.0:offset=17.0[tmp6];[tmp6][7:v]xfade=transition=slideright:duration=1.0:offset=20.0[outv] -map [outv] -c:v libx264 -preset fast -crf 23 -an -pix_fmt yuv420p C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\7c3e1cd07eb34bfb88dcb4d0ca0210be.mp4
+INFO 2026-05-27 13:33:36,237 ffmpeg_helpers FFmpeg command: C:\Users\1crore\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-8.1-full_build\bin\ffmpeg.EXE -y -hide_banner -loglevel error -ss 74.68215750719763 -t 40.43924685979262 -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\ca624e64ff644c649c42a3170289a394.mp3 -c:a aac -b:a 192k -vn C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\audio_proc_0653add505d0485294fe9b41e9399c02.m4a
+INFO 2026-05-27 13:33:38,466 ffmpeg_helpers FFmpeg command: C:\Users\1crore\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-8.1-full_build\bin\ffmpeg.EXE -y -hide_banner -loglevel error -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\7c3e1cd07eb34bfb88dcb4d0ca0210be.mp4 -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\audio_proc_0653add505d0485294fe9b41e9399c02.m4a -c:v copy -c:a aac -b:a 192k -movflags +faststart -shortest C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\final_9935476028524ff1a1ab1b1d07243852.mp4
+INFO 2026-05-27 14:26:38,487 cleanup CleanupScheduler started
+INFO 2026-05-27 14:26:55,147 cleanup CleanupScheduler started
+INFO 2026-05-27 15:22:49,339 cleanup CleanupScheduler started
+INFO 2026-05-27 15:22:50,884 cleanup CleanupScheduler started
+INFO 2026-05-27 18:01:19,759 cleanup CleanupScheduler started
+INFO 2026-05-27 18:01:22,298 cleanup CleanupScheduler started
+INFO 2026-05-27 18:49:31,520 cleanup CleanupScheduler started
+INFO 2026-05-27 18:49:33,266 cleanup CleanupScheduler started
+INFO 2026-05-28 17:21:19,275 cleanup CleanupScheduler started
+INFO 2026-05-28 17:21:20,919 cleanup CleanupScheduler started
+INFO 2026-05-28 17:48:15,270 cleanup CleanupScheduler started
+INFO 2026-05-28 17:48:17,729 cleanup CleanupScheduler started
+INFO 2026-05-28 17:49:12,838 cleanup CleanupScheduler started
+INFO 2026-05-28 17:49:36,412 cleanup CleanupScheduler started
+INFO 2026-05-28 17:51:20,296 cleanup CleanupScheduler started
+INFO 2026-05-28 17:57:27,522 ffmpeg_helpers FFmpeg command: C:\Users\1crore\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-8.1-full_build\bin\ffmpeg.EXE -y -hide_banner -loglevel error -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\06b2735186af4114be236a6b292d339c.MOV -threads 0 -c:v libx264 -preset fast -crf 23 -maxrate 2M -bufsize 2M -c:a aac -b:a 128k -movflags +faststart -pix_fmt yuv420p C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\9d945710b7f34917a8c8190da1558764.mp4
+INFO 2026-05-28 19:06:20,639 cleanup Cleaned 207 old files from C:\Users\1crore\AppData\Local\Temp\scanpdf_video\chunks
+INFO 2026-05-29 18:03:17,190 cleanup CleanupScheduler started
+INFO 2026-05-29 18:03:19,286 cleanup CleanupScheduler started
+INFO 2026-05-29 18:13:37,141 cleanup CleanupScheduler started
+INFO 2026-05-29 18:17:08,761 cleanup CleanupScheduler started
+INFO 2026-05-29 18:17:38,576 cleanup CleanupScheduler started
+INFO 2026-05-29 18:39:41,206 cleanup CleanupScheduler started
+INFO 2026-05-29 18:51:24,185 cleanup CleanupScheduler started
+INFO 2026-05-29 18:51:24,487 cleanup Cleaned 362 old files from C:\Users\1crore\AppData\Local\Temp\scanpdf_video\chunks
+INFO 2026-05-29 18:51:47,236 cleanup CleanupScheduler started
+INFO 2026-05-29 18:52:09,241 cleanup CleanupScheduler started
+INFO 2026-05-29 18:52:29,702 cleanup CleanupScheduler started
+INFO 2026-05-29 18:53:04,049 cleanup CleanupScheduler started
+INFO 2026-05-29 18:53:55,010 cleanup CleanupScheduler started
+INFO 2026-06-15 19:04:21,560 cleanup CleanupScheduler started
+INFO 2026-06-15 19:04:24,133 cleanup CleanupScheduler started
+INFO 2026-06-15 19:05:15,521 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:05:35,579 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:07:29,703 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:07:29,867 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:07:30,017 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:07:30,146 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:07:30,261 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:07:30,382 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:07:30,508 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:07:30,648 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:07:30,847 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:07:31,015 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:07:31,160 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:07:31,324 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:07:31,489 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:07:31,662 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:07:32,506 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:08:32,935 cleanup CleanupScheduler started
+INFO 2026-06-15 19:08:45,058 cleanup CleanupScheduler started
+INFO 2026-06-15 19:09:28,338 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:09:40,634 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:09:40,792 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:09:40,911 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:09:41,029 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:09:41,186 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:09:41,304 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:09:41,447 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:09:41,837 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:09:42,205 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:09:42,570 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:09:42,925 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:09:43,020 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:09:43,107 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:09:43,190 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:09:43,757 utils Cleanup: Removed 0 files, freed 0.0MB
+ERROR 2026-06-15 19:09:43,759 views No chunk file received. Available FILES keys: []
+INFO 2026-06-15 19:09:53,378 cleanup CleanupScheduler started
+INFO 2026-06-15 19:10:18,242 cleanup CleanupScheduler started
+INFO 2026-06-15 19:10:25,743 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:10:28,952 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:10:42,133 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:10:42,250 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:10:42,362 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:10:42,465 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:10:42,591 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:10:42,705 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:10:42,834 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:10:42,961 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:10:43,085 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:10:43,300 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:10:43,444 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:10:43,571 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:10:43,723 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:10:43,850 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:10:44,474 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:10:56,917 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:11:04,187 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:11:04,567 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:11:04,931 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:11:05,241 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:11:05,595 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:11:17,456 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:11:17,586 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:11:17,692 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:11:17,779 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:11:17,874 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:11:17,982 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:11:18,104 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:11:18,458 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:11:18,907 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:11:18,996 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:11:19,075 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:11:19,138 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:11:19,193 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:11:19,274 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:11:19,710 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:12:19,827 cleanup CleanupScheduler started
+INFO 2026-06-15 19:12:29,845 cleanup CleanupScheduler started
+INFO 2026-06-15 19:12:54,191 cleanup CleanupScheduler started
+INFO 2026-06-15 19:13:19,659 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:13:31,530 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:13:31,701 views Chunk status: upload_id=ecf97474-7684-4d01-9663-22790586062a, received=1/14, complete=False, missing=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+INFO 2026-06-15 19:13:31,713 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:13:31,853 views Chunk status: upload_id=ecf97474-7684-4d01-9663-22790586062a, received=2/14, complete=False, missing=[2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+INFO 2026-06-15 19:13:31,879 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:13:32,178 views Chunk status: upload_id=ecf97474-7684-4d01-9663-22790586062a, received=3/14, complete=False, missing=[3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+INFO 2026-06-15 19:13:32,202 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:13:32,332 views Chunk status: upload_id=ecf97474-7684-4d01-9663-22790586062a, received=4/14, complete=False, missing=[4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+INFO 2026-06-15 19:13:32,345 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:13:32,442 views Chunk status: upload_id=ecf97474-7684-4d01-9663-22790586062a, received=5/14, complete=False, missing=[5, 6, 7, 8, 9, 10, 11, 12, 13]
+INFO 2026-06-15 19:13:32,453 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:13:32,533 views Chunk status: upload_id=ecf97474-7684-4d01-9663-22790586062a, received=6/14, complete=False, missing=[6, 7, 8, 9, 10, 11, 12, 13]
+INFO 2026-06-15 19:13:32,544 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:13:32,677 views Chunk status: upload_id=ecf97474-7684-4d01-9663-22790586062a, received=7/14, complete=False, missing=[7, 8, 9, 10, 11, 12, 13]
+INFO 2026-06-15 19:13:32,973 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:13:33,101 views Chunk status: upload_id=ecf97474-7684-4d01-9663-22790586062a, received=8/14, complete=False, missing=[8, 9, 10, 11, 12, 13]
+INFO 2026-06-15 19:13:33,145 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:13:33,238 views Chunk status: upload_id=ecf97474-7684-4d01-9663-22790586062a, received=9/14, complete=False, missing=[9, 10, 11, 12, 13]
+INFO 2026-06-15 19:13:33,249 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:13:33,341 views Chunk status: upload_id=ecf97474-7684-4d01-9663-22790586062a, received=10/14, complete=False, missing=[10, 11, 12, 13]
+INFO 2026-06-15 19:13:33,350 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:13:33,434 views Chunk status: upload_id=ecf97474-7684-4d01-9663-22790586062a, received=11/14, complete=False, missing=[11, 12, 13]
+INFO 2026-06-15 19:13:33,444 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:13:33,532 views Chunk status: upload_id=ecf97474-7684-4d01-9663-22790586062a, received=12/14, complete=False, missing=[12, 13]
+INFO 2026-06-15 19:13:33,548 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:13:33,730 views Chunk status: upload_id=ecf97474-7684-4d01-9663-22790586062a, received=13/14, complete=False, missing=[13]
+INFO 2026-06-15 19:13:33,828 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:13:34,039 views Chunk status: upload_id=ecf97474-7684-4d01-9663-22790586062a, received=14/14, complete=True, missing=[]
+INFO 2026-06-15 19:13:34,040 views Assembling 14 chunks for upload_id=ecf97474-7684-4d01-9663-22790586062a
+INFO 2026-06-15 19:13:34,574 views Assembly successful: C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\ecf97474-7684-4d01-9663-22790586062a.mp4
+INFO 2026-06-15 19:13:34,601 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:13:34,607 views Chunk status: upload_id=ecf97474-7684-4d01-9663-22790586062a, received=0/14, complete=False, missing=[0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+INFO 2026-06-15 19:14:16,728 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:14:20,472 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:14:44,294 cleanup CleanupScheduler started
+INFO 2026-06-15 19:14:54,342 cleanup CleanupScheduler started
+INFO 2026-06-15 19:15:22,748 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:15:32,280 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:15:32,424 views Chunk status: upload_id=968c4a45-e444-4601-a5a8-23cb46847ba6, received=1/14, complete=False, missing=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+INFO 2026-06-15 19:15:32,443 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:15:32,572 views Chunk status: upload_id=968c4a45-e444-4601-a5a8-23cb46847ba6, received=2/14, complete=False, missing=[2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+INFO 2026-06-15 19:15:32,585 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:15:32,681 views Chunk status: upload_id=968c4a45-e444-4601-a5a8-23cb46847ba6, received=3/14, complete=False, missing=[3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+INFO 2026-06-15 19:15:32,696 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:15:32,825 views Chunk status: upload_id=968c4a45-e444-4601-a5a8-23cb46847ba6, received=4/14, complete=False, missing=[4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+INFO 2026-06-15 19:15:32,897 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:15:33,035 views Chunk status: upload_id=968c4a45-e444-4601-a5a8-23cb46847ba6, received=5/14, complete=False, missing=[5, 6, 7, 8, 9, 10, 11, 12, 13]
+INFO 2026-06-15 19:15:33,077 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:15:33,176 views Chunk status: upload_id=968c4a45-e444-4601-a5a8-23cb46847ba6, received=6/14, complete=False, missing=[6, 7, 8, 9, 10, 11, 12, 13]
+INFO 2026-06-15 19:15:33,190 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:15:33,285 views Chunk status: upload_id=968c4a45-e444-4601-a5a8-23cb46847ba6, received=7/14, complete=False, missing=[7, 8, 9, 10, 11, 12, 13]
+INFO 2026-06-15 19:15:33,329 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:15:33,451 views Chunk status: upload_id=968c4a45-e444-4601-a5a8-23cb46847ba6, received=8/14, complete=False, missing=[8, 9, 10, 11, 12, 13]
+INFO 2026-06-15 19:15:33,497 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:15:33,641 views Chunk status: upload_id=968c4a45-e444-4601-a5a8-23cb46847ba6, received=9/14, complete=False, missing=[9, 10, 11, 12, 13]
+INFO 2026-06-15 19:15:33,664 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:15:33,848 views Chunk status: upload_id=968c4a45-e444-4601-a5a8-23cb46847ba6, received=10/14, complete=False, missing=[10, 11, 12, 13]
+INFO 2026-06-15 19:15:34,030 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:15:34,230 views Chunk status: upload_id=968c4a45-e444-4601-a5a8-23cb46847ba6, received=11/14, complete=False, missing=[11, 12, 13]
+INFO 2026-06-15 19:15:34,329 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:15:34,453 views Chunk status: upload_id=968c4a45-e444-4601-a5a8-23cb46847ba6, received=12/14, complete=False, missing=[12, 13]
+INFO 2026-06-15 19:15:34,499 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:15:34,634 views Chunk status: upload_id=968c4a45-e444-4601-a5a8-23cb46847ba6, received=13/14, complete=False, missing=[13]
+INFO 2026-06-15 19:15:34,650 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:15:34,762 views Chunk status: upload_id=968c4a45-e444-4601-a5a8-23cb46847ba6, received=14/14, complete=True, missing=[]
+INFO 2026-06-15 19:15:34,764 views Assembling 14 chunks for upload_id=968c4a45-e444-4601-a5a8-23cb46847ba6
+INFO 2026-06-15 19:15:35,466 views Assembly successful: C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\968c4a45-e444-4601-a5a8-23cb46847ba6.mp4
+INFO 2026-06-15 19:15:35,497 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:15:35,500 views Assembly already complete for 968c4a45-e444-4601-a5a8-23cb46847ba6, returning existing file
+INFO 2026-06-15 19:16:36,066 cleanup CleanupScheduler started
+INFO 2026-06-15 19:16:56,076 cleanup CleanupScheduler started
+INFO 2026-06-15 19:17:14,303 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:17:24,129 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:17:24,229 views Chunk status: upload_id=75033805-baef-45f0-b519-d74a8beb7c0e, received=1/14, complete=False, missing=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+INFO 2026-06-15 19:17:24,240 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:17:24,326 views Chunk status: upload_id=75033805-baef-45f0-b519-d74a8beb7c0e, received=2/14, complete=False, missing=[2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+INFO 2026-06-15 19:17:24,345 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:17:24,432 views Chunk status: upload_id=75033805-baef-45f0-b519-d74a8beb7c0e, received=3/14, complete=False, missing=[3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+INFO 2026-06-15 19:17:24,445 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:17:24,519 views Chunk status: upload_id=75033805-baef-45f0-b519-d74a8beb7c0e, received=4/14, complete=False, missing=[4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+INFO 2026-06-15 19:17:24,549 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:17:24,633 views Chunk status: upload_id=75033805-baef-45f0-b519-d74a8beb7c0e, received=5/14, complete=False, missing=[5, 6, 7, 8, 9, 10, 11, 12, 13]
+INFO 2026-06-15 19:17:24,645 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:17:24,731 views Chunk status: upload_id=75033805-baef-45f0-b519-d74a8beb7c0e, received=6/14, complete=False, missing=[6, 7, 8, 9, 10, 11, 12, 13]
+INFO 2026-06-15 19:17:24,746 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:17:24,867 views Chunk status: upload_id=75033805-baef-45f0-b519-d74a8beb7c0e, received=7/14, complete=False, missing=[7, 8, 9, 10, 11, 12, 13]
+INFO 2026-06-15 19:17:24,950 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:17:25,103 views Chunk status: upload_id=75033805-baef-45f0-b519-d74a8beb7c0e, received=8/14, complete=False, missing=[8, 9, 10, 11, 12, 13]
+INFO 2026-06-15 19:17:25,153 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:17:25,302 views Chunk status: upload_id=75033805-baef-45f0-b519-d74a8beb7c0e, received=9/14, complete=False, missing=[9, 10, 11, 12, 13]
+INFO 2026-06-15 19:17:25,346 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:17:25,636 views Chunk status: upload_id=75033805-baef-45f0-b519-d74a8beb7c0e, received=10/14, complete=False, missing=[10, 11, 12, 13]
+INFO 2026-06-15 19:17:25,663 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:17:25,725 views Chunk status: upload_id=75033805-baef-45f0-b519-d74a8beb7c0e, received=11/14, complete=False, missing=[11, 12, 13]
+INFO 2026-06-15 19:17:25,782 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:17:25,832 views Chunk status: upload_id=75033805-baef-45f0-b519-d74a8beb7c0e, received=12/14, complete=False, missing=[12, 13]
+INFO 2026-06-15 19:17:25,850 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:17:25,911 views Chunk status: upload_id=75033805-baef-45f0-b519-d74a8beb7c0e, received=13/14, complete=False, missing=[13]
+INFO 2026-06-15 19:17:25,922 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:17:25,957 views Chunk status: upload_id=75033805-baef-45f0-b519-d74a8beb7c0e, received=14/14, complete=True, missing=[]
+INFO 2026-06-15 19:17:25,957 views Assembling 14 chunks for upload_id=75033805-baef-45f0-b519-d74a8beb7c0e
+INFO 2026-06-15 19:17:26,397 views Assembly successful: C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\75033805-baef-45f0-b519-d74a8beb7c0e.mp4
+INFO 2026-06-15 19:17:26,407 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:17:26,412 views Assembly already complete for 75033805-baef-45f0-b519-d74a8beb7c0e, returning existing file
+INFO 2026-06-15 19:17:26,427 views Using chunk-assembled file: C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\75033805-baef-45f0-b519-d74a8beb7c0e.mp4
+INFO 2026-06-15 19:17:26,449 ffmpeg_helpers FFmpeg command: C:\Users\1crore\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-8.1-full_build\bin\ffmpeg.EXE -y -hide_banner -loglevel error -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\75033805-baef-45f0-b519-d74a8beb7c0e.mp4 -threads 0 -c:v libx264 -preset fast -crf 23 -c:a aac -b:a 96k -pix_fmt yuv420p -movflags +faststart C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\674a43aeef0f4121876457e71fb0341b.mp4
+INFO 2026-06-15 19:19:21,696 cleanup Cleaned 1 old files from C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads
+INFO 2026-06-15 19:21:56,086 cleanup Cleaned 3 old files from C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads
+INFO 2026-06-15 19:23:42,581 cleanup CleanupScheduler started
+INFO 2026-06-15 19:23:42,589 cleanup Cleaned 1 old files from C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads
+INFO 2026-06-15 19:25:00,767 cleanup CleanupScheduler started
+INFO 2026-06-15 19:25:32,294 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:25:45,756 utils Cleanup: Removed 1 files, freed 68.5MB
+INFO 2026-06-15 19:25:45,757 views Pre-cleanup: Removed 1 files, freed 68.5MB
+INFO 2026-06-15 19:25:45,932 views Chunk status: upload_id=b9bc2099-099b-4d3e-b4fe-67d8441cd716, received=1/14, complete=False, missing=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+INFO 2026-06-15 19:25:45,942 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:25:46,067 views Chunk status: upload_id=b9bc2099-099b-4d3e-b4fe-67d8441cd716, received=2/14, complete=False, missing=[2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+INFO 2026-06-15 19:25:46,081 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:25:46,204 views Chunk status: upload_id=b9bc2099-099b-4d3e-b4fe-67d8441cd716, received=3/14, complete=False, missing=[3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+INFO 2026-06-15 19:25:46,218 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:25:46,362 views Chunk status: upload_id=b9bc2099-099b-4d3e-b4fe-67d8441cd716, received=4/14, complete=False, missing=[4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+INFO 2026-06-15 19:25:46,373 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:25:46,523 views Chunk status: upload_id=b9bc2099-099b-4d3e-b4fe-67d8441cd716, received=5/14, complete=False, missing=[5, 6, 7, 8, 9, 10, 11, 12, 13]
+INFO 2026-06-15 19:25:46,540 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:25:46,686 views Chunk status: upload_id=b9bc2099-099b-4d3e-b4fe-67d8441cd716, received=6/14, complete=False, missing=[6, 7, 8, 9, 10, 11, 12, 13]
+INFO 2026-06-15 19:25:46,701 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:25:46,872 views Chunk status: upload_id=b9bc2099-099b-4d3e-b4fe-67d8441cd716, received=7/14, complete=False, missing=[7, 8, 9, 10, 11, 12, 13]
+INFO 2026-06-15 19:25:46,888 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:25:47,084 views Chunk status: upload_id=b9bc2099-099b-4d3e-b4fe-67d8441cd716, received=8/14, complete=False, missing=[8, 9, 10, 11, 12, 13]
+INFO 2026-06-15 19:25:47,098 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:25:47,241 views Chunk status: upload_id=b9bc2099-099b-4d3e-b4fe-67d8441cd716, received=9/14, complete=False, missing=[9, 10, 11, 12, 13]
+INFO 2026-06-15 19:25:47,256 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:25:47,395 views Chunk status: upload_id=b9bc2099-099b-4d3e-b4fe-67d8441cd716, received=10/14, complete=False, missing=[10, 11, 12, 13]
+INFO 2026-06-15 19:25:47,406 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:25:47,537 views Chunk status: upload_id=b9bc2099-099b-4d3e-b4fe-67d8441cd716, received=11/14, complete=False, missing=[11, 12, 13]
+INFO 2026-06-15 19:25:47,551 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:25:47,695 views Chunk status: upload_id=b9bc2099-099b-4d3e-b4fe-67d8441cd716, received=12/14, complete=False, missing=[12, 13]
+INFO 2026-06-15 19:25:47,707 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:25:47,859 views Chunk status: upload_id=b9bc2099-099b-4d3e-b4fe-67d8441cd716, received=13/14, complete=False, missing=[13]
+INFO 2026-06-15 19:25:47,876 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:25:47,992 views Chunk status: upload_id=b9bc2099-099b-4d3e-b4fe-67d8441cd716, received=14/14, complete=True, missing=[]
+INFO 2026-06-15 19:25:47,993 views Assembling 14 chunks for upload_id=b9bc2099-099b-4d3e-b4fe-67d8441cd716
+INFO 2026-06-15 19:25:48,486 views Assembly successful: C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\b9bc2099-099b-4d3e-b4fe-67d8441cd716.mp4
+INFO 2026-06-15 19:25:48,502 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:25:48,509 views Assembly already complete for b9bc2099-099b-4d3e-b4fe-67d8441cd716, returning existing file
+INFO 2026-06-15 19:25:48,524 views Using chunk-assembled file: C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\b9bc2099-099b-4d3e-b4fe-67d8441cd716.mp4
+ERROR 2026-06-15 19:27:38,084 views Compression failed
+Traceback (most recent call last):
+  File "R:\anaconda\Lib\site-packages\redis\connection.py", line 1003, in connect_check_health
+    sock = self._connect()
+  File "R:\anaconda\Lib\site-packages\redis\connection.py", line 1515, in _connect
+    raise err
+  File "R:\anaconda\Lib\site-packages\redis\connection.py", line 1499, in _connect
+    sock.connect(socket_address)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+ConnectionRefusedError: [WinError 10061] No connection could be made because the target machine actively refused it
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "R:\anaconda\Lib\site-packages\celery\backends\redis.py", line 127, in reconnect_on_error
+    yield
+  File "R:\anaconda\Lib\site-packages\celery\backends\redis.py", line 177, in _consume_from
+    self._pubsub.subscribe(key)
+    ~~~~~~~~~~~~~~~~~~~~~~^^^^^
+  File "R:\anaconda\Lib\site-packages\redis\client.py", line 1265, in subscribe
+    ret_val = self.execute_command("SUBSCRIBE", *new_channels.keys())
+  File "R:\anaconda\Lib\site-packages\redis\client.py", line 1023, in execute_command
+    self.connection = self.connection_pool.get_connection()
+                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "R:\anaconda\Lib\site-packages\redis\utils.py", line 236, in wrapper
+    return func(*args, **kwargs)
+  File "R:\anaconda\Lib\site-packages\redis\connection.py", line 3041, in get_connection
+    connection.connect()
+    ~~~~~~~~~~~~~~~~~~^^
+  File "R:\anaconda\Lib\site-packages\redis\connection.py", line 976, in connect
+    self.retry.call_with_retry(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        lambda: self.connect_check_health(
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+        lambda error: self.disconnect(error),
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "R:\anaconda\Lib\site-packages\redis\retry.py", line 132, in call_with_retry
+    raise error
+  File "R:\anaconda\Lib\site-packages\redis\retry.py", line 120, in call_with_retry
+    return do()
+  File "R:\anaconda\Lib\site-packages\redis\connection.py", line 977, in <lambda>
+    lambda: self.connect_check_health(
+            ~~~~~~~~~~~~~~~~~~~~~~~~~^
+        check_health=True, retry_socket_connect=False
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ),
+    ^
+  File "R:\anaconda\Lib\site-packages\redis\connection.py", line 1025, in connect_check_health
+    raise e
+redis.exceptions.ConnectionError: Error 10061 connecting to localhost:6379. No connection could be made because the target machine actively refused it.
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "R:\anaconda\Lib\site-packages\redis\connection.py", line 1003, in connect_check_health
+    sock = self._connect()
+  File "R:\anaconda\Lib\site-packages\redis\connection.py", line 1515, in _connect
+    raise err
+  File "R:\anaconda\Lib\site-packages\redis\connection.py", line 1499, in _connect
+    sock.connect(socket_address)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^
+ConnectionRefusedError: [WinError 10061] No connection could be made because the target machine actively refused it
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "R:\anaconda\Lib\site-packages\kombu\connection.py", line 472, in _reraise_as_library_errors
+    yield
+  File "R:\anaconda\Lib\site-packages\celery\app\base.py", line 929, in send_task
+    self.backend.on_task_call(P, task_id)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^
+  File "R:\anaconda\Lib\site-packages\celery\backends\redis.py", line 378, in on_task_call
+    self.result_consumer.consume_from(task_id)
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^
+  File "R:\anaconda\Lib\site-packages\celery\backends\redis.py", line 169, in consume_from
+    return self.start(task_id)
+           ~~~~~~~~~~^^^^^^^^^
+  File "R:\anaconda\Lib\site-packages\celery\backends\redis.py", line 147, in start
+    self._consume_from(initial_task_id)
+    ~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^
+  File "R:\anaconda\Lib\site-packages\celery\backends\redis.py", line 176, in _consume_from
+    with self.reconnect_on_error():
+         ~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "R:\anaconda\Lib\contextlib.py", line 162, in __exit__
+    self.gen.throw(value)
+    ~~~~~~~~~~~~~~^^^^^^^
+  File "R:\anaconda\Lib\site-packages\celery\backends\redis.py", line 130, in reconnect_on_error
+    self._ensure(self._reconnect_pubsub, ())
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "R:\anaconda\Lib\site-packages\celery\backends\redis.py", line 389, in ensure
+    return retry_over_time(
+        fun, self.connection_errors, args, {},
+        partial(self.on_connection_error, max_retries),
+        **retry_policy)
+  File "R:\anaconda\Lib\site-packages\kombu\utils\functional.py", line 318, in retry_over_time
+    return fun(*args, **kwargs)
+  File "R:\anaconda\Lib\site-packages\celery\backends\redis.py", line 106, in _reconnect_pubsub
+    metas = self.backend.client.mget(self.subscribed_to)
+  File "R:\anaconda\Lib\site-packages\redis\commands\core.py", line 2241, in mget
+    return self.execute_command("MGET", *args, **options)
+           ~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "R:\anaconda\Lib\site-packages\redis\client.py", line 716, in execute_command
+    return self._execute_command(*args, **options)
+           ~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+  File "R:\anaconda\Lib\site-packages\redis\client.py", line 722, in _execute_command
+    conn = self.connection or pool.get_connection()
+                              ~~~~~~~~~~~~~~~~~~~^^
+  File "R:\anaconda\Lib\site-packages\redis\utils.py", line 236, in wrapper
+    return func(*args, **kwargs)
+  File "R:\anaconda\Lib\site-packages\redis\connection.py", line 3041, in get_connection
+    connection.connect()
+    ~~~~~~~~~~~~~~~~~~^^
+  File "R:\anaconda\Lib\site-packages\redis\connection.py", line 976, in connect
+    self.retry.call_with_retry(
+    ~~~~~~~~~~~~~~~~~~~~~~~~~~^
+        lambda: self.connect_check_health(
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+        lambda error: self.disconnect(error),
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "R:\anaconda\Lib\site-packages\redis\retry.py", line 132, in call_with_retry
+    raise error
+  File "R:\anaconda\Lib\site-packages\redis\retry.py", line 120, in call_with_retry
+    return do()
+  File "R:\anaconda\Lib\site-packages\redis\connection.py", line 977, in <lambda>
+    lambda: self.connect_check_health(
+            ~~~~~~~~~~~~~~~~~~~~~~~~~^
+        check_health=True, retry_socket_connect=False
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ),
+    ^
+  File "R:\anaconda\Lib\site-packages\redis\connection.py", line 1025, in connect_check_health
+    raise e
+redis.exceptions.ConnectionError: Error 10061 connecting to localhost:6379. No connection could be made because the target machine actively refused it.
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "R:\Balakrishnan\1CP_Project\All_In_One_PDF Scan Pdf\Scan-PDF\video_processor\views.py", line 970, in compress_video_api
+    task = compress_video_task.delay(input_path, output_path, options)
+  File "R:\anaconda\Lib\site-packages\celery\app\task.py", line 444, in delay
+    return self.apply_async(args, kwargs)
+           ~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^
+  File "R:\anaconda\Lib\site-packages\celery\app\task.py", line 601, in apply_async
+    return app.send_task(
+           ~~~~~~~~~~~~~^
+        self.name, args, kwargs, task_id=task_id, producer=producer,
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<2 lines>...
+        **options
+        ^^^^^^^^^
+    )
+    ^
+  File "R:\anaconda\Lib\site-packages\celery\app\base.py", line 927, in send_task
+    with P.connection._reraise_as_library_errors():
+         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~^^
+  File "R:\anaconda\Lib\contextlib.py", line 162, in __exit__
+    self.gen.throw(value)
+    ~~~~~~~~~~~~~~^^^^^^^
+  File "R:\anaconda\Lib\site-packages\kombu\connection.py", line 476, in _reraise_as_library_errors
+    raise ConnectionError(str(exc)) from exc
+kombu.exceptions.OperationalError: Error 10061 connecting to localhost:6379. No connection could be made because the target machine actively refused it.
+INFO 2026-06-15 19:28:50,050 cleanup CleanupScheduler started
+INFO 2026-06-15 19:28:50,052 cleanup Cleaned 1 old files from C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads
+INFO 2026-06-15 19:29:27,480 cleanup CleanupScheduler started
+INFO 2026-06-15 19:29:38,540 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:29:50,002 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:29:50,168 views Chunk status: upload_id=a7ee5d1e-496a-4fd9-b018-0b3c6f706a6a, received=1/14, complete=False, missing=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+INFO 2026-06-15 19:29:50,191 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:29:50,317 views Chunk status: upload_id=a7ee5d1e-496a-4fd9-b018-0b3c6f706a6a, received=2/14, complete=False, missing=[2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+INFO 2026-06-15 19:29:50,336 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:29:50,449 views Chunk status: upload_id=a7ee5d1e-496a-4fd9-b018-0b3c6f706a6a, received=3/14, complete=False, missing=[3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+INFO 2026-06-15 19:29:50,462 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:29:50,577 views Chunk status: upload_id=a7ee5d1e-496a-4fd9-b018-0b3c6f706a6a, received=4/14, complete=False, missing=[4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+INFO 2026-06-15 19:29:50,591 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:29:50,693 views Chunk status: upload_id=a7ee5d1e-496a-4fd9-b018-0b3c6f706a6a, received=5/14, complete=False, missing=[5, 6, 7, 8, 9, 10, 11, 12, 13]
+INFO 2026-06-15 19:29:50,725 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:29:50,842 views Chunk status: upload_id=a7ee5d1e-496a-4fd9-b018-0b3c6f706a6a, received=6/14, complete=False, missing=[6, 7, 8, 9, 10, 11, 12, 13]
+INFO 2026-06-15 19:29:50,880 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:29:50,990 views Chunk status: upload_id=a7ee5d1e-496a-4fd9-b018-0b3c6f706a6a, received=7/14, complete=False, missing=[7, 8, 9, 10, 11, 12, 13]
+INFO 2026-06-15 19:29:51,004 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:29:51,141 views Chunk status: upload_id=a7ee5d1e-496a-4fd9-b018-0b3c6f706a6a, received=8/14, complete=False, missing=[8, 9, 10, 11, 12, 13]
+INFO 2026-06-15 19:29:51,203 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:29:51,339 views Chunk status: upload_id=a7ee5d1e-496a-4fd9-b018-0b3c6f706a6a, received=9/14, complete=False, missing=[9, 10, 11, 12, 13]
+INFO 2026-06-15 19:29:51,375 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:29:51,523 views Chunk status: upload_id=a7ee5d1e-496a-4fd9-b018-0b3c6f706a6a, received=10/14, complete=False, missing=[10, 11, 12, 13]
+INFO 2026-06-15 19:29:51,585 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:29:51,713 views Chunk status: upload_id=a7ee5d1e-496a-4fd9-b018-0b3c6f706a6a, received=11/14, complete=False, missing=[11, 12, 13]
+INFO 2026-06-15 19:29:51,734 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:29:51,853 views Chunk status: upload_id=a7ee5d1e-496a-4fd9-b018-0b3c6f706a6a, received=12/14, complete=False, missing=[12, 13]
+INFO 2026-06-15 19:29:51,869 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:29:52,002 views Chunk status: upload_id=a7ee5d1e-496a-4fd9-b018-0b3c6f706a6a, received=13/14, complete=False, missing=[13]
+INFO 2026-06-15 19:29:52,054 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:29:52,132 views Chunk status: upload_id=a7ee5d1e-496a-4fd9-b018-0b3c6f706a6a, received=14/14, complete=True, missing=[]
+INFO 2026-06-15 19:29:52,133 views Assembling 14 chunks for upload_id=a7ee5d1e-496a-4fd9-b018-0b3c6f706a6a
+INFO 2026-06-15 19:29:52,789 views Assembly successful: C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\a7ee5d1e-496a-4fd9-b018-0b3c6f706a6a.mp4
+INFO 2026-06-15 19:29:52,803 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:29:52,808 views Assembly already complete for a7ee5d1e-496a-4fd9-b018-0b3c6f706a6a, returning existing file
+INFO 2026-06-15 19:29:52,833 views Using chunk-assembled file: C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\a7ee5d1e-496a-4fd9-b018-0b3c6f706a6a.mp4
+WARNING 2026-06-15 19:31:43,172 views Celery unavailable, falling back to sync compression: Error 10061 connecting to localhost:6379. No connection could be made because the target machine actively refused it.
+INFO 2026-06-15 19:31:43,209 ffmpeg_helpers FFmpeg command: C:\Users\1crore\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-8.1-full_build\bin\ffmpeg.EXE -y -hide_banner -loglevel error -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\a7ee5d1e-496a-4fd9-b018-0b3c6f706a6a.mp4 -threads 0 -c:v libx264 -preset fast -crf 23 -c:a aac -b:a 96k -pix_fmt yuv420p -movflags +faststart C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\06c00a1604a942d68034f2c5271ff568.mp4
+INFO 2026-06-15 19:36:29,997 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:36:40,869 cleanup CleanupScheduler started
+INFO 2026-06-15 19:36:54,107 cleanup CleanupScheduler started
+INFO 2026-06-15 19:37:05,725 cleanup CleanupScheduler started
+INFO 2026-06-15 19:37:19,237 cleanup CleanupScheduler started
+INFO 2026-06-15 19:37:50,260 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:37:58,411 cleanup CleanupScheduler started
+INFO 2026-06-15 19:38:08,933 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:38:09,062 views Chunk status: upload_id=edeffe02-7476-42ac-9685-87b3d3a2815c, received=1/14, complete=False, missing=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+INFO 2026-06-15 19:38:09,088 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:38:09,200 views Chunk status: upload_id=edeffe02-7476-42ac-9685-87b3d3a2815c, received=2/14, complete=False, missing=[2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+INFO 2026-06-15 19:38:09,209 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:38:09,327 views Chunk status: upload_id=edeffe02-7476-42ac-9685-87b3d3a2815c, received=3/14, complete=False, missing=[3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+INFO 2026-06-15 19:38:09,339 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:38:09,464 views Chunk status: upload_id=edeffe02-7476-42ac-9685-87b3d3a2815c, received=4/14, complete=False, missing=[4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+INFO 2026-06-15 19:38:09,475 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:38:09,589 views Chunk status: upload_id=edeffe02-7476-42ac-9685-87b3d3a2815c, received=5/14, complete=False, missing=[5, 6, 7, 8, 9, 10, 11, 12, 13]
+INFO 2026-06-15 19:38:09,615 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:38:09,723 views Chunk status: upload_id=edeffe02-7476-42ac-9685-87b3d3a2815c, received=6/14, complete=False, missing=[6, 7, 8, 9, 10, 11, 12, 13]
+INFO 2026-06-15 19:38:09,737 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:38:09,865 views Chunk status: upload_id=edeffe02-7476-42ac-9685-87b3d3a2815c, received=7/14, complete=False, missing=[7, 8, 9, 10, 11, 12, 13]
+INFO 2026-06-15 19:38:09,874 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:38:10,003 views Chunk status: upload_id=edeffe02-7476-42ac-9685-87b3d3a2815c, received=8/14, complete=False, missing=[8, 9, 10, 11, 12, 13]
+INFO 2026-06-15 19:38:10,015 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:38:10,152 views Chunk status: upload_id=edeffe02-7476-42ac-9685-87b3d3a2815c, received=9/14, complete=False, missing=[9, 10, 11, 12, 13]
+INFO 2026-06-15 19:38:10,163 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:38:10,315 views Chunk status: upload_id=edeffe02-7476-42ac-9685-87b3d3a2815c, received=10/14, complete=False, missing=[10, 11, 12, 13]
+INFO 2026-06-15 19:38:10,324 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:38:10,466 views Chunk status: upload_id=edeffe02-7476-42ac-9685-87b3d3a2815c, received=11/14, complete=False, missing=[11, 12, 13]
+INFO 2026-06-15 19:38:10,479 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:38:10,598 views Chunk status: upload_id=edeffe02-7476-42ac-9685-87b3d3a2815c, received=12/14, complete=False, missing=[12, 13]
+INFO 2026-06-15 19:38:10,610 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:38:10,745 views Chunk status: upload_id=edeffe02-7476-42ac-9685-87b3d3a2815c, received=13/14, complete=False, missing=[13]
+INFO 2026-06-15 19:38:10,757 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:38:10,865 views Chunk status: upload_id=edeffe02-7476-42ac-9685-87b3d3a2815c, received=14/14, complete=True, missing=[]
+INFO 2026-06-15 19:38:10,866 views Assembling 14 chunks for upload_id=edeffe02-7476-42ac-9685-87b3d3a2815c
+INFO 2026-06-15 19:38:11,735 views Assembly successful: C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\edeffe02-7476-42ac-9685-87b3d3a2815c.mp4
+INFO 2026-06-15 19:38:11,993 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-15 19:38:11,996 views Assembly already complete for edeffe02-7476-42ac-9685-87b3d3a2815c, returning existing file
+INFO 2026-06-15 19:38:12,316 views Using chunk-assembled file: C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\edeffe02-7476-42ac-9685-87b3d3a2815c.mp4
+WARNING 2026-06-15 19:40:01,656 views Celery unavailable, falling back to background thread: Error 10061 connecting to localhost:6379. No connection could be made because the target machine actively refused it.
+INFO 2026-06-15 19:40:01,657 views [26a6b75b-e756-44cf-a4d8-9191492de457] Starting background compression
+INFO 2026-06-15 19:40:01,692 ffmpeg_helpers FFmpeg command: C:\Users\1crore\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-8.1-full_build\bin\ffmpeg.EXE -y -hide_banner -loglevel error -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\edeffe02-7476-42ac-9685-87b3d3a2815c.mp4 -threads 0 -c:v libx264 -preset fast -crf 23 -c:a aac -b:a 96k -pix_fmt yuv420p -movflags +faststart C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\552ad60a33db437a9c32344dd9f05929.mp4
+INFO 2026-06-15 19:42:58,497 cleanup Cleaned 1 old files from C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads
+INFO 2026-06-15 19:43:11,694 views [26a6b75b-e756-44cf-a4d8-9191492de457] Compression complete: C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\552ad60a33db437a9c32344dd9f05929.mp4
+INFO 2026-06-15 19:43:12,692 views Background job 26a6b75b-e756-44cf-a4d8-9191492de457 completed. Serving file: C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\552ad60a33db437a9c32344dd9f05929.mp4
+INFO 2026-06-16 11:02:16,381 cleanup CleanupScheduler started
+INFO 2026-06-16 11:02:16,387 cleanup Cleaned 1 old files from C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads
+INFO 2026-06-16 11:02:18,264 cleanup CleanupScheduler started
+INFO 2026-06-16 11:03:11,432 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 11:03:23,069 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 11:03:23,275 views Chunk status: upload_id=c9e54ad9-422c-4c1a-b7db-528bdbc888f5, received=1/14, complete=False, missing=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+INFO 2026-06-16 11:03:23,302 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 11:03:23,481 views Chunk status: upload_id=c9e54ad9-422c-4c1a-b7db-528bdbc888f5, received=2/14, complete=False, missing=[2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+INFO 2026-06-16 11:03:23,495 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 11:03:23,680 views Chunk status: upload_id=c9e54ad9-422c-4c1a-b7db-528bdbc888f5, received=3/14, complete=False, missing=[3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+INFO 2026-06-16 11:03:23,697 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 11:03:23,899 views Chunk status: upload_id=c9e54ad9-422c-4c1a-b7db-528bdbc888f5, received=4/14, complete=False, missing=[4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+INFO 2026-06-16 11:03:23,914 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 11:03:24,143 views Chunk status: upload_id=c9e54ad9-422c-4c1a-b7db-528bdbc888f5, received=5/14, complete=False, missing=[5, 6, 7, 8, 9, 10, 11, 12, 13]
+INFO 2026-06-16 11:03:24,157 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 11:03:24,371 views Chunk status: upload_id=c9e54ad9-422c-4c1a-b7db-528bdbc888f5, received=6/14, complete=False, missing=[6, 7, 8, 9, 10, 11, 12, 13]
+INFO 2026-06-16 11:03:24,401 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 11:03:24,640 views Chunk status: upload_id=c9e54ad9-422c-4c1a-b7db-528bdbc888f5, received=7/14, complete=False, missing=[7, 8, 9, 10, 11, 12, 13]
+INFO 2026-06-16 11:03:24,655 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 11:03:24,861 views Chunk status: upload_id=c9e54ad9-422c-4c1a-b7db-528bdbc888f5, received=8/14, complete=False, missing=[8, 9, 10, 11, 12, 13]
+INFO 2026-06-16 11:03:24,919 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 11:03:25,169 views Chunk status: upload_id=c9e54ad9-422c-4c1a-b7db-528bdbc888f5, received=9/14, complete=False, missing=[9, 10, 11, 12, 13]
+INFO 2026-06-16 11:03:25,201 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 11:03:25,423 views Chunk status: upload_id=c9e54ad9-422c-4c1a-b7db-528bdbc888f5, received=10/14, complete=False, missing=[10, 11, 12, 13]
+INFO 2026-06-16 11:03:25,486 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 11:03:25,639 views Chunk status: upload_id=c9e54ad9-422c-4c1a-b7db-528bdbc888f5, received=11/14, complete=False, missing=[11, 12, 13]
+INFO 2026-06-16 11:03:25,646 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 11:03:25,751 views Chunk status: upload_id=c9e54ad9-422c-4c1a-b7db-528bdbc888f5, received=12/14, complete=False, missing=[12, 13]
+INFO 2026-06-16 11:03:25,759 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 11:03:25,856 views Chunk status: upload_id=c9e54ad9-422c-4c1a-b7db-528bdbc888f5, received=13/14, complete=False, missing=[13]
+INFO 2026-06-16 11:03:25,864 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 11:03:25,953 views Chunk status: upload_id=c9e54ad9-422c-4c1a-b7db-528bdbc888f5, received=14/14, complete=True, missing=[]
+INFO 2026-06-16 11:03:25,954 views Assembling 14 chunks for upload_id=c9e54ad9-422c-4c1a-b7db-528bdbc888f5
+INFO 2026-06-16 11:03:26,255 views Assembly successful: C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\c9e54ad9-422c-4c1a-b7db-528bdbc888f5.mp4
+INFO 2026-06-16 11:03:26,261 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 11:03:26,262 views Assembly already complete for c9e54ad9-422c-4c1a-b7db-528bdbc888f5, returning existing file
+INFO 2026-06-16 11:03:26,270 views Using chunk-assembled file: C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\c9e54ad9-422c-4c1a-b7db-528bdbc888f5.mp4
+WARNING 2026-06-16 11:05:15,640 views Celery unavailable, falling back to background thread: Error 10061 connecting to localhost:6379. No connection could be made because the target machine actively refused it.
+INFO 2026-06-16 11:05:15,642 views [147130ff-907c-4b38-8a88-54fc24717cf0] Starting background compression
+INFO 2026-06-16 11:05:15,679 ffmpeg_helpers FFmpeg command: C:\Users\1crore\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-8.1-full_build\bin\ffmpeg.EXE -y -hide_banner -loglevel error -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\c9e54ad9-422c-4c1a-b7db-528bdbc888f5.mp4 -threads 0 -c:v libx264 -preset fast -crf 23 -c:a aac -b:a 96k -pix_fmt yuv420p -movflags +faststart C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\ff11c3dabb6d4505a82c80f79ec8c296.mp4
+INFO 2026-06-16 11:08:42,174 views [147130ff-907c-4b38-8a88-54fc24717cf0] Compression complete: C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\ff11c3dabb6d4505a82c80f79ec8c296.mp4
+INFO 2026-06-16 11:08:50,544 views Background job 147130ff-907c-4b38-8a88-54fc24717cf0 completed. Serving file: C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\ff11c3dabb6d4505a82c80f79ec8c296.mp4
+INFO 2026-06-16 11:11:18,698 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 11:11:47,994 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 11:17:16,491 cleanup Cleaned 1 old files from C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads
+INFO 2026-06-16 15:01:34,162 cleanup CleanupScheduler started
+INFO 2026-06-16 15:01:35,725 cleanup CleanupScheduler started
+INFO 2026-06-16 15:02:07,842 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 15:10:10,490 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 15:10:15,991 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 15:17:50,584 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 15:17:50,721 views Chunk status: upload_id=04a4a8f6-843f-46c6-8521-6edcf6872bb9, received=1/14, complete=False, missing=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+INFO 2026-06-16 15:17:50,747 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 15:17:50,903 views Chunk status: upload_id=04a4a8f6-843f-46c6-8521-6edcf6872bb9, received=2/14, complete=False, missing=[2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+INFO 2026-06-16 15:17:50,959 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 15:17:51,066 views Chunk status: upload_id=04a4a8f6-843f-46c6-8521-6edcf6872bb9, received=3/14, complete=False, missing=[3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+INFO 2026-06-16 15:17:51,092 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 15:17:51,402 views Chunk status: upload_id=04a4a8f6-843f-46c6-8521-6edcf6872bb9, received=4/14, complete=False, missing=[4, 5, 6, 7, 8, 9, 10, 11, 12, 13]
+INFO 2026-06-16 15:17:51,475 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 15:17:51,737 views Chunk status: upload_id=04a4a8f6-843f-46c6-8521-6edcf6872bb9, received=5/14, complete=False, missing=[5, 6, 7, 8, 9, 10, 11, 12, 13]
+INFO 2026-06-16 15:17:51,757 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 15:17:52,010 views Chunk status: upload_id=04a4a8f6-843f-46c6-8521-6edcf6872bb9, received=6/14, complete=False, missing=[6, 7, 8, 9, 10, 11, 12, 13]
+INFO 2026-06-16 15:17:52,031 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 15:17:52,252 views Chunk status: upload_id=04a4a8f6-843f-46c6-8521-6edcf6872bb9, received=7/14, complete=False, missing=[7, 8, 9, 10, 11, 12, 13]
+INFO 2026-06-16 15:17:52,269 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 15:17:52,486 views Chunk status: upload_id=04a4a8f6-843f-46c6-8521-6edcf6872bb9, received=8/14, complete=False, missing=[8, 9, 10, 11, 12, 13]
+INFO 2026-06-16 15:17:52,518 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 15:17:52,729 views Chunk status: upload_id=04a4a8f6-843f-46c6-8521-6edcf6872bb9, received=9/14, complete=False, missing=[9, 10, 11, 12, 13]
+INFO 2026-06-16 15:17:52,745 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 15:17:52,979 views Chunk status: upload_id=04a4a8f6-843f-46c6-8521-6edcf6872bb9, received=10/14, complete=False, missing=[10, 11, 12, 13]
+INFO 2026-06-16 15:17:52,999 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 15:17:53,221 views Chunk status: upload_id=04a4a8f6-843f-46c6-8521-6edcf6872bb9, received=11/14, complete=False, missing=[11, 12, 13]
+INFO 2026-06-16 15:17:53,238 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 15:17:53,417 views Chunk status: upload_id=04a4a8f6-843f-46c6-8521-6edcf6872bb9, received=12/14, complete=False, missing=[12, 13]
+INFO 2026-06-16 15:17:53,433 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 15:17:53,617 views Chunk status: upload_id=04a4a8f6-843f-46c6-8521-6edcf6872bb9, received=13/14, complete=False, missing=[13]
+INFO 2026-06-16 15:17:53,634 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 15:17:53,779 views Chunk status: upload_id=04a4a8f6-843f-46c6-8521-6edcf6872bb9, received=14/14, complete=True, missing=[]
+INFO 2026-06-16 15:17:53,780 views Assembling 14 chunks for upload_id=04a4a8f6-843f-46c6-8521-6edcf6872bb9
+INFO 2026-06-16 15:17:54,287 views Assembly successful: C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\04a4a8f6-843f-46c6-8521-6edcf6872bb9.mp4
+INFO 2026-06-16 15:17:54,304 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 15:17:54,313 views Assembly already complete for 04a4a8f6-843f-46c6-8521-6edcf6872bb9, returning existing file
+INFO 2026-06-16 15:17:54,334 views Using chunk-assembled file: C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\04a4a8f6-843f-46c6-8521-6edcf6872bb9.mp4
+WARNING 2026-06-16 15:19:44,294 views Celery unavailable, falling back to background thread: Error 10061 connecting to localhost:6379. No connection could be made because the target machine actively refused it.
+INFO 2026-06-16 15:19:44,297 views [ca5ba8ce-794f-4a68-a309-54c30dedbd9f] Starting background compression
+INFO 2026-06-16 15:19:44,335 ffmpeg_helpers FFmpeg command: C:\Users\1crore\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-8.1-full_build\bin\ffmpeg.EXE -y -hide_banner -loglevel error -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\04a4a8f6-843f-46c6-8521-6edcf6872bb9.mp4 -threads 0 -c:v libx264 -preset fast -crf 23 -c:a aac -b:a 96k -pix_fmt yuv420p -movflags +faststart C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\36ee3eba367c489584758af9eddafc47.mp4
+INFO 2026-06-16 15:22:31,712 views [ca5ba8ce-794f-4a68-a309-54c30dedbd9f] Compression complete: C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\36ee3eba367c489584758af9eddafc47.mp4
+INFO 2026-06-16 15:22:32,340 views Background job ca5ba8ce-794f-4a68-a309-54c30dedbd9f completed. Serving file: C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\36ee3eba367c489584758af9eddafc47.mp4
+INFO 2026-06-16 15:31:34,392 cleanup Cleaned 1 old files from C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads
+INFO 2026-06-16 16:21:38,888 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 16:21:52,229 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 16:22:15,731 ffmpeg_helpers FFmpeg command: C:\Users\1crore\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-8.1-full_build\bin\ffmpeg.EXE -y -hide_banner -loglevel error -f concat -safe 0 -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\merge_483a0ae0c90a4312a75013c7020061a8.txt -c copy -movflags +faststart C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\79b803603bae4831aadfda1c8f8f673a.mp4
+INFO 2026-06-16 16:23:25,086 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 16:23:32,394 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 16:30:33,094 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 16:30:48,066 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 16:40:52,963 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 16:40:56,566 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 16:40:56,764 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 16:40:57,055 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 16:41:00,824 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 16:41:46,051 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 16:41:46,217 views Chunk status: upload_id=d8b3286b-0458-4b9e-b95a-148c13098a41, received=1/11, complete=False, missing=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+INFO 2026-06-16 16:41:46,239 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 16:41:46,357 views Chunk status: upload_id=d8b3286b-0458-4b9e-b95a-148c13098a41, received=2/11, complete=False, missing=[2, 3, 4, 5, 6, 7, 8, 9, 10]
+INFO 2026-06-16 16:41:46,380 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 16:41:46,523 views Chunk status: upload_id=d8b3286b-0458-4b9e-b95a-148c13098a41, received=3/11, complete=False, missing=[3, 4, 5, 6, 7, 8, 9, 10]
+INFO 2026-06-16 16:41:46,549 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 16:41:46,709 views Chunk status: upload_id=d8b3286b-0458-4b9e-b95a-148c13098a41, received=4/11, complete=False, missing=[4, 5, 6, 7, 8, 9, 10]
+INFO 2026-06-16 16:41:46,735 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 16:41:46,856 views Chunk status: upload_id=d8b3286b-0458-4b9e-b95a-148c13098a41, received=5/11, complete=False, missing=[5, 6, 7, 8, 9, 10]
+INFO 2026-06-16 16:41:46,937 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 16:41:47,064 views Chunk status: upload_id=d8b3286b-0458-4b9e-b95a-148c13098a41, received=6/11, complete=False, missing=[6, 7, 8, 9, 10]
+INFO 2026-06-16 16:41:47,129 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 16:41:47,291 views Chunk status: upload_id=d8b3286b-0458-4b9e-b95a-148c13098a41, received=7/11, complete=False, missing=[7, 8, 9, 10]
+INFO 2026-06-16 16:41:47,325 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 16:41:47,491 views Chunk status: upload_id=d8b3286b-0458-4b9e-b95a-148c13098a41, received=8/11, complete=False, missing=[8, 9, 10]
+INFO 2026-06-16 16:41:47,518 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 16:41:47,753 views Chunk status: upload_id=d8b3286b-0458-4b9e-b95a-148c13098a41, received=9/11, complete=False, missing=[9, 10]
+INFO 2026-06-16 16:41:47,775 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 16:41:48,006 views Chunk status: upload_id=d8b3286b-0458-4b9e-b95a-148c13098a41, received=10/11, complete=False, missing=[10]
+INFO 2026-06-16 16:41:48,028 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 16:41:48,135 views Chunk status: upload_id=d8b3286b-0458-4b9e-b95a-148c13098a41, received=11/11, complete=True, missing=[]
+INFO 2026-06-16 16:41:48,136 views Assembling 11 chunks for upload_id=d8b3286b-0458-4b9e-b95a-148c13098a41
+INFO 2026-06-16 16:41:48,633 views Assembly successful: C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\d8b3286b-0458-4b9e-b95a-148c13098a41.mp4
+INFO 2026-06-16 16:41:48,673 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 16:41:48,685 views Assembly already complete for d8b3286b-0458-4b9e-b95a-148c13098a41, returning existing file
+INFO 2026-06-16 16:47:38,585 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 16:50:59,041 cleanup CleanupScheduler started
+INFO 2026-06-16 16:55:59,058 cleanup Cleaned 1 old files from C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads
+INFO 2026-06-16 17:04:55,902 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 17:04:58,534 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 17:08:55,621 ffmpeg_helpers FFmpeg command: C:\Users\1crore\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-8.1-full_build\bin\ffmpeg.EXE -y -hide_banner -loglevel error -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\46f7bcb8948f40ff87a6876747215045.mp4 -ss 4.6 -to 11.0 -c copy -avoid_negative_ts make_zero C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\260bd7c2dea949d3b445ae479d6a16d4.mp4
+INFO 2026-06-16 17:09:44,084 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 17:09:54,573 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 17:22:07,740 cleanup CleanupScheduler started
+INFO 2026-06-16 17:28:49,848 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 17:29:09,998 ffmpeg_helpers FFmpeg command: C:\Users\1crore\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-8.1-full_build\bin\ffmpeg.EXE -y -hide_banner -loglevel error -ss 0.0 -t 5.0 -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\cb165ad8b8b14982a470d38015c31075.mp4 -vf fps=10,scale=480:-1:flags=lanczos,split[s0][s1];[s0]palettegen=max_colors=128[p];[s1][p]paletteuse=dither=bayer -loop 0 C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\528071770f534e5bb4df0b545ee2288d.gif
+INFO 2026-06-16 17:31:07,322 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 17:31:45,245 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 17:31:45,403 views Chunk status: upload_id=1e22548c-6505-4753-9e89-8d1cff910098, received=1/11, complete=False, missing=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10]
+INFO 2026-06-16 17:31:45,427 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 17:31:45,556 views Chunk status: upload_id=1e22548c-6505-4753-9e89-8d1cff910098, received=2/11, complete=False, missing=[2, 3, 4, 5, 6, 7, 8, 9, 10]
+INFO 2026-06-16 17:31:45,610 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 17:31:45,743 views Chunk status: upload_id=1e22548c-6505-4753-9e89-8d1cff910098, received=3/11, complete=False, missing=[3, 4, 5, 6, 7, 8, 9, 10]
+INFO 2026-06-16 17:31:45,760 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 17:31:45,912 views Chunk status: upload_id=1e22548c-6505-4753-9e89-8d1cff910098, received=4/11, complete=False, missing=[4, 5, 6, 7, 8, 9, 10]
+INFO 2026-06-16 17:31:45,930 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 17:31:46,078 views Chunk status: upload_id=1e22548c-6505-4753-9e89-8d1cff910098, received=5/11, complete=False, missing=[5, 6, 7, 8, 9, 10]
+INFO 2026-06-16 17:31:46,128 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 17:31:46,235 views Chunk status: upload_id=1e22548c-6505-4753-9e89-8d1cff910098, received=6/11, complete=False, missing=[6, 7, 8, 9, 10]
+INFO 2026-06-16 17:31:46,250 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 17:31:46,407 views Chunk status: upload_id=1e22548c-6505-4753-9e89-8d1cff910098, received=7/11, complete=False, missing=[7, 8, 9, 10]
+INFO 2026-06-16 17:31:46,423 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 17:31:46,560 views Chunk status: upload_id=1e22548c-6505-4753-9e89-8d1cff910098, received=8/11, complete=False, missing=[8, 9, 10]
+INFO 2026-06-16 17:31:46,580 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 17:31:46,733 views Chunk status: upload_id=1e22548c-6505-4753-9e89-8d1cff910098, received=9/11, complete=False, missing=[9, 10]
+INFO 2026-06-16 17:31:46,763 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 17:31:46,912 views Chunk status: upload_id=1e22548c-6505-4753-9e89-8d1cff910098, received=10/11, complete=False, missing=[10]
+INFO 2026-06-16 17:31:46,954 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 17:31:47,061 views Chunk status: upload_id=1e22548c-6505-4753-9e89-8d1cff910098, received=11/11, complete=True, missing=[]
+INFO 2026-06-16 17:31:47,061 views Assembling 11 chunks for upload_id=1e22548c-6505-4753-9e89-8d1cff910098
+INFO 2026-06-16 17:31:47,484 views Assembly successful: C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\1e22548c-6505-4753-9e89-8d1cff910098.mp4
+INFO 2026-06-16 17:31:47,505 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 17:31:47,515 views Assembly already complete for 1e22548c-6505-4753-9e89-8d1cff910098, returning existing file
+INFO 2026-06-16 17:31:47,539 views Using chunk-assembled file: C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\1e22548c-6505-4753-9e89-8d1cff910098.mp4
+INFO 2026-06-16 17:31:47,572 ffmpeg_helpers FFmpeg command: C:\Users\1crore\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-8.1-full_build\bin\ffmpeg.EXE -y -hide_banner -loglevel error -ss 1.3 -t 9.7 -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\1e22548c-6505-4753-9e89-8d1cff910098.mp4 -vf fps=10,scale=480:-1:flags=lanczos,split[s0][s1];[s0]palettegen=max_colors=128[p];[s1][p]paletteuse=dither=bayer -loop 0 C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\863fc1f91a474088bc9a4a838d953615.gif
+INFO 2026-06-16 17:36:59,697 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 17:43:22,522 cleanup Cleaned 1 old files from C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads
+INFO 2026-06-16 18:03:42,543 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 18:11:19,848 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 18:11:19,979 views Chunk status: upload_id=3b48ec20-9c00-4f4d-b3aa-b10a5d7cfe2a, received=1/13, complete=False, missing=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+INFO 2026-06-16 18:11:20,000 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 18:11:20,132 views Chunk status: upload_id=3b48ec20-9c00-4f4d-b3aa-b10a5d7cfe2a, received=2/13, complete=False, missing=[2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+INFO 2026-06-16 18:11:20,148 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 18:11:20,251 views Chunk status: upload_id=3b48ec20-9c00-4f4d-b3aa-b10a5d7cfe2a, received=3/13, complete=False, missing=[3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+INFO 2026-06-16 18:11:20,270 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 18:11:20,381 views Chunk status: upload_id=3b48ec20-9c00-4f4d-b3aa-b10a5d7cfe2a, received=4/13, complete=False, missing=[4, 5, 6, 7, 8, 9, 10, 11, 12]
+INFO 2026-06-16 18:11:20,447 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 18:11:20,545 views Chunk status: upload_id=3b48ec20-9c00-4f4d-b3aa-b10a5d7cfe2a, received=5/13, complete=False, missing=[5, 6, 7, 8, 9, 10, 11, 12]
+INFO 2026-06-16 18:11:20,564 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 18:11:20,724 views Chunk status: upload_id=3b48ec20-9c00-4f4d-b3aa-b10a5d7cfe2a, received=6/13, complete=False, missing=[6, 7, 8, 9, 10, 11, 12]
+INFO 2026-06-16 18:11:20,743 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 18:11:20,900 views Chunk status: upload_id=3b48ec20-9c00-4f4d-b3aa-b10a5d7cfe2a, received=7/13, complete=False, missing=[7, 8, 9, 10, 11, 12]
+INFO 2026-06-16 18:11:20,993 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 18:11:21,113 views Chunk status: upload_id=3b48ec20-9c00-4f4d-b3aa-b10a5d7cfe2a, received=8/13, complete=False, missing=[8, 9, 10, 11, 12]
+INFO 2026-06-16 18:11:21,130 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 18:11:21,251 views Chunk status: upload_id=3b48ec20-9c00-4f4d-b3aa-b10a5d7cfe2a, received=9/13, complete=False, missing=[9, 10, 11, 12]
+INFO 2026-06-16 18:11:21,298 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 18:11:21,413 views Chunk status: upload_id=3b48ec20-9c00-4f4d-b3aa-b10a5d7cfe2a, received=10/13, complete=False, missing=[10, 11, 12]
+INFO 2026-06-16 18:11:21,430 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 18:11:21,554 views Chunk status: upload_id=3b48ec20-9c00-4f4d-b3aa-b10a5d7cfe2a, received=11/13, complete=False, missing=[11, 12]
+INFO 2026-06-16 18:11:21,575 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 18:11:21,694 views Chunk status: upload_id=3b48ec20-9c00-4f4d-b3aa-b10a5d7cfe2a, received=12/13, complete=False, missing=[12]
+INFO 2026-06-16 18:11:21,712 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 18:11:21,824 views Chunk status: upload_id=3b48ec20-9c00-4f4d-b3aa-b10a5d7cfe2a, received=13/13, complete=True, missing=[]
+INFO 2026-06-16 18:11:21,826 views Assembling 13 chunks for upload_id=3b48ec20-9c00-4f4d-b3aa-b10a5d7cfe2a
+INFO 2026-06-16 18:11:22,276 views Assembly successful: C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\3b48ec20-9c00-4f4d-b3aa-b10a5d7cfe2a.mp4
+INFO 2026-06-16 18:11:22,289 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 18:11:22,294 views Assembly already complete for 3b48ec20-9c00-4f4d-b3aa-b10a5d7cfe2a, returning existing file
+INFO 2026-06-16 18:23:22,631 cleanup Cleaned 1 old files from C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads
+INFO 2026-06-16 18:45:00,239 cleanup CleanupScheduler started
+INFO 2026-06-16 18:45:12,604 cleanup CleanupScheduler started
+INFO 2026-06-16 18:47:19,442 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 18:48:06,753 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 18:48:06,899 views Chunk status: upload_id=3fbba631-ea7e-440e-ba0d-98bdc101b262, received=1/13, complete=False, missing=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+INFO 2026-06-16 18:48:06,919 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 18:48:07,065 views Chunk status: upload_id=3fbba631-ea7e-440e-ba0d-98bdc101b262, received=2/13, complete=False, missing=[2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+INFO 2026-06-16 18:48:07,084 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 18:48:07,295 views Chunk status: upload_id=3fbba631-ea7e-440e-ba0d-98bdc101b262, received=3/13, complete=False, missing=[3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+INFO 2026-06-16 18:48:07,531 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 18:48:07,725 views Chunk status: upload_id=3fbba631-ea7e-440e-ba0d-98bdc101b262, received=4/13, complete=False, missing=[4, 5, 6, 7, 8, 9, 10, 11, 12]
+INFO 2026-06-16 18:48:07,786 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 18:48:07,955 views Chunk status: upload_id=3fbba631-ea7e-440e-ba0d-98bdc101b262, received=5/13, complete=False, missing=[5, 6, 7, 8, 9, 10, 11, 12]
+INFO 2026-06-16 18:48:07,980 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 18:48:08,149 views Chunk status: upload_id=3fbba631-ea7e-440e-ba0d-98bdc101b262, received=6/13, complete=False, missing=[6, 7, 8, 9, 10, 11, 12]
+INFO 2026-06-16 18:48:08,168 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 18:48:08,334 views Chunk status: upload_id=3fbba631-ea7e-440e-ba0d-98bdc101b262, received=7/13, complete=False, missing=[7, 8, 9, 10, 11, 12]
+INFO 2026-06-16 18:48:08,350 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 18:48:08,516 views Chunk status: upload_id=3fbba631-ea7e-440e-ba0d-98bdc101b262, received=8/13, complete=False, missing=[8, 9, 10, 11, 12]
+INFO 2026-06-16 18:48:08,531 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 18:48:08,720 views Chunk status: upload_id=3fbba631-ea7e-440e-ba0d-98bdc101b262, received=9/13, complete=False, missing=[9, 10, 11, 12]
+INFO 2026-06-16 18:48:08,737 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 18:48:08,949 views Chunk status: upload_id=3fbba631-ea7e-440e-ba0d-98bdc101b262, received=10/13, complete=False, missing=[10, 11, 12]
+INFO 2026-06-16 18:48:08,964 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 18:48:09,148 views Chunk status: upload_id=3fbba631-ea7e-440e-ba0d-98bdc101b262, received=11/13, complete=False, missing=[11, 12]
+INFO 2026-06-16 18:48:09,164 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 18:48:09,351 views Chunk status: upload_id=3fbba631-ea7e-440e-ba0d-98bdc101b262, received=12/13, complete=False, missing=[12]
+INFO 2026-06-16 18:48:09,367 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 18:48:09,537 views Chunk status: upload_id=3fbba631-ea7e-440e-ba0d-98bdc101b262, received=13/13, complete=True, missing=[]
+INFO 2026-06-16 18:48:09,537 views Assembling 13 chunks for upload_id=3fbba631-ea7e-440e-ba0d-98bdc101b262
+INFO 2026-06-16 18:48:09,998 views Assembly successful: C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\3fbba631-ea7e-440e-ba0d-98bdc101b262.mp4
+INFO 2026-06-16 18:48:10,017 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 18:48:10,020 views Assembly already complete for 3fbba631-ea7e-440e-ba0d-98bdc101b262, returning existing file
+INFO 2026-06-16 18:48:10,046 views Using chunk-assembled file: C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\3fbba631-ea7e-440e-ba0d-98bdc101b262.mp4
+INFO 2026-06-16 18:48:10,099 ffmpeg_helpers FFmpeg command: C:\Users\1crore\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-8.1-full_build\bin\ffmpeg.EXE -y -hide_banner -loglevel error -t 17.6 -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\3fbba631-ea7e-440e-ba0d-98bdc101b262.mp4 -vn -c:a libmp3lame -b:a 192k -ar 44100 -ac 2 C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\56cebc60989c40d58d895d0172db7937.mp3
+ERROR 2026-06-16 18:48:10,518 ffmpeg_helpers FFmpeg error (code 4294967274): [out#0/mp3 @ 0000018d8b279fc0] Output file does not contain any stream
+Error opening output file C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\56cebc60989c40d58d895d0172db7937.mp3.
+Error opening output files: Invalid argument
+
+ERROR 2026-06-16 18:48:10,519 views Audio extraction failed
+Traceback (most recent call last):
+  File "R:\Balakrishnan\1CP_Project\All_In_One_PDF Scan Pdf\Scan-PDF\video_processor\ffmpeg_helpers.py", line 149, in run_ffmpeg
+    raise RuntimeError(f"FFmpeg failed: {stderr[:500]}")
+RuntimeError: FFmpeg failed: [out#0/mp3 @ 0000018d8b279fc0] Output file does not contain any stream
+Error opening output file C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\56cebc60989c40d58d895d0172db7937.mp3.
+Error opening output files: Invalid argument
+
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "R:\Balakrishnan\1CP_Project\All_In_One_PDF Scan Pdf\Scan-PDF\video_processor\views.py", line 1242, in extract_audio_api
+    run_ffmpeg(cmd, timeout=600)
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+  File "R:\Balakrishnan\1CP_Project\All_In_One_PDF Scan Pdf\Scan-PDF\video_processor\ffmpeg_helpers.py", line 155, in run_ffmpeg
+    raise RuntimeError(f"FFmpeg execution error: {e}")
+RuntimeError: FFmpeg execution error: FFmpeg failed: [out#0/mp3 @ 0000018d8b279fc0] Output file does not contain any stream
+Error opening output file C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\56cebc60989c40d58d895d0172db7937.mp3.
+Error opening output files: Invalid argument
+
+INFO 2026-06-16 18:49:35,698 cleanup CleanupScheduler started
+INFO 2026-06-16 18:51:04,900 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 18:51:17,877 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 18:51:18,037 views Chunk status: upload_id=a6204860-0859-4911-b8a1-632913b5d7a6, received=1/13, complete=False, missing=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+INFO 2026-06-16 18:51:18,056 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 18:51:18,179 views Chunk status: upload_id=a6204860-0859-4911-b8a1-632913b5d7a6, received=2/13, complete=False, missing=[2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+INFO 2026-06-16 18:51:18,196 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 18:51:18,312 views Chunk status: upload_id=a6204860-0859-4911-b8a1-632913b5d7a6, received=3/13, complete=False, missing=[3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+INFO 2026-06-16 18:51:18,328 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 18:51:18,480 views Chunk status: upload_id=a6204860-0859-4911-b8a1-632913b5d7a6, received=4/13, complete=False, missing=[4, 5, 6, 7, 8, 9, 10, 11, 12]
+INFO 2026-06-16 18:51:18,503 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 18:51:18,621 views Chunk status: upload_id=a6204860-0859-4911-b8a1-632913b5d7a6, received=5/13, complete=False, missing=[5, 6, 7, 8, 9, 10, 11, 12]
+INFO 2026-06-16 18:51:18,637 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 18:51:18,751 views Chunk status: upload_id=a6204860-0859-4911-b8a1-632913b5d7a6, received=6/13, complete=False, missing=[6, 7, 8, 9, 10, 11, 12]
+INFO 2026-06-16 18:51:18,771 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 18:51:18,890 views Chunk status: upload_id=a6204860-0859-4911-b8a1-632913b5d7a6, received=7/13, complete=False, missing=[7, 8, 9, 10, 11, 12]
+INFO 2026-06-16 18:51:18,947 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 18:51:19,058 views Chunk status: upload_id=a6204860-0859-4911-b8a1-632913b5d7a6, received=8/13, complete=False, missing=[8, 9, 10, 11, 12]
+INFO 2026-06-16 18:51:19,076 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 18:51:19,209 views Chunk status: upload_id=a6204860-0859-4911-b8a1-632913b5d7a6, received=9/13, complete=False, missing=[9, 10, 11, 12]
+INFO 2026-06-16 18:51:19,228 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 18:51:19,352 views Chunk status: upload_id=a6204860-0859-4911-b8a1-632913b5d7a6, received=10/13, complete=False, missing=[10, 11, 12]
+INFO 2026-06-16 18:51:19,367 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 18:51:19,485 views Chunk status: upload_id=a6204860-0859-4911-b8a1-632913b5d7a6, received=11/13, complete=False, missing=[11, 12]
+INFO 2026-06-16 18:51:19,503 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 18:51:19,634 views Chunk status: upload_id=a6204860-0859-4911-b8a1-632913b5d7a6, received=12/13, complete=False, missing=[12]
+INFO 2026-06-16 18:51:19,652 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 18:51:19,758 views Chunk status: upload_id=a6204860-0859-4911-b8a1-632913b5d7a6, received=13/13, complete=True, missing=[]
+INFO 2026-06-16 18:51:19,759 views Assembling 13 chunks for upload_id=a6204860-0859-4911-b8a1-632913b5d7a6
+INFO 2026-06-16 18:51:20,207 views Assembly successful: C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\a6204860-0859-4911-b8a1-632913b5d7a6.mp4
+INFO 2026-06-16 18:51:20,220 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 18:51:20,225 views Assembly already complete for a6204860-0859-4911-b8a1-632913b5d7a6, returning existing file
+INFO 2026-06-16 18:51:20,250 views Using chunk-assembled file: C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\a6204860-0859-4911-b8a1-632913b5d7a6.mp4
+INFO 2026-06-16 18:51:20,291 ffmpeg_helpers FFmpeg command: C:\Users\1crore\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-8.1-full_build\bin\ffmpeg.EXE -y -hide_banner -loglevel error -t 17.6 -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\a6204860-0859-4911-b8a1-632913b5d7a6.mp4 -vn -c:a libmp3lame -b:a 192k -ar 44100 -ac 2 C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\4cc414e8d5c64b8d8b79607573b4fd73.mp3
+ERROR 2026-06-16 18:51:20,563 ffmpeg_helpers FFmpeg error (code 4294967274): [out#0/mp3 @ 000001f704ed9fc0] Output file does not contain any stream
+Error opening output file C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\4cc414e8d5c64b8d8b79607573b4fd73.mp3.
+Error opening output files: Invalid argument
+
+WARNING 2026-06-16 18:51:20,565 views Attempted to extract audio from a video with no audio track.
+INFO 2026-06-16 18:52:52,794 utils Cleanup: Removed 0 files, freed 0.0MB

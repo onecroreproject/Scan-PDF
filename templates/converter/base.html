@@ -177,7 +177,8 @@
         /* Ensure all mega menus are hidden by default and clickable on hover */
         #mega-menu-all-pdf,
         #mega-menu-image-tools,
-        #mega-menu-important-tools {
+        #mega-menu-important-tools,
+        #mega-menu-video-tools {
             visibility: hidden;
             opacity: 0;
             pointer-events: none;
@@ -188,7 +189,8 @@
 
         .group:hover>#mega-menu-all-pdf,
         .group:hover>#mega-menu-image-tools,
-        .group:hover>#mega-menu-important-tools {
+        .group:hover>#mega-menu-important-tools,
+        .group:hover>#mega-menu-video-tools {
             visibility: visible;
             opacity: 1;
             pointer-events: auto;
@@ -508,11 +510,129 @@
                             </div>
                         </div>
 
-                        <!-- Video Converter -->
-                        <a href="{% url 'video_processor:converter' %}"
-                            class="flex items-center gap-1.5 px-4 py-2 text-[14px] font-black text-surface-900 transition-all uppercase tracking-widest hover:text-brand-600">
-                            Video Converter
-                        </a>
+                        <!-- Video Tools Mega Menu -->
+                        <div class="relative group">
+                            <button
+                                class="flex items-center gap-1.5 px-4 py-2 text-[14px] font-black text-surface-900 transition-all uppercase tracking-widest hover:text-brand-600">
+                                Video Tools <i data-lucide="chevron-down"
+                                    class="w-4 h-4 transition-transform group-hover:rotate-180"></i>
+                            </button>
+                            <div id="mega-menu-video-tools"
+                                class="fixed top-[70px] left-1/2 -translate-x-1/2 w-[95vw] max-w-4xl bg-white border border-surface-100 shadow-mega rounded-3xl z-50 overflow-hidden transition-all duration-300 translate-y-2 group-hover:translate-y-0">
+                                <div class="p-8 grid grid-cols-2 md:grid-cols-3 gap-4">
+                                    <a href="{% url 'video_processor:converter' %}"
+                                        class="flex items-center gap-4 p-4 rounded-2xl hover:bg-brand-50/50 transition-all border border-surface-100 hover:border-brand-200 group/item">
+                                        <div class="w-12 h-12 rounded-2xl bg-red-50 flex items-center justify-center group-hover/item:bg-red-100 transition-colors">
+                                            <i data-lucide="refresh-cw" class="w-6 h-6 text-red-600"></i>
+                                        </div>
+                                        <div class="flex-1">
+                                            <p class="text-[13px] font-black text-surface-900 group-hover/item:text-brand-600">Video Converter</p>
+                                            <p class="text-[10px] text-surface-400 font-bold uppercase tracking-widest">MP4, AVI, MOV, MKV, WEBM</p>
+                                        </div>
+                                        <i data-lucide="chevron-right" class="w-5 h-5 text-surface-300 group-hover/item:translate-x-1 group-hover/item:text-brand-400 transition-all"></i>
+                                    </a>
+                                    <a href="{% url 'video_processor:image_to_video' %}"
+                                        class="flex items-center gap-4 p-4 rounded-2xl hover:bg-brand-50/50 transition-all border border-surface-100 hover:border-brand-200 group/item">
+                                        <div class="w-12 h-12 rounded-2xl bg-pink-50 flex items-center justify-center group-hover/item:bg-pink-100 transition-colors">
+                                            <i data-lucide="image" class="w-6 h-6 text-pink-600"></i>
+                                        </div>
+                                        <div class="flex-1">
+                                            <p class="text-[13px] font-black text-surface-900 group-hover/item:text-brand-600">Image to Video</p>
+                                            <p class="text-[10px] text-surface-400 font-bold uppercase tracking-widest">Slideshow creator</p>
+                                        </div>
+                                        <i data-lucide="chevron-right" class="w-5 h-5 text-surface-300 group-hover/item:translate-x-1 group-hover/item:text-brand-400 transition-all"></i>
+                                    </a>
+                                    <a href="{% url 'video_processor:video_editor' %}"
+                                        class="flex items-center gap-4 p-4 rounded-2xl hover:bg-brand-50/50 transition-all border border-surface-100 hover:border-brand-200 group/item">
+                                        <div class="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center group-hover/item:bg-blue-100 transition-colors">
+                                            <i data-lucide="scissors" class="w-6 h-6 text-blue-600"></i>
+                                        </div>
+                                        <div class="flex-1">
+                                            <p class="text-[13px] font-black text-surface-900 group-hover/item:text-brand-600">Video Editor</p>
+                                            <p class="text-[10px] text-surface-400 font-bold uppercase tracking-widest">Trim, cut, rotate, crop</p>
+                                        </div>
+                                        <i data-lucide="chevron-right" class="w-5 h-5 text-surface-300 group-hover/item:translate-x-1 group-hover/item:text-brand-400 transition-all"></i>
+                                    </a>
+                                    <a href="{% url 'video_processor:compressor' %}"
+                                        class="flex items-center gap-4 p-4 rounded-2xl hover:bg-brand-50/50 transition-all border border-surface-100 hover:border-brand-200 group/item">
+                                        <div class="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center group-hover/item:bg-emerald-100 transition-colors">
+                                            <i data-lucide="archive" class="w-6 h-6 text-emerald-600"></i>
+                                        </div>
+                                        <div class="flex-1">
+                                            <p class="text-[13px] font-black text-surface-900 group-hover/item:text-brand-600">Video Compressor</p>
+                                            <p class="text-[10px] text-surface-400 font-bold uppercase tracking-widest">Reduce file size</p>
+                                        </div>
+                                        <i data-lucide="chevron-right" class="w-5 h-5 text-surface-300 group-hover/item:translate-x-1 group-hover/item:text-brand-400 transition-all"></i>
+                                    </a>
+                                    <a href="{% url 'video_processor:merger' %}"
+                                        class="flex items-center gap-4 p-4 rounded-2xl hover:bg-brand-50/50 transition-all border border-surface-100 hover:border-brand-200 group/item">
+                                        <div class="w-12 h-12 rounded-2xl bg-cyan-50 flex items-center justify-center group-hover/item:bg-cyan-100 transition-colors">
+                                            <i data-lucide="combine" class="w-6 h-6 text-cyan-600"></i>
+                                        </div>
+                                        <div class="flex-1">
+                                            <p class="text-[13px] font-black text-surface-900 group-hover/item:text-brand-600">Video Merger</p>
+                                            <p class="text-[10px] text-surface-400 font-bold uppercase tracking-widest">Combine videos</p>
+                                        </div>
+                                        <i data-lucide="chevron-right" class="w-5 h-5 text-surface-300 group-hover/item:translate-x-1 group-hover/item:text-brand-400 transition-all"></i>
+                                    </a>
+                                    <a href="{% url 'video_processor:trimmer' %}"
+                                        class="flex items-center gap-4 p-4 rounded-2xl hover:bg-brand-50/50 transition-all border border-surface-100 hover:border-brand-200 group/item">
+                                        <div class="w-12 h-12 rounded-2xl bg-amber-50 flex items-center justify-center group-hover/item:bg-amber-100 transition-colors">
+                                            <i data-lucide="crop" class="w-6 h-6 text-amber-600"></i>
+                                        </div>
+                                        <div class="flex-1">
+                                            <p class="text-[13px] font-black text-surface-900 group-hover/item:text-brand-600">Video Trimmer</p>
+                                            <p class="text-[10px] text-surface-400 font-bold uppercase tracking-widest">Cut by time</p>
+                                        </div>
+                                        <i data-lucide="chevron-right" class="w-5 h-5 text-surface-300 group-hover/item:translate-x-1 group-hover/item:text-brand-400 transition-all"></i>
+                                    </a>
+                                    <a href="{% url 'video_processor:gif_maker' %}"
+                                        class="flex items-center gap-4 p-4 rounded-2xl hover:bg-brand-50/50 transition-all border border-surface-100 hover:border-brand-200 group/item">
+                                        <div class="w-12 h-12 rounded-2xl bg-fuchsia-50 flex items-center justify-center group-hover/item:bg-fuchsia-100 transition-colors">
+                                            <i data-lucide="image" class="w-6 h-6 text-fuchsia-600"></i>
+                                        </div>
+                                        <div class="flex-1">
+                                            <p class="text-[13px] font-black text-surface-900 group-hover/item:text-brand-600">GIF Maker</p>
+                                            <p class="text-[10px] text-surface-400 font-bold uppercase tracking-widest">Video to GIF</p>
+                                        </div>
+                                        <i data-lucide="chevron-right" class="w-5 h-5 text-surface-300 group-hover/item:translate-x-1 group-hover/item:text-brand-400 transition-all"></i>
+                                    </a>
+                                    <a href="{% url 'video_processor:audio_extractor' %}"
+                                        class="flex items-center gap-4 p-4 rounded-2xl hover:bg-brand-50/50 transition-all border border-surface-100 hover:border-brand-200 group/item">
+                                        <div class="w-12 h-12 rounded-2xl bg-violet-50 flex items-center justify-center group-hover/item:bg-violet-100 transition-colors">
+                                            <i data-lucide="music" class="w-6 h-6 text-violet-600"></i>
+                                        </div>
+                                        <div class="flex-1">
+                                            <p class="text-[13px] font-black text-surface-900 group-hover/item:text-brand-600">Audio Extractor</p>
+                                            <p class="text-[10px] text-surface-400 font-bold uppercase tracking-widest">MP3, WAV, AAC</p>
+                                        </div>
+                                        <i data-lucide="chevron-right" class="w-5 h-5 text-surface-300 group-hover/item:translate-x-1 group-hover/item:text-brand-400 transition-all"></i>
+                                    </a>
+                                    <a href="{% url 'video_processor:watermark' %}"
+                                        class="flex items-center gap-4 p-4 rounded-2xl hover:bg-brand-50/50 transition-all border border-surface-100 hover:border-brand-200 group/item">
+                                        <div class="w-12 h-12 rounded-2xl bg-teal-50 flex items-center justify-center group-hover/item:bg-teal-100 transition-colors">
+                                            <i data-lucide="stamp" class="w-6 h-6 text-teal-600"></i>
+                                        </div>
+                                        <div class="flex-1">
+                                            <p class="text-[13px] font-black text-surface-900 group-hover/item:text-brand-600">Watermark Tool</p>
+                                            <p class="text-[10px] text-surface-400 font-bold uppercase tracking-widest">Text or image</p>
+                                        </div>
+                                        <i data-lucide="chevron-right" class="w-5 h-5 text-surface-300 group-hover/item:translate-x-1 group-hover/item:text-brand-400 transition-all"></i>
+                                    </a>
+                                    <a href="{% url 'video_processor:subtitle_overlay' %}"
+                                        class="flex items-center gap-4 p-4 rounded-2xl hover:bg-brand-50/50 transition-all border border-surface-100 hover:border-brand-200 group/item">
+                                        <div class="w-12 h-12 rounded-2xl bg-sky-50 flex items-center justify-center group-hover/item:bg-sky-100 transition-colors">
+                                            <i data-lucide="subtitles" class="w-6 h-6 text-sky-600"></i>
+                                        </div>
+                                        <div class="flex-1">
+                                            <p class="text-[13px] font-black text-surface-900 group-hover/item:text-brand-600">Subtitle Overlay</p>
+                                            <p class="text-[10px] text-surface-400 font-bold uppercase tracking-widest">Burn SRT/VTT/ASS</p>
+                                        </div>
+                                        <i data-lucide="chevron-right" class="w-5 h-5 text-surface-300 group-hover/item:translate-x-1 group-hover/item:text-brand-400 transition-all"></i>
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
 
                         <!-- Important Tools (Styled like Image Tools mega) -->
                         <div class="relative group">
@@ -655,9 +775,49 @@
                         class="flex items-center gap-3 px-4 py-3 rounded-2xl text-surface-700 hover:text-brand-600 hover:bg-brand-50/60 transition-all font-bold text-sm">
                         <i data-lucide="grid-3x3" class="w-5 h-5"></i>All Tools
                     </a>
+                    <!-- Mobile Video Tools -->
+                    <div class="px-4 py-2 border-b border-surface-50 mt-4 mb-2">
+                        <span class="text-[10px] font-bold text-surface-400 uppercase tracking-widest">Video Tools</span>
+                    </div>
                     <a href="{% url 'video_processor:converter' %}"
                         class="flex items-center gap-3 px-4 py-3 rounded-2xl text-surface-700 hover:text-brand-600 hover:bg-brand-50/60 transition-all font-bold text-sm">
-                        <i data-lucide="video" class="w-5 h-5"></i>Video Converter
+                        <i data-lucide="refresh-cw" class="w-5 h-5 text-red-500"></i>Video Converter
+                    </a>
+                    <a href="{% url 'video_processor:image_to_video' %}"
+                        class="flex items-center gap-3 px-4 py-3 rounded-2xl text-surface-700 hover:text-brand-600 hover:bg-brand-50/60 transition-all font-bold text-sm">
+                        <i data-lucide="image" class="w-5 h-5 text-pink-500"></i>Image to Video
+                    </a>
+                    <a href="{% url 'video_processor:video_editor' %}"
+                        class="flex items-center gap-3 px-4 py-3 rounded-2xl text-surface-700 hover:text-brand-600 hover:bg-brand-50/60 transition-all font-bold text-sm">
+                        <i data-lucide="scissors" class="w-5 h-5 text-blue-500"></i>Video Editor
+                    </a>
+                    <a href="{% url 'video_processor:compressor' %}"
+                        class="flex items-center gap-3 px-4 py-3 rounded-2xl text-surface-700 hover:text-brand-600 hover:bg-brand-50/60 transition-all font-bold text-sm">
+                        <i data-lucide="archive" class="w-5 h-5 text-emerald-500"></i>Video Compressor
+                    </a>
+                    <a href="{% url 'video_processor:merger' %}"
+                        class="flex items-center gap-3 px-4 py-3 rounded-2xl text-surface-700 hover:text-brand-600 hover:bg-brand-50/60 transition-all font-bold text-sm">
+                        <i data-lucide="combine" class="w-5 h-5 text-cyan-500"></i>Video Merger
+                    </a>
+                    <a href="{% url 'video_processor:trimmer' %}"
+                        class="flex items-center gap-3 px-4 py-3 rounded-2xl text-surface-700 hover:text-brand-600 hover:bg-brand-50/60 transition-all font-bold text-sm">
+                        <i data-lucide="crop" class="w-5 h-5 text-amber-500"></i>Video Trimmer
+                    </a>
+                    <a href="{% url 'video_processor:gif_maker' %}"
+                        class="flex items-center gap-3 px-4 py-3 rounded-2xl text-surface-700 hover:text-brand-600 hover:bg-brand-50/60 transition-all font-bold text-sm">
+                        <i data-lucide="image" class="w-5 h-5 text-fuchsia-500"></i>GIF Maker
+                    </a>
+                    <a href="{% url 'video_processor:audio_extractor' %}"
+                        class="flex items-center gap-3 px-4 py-3 rounded-2xl text-surface-700 hover:text-brand-600 hover:bg-brand-50/60 transition-all font-bold text-sm">
+                        <i data-lucide="music" class="w-5 h-5 text-violet-500"></i>Audio Extractor
+                    </a>
+                    <a href="{% url 'video_processor:watermark' %}"
+                        class="flex items-center gap-3 px-4 py-3 rounded-2xl text-surface-700 hover:text-brand-600 hover:bg-brand-50/60 transition-all font-bold text-sm">
+                        <i data-lucide="stamp" class="w-5 h-5 text-teal-500"></i>Watermark Tool
+                    </a>
+                    <a href="{% url 'video_processor:subtitle_overlay' %}"
+                        class="flex items-center gap-3 px-4 py-3 rounded-2xl text-surface-700 hover:text-brand-600 hover:bg-brand-50/60 transition-all font-bold text-sm">
+                        <i data-lucide="subtitles" class="w-5 h-5 text-sky-500"></i>Subtitle Overlay
                     </a>
 
                     <!-- Mobile Important Tools -->
