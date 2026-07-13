@@ -94,13 +94,10 @@ def create_cleanup_response(file_path, content_type=None, filename=None):
         import mimetypes
         content_type, _ = mimetypes.guess_type(file_path)
         content_type = content_type or 'application/octet-stream'
-    
-    # Choose the starting point for formatting: passed filename or the disk name
-    raw_name = filename or os.path.basename(file_path)
-    
-    # Use the formatting logic from utils
+
     from .utils import format_download_name
-    final_filename = format_download_name(raw_name)
+
+    final_filename = format_download_name(filename or os.path.basename(file_path), file_path)
 
     response = FileCleanupResponse(file_path, content_type=content_type)
     response['Content-Disposition'] = f'attachment; filename="{final_filename}"'
@@ -1484,27 +1481,6 @@ def convert_file(request, tool_slug):
             return JsonResponse({'success': True, 'results': results})
         except Exception as e:
             return JsonResponse({'success': False, 'error': str(e)}, status=500)
-
-    # ── AI: Image/Text to Video ──
-    if tool_slug == 'image-to-video':
-        prompt = request.POST.get('prompt')
-        if not prompt:
-            return JsonResponse({'error': 'Please provide a prompt for video generation.'}, status=400)
-        
-        uploaded_file = request.FILES.get('file')
-        input_path = None
-        if uploaded_file:
-            input_path = save_uploaded_file(uploaded_file)
-        
-        try:
-            output_path = generate_video(prompt, input_path=input_path, original_name=uploaded_file.name if uploaded_file else "gen_video")
-            
-            if input_path and os.path.exists(input_path):
-                os.remove(input_path)
-                
-            return create_cleanup_response(output_path, content_type='video/mp4')
-        except Exception as e:
-            return JsonResponse({'error': str(e)}, status=500)
 
     # ── AI: Story Generator ──
     if tool_slug == 'story-generator':

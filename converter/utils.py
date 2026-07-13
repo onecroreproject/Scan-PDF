@@ -5,6 +5,7 @@ Each function takes an input file path and returns the output file path.
 import os
 import io
 import tempfile
+import zipfile
 from pathlib import Path
 
 from django.conf import settings
@@ -31,17 +32,29 @@ def save_uploaded_file(uploaded_file):
     ext = os.path.splitext(uploaded_file.name)[1]
     # Use UUID to prevent name collisions and keep it temporary
     file_path = os.path.join(upload_dir, f"{uuid.uuid4().hex}{ext}")
+
+    # Some uploads arrive with the stream already advanced; reset to the start
+    # so the full file is written reliably.
+    if hasattr(uploaded_file, 'seek'):
+        try:
+            uploaded_file.seek(0)
+        except (AttributeError, OSError, ValueError):
+            pass
+
     with open(file_path, 'wb+') as dest:
         for chunk in uploaded_file.chunks():
             dest.write(chunk)
     return file_path
 
 
-def format_download_name(name):
+def format_download_name(name, output_path=None):
     """
-    Return the original filename unchanged.
-    Preserves the exact uploaded/stored filename with no modification.
+    Return a download filename that reflects the converted output when available.
+    If an output path is supplied, use its basename; otherwise fall back to the
+    original name unchanged.
     """
+    if output_path:
+        return os.path.basename(output_path)
     return os.path.basename(name)
 
 
@@ -57,9 +70,18 @@ def get_output_path(original_name, new_extension, suffix=''):
     # Use the original name as the base for readability
     base_name = Path(original_name).stem
     
+    # Strip any existing "ScanPDF_" prefixes to prevent accumulation
+    while base_name.startswith("ScanPDF_"):
+        base_name = base_name[8:]
+    
     # Sanitize base_name for the file system (remove spaces, etc.)
     base_name = re.sub(r'[^\w\.\-]', '_', base_name)
     base_name = re.sub(r'_{2,}', '_', base_name).strip('_')
+    
+    # Truncate base_name to prevent 'Path too long' errors on Windows (MAX_PATH is 260)
+    # A limit of 50 chars for the base name leaves plenty of room for dir path and suffixes.
+    if len(base_name) > 50:
+        base_name = base_name[:50].strip('_')
     
     ext = new_extension if new_extension.startswith('.') else f".{new_extension}"
     
@@ -67,7 +89,6 @@ def get_output_path(original_name, new_extension, suffix=''):
     unique_suffix = uuid.uuid4().hex[:4].upper()
     
     # Format: ScanPDF_OriginalName_Suffix_UNIQUE.ext
-    # Example: ScanPDF_MyFile_merged_A1B2.pdf
     output_name = f"ScanPDF_{base_name}{suffix}_{unique_suffix}{ext}"
     
     return os.path.join(output_dir, output_name)
@@ -78,15 +99,50 @@ def get_output_path(original_name, new_extension, suffix=''):
 # ═══════════════════════════════════════════════════════════════
 def convert_word_to_pdf(input_path, original_name):
     """Convert a Word document (.docx) to PDF with professional multi-page support."""
-    import mammoth
+    import logging
+    logger = logging.getLogger(__name__)
+
+    if not input_path or not os.path.exists(input_path):
+        raise Exception("The uploaded Word file could not be saved correctly.")
+
+    file_size = os.path.getsize(input_path)
+    if file_size == 0:
+        raise Exception("The uploaded Word file is empty.")
+
+    # Check file extension to give better error messages
+    file_ext = os.path.splitext(original_name)[1].lower() if original_name else ''
+    
+    # Read the first few bytes to detect file type by magic bytes
+    with open(input_path, 'rb') as f:
+        header = f.read(8)
+    
+    is_zip = zipfile.is_zipfile(input_path)
+    is_ole = header[:8] == b'\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1'  # OLE2 / .doc format
+    
+    if is_ole:
+        raise Exception(
+            "The uploaded file appears to be an older .doc format (Word 97-2003). "
+            "Please save it as .docx (Word 2007+) first, then upload again."
+        )
+    
+    if not is_zip and not is_ole:
+        # File is neither a ZIP (.docx) nor OLE (.doc) — might be corrupted or wrong type
+        logger.warning(
+            f"File '{original_name}' (size={file_size}) failed zip check. "
+            f"Header bytes: {header[:8].hex()}. Attempting conversion anyway..."
+        )
     
     output_path = get_output_path(original_name, 'pdf')
 
-    # Convert DOCX to HTML using Mammoth for best semantic structure and fidelity
+    # ── Attempt 1: Mammoth + WeasyPrint (best quality) ──
     try:
+        import mammoth
         with open(input_path, "rb") as docx_file:
             result = mammoth.convert_to_html(docx_file)
             body_html = result.value
+            
+            if not body_html or not body_html.strip():
+                raise Exception("Mammoth produced empty HTML output")
             
             # Add professional styles and Ensure A4 multi-page pagination
             html_content = f"""
@@ -123,19 +179,32 @@ def convert_word_to_pdf(input_path, original_name):
             # Use WeasyPrint for high-quality multi-page PDF generation
             import weasyprint
             weasyprint.HTML(string=html_content).write_pdf(output_path)
-            return output_path
+            
+            if os.path.exists(output_path) and os.path.getsize(output_path) > 0:
+                logger.info(f"Word→PDF via Mammoth+WeasyPrint succeeded for '{original_name}'")
+                return output_path
+            else:
+                raise Exception("WeasyPrint produced an empty PDF")
             
     except Exception as e:
-        # Check if it was weasyprint failure or file error
-        pass
+        logger.warning(f"Mammoth+WeasyPrint failed for '{original_name}': {e}")
+        # Continue to fallback
 
-    # Fallback to a simpler manual pagination if weasyprint/mammoth fails
+    # ── Attempt 2: python-docx + PyMuPDF fallback ──
     try:
         from docx import Document
         import fitz
         
         doc = Document(input_path)
-        pdf_doc = fitz.open()
+        try:
+            import pymupdf as fitz
+        except ImportError:
+            import fitz
+            
+        try:
+            pdf_doc = fitz.Document()
+        except AttributeError:
+            pdf_doc = fitz.open()
         page = pdf_doc.new_page()
         y_position = 72
         
@@ -182,9 +251,95 @@ def convert_word_to_pdf(input_path, original_name):
 
         pdf_doc.save(output_path)
         pdf_doc.close()
-        return output_path
+        
+        if os.path.exists(output_path) and os.path.getsize(output_path) > 0:
+            logger.info(f"Word→PDF via python-docx+PyMuPDF fallback succeeded for '{original_name}'")
+            return output_path
+        else:
+            raise Exception("Fallback produced an empty PDF")
     except Exception as e:
-        raise Exception(f"Failed to convert Word to PDF: {str(e)}")
+        logger.warning(f"python-docx fallback failed for '{original_name}': {e}")
+        # Continue to Attempt 3
+
+    # ── Attempt 3: Ultimate Fallbacks (Handling incorrect extensions) ──
+    try:
+        # Check if it's actually already a PDF masquerading as a docx
+        if header.startswith(b'%PDF'):
+            import shutil
+            shutil.copy2(input_path, output_path)
+            logger.info(f"File '{original_name}' was actually a PDF. Copied directly.")
+            return output_path
+            
+        # Check if it's an HTML or RTF or plain text file
+        # We can try to decode it as text and render it
+        text_content = None
+        for encoding in ['utf-8', 'latin-1', 'cp1252']:
+            try:
+                with open(input_path, 'r', encoding=encoding) as f:
+                    text_content = f.read()
+                # If we read it successfully and it's mostly printable, consider it text
+                # We'll reject if it contains too many null bytes (binary)
+                if text_content.count('\x00') < 5:
+                    break
+                else:
+                    text_content = None
+            except Exception:
+                continue
+                
+        if text_content:
+            import weasyprint
+            import html
+            
+            # If it looks like HTML, just render it directly
+            if '<html' in text_content.lower() or '<body' in text_content.lower():
+                weasyprint.HTML(string=text_content).write_pdf(output_path)
+            else:
+                # Wrap plain text in a basic preformatted HTML template
+                escaped_text = html.escape(text_content)
+                # Quick formatting for basic text
+                escaped_text = escaped_text.replace('\n', '<br>')
+                
+                html_content = f"""
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <meta charset="utf-8">
+                    <style>
+                        @page {{ size: A4; margin: 2.5cm; }}
+                        body {{
+                            font-family: monospace, 'Courier New', Courier;
+                            font-size: 10pt;
+                            line-height: 1.5;
+                            color: #1a1a1a;
+                            white-space: pre-wrap;
+                        }}
+                    </style>
+                </head>
+                <body>
+                    {escaped_text}
+                </body>
+                </html>
+                """
+                weasyprint.HTML(string=html_content).write_pdf(output_path)
+                
+            if os.path.exists(output_path) and os.path.getsize(output_path) > 0:
+                logger.info(f"Word→PDF via text fallback succeeded for '{original_name}'")
+                return output_path
+
+    except Exception as fallback_e:
+        logger.warning(f"Ultimate fallbacks failed: {fallback_e}")
+
+    # If everything fails, raise the informative error
+    if os.path.exists(output_path):
+        try:
+            os.remove(output_path)
+        except OSError:
+            pass
+    raise Exception(
+        f"Failed to convert Word to PDF. The file '{original_name}' may be corrupted or not a valid .docx document. "
+        f"If it's an older .doc file, please open it in Word and use 'Save As' -> .docx. "
+        f"(Debug info: {str(e)})"
+    )
 
 
 def merge_word_files(input_paths, original_name):
@@ -192,23 +347,93 @@ def merge_word_files(input_paths, original_name):
     from docx import Document
     if not input_paths: return None
     
-    # Use the first document as base
-    master = Document(input_paths[0])
+    # Reorder the files: e.g., 1, 2, 3 becomes 3, 1, 2 (right-shift by 1)
+    if len(input_paths) > 1:
+        input_paths = [input_paths[-1]] + input_paths[:-1]
     
-    import copy
-    for path in input_paths[1:]:
-        sub_doc = Document(path)
-        # Add page break
-        master.add_page_break()
-        for element in sub_doc.element.body:
-            tag = element.tag
-            if tag.endswith('sectPr'):
-                continue
-            master.element.body.append(element)
+    try:
+        # Check if first doc is valid docx, otherwise start with a blank doc
+        try:
+            master = Document(input_paths[0])
+            start_idx = 1
+        except Exception:
+            master = Document()
+            start_idx = 0
             
-    output_path = get_output_path(original_name, 'docx', '_merged')
-    master.save(output_path)
-    return output_path
+        import copy
+        for idx, path in enumerate(input_paths[start_idx:]):
+            if idx > 0 or start_idx == 0:
+                master.add_page_break()
+                
+            try:
+                sub_doc = Document(path)
+                for element in sub_doc.element.body:
+                    tag = element.tag
+                    if tag.endswith('sectPr'):
+                        continue
+                    # Deepcopy is crucial to avoid corrupting the XML tree
+                    master.element.body.append(copy.deepcopy(element))
+            except Exception as doc_err:
+                # Fallback: Try reading as plain text/HTML and append paragraphs
+                text_content = None
+                for encoding in ['utf-8', 'latin-1', 'cp1252']:
+                    try:
+                        with open(path, 'r', encoding=encoding, errors='ignore') as f:
+                            text_content = f.read()
+                        if text_content.count('\x00') < 5:
+                            break
+                        else:
+                            text_content = None
+                    except Exception:
+                        continue
+                
+                if text_content:
+                    # Strip basic HTML tags if any
+                    import re
+                    clean_text = re.sub(r'<[^>]+>', '', text_content)
+                    lines = [line.strip() for line in clean_text.split('\n')]
+                    for line in lines:
+                        if line:
+                            master.add_paragraph(line)
+                else:
+                    # If it's a binary file we completely can't read, try PDF extraction, then just append a warning
+                    try:
+                        try:
+                            import pymupdf as fitz
+                        except ImportError:
+                            import fitz
+                        
+                        is_pdf = False
+                        try:
+                            with open(path, 'rb') as f:
+                                is_pdf = f.read(4).startswith(b'%PDF')
+                        except:
+                            pass
+                            
+                        if is_pdf:
+                            if not hasattr(fitz, 'open') and hasattr(fitz, 'Document'):
+                                fitz.open = fitz.Document
+                            pdf_doc = fitz.open(path)
+                            for page in pdf_doc:
+                                text = page.get_text()
+                                if text:
+                                    for line in text.split('\n'):
+                                        if line.strip():
+                                            master.add_paragraph(line.strip())
+                            pdf_doc.close()
+                        else:
+                            master.add_paragraph(f"[Warning: Could not merge file. It appears to be a corrupted or unsupported binary format (e.g. older .doc).]")
+                    except Exception as e:
+                        master.add_paragraph(f"[Warning: Could not merge file due to extraction error: {str(e)}]")
+                        
+        output_path = get_output_path(original_name, 'docx', '_merged')
+        master.save(output_path)
+        return output_path
+    except Exception as e:
+        raise Exception(
+            f"Failed to merge Word documents. One or more files may be corrupted or not valid .docx documents. "
+            f"If you uploaded an older .doc file, please re-save it as .docx. (Debug info: {str(e)})"
+        )
 
 
 
@@ -311,12 +536,10 @@ def _extract_shape_fill_css(shape):
 
 
 def convert_pptx_to_pdf(input_path, original_name):
-    """Convert a PowerPoint presentation (.pptx) to PDF with high-quality rendering.
-
-    Strategy: build a multi-page HTML document where every slide is a fixed-size
-    CSS page with shapes positioned absolutely at their original coordinates,
-    then render to PDF with WeasyPrint for best quality.
-    """
+    """Convert a PowerPoint presentation (.pptx) to PDF with high-quality rendering."""
+    import logging
+    logger = logging.getLogger(__name__)
+    
     from pptx import Presentation
     from pptx.util import Emu
     import base64
@@ -324,7 +547,62 @@ def convert_pptx_to_pdf(input_path, original_name):
 
     output_path = get_output_path(original_name, 'pdf')
 
-    prs = Presentation(input_path)
+    try:
+        prs = Presentation(input_path)
+    except Exception as e:
+        logger.warning(f"Failed to open '{original_name}' as PPTX: {e}")
+        # ── Ultimate Fallbacks for invalid PPTX files ──
+        try:
+            with open(input_path, 'rb') as f:
+                header = f.read(8)
+            # Check if it's actually already a PDF masquerading as a pptx
+            if header.startswith(b'%PDF'):
+                import shutil
+                shutil.copy2(input_path, output_path)
+                logger.info(f"File '{original_name}' was actually a PDF. Copied directly.")
+                return output_path
+                
+            # Check if it's plain text or HTML
+            text_content = None
+            for encoding in ['utf-8', 'latin-1', 'cp1252']:
+                try:
+                    with open(input_path, 'r', encoding=encoding) as f:
+                        text_content = f.read()
+                    if text_content.count('\x00') < 5:
+                        break
+                    else:
+                        text_content = None
+                except Exception:
+                    continue
+                    
+            if text_content:
+                import weasyprint
+                import html
+                if '<html' in text_content.lower() or '<body' in text_content.lower():
+                    weasyprint.HTML(string=text_content).write_pdf(output_path)
+                else:
+                    escaped_text = html.escape(text_content).replace('\n', '<br>')
+                    html_content = f"""
+                    <!DOCTYPE html>
+                    <html><head><meta charset="utf-8">
+                    <style>@page {{ size: A4 landscape; margin: 2.5cm; }}
+                    body {{ font-family: monospace, sans-serif; font-size: 10pt; white-space: pre-wrap; }}
+                    </style></head><body>{escaped_text}</body></html>
+                    """
+                    weasyprint.HTML(string=html_content).write_pdf(output_path)
+                    
+                if os.path.exists(output_path) and os.path.getsize(output_path) > 0:
+                    logger.info(f"PPTX→PDF via text fallback succeeded for '{original_name}'")
+                    return output_path
+        except Exception as fallback_e:
+            logger.warning(f"PPTX ultimate fallbacks failed: {fallback_e}")
+            
+        raise Exception(
+            f"Failed to convert PowerPoint to PDF. The file '{original_name}' may be corrupted or not a valid .pptx document. "
+            f"If it's an older .ppt file, please open it in PowerPoint and use 'Save As' -> .pptx. "
+            f"(Debug info: {str(e)})"
+        )
+
     slide_w_emu = prs.slide_width or Emu(9144000)   # 10 in
     slide_h_emu = prs.slide_height or Emu(6858000)  # 7.5 in
     slide_w_px = _emu_to_px(slide_w_emu)
@@ -521,7 +799,15 @@ def convert_pptx_to_pdf(input_path, original_name):
         tmp_html.close()
 
         # Fallback: manual text extraction when neither renderer works
-        pdf_doc = fitz.open()
+        try:
+            import pymupdf as fitz
+        except ImportError:
+            import fitz
+            
+        try:
+            pdf_doc = fitz.Document()
+        except AttributeError:
+            pdf_doc = fitz.open()
 
         page_w_pt = slide_w_emu / 914400 * 72
         page_h_pt = slide_h_emu / 914400 * 72
@@ -654,20 +940,71 @@ def _openpyxl_color_to_hex(color):
 
 
 def convert_excel_to_pdf(input_path, original_name):
-    """Convert an Excel spreadsheet (.xlsx) to PDF with high-quality formatting.
-
-    Strategy: read cell-level formatting via openpyxl (background colours, fonts,
-    alignment, borders, merged cells, column widths) and build a richly-styled
-    HTML table that mirrors the spreadsheet's visual appearance, then render to
-    PDF with WeasyPrint.
-    """
+    """Convert an Excel spreadsheet (.xlsx) to PDF with high-quality formatting."""
+    import logging
+    logger = logging.getLogger(__name__)
+    
     import html as html_mod
     from openpyxl import load_workbook
     from openpyxl.utils import get_column_letter
 
     output_path = get_output_path(original_name, 'pdf')
 
-    wb = load_workbook(input_path, data_only=True)
+    try:
+        wb = load_workbook(input_path, data_only=True)
+    except Exception as e:
+        logger.warning(f"Failed to open '{original_name}' as XLSX: {e}")
+        # ── Ultimate Fallbacks for invalid XLSX files ──
+        try:
+            with open(input_path, 'rb') as f:
+                header = f.read(8)
+            # Check if it's actually already a PDF masquerading as a xlsx
+            if header.startswith(b'%PDF'):
+                import shutil
+                shutil.copy2(input_path, output_path)
+                logger.info(f"File '{original_name}' was actually a PDF. Copied directly.")
+                return output_path
+                
+            # Check if it's plain text (like CSV) or HTML
+            text_content = None
+            for encoding in ['utf-8', 'latin-1', 'cp1252']:
+                try:
+                    with open(input_path, 'r', encoding=encoding) as f:
+                        text_content = f.read()
+                    if text_content.count('\x00') < 5:
+                        break
+                    else:
+                        text_content = None
+                except Exception:
+                    continue
+                    
+            if text_content:
+                import weasyprint
+                import html
+                if '<html' in text_content.lower() or '<body' in text_content.lower():
+                    weasyprint.HTML(string=text_content).write_pdf(output_path)
+                else:
+                    escaped_text = html.escape(text_content).replace('\n', '<br>')
+                    html_content = f"""
+                    <!DOCTYPE html>
+                    <html><head><meta charset="utf-8">
+                    <style>@page {{ size: A4 landscape; margin: 2.5cm; }}
+                    body {{ font-family: monospace, sans-serif; font-size: 10pt; white-space: pre-wrap; }}
+                    </style></head><body>{escaped_text}</body></html>
+                    """
+                    weasyprint.HTML(string=html_content).write_pdf(output_path)
+                    
+                if os.path.exists(output_path) and os.path.getsize(output_path) > 0:
+                    logger.info(f"XLSX→PDF via text fallback succeeded for '{original_name}'")
+                    return output_path
+        except Exception as fallback_e:
+            logger.warning(f"XLSX ultimate fallbacks failed: {fallback_e}")
+            
+        raise Exception(
+            f"Failed to convert Excel to PDF. The file '{original_name}' may be corrupted or not a valid .xlsx document. "
+            f"If it's an older .xls file or CSV, please open it in Excel and use 'Save As' -> .xlsx. "
+            f"(Debug info: {str(e)})"
+        )
 
     # Decide page orientation: landscape when any sheet has many columns
     use_landscape = False
@@ -907,7 +1244,15 @@ def convert_excel_to_pdf(input_path, original_name):
         import fitz
         import pandas as pd
 
-        pdf_doc = fitz.open()
+        try:
+            import pymupdf as fitz
+        except ImportError:
+            import fitz
+            
+        try:
+            pdf_doc = fitz.Document()
+        except AttributeError:
+            pdf_doc = fitz.open()
 
         for ws in wb.worksheets:
             if ws.max_row is None or ws.max_row < 1:
@@ -1036,7 +1381,12 @@ def convert_html_to_pdf(input_path, original_name, url=None):
     try:
         from html2image import Html2Image
         import uuid
-        import fitz
+        try:
+            import pymupdf as fitz
+        except ImportError:
+            import fitz
+        if not hasattr(fitz, 'open') and hasattr(fitz, 'Document'):
+            fitz.open = fitz.Document
 
         # Prepare a temporary high-res screenshot
         _, output_dir = ensure_media_dirs()
@@ -1083,7 +1433,13 @@ def convert_html_to_pdf(input_path, original_name, url=None):
 
     # ── Final Fallback: Simple text-based reconstruction ────
     try:
-        import fitz, re
+        try:
+            import pymupdf as fitz
+        except ImportError:
+            import fitz
+        if not hasattr(fitz, 'open') and hasattr(fitz, 'Document'):
+            fitz.open = fitz.Document
+        import re
         clean = re.sub(r'<[^>]+>', '\n', html_content)
         clean = re.sub(r'\n{3,}', '\n\n', clean)
         lines = [l.strip() for l in clean.split('\n') if l.strip()]
@@ -1122,7 +1478,12 @@ def convert_html_to_pdf(input_path, original_name, url=None):
 # ═══════════════════════════════════════════════════════════════
 def convert_pdf_to_image(input_path, original_name, image_format='png'):
     """Convert a PDF to images (one image per page). Returns a zip if multiple pages."""
-    import fitz  # PyMuPDF
+    try:
+        import pymupdf as fitz
+    except ImportError:
+        import fitz
+    if not hasattr(fitz, 'open') and hasattr(fitz, 'Document'):
+        fitz.open = fitz.Document
     import zipfile
 
     _, output_dir = ensure_media_dirs()
@@ -1206,7 +1567,12 @@ def convert_pdf_to_word(input_path, original_name):
 
     # ── Fallback: PyMuPDF + python-docx ─────────────────
     try:
-        import fitz
+        try:
+            import pymupdf as fitz
+        except ImportError:
+            import fitz
+        if not hasattr(fitz, 'open') and hasattr(fitz, 'Document'):
+            fitz.open = fitz.Document
         from docx import Document
         from docx.shared import Pt, Inches, RGBColor
         from docx.enum.text import WD_ALIGN_PARAGRAPH
@@ -1301,7 +1667,12 @@ def convert_pdf_to_pptx(input_path, original_name):
     output_path = get_output_path(original_name, 'pptx')
 
     try:
-        import fitz
+        try:
+            import pymupdf as fitz
+        except ImportError:
+            import fitz
+        if not hasattr(fitz, 'open') and hasattr(fitz, 'Document'):
+            fitz.open = fitz.Document
         from pptx import Presentation
         from pptx.util import Inches, Pt, Emu
         from pptx.dml.color import RGBColor as PptxRGBColor
@@ -1580,7 +1951,12 @@ def convert_pdf_to_excel(input_path, original_name):
 # ═══════════════════════════════════════════════════════════════
 def merge_pdfs(input_paths, original_name):
     """Merge multiple PDF files into a single PDF."""
-    import fitz
+    try:
+        import pymupdf as fitz
+    except ImportError:
+        import fitz
+    if not hasattr(fitz, 'open') and hasattr(fitz, 'Document'):
+        fitz.open = fitz.Document
 
     _, output_dir = ensure_media_dirs()
     base_name = Path(original_name).stem
@@ -1602,7 +1978,12 @@ def merge_pdfs(input_paths, original_name):
 # ═══════════════════════════════════════════════════════════════
 def split_pdf(input_path, original_name, split_mode='each', page_ranges=None):
     """Split a PDF into individual pages or custom ranges. Returns a zip."""
-    import fitz
+    try:
+        import pymupdf as fitz
+    except ImportError:
+        import fitz
+    if not hasattr(fitz, 'open') and hasattr(fitz, 'Document'):
+        fitz.open = fitz.Document
     import zipfile
 
     _, output_dir = ensure_media_dirs()
@@ -1661,7 +2042,12 @@ def split_pdf(input_path, original_name, split_mode='each', page_ranges=None):
 # ═══════════════════════════════════════════════════════════════
 def compress_pdf(input_path, original_name):
     """Compress a PDF file aggressively but extremely fast by caching image xrefs."""
-    import fitz
+    try:
+        import pymupdf as fitz
+    except ImportError:
+        import fitz
+    if not hasattr(fitz, 'open') and hasattr(fitz, 'Document'):
+        fitz.open = fitz.Document
 
     output_path = get_output_path(original_name, 'pdf', suffix='_compressed')
     pdf = fitz.open(input_path)
@@ -1727,7 +2113,12 @@ def remove_pdf_pages(input_path, original_name, pages_to_remove):
 
     pages_to_remove: comma-separated string like '1,3,5-7'
     """
-    import fitz
+    try:
+        import pymupdf as fitz
+    except ImportError:
+        import fitz
+    if not hasattr(fitz, 'open') and hasattr(fitz, 'Document'):
+        fitz.open = fitz.Document
 
     output_path = get_output_path(original_name, 'pdf', suffix='_trimmed')
 
@@ -1772,7 +2163,12 @@ def extract_pdf_pages(input_path, original_name, pages_to_extract):
 
     pages_to_extract: comma-separated string like '1,3,5-7'
     """
-    import fitz
+    try:
+        import pymupdf as fitz
+    except ImportError:
+        import fitz
+    if not hasattr(fitz, 'open') and hasattr(fitz, 'Document'):
+        fitz.open = fitz.Document
 
     output_path = get_output_path(original_name, 'pdf', suffix='_extracted')
 
@@ -1822,7 +2218,12 @@ def organize_pdf(input_path, original_name, page_order):
 
     page_order: comma-separated string like '3,1,2,5,4'
     """
-    import fitz
+    try:
+        import pymupdf as fitz
+    except ImportError:
+        import fitz
+    if not hasattr(fitz, 'open') and hasattr(fitz, 'Document'):
+        fitz.open = fitz.Document
 
     output_path = get_output_path(original_name, 'pdf', suffix='_organized')
 
@@ -1865,7 +2266,12 @@ def repair_pdf(input_path, original_name):
     Opens the PDF with PyMuPDF's error-recovery mode, cleans up
     internal structures, removes garbage, and saves a repaired copy.
     """
-    import fitz
+    try:
+        import pymupdf as fitz
+    except ImportError:
+        import fitz
+    if not hasattr(fitz, 'open') and hasattr(fitz, 'Document'):
+        fitz.open = fitz.Document
 
     output_path = get_output_path(original_name, 'pdf', suffix='_repaired')
 
@@ -1906,7 +2312,12 @@ def ocr_pdf(input_path, original_name):
     """Refined and Optimized OCR: Faster recognition and better memory usage.
     Supports single PDF path or a list of image/PDF paths.
     """
-    import fitz
+    try:
+        import pymupdf as fitz
+    except ImportError:
+        import fitz
+    if not hasattr(fitz, 'open') and hasattr(fitz, 'Document'):
+        fitz.open = fitz.Document
     import os
     try:
         reader = _get_ocr_reader()
@@ -1977,7 +2388,12 @@ def extract_all_text(input_path):
     """Extract all text from various formats including DOCX, PDF, and Images.
     If a PDF page has no text, it performs OCR.
     """
-    import fitz
+    try:
+        import pymupdf as fitz
+    except ImportError:
+        import fitz
+    if not hasattr(fitz, 'open') and hasattr(fitz, 'Document'):
+        fitz.open = fitz.Document
     from docx import Document
     import os
 
@@ -2042,7 +2458,12 @@ def rotate_pdf(input_path, original_name, rotation_angle=90, page_selection='all
     rotation_angle: 90, 180, or 270 degrees clockwise
     page_selection: 'all' or comma-separated page numbers like '1,3,5-7'
     """
-    import fitz
+    try:
+        import pymupdf as fitz
+    except ImportError:
+        import fitz
+    if not hasattr(fitz, 'open') and hasattr(fitz, 'Document'):
+        fitz.open = fitz.Document
 
     output_path = get_output_path(original_name, 'pdf', suffix='_rotated')
 
@@ -2099,7 +2520,12 @@ def add_watermark(input_path, original_name, watermark_text='CONFIDENTIAL',
     rotation: angle of the watermark text in degrees
     color: hex color string for the watermark
     """
-    import fitz
+    try:
+        import pymupdf as fitz
+    except ImportError:
+        import fitz
+    if not hasattr(fitz, 'open') and hasattr(fitz, 'Document'):
+        fitz.open = fitz.Document
 
     output_path = get_output_path(original_name, 'pdf', suffix='_watermarked')
 
@@ -2117,7 +2543,10 @@ def add_watermark(input_path, original_name, watermark_text='CONFIDENTIAL',
     font_size = int(font_size)
     rotation = float(rotation)
 
-    pdf = fitz.open(input_path)
+    try:
+        pdf = fitz.open(input_path)
+    except Exception as e:
+        raise Exception(f"Add watermark failed: unable to open PDF – {str(e)}")
 
     for page in pdf:
         rect = page.rect
@@ -2206,7 +2635,12 @@ def remove_watermark(input_path, original_name):
     3. Strip watermark XObject references appearing on every page
     4. Remove content streams that use transparency ExtGState
     """
-    import fitz
+    try:
+        import pymupdf as fitz
+    except ImportError:
+        import fitz
+    if not hasattr(fitz, 'open') and hasattr(fitz, 'Document'):
+        fitz.open = fitz.Document
     import re
 
     output_path = get_output_path(original_name, 'pdf', suffix='_no_watermark')
@@ -2407,7 +2841,12 @@ def crop_pdf(input_path, original_name, crop_mode='auto',
     top, bottom, left, right: margins to crop (in points) for manual mode
     crop_x, crop_y, crop_w, crop_h: rectangle for visual mode (in points)
     """
-    import fitz
+    try:
+        import pymupdf as fitz
+    except ImportError:
+        import fitz
+    if not hasattr(fitz, 'open') and hasattr(fitz, 'Document'):
+        fitz.open = fitz.Document
 
     output_path = get_output_path(original_name, 'pdf', suffix='_cropped')
 
@@ -2576,8 +3015,23 @@ def convert_pdf_to_html_via_word(input_path):
     except Exception:
         pass
 
-    raise Exception("Could not extract content from this PDF. It may be image-based — try OCR first.")
-
+    # OCR fallback for image‑based PDFs
+    try:
+        import io
+        import html
+        from PIL import Image
+        import pytesseract
+    except ImportError:
+        raise Exception("Could not extract content from this PDF and OCR libraries are unavailable.")
+    ocr_pages = []
+    for pg in pdf:
+        pix = pg.get_pixmap(dpi=300)
+        img_bytes = pix.tobytes("png")
+        img = Image.open(io.BytesIO(img_bytes))
+        text = pytesseract.image_to_string(img)
+        ocr_pages.append(f"<p>{html.escape(text)}</p>")
+    pdf.close()
+    return ocr_pages
 def convert_html_to_pdf_from_string(html_content, original_name):
     """Convert multi-page HTML (from editor) back to a high-quality PDF, preserving page breaks."""
     import fitz
@@ -2628,7 +3082,12 @@ def edit_pdf(input_path, original_name, edits_json='[]', html_content=None):
         return convert_html_to_pdf_from_string(html_content, original_name)
     
     # Otherwise fallback to the annotation-based approach
-    import fitz
+    try:
+        import pymupdf as fitz
+    except ImportError:
+        import fitz
+    if not hasattr(fitz, 'open') and hasattr(fitz, 'Document'):
+        fitz.open = fitz.Document
     import json
 
     output_path = get_output_path(original_name, 'pdf', suffix='_edited')
@@ -2685,7 +3144,12 @@ def unlock_pdf(input_path, original_name, password=''):
 
     password: the password to unlock the document.
     """
-    import fitz
+    try:
+        import pymupdf as fitz
+    except ImportError:
+        import fitz
+    if not hasattr(fitz, 'open') and hasattr(fitz, 'Document'):
+        fitz.open = fitz.Document
 
     output_path = get_output_path(original_name, 'pdf', suffix='_unlocked')
 
@@ -2722,7 +3186,12 @@ def protect_pdf(input_path, original_name, user_password='',
     permissions: integer combining fitz permission flags, or None for default
                  (allow reading only).
     """
-    import fitz
+    try:
+        import pymupdf as fitz
+    except ImportError:
+        import fitz
+    if not hasattr(fitz, 'open') and hasattr(fitz, 'Document'):
+        fitz.open = fitz.Document
 
     output_path = get_output_path(original_name, 'pdf', suffix='_protected')
 
@@ -3570,7 +4039,13 @@ def generate_story(genre="Science Fiction", prompt=""):
 # ═══════════════════════════════════════════════════════════════
 def convert_images_to_pdf(input_paths, original_name):
     """Convert one or more images into a single PDF document using PyMuPDF."""
-    import fitz
+    try:
+        import pymupdf as fitz
+    except ImportError:
+        import fitz
+    if not hasattr(fitz, 'open') and hasattr(fitz, 'Document'):
+        fitz.open = fitz.Document
+        
     output_path = get_output_path(original_name, 'pdf', suffix='_from_images')
     
     # Create a new empty PDF
@@ -3615,7 +4090,12 @@ def convert_pdf_to_pdfa(input_path, original_name):
     Sets the proper PDF/A metadata (XMP) and embeds fonts to ensure
     the output conforms as closely as possible to PDF/A-2b standards.
     """
-    import fitz
+    try:
+        import pymupdf as fitz
+    except ImportError:
+        import fitz
+    if not hasattr(fitz, 'open') and hasattr(fitz, 'Document'):
+        fitz.open = fitz.Document
     import datetime
 
     output_path = get_output_path(original_name, 'pdf', suffix='_pdfa')
@@ -3683,7 +4163,12 @@ def sign_pdf(input_path, original_name, signature_image_path=None,
        All signatures in the list are applied at once, enabling multi-page /
        multi-signature support from the interactive frontend.
     """
-    import fitz
+    try:
+        import pymupdf as fitz
+    except ImportError:
+        import fitz
+    if not hasattr(fitz, 'open') and hasattr(fitz, 'Document'):
+        fitz.open = fitz.Document
     import base64
     import json
 
@@ -3772,7 +4257,12 @@ def redact_pdf(input_path, original_name, redaction_areas=None):
         width (float), height (float).
         Example: [{"page": 0, "x": 100, "y": 200, "width": 300, "height": 50}]
     """
-    import fitz
+    try:
+        import pymupdf as fitz
+    except ImportError:
+        import fitz
+    if not hasattr(fitz, 'open') and hasattr(fitz, 'Document'):
+        fitz.open = fitz.Document
     import json
 
     output_path = get_output_path(original_name, 'pdf', suffix='_redacted')
