@@ -956,3 +956,213 @@ Error opening output files: Invalid argument
 
 WARNING 2026-06-16 18:51:20,565 views Attempted to extract audio from a video with no audio track.
 INFO 2026-06-16 18:52:52,794 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 19:00:36,266 cleanup CleanupScheduler started
+INFO 2026-06-16 19:00:36,267 cleanup Cleaned 1 old files from C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads
+INFO 2026-06-16 19:00:37,708 cleanup CleanupScheduler started
+INFO 2026-06-16 19:00:58,483 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 19:01:00,879 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 19:01:03,023 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 19:01:03,424 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 19:01:03,654 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 19:01:03,894 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 19:04:32,388 cleanup CleanupScheduler started
+INFO 2026-06-16 19:04:32,390 cleanup Cleaned 1 old files from C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads
+INFO 2026-06-16 19:05:10,532 cleanup CleanupScheduler started
+INFO 2026-06-16 19:06:50,819 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 19:07:12,222 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 19:07:12,351 views Chunk status: upload_id=33078c90-a34d-4c97-bd03-c5a616f164f5, received=1/13, complete=False, missing=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+INFO 2026-06-16 19:07:12,381 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 19:07:12,496 views Chunk status: upload_id=33078c90-a34d-4c97-bd03-c5a616f164f5, received=2/13, complete=False, missing=[2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+INFO 2026-06-16 19:07:12,519 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 19:07:12,663 views Chunk status: upload_id=33078c90-a34d-4c97-bd03-c5a616f164f5, received=3/13, complete=False, missing=[3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+INFO 2026-06-16 19:07:12,684 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 19:07:12,849 views Chunk status: upload_id=33078c90-a34d-4c97-bd03-c5a616f164f5, received=4/13, complete=False, missing=[4, 5, 6, 7, 8, 9, 10, 11, 12]
+INFO 2026-06-16 19:07:12,880 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 19:07:13,214 views Chunk status: upload_id=33078c90-a34d-4c97-bd03-c5a616f164f5, received=5/13, complete=False, missing=[5, 6, 7, 8, 9, 10, 11, 12]
+INFO 2026-06-16 19:07:13,313 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 19:07:13,734 views Chunk status: upload_id=33078c90-a34d-4c97-bd03-c5a616f164f5, received=6/13, complete=False, missing=[6, 7, 8, 9, 10, 11, 12]
+INFO 2026-06-16 19:07:14,103 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 19:07:14,751 views Chunk status: upload_id=33078c90-a34d-4c97-bd03-c5a616f164f5, received=7/13, complete=False, missing=[7, 8, 9, 10, 11, 12]
+INFO 2026-06-16 19:07:14,902 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 19:07:15,314 views Chunk status: upload_id=33078c90-a34d-4c97-bd03-c5a616f164f5, received=8/13, complete=False, missing=[8, 9, 10, 11, 12]
+INFO 2026-06-16 19:07:15,337 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 19:07:15,632 views Chunk status: upload_id=33078c90-a34d-4c97-bd03-c5a616f164f5, received=9/13, complete=False, missing=[9, 10, 11, 12]
+INFO 2026-06-16 19:07:15,688 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 19:07:15,915 views Chunk status: upload_id=33078c90-a34d-4c97-bd03-c5a616f164f5, received=10/13, complete=False, missing=[10, 11, 12]
+INFO 2026-06-16 19:07:15,932 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 19:07:16,105 views Chunk status: upload_id=33078c90-a34d-4c97-bd03-c5a616f164f5, received=11/13, complete=False, missing=[11, 12]
+INFO 2026-06-16 19:07:16,127 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 19:07:16,279 views Chunk status: upload_id=33078c90-a34d-4c97-bd03-c5a616f164f5, received=12/13, complete=False, missing=[12]
+INFO 2026-06-16 19:07:16,300 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 19:07:16,427 views Chunk status: upload_id=33078c90-a34d-4c97-bd03-c5a616f164f5, received=13/13, complete=True, missing=[]
+INFO 2026-06-16 19:07:16,430 views Assembling 13 chunks for upload_id=33078c90-a34d-4c97-bd03-c5a616f164f5
+INFO 2026-06-16 19:07:16,919 views Assembly successful: C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\33078c90-a34d-4c97-bd03-c5a616f164f5.mp4
+INFO 2026-06-16 19:07:16,938 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 19:07:16,948 views Assembly already complete for 33078c90-a34d-4c97-bd03-c5a616f164f5, returning existing file
+INFO 2026-06-16 19:07:16,970 views Using chunk-assembled file: C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\33078c90-a34d-4c97-bd03-c5a616f164f5.mp4
+INFO 2026-06-16 19:07:17,004 ffmpeg_helpers FFmpeg command: C:\Users\1crore\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-8.1-full_build\bin\ffmpeg.EXE -y -hide_banner -loglevel error -ss 1.1 -t 13.8 -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\33078c90-a34d-4c97-bd03-c5a616f164f5.mp4 -vn -c:a libmp3lame -b:a 192k -ar 44100 -ac 2 C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\01473cd40b4044f1b5347747c82fbcb4.mp3
+ERROR 2026-06-16 19:07:17,536 ffmpeg_helpers FFmpeg error (code 4294967274): [out#0/mp3 @ 0000021f1c5eb380] Output file does not contain any stream
+Error opening output file C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\01473cd40b4044f1b5347747c82fbcb4.mp3.
+Error opening output files: Invalid argument
+
+ERROR 2026-06-16 19:07:17,536 views Audio extraction failed
+Traceback (most recent call last):
+  File "R:\Balakrishnan\1CP_Project\All_In_One_PDF Scan Pdf\Scan-PDF\video_processor\ffmpeg_helpers.py", line 149, in run_ffmpeg
+    raise RuntimeError(f"FFmpeg failed: {stderr[:500]}")
+RuntimeError: FFmpeg failed: [out#0/mp3 @ 0000021f1c5eb380] Output file does not contain any stream
+Error opening output file C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\01473cd40b4044f1b5347747c82fbcb4.mp3.
+Error opening output files: Invalid argument
+
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "R:\Balakrishnan\1CP_Project\All_In_One_PDF Scan Pdf\Scan-PDF\video_processor\views.py", line 1242, in extract_audio_api
+    run_ffmpeg(cmd, timeout=600)
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+  File "R:\Balakrishnan\1CP_Project\All_In_One_PDF Scan Pdf\Scan-PDF\video_processor\ffmpeg_helpers.py", line 155, in run_ffmpeg
+    raise RuntimeError(f"FFmpeg execution error: {e}")
+RuntimeError: FFmpeg execution error: FFmpeg failed: [out#0/mp3 @ 0000021f1c5eb380] Output file does not contain any stream
+Error opening output file C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\01473cd40b4044f1b5347747c82fbcb4.mp3.
+Error opening output files: Invalid argument
+
+INFO 2026-06-16 19:09:30,116 cleanup CleanupScheduler started
+INFO 2026-06-16 19:09:54,609 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 19:10:18,409 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 19:10:18,552 views Chunk status: upload_id=ab1b8f99-0974-48ad-873c-77c108b6b2e6, received=1/13, complete=False, missing=[1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+INFO 2026-06-16 19:10:18,574 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 19:10:18,692 views Chunk status: upload_id=ab1b8f99-0974-48ad-873c-77c108b6b2e6, received=2/13, complete=False, missing=[2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+INFO 2026-06-16 19:10:18,724 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 19:10:18,874 views Chunk status: upload_id=ab1b8f99-0974-48ad-873c-77c108b6b2e6, received=3/13, complete=False, missing=[3, 4, 5, 6, 7, 8, 9, 10, 11, 12]
+INFO 2026-06-16 19:10:18,890 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 19:10:19,020 views Chunk status: upload_id=ab1b8f99-0974-48ad-873c-77c108b6b2e6, received=4/13, complete=False, missing=[4, 5, 6, 7, 8, 9, 10, 11, 12]
+INFO 2026-06-16 19:10:19,043 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 19:10:19,177 views Chunk status: upload_id=ab1b8f99-0974-48ad-873c-77c108b6b2e6, received=5/13, complete=False, missing=[5, 6, 7, 8, 9, 10, 11, 12]
+INFO 2026-06-16 19:10:19,227 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 19:10:19,371 views Chunk status: upload_id=ab1b8f99-0974-48ad-873c-77c108b6b2e6, received=6/13, complete=False, missing=[6, 7, 8, 9, 10, 11, 12]
+INFO 2026-06-16 19:10:19,387 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 19:10:19,568 views Chunk status: upload_id=ab1b8f99-0974-48ad-873c-77c108b6b2e6, received=7/13, complete=False, missing=[7, 8, 9, 10, 11, 12]
+INFO 2026-06-16 19:10:19,587 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 19:10:19,722 views Chunk status: upload_id=ab1b8f99-0974-48ad-873c-77c108b6b2e6, received=8/13, complete=False, missing=[8, 9, 10, 11, 12]
+INFO 2026-06-16 19:10:19,753 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 19:10:19,901 views Chunk status: upload_id=ab1b8f99-0974-48ad-873c-77c108b6b2e6, received=9/13, complete=False, missing=[9, 10, 11, 12]
+INFO 2026-06-16 19:10:19,940 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 19:10:20,110 views Chunk status: upload_id=ab1b8f99-0974-48ad-873c-77c108b6b2e6, received=10/13, complete=False, missing=[10, 11, 12]
+INFO 2026-06-16 19:10:20,188 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 19:10:20,311 views Chunk status: upload_id=ab1b8f99-0974-48ad-873c-77c108b6b2e6, received=11/13, complete=False, missing=[11, 12]
+INFO 2026-06-16 19:10:20,330 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 19:10:20,453 views Chunk status: upload_id=ab1b8f99-0974-48ad-873c-77c108b6b2e6, received=12/13, complete=False, missing=[12]
+INFO 2026-06-16 19:10:20,470 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 19:10:20,598 views Chunk status: upload_id=ab1b8f99-0974-48ad-873c-77c108b6b2e6, received=13/13, complete=True, missing=[]
+INFO 2026-06-16 19:10:20,601 views Assembling 13 chunks for upload_id=ab1b8f99-0974-48ad-873c-77c108b6b2e6
+INFO 2026-06-16 19:10:21,140 views Assembly successful: C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\ab1b8f99-0974-48ad-873c-77c108b6b2e6.mp4
+INFO 2026-06-16 19:10:21,174 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 19:10:21,177 views Assembly already complete for ab1b8f99-0974-48ad-873c-77c108b6b2e6, returning existing file
+INFO 2026-06-16 19:10:21,210 views Using chunk-assembled file: C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\ab1b8f99-0974-48ad-873c-77c108b6b2e6.mp4
+INFO 2026-06-16 19:10:21,273 ffmpeg_helpers FFmpeg command: C:\Users\1crore\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-8.1-full_build\bin\ffmpeg.EXE -y -hide_banner -loglevel error -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\ab1b8f99-0974-48ad-873c-77c108b6b2e6.mp4 -vn -c:a libmp3lame -t 17.6 -b:a 192k -ar 44100 -ac 2 C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\b47cc4e98a544c7a960c8321becc7f4d.mp3
+ERROR 2026-06-16 19:10:21,730 ffmpeg_helpers FFmpeg error (code 4294967274): [out#0/mp3 @ 0000023a699ba000] Output file does not contain any stream
+Error opening output file C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\b47cc4e98a544c7a960c8321becc7f4d.mp3.
+Error opening output files: Invalid argument
+
+ERROR 2026-06-16 19:10:21,732 views Audio extraction failed
+Traceback (most recent call last):
+  File "R:\Balakrishnan\1CP_Project\All_In_One_PDF Scan Pdf\Scan-PDF\video_processor\ffmpeg_helpers.py", line 149, in run_ffmpeg
+    raise RuntimeError(f"FFmpeg failed: {stderr[:500]}")
+RuntimeError: FFmpeg failed: [out#0/mp3 @ 0000023a699ba000] Output file does not contain any stream
+Error opening output file C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\b47cc4e98a544c7a960c8321becc7f4d.mp3.
+Error opening output files: Invalid argument
+
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "R:\Balakrishnan\1CP_Project\All_In_One_PDF Scan Pdf\Scan-PDF\video_processor\views.py", line 1242, in extract_audio_api
+    run_ffmpeg(cmd, timeout=600)
+    ~~~~~~~~~~^^^^^^^^^^^^^^^^^^
+  File "R:\Balakrishnan\1CP_Project\All_In_One_PDF Scan Pdf\Scan-PDF\video_processor\ffmpeg_helpers.py", line 155, in run_ffmpeg
+    raise RuntimeError(f"FFmpeg execution error: {e}")
+RuntimeError: FFmpeg execution error: FFmpeg failed: [out#0/mp3 @ 0000023a699ba000] Output file does not contain any stream
+Error opening output file C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\b47cc4e98a544c7a960c8321becc7f4d.mp3.
+Error opening output files: Invalid argument
+
+INFO 2026-06-16 19:11:04,256 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 19:11:17,297 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-06-16 19:16:42,785 cleanup CleanupScheduler started
+INFO 2026-06-16 19:17:37,922 cleanup CleanupScheduler started
+INFO 2026-06-16 19:17:37,924 cleanup Cleaned 1 old files from C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads
+INFO 2026-06-16 19:18:20,943 cleanup CleanupScheduler started
+INFO 2026-06-16 19:20:22,566 utils Cleanup: Removed 1 files, freed 64.4MB
+INFO 2026-06-16 19:20:25,306 utils Cleanup: Removed 0 files, freed 0.0MB
+ERROR 2026-06-16 19:20:44,863 views Audio extraction failed
+Traceback (most recent call last):
+  File "R:\Balakrishnan\1CP_Project\All_In_One_PDF Scan Pdf\Scan-PDF\video_processor\views.py", line 1243, in extract_audio_api
+    batch_dir = os.path.join(get_outputs_dir(), batch_id)
+                             ^^^^^^^^^^^^^^^
+NameError: name 'get_outputs_dir' is not defined
+INFO 2026-06-23 10:49:05,694 cleanup CleanupScheduler started
+INFO 2026-06-23 10:49:08,071 cleanup CleanupScheduler started
+INFO 2026-07-04 15:43:47,690 cleanup CleanupScheduler started
+INFO 2026-07-04 18:57:55,692 cleanup CleanupScheduler started
+INFO 2026-07-04 18:57:57,221 cleanup CleanupScheduler started
+INFO 2026-07-04 19:04:07,768 cleanup CleanupScheduler started
+INFO 2026-07-04 19:05:42,102 cleanup CleanupScheduler started
+INFO 2026-07-04 19:05:45,224 cleanup CleanupScheduler started
+INFO 2026-07-06 10:45:57,193 cleanup CleanupScheduler started
+INFO 2026-07-06 10:46:01,769 cleanup CleanupScheduler started
+INFO 2026-07-06 10:51:41,000 cleanup CleanupScheduler started
+INFO 2026-07-06 10:55:23,297 cleanup CleanupScheduler started
+INFO 2026-07-06 10:57:51,525 cleanup CleanupScheduler started
+INFO 2026-07-06 11:02:26,159 cleanup CleanupScheduler started
+INFO 2026-07-06 11:21:14,172 cleanup CleanupScheduler started
+INFO 2026-07-06 11:24:46,581 cleanup CleanupScheduler started
+INFO 2026-07-06 11:24:59,251 cleanup CleanupScheduler started
+INFO 2026-07-06 11:32:26,681 cleanup CleanupScheduler started
+INFO 2026-07-06 11:34:40,331 cleanup CleanupScheduler started
+INFO 2026-07-06 11:37:13,107 cleanup CleanupScheduler started
+INFO 2026-07-06 11:41:24,030 cleanup CleanupScheduler started
+INFO 2026-07-06 11:48:40,532 cleanup CleanupScheduler started
+INFO 2026-07-06 11:50:18,801 cleanup CleanupScheduler started
+INFO 2026-07-06 11:51:53,739 cleanup CleanupScheduler started
+INFO 2026-07-06 11:54:57,941 cleanup CleanupScheduler started
+INFO 2026-07-06 12:01:35,238 cleanup CleanupScheduler started
+INFO 2026-07-06 14:28:25,028 cleanup CleanupScheduler started
+INFO 2026-07-06 14:28:41,287 cleanup CleanupScheduler started
+INFO 2026-07-06 14:29:11,898 cleanup CleanupScheduler started
+INFO 2026-07-06 14:29:33,727 cleanup CleanupScheduler started
+INFO 2026-07-06 14:37:35,970 cleanup CleanupScheduler started
+INFO 2026-07-06 19:46:03,684 cleanup CleanupScheduler started
+INFO 2026-07-07 09:27:06,812 cleanup CleanupScheduler started
+INFO 2026-07-07 09:27:09,071 cleanup CleanupScheduler started
+INFO 2026-07-07 09:35:01,319 cleanup CleanupScheduler started
+INFO 2026-07-07 09:35:16,174 cleanup CleanupScheduler started
+INFO 2026-07-07 09:38:46,663 cleanup CleanupScheduler started
+INFO 2026-07-07 09:39:14,844 cleanup CleanupScheduler started
+INFO 2026-07-07 09:39:41,856 cleanup CleanupScheduler started
+INFO 2026-07-07 09:39:53,715 cleanup CleanupScheduler started
+INFO 2026-07-07 09:43:43,053 cleanup CleanupScheduler started
+INFO 2026-07-07 09:52:51,970 cleanup CleanupScheduler started
+INFO 2026-07-07 10:51:28,525 cleanup CleanupScheduler started
+INFO 2026-07-08 09:56:36,247 cleanup CleanupScheduler started
+INFO 2026-07-08 09:56:43,876 cleanup CleanupScheduler started
+INFO 2026-07-13 10:32:34,907 cleanup CleanupScheduler started
+INFO 2026-07-13 10:32:36,145 cleanup CleanupScheduler started
+INFO 2026-07-13 11:55:31,629 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-07-13 11:55:39,961 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-07-13 11:56:57,600 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-07-13 12:21:23,059 cleanup CleanupScheduler started
+INFO 2026-07-13 12:21:24,298 cleanup CleanupScheduler started
+INFO 2026-07-13 12:23:57,044 cleanup CleanupScheduler started
+INFO 2026-07-13 12:24:35,813 cleanup CleanupScheduler started
+INFO 2026-07-13 12:25:02,423 cleanup CleanupScheduler started
+INFO 2026-07-13 12:25:59,719 cleanup CleanupScheduler started
+INFO 2026-07-13 12:26:02,622 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-07-13 12:26:08,124 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-07-13 12:26:44,009 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-07-13 12:27:16,443 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-07-13 12:27:16,540 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-07-13 12:39:51,338 cleanup CleanupScheduler started
+INFO 2026-07-13 12:39:52,527 cleanup CleanupScheduler started
+INFO 2026-07-13 14:03:12,417 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-07-13 14:03:30,358 ffmpeg_helpers FFmpeg command: C:\Users\1crore\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-8.1-full_build\bin\ffmpeg.EXE -y -hide_banner -loglevel error -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\b9d2a6603dea48259b5902840fa5a742.mp4 -threads 0 -c:v libx264 -preset medium -crf 18 -maxrate 5M -bufsize 5M -c:a aac -b:a 128k -pix_fmt yuv420p C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\d64d760442fb4c21954a96ccc867c7c6.mov
+INFO 2026-07-13 14:05:17,964 utils Cleanup: Removed 0 files, freed 0.0MB
+INFO 2026-07-13 14:05:36,953 ffmpeg_helpers FFmpeg command: C:\Users\1crore\AppData\Local\Microsoft\WinGet\Packages\Gyan.FFmpeg_Microsoft.Winget.Source_8wekyb3d8bbwe\ffmpeg-8.1-full_build\bin\ffmpeg.EXE -y -hide_banner -loglevel error -i C:\Users\1crore\AppData\Local\Temp\scanpdf_video\uploads\cee2e4862e6d4c2daf3ed882436b4933.mov -threads 0 -vf scale=3840:2160:force_original_aspect_ratio=decrease,pad=3840:2160:(ow-iw)/2:(oh-ih)/2:black -c:v libx265 -preset medium -crf 18 -maxrate 5M -bufsize 5M -c:a libmp3lame -b:a 128k -pix_fmt yuv420p C:\Users\1crore\AppData\Local\Temp\scanpdf_video\outputs\6501778f30cf45069e42b8d6d4ff3ae2.avi

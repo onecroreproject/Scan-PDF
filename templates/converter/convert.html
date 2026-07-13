@@ -260,6 +260,7 @@
 
             downloadBtn.href = url;
             downloadBtn.download = outputFilename;
+            downloadBtn.setAttribute('download', outputFilename);
 
             progressSection.classList.add('hidden');
             successSection.classList.remove('hidden');

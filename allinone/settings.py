@@ -32,7 +32,6 @@ INSTALLED_APPS = [
     'converter',
     'image_processor',
     'audio_processor',
-    'video_processor',
     'dynamic_qr',
 ]
 
@@ -130,7 +129,6 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = 524288000  # 500 MB
 FILE_UPLOAD_TEMP_DIR = os.path.join(tempfile.gettempdir(), 'scanpdf_uploads')
 os.makedirs(FILE_UPLOAD_TEMP_DIR, exist_ok=True)
 
-# Request timeout for long video processing
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 10000
 
 # ═══════════════════════════════════════════════════════════════
@@ -145,19 +143,6 @@ CELERY_TASK_TRACK_STARTED = True
 CELERY_TASK_TIME_LIMIT = 3600  # 1 hour max per task
 CELERY_WORKER_PREFETCH_MULTIPLIER = 1  # For large file tasks, don't prefetch
 CELERY_BROKER_CONNECTION_RETRY_ON_STARTUP = True
-
-# ═══════════════════════════════════════════════════════════════
-# VIDEO PROCESSOR TEMP DIRECTORIES
-# ═══════════════════════════════════════════════════════════════
-VIDEO_TEMP_ROOT = os.path.join(tempfile.gettempdir(), 'scanpdf_video')
-VIDEO_UPLOADS_DIR = os.path.join(VIDEO_TEMP_ROOT, 'uploads')
-VIDEO_OUTPUTS_DIR = os.path.join(VIDEO_TEMP_ROOT, 'outputs')
-VIDEO_CHUNKS_DIR = os.path.join(VIDEO_TEMP_ROOT, 'chunks')
-os.makedirs(VIDEO_UPLOADS_DIR, exist_ok=True)
-os.makedirs(VIDEO_OUTPUTS_DIR, exist_ok=True)
-os.makedirs(VIDEO_CHUNKS_DIR, exist_ok=True)
-
-# Video cleanup age (seconds)
 VIDEO_TEMP_MAX_AGE = 600  # 10 minutes
 
 # ═══════════════════════════════════════════════════════════════
@@ -173,25 +158,13 @@ LOGGING = {
         },
     },
     'handlers': {
-        'file': {
-            'level': 'INFO',
-            'class': 'logging.FileHandler',
-            'filename': BASE_DIR / 'logs' / 'video_processor.log',
-            'formatter': 'verbose',
-        },
         'console': {
             'level': 'INFO',
             'class': 'logging.StreamHandler',
             'formatter': 'verbose',
         },
     },
-    'loggers': {
-        'video_processor': {
-            'handlers': ['file', 'console'],
-            'level': 'INFO',
-            'propagate': False,
-        },
-    },
+    'loggers': {},
 }
 
 # Ensure logs directory exists

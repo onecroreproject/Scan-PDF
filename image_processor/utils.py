@@ -17,13 +17,14 @@ def _moviepy():
     """
     ensure_ffmpeg_configured()
     from moviepy.editor import (  # type: ignore
+        VideoFileClip,
         ImageSequenceClip,
         ImageClip,
         AudioFileClip,
         concatenate_videoclips,
     )
 
-    return ImageSequenceClip, ImageClip, AudioFileClip, concatenate_videoclips
+    return VideoFileClip, ImageSequenceClip, ImageClip, AudioFileClip, concatenate_videoclips
 
 def ensure_media_dirs():
     """Ensure temporary upload and output directories exist."""
