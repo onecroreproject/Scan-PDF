@@ -11,10 +11,23 @@
         content="scan pdf, file converter, word to pdf, pptx to pdf, excel to pdf, pdf tools, merge pdf, split pdf, compress pdf, online converter">
     <meta name="author" content="ScanPDF">
     <meta name="theme-color" content="#7c3aed">
+
+    <!-- Google Site Verification -->
+    <meta name="google-site-verification" content="uD7iyU5cpHVLr9HE12Tl9LBQZ45a6d6E9jolv8PyWd4" />
+
+    <!-- Google Analytics (GA4) -->
+    <script async src="https://www.googletagmanager.com/gtag/js?id=G-D279Q3L3D1"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', 'G-D279Q3L3D1');
+    </script>
+
     <title>{{ page_title|default:"ScanPDF" }}</title>
 
     <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-9024238607769692"
-     crossorigin="anonymous"></script>
+        crossorigin="anonymous"></script>
 
 
     <!-- Favicon -->
@@ -508,6 +521,14 @@
                             </div>
                         </div>
 
+                        <!-- Video Converter Link -->
+                        <div class="relative group flex items-center">
+                            <a href="{% url 'converter:convert_page' 'video-converter' %}"
+                                class="flex items-center gap-1.5 px-4 py-2 text-[14px] font-black text-surface-900 transition-all uppercase tracking-widest hover:text-brand-600">
+                                Video Converter
+                            </a>
+                        </div>
+
                         <!-- Important Tools (Styled like Image Tools mega) -->
                         <div class="relative group">
                             <button
@@ -664,6 +685,12 @@
                         class="flex items-center gap-3 px-4 py-3 rounded-2xl text-surface-700 hover:text-brand-600 hover:bg-brand-50/60 transition-all font-bold text-sm">
                         <i data-lucide="link" class="w-5 h-5 text-indigo-600"></i>
                         Short URL
+                    </a>
+
+                    <a href="{% url 'converter:convert_page' 'video-converter' %}"
+                        class="flex items-center gap-3 px-4 py-3 rounded-2xl text-surface-700 hover:text-brand-600 hover:bg-brand-50/60 transition-all font-bold text-sm">
+                        <i data-lucide="video" class="w-5 h-5 text-violet-600"></i>
+                        Video Converter
                     </a>
 
                     {% if request.session.is_dqr_user %}
