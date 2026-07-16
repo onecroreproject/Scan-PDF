@@ -9,7 +9,7 @@ import urllib.request
 import urllib.parse
 from pathlib import Path
 from django.shortcuts import render
-from django.http import JsonResponse, FileResponse, Http404
+from django.http import JsonResponse, FileResponse, Http404, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
 
@@ -63,6 +63,7 @@ from .utils import (
     redact_pdf,
     merge_word_files,
 )
+from .utils_video import convert_video_format
 
 _CURRENCY_CACHE = {'base': None, 'rates': None, 'updated_at': 0}
 
@@ -642,6 +643,17 @@ TOOLS = {
         'gradient': 'from-blue-500 to-indigo-700',
         'category': 'audio-tools',
     },
+    'video-converter': {
+        'title': 'Video Converter',
+        'description': 'Convert videos between formats like MP4, AVI, MOV, MKV, and more.',
+        'icon': 'video',
+        'accept': '.mp4,.avi,.mov,.mkv,.webm,.wmv,.flv,.3gp',
+        'allowed_extensions': ['.mp4', '.avi', '.mov', '.mkv', '.webm', '.wmv', '.flv', '.3gp'],
+        'converter': convert_video_format,
+        'color': '#8b5cf6',
+        'gradient': 'from-violet-500 to-purple-700',
+        'category': 'convert',
+    },
 }
 
 
@@ -737,6 +749,8 @@ def convert_page(request, tool_slug):
         template = 'audio_processor/merge_audio.html'
     elif tool_slug == 'extract-audio-from-video':
         template = 'audio_processor/extract_audio.html'
+    elif tool_slug == 'video-converter':
+        template = 'converter/video_converter.html'
     else:
         template = 'converter/convert.html'
 
@@ -1612,6 +1626,49 @@ def convert_file(request, tool_slug):
             return create_cleanup_response(output_path, content_type='application/pdf')
         except Exception as e:
             return JsonResponse({'error': f'Redact PDF failed: {str(e)}'}, status=500)
+
+    # ── Video Converter ──
+    if tool_slug == 'video-converter':
+        if 'file' not in request.FILES:
+            return JsonResponse({'error': 'No file was uploaded.'}, status=400)
+
+        uploaded_file = request.FILES['file']
+        output_format = request.POST.get('output_format', 'mp4')
+
+        try:
+            input_path = save_uploaded_file(uploaded_file)
+            output_path = convert_video_format(
+                input_path, uploaded_file.name, output_format
+            )
+            # Force application/octet-stream to prevent browser extensions (like IDM) 
+            # from intercepting video/mp4 responses and aborting the fetch stream.
+            content_type = 'application/octet-stream'
+
+            try:
+                os.remove(input_path)
+            except OSError:
+                pass
+                
+            from .utils import format_download_name
+            final_filename = format_download_name(uploaded_file.name, output_path)
+
+            import base64
+            with open(output_path, 'rb') as f:
+                b64_data = base64.b64encode(f.read()).decode('utf-8')
+
+            try:
+                os.remove(output_path)
+            except OSError:
+                pass
+
+            return JsonResponse({
+                'success': True,
+                'filename': final_filename,
+                'content_type': content_type,
+                'data': b64_data
+            })
+        except Exception as e:
+            return JsonResponse({'error': f'Video conversion failed: {str(e)}'}, status=500)
 
     # ── Default Fallback for other tools ──
     # ── Standard single-file conversion ──
