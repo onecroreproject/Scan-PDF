@@ -30,11 +30,14 @@ def get_ytdl_base_options():
         
     return options
 
-def _is_youtube_bot_error(e, url):
-    if 'youtube.com' not in url.lower() and 'youtu.be' not in url.lower():
-        return False
+def _is_bot_error(e, url):
     error_msg = str(e).lower()
-    return 'sign in' in error_msg or 'bot' in error_msg or 'age' in error_msg or 'verify' in error_msg
+    bot_keywords = [
+        'sign in', 'bot', 'age', 'verify', 
+        'cookies-from-browser', 'authentication', 
+        'logged-in', 'empty media response', 'login'
+    ]
+    return any(keyword in error_msg for keyword in bot_keywords)
 
 def _execute_with_retry(execute_func, url, options):
     """
@@ -44,15 +47,15 @@ def _execute_with_retry(execute_func, url, options):
     try:
         return execute_func(options)
     except Exception as e:
-        if not _is_youtube_bot_error(e, url):
+        if not _is_bot_error(e, url):
             raise
             
-        logger.warning(f"YouTube bot/age detection encountered for {url}. Retrying with browser cookies...")
+        logger.warning(f"Bot/age detection encountered for {url}. Retrying with browser cookies...")
         browsers = ['chrome', 'edge', 'firefox']
         
         for browser in browsers:
             retry_options = options.copy()
-            retry_options['cookiesfrombrowser'] = (browser,)
+            retry_options['cookiesfrombrowser'] = [(browser, None, None, None)]
             
             try:
                 logger.info(f"Retrying with {browser} cookies...")
@@ -60,7 +63,7 @@ def _execute_with_retry(execute_func, url, options):
             except Exception as retry_e:
                 logger.warning(f"{browser} cookie retry failed: {retry_e}")
                 
-        raise ValueError("YouTube is blocking access. Please ensure you are logged into YouTube on Chrome/Edge/Firefox to bypass bot protection, or try again later.")
+        raise ValueError("The platform is blocking access. Please ensure you are logged in on Chrome/Edge/Firefox to bypass bot protection, or try again later.")
 
 
 def verify_video_audio_streams(filepath):
