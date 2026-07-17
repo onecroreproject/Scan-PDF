@@ -190,18 +190,20 @@
         /* Ensure all mega menus are hidden by default and clickable on hover */
         #mega-menu-all-pdf,
         #mega-menu-image-tools,
-        #mega-menu-important-tools {
+        #mega-menu-important-tools,
+        #mega-menu-video-tools {
             visibility: hidden;
             opacity: 0;
             pointer-events: none;
-            padding-top: 10px;
+            padding-top: 24px;
             /* Bridge the gap from button to menu */
-            margin-top: -10px;
+            margin-top: -24px;
         }
 
         .group:hover>#mega-menu-all-pdf,
         .group:hover>#mega-menu-image-tools,
-        .group:hover>#mega-menu-important-tools {
+        .group:hover>#mega-menu-important-tools,
+        .group:hover>#mega-menu-video-tools {
             visibility: visible;
             opacity: 1;
             pointer-events: auto;
@@ -521,12 +523,147 @@
                             </div>
                         </div>
 
-                        <!-- Video Converter Link -->
-                        <div class="relative group flex items-center">
-                            <a href="{% url 'converter:convert_page' 'video-converter' %}"
+                        <!-- Video Tools Menu -->
+                        <div class="relative group">
+                            <button
                                 class="flex items-center gap-1.5 px-4 py-2 text-[14px] font-black text-surface-900 transition-all uppercase tracking-widest hover:text-brand-600">
-                                Video Converter
-                            </a>
+                                Video <i data-lucide="chevron-down"
+                                    class="w-4 h-4 transition-transform group-hover:rotate-180"></i>
+                            </button>
+                            <div id="mega-menu-video-tools"
+                                class="fixed top-[70px] left-1/2 -translate-x-1/2 w-[95vw] max-w-5xl bg-white border border-surface-100 shadow-mega rounded-3xl z-50 overflow-hidden transition-all duration-300 translate-y-2 group-hover:translate-y-0">
+                                <div class="p-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
+                                    <a href="{% url 'converter:convert_page' 'video-converter' %}"
+                                        class="flex items-center gap-4 p-4 rounded-2xl hover:bg-brand-50/50 transition-all border border-surface-100 hover:border-brand-200 group/item">
+                                        <div
+                                            class="w-10 h-10 rounded-2xl bg-violet-50 flex items-center justify-center group-hover/item:bg-violet-100 transition-colors">
+                                            <i data-lucide="video" class="w-5 h-5 text-violet-600"></i>
+                                        </div>
+                                        <div class="flex-1">
+                                            <p
+                                                class="text-[13px] font-black text-surface-900 group-hover/item:text-brand-600">
+                                                Converter</p>
+                                        </div>
+                                    </a>
+
+                                    <a href="{% url 'video_downloader:index' %}"
+                                        class="flex items-center gap-4 p-4 rounded-2xl hover:bg-brand-50/50 transition-all border border-surface-100 hover:border-brand-200 group/item">
+                                        <div
+                                            class="w-10 h-10 rounded-2xl bg-brand-50 flex items-center justify-center group-hover/item:bg-brand-100 transition-colors">
+                                            <i data-lucide="download-cloud" class="w-5 h-5 text-brand-600"></i>
+                                        </div>
+                                        <div class="flex-1">
+                                            <p
+                                                class="text-[13px] font-black text-surface-900 group-hover/item:text-brand-600">
+                                                Universal</p>
+                                        </div>
+                                    </a>
+
+                                    <a href="{% url 'video_downloader:youtube_downloader' %}"
+                                        class="flex items-center gap-4 p-4 rounded-2xl hover:bg-brand-50/50 transition-all border border-surface-100 hover:border-brand-200 group/item">
+                                        <div
+                                            class="w-10 h-10 rounded-2xl bg-red-50 flex items-center justify-center group-hover/item:bg-red-100 transition-colors">
+                                            <i data-lucide="youtube" class="w-5 h-5 text-red-600"></i>
+                                        </div>
+                                        <div class="flex-1">
+                                            <p
+                                                class="text-[13px] font-black text-surface-900 group-hover/item:text-brand-600">
+                                                YouTube</p>
+                                        </div>
+                                    </a>
+
+                                    <a href="{% url 'video_downloader:facebook_downloader' %}"
+                                        class="flex items-center gap-4 p-4 rounded-2xl hover:bg-brand-50/50 transition-all border border-surface-100 hover:border-brand-200 group/item">
+                                        <div
+                                            class="w-10 h-10 rounded-2xl bg-blue-50 flex items-center justify-center group-hover/item:bg-blue-100 transition-colors">
+                                            <i data-lucide="facebook" class="w-5 h-5 text-blue-600"></i>
+                                        </div>
+                                        <div class="flex-1">
+                                            <p
+                                                class="text-[13px] font-black text-surface-900 group-hover/item:text-brand-600">
+                                                Facebook</p>
+                                        </div>
+                                    </a>
+
+                                    <a href="{% url 'video_downloader:twitter_downloader' %}"
+                                        class="flex items-center gap-4 p-4 rounded-2xl hover:bg-brand-50/50 transition-all border border-surface-100 hover:border-brand-200 group/item">
+                                        <div
+                                            class="w-10 h-10 rounded-2xl bg-gray-50 flex items-center justify-center group-hover/item:bg-gray-200 transition-colors">
+                                            <i data-lucide="twitter" class="w-5 h-5 text-gray-800"></i>
+                                        </div>
+                                        <div class="flex-1">
+                                            <p
+                                                class="text-[13px] font-black text-surface-900 group-hover/item:text-brand-600">
+                                                X (Twitter)</p>
+                                        </div>
+                                    </a>
+
+                                    <a href="{% url 'video_downloader:instagram_downloader' %}"
+                                        class="flex items-center gap-4 p-4 rounded-2xl hover:bg-brand-50/50 transition-all border border-surface-100 hover:border-brand-200 group/item">
+                                        <div
+                                            class="w-10 h-10 rounded-2xl bg-pink-50 flex items-center justify-center group-hover/item:bg-pink-100 transition-colors">
+                                            <i data-lucide="instagram" class="w-5 h-5 text-pink-600"></i>
+                                        </div>
+                                        <div class="flex-1">
+                                            <p
+                                                class="text-[13px] font-black text-surface-900 group-hover/item:text-brand-600">
+                                                Instagram</p>
+                                        </div>
+                                    </a>
+
+                                    <a href="{% url 'video_downloader:tiktok_downloader' %}"
+                                        class="flex items-center gap-4 p-4 rounded-2xl hover:bg-brand-50/50 transition-all border border-surface-100 hover:border-brand-200 group/item">
+                                        <div
+                                            class="w-10 h-10 rounded-2xl bg-slate-50 flex items-center justify-center group-hover/item:bg-slate-200 transition-colors">
+                                            <i data-lucide="music-2" class="w-5 h-5 text-slate-800"></i>
+                                        </div>
+                                        <div class="flex-1">
+                                            <p
+                                                class="text-[13px] font-black text-surface-900 group-hover/item:text-brand-600">
+                                                TikTok</p>
+                                        </div>
+                                    </a>
+
+                                    <a href="{% url 'video_downloader:vimeo_downloader' %}"
+                                        class="flex items-center gap-4 p-4 rounded-2xl hover:bg-brand-50/50 transition-all border border-surface-100 hover:border-brand-200 group/item">
+                                        <div
+                                            class="w-10 h-10 rounded-2xl bg-sky-50 flex items-center justify-center group-hover/item:bg-sky-100 transition-colors">
+                                            <i data-lucide="video" class="w-5 h-5 text-sky-600"></i>
+                                        </div>
+                                        <div class="flex-1">
+                                            <p
+                                                class="text-[13px] font-black text-surface-900 group-hover/item:text-brand-600">
+                                                Vimeo</p>
+                                        </div>
+                                    </a>
+
+                                    <a href="{% url 'video_downloader:reddit_downloader' %}"
+                                        class="flex items-center gap-4 p-4 rounded-2xl hover:bg-brand-50/50 transition-all border border-surface-100 hover:border-brand-200 group/item">
+                                        <div
+                                            class="w-10 h-10 rounded-2xl bg-orange-50 flex items-center justify-center group-hover/item:bg-orange-100 transition-colors">
+                                            <i data-lucide="hash" class="w-5 h-5 text-orange-600"></i>
+                                        </div>
+                                        <div class="flex-1">
+                                            <p
+                                                class="text-[13px] font-black text-surface-900 group-hover/item:text-brand-600">
+                                                Reddit</p>
+                                        </div>
+                                    </a>
+
+                                    <a href="{% url 'video_downloader:dailymotion_downloader' %}"
+                                        class="flex items-center gap-4 p-4 rounded-2xl hover:bg-brand-50/50 transition-all border border-surface-100 hover:border-brand-200 group/item">
+                                        <div
+                                            class="w-10 h-10 rounded-2xl bg-blue-50 flex items-center justify-center group-hover/item:bg-blue-100 transition-colors">
+                                            <i data-lucide="play-circle" class="w-5 h-5 text-blue-700"></i>
+                                        </div>
+                                        <div class="flex-1">
+                                            <p
+                                                class="text-[13px] font-black text-surface-900 group-hover/item:text-brand-600">
+                                                Dailymotion</p>
+                                        </div>
+                                    </a>
+                                </div>
+                            </div>
                         </div>
 
                         <!-- Important Tools (Styled like Image Tools mega) -->
@@ -687,10 +824,19 @@
                         Short URL
                     </a>
 
+                    <!-- Mobile Video Tools -->
+                    <div class="px-4 py-2 border-b border-surface-50 mt-4 mb-2">
+                        <span class="text-[10px] font-bold text-surface-400 uppercase tracking-widest">Video Tools</span>
+                    </div>
                     <a href="{% url 'converter:convert_page' 'video-converter' %}"
                         class="flex items-center gap-3 px-4 py-3 rounded-2xl text-surface-700 hover:text-brand-600 hover:bg-brand-50/60 transition-all font-bold text-sm">
                         <i data-lucide="video" class="w-5 h-5 text-violet-600"></i>
                         Video Converter
+                    </a>
+                    <a href="{% url 'video_downloader:index' %}"
+                        class="flex items-center gap-3 px-4 py-3 rounded-2xl text-surface-700 hover:text-brand-600 hover:bg-brand-50/60 transition-all font-bold text-sm">
+                        <i data-lucide="download-cloud" class="w-5 h-5 text-brand-600"></i>
+                        Video Downloader
                     </a>
 
                     {% if request.session.is_dqr_user %}

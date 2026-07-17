@@ -647,8 +647,8 @@ TOOLS = {
         'title': 'Video Converter',
         'description': 'Convert videos between formats like MP4, AVI, MOV, MKV, and more.',
         'icon': 'video',
-        'accept': '.mp4,.avi,.mov,.mkv,.webm,.wmv,.flv,.3gp',
-        'allowed_extensions': ['.mp4', '.avi', '.mov', '.mkv', '.webm', '.wmv', '.flv', '.3gp'],
+        'accept': '.mp4,.avi,.mov,.mkv,.wmv,.flv,.3gp',
+        'allowed_extensions': ['.mp4', '.avi', '.mov', '.mkv', '.wmv', '.flv', '.3gp'],
         'converter': convert_video_format,
         'color': '#8b5cf6',
         'gradient': 'from-violet-500 to-purple-700',
@@ -1684,10 +1684,7 @@ def convert_file(request, tool_slug):
             'error': f'Invalid file type "{file_ext}". Allowed types: {allowed}'
         }, status=400)
 
-    if uploaded_file.size > 52428800:
-        return JsonResponse({
-            'error': 'File size exceeds the 50MB limit. Please upload a smaller file.'
-        }, status=400)
+
 
     try:
         input_path = save_uploaded_file(uploaded_file)
