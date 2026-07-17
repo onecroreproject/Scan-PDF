@@ -334,9 +334,8 @@ def download_format(url, format_id, format_type):
                         pass
                     raise Exception("FFmpeg merge failed or resulted in a silent video. Missing audio track.")
                     
-                # Transcode unsupported audio to AAC if necessary
-                unsupported_codecs = ['opus', 'vorbis', 'webm']
-                if audio_codec in unsupported_codecs:
+                # ALWAYS transcode audio to a fresh AAC stream to guarantee Windows Media Player compatibility
+                if True:
                     ffmpeg_dir = getattr(settings, 'FFMPEG_BIN_DIR', None)
                     ffmpeg_cmd = 'ffmpeg'
                     if ffmpeg_dir and os.path.exists(ffmpeg_dir):
@@ -349,6 +348,9 @@ def download_format(url, format_id, format_type):
                         '-c:v', 'copy',
                         '-c:a', 'aac',
                         '-b:a', '192k',
+                        '-ar', '44100',
+                        '-ac', '2',
+                        '-movflags', '+faststart',
                         transcoded_file,
                         '-y'
                     ]
