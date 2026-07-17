@@ -16,6 +16,11 @@ def get_ytdl_base_options():
         'no_warnings': True,
         'nocheckcertificate': True,
         'geo_bypass': True,
+        'retries': 10,
+        'fragment_retries': 10,
+        'http_headers': {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+        }
     }
     
     # Try to use bundled FFmpeg if available
@@ -24,6 +29,39 @@ def get_ytdl_base_options():
         options['ffmpeg_location'] = str(ffmpeg_dir)
         
     return options
+
+def _is_youtube_bot_error(e, url):
+    if 'youtube.com' not in url.lower() and 'youtu.be' not in url.lower():
+        return False
+    error_msg = str(e).lower()
+    return 'sign in' in error_msg or 'bot' in error_msg or 'age' in error_msg or 'verify' in error_msg
+
+def _execute_with_retry(execute_func, url, options):
+    """
+    Executes a yt-dlp function. If it fails due to YouTube bot detection,
+    retries with browser cookies in order: Chrome, Edge, Firefox.
+    """
+    try:
+        return execute_func(options)
+    except Exception as e:
+        if not _is_youtube_bot_error(e, url):
+            raise
+            
+        logger.warning(f"YouTube bot/age detection encountered for {url}. Retrying with browser cookies...")
+        browsers = ['chrome', 'edge', 'firefox']
+        
+        for browser in browsers:
+            retry_options = options.copy()
+            retry_options['cookiesfrombrowser'] = (browser,)
+            
+            try:
+                logger.info(f"Retrying with {browser} cookies...")
+                return execute_func(retry_options)
+            except Exception as retry_e:
+                logger.warning(f"{browser} cookie retry failed: {retry_e}")
+                
+        raise ValueError("YouTube is blocking access. Please ensure you are logged into YouTube on Chrome/Edge/Firefox to bypass bot protection, or try again later.")
+
 
 def verify_video_audio_streams(filepath):
     """
@@ -89,11 +127,15 @@ def analyze_video(url):
     """
     options = get_ytdl_base_options()
     
-    try:
-        with yt_dlp.YoutubeDL(options) as ydl:
-            info = ydl.extract_info(url, download=False)
+    def _extract(opts):
+        with yt_dlp.YoutubeDL(opts) as ydl:
+            return ydl.extract_info(url, download=False)
             
-            # Basic metadata
+    try:
+        info = _execute_with_retry(_extract, url, options)
+        
+        # Basic metadata
+        if True:
             result = {
                 'title': info.get('title', 'Unknown Title'),
                 'thumbnail': info.get('thumbnail'),
@@ -248,7 +290,7 @@ def download_format(url, format_id, format_type):
     if format_type == 'Video + Audio':
         options['format'] = format_id
         options['merge_output_format'] = 'mp4'
-    elif format_type == 'Audio Only':
+    if format_type == 'Audio Only':
         options['format'] = format_id
         options['postprocessors'] = [{
             'key': 'FFmpegExtractAudio',
@@ -256,11 +298,15 @@ def download_format(url, format_id, format_type):
             'preferredquality': '192',
         }]
         
-    try:
-        with yt_dlp.YoutubeDL(options) as ydl:
-            info = ydl.extract_info(url, download=True)
+    def _download(opts):
+        with yt_dlp.YoutubeDL(opts) as ydl:
+            return ydl.extract_info(url, download=True)
             
-            # Find the actual downloaded file, ignoring yt-dlp intermediate files
+    try:
+        info = _execute_with_retry(_download, url, options)
+        
+        # Find the actual downloaded file, ignoring yt-dlp intermediate files
+        if True:
             valid_files = []
             for f in os.listdir(temp_dir):
                 if f.startswith(file_id) and not f.endswith('.part') and '.f' not in f and not f.endswith('.ytdl'):
