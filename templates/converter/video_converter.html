@@ -65,10 +65,7 @@
                 <input type="radio" name="output_format" value="mkv" class="hidden peer">
                 <span class="px-4 py-2 rounded-xl text-sm font-bold border border-surface-200 peer-checked:border-brand-500 peer-checked:bg-brand-50 peer-checked:text-brand-700 text-surface-400 hover:bg-surface-50 transition-all block">MKV</span>
             </label>
-            <label class="cursor-pointer">
-                <input type="radio" name="output_format" value="webm" class="hidden peer">
-                <span class="px-4 py-2 rounded-xl text-sm font-bold border border-surface-200 peer-checked:border-brand-500 peer-checked:bg-brand-50 peer-checked:text-brand-700 text-surface-400 hover:bg-surface-50 transition-all block">WEBM</span>
-            </label>
+
             <label class="cursor-pointer">
                 <input type="radio" name="output_format" value="wmv" class="hidden peer">
                 <span class="px-4 py-2 rounded-xl text-sm font-bold border border-surface-200 peer-checked:border-brand-500 peer-checked:bg-brand-50 peer-checked:text-brand-700 text-surface-400 hover:bg-surface-50 transition-all block">WMV</span>
@@ -203,10 +200,7 @@
             return;
         }
 
-        if (file.size > 52428800) {
-            showError('File exceeds 50MB limit.');
-            return;
-        }
+
 
         selectedFile = file;
         fileName.textContent = file.name;

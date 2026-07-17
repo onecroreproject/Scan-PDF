@@ -1,0 +1,303 @@
+{% extends 'converter/base.html' %}
+{% load static %}
+
+{% block extra_head %}
+{% if meta_description %}
+<meta name="description" content="{{ meta_description }}">
+{% endif %}
+{% if keywords %}
+<meta name="keywords" content="{{ keywords }}">
+{% endif %}
+<style>
+    .loader {
+        border-top-color: #7c3aed;
+        -webkit-animation: spinner 1.5s linear infinite;
+        animation: spinner 1.5s linear infinite;
+    }
+    
+    @keyframes spinner {
+        0% {
+            transform: rotate(0deg);
+        }
+        100% {
+            transform: rotate(360deg);
+        }
+    }
+    
+    td {
+        vertical-align: middle;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<main class="flex-grow pt-4">
+    <!-- Hero Section -->
+    <section class="relative pt-4 pb-16 lg:pt-8 lg:pb-24 overflow-hidden">
+        <div class="absolute inset-0 bg-gradient-to-b from-brand-50 to-white -z-10"></div>
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center relative z-10">
+            <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-brand-100/50 border border-brand-200 text-brand-700 text-xs font-bold tracking-widest uppercase mb-8">
+                <i data-lucide="download" class="w-4 h-4"></i>
+                {% if platform_name == 'Universal' %}Universal Downloader{% else %}{{ platform_name }} Downloader{% endif %}
+            </div>
+            
+            <h1 class="text-4xl md:text-5xl lg:text-6xl font-black text-surface-900 tracking-tight mb-6 leading-tight">
+                {% if platform_name != 'Universal' %}{{ platform_name }} <br/>{% else %}Online Video {% endif %}<span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-600 to-brand-400">Downloader</span>
+            </h1>
+            
+            <p class="text-lg text-surface-500 mb-10 max-w-2xl mx-auto font-medium">
+                {% if platform_name == 'Universal' %}
+                Download videos from YouTube, Facebook, Instagram, TikTok, X and many more websites in high quality.
+                {% else %}
+                Download {{ platform_name }} videos quickly and easily in high quality MP4 and MP3 formats.
+                {% endif %}
+            </p>
+            
+            <!-- Input Form -->
+            <div class="max-w-3xl mx-auto relative group">
+                <div class="absolute -inset-1 bg-gradient-to-r from-brand-400 to-brand-600 rounded-2xl blur opacity-25 group-hover:opacity-40 transition duration-1000 group-hover:duration-200"></div>
+                <div class="relative flex flex-col sm:flex-row items-center gap-4 bg-white p-2 rounded-2xl shadow-elevated border border-surface-100">
+                    <div class="relative flex-grow w-full">
+                        <i data-lucide="link" class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-surface-400"></i>
+                        <input type="url" id="video-url" placeholder="Paste video URL here..." class="w-full pl-12 pr-4 py-4 rounded-xl bg-surface-50 border-transparent focus:bg-white focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 outline-none transition-all text-surface-900 font-medium" required>
+                    </div>
+                    <button id="analyze-btn" class="w-full sm:w-auto px-8 py-4 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl transition-colors flex items-center justify-center gap-2 whitespace-nowrap shadow-md hover:shadow-lg">
+                        <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                        <span>Start</span>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Loading State -->
+            <div id="loading-state" class="hidden mt-12 flex-col items-center justify-center gap-4">
+                <div class="loader ease-linear rounded-full border-4 border-t-4 border-surface-200 h-12 w-12 mb-4"></div>
+                <p class="text-surface-600 font-semibold animate-pulse">Analyzing video... Please wait.</p>
+            </div>
+            
+            <!-- Error Alert -->
+            <div id="error-alert" class="hidden mt-8 max-w-2xl mx-auto bg-red-50 border border-red-200 text-red-700 px-6 py-4 rounded-xl flex items-start gap-4 text-left">
+                <i data-lucide="alert-circle" class="w-6 h-6 flex-shrink-0 mt-0.5"></i>
+                <div>
+                    <h4 class="font-bold text-red-800 mb-1">Analysis Failed</h4>
+                    <p id="error-message" class="text-sm">Invalid URL or unsupported website.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Results Section -->
+    <section id="results-section" class="hidden pb-24">
+        <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex flex-col-reverse lg:flex-row gap-8 items-start">
+                
+                <!-- Left Column: Tables -->
+                <div class="w-full lg:w-3/5 bg-white border border-gray-200 rounded-sm overflow-hidden shadow-sm">
+                    
+                    <!-- Video + Audio Section -->
+                    <div id="video-formats-container" class="hidden">
+                        <div class="bg-white px-4 py-3 flex items-center gap-2 font-bold text-gray-900 border-b border-gray-200">
+                            <i data-lucide="video" class="w-5 h-5"></i> Video
+                        </div>
+                        <table class="w-full text-sm text-gray-800 border-collapse">
+                            <tbody id="video-formats-body">
+                                <!-- Dynamic rows -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Audio Section -->
+                    <div id="audio-formats-container" class="hidden">
+                        <div class="bg-white px-4 py-3 flex items-center gap-2 font-bold text-gray-900 border-y border-gray-200">
+                            <i data-lucide="music" class="w-5 h-5"></i> Audio
+                        </div>
+                        <table class="w-full text-sm text-gray-800 border-collapse">
+                            <tbody id="audio-formats-body">
+                                <!-- Dynamic rows -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- Right Column: Metadata -->
+                <div class="w-full lg:w-2/5 flex flex-col items-center text-center">
+                    <img id="video-thumbnail" src="" alt="Thumbnail" class="w-full max-w-md object-cover border-4 border-black mb-4">
+                    <h2 id="video-title" class="text-base font-bold text-gray-900 px-4 leading-tight mb-2">Video Title</h2>
+                    <div class="text-gray-500 font-medium text-sm" id="video-duration">Duration: 00:00:00</div>
+                </div>
+
+            </div>
+        </div>
+    </section>
+</main>
+{% endblock %}
+
+{% block extra_scripts %}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const analyzeBtn = document.getElementById('analyze-btn');
+        const urlInput = document.getElementById('video-url');
+        const loadingState = document.getElementById('loading-state');
+        const errorAlert = document.getElementById('error-alert');
+        const errorMessage = document.getElementById('error-message');
+        const resultsSection = document.getElementById('results-section');
+        
+        // Metadata elements
+        const videoThumbnail = document.getElementById('video-thumbnail');
+        const videoDuration = document.getElementById('video-duration');
+        const videoTitle = document.getElementById('video-title');
+        
+        // Tables
+        const videoFormatsContainer = document.getElementById('video-formats-container');
+        const videoFormatsBody = document.getElementById('video-formats-body');
+        const audioFormatsContainer = document.getElementById('audio-formats-container');
+        const audioFormatsBody = document.getElementById('audio-formats-body');
+        
+        function formatBytes(bytes, decimals = 2) {
+            if (!+bytes) return 'Unknown';
+            const k = 1024;
+            const dm = decimals < 0 ? 0 : decimals;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
+        }
+        
+        function formatDuration(seconds) {
+            if (!seconds) return '0:00';
+            const h = Math.floor(seconds / 3600);
+            const m = Math.floor((seconds % 3600) / 60);
+            const s = Math.floor(seconds % 60);
+            if (h > 0) {
+                return `${h}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`;
+            }
+            return `${m}:${s.toString().padStart(2, '0')}`;
+        }
+        
+        function formatVal(val) {
+            if (!val || String(val).toLowerCase() === 'none' || String(val).toLowerCase() === 'null') return '-';
+            return val;
+        }
+        
+        analyzeBtn.addEventListener('click', async function() {
+            const url = urlInput.value.trim();
+            if (!url) {
+                urlInput.focus();
+                return;
+            }
+            
+            // Reset state
+            errorAlert.classList.add('hidden');
+            resultsSection.classList.add('hidden');
+            loadingState.classList.remove('hidden');
+            analyzeBtn.disabled = true;
+            analyzeBtn.innerHTML = `<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i><span>Analyzing</span>`;
+            if(window.lucide) window.lucide.createIcons();
+            
+            try {
+                const response = await fetch('{% url "video_downloader:analyze_url" %}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ url: url })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to analyze video');
+                }
+                
+                // Populate metadata
+                videoTitle.textContent = data.title;
+                videoDuration.textContent = 'Duration: ' + formatDuration(data.duration);
+                if (data.thumbnail) {
+                    videoThumbnail.src = data.thumbnail;
+                } else {
+                    videoThumbnail.src = '{% static "images/placeholder.png" %}'; // fallback
+                }
+                
+                // Clear tables
+                videoFormatsBody.innerHTML = '';
+                audioFormatsBody.innerHTML = '';
+                
+                let hasVideo = false;
+                let hasAudio = false;
+                
+                // Sort formats (best resolution first for video, best bitrate for audio)
+                const sortedFormats = data.formats.sort((a, b) => {
+                    const hA = a.height || 0;
+                    const hB = b.height || 0;
+                    return hB - hA;
+                });
+                
+                sortedFormats.forEach(fmt => {
+                    const sizeStr = formatBytes(fmt.filesize);
+                    const dlUrl = `{% url "video_downloader:download_video" %}?url=${encodeURIComponent(url)}&format_id=${encodeURIComponent(fmt.format_id)}&format_type=${encodeURIComponent(fmt.type)}`;
+                    
+                    if (fmt.type === 'Audio Only') {
+                        hasAudio = true;
+                        const tr = document.createElement('tr');
+                        tr.className = 'border-b border-gray-200 hover:bg-gray-50';
+                        const bitrate = fmt.bitrate ? Math.round(fmt.bitrate) + 'k' : (fmt.abr ? Math.round(fmt.abr) + 'k' : formatVal(fmt.resolution));
+                        tr.innerHTML = `
+                            <td class="px-2 py-3 border-r border-gray-200 text-center w-1/3">${bitrate} (.${formatVal(fmt.ext)})</td>
+                            <td class="px-2 py-3 border-r border-gray-200 text-center w-1/3">${sizeStr}</td>
+                            <td class="px-4 py-3 text-center w-1/3">
+                                <a href="${dlUrl}" class="inline-flex items-center justify-center w-full gap-2 px-4 py-2.5 bg-[#e91e63] hover:bg-pink-700 text-white font-bold rounded transition-colors text-sm">
+                                    <i data-lucide="download" class="w-4 h-4"></i> Download
+                                </a>
+                            </td>
+                        `;
+                        audioFormatsBody.appendChild(tr);
+                    } else if (fmt.type === 'Video + Audio') {
+                        hasVideo = true;
+                        const audioIcon = '<i data-lucide="volume-2" class="w-4 h-4 text-gray-800"></i>';
+                        
+                        const tr = document.createElement('tr');
+                        tr.className = 'border-b border-gray-200 hover:bg-gray-50';
+                        tr.innerHTML = `
+                            <td class="px-2 py-3 border-r border-gray-200 text-center w-1/3">
+                                <div class="font-bold text-gray-800 flex items-center justify-center gap-1 mb-1">
+                                    ${formatVal(fmt.resolution)}
+                                    ${audioIcon}
+                                </div>
+                                <div class="flex items-center justify-center gap-1">
+                                    <span class="px-1.5 py-0.5 bg-green-500 text-white text-[10px] font-bold rounded uppercase">MP4</span>
+                                </div>
+                            </td>
+                            <td class="px-2 py-3 border-r border-gray-200 text-center w-1/3">${sizeStr}</td>
+                            <td class="px-4 py-3 text-center w-1/3">
+                                <a href="${dlUrl}" class="inline-flex items-center justify-center w-full gap-2 px-4 py-2.5 bg-[#e91e63] hover:bg-pink-700 text-white font-bold rounded transition-colors text-sm">
+                                    <i data-lucide="download" class="w-4 h-4"></i> Download
+                                </a>
+                            </td>
+                        `;
+                        videoFormatsBody.appendChild(tr);
+                    }
+                });
+                
+                videoFormatsContainer.classList.toggle('hidden', !hasVideo);
+                audioFormatsContainer.classList.toggle('hidden', !hasAudio);
+                
+                if(window.lucide) window.lucide.createIcons();
+                
+                // Show results
+                loadingState.classList.add('hidden');
+                resultsSection.classList.remove('hidden');
+                
+                // Scroll to results
+                resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                
+            } catch (err) {
+                loadingState.classList.add('hidden');
+                errorMessage.textContent = err.message;
+                errorAlert.classList.remove('hidden');
+            } finally {
+                analyzeBtn.disabled = false;
+                analyzeBtn.innerHTML = `<i data-lucide="arrow-right" class="w-5 h-5"></i><span>Start</span>`;
+                if(window.lucide) window.lucide.createIcons();
+            }
+        });
+    });
+</script>
+{% endblock %}

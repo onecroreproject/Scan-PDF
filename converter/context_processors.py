@@ -94,6 +94,72 @@ def tools_processor(request):
         'url': reverse('dynamic_qr:short_url') if is_dqr_user else reverse('dynamic_qr:login')
     }
 
+    # Add Video Downloader tools to search
+    metadata['video-downloader-universal'] = {
+        'title': 'Universal Video Downloader',
+        'icon': 'download-cloud',
+        'description': 'Download videos from YouTube, Facebook, Instagram, TikTok, and more.',
+        'slug': 'video-downloader',
+        'url': reverse('video_downloader:index')
+    }
+    metadata['youtube-downloader'] = {
+        'title': 'YouTube Video Downloader',
+        'icon': 'youtube',
+        'description': 'Download YouTube videos easily in MP4 or MP3 format.',
+        'slug': 'youtube-downloader',
+        'url': reverse('video_downloader:youtube_downloader')
+    }
+    metadata['facebook-downloader'] = {
+        'title': 'Facebook Video Downloader',
+        'icon': 'facebook',
+        'description': 'Download Facebook videos directly to your device.',
+        'slug': 'facebook-downloader',
+        'url': reverse('video_downloader:facebook_downloader')
+    }
+    metadata['twitter-downloader'] = {
+        'title': 'X (Twitter) Video Downloader',
+        'icon': 'twitter',
+        'description': 'Download videos and GIFs from X (formerly Twitter).',
+        'slug': 'twitter-downloader',
+        'url': reverse('video_downloader:twitter_downloader')
+    }
+    metadata['instagram-downloader'] = {
+        'title': 'Instagram Video Downloader',
+        'icon': 'instagram',
+        'description': 'Download Instagram Reels, IGTV, and videos.',
+        'slug': 'instagram-downloader',
+        'url': reverse('video_downloader:instagram_downloader')
+    }
+    metadata['tiktok-downloader'] = {
+        'title': 'TikTok Video Downloader',
+        'icon': 'music-2',
+        'description': 'Download TikTok videos without watermark.',
+        'slug': 'tiktok-downloader',
+        'url': reverse('video_downloader:tiktok_downloader')
+    }
+    metadata['vimeo-downloader'] = {
+        'title': 'Vimeo Video Downloader',
+        'icon': 'video',
+        'description': 'Download Vimeo videos in HD quality.',
+        'slug': 'vimeo-downloader',
+        'url': reverse('video_downloader:vimeo_downloader')
+    }
+    metadata['reddit-downloader'] = {
+        'title': 'Reddit Video Downloader',
+        'icon': 'hash',
+        'description': 'Download Reddit videos with audio.',
+        'slug': 'reddit-downloader',
+        'url': reverse('video_downloader:reddit_downloader')
+    }
+    metadata['dailymotion-downloader'] = {
+        'title': 'Dailymotion Video Downloader',
+        'icon': 'play-circle',
+        'description': 'Download Dailymotion videos in high quality.',
+        'slug': 'dailymotion-downloader',
+        'url': reverse('video_downloader:dailymotion_downloader')
+    }
+
+
     return {
         'grouped_tools': ordered,
         'all_tools_metadata': metadata,
