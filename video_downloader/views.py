@@ -104,7 +104,7 @@ def analyze_url(request):
     except ValueError as e:
         return JsonResponse({'error': str(e)}, status=400)
     except Exception as e:
-        return JsonResponse({'error': 'An unexpected error occurred. Please try again later.'}, status=500)
+        return JsonResponse({'error': f"Server execution error: {str(e)}"}, status=500)
 
 @require_http_methods(["POST", "GET"])
 def download_video(request):
@@ -149,4 +149,4 @@ def download_video(request):
     except ValueError as e:
         return JsonResponse({'error': str(e)}, status=400)
     except Exception as e:
-        return JsonResponse({'error': 'An unexpected error occurred during download.'}, status=500)
+        return JsonResponse({'error': f"Download failed: {str(e)}"}, status=500)

@@ -10,7 +10,15 @@ import yt_dlp
 
 logger = logging.getLogger(__name__)
 
+import random
+
 def get_ytdl_base_options():
+    user_agents = [
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Safari/605.1.15',
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:122.0) Gecko/20100101 Firefox/122.0'
+    ]
+    
     options = {
         'quiet': True,
         'no_warnings': True,
@@ -20,6 +28,12 @@ def get_ytdl_base_options():
         'fragment_retries': 10,
         'format_sort': ['vcodec:h264', 'res', 'acodec:m4a'],
         'force_ipv4': True,
+        'http_headers': {
+            'User-Agent': random.choice(user_agents),
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.5',
+            'Sec-Fetch-Mode': 'navigate',
+        },
     }
     
     # Try to use cookies.txt if it exists in the project base directory
@@ -52,8 +66,9 @@ def _execute_with_retry(execute_func, url, options):
     try:
         return execute_func(options)
     except Exception as e:
+        error_msg = str(e)
         if not _is_bot_error(e, url):
-            raise
+            raise ValueError(f"Extraction failed: {error_msg}")
             
         logger.warning(f"Bot/age detection encountered for {url}. Retrying with browser cookies...")
         browsers = ['chrome', 'edge', 'firefox']
@@ -67,8 +82,9 @@ def _execute_with_retry(execute_func, url, options):
                 return execute_func(retry_options)
             except Exception as retry_e:
                 logger.warning(f"{browser} cookie retry failed: {retry_e}")
+                error_msg = f"{error_msg} | {browser} retry: {str(retry_e)}"
                 
-        raise ValueError("The platform is blocking access. If you are running this on a host server, please export your browser cookies to 'cookies.txt' and upload it to the project root directory to bypass bot protection.")
+        raise ValueError(f"Platform blocked access. Hostinger restricts outbound media requests and your IP might be banned. Details: {error_msg}")
 
 
 def verify_video_audio_streams(filepath):
@@ -278,8 +294,10 @@ def analyze_video(url):
                 
             result['formats'] = final_video_formats + final_audio_formats
             return result
+    except ValueError as e:
+        raise
     except Exception as e:
-        logger.error(f"Error analyzing video URL {url}: {e}")
+        logger.error(f"Failed to analyze URL {url}: {e}")
         raise ValueError(str(e))
 
 def download_format(url, format_id, format_type):

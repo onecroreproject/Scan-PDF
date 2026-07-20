@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Payment Successful</title>
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333333; margin: 0; padding: 20px;">
+    <div style="max-w-600px; margin: 0 auto; border: 1px solid #eeeeee; border-radius: 12px; padding: 30px;">
+        <div style="text-align: center; margin-bottom: 20px;">
+            <h2 style="color: #10b981;">Payment Received</h2>
+        </div>
+        <p>Dear {{ user.username }},</p>
+        <p>Thank you for your payment. We have successfully processed your invoice transaction.</p>
+        <div style="background-color: #f9f9f9; padding: 15px; border-radius: 8px; margin: 20px 0;">
+            <table style="width: 100%; border-collapse: collapse;">
+                <tr>
+                    <td style="padding: 5px 0; font-weight: bold;">Transaction ID:</td>
+                    <td style="padding: 5px 0; text-align: right; font-family: monospace;">{{ payment.transaction_id }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 5px 0; font-weight: bold;">Amount Paid:</td>
+                    <td style="padding: 5px 0; text-align: right;">₹{{ payment.amount }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 5px 0; font-weight: bold;">Receipt Number:</td>
+                    <td style="padding: 5px 0; text-align: right;">{{ payment.receipt_number }}</td>
+                </tr>
+                <tr>
+                    <td style="padding: 5px 0; font-weight: bold;">Gateway:</td>
+                    <td style="padding: 5px 0; text-align: right;">{{ payment.gateway }}</td>
+                </tr>
+            </table>
+        </div>
+        <p>A receipt has been added to your dashboard billing history.</p>
+        <p>Regards,<br>ScanPDF Team</p>
+    </div>
+</body>
+</html>

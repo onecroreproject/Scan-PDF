@@ -1,0 +1,180 @@
+{% extends "admin/index.html" %}
+
+{% block content %}
+<style>
+    .dashboard-metrics {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+        gap: 15px;
+        margin-bottom: 30px;
+    }
+    .metric-card {
+        background: #ffffff;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 15px;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        display: flex;
+        flex-direction: column;
+    }
+    .metric-title {
+        font-size: 10px;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #777777;
+        font-weight: bold;
+        margin-bottom: 5px;
+    }
+    .metric-value {
+        font-size: 20px;
+        font-weight: 800;
+        color: #333333;
+    }
+    .metric-section-title {
+        font-size: 14px;
+        font-weight: 800;
+        text-transform: uppercase;
+        color: #444444;
+        margin: 20px 0 10px 0;
+        border-bottom: 2px solid #eee;
+        padding-bottom: 5px;
+    }
+    .expiry-container {
+        background: #ffffff;
+        border: 1px solid #e0e0e0;
+        border-radius: 8px;
+        padding: 20px;
+        margin-bottom: 30px;
+    }
+    .expiry-list {
+        margin-top: 10px;
+        font-size: 12px;
+    }
+    .expiry-item {
+        padding: 8px 12px;
+        border-radius: 4px;
+        margin-bottom: 5px;
+        font-weight: bold;
+    }
+    .expiry-item.expired {
+        background: #fee2e2;
+        color: #dc2626;
+        border: 1px solid #fca5a5;
+    }
+    .expiry-item.today {
+        background: #ffedd5;
+        color: #d97706;
+        border: 1px solid #fdbb2d;
+    }
+    .expiry-item.soon {
+        background: #f0fdf4;
+        color: #16a34a;
+        border: 1px solid #bbf7d0;
+    }
+</style>
+
+<div class="metric-section-title">SaaS Metrics Overview</div>
+<div class="dashboard-metrics">
+    <!-- User metrics -->
+    <div class="metric-card">
+        <span class="metric-title">Total Users</span>
+        <span class="metric-value">{{ total_users }}</span>
+    </div>
+    <div class="metric-card">
+        <span class="metric-title">Active Users</span>
+        <span class="metric-value">{{ active_users }}</span>
+    </div>
+    <div class="metric-card">
+        <span class="metric-title">New Users Today</span>
+        <span class="metric-value">{{ new_users_today }}</span>
+    </div>
+
+    <!-- Subscription metrics -->
+    <div class="metric-card">
+        <span class="metric-title">Total Subscriptions</span>
+        <span class="metric-value">{{ total_subs }}</span>
+    </div>
+    <div class="metric-card">
+        <span class="metric-title">Active Subscriptions</span>
+        <span class="metric-value" style="color: #16a34a;">{{ active_subs }}</span>
+    </div>
+    <div class="metric-card">
+        <span class="metric-title">Expired Subscriptions</span>
+        <span class="metric-value" style="color: #dc2626;">{{ expired_subs }}</span>
+    </div>
+    <div class="metric-card">
+        <span class="metric-title">Pending Subscriptions</span>
+        <span class="metric-value">{{ pending_subs }}</span>
+    </div>
+    <div class="metric-card">
+        <span class="metric-title">Cancelled Subscriptions</span>
+        <span class="metric-value">{{ cancelled_subs }}</span>
+    </div>
+
+    <!-- Revenue metrics -->
+    <div class="metric-card">
+        <span class="metric-title">Total Payments</span>
+        <span class="metric-value">{{ total_payments }}</span>
+    </div>
+    <div class="metric-card">
+        <span class="metric-title">Successful Payments</span>
+        <span class="metric-value" style="color: #16a34a;">{{ success_payments }}</span>
+    </div>
+    <div class="metric-card">
+        <span class="metric-title">Failed Payments</span>
+        <span class="metric-value" style="color: #dc2626;">{{ failed_payments }}</span>
+    </div>
+    <div class="metric-card" style="background: #faf5ff; border-color: #d8b4fe;">
+        <span class="metric-title" style="color: #7c3aed;">Monthly Revenue</span>
+        <span class="metric-value" style="color: #7c3aed;">₹{{ monthly_revenue }}</span>
+    </div>
+    <div class="metric-card" style="background: #faf5ff; border-color: #d8b4fe;">
+        <span class="metric-title" style="color: #7c3aed;">Yearly Revenue</span>
+        <span class="metric-value" style="color: #7c3aed;">₹{{ yearly_revenue }}</span>
+    </div>
+
+    <!-- Asset metrics -->
+    <div class="metric-card">
+        <span class="metric-title">Total Dynamic QRs</span>
+        <span class="metric-value">{{ total_qrs }}</span>
+    </div>
+    <div class="metric-card">
+        <span class="metric-title">Total Short URLs</span>
+        <span class="metric-value">{{ total_shorts }}</span>
+    </div>
+</div>
+
+<!-- Expiry Monitoring Section -->
+<div class="expiry-container">
+    <h3 style="margin-top: 0; font-weight: 800; border-bottom: 1px solid #eee; padding-bottom: 5px;">Subscription Expiry Monitor</h3>
+    <div class="expiry-list">
+        {% if expiring_today or expiring_3_days or expiring_7_days or already_expired %}
+            {% for sub in already_expired %}
+                <div class="expiry-item expired">
+                    🚨 EXPIRED: {{ sub.user.username }} (Plan: {{ sub.plan.name }} - Expired on {{ sub.end_date|date:"M d, Y" }})
+                </div>
+            {% endfor %}
+            {% for sub in expiring_today %}
+                <div class="expiry-item today">
+                    ⚠️ EXPIRING TODAY: {{ sub.user.username }} (Plan: {{ sub.plan.name }} - Ends today!)
+                </div>
+            {% endfor %}
+            {% for sub in expiring_3_days %}
+                <div class="expiry-item soon">
+                    ⏳ EXPIRING IN 3 DAYS: {{ sub.user.username }} (Plan: {{ sub.plan.name }} - Ends {{ sub.end_date|date:"M d, Y" }})
+                </div>
+            {% endfor %}
+            {% for sub in expiring_7_days %}
+                <div class="expiry-item soon">
+                    ⏳ EXPIRING IN 7 DAYS: {{ sub.user.username }} (Plan: {{ sub.plan.name }} - Ends {{ sub.end_date|date:"M d, Y" }})
+                </div>
+            {% endfor %}
+        {% else %}
+            <div style="color: #666; font-style: italic;">No subscriptions expiring soon or expired.</div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Render standard Django Admin lists below -->
+{{ block.super }}
+{% endblock %}

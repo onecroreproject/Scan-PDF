@@ -1,0 +1,49 @@
+{% extends 'admin_dashboard/base.html' %}
+
+{% block title %}Payments | SaaS Admin{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="fw-bold m-0">Payment Transactions</h3>
+</div>
+
+<div class="card-table">
+    <div class="card-table-header">
+        <h4>All Payments</h4>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>TXN ID</th>
+                    <th>User</th>
+                    <th>Plan</th>
+                    <th>Amount</th>
+                    <th>Date</th>
+                    <th>Gateway</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in payments %}
+                <tr>
+                    <td class="font-monospace text-muted">{{ p.transaction_id }}</td>
+                    <td class="fw-bold">{{ p.user.username }}</td>
+                    <td>{{ p.subscription.plan.name|default:"-" }}</td>
+                    <td class="fw-bold">₹{{ p.amount }}</td>
+                    <td>{{ p.created_at|date:"M d, Y H:i" }}</td>
+                    <td>{{ p.gateway }}</td>
+                    <td>
+                        {% if p.payment_status == 'Paid' %}
+                            <span class="badge badge-soft-success">Paid</span>
+                        {% else %}
+                            <span class="badge badge-soft-danger">{{ p.payment_status }}</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

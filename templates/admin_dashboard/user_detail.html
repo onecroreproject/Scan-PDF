@@ -1,0 +1,169 @@
+{% extends 'admin_dashboard/base.html' %}
+
+{% block title %}User Detail | SaaS Admin{% endblock %}
+
+{% block content %}
+<div class="mb-4">
+    <a href="{% url 'custom_admin:users' %}" class="btn btn-outline-secondary btn-sm"><i class="fa-solid fa-arrow-left"></i> Back to Users</a>
+</div>
+
+<div class="profile-header">
+    <img src="https://ui-avatars.com/api/?name={{ target_user.username }}&background=f1f5f9&color=64748b&size=150" alt="">
+    <div class="profile-header-info flex-grow-1">
+        <h2>{{ target_user.first_name }} {{ target_user.last_name }}</h2>
+        <p>@{{ target_user.username }} • {{ target_user.email }}</p>
+        <div class="mt-3">
+            {% if target_user.is_active %}
+                <span class="badge badge-soft-success">Active Account</span>
+            {% else %}
+                <span class="badge badge-soft-danger">Inactive Account</span>
+            {% endif %}
+            <span class="badge badge-soft-secondary">Joined {{ target_user.date_joined|date:"M d, Y" }}</span>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-6">
+        <div class="card-table h-100">
+            <div class="card-table-header">
+                <h4>Subscription Details</h4>
+            </div>
+            <div class="p-4">
+                {% if subscription %}
+                    <h5 class="fw-bold text-primary">{{ subscription.plan.name }} Plan</h5>
+                    <p class="text-muted mb-4">{{ subscription.billing_cycle|title }} Billing</p>
+                    
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Status</span>
+                        <span class="badge badge-soft-success">{{ subscription.status }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Start Date</span>
+                        <span class="fw-medium">{{ subscription.start_date|date:"M d, Y" }}</span>
+                    </div>
+                    <div class="d-flex justify-content-between mb-2">
+                        <span>Expiry Date</span>
+                        <span class="fw-medium">{{ subscription.end_date|date:"M d, Y" }}</span>
+                    </div>
+                {% else %}
+                    <h5 class="fw-bold text-secondary">FREE Plan</h5>
+                    <p class="text-muted">No active premium subscription.</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card-table h-100">
+            <div class="card-table-header">
+                <h4>Usage Statistics</h4>
+            </div>
+            <div class="p-4">
+                <div class="mb-4">
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>Dynamic QR Codes</span>
+                        <span class="fw-bold">{{ qrs.count }} / {% if subscription %}{{ subscription.plan.max_dynamic_qrs }}{% else %}5{% endif %}</span>
+                    </div>
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar bg-purple" role="progressbar" style="width: {% if subscription %}{{ qrs.count|floatformat:2 }}{% else %}0{% endif %}%; background-color:#4f46e5;"></div>
+                    </div>
+                </div>
+                
+                <div>
+                    <div class="d-flex justify-content-between mb-1">
+                        <span>Short URLs</span>
+                        <span class="fw-bold">{{ shorts.count }} / {% if subscription %}{{ subscription.plan.max_short_urls }}{% else %}10{% endif %}</span>
+                    </div>
+                    <div class="progress" style="height: 8px;">
+                        <div class="progress-bar bg-blue" role="progressbar" style="width: {% if subscription %}{{ shorts.count|floatformat:2 }}{% else %}0{% endif %}%; background-color:#2563eb;"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card-table mb-4">
+    <div class="card-table-header">
+        <h4>Payment History</h4>
+    </div>
+    <div class="table-responsive">
+        <table class="table mb-0">
+            <thead>
+                <tr>
+                    <th>TXN ID</th>
+                    <th>Date</th>
+                    <th>Amount</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for p in payments %}
+                <tr>
+                    <td class="font-monospace text-muted">{{ p.transaction_id }}</td>
+                    <td>{{ p.created_at|date:"M d, Y" }}</td>
+                    <td class="fw-bold">₹{{ p.amount }}</td>
+                    <td>
+                        {% if p.payment_status == 'Paid' %}
+                            <span class="badge badge-soft-success">Paid</span>
+                        {% else %}
+                            <span class="badge badge-soft-danger">{{ p.payment_status }}</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" class="text-center text-muted py-4">No payment history found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-6">
+        <div class="card-table h-100">
+            <div class="card-table-header">
+                <h4>Recent QR Codes</h4>
+            </div>
+            <ul class="list-group list-group-flush">
+                {% for qr in qrs|slice:":5" %}
+                <li class="list-group-item d-flex justify-content-between align-items-center py-3">
+                    <div>
+                        <div class="fw-bold">{{ qr.qr_name }}</div>
+                        <div class="small text-muted">{{ qr.destination_url|truncatechars:30 }}</div>
+                    </div>
+                    <span class="small text-muted">{{ qr.created_at|date:"M d" }}</span>
+                </li>
+                {% empty %}
+                <li class="list-group-item text-center text-muted py-4">No QR codes created.</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+    
+    <div class="col-md-6">
+        <div class="card-table h-100">
+            <div class="card-table-header">
+                <h4>Activity Timeline</h4>
+            </div>
+            <ul class="list-group list-group-flush">
+                {% for log in activity|slice:":5" %}
+                <li class="list-group-item py-3">
+                    <div class="d-flex justify-content-between">
+                        <span class="fw-medium">{{ log.action }}</span>
+                        <span class="small text-muted">{{ log.created_at|date:"M d, H:i" }}</span>
+                    </div>
+                    <div class="small text-muted mt-1">Status: {{ log.status }}</div>
+                </li>
+                {% empty %}
+                <li class="list-group-item text-center text-muted py-4">No recent activity.</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

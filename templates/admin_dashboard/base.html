@@ -1,0 +1,95 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Custom Admin Dashboard{% endblock %}</title>
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Google Fonts (Inter) -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="{% static 'admin_dashboard/css/dashboard.css' %}">
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+
+    <!-- Sidebar -->
+    <nav id="sidebar">
+        <div class="sidebar-header">
+            <i class="fa-solid fa-bolt text-warning me-2"></i> ScanPDF Admin
+        </div>
+
+        <ul class="list-unstyled components">
+            <li class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
+                <a href="{% url 'custom_admin:dashboard' %}"><i class="fa-solid fa-chart-pie"></i> Dashboard</a>
+            </li>
+            <li class="{% if request.resolver_match.url_name == 'users' or request.resolver_match.url_name == 'user_detail' %}active{% endif %}">
+                <a href="{% url 'custom_admin:users' %}"><i class="fa-solid fa-users"></i> Users</a>
+            </li>
+            <li class="{% if request.resolver_match.url_name == 'subscriptions' %}active{% endif %}">
+                <a href="{% url 'custom_admin:subscriptions' %}"><i class="fa-solid fa-id-card"></i> Subscriptions</a>
+            </li>
+            <li class="{% if request.resolver_match.url_name == 'payments' %}active{% endif %}">
+                <a href="{% url 'custom_admin:payments' %}"><i class="fa-solid fa-credit-card"></i> Payments</a>
+            </li>
+            <li class="{% if request.resolver_match.url_name == 'plans' %}active{% endif %}">
+                <a href="{% url 'custom_admin:plans' %}"><i class="fa-solid fa-tags"></i> Plans</a>
+            </li>
+            <li class="{% if request.resolver_match.url_name == 'qrcodes' %}active{% endif %}">
+                <a href="{% url 'custom_admin:qrcodes' %}"><i class="fa-solid fa-qrcode"></i> QR Codes</a>
+            </li>
+            <li class="{% if request.resolver_match.url_name == 'shorturls' %}active{% endif %}">
+                <a href="{% url 'custom_admin:shorturls' %}"><i class="fa-solid fa-link"></i> Short URLs</a>
+            </li>
+            <li class="{% if request.resolver_match.url_name == 'reports' %}active{% endif %}">
+                <a href="{% url 'custom_admin:reports' %}"><i class="fa-solid fa-chart-line"></i> Reports</a>
+            </li>
+            <li class="{% if request.resolver_match.url_name == 'activity' %}active{% endif %}">
+                <a href="{% url 'custom_admin:activity' %}"><i class="fa-solid fa-history"></i> Activity Logs</a>
+            </li>
+            <li class="{% if request.resolver_match.url_name == 'settings' %}active{% endif %}">
+                <a href="{% url 'custom_admin:settings' %}"><i class="fa-solid fa-cog"></i> Settings</a>
+            </li>
+        </ul>
+    </nav>
+
+    <!-- Main Content -->
+    <div id="content">
+        <!-- Top Navbar -->
+        <div class="top-navbar">
+            <div class="search-box">
+                <i class="fa-solid fa-search"></i>
+                <input type="text" placeholder="Search users, transactions...">
+            </div>
+            
+            <div class="nav-user">
+                <span id="current-datetime" class="text-muted small fw-medium"></span>
+                <i class="fa-solid fa-bell"></i>
+                <div class="nav-profile">
+                    <img src="https://ui-avatars.com/api/?name={{ request.user.username }}&background=4f46e5&color=fff" alt="Admin">
+                    <span>{{ request.user.username }}</span>
+                </div>
+                <!-- Custom logout view to handle GET and redirect to home -->
+                <a href="{% url 'custom_admin:logout' %}" class="btn btn-sm btn-outline-danger ms-3"><i class="fa-solid fa-sign-out-alt"></i> Logout</a>
+            </div>
+        </div>
+
+        <!-- Page Content -->
+        <div class="page-content">
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Custom JS -->
+    <script src="{% static 'admin_dashboard/js/dashboard.js' %}"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

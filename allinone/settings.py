@@ -34,6 +34,8 @@ INSTALLED_APPS = [
     'audio_processor',
     'dynamic_qr',
     'video_downloader',
+    'services',
+    'custom_admin',
 ]
 
 MIDDLEWARE = [
@@ -45,6 +47,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'services.middleware.SubscriptionMiddleware',
 ]
 
 ROOT_URLCONF = 'allinone.urls'

@@ -1,0 +1,51 @@
+{% extends 'admin_dashboard/base.html' %}
+
+{% block title %}Activity Logs | SaaS Admin{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="fw-bold m-0">System Activity Logs</h3>
+</div>
+
+<div class="card-table">
+    <div class="card-table-header">
+        <h4>Recent Activity</h4>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Date & Time</th>
+                    <th>User</th>
+                    <th>Action</th>
+                    <th>IP Address</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for log in logs %}
+                <tr>
+                    <td>{{ log.created_at|date:"Y-m-d H:i:s" }}</td>
+                    <td class="fw-bold">{{ log.user.username|default:"System" }}</td>
+                    <td>{{ log.action }}</td>
+                    <td class="font-monospace text-muted">{{ log.ip_address|default:"-" }}</td>
+                    <td>
+                        {% if log.status == 'Success' %}
+                            <span class="badge badge-soft-success">Success</span>
+                        {% elif log.status == 'Failed' or log.status == 'Expired' or log.status == 'Cancelled' %}
+                            <span class="badge badge-soft-danger">{{ log.status }}</span>
+                        {% else %}
+                            <span class="badge badge-soft-secondary">{{ log.status }}</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center text-muted py-4">No activity logs found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

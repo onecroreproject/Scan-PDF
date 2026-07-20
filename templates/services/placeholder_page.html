@@ -1,0 +1,53 @@
+{% extends 'converter/base.html' %}
+
+{% block content %}
+<div class="min-h-screen bg-surface-50 py-20 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-4xl mx-auto space-y-12">
+        <!-- Header -->
+        <div class="text-center space-y-4">
+            <h1 class="text-4xl font-black text-surface-900 tracking-tight">
+                {{ title }}
+            </h1>
+            <p class="text-lg text-surface-600 font-medium max-w-2xl mx-auto">
+                {{ subtitle }}
+            </p>
+        </div>
+
+        {% if features %}
+        <!-- Features Showcase Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 pt-8">
+            {% for feature in features %}
+            <div class="bg-white border border-surface-100 rounded-2xl p-6 shadow-card hover:shadow-card-hover hover:border-brand-200 transition-all flex items-start gap-4">
+                <div class="w-10 h-10 rounded-xl bg-brand-50 flex items-center justify-center text-brand-600 shrink-0">
+                    <i data-lucide="check-circle-2" class="w-5 h-5"></i>
+                </div>
+                <div class="space-y-1">
+                    <h3 class="font-black text-surface-900 text-sm tracking-wide uppercase">{{ feature.name }}</h3>
+                    <p class="text-xs text-surface-500 font-semibold leading-relaxed">{{ feature.desc }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <!-- Generic Placeholder Content -->
+        <div class="bg-white border border-surface-100 rounded-3xl p-12 shadow-card text-center space-y-6">
+            <div class="w-20 h-20 rounded-full bg-brand-50 flex items-center justify-center mx-auto text-brand-600">
+                <i data-lucide="construction" class="w-10 h-10"></i>
+            </div>
+            <div class="space-y-2 max-w-md mx-auto">
+                <h3 class="text-xl font-black text-surface-900 uppercase tracking-wider">Architecture Placeholder</h3>
+                <p class="text-sm text-surface-500 font-semibold leading-relaxed">
+                    This section belongs to the future-ready services module. The layout is set up for subsequent integration phases.
+                </p>
+            </div>
+            <div class="pt-4">
+                <a href="{% url 'services:pricing' %}" class="inline-flex items-center gap-2 py-3 px-6 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-sm font-black transition-all uppercase tracking-wider">
+                    View Pricing Plans
+                    <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                </a>
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

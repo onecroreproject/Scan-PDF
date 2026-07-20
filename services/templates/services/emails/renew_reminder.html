@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>Renew Reminder</title>
+</head>
+<body style="font-family: Arial, sans-serif; line-height: 1.6; color: #333333; margin: 0; padding: 20px;">
+    <div style="max-w-600px; margin: 0 auto; border: 1px solid #eeeeee; border-radius: 12px; padding: 30px;">
+        <div style="text-align: center; margin-bottom: 20px;">
+            <h2 style="color: #eab308;">Subscription Renewal Reminder</h2>
+        </div>
+        <p>Dear {{ user.username }},</p>
+        <p>This is a friendly reminder that your subscription to the <strong>{{ subscription.plan.name }}</strong> plan is set to expire on <strong>{{ subscription.end_date|date:"F d, Y" }}</strong>.</p>
+        <p>Please renew your plan to ensure uninterrupted access to your QR codes and shortened link redirects.</p>
+        <p style="text-align: center; margin-top: 30px;">
+            <a href="{{ pricing_url }}" style="background-color: #7c3aed; color: #ffffff; padding: 12px 24px; border-radius: 8px; text-decoration: none; font-weight: bold;">Renew Subscription</a>
+        </p>
+        <p>Regards,<br>ScanPDF Team</p>
+    </div>
+</body>
+</html>

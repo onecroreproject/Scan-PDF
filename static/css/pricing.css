@@ -1,0 +1,14 @@
+/* Pricing Page Animation Styles */
+.price-animate {
+    transition: opacity 150ms ease-in-out, transform 150ms ease-in-out;
+}
+
+.price-fade-out {
+    opacity: 0;
+    transform: translateY(-5px);
+}
+
+.price-fade-in {
+    opacity: 1;
+    transform: translateY(0);
+}
