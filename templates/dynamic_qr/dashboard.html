@@ -81,6 +81,65 @@
         </div>
     </div>
 
+    <!-- My Subscription Section -->
+    <div class="bg-white border border-slate-100 rounded-3xl p-6 shadow-sm mb-10">
+        <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div class="space-y-2">
+                <div class="flex items-center gap-2">
+                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase tracking-wider bg-indigo-50 text-indigo-700">
+                        Active Subscription
+                    </span>
+                    <span class="inline-flex items-center gap-1.5 px-2 py-0.5 bg-emerald-50 text-emerald-600 rounded-full text-[9px] font-black uppercase tracking-wider">
+                        <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full status-active-pulse"></span>
+                        {{ subscription.status }}
+                    </span>
+                </div>
+                <h3 class="text-lg font-black text-slate-900">
+                    Plan: <span class="text-indigo-600">{{ subscription.plan.name }}</span>
+                </h3>
+                <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs font-bold text-slate-500 pt-2">
+                    <div>
+                        <span class="block text-[9px] uppercase tracking-widest text-slate-400">Billing Interval</span>
+                        <span class="text-slate-700 capitalize">{{ subscription.billing_cycle }}</span>
+                    </div>
+                    <div>
+                        <span class="block text-[9px] uppercase tracking-widest text-slate-400">Start Date</span>
+                        <span class="text-slate-700">{{ subscription.start_date|date:"M d, Y" }}</span>
+                    </div>
+                    <div>
+                        <span class="block text-[9px] uppercase tracking-widest text-slate-400">Renewal/Expiry Date</span>
+                        <span class="text-slate-700">
+                            {% if subscription.end_date %}
+                                {{ subscription.end_date|date:"M d, Y" }}
+                            {% else %}
+                                Lifetime (Free)
+                            {% endif %}
+                        </span>
+                    </div>
+                    <div>
+                        <span class="block text-[9px] uppercase tracking-widest text-slate-400">Payment Status</span>
+                        <span class="text-slate-700 capitalize">{{ subscription.payment_status }}</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Actions -->
+            <div class="flex flex-wrap gap-3 items-center">
+                <a href="{% url 'services:pricing' %}" class="px-4 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg font-black text-xs transition-all uppercase tracking-widest">
+                    Upgrade Plan
+                </a>
+                {% if subscription.plan.code != 'free' %}
+                <a href="{% url 'services:payment_confirm' subscription.plan.code subscription.billing_cycle %}" class="px-4 py-2.5 border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-lg font-black text-xs transition-all uppercase tracking-widest">
+                    Renew
+                </a>
+                {% endif %}
+                <a href="{% url 'services:payment_history' %}" class="px-4 py-2.5 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg border border-slate-200 font-black text-xs transition-all uppercase tracking-widest">
+                    Payment History
+                </a>
+            </div>
+        </div>
+    </div>
+
     <!-- List Section -->
     <div class="flex items-center justify-between mb-6">
         <div>

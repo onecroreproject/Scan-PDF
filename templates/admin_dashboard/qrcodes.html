@@ -1,0 +1,41 @@
+{% extends 'admin_dashboard/base.html' %}
+
+{% block title %}QR Codes | SaaS Admin{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="fw-bold m-0">Dynamic QR Codes</h3>
+</div>
+
+<div class="card-table">
+    <div class="card-table-header">
+        <h4>All QR Codes</h4>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover mb-0">
+            <thead>
+                <tr>
+                    <th>Name</th>
+                    <th>User</th>
+                    <th>Destination URL</th>
+                    <th>Created At</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for qr in qrcodes %}
+                <tr>
+                    <td class="fw-bold">{{ qr.qr_name }}</td>
+                    <td>{{ qr.user.username }}</td>
+                    <td class="text-muted"><a href="{{ qr.destination_url }}" target="_blank">{{ qr.destination_url|truncatechars:50 }}</a></td>
+                    <td>{{ qr.created_at|date:"M d, Y H:i" }}</td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="4" class="text-center text-muted py-4">No QR codes found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

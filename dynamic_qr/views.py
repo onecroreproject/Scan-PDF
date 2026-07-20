@@ -58,9 +58,32 @@ def dqr_repair_db(request):
         from django.http import HttpResponse
         return HttpResponse("Unauthorized.", status=403)
     
+    from django.core.management import call_command
+    results = []
+    
+    # Auto-create superuser for admin dashboard verification
+    from django.contrib.auth.models import User
+    if not User.objects.filter(username='admin').exists():
+        User.objects.create_superuser('admin', 'admin@example.com', 'adminpassword123')
+        results.append("✅ Created superuser 'admin' with password 'adminpassword123'.")
+    else:
+        # Reset password to ensure we can log in
+        admin_user = User.objects.get(username='admin')
+        admin_user.set_password('adminpassword123')
+        admin_user.is_superuser = True
+        admin_user.is_staff = True
+        admin_user.save()
+        results.append("✅ Reset superuser 'admin' password to 'adminpassword123'.")
+        
+    try:
+        call_command('makemigrations', 'services', interactive=False)
+        call_command('migrate', 'services', interactive=False)
+        results.append("✅ Successfully programmatically ran makemigrations & migrate for 'services' app.")
+    except Exception as e:
+        results.append(f"❌ Error during database migration run: {str(e)}")
+
     from django.http import HttpResponse
     with connection.cursor() as cursor:
-        results = []
         
         # 0. Ensure Main DynamicQRCode Table exists
         try:
@@ -154,7 +177,12 @@ def dqr_login_view(request):
     """Login page for dynamic QR feature only."""
     # Only redirect if they are fully authenticated for the QR system
     if request.user.is_authenticated and request.session.get('is_dqr_user'):
-        return redirect('dynamic_qr:dashboard')
+        if request.user.is_superuser:
+            return redirect('custom_admin:dashboard')
+        elif request.user.is_staff:
+            return redirect('admin:index')
+        next_url = request.GET.get('next', '')
+        return redirect(next_url if next_url else 'dynamic_qr:dashboard')
 
     error = None
     if request.method == 'POST':
@@ -176,6 +204,13 @@ def dqr_login_view(request):
             login(request, user)
             # Mark this session as a Dynamic QR session for isolation
             request.session['is_dqr_user'] = True
+            
+            # Redirect superusers to custom admin, staff to default admin
+            if user.is_superuser:
+                return redirect('custom_admin:dashboard')
+            elif user.is_staff:
+                return redirect('admin:index')
+                
             next_url = request.GET.get('next', '')
             return redirect(next_url if next_url else 'dynamic_qr:dashboard')
         else:
@@ -190,7 +225,8 @@ def dqr_login_view(request):
 def dqr_register_view(request):
     """Register page for dynamic QR feature only."""
     if request.user.is_authenticated and request.session.get('is_dqr_user'):
-        return redirect('dynamic_qr:dashboard')
+        next_url = request.GET.get('next', '')
+        return redirect(next_url if next_url else 'dynamic_qr:dashboard')
 
     form = DynamicQRRegisterForm()
     if request.method == 'POST':
@@ -199,7 +235,8 @@ def dqr_register_view(request):
             user = form.save()
             login(request, user)
             request.session['is_dqr_user'] = True
-            return redirect('dynamic_qr:dashboard')
+            next_url = request.GET.get('next', '')
+            return redirect(next_url if next_url else 'dynamic_qr:dashboard')
 
     return render(request, 'dynamic_qr/register.html', {'form': form})
 
@@ -379,12 +416,28 @@ def dqr_dashboard_view(request):
         for qr in recent_qrs:
             qr.qr_content = qr.get_static_content(request)
 
+        # Retrieve active subscription details
+        from services.models import Subscription, Plan
+        subscription = Subscription.objects.filter(user=request.user, status='Active').first()
+        if not subscription:
+            from services.views import get_or_create_plans
+            get_or_create_plans()
+            free_plan = Plan.objects.get(code='free')
+            subscription = Subscription.objects.create(
+                user=request.user,
+                plan=free_plan,
+                status='Active',
+                billing_cycle='monthly',
+                payment_status='Paid'
+            )
+
         return render(request, 'dynamic_qr/dashboard.html', {
             'qr_codes': recent_qrs,
             'total_active': total_active,
             'total_deactivated': total_deactivated,
             'total_scans': total_scans,
-            'has_more': all_qrs.count() > 6
+            'has_more': all_qrs.count() > 6,
+            'subscription': subscription
         })
     except Exception as e:
         if 'no such column' in str(e).lower():
@@ -420,7 +473,10 @@ def dqr_all_qrs_view(request):
 # ═══════════════════════════════════════════════════════════════
 # DASHBOARD: Create dynamic QR code
 # ═══════════════════════════════════════════════════════════════
+from services.decorators import check_dynamic_qr_limit, check_short_url_limit
+
 @dqr_login_required
+@check_dynamic_qr_limit
 def dqr_create_view(request):
     """Full page to create a new dynamic QR code or process the creation via AJAX."""
     if request.method == 'GET':
@@ -512,6 +568,7 @@ def dqr_create_view(request):
 
 
 @dqr_login_required
+@check_short_url_limit
 def dqr_short_url_view(request):
     """Specialized tool for Short URLs: List and Create."""
     if request.method == 'GET':

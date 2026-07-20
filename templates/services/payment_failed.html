@@ -1,0 +1,31 @@
+{% extends 'converter/base.html' %}
+
+{% block content %}
+<div class="min-h-screen bg-surface-50 py-20 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md mx-auto bg-white border border-surface-100 rounded-3xl p-8 shadow-mega text-center space-y-8">
+        
+        <!-- Icon -->
+        <div class="w-16 h-16 rounded-full bg-red-50 text-red-600 flex items-center justify-center mx-auto">
+            <i data-lucide="shield-alert" class="w-10 h-10"></i>
+        </div>
+
+        <!-- Failure Header -->
+        <div class="space-y-2">
+            <h2 class="text-3xl font-black text-surface-900">Payment Failed</h2>
+            <p class="text-sm text-surface-500 font-semibold leading-relaxed">
+                The simulated transaction could not be processed successfully.
+            </p>
+        </div>
+
+        <!-- Navigation / Actions -->
+        <div class="space-y-3">
+            <a href="{% url 'services:pricing' %}" class="block w-full py-4 px-6 rounded-2xl bg-brand-600 hover:bg-brand-700 text-white text-sm font-black transition-all uppercase tracking-wider">
+                Retry Payment
+            </a>
+            <a href="{% url 'services:pricing' %}" class="block w-full py-3 px-6 rounded-2xl border border-surface-200 hover:bg-surface-50 text-surface-600 text-sm font-black transition-all uppercase tracking-wider">
+                Back To Pricing
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

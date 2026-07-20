@@ -1,0 +1,262 @@
+{% extends 'converter/base.html' %}
+{% load static %}
+
+{% block content %}
+<!-- Link to extracted CSS file -->
+<link rel="stylesheet" href="{% static 'css/pricing.css' %}">
+
+<div class="min-h-screen bg-surface-50 py-20 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto">
+        <!-- Header -->
+        <div class="text-center max-w-3xl mx-auto space-y-4 mb-16">
+            <h1 class="text-4xl sm:text-5xl font-black tracking-tight text-surface-900">
+                Simple, <span class="text-transparent bg-clip-text bg-gradient-to-r from-brand-600 to-brand-500">Transparent</span> Pricing
+            </h1>
+            <p class="text-lg text-surface-600 font-medium">
+                Choose the plan that fits your needs. Scale up or down at any time.
+            </p>
+
+            <!-- Billing Toggle -->
+            <div class="flex items-center justify-center gap-4 mt-8">
+                <span id="billing-monthly-label" class="text-sm font-bold text-brand-600 transition-colors">Monthly Billing</span>
+                <button id="billing-toggle" type="button" class="relative inline-flex h-7 w-14 shrink-0 cursor-pointer rounded-full border-2 border-transparent bg-brand-600 transition-colors duration-200 ease-in-out focus:outline-none" role="switch" aria-checked="false">
+                    <span id="toggle-circle" aria-hidden="true" class="pointer-events-none inline-block h-6 w-6 translate-x-0 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"></span>
+                </button>
+                <span id="billing-yearly-label" class="text-sm font-bold text-surface-400 transition-colors">
+                    Yearly Billing <span class="ml-1.5 inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-bold text-emerald-700 uppercase tracking-wider">Save 20%</span>
+                </span>
+            </div>
+        </div>
+
+        <!-- Pricing Cards Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 items-stretch">
+            
+            <!-- FREE Plan -->
+            <div class="flex flex-col bg-white rounded-3xl border border-surface-100 shadow-card hover:shadow-card-hover hover:border-brand-200 transition-all p-8 relative overflow-hidden group">
+                <div class="space-y-4 flex-1">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h3 class="text-xl font-black text-surface-900 uppercase tracking-wider">Free</h3>
+                            <p class="text-xs text-surface-500 font-bold mt-1">Perfect to get started</p>
+                        </div>
+                    </div>
+                    <div class="py-4">
+                        <span id="price-free" class="text-5xl font-black text-surface-900 price-animate">₹0</span>
+                        <span id="period-free" class="text-surface-500 text-sm font-bold price-animate">/month</span>
+                    </div>
+                    <ul class="space-y-3 pt-4 border-t border-surface-50">
+                        <li class="flex items-start gap-3 text-sm text-surface-600 font-medium">
+                            <i data-lucide="check" class="w-5 h-5 text-emerald-500 shrink-0"></i>
+                            <span>5 Dynamic QR Codes</span>
+                        </li>
+                        <li class="flex items-start gap-3 text-sm text-surface-600 font-medium">
+                            <i data-lucide="check" class="w-5 h-5 text-emerald-500 shrink-0"></i>
+                            <span>Short URLs</span>
+                        </li>
+                        <li class="flex items-start gap-3 text-sm text-surface-600 font-medium">
+                            <i data-lucide="check" class="w-5 h-5 text-emerald-500 shrink-0"></i>
+                            <span>Standard Scan Analytics</span>
+                        </li>
+                        <li class="flex items-start gap-3 text-sm text-surface-300 font-medium line-through">
+                            <i data-lucide="x" class="w-5 h-5 text-surface-300 shrink-0"></i>
+                            <span>Custom Domains</span>
+                        </li>
+                        <li class="flex items-start gap-3 text-sm text-surface-300 font-medium line-through">
+                            <i data-lucide="x" class="w-5 h-5 text-surface-300 shrink-0"></i>
+                            <span>API Access</span>
+                        </li>
+                    </ul>
+                </div>
+                <div class="mt-8">
+                    {% if is_logged_in and current_subscription.plan.code == 'free' %}
+                    <button class="w-full py-4 px-6 rounded-2xl bg-surface-100 text-surface-400 text-sm font-black transition-all cursor-not-allowed uppercase tracking-wider" disabled>
+                        Current Plan
+                    </button>
+                    {% else %}
+                    <a href="{% if is_logged_in %}{% url 'services:payment_confirm' 'free' 'monthly' %}{% else %}{% url 'dynamic_qr:login' %}?next={% url 'services:pricing' %}{% endif %}" class="block w-full py-4 px-6 rounded-2xl bg-surface-900 hover:bg-surface-800 text-white text-center text-sm font-black transition-all uppercase tracking-wider">
+                        Get Started
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- PRO Plan (Recommended) -->
+            <div class="flex flex-col bg-white rounded-3xl border-2 border-brand-500 shadow-elevated transition-all p-8 relative overflow-hidden group">
+                <div class="absolute top-0 right-0 bg-brand-500 text-white text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded-bl-2xl">
+                    Popular
+                </div>
+                <div class="space-y-4 flex-1">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h3 class="text-xl font-black text-surface-900 uppercase tracking-wider">Pro</h3>
+                            <p class="text-xs text-surface-500 font-bold mt-1">For serious creators</p>
+                        </div>
+                    </div>
+                    <div class="py-4">
+                        <span id="price-pro" class="text-5xl font-black text-surface-900 price-animate">₹499</span>
+                        <span id="period-pro" class="text-surface-500 text-sm font-bold price-animate">/month</span>
+                    </div>
+                    <ul class="space-y-3 pt-4 border-t border-surface-50">
+                        <li class="flex items-start gap-3 text-sm text-surface-600 font-medium">
+                            <i data-lucide="check" class="w-5 h-5 text-emerald-500 shrink-0"></i>
+                            <span class="text-surface-900 font-semibold">100 Dynamic QR Codes</span>
+                        </li>
+                        <li class="flex items-start gap-3 text-sm text-surface-600 font-medium">
+                            <i data-lucide="check" class="w-5 h-5 text-emerald-500 shrink-0"></i>
+                            <span>Short URLs & Custom Alias</span>
+                        </li>
+                        <li class="flex items-start gap-3 text-sm text-surface-600 font-medium">
+                            <i data-lucide="check" class="w-5 h-5 text-emerald-500 shrink-0"></i>
+                            <span>Advanced Scan Analytics</span>
+                        </li>
+                        <li class="flex items-start gap-3 text-sm text-surface-600 font-medium">
+                            <i data-lucide="check" class="w-5 h-5 text-emerald-500 shrink-0"></i>
+                            <span>1 Custom Domain</span>
+                        </li>
+                        <li class="flex items-start gap-3 text-sm text-surface-300 font-medium line-through">
+                            <i data-lucide="x" class="w-5 h-5 text-surface-300 shrink-0"></i>
+                            <span>API Access</span>
+                        </li>
+                    </ul>
+                </div>
+                <div class="mt-8">
+                    {% if is_logged_in and current_subscription.plan.code == 'pro' %}
+                    <button class="w-full py-4 px-6 rounded-2xl bg-surface-100 text-surface-400 text-sm font-black transition-all cursor-not-allowed uppercase tracking-wider" disabled>
+                        Current Plan
+                    </button>
+                    {% else %}
+                    <a href="{% if is_logged_in %}{% url 'services:payment_confirm' 'pro' 'monthly' %}{% else %}{% url 'dynamic_qr:login' %}?next={% url 'services:pricing' %}{% endif %}" data-plan="pro" class="plan-btn block w-full py-4 px-6 rounded-2xl bg-brand-600 hover:bg-brand-700 text-white text-center text-sm font-black transition-all uppercase tracking-wider">
+                        Pay Now
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- BUSINESS Plan -->
+            <div class="flex flex-col bg-white rounded-3xl border border-surface-100 shadow-card hover:shadow-card-hover hover:border-brand-200 transition-all p-8 relative overflow-hidden group">
+                <div class="space-y-4 flex-1">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h3 class="text-xl font-black text-surface-900 uppercase tracking-wider">Business</h3>
+                            <p class="text-xs text-surface-500 font-bold mt-1">For growing teams</p>
+                        </div>
+                    </div>
+                    <div class="py-4">
+                        <span id="price-business" class="text-5xl font-black text-surface-900 price-animate">₹999</span>
+                        <span id="period-business" class="text-surface-500 text-sm font-bold price-animate">/month</span>
+                    </div>
+                    <ul class="space-y-3 pt-4 border-t border-surface-50">
+                        <li class="flex items-start gap-3 text-sm text-surface-600 font-medium">
+                            <i data-lucide="check" class="w-5 h-5 text-emerald-500 shrink-0"></i>
+                            <span class="text-surface-900 font-semibold">1,000 Dynamic QR Codes</span>
+                        </li>
+                        <li class="flex items-start gap-3 text-sm text-surface-600 font-medium">
+                            <i data-lucide="check" class="w-5 h-5 text-emerald-500 shrink-0"></i>
+                            <span>Short URLs + Bulk Actions</span>
+                        </li>
+                        <li class="flex items-start gap-3 text-sm text-surface-600 font-medium">
+                            <i data-lucide="check" class="w-5 h-5 text-emerald-500 shrink-0"></i>
+                            <span>Detailed Country/City Analytics</span>
+                        </li>
+                        <li class="flex items-start gap-3 text-sm text-surface-600 font-medium">
+                            <i data-lucide="check" class="w-5 h-5 text-emerald-500 shrink-0"></i>
+                            <span>3 Custom Domains</span>
+                        </li>
+                        <li class="flex items-start gap-3 text-sm text-surface-600 font-medium">
+                            <i data-lucide="check" class="w-5 h-5 text-emerald-500 shrink-0"></i>
+                            <span>Full API Access</span>
+                        </li>
+                    </ul>
+                </div>
+                <div class="mt-8">
+                    {% if is_logged_in and current_subscription.plan.code == 'business' %}
+                    <button class="w-full py-4 px-6 rounded-2xl bg-surface-100 text-surface-400 text-sm font-black transition-all cursor-not-allowed uppercase tracking-wider" disabled>
+                        Current Plan
+                    </button>
+                    {% else %}
+                    <a href="{% if is_logged_in %}{% url 'services:payment_confirm' 'business' 'monthly' %}{% else %}{% url 'dynamic_qr:login' %}?next={% url 'services:pricing' %}{% endif %}" data-plan="business" class="plan-btn block w-full py-4 px-6 rounded-2xl bg-surface-900 hover:bg-surface-800 text-white text-center text-sm font-black transition-all uppercase tracking-wider">
+                        Pay Now
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- BUSINESS+ Plan -->
+            <div class="flex flex-col bg-white rounded-3xl border border-surface-100 shadow-card hover:shadow-card-hover hover:border-brand-200 transition-all p-8 relative overflow-hidden group">
+                <div class="space-y-4 flex-1">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h3 class="text-xl font-black text-surface-900 uppercase tracking-wider">Business+</h3>
+                            <p class="text-xs text-surface-500 font-bold mt-1">Enterprise scale</p>
+                        </div>
+                    </div>
+                    <div class="py-4">
+                        <span id="price-business-plus" class="text-5xl font-black text-surface-900 price-animate">₹1999</span>
+                        <span id="period-business-plus" class="text-surface-500 text-sm font-bold price-animate">/month</span>
+                    </div>
+                    <ul class="space-y-3 pt-4 border-t border-surface-50">
+                        <li class="flex items-start gap-3 text-sm text-surface-600 font-medium">
+                            <i data-lucide="check" class="w-5 h-5 text-emerald-500 shrink-0"></i>
+                            <span class="text-surface-900 font-semibold">Unlimited QR Codes</span>
+                        </li>
+                        <li class="flex items-start gap-3 text-sm text-surface-600 font-medium">
+                            <i data-lucide="check" class="w-5 h-5 text-emerald-500 shrink-0"></i>
+                            <span>GPS Tracking & Webhooks</span>
+                        </li>
+                        <li class="flex items-start gap-3 text-sm text-surface-600 font-medium">
+                            <i data-lucide="check" class="w-5 h-5 text-emerald-500 shrink-0"></i>
+                            <span>Team Management (Unlimited)</span>
+                        </li>
+                        <li class="flex items-start gap-3 text-sm text-surface-600 font-medium">
+                            <i data-lucide="check" class="w-5 h-5 text-emerald-500 shrink-0"></i>
+                            <span>Unlimited Custom Domains</span>
+                        </li>
+                        <li class="flex items-start gap-3 text-sm text-surface-600 font-medium">
+                            <i data-lucide="check" class="w-5 h-5 text-emerald-500 shrink-0"></i>
+                            <span>Priority SLA Support</span>
+                        </li>
+                    </ul>
+                </div>
+                <div class="mt-8">
+                    {% if is_logged_in and current_subscription.plan.code == 'business_plus' %}
+                    <button class="w-full py-4 px-6 rounded-2xl bg-surface-100 text-surface-400 text-sm font-black transition-all cursor-not-allowed uppercase tracking-wider" disabled>
+                        Current Plan
+                    </button>
+                    {% else %}
+                    <a href="{% if is_logged_in %}{% url 'services:payment_confirm' 'business_plus' 'monthly' %}{% else %}{% url 'dynamic_qr:login' %}?next={% url 'services:pricing' %}{% endif %}" data-plan="business_plus" class="plan-btn block w-full py-4 px-6 rounded-2xl bg-surface-900 hover:bg-surface-800 text-white text-center text-sm font-black transition-all uppercase tracking-wider">
+                        Pay Now
+                    </a>
+                    {% endif %}
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<!-- Premium Subscription Future Upgrade Modal -->
+<div id="upgrade-modal" class="fixed inset-0 bg-surface-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 opacity-0 pointer-events-none transition-all duration-300">
+    <div class="bg-white rounded-3xl p-8 max-w-md w-full border border-surface-100 shadow-mega transform scale-95 transition-all duration-300 space-y-6">
+        <div class="text-center space-y-4">
+            <div class="w-16 h-16 rounded-full bg-brand-50 flex items-center justify-center mx-auto text-brand-600">
+                <i data-lucide="shield-check" class="w-8 h-8"></i>
+            </div>
+            <h3 class="text-2xl font-black text-surface-900">Future Upgrade Architecture Ready</h3>
+            <p class="text-sm text-surface-500 font-semibold leading-relaxed">
+                You are currently logged in. The database architecture for the <span id="modal-plan-name" class="text-brand-600 font-extrabold"></span> plan is prepared. Subscription billing and payment integration will be activated in the next phase.
+            </p>
+        </div>
+        <div class="flex gap-4">
+            <button onclick="closeUpgradeModal()" class="flex-1 py-3 px-4 rounded-xl border border-surface-200 hover:bg-surface-50 text-surface-700 text-sm font-black transition-all uppercase tracking-wider">
+                Cancel
+            </button>
+            <button onclick="closeUpgradeModal()" class="flex-1 py-3 px-4 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-sm font-black transition-all uppercase tracking-wider">
+                Confirm Plan
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Link to extracted JS file -->
+<script src="{% static 'js/pricing.js' %}"></script>
+{% endblock %}

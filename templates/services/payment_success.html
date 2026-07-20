@@ -1,0 +1,60 @@
+{% extends 'converter/base.html' %}
+
+{% block content %}
+<div class="min-h-screen bg-surface-50 py-20 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md mx-auto bg-white border border-surface-100 rounded-3xl p-8 shadow-mega text-center space-y-8">
+        
+        <!-- Icon -->
+        <div class="w-16 h-16 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center mx-auto">
+            <i data-lucide="check-circle" class="w-10 h-10"></i>
+        </div>
+
+        <!-- Success Header -->
+        <div class="space-y-2">
+            <h2 class="text-3xl font-black text-surface-900">Payment Successful</h2>
+            <p class="text-sm text-surface-500 font-semibold">Subscription Activated Successfully</p>
+        </div>
+
+        <!-- Receipt / Details -->
+        {% if payment %}
+        <div class="bg-surface-50 rounded-2xl p-6 text-left space-y-4">
+            <div class="flex justify-between items-center text-xs font-bold text-surface-500 uppercase tracking-wider">
+                <span>Plan</span>
+                <span class="text-surface-900 font-extrabold">{{ subscription.plan.name }} ({{ subscription.billing_cycle }})</span>
+            </div>
+            <div class="h-px bg-surface-100"></div>
+            <div class="flex justify-between items-center text-xs font-bold text-surface-500 uppercase tracking-wider">
+                <span>Transaction ID</span>
+                <span class="text-surface-950 font-mono">{{ payment.transaction_id }}</span>
+            </div>
+            <div class="h-px bg-surface-100"></div>
+            <div class="flex justify-between items-center text-xs font-bold text-surface-500 uppercase tracking-wider">
+                <span>Amount Paid</span>
+                <span class="text-surface-950 font-extrabold">₹{{ payment.amount }}</span>
+            </div>
+            {% if subscription.end_date %}
+            <div class="h-px bg-surface-100"></div>
+            <div class="flex justify-between items-center text-xs font-bold text-surface-500 uppercase tracking-wider">
+                <span>Expiry Date</span>
+                <span class="text-surface-900">{{ subscription.end_date|date:"F d, Y" }}</span>
+            </div>
+            {% endif %}
+        </div>
+        {% else %}
+        <div class="bg-surface-50 rounded-2xl p-6 text-xs text-surface-500 font-semibold text-center leading-relaxed">
+            Your active subscription has been updated. Go to the dashboard to inspect benefits.
+        </div>
+        {% endif %}
+
+        <!-- Navigation -->
+        <div class="space-y-3">
+            <a href="{% url 'dynamic_qr:dashboard' %}" class="block w-full py-4 px-6 rounded-2xl bg-brand-600 hover:bg-brand-700 text-white text-sm font-black transition-all uppercase tracking-wider">
+                Go To Dashboard
+            </a>
+            <a href="{% url 'services:pricing' %}" class="block w-full py-3 px-6 rounded-2xl border border-surface-200 hover:bg-surface-50 text-surface-600 text-sm font-black transition-all uppercase tracking-wider">
+                View Pricing
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

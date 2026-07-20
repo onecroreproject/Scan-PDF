@@ -16,6 +16,8 @@ urlpatterns = [
     path('audio/', include('audio_processor.urls')),
     path('qr/', include('dynamic_qr.urls')),
     path('video-downloader/', include('video_downloader.urls')),
+    path('services/', include('services.urls')),
+    path('custom-admin/', include('custom_admin.urls')),
     path('favicon.ico', RedirectView.as_view(url=staticfiles_storage.url('favicon.ico'))),
 ]
 

@@ -1,0 +1,63 @@
+{% extends 'admin_dashboard/base.html' %}
+
+{% block title %}Reports | SaaS Admin{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="fw-bold m-0">Reports & Analytics</h3>
+</div>
+
+<div class="row g-4">
+    <div class="col-md-6">
+        <div class="card-table p-4 h-100">
+            <h5 class="fw-bold mb-4">New Users (Last 7 Days)</h5>
+            <canvas id="usersChart" height="200"></canvas>
+        </div>
+    </div>
+    <div class="col-md-6">
+        <div class="card-table p-4 h-100">
+            <h5 class="fw-bold mb-4">Revenue (Last 6 Months)</h5>
+            <canvas id="revenueChart" height="200"></canvas>
+        </div>
+    </div>
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    // Dummy Data for Charts
+    const usersCtx = document.getElementById('usersChart').getContext('2d');
+    new Chart(usersCtx, {
+        type: 'line',
+        data: {
+            labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+            datasets: [{
+                label: 'New Users',
+                data: [12, 19, 3, 5, 2, 3, 15],
+                borderColor: '#4f46e5',
+                tension: 0.4,
+                fill: true,
+                backgroundColor: 'rgba(79, 70, 229, 0.1)'
+            }]
+        },
+        options: { responsive: true }
+    });
+
+    const revCtx = document.getElementById('revenueChart').getContext('2d');
+    new Chart(revCtx, {
+        type: 'bar',
+        data: {
+            labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun'],
+            datasets: [{
+                label: 'Revenue (₹)',
+                data: [12000, 19000, 3000, 5000, 20000, 30000],
+                backgroundColor: '#16a34a',
+            }]
+        },
+        options: { responsive: true }
+    });
+});
+</script>
+{% endblock %}

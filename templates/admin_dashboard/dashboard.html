@@ -1,0 +1,150 @@
+{% extends 'admin_dashboard/base.html' %}
+
+{% block title %}Dashboard | SaaS Admin{% endblock %}
+
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h3 class="fw-bold m-0">Overview</h3>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="metric-card">
+            <div class="metric-icon bg-purple-light">
+                <i class="fa-solid fa-users"></i>
+            </div>
+            <div class="metric-info">
+                <h5>Total Users</h5>
+                <h2>{{ total_users }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="metric-card">
+            <div class="metric-icon bg-green-light">
+                <i class="fa-solid fa-user-check"></i>
+            </div>
+            <div class="metric-info">
+                <h5>Active Users</h5>
+                <h2>{{ active_users }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="metric-card">
+            <div class="metric-icon bg-red-light">
+                <i class="fa-solid fa-user-xmark"></i>
+            </div>
+            <div class="metric-info">
+                <h5>Inactive Users</h5>
+                <h2>{{ inactive_users }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="metric-card">
+            <div class="metric-icon bg-yellow-light">
+                <i class="fa-solid fa-user-plus"></i>
+            </div>
+            <div class="metric-info">
+                <h5>Today's Users</h5>
+                <h2>{{ today_users }}</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="metric-card">
+            <div class="metric-icon bg-blue-light">
+                <i class="fa-solid fa-credit-card"></i>
+            </div>
+            <div class="metric-info">
+                <h5>Total Payments</h5>
+                <h2>{{ total_payments }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="metric-card">
+            <div class="metric-icon bg-green-light">
+                <i class="fa-solid fa-indian-rupee-sign"></i>
+            </div>
+            <div class="metric-info">
+                <h5>Monthly Revenue</h5>
+                <h2>₹{{ monthly_revenue }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="metric-card">
+            <div class="metric-icon bg-purple-light">
+                <i class="fa-solid fa-indian-rupee-sign"></i>
+            </div>
+            <div class="metric-info">
+                <h5>Yearly Revenue</h5>
+                <h2>₹{{ yearly_revenue }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="metric-card">
+            <div class="metric-icon bg-yellow-light">
+                <i class="fa-solid fa-id-card"></i>
+            </div>
+            <div class="metric-info">
+                <h5>Total Subscriptions</h5>
+                <h2>{{ total_subscriptions }}</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row g-4 mb-4">
+    <div class="col-md-3">
+        <div class="metric-card">
+            <div class="metric-icon bg-red-light">
+                <i class="fa-solid fa-calendar-xmark"></i>
+            </div>
+            <div class="metric-info">
+                <h5>Expired Plans</h5>
+                <h2>{{ expired_plans }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="metric-card">
+            <div class="metric-icon bg-yellow-light">
+                <i class="fa-solid fa-hourglass-half"></i>
+            </div>
+            <div class="metric-info">
+                <h5>Pending Renewals</h5>
+                <h2>{{ pending_renewals }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="metric-card">
+            <div class="metric-icon bg-purple-light">
+                <i class="fa-solid fa-qrcode"></i>
+            </div>
+            <div class="metric-info">
+                <h5>Dynamic QR Created</h5>
+                <h2>{{ dynamic_qrs_created }}</h2>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-3">
+        <div class="metric-card">
+            <div class="metric-icon bg-blue-light">
+                <i class="fa-solid fa-link"></i>
+            </div>
+            <div class="metric-info">
+                <h5>Short URLs Created</h5>
+                <h2>{{ short_urls_created }}</h2>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

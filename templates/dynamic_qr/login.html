@@ -15,7 +15,7 @@
 </div>
 {% endif %}
 
-<form method="POST" action="{% url 'dynamic_qr:login' %}">
+<form method="POST" action="{% url 'dynamic_qr:login' %}{% if request.GET.next %}?next={{ request.GET.next|urlencode }}{% endif %}">
     {% csrf_token %}
     <div class="field-group">
         <label class="field-label">Username or Email</label>
@@ -46,6 +46,6 @@
 
 <div class="auth-links">
     <span style="color:#64748b">Don't have an account?</span>
-    <a href="{% url 'dynamic_qr:register' %}" style="color:#8b5cf6;font-weight:700;">Create Account</a>
+    <a href="{% url 'dynamic_qr:register' %}{% if request.GET.next %}?next={{ request.GET.next|urlencode }}{% endif %}" style="color:#8b5cf6;font-weight:700;">Create Account</a>
 </div>
 {% endblock %}

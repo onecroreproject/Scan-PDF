@@ -670,41 +670,75 @@
                         <div class="relative group">
                             <button
                                 class="flex items-center gap-1.5 px-4 py-2 text-[14px] font-black text-surface-900 transition-all uppercase tracking-widest hover:text-brand-600">
-                                QR Tools <i data-lucide="chevron-down"
+                                Services <i data-lucide="chevron-down"
                                     class="w-4 h-4 transition-transform group-hover:rotate-180"></i>
                             </button>
                             <div id="mega-menu-important-tools"
                                 class="fixed top-[70px] left-1/2 -translate-x-1/2 w-[95vw] max-w-4xl bg-white border border-surface-100 shadow-mega rounded-3xl z-50 overflow-hidden transition-all duration-300 translate-y-2 group-hover:translate-y-0">
                                 <div class="p-8 grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <a href="{% if request.session.is_dqr_user %}{% url 'dynamic_qr:dashboard' %}{% else %}{% url 'dynamic_qr:login' %}{% endif %}"
+                                    <a href="{% url 'services:features' %}"
                                         class="flex items-center gap-4 p-4 rounded-2xl hover:bg-brand-50/50 transition-all border border-surface-100 hover:border-brand-200 group/item">
                                         <div
-                                            class="w-12 h-12 rounded-2xl bg-orange-50 flex items-center justify-center group-hover/item:bg-orange-100 transition-colors">
-                                            <i data-lucide="qr-code" class="w-6 h-6 text-orange-600"></i>
+                                            class="w-12 h-12 rounded-2xl bg-purple-50 flex items-center justify-center group-hover/item:bg-purple-100 transition-colors">
+                                            <i data-lucide="sparkles" class="w-6 h-6 text-purple-600"></i>
                                         </div>
                                         <div class="flex-1">
                                             <p
                                                 class="text-[13px] font-black text-surface-900 group-hover/item:text-brand-600">
-                                                Dynamic QR</p>
+                                                Features</p>
                                             <p class="text-[10px] text-surface-400 font-bold uppercase tracking-widest">
-                                                Login required</p>
+                                                Explore dynamic features</p>
                                         </div>
                                         <i data-lucide="chevron-right"
                                             class="w-5 h-5 text-surface-300 group-hover/item:translate-x-1 group-hover/item:text-brand-400 transition-all"></i>
                                     </a>
 
-                                    <a href="{% if request.session.is_dqr_user %}{% url 'dynamic_qr:short_url' %}{% else %}{% url 'dynamic_qr:login' %}{% endif %}"
+                                    <a href="{% url 'services:pricing' %}"
                                         class="flex items-center gap-4 p-4 rounded-2xl hover:bg-brand-50/50 transition-all border border-surface-100 hover:border-brand-200 group/item">
                                         <div
-                                            class="w-12 h-12 rounded-2xl bg-indigo-50 flex items-center justify-center group-hover/item:bg-indigo-100 transition-colors">
-                                            <i data-lucide="link" class="w-6 h-6 text-indigo-600"></i>
+                                            class="w-12 h-12 rounded-2xl bg-emerald-50 flex items-center justify-center group-hover/item:bg-emerald-100 transition-colors">
+                                            <i data-lucide="credit-card" class="w-6 h-6 text-emerald-600"></i>
                                         </div>
                                         <div class="flex-1">
                                             <p
                                                 class="text-[13px] font-black text-surface-900 group-hover/item:text-brand-600">
-                                                Short URL</p>
+                                                Pricing</p>
                                             <p class="text-[10px] text-surface-400 font-bold uppercase tracking-widest">
-                                                Login required</p>
+                                                SaaS Subscription plans</p>
+                                        </div>
+                                        <i data-lucide="chevron-right"
+                                            class="w-5 h-5 text-surface-300 group-hover/item:translate-x-1 group-hover/item:text-brand-400 transition-all"></i>
+                                    </a>
+
+                                    <a href="{% url 'services:support' %}"
+                                        class="flex items-center gap-4 p-4 rounded-2xl hover:bg-brand-50/50 transition-all border border-surface-100 hover:border-brand-200 group/item">
+                                        <div
+                                            class="w-12 h-12 rounded-2xl bg-sky-50 flex items-center justify-center group-hover/item:bg-sky-100 transition-colors">
+                                            <i data-lucide="help-circle" class="w-6 h-6 text-sky-600"></i>
+                                        </div>
+                                        <div class="flex-1">
+                                            <p
+                                                class="text-[13px] font-black text-surface-900 group-hover/item:text-brand-600">
+                                                Support</p>
+                                            <p class="text-[10px] text-surface-400 font-bold uppercase tracking-widest">
+                                                24/7 assistance & FAQ</p>
+                                        </div>
+                                        <i data-lucide="chevron-right"
+                                            class="w-5 h-5 text-surface-300 group-hover/item:translate-x-1 group-hover/item:text-brand-400 transition-all"></i>
+                                    </a>
+
+                                    <a href="{% url 'services:contact' %}"
+                                        class="flex items-center gap-4 p-4 rounded-2xl hover:bg-brand-50/50 transition-all border border-surface-100 hover:border-brand-200 group/item">
+                                        <div
+                                            class="w-12 h-12 rounded-2xl bg-rose-50 flex items-center justify-center group-hover/item:bg-rose-100 transition-colors">
+                                            <i data-lucide="mail" class="w-6 h-6 text-rose-600"></i>
+                                        </div>
+                                        <div class="flex-1">
+                                            <p
+                                                class="text-[13px] font-black text-surface-900 group-hover/item:text-brand-600">
+                                                Contact Us</p>
+                                            <p class="text-[10px] text-surface-400 font-bold uppercase tracking-widest">
+                                                Reach out to us</p>
                                         </div>
                                         <i data-lucide="chevron-right"
                                             class="w-5 h-5 text-surface-300 group-hover/item:translate-x-1 group-hover/item:text-brand-400 transition-all"></i>
@@ -757,6 +791,11 @@
                                 style="display:none;">
                                 {% csrf_token %}
                             </form>
+                            <a href="{% url 'dynamic_qr:dashboard' %}"
+                                class="flex items-center gap-3 px-4 py-2 text-sm font-bold text-surface-700 hover:text-brand-600 hover:bg-brand-50 transition-all">
+                                <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
+                                Dashboard
+                            </a>
                             <a href="#"
                                 onclick="event.preventDefault(); document.getElementById('navbar-logout-form').submit();"
                                 class="flex items-center gap-3 px-4 py-2 text-sm font-bold text-surface-700 hover:text-red-500 hover:bg-red-50 transition-all">
@@ -840,6 +879,10 @@
                     </a>
 
                     {% if request.session.is_dqr_user %}
+                    <a href="{% url 'dynamic_qr:dashboard' %}"
+                        class="flex items-center gap-3 px-4 py-3 rounded-2xl text-surface-700 hover:text-brand-600 hover:bg-brand-50/60 transition-all font-bold text-sm">
+                        <i data-lucide="layout-dashboard" class="w-5 h-5"></i>Dashboard
+                    </a>
                     <a href="#"
                         onclick="event.preventDefault(); document.getElementById('navbar-logout-form').submit();"
                         class="flex items-center gap-3 px-4 py-3 rounded-2xl text-red-600 hover:bg-red-50 transition-all font-bold text-sm">
