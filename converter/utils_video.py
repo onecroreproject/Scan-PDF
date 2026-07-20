@@ -46,7 +46,7 @@ def convert_video_format(input_path, original_filename, output_format):
         # Using mpeg4 allows us to use any resolution, but we still scale it down to 
         # 720p max to ensure compatibility with devices that use 3GP.
         command.extend([
-            '-vf', 'scale=-2:min(ih\,720)',
+            '-vf', r'scale=-2:min(ih\,720)',
             '-c:v', 'mpeg4',
             '-c:a', 'aac',
             '-ar', '8000', # Standard audio rate for 3GP
