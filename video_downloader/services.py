@@ -18,10 +18,15 @@ def get_ytdl_base_options():
         'geo_bypass': True,
         'retries': 10,
         'fragment_retries': 10,
-        'http_headers': {
-            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
-        }
+        'format_sort': ['vcodec:h264', 'res', 'acodec:m4a'],
+        'force_ipv4': True,
     }
+    
+    # Try to use cookies.txt if it exists in the project base directory
+    cookies_file = os.path.join(settings.BASE_DIR, 'cookies.txt')
+    if os.path.exists(cookies_file):
+        options['cookiefile'] = cookies_file
+        logger.info(f"Loaded cookies file from: {cookies_file}")
     
     # Try to use bundled FFmpeg if available
     ffmpeg_dir = getattr(settings, 'FFMPEG_BIN_DIR', None)
@@ -63,7 +68,7 @@ def _execute_with_retry(execute_func, url, options):
             except Exception as retry_e:
                 logger.warning(f"{browser} cookie retry failed: {retry_e}")
                 
-        raise ValueError("The platform is blocking access. Please ensure you are logged in on Chrome/Edge/Firefox to bypass bot protection, or try again later.")
+        raise ValueError("The platform is blocking access. If you are running this on a host server, please export your browser cookies to 'cookies.txt' and upload it to the project root directory to bypass bot protection.")
 
 
 def verify_video_audio_streams(filepath):
@@ -96,16 +101,18 @@ def verify_video_audio_streams(filepath):
         has_video = False
         has_audio = False
         audio_codec = None
+        video_codec = None
         
         for s in streams:
             codec_type = s.get('codec_type')
             if codec_type == 'video':
                 has_video = True
+                video_codec = s.get('codec_name', '').lower()
             elif codec_type == 'audio':
                 has_audio = True
                 audio_codec = s.get('codec_name', '').lower()
                 
-        return has_video, has_audio, audio_codec
+        return has_video, has_audio, audio_codec, video_codec
     except Exception as e:
         logger.error(f"Error running ffprobe on {filepath}: {e}")
         return False, False, None
@@ -325,7 +332,7 @@ def download_format(url, format_id, format_type):
             
             # Verify Video + Audio merge
             if format_type == 'Video + Audio':
-                has_video, has_audio, audio_codec = verify_video_audio_streams(downloaded_file)
+                has_video, has_audio, audio_codec, video_codec = verify_video_audio_streams(downloaded_file)
                 if not (has_video and has_audio):
                     # Delete the defective file
                     try:
@@ -334,18 +341,23 @@ def download_format(url, format_id, format_type):
                         pass
                     raise Exception("FFmpeg merge failed or resulted in a silent video. Missing audio track.")
                     
-                # ALWAYS transcode audio to a fresh AAC stream to guarantee Windows Media Player compatibility
+                # ALWAYS transcode to ensure compatibility with Windows Media Player / browsers
                 if True:
                     ffmpeg_dir = getattr(settings, 'FFMPEG_BIN_DIR', None)
                     ffmpeg_cmd = 'ffmpeg'
                     if ffmpeg_dir and os.path.exists(ffmpeg_dir):
                         ffmpeg_cmd = os.path.join(ffmpeg_dir, 'ffmpeg')
                         
-                    transcoded_file = os.path.join(temp_dir, f"{file_id}_aac.mp4")
+                    transcoded_file = os.path.join(temp_dir, f"{file_id}_transcoded.mp4")
+                    
+                    # If video is already H.264/AVC, copy it (fast); otherwise transcode it to libx264
+                    is_h264 = video_codec and ('h264' in video_codec or 'avc' in video_codec)
+                    video_codec_arg = ['-c:v', 'copy'] if is_h264 else ['-c:v', 'libx264', '-preset', 'superfast', '-crf', '23']
+                    
                     cmd = [
                         ffmpeg_cmd,
                         '-i', downloaded_file,
-                        '-c:v', 'copy',
+                    ] + video_codec_arg + [
                         '-c:a', 'aac',
                         '-b:a', '192k',
                         '-ar', '44100',
@@ -355,7 +367,7 @@ def download_format(url, format_id, format_type):
                         '-y'
                     ]
                     
-                    logger.info(f"Transcoding audio from {audio_codec} to AAC: {' '.join(cmd)}")
+                    logger.info(f"Transcoding video ({video_codec}) and audio ({audio_codec}) to standard H.264/AAC: {' '.join(cmd)}")
                     # Use CREATE_NO_WINDOW if available to prevent popup
                     transcode_result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
                     if transcode_result.returncode == 0 and os.path.exists(transcoded_file):
