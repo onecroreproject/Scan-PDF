@@ -1,0 +1,614 @@
+{% extends 'converter/base.html' %}
+{% load static %}
+
+{% block content %}
+
+<style>
+    /* ============================================
+       Add Text To Video — Production UI
+       ============================================ */
+
+    .atv-wrap {
+        --atv-primary: #2563eb;
+        --atv-primary-hover: #1d4ed8;
+        --atv-primary-soft: #eff6ff;
+        --atv-surface: #ffffff;
+        --atv-bg: #f8fafc;
+        --atv-border: #e2e8f0;
+        --atv-border-strong: #cbd5e1;
+        --atv-text: #0f172a;
+        --atv-text-secondary: #475569;
+        --atv-text-muted: #94a3b8;
+        --atv-radius: 10px;
+        --atv-radius-lg: 14px;
+        --atv-shadow: 0 1px 3px rgba(15, 23, 42, 0.06), 0 1px 2px rgba(15, 23, 42, 0.04);
+        --atv-shadow-md: 0 4px 12px rgba(15, 23, 42, 0.08);
+
+        font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        background: var(--atv-bg);
+        min-height: calc(100vh - 60px);
+        padding: 32px 20px 48px;
+        color: var(--atv-text);
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        line-height: 1.5;
+    }
+
+    .atv-card {
+        max-width: 680px;
+        margin: 0 auto;
+        background: var(--atv-surface);
+        border-radius: var(--atv-radius-lg);
+        border: 1px solid var(--atv-border);
+        box-shadow: var(--atv-shadow-md);
+        overflow: hidden;
+    }
+
+    /* ---- Header ---- */
+    .atv-header {
+        padding: 24px 28px;
+        border-bottom: 1px solid var(--atv-border);
+        background: var(--atv-surface);
+        display: flex;
+        align-items: flex-start;
+        gap: 14px;
+    }
+
+    .atv-header-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #2563eb, #3b82f6);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        box-shadow: 0 2px 8px rgba(37, 99, 235, 0.3);
+    }
+
+    .atv-header-icon svg {
+        width: 22px;
+        height: 22px;
+        color: #fff;
+    }
+
+    .atv-header-text h1 {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        color: var(--atv-text);
+        line-height: 1.3;
+    }
+
+    .atv-header-text p {
+        margin: 4px 0 0;
+        font-size: 0.875rem;
+        color: var(--atv-text-secondary);
+        font-weight: 400;
+    }
+
+    /* ---- Body ---- */
+    .atv-body {
+        padding: 28px;
+    }
+
+    /* ---- Sections ---- */
+    .atv-section {
+        margin-bottom: 28px;
+    }
+
+    .atv-section:last-of-type {
+        margin-bottom: 8px;
+    }
+
+    .atv-section-label {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.7rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.07em;
+        color: var(--atv-text-muted);
+        margin-bottom: 14px;
+        padding-bottom: 8px;
+        border-bottom: 1px solid var(--atv-border);
+    }
+
+    .atv-section-label svg {
+        width: 14px;
+        height: 14px;
+        opacity: 0.7;
+    }
+
+    /* ---- Form fields ---- */
+    .atv-field {
+        margin-bottom: 16px;
+    }
+
+    .atv-field:last-child {
+        margin-bottom: 0;
+    }
+
+    .atv-field > label {
+        display: block;
+        font-size: 0.8125rem;
+        font-weight: 600;
+        color: var(--atv-text);
+        margin-bottom: 6px;
+    }
+
+    .atv-field > label .atv-hint {
+        font-weight: 400;
+        color: var(--atv-text-muted);
+        font-size: 0.75rem;
+        margin-left: 4px;
+    }
+
+    .atv-grid-2 {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 16px;
+    }
+
+    /* Inputs */
+    .atv-input,
+    .atv-select {
+        width: 100%;
+        height: 42px;
+        padding: 0 12px;
+        border: 1.5px solid var(--atv-border);
+        border-radius: 8px;
+        font-size: 0.9rem;
+        color: var(--atv-text);
+        background: #fff;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease;
+        box-sizing: border-box;
+        font-family: inherit;
+        appearance: none;
+        -webkit-appearance: none;
+    }
+
+    .atv-select {
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2394a3b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 12px center;
+        padding-right: 36px;
+        cursor: pointer;
+    }
+
+    .atv-input:hover,
+    .atv-select:hover {
+        border-color: var(--atv-border-strong);
+    }
+
+    .atv-input:focus,
+    .atv-select:focus {
+        outline: none;
+        border-color: var(--atv-primary);
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+    }
+
+    .atv-input::placeholder {
+        color: var(--atv-text-muted);
+    }
+
+    /* File input */
+    .atv-file-wrap {
+        position: relative;
+    }
+
+    .atv-file {
+        width: 100%;
+        height: 48px;
+        padding: 0 14px;
+        border: 1.5px dashed var(--atv-border-strong);
+        border-radius: 8px;
+        font-size: 0.875rem;
+        color: var(--atv-text-secondary);
+        background: var(--atv-bg);
+        cursor: pointer;
+        transition: border-color 0.15s ease, background 0.15s ease;
+        box-sizing: border-box;
+        font-family: inherit;
+    }
+
+    .atv-file:hover {
+        border-color: var(--atv-primary);
+        background: var(--atv-primary-soft);
+    }
+
+    .atv-file:focus {
+        outline: none;
+        border-color: var(--atv-primary);
+        border-style: solid;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+    }
+
+    .atv-file::file-selector-button {
+        height: 32px;
+        margin-right: 12px;
+        padding: 0 14px;
+        border: none;
+        border-radius: 6px;
+        background: var(--atv-primary);
+        color: #fff;
+        font-size: 0.8rem;
+        font-weight: 600;
+        font-family: inherit;
+        cursor: pointer;
+        transition: background 0.15s ease;
+    }
+
+    .atv-file::file-selector-button:hover {
+        background: var(--atv-primary-hover);
+    }
+
+    /* ---- Submit ---- */
+    .atv-actions {
+        margin-top: 28px;
+        padding-top: 24px;
+        border-top: 1px solid var(--atv-border);
+    }
+
+    .atv-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        width: 100%;
+        height: 46px;
+        background: var(--atv-primary);
+        color: #fff;
+        border: none;
+        border-radius: 9px;
+        font-size: 0.95rem;
+        font-weight: 600;
+        font-family: inherit;
+        cursor: pointer;
+        transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
+        box-shadow: 0 1px 2px rgba(37, 99, 235, 0.2), 0 2px 8px rgba(37, 99, 235, 0.25);
+        letter-spacing: 0.01em;
+    }
+
+    .atv-btn:hover {
+        background: var(--atv-primary-hover);
+        box-shadow: 0 2px 4px rgba(37, 99, 235, 0.25), 0 4px 12px rgba(37, 99, 235, 0.3);
+        transform: translateY(-1px);
+    }
+
+    .atv-btn:active {
+        transform: translateY(0);
+        box-shadow: 0 1px 2px rgba(37, 99, 235, 0.2);
+    }
+
+    .atv-btn:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.3);
+    }
+
+    .atv-btn svg {
+        width: 18px;
+        height: 18px;
+        flex-shrink: 0;
+    }
+    .atv-header .text-add{
+    color: #6d28d9; /* Purple */
+}
+
+/*=========================================
+    Messages
+=========================================*/
+
+.message-box{
+
+    width:100%;
+
+    padding:14px 18px;
+
+    border-radius:10px;
+
+    font-size:15px;
+
+    font-weight:600;
+
+    margin-bottom:15px;
+
+    border:1px solid transparent;
+
+    animation:fadeIn .3s ease;
+
+}
+
+.message-success{
+
+    background:#e9f8ef;
+
+    color:#0f7b3f;
+
+    border-color:#b7e4c7;
+
+}
+
+.message-error{
+
+    background:#fdecec;
+
+    color:#c62828;
+
+    border-color:#f5b5b5;
+
+}
+
+.message-warning{
+
+    background:#fff8e6;
+
+    color:#a86d00;
+
+    border-color:#ffe08a;
+
+}
+
+.message-info{
+
+    background:#eef5ff;
+
+    color:#0b5ed7;
+
+    border-color:#b6d4fe;
+
+}
+
+@keyframes fadeIn{
+
+    from{
+
+        opacity:0;
+
+        transform:translateY(-10px);
+
+    }
+
+    to{
+
+        opacity:1;
+
+        transform:translateY(0);
+
+    }
+
+}
+
+    /* ---- Responsive ---- */
+    @media (max-width: 560px) {
+        .atv-wrap {
+            padding: 16px 12px 32px;
+        }
+
+        .atv-header {
+            padding: 20px;
+        }
+
+        .atv-body {
+            padding: 20px;
+        }
+
+        .atv-grid-2 {
+            grid-template-columns: 1fr;
+            gap: 14px;
+        }
+
+        .atv-header-text h1 {
+            font-size: 1.1rem;
+        }
+    }
+</style>
+
+<div class="atv-wrap">
+    <div class="atv-card">
+
+        <!-- Header -->
+        <div class="atv-header">
+            <div class="atv-header-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
+                </svg>
+            </div>
+            <div class="atv-header-text">
+                <h1 class="text-add">Add Text To Video</h1>
+                <p>Overlay text on your video with custom style, position &amp; timing</p>
+            </div>
+        </div>
+        
+
+        <!-- Form -->
+        <div class="atv-body">
+            {% if messages %}
+<div class="mb-4">
+
+    {% for message in messages %}
+
+        <div class="message-box message-{{ message.tags }}">
+            {{ message }}
+        </div>
+
+    {% endfor %}
+
+</div>
+{% endif %}
+            <form method="POST"
+                  action="{% url 'video_tools:add_text_to_video' %}"
+                  enctype="multipart/form-data">
+
+                {% csrf_token %}
+
+                <!-- 1. Video -->
+                <div class="atv-section">
+                    <div class="atv-section-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                        </svg>
+                        Video
+                    </div>
+                    <div class="atv-field">
+                        <label>Upload Video</label>
+                        <div class="atv-file-wrap">
+                            <input
+                                class="atv-file"
+                                type="file"
+                                name="video"
+                                accept="video/*"
+                                required>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 2. Text -->
+                <div class="atv-section">
+                    <div class="atv-section-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M4 6h16M4 12h16M4 18h7" />
+                        </svg>
+                        Text
+                    </div>
+                    <div class="atv-field">
+                        <label>Text Content</label>
+                        <input
+                            class="atv-input"
+                            type="text"
+                            name="text"
+                            placeholder="Type the text you want to overlay…"
+                            required>
+                    </div>
+                </div>
+
+                <!-- 3. Appearance -->
+                <div class="atv-section">
+                    <div class="atv-section-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M7 21a4 4 0 01-4-4V5a2 2 0 012-2h4a2 2 0 012 2v12a4 4 0 01-4 4zm0 0h12a2 2 0 002-2v-4a2 2 0 00-2-2h-2.343M11 7.343C10.657 7 10.343 7 10 7H6" />
+                        </svg>
+                        Appearance
+                    </div>
+
+                    <div class="atv-grid-2">
+                        <div class="atv-field">
+                            <label>Font Size</label>
+                            <select class="atv-select" name="font_size">
+                                <option>18</option>
+                                <option selected>20</option>
+                                <option>24</option>
+                                <option>28</option>
+                                <option>32</option>
+                                <option>40</option>
+                                <option>48</option>
+                            </select>
+                        </div>
+                        <div class="atv-field">
+                            <label>Font Color</label>
+                            <select class="atv-select" name="font_color">
+                                <option value="white">White</option>
+                                <option value="black">Black</option>
+                                <option value="red">Red</option>
+                                <option value="yellow">Yellow</option>
+                                <option value="green">Green</option>
+                                <option value="blue">Blue</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <div class="atv-field">
+                        <label>Transparency <span class="atv-hint">0–100 · 100 = fully opaque</span></label>
+                        <input
+                            class="atv-input"
+                            type="number"
+                            name="opacity"
+                            min="0"
+                            max="100"
+                            value="100">
+                    </div>
+                </div>
+
+                <!-- 4. Position -->
+                <div class="atv-section">
+                    <div class="atv-section-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+                        </svg>
+                        Position &amp; Spacing
+                    </div>
+
+                    <div class="atv-field">
+                        <label>Position</label>
+                        <select class="atv-select" name="position">
+                            <option value="center">Center</option>
+                            <option value="top">Top</option>
+                            <option value="bottom">Bottom</option>
+                            <option value="left">Left</option>
+                            <option value="right">Right</option>
+                            <option value="top_left">Top Left</option>
+                            <option value="top_right">Top Right</option>
+                            <option value="bottom_left">Bottom Left</option>
+                            <option value="bottom_right">Bottom Right</option>
+                        </select>
+                    </div>
+
+                    <div class="atv-grid-2">
+                        <div class="atv-field">
+                            <label>Margin X <span class="atv-hint">px</span></label>
+                            <input
+                                class="atv-input"
+                                type="number"
+                                name="margin_x"
+                                value="20">
+                        </div>
+                        <div class="atv-field">
+                            <label>Margin Y <span class="atv-hint">px</span></label>
+                            <input
+                                class="atv-input"
+                                type="number"
+                                name="margin_y"
+                                value="20">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 5. Timing -->
+                <div class="atv-section">
+                    <div class="atv-section-label">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Timing
+                    </div>
+                    <div class="atv-field">
+                        <label>Duration <span class="atv-hint">seconds</span></label>
+                        <input
+                            class="atv-input"
+                            type="number"
+                            name="duration"
+                            min="1"
+                            value="10">
+                    </div>
+                </div>
+
+                <!-- Submit -->
+                <div class="atv-actions">
+                    <button class="atv-btn" type="submit">
+                        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                            <path stroke-linecap="round" stroke-linejoin="round" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                        Add Text To Video
+                    </button>
+                </div>
+
+            </form>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

@@ -559,6 +559,19 @@
                                         </div>
                                     </a>
 
+                                      <a href="{% url 'video_tools:upload' %}"
+                                        class="flex items-center gap-4 p-4 rounded-2xl hover:bg-brand-50/50 transition-all border border-surface-100 hover:border-brand-200 group/item">
+                                        <div
+                                            class="w-10 h-10 rounded-2xl bg-brand-50 flex items-center justify-center group-hover/item:bg-brand-100 transition-colors">
+                                            <i data-lucide="download-cloud" class="w-5 h-5 text-brand-600"></i>
+                                        </div>
+                                        <div class="flex-1">
+                                            <p
+                                                class="text-[13px] font-black text-surface-900 group-hover/item:text-brand-600">
+                                                Add Audio To Video</p>
+                                        </div>
+                                    </a>
+
                                     <a href="{% url 'video_downloader:youtube_downloader' %}"
                                         class="flex items-center gap-4 p-4 rounded-2xl hover:bg-brand-50/50 transition-all border border-surface-100 hover:border-brand-200 group/item">
                                         <div

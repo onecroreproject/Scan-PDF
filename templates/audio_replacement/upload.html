@@ -1,0 +1,565 @@
+{% extends 'converter/base.html' %}
+{% load static %}
+
+{% block content %}
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Audio to Video | Professional Video Tool</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-dark: #1d4ed8;
+            --bg: #f8fafc;
+            --card-shadow: 0 10px 40px -10px rgba(0, 0, 0, 0.08);
+        }
+
+        body {
+            background: var(--bg);
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            color: #1e293b;
+        }
+
+        .hero-header {
+            background: linear-gradient(135deg, #2563eb 0%, #1e40af 100%);
+            color: white;
+            padding: 2.5rem 0 2rem;
+            margin-bottom: -1.5rem;
+        }
+
+        .main-card {
+            border: none;
+            border-radius: 1rem;
+            box-shadow: var(--card-shadow);
+            overflow: hidden;
+        }
+
+        .card-header-custom {
+            background: white;
+            border-bottom: 1px solid #e2e8f0;
+            padding: 1.5rem 1.75rem;
+        }
+
+        .form-label {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #334155;
+            margin-bottom: 0.4rem;
+        }
+
+        .form-control, .form-select {
+            border-radius: 0.6rem;
+            border: 1.5px solid #e2e8f0;
+            padding: 0.7rem 1rem;
+            font-size: 0.95rem;
+            transition: all 0.2s ease;
+        }
+
+        .form-control:focus, .form-select:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+        }
+
+        .upload-zone {
+            border: 2px dashed #cbd5e1;
+            border-radius: 0.75rem;
+            padding: 1.75rem 1rem;
+            text-align: center;
+            background: #f8fafc;
+            transition: all 0.25s ease;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .upload-zone:hover {
+            border-color: var(--primary);
+            background: #eff6ff;
+        }
+
+        .upload-zone i {
+            font-size: 2rem;
+            color: #64748b;
+            margin-bottom: 0.5rem;
+        }
+
+        .upload-zone:hover i {
+            color: var(--primary);
+        }
+
+        .btn-process {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            border: none;
+            border-radius: 0.75rem;
+            padding: 0.9rem 1.5rem;
+            font-weight: 600;
+            font-size: 1.05rem;
+            letter-spacing: 0.3px;
+            transition: all 0.25s ease;
+        }
+
+        .btn-process:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px -5px rgba(37, 99, 235, 0.45);
+            background: linear-gradient(135deg, #1d4ed8, #1e3a8a);
+        }
+
+        .progress {
+            height: 1.1rem;
+            border-radius: 0.5rem;
+            background: #e2e8f0;
+        }
+
+        .progress-bar {
+            background: linear-gradient(90deg, #3b82f6, #2563eb);
+            border-radius: 0.5rem;
+        }
+
+        .badge-format {
+            font-weight: 500;
+            font-size: 0.75rem;
+            padding: 0.3rem 0.6rem;
+            border-radius: 0.4rem;
+        }
+
+        .section-title {
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.6px;
+            color: #64748b;
+            margin-bottom: 1rem;
+        }
+
+        .form-check-input:checked {
+            background-color: var(--primary);
+            border-color: var(--primary);
+        }
+
+        .info-box {
+            background: #f1f5f9;
+            border-radius: 0.6rem;
+            padding: 0.85rem 1rem;
+            font-size: 0.85rem;
+            color: #475569;
+        }
+
+        .steps-card {
+            border: none;
+            border-radius: 1rem;
+            box-shadow: var(--card-shadow);
+        }
+
+        .step-item {
+            display: flex;
+            gap: 1rem;
+            padding: 1rem 0;
+            border-bottom: 1px solid #f1f5f9;
+        }
+
+        .step-item:last-child {
+            border-bottom: none;
+        }
+
+        .step-number {
+            width: 32px;
+            height: 32px;
+            background: #eff6ff;
+            color: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 0.9rem;
+            flex-shrink: 0;
+        }
+
+        .step-content h6 {
+            font-weight: 600;
+            margin-bottom: 0.25rem;
+            font-size: 0.95rem;
+        }
+
+        .step-content p, .step-content ul {
+            margin-bottom: 0;
+            font-size: 0.875rem;
+            color: #64748b;
+        }
+
+        .step-content ul {
+            padding-left: 1.1rem;
+            margin-top: 0.3rem;
+        }
+/*=========================================
+    Messages
+=========================================*/
+
+.message-box{
+
+    width:100%;
+
+    padding:14px 18px;
+
+    border-radius:10px;
+
+    font-size:15px;
+
+    font-weight:600;
+
+    margin-bottom:15px;
+
+    border:1px solid transparent;
+
+    animation:fadeIn .3s ease;
+
+}
+
+.message-success{
+
+    background:#e9f8ef;
+
+    color:#0f7b3f;
+
+    border-color:#b7e4c7;
+
+}
+
+.message-error{
+
+    background:#fdecec;
+
+    color:#c62828;
+
+    border-color:#f5b5b5;
+
+}
+
+.message-warning{
+
+    background:#fff8e6;
+
+    color:#a86d00;
+
+    border-color:#ffe08a;
+
+}
+
+.message-info{
+
+    background:#eef5ff;
+
+    color:#0b5ed7;
+
+    border-color:#b6d4fe;
+
+}
+
+@keyframes fadeIn{
+
+    from{
+
+        opacity:0;
+
+        transform:translateY(-10px);
+
+    }
+
+    to{
+
+        opacity:1;
+
+        transform:translateY(0);
+
+    }
+
+}
+        @media (max-width: 991.98px) {
+            .steps-section {
+                margin-top: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Hero Header -->
+
+                <div class="col-12 text-center text-brand-700">
+                    <h1 class="h3 mb-1 fw-bold">Add Audio to Video</h1>
+                    <p class="mb-0 opacity-75 small">Upload a video and an audio file to replace or merge audio</p>
+                </div>
+   
+
+    <div class="container py-4 py-md-5">
+        <div class="row g-4">
+
+            <!-- LEFT: Form -->
+            <div class="col-lg-7">
+                <div class="card main-card">
+                    <div class="card-header-custom">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0 fw-semibold">
+                                <i class="bi bi-upload me-2 text-primary"></i>
+                                Upload & Configure
+                            </h5>
+                            <span class="badge bg-primary-subtle text-primary">Free Tool</span>
+                        </div>
+                    </div>
+
+                    <div class="card-body p-4">
+
+                    {% if messages %}
+<div class="mb-4">
+
+    {% for message in messages %}
+
+        <div class="message-box message-{{ message.tags }}">
+            {{ message }}
+        </div>
+
+    {% endfor %}
+
+</div>
+{% endif %}
+
+                        <form method="POST" enctype="multipart/form-data">
+                            {% csrf_token %}
+
+                            <!-- Video Upload -->
+                            <div class="mb-4">
+                                <label class="form-label">
+                                    <i class="bi bi-camera-video me-1"></i> Upload Video
+                                </label>
+                                <div class="upload-zone" onclick="document.getElementById('id_video').click()">
+                                    <i class="bi bi-cloud-arrow-up d-block"></i>
+                                    <div class="fw-medium">Click to upload video</div>
+                                    <small class="text-muted">MP4, AVI, MOV, MKV, WEBM</small>
+                                    {{ form.video }}
+                                </div>
+                            </div>
+
+                            <!-- Audio Upload -->
+                            <div class="mb-4">
+                                <label class="form-label">
+                                    <i class="bi bi-music-note-beamed me-1"></i> Upload Audio
+                                </label>
+                                <div class="upload-zone" onclick="document.getElementById('id_audio').click()">
+                                    <i class="bi bi-headphones d-block"></i>
+                                    <div class="fw-medium">Click to upload audio</div>
+                                    <small class="text-muted">MP3, WAV, AAC, M4A, OGG, FLAC</small>
+                                    {{ form.audio }}
+                                </div>
+                            </div>
+
+                            <hr class="my-4">
+
+                            <div class="section-title">Processing Settings</div>
+
+                            <div class="row g-3 mb-4">
+                                <div class="col-md-6">
+                                    <label class="form-label">Processing Mode</label>
+                                    {{ form.mode }}
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="form-label">Audio Volume</label>
+                                    {{ form.volume }}
+                                    <div class="form-text">1.0 = Normal · 2.0 = Double · 0.5 = Half</div>
+                                </div>
+                            </div>
+
+                            <div class="form-check form-switch mb-4">
+                                {{ form.loop_audio }}
+                                <label class="form-check-label" for="{{ form.loop_audio.id_for_label }}">
+                                    Loop audio if shorter than the video
+                                </label>
+                            </div>
+
+                
+
+                            <!-- Progress -->
+                            <div class="mb-4">
+                                <label class="form-label d-flex justify-content-between">
+                                    <span>Processing Progress</span>
+                                    <span class="text-muted small">Ready</span>
+                                </label>
+                                <div class="progress">
+                                    <div class="progress-bar progress-bar-striped progress-bar-animated"
+                                         style="width:100%;"></div>
+                                </div>
+                            </div>
+
+                            <button type="submit" class="btn btn-primary btn-process w-100">
+                                <i class="bi bi-play-circle me-2"></i>
+                                Process Video
+                            </button>
+                        </form>
+                    </div>
+
+                    <div class="card-footer bg-white border-top py-3">
+                        <div class="row text-center g-2">
+                            <div class="col-12 col-md-6">
+                                <small class="text-muted d-block mb-1">Supported Video</small>
+                                <span class="badge bg-secondary-subtle text-secondary badge-format me-1">MP4</span>
+                                <span class="badge bg-secondary-subtle text-secondary badge-format me-1">AVI</span>
+                                <span class="badge bg-secondary-subtle text-secondary badge-format me-1">MOV</span>
+                                <span class="badge bg-secondary-subtle text-secondary badge-format me-1">MKV</span>
+                                <span class="badge bg-secondary-subtle text-secondary badge-format">WEBM</span>
+                            </div>
+                            <div class="col-12 col-md-6 mt-2 mt-md-0">
+                                <small class="text-muted d-block mb-1">Supported Audio</small>
+                                <span class="badge bg-secondary-subtle text-secondary badge-format me-1">MP3</span>
+                                <span class="badge bg-secondary-subtle text-secondary badge-format me-1">WAV</span>
+                                <span class="badge bg-secondary-subtle text-secondary badge-format me-1">AAC</span>
+                                <span class="badge bg-secondary-subtle text-secondary badge-format me-1">M4A</span>
+                                <span class="badge bg-secondary-subtle text-secondary badge-format me-1">OGG</span>
+                                <span class="badge bg-secondary-subtle text-secondary badge-format">FLAC</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- RIGHT: How to Use (Your Content) -->
+            <div class="col-lg-5 steps-section">
+                <div class="card steps-card">
+                    <div class="card-body p-4">
+                        <h5 class="fw-semibold mb-3">
+                            <i class="bi bi-list-ol me-2 text-primary"></i>
+                            How to Use
+                        </h5>
+
+                        <div class="step-item">
+                            <div class="step-number">2</div>
+                            <div class="step-content">
+                                <h6>Upload a Video</h6>
+                                <p>Click <strong>Choose Video</strong> and select a supported video file.</p>
+                                <ul>
+                                    <li>MP4</li>
+                                    <li>AVI</li>
+                                    <li>MOV</li>
+                                    <li>MKV</li>
+                                    <li>WEBM</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="step-item">
+                            <div class="step-number">3</div>
+                            <div class="step-content">
+                                <h6>Upload an Audio File</h6>
+                                <p>Click <strong>Choose Audio</strong> and select the audio file you want to add.</p>
+                                <ul>
+                                    <li>MP3</li>
+                                    <li>WAV</li>
+                                    <li>AAC</li>
+                                    <li>M4A</li>
+                                    <li>OGG</li>
+                                    <li>FLAC</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="step-item">
+                            <div class="step-number">4</div>
+                            <div class="step-content">
+                                <h6>Select the Processing Mode</h6>
+                                <p>Choose one of the available options:</p>
+                                <ul>
+                                    <li><strong>Replace Audio</strong> — Removes the video's original audio. Uses only the uploaded audio.</li>
+                                    <li><strong>Merge Audio</strong> — Mixes the uploaded audio with the video's original audio.</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="step-item">
+                            <div class="step-number">5</div>
+                            <div class="step-content">
+                                <h6>Configure Optional Settings</h6>
+                                <p>You can customise the output by:</p>
+                                <ul>
+                                    <li>Adjusting the audio volume</li>
+                                    <li>Enabling audio looping if the audio is shorter than the video</li>
+                                
+                                </ul>
+                                <p class="mt-1">If these settings are not required, the default values can be used.</p>
+                            </div>
+                        </div>
+
+                        <div class="step-item">
+                            <div class="step-number">6</div>
+                            <div class="step-content">
+                                <h6>Process the Video</h6>
+                                <p>Click the <strong>Process Video</strong> button. The application will:</p>
+                                <ul>
+                                    <li>Validate the uploaded files</li>
+                                    <li>Read the video information</li>
+                                    <li>Process the audio</li>
+                                    <li>Apply the selected settings</li>
+                                    <li>Replace or merge the audio</li>
+                                    <li>Generate the final output video</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="step-item">
+                            <div class="step-number">7</div>
+                            <div class="step-content">
+                                <h6>Preview the Result</h6>
+                                <p>After processing is complete, the output page displays:</p>
+                                <ul>
+                                    <li>The processed video</li>
+                                    <li>Processing status</li>
+                                    <li>Video preview</li>
+                                </ul>
+                                <p class="mt-1">You can play the video to verify the result.</p>
+                            </div>
+                        </div>
+
+                        <div class="step-item">
+                            <div class="step-number">8</div>
+                            <div class="step-content">
+                                <h6>Download the Video</h6>
+                                <p>Click the <strong>Download Video</strong> button to save the processed video to your local computer.</p>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const videoInput = document.getElementById('id_video');
+            const audioInput = document.getElementById('id_audio');
+
+            if (videoInput) {
+                videoInput.style.display = 'none';
+                videoInput.addEventListener('change', function () {
+                    if (this.files.length) {
+                        this.closest('.upload-zone').querySelector('.fw-medium').textContent = this.files[0].name;
+                    }
+                });
+            }
+
+            if (audioInput) {
+                audioInput.style.display = 'none';
+                audioInput.addEventListener('change', function () {
+                    if (this.files.length) {
+                        this.closest('.upload-zone').querySelector('.fw-medium').textContent = this.files[0].name;
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+{% endblock %}

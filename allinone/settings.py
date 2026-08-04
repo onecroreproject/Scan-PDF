@@ -34,8 +34,13 @@ INSTALLED_APPS = [
     'audio_processor',
     'dynamic_qr',
     'video_downloader',
+
     'services',
     'custom_admin',
+
+    'audio_replacement',
+    #"media_processing.apps.MediaProcessingConfig",
+
 ]
 
 MIDDLEWARE = [

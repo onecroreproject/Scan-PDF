@@ -27,4 +27,27 @@ redis>=4.6.0
 python-magic>=0.4.27
 python-magic-bin>=0.4.14; platform_system=="Windows"
 yt-dlp>=2024.04.09
+
 curl-cffi
+
+
+ffmpeg-python>=0.2.0
+
+pydub>=0.25.1
+
+librosa>=0.11.0
+
+soundfile>=0.13.1
+
+pymediainfo>=7.0.1
+
+loguru>=0.7.3
+
+channels>=4.2.2
+
+channels-redis>=4.2.1
+
+daphne>=4.2.1
+
+opencv-python==5.0.0.93
+

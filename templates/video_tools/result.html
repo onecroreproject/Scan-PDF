@@ -1,0 +1,258 @@
+{% extends 'converter/base.html' %}
+{% load static %}
+
+{% block content %}
+
+<style>
+    /* ============================================
+       Add Text To Video — Preview (Production)
+       ============================================ */
+
+    .atv-wrap {
+        --atv-primary: #2563eb;
+        --atv-primary-hover: #1d4ed8;
+        --atv-primary-soft: #eff6ff;
+        --atv-success: #16a34a;
+        --atv-success-hover: #15803d;
+        --atv-surface: #ffffff;
+        --atv-bg: #f8fafc;
+        --atv-border: #e2e8f0;
+        --atv-text: #0f172a;
+        --atv-text-secondary: #475569;
+        --atv-text-muted: #94a3b8;
+        --atv-radius-lg: 14px;
+        --atv-shadow-md: 0 4px 12px rgba(15, 23, 42, 0.08);
+
+        font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+        background: var(--atv-bg);
+        min-height: calc(100vh - 60px);
+        padding: 32px 20px 48px;
+        color: var(--atv-text);
+        -webkit-font-smoothing: antialiased;
+        -moz-osx-font-smoothing: grayscale;
+        line-height: 1.5;
+    }
+
+    .atv-card {
+        max-width: 720px;
+        margin: 0 auto;
+        background: var(--atv-surface);
+        border-radius: var(--atv-radius-lg);
+        border: 1px solid var(--atv-border);
+        box-shadow: var(--atv-shadow-md);
+        overflow: hidden;
+    }
+
+    /* ---- Header ---- */
+    .atv-header {
+        padding: 24px 28px;
+        border-bottom: 1px solid var(--atv-border);
+        display: flex;
+        align-items: flex-start;
+        gap: 14px;
+    }
+
+    .atv-header-icon {
+        width: 42px;
+        height: 42px;
+        border-radius: 10px;
+        background: linear-gradient(135deg, #16a34a, #22c55e);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        box-shadow: 0 2px 8px rgba(22, 163, 74, 0.3);
+    }
+
+    .atv-header-icon svg {
+        width: 22px;
+        height: 22px;
+        color: #fff;
+    }
+
+    .atv-header-text h1 {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        color: var(--atv-text);
+        line-height: 1.3;
+    }
+
+    .atv-header-text p {
+        margin: 4px 0 0;
+        font-size: 0.875rem;
+        color: var(--atv-text-secondary);
+    }
+
+    /* ---- Body ---- */
+    .atv-body {
+        padding: 28px;
+    }
+
+    /* ---- Video player ---- */
+    .atv-player-wrap {
+        background: #0f172a;
+        border-radius: 10px;
+        overflow: hidden;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 24px;
+        border: 1px solid var(--atv-border);
+    }
+
+    .atv-player-wrap video {
+        display: block;
+        width: 100%;
+        max-width: 100%;
+        height: auto;
+        max-height: 420px;
+        background: #000;
+    }
+
+    /* ---- Actions ---- */
+    .atv-actions {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: center;
+    }
+
+    .atv-btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        height: 44px;
+        padding: 0 20px;
+        border-radius: 9px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        font-family: inherit;
+        cursor: pointer;
+        text-decoration: none;
+        transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.1s ease;
+        border: none;
+        letter-spacing: 0.01em;
+    }
+
+    .atv-btn svg {
+        width: 18px;
+        height: 18px;
+        flex-shrink: 0;
+    }
+
+    .atv-btn-success {
+        background: var(--atv-success);
+        color: #fff;
+        box-shadow: 0 1px 2px rgba(22, 163, 74, 0.2), 0 2px 8px rgba(22, 163, 74, 0.25);
+    }
+
+    .atv-btn-success:hover {
+        background: var(--atv-success-hover);
+        box-shadow: 0 2px 4px rgba(22, 163, 74, 0.25), 0 4px 12px rgba(22, 163, 74, 0.3);
+        transform: translateY(-1px);
+        color: #fff;
+        text-decoration: none;
+    }
+
+    .atv-btn-secondary {
+        background: #fff;
+        color: var(--atv-text);
+        border: 1.5px solid var(--atv-border);
+        box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+    }
+
+    .atv-btn-secondary:hover {
+        background: var(--atv-bg);
+        border-color: #cbd5e1;
+        transform: translateY(-1px);
+        color: var(--atv-text);
+        text-decoration: none;
+    }
+
+    .atv-btn:active {
+        transform: translateY(0);
+    }
+
+    .atv-btn:focus-visible {
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.25);
+    }
+
+    /* ---- Responsive ---- */
+    @media (max-width: 560px) {
+        .atv-wrap {
+            padding: 16px 12px 32px;
+        }
+
+        .atv-header {
+            padding: 20px;
+        }
+
+        .atv-body {
+            padding: 20px;
+        }
+
+        .atv-actions {
+            flex-direction: column;
+        }
+
+        .atv-btn {
+            width: 100%;
+        }
+
+        .atv-header-text h1 {
+            font-size: 1.1rem;
+        }
+    }
+</style>
+
+<div class="atv-wrap">
+    <div class="atv-card">
+
+        <!-- Header -->
+        <div class="atv-header">
+            <div class="atv-header-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            </div>
+            <div class="atv-header-text">
+                <h1>Preview</h1>
+                <p>Your video with text overlay is ready</p>
+            </div>
+        </div>
+
+        <!-- Body -->
+        <div class="atv-body">
+
+            <div class="atv-player-wrap">
+                <video controls>
+                    <source src="{{ video_url }}" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+            </div>
+
+            <div class="atv-actions">
+                <a href="{{ video_url }}" download class="atv-btn atv-btn-success">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    Download Video
+                </a>
+
+                <a href="{% url 'video_tools:add_text_to_video' %}" class="atv-btn atv-btn-secondary">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M12 4v16m8-8H4" />
+                    </svg>
+                    Add Text To Another Video
+                </a>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+{% endblock %}

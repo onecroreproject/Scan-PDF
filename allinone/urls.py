@@ -14,6 +14,7 @@ urlpatterns = [
     path('', include('converter.urls')),
     path('image/', include('image_processor.urls')),
     path('audio/', include('audio_processor.urls')),
+    path("videotools/",include("audio_replacement.urls")),
     path('qr/', include('dynamic_qr.urls')),
     path('video-downloader/', include('video_downloader.urls')),
     path('services/', include('services.urls')),
