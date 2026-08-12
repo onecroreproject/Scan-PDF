@@ -39,6 +39,7 @@ INSTALLED_APPS = [
     'custom_admin',
 
     'audio_replacement',
+    'media_tools',
     #"media_processing.apps.MediaProcessingConfig",
 
 ]

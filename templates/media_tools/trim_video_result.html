@@ -1,0 +1,420 @@
+{% extends 'converter/base.html' %}
+{% load static %}
+
+{% block content %}
+  <!-- Professional & modern design – no backend logic changed -->
+  <style>
+    /* ----- global reset & base ----- */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background: linear-gradient(145deg, #f6f9fc 0%, #edf2f7 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1.5rem;
+      margin: 0;
+      line-height: 1.5;
+      color: #1e293b;
+    }
+
+    /* ----- main card container ----- */
+    .result-card {
+      max-width: 820px;
+      width: 100%;
+      background: #ffffff;
+      border-radius: 40px;
+      box-shadow: 0 20px 40px -12px rgba(0, 20, 30, 0.25), 0 8px 24px -8px rgba(0, 0, 0, 0.08);
+      padding: 2.5rem 2.2rem 2.8rem;
+      transition: all 0.2s ease;
+      backdrop-filter: blur(2px);
+      border: 1px solid rgba(255, 255, 255, 0.5);
+    }
+
+    @media (max-width: 500px) {
+      .result-card {
+        padding: 1.8rem 1.2rem 2rem;
+        border-radius: 28px;
+      }
+    }
+
+    /* ----- header / title ----- */
+    .title-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1.8rem;
+      flex-wrap: wrap;
+    }
+
+    .title-icon {
+      background: #dbeafe;
+      border-radius: 60px;
+      width: 44px;
+      height: 44px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #1d4ed8;
+      font-size: 1.6rem;
+      flex-shrink: 0;
+    }
+
+    h1 {
+      font-size: 2rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      color: #0b1e33;
+      margin: 0;
+      background: linear-gradient(135deg, #0b2b4a 0%, #1d4ed8 80%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      word-break: break-word;
+    }
+
+    @media (max-width: 480px) {
+      h1 {
+        font-size: 1.7rem;
+      }
+      .title-icon {
+        width: 38px;
+        height: 38px;
+        font-size: 1.3rem;
+      }
+    }
+
+    /* ----- messages (Django messages) ----- */
+    .message-list {
+      margin-bottom: 2.2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.65rem;
+    }
+
+    .message-item {
+      background: #f0f9ff;
+      border-left: 6px solid #3b82f6;
+      padding: 0.9rem 1.4rem;
+      border-radius: 18px;
+      font-size: 0.98rem;
+      font-weight: 450;
+      color: #0b2b4a;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      backdrop-filter: blur(2px);
+      background: rgba(239, 246, 255, 0.75);
+      border: 1px solid rgba(59, 130, 246, 0.15);
+    }
+
+    .message-item::before {
+      content: "ℹ️";
+      font-size: 1.2rem;
+      filter: drop-shadow(0 1px 2px rgba(0,0,0,0.05));
+    }
+
+    /* ----- video wrapper (responsive) ----- */
+    .video-wrapper {
+      background: #0b1e2e;
+      border-radius: 32px;
+      overflow: hidden;
+      box-shadow: 0 12px 30px -8px rgba(0, 20, 30, 0.4);
+      margin: 1.8rem 0 2rem;
+      transition: box-shadow 0.25s;
+      aspect-ratio: 16 / 9;
+      width: 100%;
+      position: relative;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .video-wrapper video {
+      width: 100%;
+      height: 100%;
+      object-fit: contain;
+      display: block;
+      background: #0b1e2e;
+    }
+
+    /* fallback text inside video */
+    .video-wrapper video:not([src]) {
+      background: #1e2f3f;
+      color: #b0c7db;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+    }
+
+    /* ----- action buttons / links (professional) ----- */
+    .action-grid {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: flex-start;
+      gap: 1.2rem 1.8rem;
+      margin: 2rem 0 1.2rem;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.6rem;
+      padding: 0.75rem 2rem;
+      border-radius: 120px;
+      font-weight: 550;
+      font-size: 1rem;
+      text-decoration: none;
+      transition: all 0.2s ease;
+      border: none;
+      cursor: pointer;
+      background: transparent;
+      color: #1e293b;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+      letter-spacing: -0.01em;
+    }
+
+    .btn-download {
+      background: #1d4ed8;
+      color: white;
+      box-shadow: 0 8px 18px -6px #1d4ed880;
+      border: 1px solid #2563eb;
+    }
+
+    .btn-download:hover {
+      background: #2563eb;
+      transform: scale(1.02);
+      box-shadow: 0 12px 26px -8px #1d4ed8b3;
+    }
+
+    .btn-download:active {
+      transform: scale(0.97);
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 1.5px solid #cbd5e1;
+      color: #1e293b;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+    }
+
+    .btn-outline:hover {
+      background: #f1f5f9;
+      border-color: #94a3b8;
+      box-shadow: 0 8px 18px -10px #0f172a30;
+      transform: translateY(-1px);
+    }
+
+    .btn-outline:active {
+      transform: translateY(1px);
+    }
+
+    .btn-icon {
+      font-size: 1.2rem;
+      line-height: 1;
+    }
+
+    /* secondary link (trim another) */
+    .secondary-actions {
+      margin-top: 1.8rem;
+      padding-top: 1.2rem;
+      border-top: 1px solid #e9edf2;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+    }
+
+    .link-trim-another {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: #1d4ed8;
+      font-weight: 500;
+      text-decoration: none;
+      padding: 0.4rem 0.8rem 0.4rem 0.4rem;
+      border-radius: 50px;
+      background: #eff6ff;
+      transition: all 0.15s;
+      border: 1px solid transparent;
+    }
+
+    .link-trim-another:hover {
+      background: #dbeafe;
+      border-color: #b9d1f8;
+      box-shadow: 0 2px 8px rgba(29, 78, 216, 0.08);
+    }
+
+    .link-trim-another .arrow {
+      display: inline-block;
+      transition: transform 0.2s;
+    }
+
+    .link-trim-another:hover .arrow {
+      transform: translateX(5px);
+    }
+
+    /* ----- small responsive tweaks ----- */
+    @media (max-width: 600px) {
+      .action-grid {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.9rem;
+      }
+
+      .btn {
+        justify-content: center;
+        padding: 0.8rem 1.2rem;
+        width: 100%;
+      }
+
+      .secondary-actions {
+        flex-direction: column-reverse;
+        align-items: flex-start;
+      }
+    }
+
+    @media (max-width: 400px) {
+      .result-card {
+        padding: 1.2rem 0.8rem 1.5rem;
+      }
+      h1 {
+        font-size: 1.4rem;
+      }
+      .video-wrapper {
+        border-radius: 20px;
+      }
+    }
+
+    /* ----- utils / micro-interactions ----- */
+    .text-muted {
+      color: #475569;
+      font-size: 0.9rem;
+    }
+
+    /* if no messages, keep spacing consistent */
+    .message-list:empty {
+      display: none;
+    }
+
+    /* video fallback */
+    .video-wrapper video[src=""] + .fallback-placeholder {
+      display: flex;
+    }
+
+    .fallback-placeholder {
+      display: none;
+    }
+
+    /* ensure download link is visible */
+    a[download] {
+      text-decoration: none;
+    }
+
+    /* make sure django messages are displayed inside our design */
+    .message-item:last-child {
+      margin-bottom: 0;
+    }
+
+    /* small screen fine-tune */
+    .title-wrapper {
+      margin-bottom: 1rem;
+    }
+
+    /* extra style for message if it's a warning or error (but we keep generic) */
+    .message-item.error {
+      border-left-color: #ef4444;
+      background: #fef2f2;
+    }
+
+    .message-item.success {
+      border-left-color: #22c55e;
+      background: #f0fdf4;
+    }
+
+    /* but we don't change backend, just style */
+  </style>
+</head>
+<body>
+
+<div class="result-card">
+
+  <!-- header -->
+  <div class="title-wrapper">
+    <span class="title-icon" aria-hidden="true">✂️</span>
+    <h1>Video trimmed</h1>
+  </div>
+
+  <!-- django messages (fully preserved logic) -->
+  {% if messages %}
+    <div class="message-list">
+      {% for message in messages %}
+        <div class="message-item {% if message.tags %}{{ message.tags }}{% endif %}">
+          {{ message }}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <!-- video player (only design, backend untouched) -->
+  {% if video_url %}
+    <div class="video-wrapper">
+      <video controls width="640" style="width:100%;height:100%;">
+        <source src="{{ video_url }}" type="video/mp4">
+        Your browser does not support video playback.
+      </video>
+    </div>
+
+    <!-- primary actions: download + optional extra -->
+    <div class="action-grid">
+      <a href="{{ video_url }}" download class="btn btn-download">
+        <span class="btn-icon">⬇️</span> Download trimmed video
+      </a>
+      <!-- additional professional link: preview (optional but design) -->
+      <a href="{{ video_url }}" target="_blank" class="btn btn-outline" rel="noopener noreferrer">
+        <span class="btn-icon">🔍</span> Open in new tab
+      </a>
+    </div>
+  {% else %}
+    <!-- if no video_url, show a subtle placeholder (design only) -->
+    <div class="video-wrapper" style="background: #eef2f6; border: 2px dashed #bac8d9;">
+      <div style="color:#334e68; font-weight:400; padding:1.5rem; text-align:center; width:100%;">
+        <span style="font-size:2rem; display:block; margin-bottom:0.3rem;">🎬</span>
+        <span>No video available</span>
+        <span style="display:block; font-size:0.9rem; color:#5f7d9c;">Trim a video first</span>
+      </div>
+    </div>
+  {% endif %}
+
+  <!-- secondary footer: trim another + subtle info (design) -->
+  <div class="secondary-actions">
+    <a href="{% url 'media_tools:trim_video' %}" class="link-trim-another">
+      <span class="arrow" aria-hidden="true">⟳</span> Trim another video
+    </a>
+    <span class="text-muted" style="font-size:0.85rem; display:inline-flex; align-items:center; gap:0.3rem;">
+      <span style="opacity:0.6;">⚡</span> Ready
+    </span>
+  </div>
+
+  <!-- small note: design only, no backend -->
+  <div style="margin-top: 1.2rem; font-size:0.78rem; color:#718096; text-align:right; border-top:1px solid #edf2f7; padding-top:1rem; opacity:0.7; letter-spacing:0.2px;">
+    <span>Professional · responsive</span>
+  </div>
+
+</div>
+
+<!-- no extra scripts – pure design, backend untouched -->
+</body>
+{% endblock %}

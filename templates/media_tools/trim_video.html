@@ -1,0 +1,554 @@
+{% extends 'converter/base.html' %}
+{% load static %}
+
+{% block content %}
+  <!-- Professional & responsive design – backend logic untouched -->
+  <style>
+    /* ----- global reset & typography ----- */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      background: linear-gradient(145deg, #f7fafc 0%, #eef3f8 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 2.5rem 1.5rem 3rem;
+      color: #0f1a2e;
+      line-height: 1.6;
+    }
+
+    .container {
+      max-width: 960px;
+      width: 100%;
+      background: #ffffff;
+      border-radius: 48px;
+      box-shadow: 0 24px 48px -16px rgba(0, 20, 30, 0.25), 0 8px 20px -8px rgba(0, 0, 0, 0.06);
+      padding: 2.8rem 2.8rem 3.2rem;
+      transition: all 0.2s;
+      border: 1px solid rgba(255, 255, 255, 0.6);
+      backdrop-filter: blur(2px);
+    }
+
+    @media (max-width: 600px) {
+      body { padding: 1.2rem 0.8rem 2rem; }
+      .container { padding: 1.8rem 1.2rem 2.2rem; border-radius: 32px; }
+    }
+
+    /* ----- header ----- */
+    .tool-header {
+      display: flex;
+      align-items: center;
+      gap: 0.9rem;
+      margin-bottom: 2rem;
+      flex-wrap: wrap;
+    }
+
+    .header-icon {
+      background: #dbeafe;
+      border-radius: 60px;
+      width: 54px;
+      height: 54px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2rem;
+      flex-shrink: 0;
+      box-shadow: 0 4px 10px rgba(29, 78, 216, 0.10);
+    }
+
+    h1 {
+      font-size: 2.2rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      background: linear-gradient(135deg, #0b2b4a 0%, #2563eb 90%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin: 0;
+      word-break: break-word;
+    }
+
+    @media (max-width: 480px) {
+      .header-icon { width: 44px; height: 44px; font-size: 1.6rem; }
+      h1 { font-size: 1.8rem; }
+    }
+
+    /* ----- messages (django) ----- */
+    .message-list {
+      margin-bottom: 2.2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.7rem;
+    }
+
+    .message-item {
+      background: #f0f9ff;
+      border-left: 6px solid #3b82f6;
+      padding: 0.9rem 1.5rem;
+      border-radius: 20px;
+      font-size: 0.98rem;
+      font-weight: 450;
+      color: #0b2b4a;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.02);
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: rgba(239, 246, 255, 0.8);
+      border: 1px solid rgba(59, 130, 246, 0.12);
+      backdrop-filter: blur(2px);
+    }
+
+    .message-item::before {
+      content: "ℹ️";
+      font-size: 1.2rem;
+      filter: drop-shadow(0 1px 2px rgba(0,0,0,0.05));
+    }
+
+    .message-item.error {
+      border-left-color: #ef4444;
+      background: #fef2f2;
+      border-color: rgba(239, 68, 68, 0.12);
+    }
+    .message-item.error::before { content: "⚠️"; }
+
+    .message-item.success {
+      border-left-color: #22c55e;
+      background: #f0fdf4;
+      border-color: rgba(34, 197, 94, 0.12);
+    }
+    .message-item.success::before { content: "✅"; }
+
+    /* ----- form styling (backend untouched) ----- */
+    .trim-form {
+      display: flex;
+      flex-direction: column;
+      gap: 1.6rem;
+      margin: 1.8rem 0 2.5rem;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.3rem;
+    }
+
+    .form-group label {
+      font-weight: 550;
+      font-size: 0.95rem;
+      letter-spacing: -0.01em;
+      color: #1e2f44;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .form-group label::after {
+      content: "";
+      flex: 1;
+      height: 1px;
+      background: linear-gradient(to right, #dce3ec, transparent);
+      margin-left: 0.3rem;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 0.85rem 1.2rem;
+      border: 1.5px solid #e2e8f0;
+      border-radius: 24px;
+      background: #fafcff;
+      font-size: 1rem;
+      transition: all 0.2s;
+      color: #0f1a2e;
+      font-family: inherit;
+      box-shadow: inset 0 2px 4px rgba(0,0,0,0.01);
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: #2563eb;
+      box-shadow: 0 0 0 4px rgba(37, 99, 235, 0.12), inset 0 2px 4px rgba(0,0,0,0.02);
+      background: #ffffff;
+    }
+
+    .form-group input::placeholder {
+      color: #94a3b8;
+      font-weight: 350;
+    }
+
+    .form-group .helptext {
+      font-size: 0.8rem;
+      color: #64748b;
+      margin-top: 0.15rem;
+      padding-left: 0.3rem;
+    }
+
+    .form-error {
+      color: #dc2626;
+      font-size: 0.85rem;
+      margin-top: 0.2rem;
+      padding-left: 0.5rem;
+      border-left: 3px solid #dc2626;
+      padding-left: 0.8rem;
+      background: #fef2f2;
+      border-radius: 12px;
+      padding: 0.4rem 1rem;
+      display: inline-block;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.8rem;
+    }
+
+    @media (max-width: 550px) {
+      .form-row {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+      }
+    }
+
+    /* ----- submit button (professional) ----- */
+    .submit-wrap {
+      margin-top: 0.8rem;
+    }
+
+    .btn-trim {
+      background: #1d4ed8;
+      border: none;
+      padding: 1rem 2.8rem;
+      border-radius: 120px;
+      font-weight: 600;
+      font-size: 1.1rem;
+      color: white;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.8rem;
+      box-shadow: 0 12px 28px -10px #1d4ed8a0;
+      transition: all 0.2s ease;
+      cursor: pointer;
+      border: 1px solid #2563eb;
+      letter-spacing: -0.01em;
+      width: auto;
+      min-width: 180px;
+    }
+
+    .btn-trim:hover {
+      background: #2563eb;
+      transform: scale(1.02);
+      box-shadow: 0 18px 36px -12px #1d4ed8c0;
+    }
+
+    .btn-trim:active {
+      transform: scale(0.97);
+    }
+
+    .btn-trim::before {
+      content: "✂️";
+      font-size: 1.3rem;
+      filter: drop-shadow(0 1px 2px rgba(0,0,0,0.1));
+    }
+
+    @media (max-width: 480px) {
+      .btn-trim {
+        width: 100%;
+        justify-content: center;
+        padding: 0.9rem 1.5rem;
+      }
+    }
+
+    /* ----- information section (tool-information) ----- */
+    .tool-information {
+      margin-top: 3rem;
+      padding-top: 2.2rem;
+      border-top: 2px solid #edf2f7;
+      display: flex;
+      flex-direction: column;
+      gap: 1.8rem;
+    }
+
+    .tool-information h2 {
+      font-size: 1.8rem;
+      font-weight: 600;
+      letter-spacing: -0.02em;
+      color: #0b1e33;
+      display: flex;
+      align-items: center;
+      gap: 0.6rem;
+    }
+    .tool-information h2::before {
+      content: "📋";
+      font-size: 1.6rem;
+    }
+
+    .tool-information h3 {
+      font-size: 1.2rem;
+      font-weight: 600;
+      color: #1a365d;
+      margin: 0.5rem 0 0.2rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .tool-information h3::before {
+      content: "▹";
+      color: #2563eb;
+      font-weight: 300;
+    }
+
+    .tool-information p {
+      color: #1e2f44;
+      max-width: 75ch;
+      margin: 0.1rem 0 0.5rem;
+      padding-left: 0.2rem;
+    }
+
+    .tool-information p:last-of-type {
+      margin-bottom: 0;
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.2rem 2rem;
+      background: #f8fafc;
+      padding: 1.2rem 1.8rem;
+      border-radius: 28px;
+      margin: 0.2rem 0 0.4rem;
+    }
+
+    @media (max-width: 600px) {
+      .info-grid {
+        grid-template-columns: 1fr;
+        padding: 1rem 1.2rem;
+      }
+      .tool-information h2 { font-size: 1.5rem; }
+    }
+
+    /* utility */
+    .text-muted {
+      color: #64748b;
+      font-size: 0.9rem;
+    }
+
+    .flex-center {
+      display: flex;
+      align-items: center;
+      gap: 0.8rem;
+      flex-wrap: wrap;
+    }
+
+    /* small extra: django non_field errors */
+    .non-field-errors {
+      background: #fef2f2;
+      border-radius: 20px;
+      padding: 0.7rem 1.2rem;
+      color: #b91c1c;
+      border: 1px solid #fecaca;
+      font-weight: 450;
+    }
+
+    /* file input styling */
+    input[type="file"] {
+      padding: 0.6rem 0.8rem;
+      background: #f1f5f9;
+      border-radius: 40px;
+      border: 1px dashed #94a3b8;
+      cursor: pointer;
+    }
+    input[type="file"]:hover {
+      background: #e9eef3;
+    }
+
+    /* small screens */
+    @media (max-width: 420px) {
+      .container { padding: 1rem 0.8rem 1.5rem; }
+      .form-group input { padding: 0.7rem 1rem; }
+    }
+  </style>
+</head>
+<body>
+<div class="container">
+
+  <!-- header -->
+  <div class="tool-header">
+    <span class="header-icon" aria-hidden="true">✂️</span>
+    <h1>Trim Video</h1>
+  </div>
+
+  <!-- messages (Django messages – logic preserved) -->
+  {% if messages %}
+    <div class="message-list">
+      {% for message in messages %}
+        <div class="message-item {% if message.tags %}{{ message.tags }}{% endif %}">
+          {{ message }}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <!-- form – backend logic untouched, only design & responsive -->
+  <form method="POST" enctype="multipart/form-data" class="trim-form">
+    {% csrf_token %}
+
+    <!-- non field errors -->
+    {% if form.non_field_errors %}
+      <div class="non-field-errors">
+        {{ form.non_field_errors }}
+      </div>
+    {% endif %}
+
+    <!-- video field -->
+    <div class="form-group">
+      {{ form.video.label_tag }}
+      {{ form.video }}
+      {% if form.video.help_text %}
+        <span class="helptext">{{ form.video.help_text }}</span>
+      {% endif %}
+      {% for error in form.video.errors %}
+        <div class="form-error">{{ error }}</div>
+      {% endfor %}
+    </div>
+
+    <!-- start & end time in a responsive row -->
+    <div class="form-row">
+      <div class="form-group">
+        {{ form.start_time.label_tag }}
+        {{ form.start_time }}
+        {% if form.start_time.help_text %}
+          <span class="helptext">{{ form.start_time.help_text }}</span>
+        {% endif %}
+        {% for error in form.start_time.errors %}
+          <div class="form-error">{{ error }}</div>
+        {% endfor %}
+      </div>
+
+      <div class="form-group">
+        {{ form.end_time.label_tag }}
+        {{ form.end_time }}
+        {% if form.end_time.help_text %}
+          <span class="helptext">{{ form.end_time.help_text }}</span>
+        {% endif %}
+        {% for error in form.end_time.errors %}
+          <div class="form-error">{{ error }}</div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- submit -->
+    <div class="submit-wrap">
+      <button type="submit" class="btn-trim">Trim Video</button>
+    </div>
+  </form>
+
+  <!-- information section – tool-information, design only -->
+  <section class="tool-information">
+    <h2>Online Video Trimmer</h2>
+    <p>
+      Our online Video Trimmer allows you to quickly remove unwanted
+      portions from a video by selecting a start time and an end time.
+      Instead of using complicated video editing software, you can upload
+      your video, enter the section you want to keep, and generate a
+      trimmed video. This tool is useful for preparing videos for social
+      media, websites, presentations, projects, tutorials, and other
+      digital content.
+    </p>
+
+    <div class="info-grid">
+      <div>
+        <h3>How to Trim a Video</h3>
+        <p>
+          To trim your video, first upload a supported video file. Enter the
+          starting point in seconds and then enter the ending point in
+          seconds. For example, if you want to keep a section beginning at
+          10 seconds and ending at 30 seconds, enter 10 as the start time and
+          30 as the end time. Click the Trim Video button to process the
+          selected portion. After processing is completed, the trimmed video
+          will be available on the result page.
+        </p>
+      </div>
+      <div>
+        <h3>What Is Video Trimming?</h3>
+        <p>
+          Video trimming means removing unwanted sections from the beginning,
+          middle, or end of a video. It allows you to keep only the portion
+          that is useful for your purpose. Video trimming is different from
+          changing the entire video because the original uploaded file is not
+          modified. A new output video is created containing the selected
+          portion.
+        </p>
+      </div>
+      <div>
+        <h3>Choose Start and End Time</h3>
+        <p>
+          The start time determines where the trimmed section begins, while
+          the end time determines where it finishes. The end time must always
+          be greater than the start time. The selected time should also be
+          within the duration of the uploaded video. For example, for a
+          60-second video, you can select a section from 15 seconds to
+          45 seconds. Invalid time values are rejected before video processing
+          begins.
+        </p>
+      </div>
+      <div>
+        <h3>Who Can Use the Video Trimmer?</h3>
+        <p>
+          This video trimming tool can be useful for students, teachers,
+          content creators, developers, video editors, businesses, and
+          general users. Students can trim recordings for assignments and
+          presentations. Content creators can remove unnecessary sections
+          before publishing videos. Businesses can shorten demonstrations,
+          tutorials, and promotional videos.
+        </p>
+      </div>
+      <div>
+        <h3>Supported Video Formats</h3>
+        <p>
+          The tool supports commonly used video formats including MP4, MOV,
+          AVI, MKV, WebM, FLV, WMV, and M4V. The uploaded file is validated
+          before processing. Unsupported files, excessively large files, and
+          invalid time values are rejected with a clear error message.
+        </p>
+      </div>
+      <div>
+        <h3>Why Use an Online Video Trimmer?</h3>
+        <p>
+          A simple video trimming tool can save time when you only need to
+          remove unwanted portions of a recording. You do not need to open a
+          full video editing application for a basic trimming operation.
+          Upload the video, specify the required time range, process the file,
+          and download the resulting video.
+        </p>
+      </div>
+    </div>
+
+    <h3>Important Information</h3>
+    <p>
+      The original video is used as the source for processing and the
+      selected section is generated as a separate output file. For best
+      results, provide accurate start and end times and use a valid video
+      file. If the selected time range is outside the available video
+      duration, the system will show an appropriate validation message
+      instead of processing an invalid request.
+    </p>
+  </section>
+
+  <!-- subtle footer design (no backend) -->
+  <div style="margin-top:2.2rem; font-size:0.75rem; color:#94a3b8; text-align:right; border-top:1px solid #ecf1f7; padding-top:1rem; letter-spacing:0.2px; opacity:0.7;">
+    <span>professional · responsive · design only</span>
+  </div>
+</div>
+<!-- backend logic fully preserved -->
+</body>
+{% endblock %}
