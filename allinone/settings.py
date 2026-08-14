@@ -118,9 +118,8 @@ mimetypes.add_type("text/css", ".css", True)
 mimetypes.add_type("application/javascript", ".js", True)
 
 # Media files (Redirected to system temp to keep project folder clean)
-import tempfile
-MEDIA_URL = '/media/'
-MEDIA_ROOT = os.path.join(tempfile.gettempdir(), 'scanpdf_media_root')
+MEDIA_URL = "/media/"
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
@@ -136,8 +135,8 @@ DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
 # File upload settings
 FILE_UPLOAD_MAX_MEMORY_SIZE = 524288000  # 500 MB - store large uploads on disk
 DATA_UPLOAD_MAX_MEMORY_SIZE = 524288000  # 500 MB
-FILE_UPLOAD_TEMP_DIR = os.path.join(tempfile.gettempdir(), 'scanpdf_uploads')
-os.makedirs(FILE_UPLOAD_TEMP_DIR, exist_ok=True)
+#FILE_UPLOAD_TEMP_DIR = os.path.join(tempfile.gettempdir(), 'scanpdf_uploads')
+#os.makedirs(FILE_UPLOAD_TEMP_DIR, exist_ok=True)
 
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 10000
 
