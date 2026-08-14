@@ -1,0 +1,1168 @@
+
+{% extends "converter/base.html" %}
+{% load static %}
+
+{% block title %}
+Add Watermark to Video
+{% endblock %}
+
+{% block content %}
+<style>
+
+/* =====================================================
+   Add Watermark To Video
+===================================================== */
+
+
+
+/* =====================================================
+   ADD WATERMARK VIDEO - MODERN PRO UI
+===================================================== */
+
+body{
+    background:#f8fafc;
+}
+
+
+/* Main Container */
+
+.watermark-page{
+    padding:40px 0;
+}
+
+
+/* Main Card */
+
+.watermark-card{
+
+    background:#ffffff;
+    border:none;
+    border-radius:24px;
+    overflow:hidden;
+    box-shadow:
+    0 20px 50px rgba(15,23,42,.08);
+
+}
+
+
+/* Header */
+
+.tool-header{
+
+    padding:35px 30px;
+    text-align:center;
+    background:
+    linear-gradient(135deg,#7c3aed,#8b5cf6);
+
+    color:white;
+
+}
+
+
+.tool-icon{
+
+    width:75px;
+    height:75px;
+
+    display:flex;
+    align-items:center;
+    justify-content:center;
+
+    margin:0 auto 18px;
+
+    background:rgba(255,255,255,.18);
+
+    border-radius:20px;
+
+    font-size:35px;
+
+}
+
+
+.tool-header h1{
+
+    font-size:32px;
+    font-weight:750;
+    margin-bottom:10px;
+
+}
+
+
+.tool-header p{
+
+    margin:0;
+    opacity:.9;
+    font-size:16px;
+
+}
+
+
+/* Body */
+
+.tool-body{
+
+    padding:40px;
+
+}
+
+
+
+/* Upload Cards */
+
+.upload-grid{
+
+    display:grid;
+
+    grid-template-columns:
+    repeat(2,1fr);
+
+    gap:25px;
+
+}
+
+
+.upload-card label{
+
+    font-weight:700;
+    color:#334155;
+    margin-bottom:12px;
+
+}
+
+
+.upload-box{
+
+    min-height:230px;
+
+    border:2px dashed #cbd5e1;
+
+    border-radius:20px;
+
+    background:#f8fafc;
+
+    display:flex;
+
+    flex-direction:column;
+
+    align-items:center;
+
+    justify-content:center;
+
+    cursor:pointer;
+
+    transition:.3s;
+
+}
+
+
+.upload-box:hover{
+
+    border-color:#7c3aed;
+
+    background:#faf5ff;
+
+    transform:translateY(-4px);
+
+}
+
+
+.upload-box i{
+
+    font-size:55px;
+
+    color:#7c3aed;
+
+}
+
+
+.upload-box h5{
+
+    margin-top:18px;
+
+    font-weight:700;
+
+    color:#334155;
+
+}
+
+
+.upload-box span{
+
+    color:#64748b;
+
+    font-size:14px;
+
+}
+
+
+
+.upload-box input{
+
+    display:none;
+
+}
+
+
+/* Section Title */
+
+.section-title{
+
+    display:flex;
+
+    align-items:center;
+
+    gap:10px;
+
+    font-size:20px;
+
+    font-weight:750;
+
+    color:#1e293b;
+
+    margin-bottom:25px;
+
+}
+
+
+.section-title i{
+
+    color:#7c3aed;
+
+}
+
+
+
+/* Form */
+
+.form-label{
+
+    font-weight:650;
+
+    color:#475569;
+
+}
+
+
+.form-control,
+.form-select{
+
+    height:52px;
+
+    border-radius:14px;
+
+    border:1px solid #e2e8f0;
+
+}
+
+
+.form-control:focus,
+.form-select:focus{
+
+    border-color:#7c3aed;
+
+    box-shadow:
+    0 0 0 .25rem rgba(124,58,237,.15);
+
+}
+
+
+
+/* Button */
+
+
+.primary-btn{
+
+    width:100%;
+
+    height:55px;
+
+    border:none;
+
+    border-radius:15px;
+
+    background:
+    linear-gradient(135deg,#7c3aed,#8b5cf6);
+
+    color:white;
+
+    font-size:17px;
+
+    font-weight:700;
+
+    transition:.3s;
+
+}
+
+
+.primary-btn:hover{
+
+    transform:translateY(-3px);
+
+    box-shadow:
+    0 15px 30px rgba(124,58,237,.3);
+
+}
+
+
+
+/* Instruction Card */
+
+
+.info-card{
+
+    margin-top:35px;
+
+    background:#fff;
+
+    border-radius:24px;
+
+    padding:35px;
+
+    box-shadow:
+    0 15px 40px rgba(15,23,42,.06);
+
+}
+
+
+.info-card h2{
+
+    font-size:26px;
+
+    font-weight:750;
+
+    color:#1e293b;
+
+}
+
+
+
+.info-card h3{
+
+    font-size:20px;
+
+    margin-top:35px;
+
+    font-weight:700;
+
+    color:#334155;
+
+}
+
+
+
+.info-card p,
+.info-card li{
+
+    color:#64748b;
+
+    line-height:1.8;
+
+}
+
+
+
+/* Lists */
+
+
+.info-list{
+
+    padding:0;
+
+    list-style:none;
+
+}
+
+
+.info-list li{
+
+    margin-bottom:15px;
+
+    display:flex;
+
+    gap:10px;
+
+}
+
+
+.info-list i{
+
+    color:#7c3aed;
+
+    margin-top:5px;
+
+}
+
+
+
+/* Format Cards */
+
+
+.format-grid{
+
+    display:grid;
+
+    grid-template-columns:
+    repeat(2,1fr);
+
+    gap:20px;
+
+}
+
+
+.format-card{
+
+    padding:25px;
+
+    background:#f8fafc;
+
+    border-radius:18px;
+
+    border:1px solid #e2e8f0;
+
+}
+
+
+
+.format-card h4{
+
+    color:#7c3aed;
+
+    font-weight:700;
+
+}
+
+
+
+
+/* Loading */
+
+.loading-overlay{
+
+    position:fixed;
+
+    inset:0;
+
+    background:rgba(255,255,255,.9);
+
+    display:none;
+
+    justify-content:center;
+
+    align-items:center;
+
+    flex-direction:column;
+
+    z-index:9999;
+
+}
+
+
+
+.spinner{
+
+    width:65px;
+
+    height:65px;
+
+    border:6px solid #ddd;
+
+    border-top-color:#7c3aed;
+
+    border-radius:50%;
+
+    animation:rotate .8s linear infinite;
+
+}
+
+
+
+@keyframes rotate{
+
+100%{
+transform:rotate(360deg);
+}
+
+}
+
+
+
+/* Responsive */
+
+
+@media(max-width:768px){
+
+
+.tool-body{
+
+    padding:22px;
+
+}
+
+
+.upload-grid,
+.format-grid{
+
+    grid-template-columns:1fr;
+
+}
+
+
+.tool-header h1{
+
+    font-size:24px;
+
+}
+
+
+.info-card{
+
+    padding:22px;
+
+}
+
+
+}
+
+
+
+</style>
+
+<!-- Loading -->
+
+<!-- Loading Overlay -->
+
+<div class="loading-overlay" id="loadingOverlay">
+
+    <div class="spinner"></div>
+
+    <h5 class="mt-3 text-purple">
+        Processing video...
+    </h5>
+
+</div>
+
+
+<div class="container watermark-page">
+
+
+<div class="row justify-content-center">
+
+<div class="col-xl-10">
+
+
+<!-- Main Tool Card -->
+
+<div class="watermark-card">
+
+
+<!-- Header -->
+
+<div class="tool-header">
+
+    <div class="tool-icon">
+
+        <i class="bi bi-image"></i>
+
+    </div>
+
+
+    <h1>
+        Add Watermark To Video
+    </h1>
+
+
+    <p>
+        Protect your videos by adding a custom logo,
+        brand watermark, or copyright image.
+    </p>
+
+
+</div>
+
+
+
+<!-- Body -->
+
+<div class="tool-body">
+
+
+{% if messages %}
+
+{% for message in messages %}
+
+<div class="alert alert-success rounded-4">
+
+{{ message }}
+
+</div>
+
+{% endfor %}
+
+{% endif %}
+
+
+
+
+<form method="POST"
+      action="{% url 'video_tools:add_watermark' %}"
+      enctype="multipart/form-data"
+      id="watermarkForm">
+
+
+{% csrf_token %}
+
+
+
+<!-- Upload Section -->
+
+
+<div class="section-title">
+
+<i class="bi bi-cloud-arrow-up"></i>
+
+Upload Files
+
+</div>
+
+
+
+<div class="upload-grid">
+
+
+
+<!-- Video Upload -->
+
+<div class="upload-card">
+
+
+<label>
+
+Upload Video
+
+</label>
+
+
+<div class="upload-box"
+onclick="document.getElementById('id_video').click()">
+
+
+
+<i class="bi bi-camera-video"></i>
+
+
+<h5>
+Drop Video Here
+</h5>
+
+
+<span>
+MP4 • MOV • AVI • MKV • WEBM
+</span>
+
+
+{{ form.video }}
+
+
+</div>
+
+
+
+</div>
+
+
+
+
+
+<!-- Watermark Upload -->
+
+
+<div class="upload-card">
+
+
+<label>
+
+Upload Watermark
+
+</label>
+
+
+
+<div class="upload-box"
+onclick="document.getElementById('id_watermark').click()">
+
+
+
+<i class="bi bi-image"></i>
+
+
+<h5>
+Drop Logo/Image Here
+</h5>
+
+
+<span>
+PNG • JPG • JPEG
+</span>
+
+
+{{ form.watermark }}
+
+
+
+</div>
+
+
+</div>
+
+
+
+</div>
+
+
+
+
+<hr class="my-5">
+
+
+
+<!-- Settings -->
+
+
+<div class="section-title">
+
+<i class="bi bi-sliders"></i>
+
+Watermark Settings
+
+</div>
+
+
+
+
+<div class="row g-4">
+
+
+<div class="col-md-4">
+
+<label class="form-label">
+
+Position
+
+</label>
+
+
+{{ form.position }}
+
+
+</div>
+
+
+
+<div class="col-md-4">
+
+
+<label class="form-label">
+
+Watermark Size (%)
+
+</label>
+
+
+{{ form.scale }}
+
+
+
+</div>
+
+
+
+<div class="col-md-4">
+
+
+<label class="form-label">
+
+Transparency
+
+</label>
+
+
+{{ form.opacity }}
+
+
+
+</div>
+
+
+
+
+<div class="col-md-6">
+
+
+<label class="form-label">
+
+Left Margin (px)
+
+</label>
+
+
+{{ form.margin_x }}
+
+
+
+</div>
+
+
+
+
+<div class="col-md-6">
+
+
+<label class="form-label">
+
+Top Margin (px)
+
+</label>
+
+
+{{ form.margin_y }}
+
+
+
+</div>
+
+
+
+</div>
+
+
+
+
+
+<hr class="my-5">
+
+
+
+<button type="submit"
+        class="primary-btn">
+
+
+<i class="bi bi-magic me-2"></i>
+
+Add Watermark To Video
+
+
+</button>
+
+
+
+</form>
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+<!-- ==============================
+     Instructions
+================================ -->
+
+
+
+<div class="info-card">
+
+
+
+<h2>
+
+How to Add a Watermark to a Video Online
+
+</h2>
+
+
+
+<p>
+
+Protect your videos by adding a custom image watermark using our
+<strong>Add Watermark to Video</strong> tool.
+Watermarks help protect your copyright, promote your brand,
+and improve visibility across YouTube, Instagram, Facebook,
+TikTok, and other platforms.
+
+</p>
+
+
+
+
+
+<h3>
+
+Steps to Add a Watermark
+
+</h3>
+
+
+
+<ul class="info-list">
+
+
+<li>
+
+<i class="bi bi-check-circle-fill"></i>
+
+Upload your video in MP4, MOV, AVI, MKV, or WEBM format.
+
+</li>
+
+
+<li>
+
+<i class="bi bi-check-circle-fill"></i>
+
+Upload your watermark image in PNG, JPG, or JPEG format.
+
+</li>
+
+
+
+<li>
+
+<i class="bi bi-check-circle-fill"></i>
+
+Use a transparent PNG logo for the best quality.
+
+</li>
+
+
+
+<li>
+
+<i class="bi bi-check-circle-fill"></i>
+
+Choose watermark position, size, and transparency.
+
+</li>
+
+
+
+<li>
+
+<i class="bi bi-check-circle-fill"></i>
+
+Click Add Watermark and wait for processing.
+
+</li>
+
+
+
+<li>
+
+<i class="bi bi-check-circle-fill"></i>
+
+Preview and download your processed video.
+
+</li>
+
+
+</ul>
+
+
+
+
+
+<h3>
+
+Best Practices
+
+</h3>
+
+
+
+<ul class="info-list">
+
+
+<li>
+
+<i class="bi bi-star-fill"></i>
+
+Use a transparent PNG logo for professional results.
+
+</li>
+
+
+<li>
+
+<i class="bi bi-star-fill"></i>
+
+Place watermark in corners to avoid blocking content.
+
+</li>
+
+
+
+<li>
+
+<i class="bi bi-star-fill"></i>
+
+Use balanced size and transparency.
+
+</li>
+
+
+
+<li>
+
+<i class="bi bi-star-fill"></i>
+
+Maintain consistent branding across videos.
+
+</li>
+
+
+
+</ul>
+
+
+
+
+
+<h3>
+
+Supported Formats
+
+</h3>
+
+
+
+<div class="format-grid">
+
+
+<div class="format-card">
+
+
+<h4>
+
+<i class="bi bi-camera-video me-2"></i>
+
+Video Formats
+
+</h4>
+
+
+<p>
+
+MP4<br>
+MOV<br>
+AVI<br>
+MKV<br>
+WEBM
+
+</p>
+
+
+</div>
+
+
+
+
+
+<div class="format-card">
+
+
+<h4>
+
+<i class="bi bi-image me-2"></i>
+
+Image Formats
+
+</h4>
+
+
+<p>
+
+PNG<br>
+JPG<br>
+JPEG
+
+</p>
+
+
+<small>
+
+Transparent PNG images are recommended for
+high-quality watermark results.
+
+</small>
+
+
+</div>
+
+
+
+</div>
+
+
+
+</div>
+
+
+
+</div>
+
+
+</div>
+
+</div>
+
+
+
+
+<script>
+
+document.addEventListener(
+"DOMContentLoaded",
+function(){
+
+
+const form =
+document.getElementById("watermarkForm");
+
+
+const button =
+form.querySelector("button[type='submit']");
+
+
+
+form.addEventListener(
+"submit",
+function(){
+
+
+button.disabled=true;
+
+
+button.innerHTML=
+`
+<span class="spinner-border spinner-border-sm me-2"></span>
+Processing...
+`;
+
+
+});
+
+
+
+});
+
+
+</script>
+
+
+
+{% endblock %}
+
+

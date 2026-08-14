@@ -588,6 +588,45 @@
         </p>
     </div>
 </a>
+<a href="{% url 'media_tools:merge_video' %}" 
+   class="flex items-center gap-4 p-4 rounded-2xl hover:bg-brand-50/50 transition-all border border-surface-100 hover:border-brand-200 group/item">
+
+    <div class="w-10 h-10 rounded-2xl bg-red-50 flex items-center justify-center group-hover/item:bg-red-100 transition-colors">
+
+        <!-- Merge Video Icon -->
+        <svg class="w-5 h-5 text-red-600"
+             fill="none"
+             stroke="currentColor"
+             viewBox="0 0 24 24"
+             stroke-width="2">
+
+            <path stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M4 5h16v14H4z" />
+
+            <path stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M8 9h8" />
+
+            <path stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M8 13h3" />
+
+            <path stroke-linecap="round"
+                  stroke-linejoin="round"
+                  d="M15 13h1" />
+
+        </svg>
+
+    </div>
+
+    <div class="flex-1">
+        <p class="text-[13px] font-black text-surface-900 group-hover/item:text-brand-600">
+            Merge Video
+        </p>
+    </div>
+
+</a>
 
                                     <a href="{% url 'video_downloader:facebook_downloader' %}"
                                         class="flex items-center gap-4 p-4 rounded-2xl hover:bg-brand-50/50 transition-all border border-surface-100 hover:border-brand-200 group/item">

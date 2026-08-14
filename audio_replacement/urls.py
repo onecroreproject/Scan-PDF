@@ -14,6 +14,11 @@ urlpatterns=[
         name="add_text_to_video"
     ),
 
+path(
+    "add-watermark/",
+    views.add_watermark,
+    name="add_watermark",
+),
 
 
 ]

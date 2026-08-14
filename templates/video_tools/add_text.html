@@ -404,6 +404,121 @@
             font-size: 1.1rem;
         }
     }
+
+    /*=========================================
+    Instructions Section
+=========================================*/
+
+.atv-guide{
+    max-width:680px;
+    margin:28px auto 0;
+    background:#fff;
+    border:1px solid var(--atv-border);
+    border-radius:14px;
+    box-shadow:var(--atv-shadow);
+    overflow:hidden;
+}
+
+.atv-guide-header{
+    padding:18px 24px;
+    border-bottom:1px solid var(--atv-border);
+    background:#f8fafc;
+}
+
+.atv-guide-header h2{
+    margin:0;
+    font-size:22px;
+    font-weight:700;
+    color:#0f172a;
+}
+
+.atv-guide-body{
+    padding:24px;
+}
+
+.atv-guide-body h3{
+    margin:24px 0 12px;
+    font-size:18px;
+    color:#1e293b;
+    font-weight:600;
+}
+
+.atv-guide-body h3:first-child{
+    margin-top:0;
+}
+
+.atv-guide-body p{
+    color:#475569;
+    font-size:15px;
+    line-height:1.8;
+    margin-bottom:16px;
+}
+
+.atv-guide-body ol,
+.atv-guide-body ul{
+    margin:0;
+    padding-left:22px;
+}
+
+.atv-guide-body li{
+    margin-bottom:12px;
+    color:#475569;
+    line-height:1.7;
+    font-size:15px;
+}
+
+.atv-format-box{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:18px;
+    margin-top:15px;
+}
+
+.atv-format-card{
+    background:#f8fafc;
+    border:1px solid #e2e8f0;
+    border-radius:10px;
+    padding:18px;
+}
+
+.atv-format-card h4{
+    margin:0 0 10px;
+    color:#2563eb;
+    font-size:16px;
+    font-weight:600;
+}
+
+.atv-format-card p{
+    margin:0;
+    font-size:15px;
+    color:#475569;
+}
+
+@media (max-width:768px){
+
+.atv-guide-header{
+    padding:16px;
+}
+
+.atv-guide-header h2{
+    font-size:20px;
+}
+
+.atv-guide-body{
+    padding:18px;
+}
+
+.atv-guide-body h3{
+    font-size:17px;
+}
+
+.atv-guide-body p,
+.atv-guide-body li{
+    font-size:14px;
+}
+
+}
+
 </style>
 
 <div class="atv-wrap">
@@ -607,6 +722,68 @@
                 </div>
 
             </form>
+            <!-- Instructions -->
+<div class="atv-guide">
+
+    <div class="atv-guide-header">
+        <h2>How to Add Text to a Video Online</h2>
+    </div>
+
+    <div class="atv-guide-body">
+
+        <p>
+            Use our <strong>Add Text to Video</strong> tool to easily add titles,
+            captions, subtitles, watermarks, or custom text to your videos without
+            compromising quality. Customize the text position, font size, color,
+            transparency, and display duration to create professional videos for
+            YouTube, Instagram, TikTok, Facebook, presentations, tutorials,
+            advertisements, and more.
+        </p>
+
+        <h3>Steps to Add Text to Your Video</h3>
+
+        <ol>
+            <li>Upload your video in MP4, MOV, AVI, MKV, or WEBM format.</li>
+            <li>Enter the text you want to display.</li>
+            <li>Select the font size and font color.</li>
+            <li>Adjust the text opacity, position, and margins.</li>
+            <li>Choose how long the text should appear.</li>
+            <li>Click <strong>Add Text To Video</strong> to begin processing.</li>
+            <li>Wait a few moments while the text is applied.</li>
+            <li>Preview and download your processed video instantly.</li>
+        </ol>
+
+        <h3>Best Practices</h3>
+
+        <ul>
+            <li>Keep your text short and easy to read.</li>
+            <li>Use high-contrast colors for better visibility.</li>
+            <li>Avoid covering important parts of the video.</li>
+            <li>Use larger font sizes for mobile viewers.</li>
+            <li>Give viewers enough time to read the text.</li>
+            <li>Maintain consistent text styling throughout the video.</li>
+        </ul>
+
+        <h3>Supported Formats</h3>
+
+        <div class="atv-format-box">
+
+            <div class="atv-format-card">
+                <h4>Input Formats</h4>
+                <p>MP4, MOV, AVI, MKV, WEBM</p>
+            </div>
+
+            <div class="atv-format-card">
+                <h4>Output Quality</h4>
+                <p>High-quality output while preserving the original video resolution whenever possible.</p>
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
         </div>
     </div>
 </div>

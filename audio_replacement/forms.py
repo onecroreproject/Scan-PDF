@@ -210,3 +210,96 @@ class AddTextVideoForm(forms.Form):
             )
 
         return text
+
+
+# ==========================================================
+# Add Watermark Form
+# ==========================================================
+
+# ==========================================================
+# Add Watermark Form
+# ==========================================================
+
+class AddWatermarkForm(forms.Form):
+
+    video = forms.FileField(
+        label="Video",
+        widget=forms.FileInput(
+            attrs={
+                "class": "form-control",
+                "accept": "video/*"
+            }
+        )
+    )
+
+    watermark = forms.ImageField(
+        label="Watermark Image",
+        widget=forms.FileInput(
+            attrs={
+                "class": "form-control",
+                "accept": "image/png,image/jpeg,image/jpg"
+            }
+        )
+    )
+
+    opacity = forms.IntegerField(
+        initial=70,
+        min_value=10,
+        max_value=100,
+        widget=forms.NumberInput(
+            attrs={
+                "class": "form-control",
+                "min": "10",
+                "max": "100"
+            }
+        )
+    )
+
+    scale = forms.IntegerField(
+        initial=20,
+        min_value=5,
+        max_value=100,
+        widget=forms.NumberInput(
+            attrs={
+                "class": "form-control",
+                "min": "5",
+                "max": "100"
+            }
+        )
+    )
+
+    margin_x = forms.IntegerField(
+        initial=20,
+        min_value=0,
+        widget=forms.NumberInput(
+            attrs={
+                "class": "form-control"
+            }
+        )
+    )
+
+    margin_y = forms.IntegerField(
+        initial=20,
+        min_value=0,
+        widget=forms.NumberInput(
+            attrs={
+                "class": "form-control"
+            }
+        )
+    )
+
+    position = forms.ChoiceField(
+        choices=[
+            ("top_left", "Top Left"),
+            ("top_right", "Top Right"),
+            ("bottom_left", "Bottom Left"),
+            ("bottom_right", "Bottom Right"),
+            ("center", "Center"),
+        ],
+        initial="bottom_right",
+        widget=forms.Select(
+            attrs={
+                "class": "form-select"
+            }
+        )
+    )

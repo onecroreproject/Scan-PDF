@@ -1,0 +1,534 @@
+{% extends 'converter/base.html' %}
+{% load static %}
+
+{% block content %}
+
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #f8fafc;
+    min-height: 100vh;
+    color: #1e293b;
+    line-height: 1.6;
+  }
+
+  .page-wrapper {
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 2.5rem 1.5rem 4rem;
+  }
+
+  /* ===== Header ===== */
+  .page-header {
+    text-align: center;
+    margin-bottom: 2.25rem;
+  }
+
+  .page-header h1 {
+    font-size: 2.4rem;
+    font-weight: 700;
+    letter-spacing: -0.03em;
+    color: #0f172a;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+  }
+
+  .page-header h1::before {
+    content: "🎬";
+    font-size: 2.1rem;
+  }
+
+  .subhead {
+    margin-top: 0.7rem;
+    font-size: 1.1rem;
+    color: #475569;
+    max-width: 520px;
+    margin-left: auto;
+    margin-right: auto;
+  }
+
+  /* ===== Messages ===== */
+  .messages {
+    max-width: 640px;
+    margin: 0 auto 1.75rem;
+  }
+
+  .message {
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    color: #1e40af;
+    padding: 0.9rem 1.4rem;
+    border-radius: 14px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    margin-bottom: 0.6rem;
+  }
+
+  /* ===== Form Card ===== */
+  .form-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 20px;
+    padding: 2.5rem 2.5rem;
+    box-shadow: 0 10px 40px -12px rgba(15, 23, 42, 0.08);
+    margin-bottom: 1.75rem;
+    text-align: center;
+  }
+
+  @media (max-width: 600px) {
+    .form-card {
+      padding: 2rem 1.25rem;
+    }
+  }
+
+  /* ===== Clideo-style Choose file button ===== */
+  .choose-file-wrap {
+    position: relative;
+    display: inline-block;
+    margin: 0.5rem 0 1.5rem;
+  }
+
+  .choose-file-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    background: #2563eb;
+    color: white;
+    font-weight: 600;
+    font-size: 1.1rem;
+    padding: 1rem 2.2rem;
+    border-radius: 12px;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 4px 14px rgba(37, 99, 235, 0.35);
+    transition: all 0.2s ease;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .choose-file-btn:hover {
+    background: #1d4ed8;
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(37, 99, 235, 0.4);
+  }
+
+  .choose-file-btn:active {
+    transform: translateY(0);
+  }
+
+  .choose-file-btn .plus {
+    font-size: 1.35rem;
+    font-weight: 400;
+    line-height: 1;
+  }
+
+  /* Hidden real file input */
+  .choose-file-wrap input[type="file"] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+    width: 100%;
+    height: 100%;
+  }
+
+  .formats-text {
+    font-size: 0.9rem;
+    color: #64748b;
+    margin-top: 0.4rem;
+  }
+
+  /* Errors */
+  .error-list {
+    margin-top: 1rem;
+    background: #fef2f2;
+    border-radius: 12px;
+    padding: 0.6rem 1.2rem;
+    color: #b91c1c;
+    font-size: 0.9rem;
+    border-left: 4px solid #ef4444;
+    text-align: left;
+    display: inline-block;
+  }
+
+  .error-list p {
+    margin: 0.15rem 0;
+  }
+
+  /* Submit */
+  .submit-wrap {
+    margin-top: 1.75rem;
+    display: flex;
+    justify-content: center;
+  }
+
+  .btn-merge {
+    background: #0f172a;
+    border: none;
+    color: #ffffff;
+    font-weight: 600;
+    font-size: 1.05rem;
+    padding: 0.95rem 2.8rem;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+  }
+
+  .btn-merge:hover {
+    background: #1e293b;
+    transform: translateY(-2px);
+  }
+
+  @media (max-width: 480px) {
+    .btn-merge {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+
+  /* ===== Selected files ===== */
+  .selected-files-section {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1.75rem;
+  }
+
+  .selected-files-section h3 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #0f172a;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.85rem;
+  }
+
+  .selected-files-section h3 span {
+    background: #dbeafe;
+    border-radius: 999px;
+    padding: 0.15rem 0.7rem;
+    font-size: 0.8rem;
+    color: #1e40af;
+    font-weight: 600;
+  }
+
+  .file-list {
+    list-style: none;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    max-height: 180px;
+    overflow-y: auto;
+  }
+
+  .file-list li {
+    padding: 0.55rem 0.8rem 0.55rem 2rem;
+    background: #f8fafc;
+    border-radius: 10px;
+    font-size: 0.92rem;
+    color: #1e293b;
+    border: 1px solid #e2e8f0;
+    position: relative;
+  }
+
+  .file-list li::before {
+    content: "🎞️";
+    position: absolute;
+    left: 0.55rem;
+    top: 0.45rem;
+    font-size: 0.9rem;
+  }
+
+  .warning-message {
+    background: #fffbeb;
+    border-radius: 10px;
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    color: #92400e;
+    margin-top: 0.7rem;
+    border-left: 4px solid #f59e0b;
+  }
+
+  /* ===== Features – 6 cards ===== */
+  .features {
+    margin-top: 2.5rem;
+  }
+
+  .features h2 {
+    font-size: 1.7rem;
+    font-weight: 700;
+    color: #0f172a;
+    text-align: center;
+    margin-bottom: 0.5rem;
+  }
+
+  .features .lead {
+    text-align: center;
+    color: #64748b;
+    max-width: 580px;
+    margin: 0 auto 2rem;
+    font-size: 1.05rem;
+  }
+
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.15rem;
+  }
+
+  @media (max-width: 700px) {
+    .info-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .info-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    padding: 1.4rem 1.5rem;
+    transition: all 0.22s ease;
+  }
+
+  .info-card:hover {
+    border-color: #93c5fd;
+    box-shadow: 0 8px 24px -8px rgba(37, 99, 235, 0.12);
+    transform: translateY(-2px);
+  }
+
+  .info-card h3 {
+    font-size: 1.05rem;
+    font-weight: 650;
+    color: #0f172a;
+    margin-bottom: 0.4rem;
+    display: flex;
+    align-items: center;
+    gap: 0.45rem;
+  }
+
+  .info-card h3::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    background: #2563eb;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .info-card p {
+    font-size: 0.92rem;
+    color: #475569;
+    line-height: 1.55;
+  }
+
+  /* Tip box */
+  .tip-box {
+    margin-top: 1.75rem;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 14px;
+    padding: 1.2rem 1.5rem;
+    color: #1e40af;
+    font-size: 0.95rem;
+    line-height: 1.55;
+  }
+
+  .tip-box strong {
+    font-weight: 650;
+  }
+
+  /* Scrollbar */
+  .file-list::-webkit-scrollbar {
+    width: 5px;
+  }
+  .file-list::-webkit-scrollbar-thumb {
+    background: #cbd5e1;
+    border-radius: 10px;
+  }
+</style>
+
+<div class="page-wrapper">
+
+  <!-- Header -->
+  <div class="page-header">
+    <h1>Merge Videos</h1>
+    <p class="subhead">Upload two or more video files to combine them into one seamless video.</p>
+  </div>
+
+  <!-- Django Messages -->
+  {% if messages %}
+    <div class="messages">
+      {% for message in messages %}
+        <div class="message">{{ message }}</div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <!-- Form Card -->
+  <div class="form-card">
+    <form method="POST" enctype="multipart/form-data" action="{% url 'media_tools:merge_video' %}">
+      {% csrf_token %}
+
+      <!-- Clideo-style Choose file button -->
+      <div class="choose-file-wrap">
+        <button type="button" class="choose-file-btn">
+          <span class="plus">+</span>
+          Choose file
+        </button>
+        <input
+          type="file"
+          name="videos"
+          id="id_videos"
+          multiple
+          accept="video/*"
+          required
+        >
+      </div>
+
+      <p class="formats-text">MP4 · MOV · AVI · MKV · WEBM · and more</p>
+
+      <!-- Django form errors -->
+      {% if form.videos.errors %}
+        <div class="error-list">
+          {% for error in form.videos.errors %}
+            <p>{{ error }}</p>
+          {% endfor %}
+        </div>
+      {% endif %}
+
+      <div class="submit-wrap">
+        <button type="submit" class="btn-merge">
+          <span>⚡</span> Merge Videos
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Selected files (dynamic – JS unchanged) -->
+  <div id="selectedFiles" class="selected-files-section" style="display: none;">
+    <!-- JS will populate -->
+  </div>
+
+  <!-- Features – 6 cards -->
+  <section class="features">
+    <h2>How to Merge Videos</h2>
+    <p class="lead">
+      Easily combine multiple clips into one complete video. Perfect for social media, presentations, travel videos, and more.
+    </p>
+
+    <div class="info-grid">
+      <div class="info-card">
+        <h3>Upload Multiple Videos</h3>
+        <p>
+          Select at least two video files. You can upload clips from your phone, camera, YouTube, Instagram, TikTok, or any supported source.
+        </p>
+      </div>
+
+      <div class="info-card">
+        <h3>Supported Formats</h3>
+        <p>
+          Works with MP4, MOV, AVI, MKV, WEBM and other common formats. Files are validated before processing begins.
+        </p>
+      </div>
+
+      <div class="info-card">
+        <h3>Order Matters</h3>
+        <p>
+          Videos are merged in the exact order you select them. Arrange your clips carefully before uploading for the best result.
+        </p>
+      </div>
+
+      <div class="info-card">
+        <h3>Processing Time</h3>
+        <p>
+          Time depends on file size, duration, resolution, and number of videos. Short clips finish quickly; longer ones may take several minutes.
+        </p>
+      </div>
+
+      <div class="info-card">
+        <h3>Do Not Close the Page</h3>
+        <p>
+          Please wait until processing is complete. Do not refresh or close the browser while the videos are being merged.
+        </p>
+      </div>
+
+      <div class="info-card">
+        <h3>Download Result</h3>
+        <p>
+          After successful processing you will be redirected to the result page where you can preview and download the final merged video.
+        </p>
+      </div>
+    </div>
+
+    <div class="tip-box">
+      💡 <strong>Tip:</strong> For faster results, use MP4 videos with moderate resolution. Upload the clips in the order you want them to appear in the final video.
+    </div>
+  </section>
+
+</div>
+
+<!-- JavaScript: show selected file list + make the blue button open the file dialog -->
+<script>
+  (function() {
+    const videoInput = document.getElementById("id_videos");
+    const selectedContainer = document.getElementById("selectedFiles");
+    const chooseBtn = document.querySelector(".choose-file-btn");
+
+    // Make the blue button trigger the file input
+    chooseBtn.addEventListener("click", function() {
+      videoInput.click();
+    });
+
+    function updateSelectedFiles() {
+      const files = videoInput.files;
+      selectedContainer.innerHTML = "";
+      if (files.length === 0) {
+        selectedContainer.style.display = "none";
+        return;
+      }
+      selectedContainer.style.display = "block";
+
+      const heading = document.createElement("h3");
+      heading.innerHTML = `📁 Selected Videos <span>${files.length}</span>`;
+      selectedContainer.appendChild(heading);
+
+      const list = document.createElement("ol");
+      list.className = "file-list";
+      for (let i = 0; i < files.length; i++) {
+        const item = document.createElement("li");
+        item.textContent = files[i].name;
+        list.appendChild(item);
+      }
+      selectedContainer.appendChild(list);
+
+      if (files.length < 2) {
+        const warning = document.createElement("div");
+        warning.className = "warning-message";
+        warning.textContent = "⚠️ Please select at least two videos.";
+        selectedContainer.appendChild(warning);
+      }
+    }
+
+    videoInput.addEventListener("change", updateSelectedFiles);
+    if (videoInput.files.length > 0) {
+      updateSelectedFiles();
+    }
+  })();
+</script>
+
+{% endblock %}

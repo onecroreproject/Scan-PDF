@@ -20,6 +20,7 @@ urlpatterns = [
     path('services/', include('services.urls')),
     path('custom-admin/', include('custom_admin.urls')),
     path('favicon.ico', RedirectView.as_view(url=staticfiles_storage.url('favicon.ico'))),
+    path('media_tools/', include('media_tools.urls')),
 ]
 
 handler404 = 'converter.views.custom_404_view'

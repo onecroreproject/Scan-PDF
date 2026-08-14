@@ -22,6 +22,8 @@ from django.shortcuts import render
 import traceback
 
 
+
+
 def upload(request):
 
     # -----------------------------------
@@ -301,6 +303,101 @@ def add_text_to_video(request):
     return render(
         request,
         "video_tools/add_text.html",
+        {
+            "form": form
+        }
+    )
+
+
+#============Water mark ==========
+
+#=========water mark =========
+
+from .forms import AddWatermarkForm
+
+from .services.watermark.watermark_service import (
+    process_watermark_video,
+)
+
+
+
+def add_watermark(request):
+
+    if request.method == "POST":
+
+        form = AddWatermarkForm(
+            request.POST,
+            request.FILES
+        )
+
+        if not form.is_valid():
+
+            messages.error(
+                request,
+                "Please upload a video and watermark image."
+            )
+
+            return render(
+                request,
+                "video_tools/add_watermark.html",
+                {
+                    "form": form
+                }
+            )
+
+        try:
+
+            output_video = process_watermark_video(
+                form.cleaned_data
+            )
+
+            output_video_url = (
+                settings.MEDIA_URL +
+                output_video.replace(
+                    settings.MEDIA_ROOT,
+                    ""
+                ).replace("\\", "/")
+            )
+
+            messages.success(
+                request,
+                "Watermark added successfully."
+            )
+            print("=" * 50)
+            print(output_video)
+            print(output_video_url)
+            print("=" * 50)
+
+     
+            
+            return render(
+                request,
+                "video_tools/watermark_result.html",
+                {
+                    "video_url": output_video_url,
+                }
+            )
+
+        except Exception as e:
+
+            messages.error(
+                request,
+                str(e)
+            )
+
+            return render(
+                request,
+                "video_tools/add_watermark.html",
+                {
+                    "form": form
+                }
+            )
+
+    form = AddWatermarkForm()
+
+    return render(
+        request,
+        "video_tools/add_watermark.html",
         {
             "form": form
         }
