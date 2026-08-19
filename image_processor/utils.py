@@ -3,6 +3,7 @@ import io
 import uuid
 import re
 import tempfile
+import zipfile
 from pathlib import Path
 from PIL import Image, ImageFilter, ImageEnhance, ImageDraw, ImageFont
 import numpy as np
@@ -58,6 +59,15 @@ def get_output_path(original_name, new_extension, suffix=''):
 def format_download_name(name):
     """Return the original filename unchanged."""
     return os.path.basename(name)
+
+def create_zip_archive(file_paths, zip_name='converted_images.zip'):
+    """Create a zip archive containing multiple files and return its path."""
+    _, output_dir = ensure_media_dirs()
+    zip_path = os.path.join(output_dir, f"{uuid.uuid4().hex[:8]}_{zip_name}")
+    with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
+        for file_path in file_paths:
+            zipf.write(file_path, arcname=os.path.basename(file_path))
+    return zip_path
 
 # ═══════════════════════════════════════════════════════════════
 # 1. IMAGE TOOLS

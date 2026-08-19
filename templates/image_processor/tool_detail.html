@@ -449,7 +449,7 @@
     function handleFiles(files) {
         const newFiles = Array.from(files);
         
-        if (TOOL_SLUG === 'image-to-video' || '{{ tool.multi_file }}' === 'True') {
+        if (TOOL_SLUG === 'image-to-video' || fileInput.hasAttribute('multiple')) {
             selectedFiles = [...selectedFiles, ...newFiles];
             renderGallery();
         } else {

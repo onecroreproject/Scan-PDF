@@ -1339,7 +1339,7 @@ def convert_excel_to_pdf(input_path, original_name):
 # ═══════════════════════════════════════════════════════════════
 # 4. HTML → PDF
 # ═══════════════════════════════════════════════════════════════
-def convert_html_to_pdf(input_path, original_name, url=None):
+def convert_html_to_pdf(input_path, original_name, url=None, provided_base_url=None):
     """Convert an HTML file or a URL to PDF.
 
     If `url` is provided, the page at that URL is fetched and rendered.
@@ -1365,7 +1365,17 @@ def convert_html_to_pdf(input_path, original_name, url=None):
     else:
         with open(input_path, 'r', encoding='utf-8', errors='ignore') as f:
             html_content = f.read()
-        base_url = Path(input_path).parent.as_uri()
+
+        if '{%' in html_content or '{{' in html_content:
+            try:
+                from django.template import Engine, Context
+                t = Engine.get_default().from_string(html_content)
+                html_content = t.render(Context({}))
+            except Exception:
+                # Fallback to raw HTML if it's not a valid Django template or cannot be rendered
+                pass
+
+        base_url = provided_base_url or Path(input_path).parent.as_uri()
 
     # ── Primary Engine: WeasyPrint ───────────────────────────
     # Best for local HTML files with standard CSS
@@ -3257,7 +3267,7 @@ def jpg_to_png(input_path, original_name):
 # ═══════════════════════════════════════════════════════════════
 # 23. HTML TO IMAGE
 # ═══════════════════════════════════════════════════════════════
-def html_to_image(input_path, original_name, url=None):
+def html_to_image(input_path, original_name, url=None, base_url=None):
     """Convert an HTML file or a URL to a pixel-perfect PNG using Chrome headless via html2image."""
     from html2image import Html2Image
     import uuid
@@ -3291,6 +3301,22 @@ def html_to_image(input_path, original_name, url=None):
             # File Mode
             with open(input_path, 'r', encoding='utf-8', errors='replace') as f:
                 html_content = f.read()
+
+            if '{%' in html_content or '{{' in html_content:
+                try:
+                    from django.template import Engine, Context
+                    t = Engine.get_default().from_string(html_content)
+                    html_content = t.render(Context({}))
+                except Exception:
+                    # Fallback to raw HTML if it's not a valid Django template or cannot be rendered
+                    pass
+
+            if base_url:
+                if '<head>' in html_content:
+                    html_content = html_content.replace('<head>', f'<head><base href="{base_url}">')
+                else:
+                    html_content = f'<head><base href="{base_url}"></head>\n' + html_content
+
             hti.screenshot(
                 html_str=html_content,
                 save_as=temp_name,

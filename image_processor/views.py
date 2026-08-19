@@ -21,7 +21,8 @@ from .utils import (
     merge_images,
     change_gif_speed,
     convert_image,
-    format_download_name
+    format_download_name,
+    create_zip_archive
 )
 
 class FileCleanupResponse(FileResponse):
@@ -174,15 +175,16 @@ IMAGE_TOOLS = {
         'category': 'image-conv',
         'color': '#475569',
         'gradient': 'from-slate-500 to-slate-700',
+        'multi_file': True,
     },
-    'jpg-converter': { 'title': 'JPG Converter', 'description': 'Convert any image format to JPG.', 'icon': 'file-image', 'accept': '.png,.bmp,.webp,.tiff', 'allowed_extensions': ['.png', '.bmp', '.webp', '.tiff'], 'category': 'image-conv', 'color': '#2b6cb0', 'gradient': 'from-blue-500 to-blue-700', 'target': 'jpg' },
-    'png-converter': { 'title': 'PNG Converter', 'description': 'Convert any image format to PNG.', 'icon': 'file-image', 'accept': '.jpg,.jpeg,.bmp,.webp,.tiff', 'allowed_extensions': ['.jpg', '.jpeg', '.bmp', '.webp', '.tiff'], 'category': 'image-conv', 'color': '#276749', 'gradient': 'from-green-500 to-emerald-700', 'target': 'png' },
-    'bmp-converter': { 'title': 'BMP Converter', 'description': 'Convert any image format to Windows Bitmap.', 'icon': 'file-image', 'accept': '.*', 'allowed_extensions': ['.jpg', '.jpeg', '.png', '.webp'], 'category': 'image-conv', 'color': '#c05621', 'gradient': 'from-orange-500 to-red-500', 'target': 'bmp' },
-    'gif-converter': { 'title': 'GIF Converter', 'description': 'Convert static images to GIF format.', 'icon': 'file-image', 'accept': '.*', 'allowed_extensions': ['.jpg', '.jpeg', '.png'], 'category': 'image-conv', 'color': '#6b46c1', 'gradient': 'from-purple-500 to-indigo-700', 'target': 'gif' },
-    'pdf-converter': { 'title': 'PDF Converter', 'description': 'Convert your images directly into a PDF document.', 'icon': 'file-text', 'accept': '.*', 'allowed_extensions': ['.jpg', '.jpeg', '.png'], 'category': 'image-conv', 'color': '#dc2626', 'gradient': 'from-red-500 to-red-700', 'target': 'pdf' },
-    'tiff-converter': { 'title': 'TIFF Converter', 'description': 'High-quality TIFF conversion for professional printing.', 'icon': 'file-image', 'accept': '.*', 'allowed_extensions': ['.jpg', '.jpeg', '.png'], 'category': 'image-conv', 'color': '#0d9488', 'gradient': 'from-teal-500 to-teal-700', 'target': 'tiff' },
-    'webp-converter': { 'title': 'WEBP Converter', 'description': 'Optimize your images for the web with WEBP format.', 'icon': 'file-image', 'accept': '.*', 'allowed_extensions': ['.jpg', '.jpeg', '.png'], 'category': 'image-conv', 'color': '#0ea5e9', 'gradient': 'from-sky-500 to-sky-700', 'target': 'webp' },
-    'dng-converter': { 'title': 'DNG Converter', 'description': 'DNG Digital Negative conversion placeholder.', 'icon': 'file-image', 'accept': '.*', 'allowed_extensions': ['.jpg', '.jpeg', '.png'], 'category': 'image-conv', 'color': '#111827', 'gradient': 'from-gray-700 to-black', 'target': 'tiff' },
+    'jpg-converter': { 'title': 'JPG Converter', 'description': 'Convert any image format to JPG.', 'icon': 'file-image', 'accept': '.png,.bmp,.webp,.tiff', 'allowed_extensions': ['.png', '.bmp', '.webp', '.tiff'], 'category': 'image-conv', 'color': '#2b6cb0', 'gradient': 'from-blue-500 to-blue-700', 'target': 'jpg', 'multi_file': True },
+    'png-converter': { 'title': 'PNG Converter', 'description': 'Convert any image format to PNG.', 'icon': 'file-image', 'accept': '.jpg,.jpeg,.bmp,.webp,.tiff', 'allowed_extensions': ['.jpg', '.jpeg', '.bmp', '.webp', '.tiff'], 'category': 'image-conv', 'color': '#276749', 'gradient': 'from-green-500 to-emerald-700', 'target': 'png', 'multi_file': True },
+    'bmp-converter': { 'title': 'BMP Converter', 'description': 'Convert any image format to Windows Bitmap.', 'icon': 'file-image', 'accept': '.*', 'allowed_extensions': ['.jpg', '.jpeg', '.png', '.webp'], 'category': 'image-conv', 'color': '#c05621', 'gradient': 'from-orange-500 to-red-500', 'target': 'bmp', 'multi_file': True },
+    'gif-converter': { 'title': 'GIF Converter', 'description': 'Convert static images to GIF format.', 'icon': 'file-image', 'accept': '.*', 'allowed_extensions': ['.jpg', '.jpeg', '.png'], 'category': 'image-conv', 'color': '#6b46c1', 'gradient': 'from-purple-500 to-indigo-700', 'target': 'gif', 'multi_file': True },
+    'pdf-converter': { 'title': 'PDF Converter', 'description': 'Convert your images directly into a PDF document.', 'icon': 'file-text', 'accept': '.*', 'allowed_extensions': ['.jpg', '.jpeg', '.png'], 'category': 'image-conv', 'color': '#dc2626', 'gradient': 'from-red-500 to-red-700', 'target': 'pdf', 'multi_file': True },
+    'tiff-converter': { 'title': 'TIFF Converter', 'description': 'High-quality TIFF conversion for professional printing.', 'icon': 'file-image', 'accept': '.*', 'allowed_extensions': ['.jpg', '.jpeg', '.png'], 'category': 'image-conv', 'color': '#0d9488', 'gradient': 'from-teal-500 to-teal-700', 'target': 'tiff', 'multi_file': True },
+    'webp-converter': { 'title': 'WEBP Converter', 'description': 'Optimize your images for the web with WEBP format.', 'icon': 'file-image', 'accept': '.*', 'allowed_extensions': ['.jpg', '.jpeg', '.png'], 'category': 'image-conv', 'color': '#0ea5e9', 'gradient': 'from-sky-500 to-sky-700', 'target': 'webp', 'multi_file': True },
+    'dng-converter': { 'title': 'DNG Converter', 'description': 'DNG Digital Negative conversion placeholder.', 'icon': 'file-image', 'accept': '.*', 'allowed_extensions': ['.jpg', '.jpeg', '.png'], 'category': 'image-conv', 'color': '#111827', 'gradient': 'from-gray-700 to-black', 'target': 'tiff', 'multi_file': True },
 }
 
 def tool_page(request, tool_slug):
@@ -214,12 +216,14 @@ def process_tool(request, tool_slug):
         if not files: return JsonResponse({'error': 'No files uploaded'}, status=400)
         input_paths = [save_uploaded_file(f) for f in files]
         original_name = files[0].name
+        original_names = [f.name for f in files]
     else:
         uploaded_file = request.FILES.get('file')
         if not uploaded_file: return JsonResponse({'error': 'No file uploaded'}, status=400)
         input_path = save_uploaded_file(uploaded_file)
         input_paths = [input_path]
         original_name = uploaded_file.name
+        original_names = [uploaded_file.name]
 
     try:
         output_path = None
@@ -260,9 +264,18 @@ def process_tool(request, tool_slug):
             output_path = change_gif_speed(input_paths[0], original_name, speed_factor=factor)
         
         # --- Converters ---
-        elif tool_slug.endswith('-converter'):
+        elif tool_slug.endswith('-converter') or tool_slug == 'image-converter':
             target = request.POST.get('target_format') or IMAGE_TOOLS[tool_slug].get('target', 'jpg')
-            output_path = convert_image(input_paths[0], original_name, target)
+            converted_paths = []
+            for i, p in enumerate(input_paths):
+                converted_paths.append(convert_image(p, original_names[i], target))
+            
+            if len(converted_paths) > 1:
+                output_path = create_zip_archive(converted_paths, zip_name='converted_images.zip')
+                # Add individual converted images to input_paths so they get deleted in the finally block
+                input_paths.extend(converted_paths)
+            elif len(converted_paths) == 1:
+                output_path = converted_paths[0]
         
         if output_path and os.path.exists(output_path):
             return create_cleanup_response(output_path)
