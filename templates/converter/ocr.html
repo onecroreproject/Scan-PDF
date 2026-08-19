@@ -226,11 +226,27 @@
             });
 
             if (!response.ok) {
-                const data = await response.json();
-                throw new Error(data.error || 'Extraction failed');
+                let errorMsg = `Server error: ${response.status} ${response.statusText}`;
+                try {
+                    const data = await response.json();
+                    if (data.error) errorMsg = data.error;
+                } catch (e) {
+                    // Response is not JSON (e.g. Nginx 413 or 502 HTML page)
+                    if (response.status === 413) {
+                        errorMsg = "File is too large for the server to process.";
+                    } else if (response.status >= 500) {
+                        errorMsg = "Server error (500+). The server might have run out of memory or timed out.";
+                    }
+                }
+                throw new Error(errorMsg);
             }
 
-            const data = await response.json();
+            let data;
+            try {
+                data = await response.json();
+            } catch (e) {
+                throw new Error("Server returned an invalid response. Expected JSON but received HTML/text. Check server logs.");
+            }
             
             resultText.value = data.extracted_text;
             

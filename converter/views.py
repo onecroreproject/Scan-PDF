@@ -64,6 +64,7 @@ from .utils import (
     merge_word_files,
 )
 from .utils_video import convert_video_format
+from image_processor.utils import create_zip_archive
 
 _CURRENCY_CACHE = {'base': None, 'rates': None, 'updated_at': 0}
 
@@ -385,6 +386,7 @@ TOOLS = {
         'color': '#2b6cb0',
         'gradient': 'from-blue-500 to-blue-700',
         'category': 'convert',
+        'multi_file': True,
     },
     'jpg-to-png': {
         'title': 'JPG to PNG',
@@ -396,6 +398,7 @@ TOOLS = {
         'color': '#276749',
         'gradient': 'from-green-500 to-emerald-700',
         'category': 'convert',
+        'multi_file': True,
     },
     'html-to-image': {
         'title': 'HTML to Image',
@@ -767,7 +770,9 @@ def convert_page(request, tool_slug):
 @require_POST
 def convert_file(request, tool_slug):
     """Handle file conversion via AJAX request."""
-    tool = TOOLS[tool_slug]
+    tool = TOOLS.get(tool_slug)
+    if not tool:
+        return JsonResponse({'error': f'Invalid tool: {tool_slug}'}, status=404)
 
     # ── Chemical Balance ──
     if tool_slug == 'chemical-balancer':
@@ -850,7 +855,8 @@ def convert_file(request, tool_slug):
             else:
                 # File mode
                 input_path = save_uploaded_file(uploaded_file)
-                output_path = convert_html_to_pdf(input_path, uploaded_file.name)
+                base_url = request.build_absolute_uri('/')
+                output_path = convert_html_to_pdf(input_path, uploaded_file.name, provided_base_url=base_url)
                 try:
                     os.remove(input_path)
                 except OSError:
@@ -879,7 +885,8 @@ def convert_file(request, tool_slug):
             else:
                 # File mode
                 input_path = save_uploaded_file(uploaded_file)
-                output_path = html_to_image(input_path, uploaded_file.name)
+                base_url = request.build_absolute_uri('/')
+                output_path = html_to_image(input_path, uploaded_file.name, base_url=base_url)
                 try:
                     os.remove(input_path)
                 except OSError:
@@ -999,7 +1006,7 @@ def convert_file(request, tool_slug):
 
             return create_cleanup_response(output_path, content_type='application/zip')
         except Exception as e:
-            return JsonResponse({'error': f'Split failed: {str(e)}'}, status=500)
+            return JsonResponse({'error': f'Split PDF failed: {str(e)}'}, status=500)
 
     # ── Remove Pages ──
     if tool_slug == 'remove-pages':
@@ -1671,35 +1678,45 @@ def convert_file(request, tool_slug):
             return JsonResponse({'error': f'Video conversion failed: {str(e)}'}, status=500)
 
     # ── Default Fallback for other tools ──
-    # ── Standard single-file conversion ──
-    if 'file' not in request.FILES:
+    # ── Standard single-file conversion and generic multi-file ──
+    if tool.get('multi_file'):
+        files = request.FILES.getlist('files')
+    else:
+        files = [request.FILES.get('file')] if 'file' in request.FILES else []
+    
+    if not files or not files[0]:
         return JsonResponse({'error': 'No file was uploaded. Please select a file.'}, status=400)
 
-    uploaded_file = request.FILES['file']
-
-    file_ext = os.path.splitext(uploaded_file.name)[1].lower()
-    if file_ext not in tool['allowed_extensions']:
-        allowed = ', '.join(tool['allowed_extensions'])
-        return JsonResponse({
-            'error': f'Invalid file type "{file_ext}". Allowed types: {allowed}'
-        }, status=400)
-
-
-
     try:
-        input_path = save_uploaded_file(uploaded_file)
-        output_path = tool['converter'](input_path, uploaded_file.name)
+        converted_paths = []
+        original_names = []
+        for uploaded_file in files:
+            file_ext = os.path.splitext(uploaded_file.name)[1].lower()
+            if file_ext not in tool['allowed_extensions'] and tool['allowed_extensions']:
+                allowed = ', '.join(tool['allowed_extensions'])
+                return JsonResponse({'error': f'Invalid file type "{file_ext}". Allowed types: {allowed}'}, status=400)
 
-        try:
-            os.remove(input_path)
-        except OSError:
-            pass
-
-        content_type, _ = mimetypes.guess_type(output_path)
-        if content_type is None:
-            content_type = 'application/octet-stream'
-
-        return create_cleanup_response(output_path, content_type=content_type, filename=uploaded_file.name)
+            input_path = save_uploaded_file(uploaded_file)
+            output_path = tool['converter'](input_path, uploaded_file.name)
+            converted_paths.append(output_path)
+            original_names.append(uploaded_file.name)
+            try:
+                os.remove(input_path)
+            except OSError:
+                pass
+        
+        if len(converted_paths) > 1:
+            output_path = create_zip_archive(converted_paths, zip_name='converted_files.zip')
+            for p in converted_paths:
+                try: os.remove(p)
+                except: pass
+            return create_cleanup_response(output_path, content_type='application/zip', filename='converted_files.zip')
+        else:
+            output_path = converted_paths[0]
+            content_type, _ = mimetypes.guess_type(output_path)
+            if content_type is None:
+                content_type = 'application/octet-stream'
+            return create_cleanup_response(output_path, content_type=content_type, filename=original_names[0])
 
     except Exception as e:
         return JsonResponse({

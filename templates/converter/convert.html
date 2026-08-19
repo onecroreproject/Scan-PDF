@@ -1,6 +1,58 @@
 {% extends 'converter/tool_base.html' %}
 {% load static %}
 
+{% block tool_head %}
+{% if tool.multi_file %}
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<style>
+    #image-gallery {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+        gap: 1rem;
+        margin-top: 1.5rem;
+    }
+    .gallery-item {
+        position: relative;
+        aspect-ratio: 1;
+        border-radius: 0.75rem;
+        overflow: hidden;
+        border: 2px solid #e2e8f0;
+        cursor: grab;
+        background: #f8fafc;
+        transition: all 0.2s;
+    }
+    .gallery-item:hover {
+        border-color: #8b5cf6;
+        transform: scale(1.02);
+    }
+    .gallery-item img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+    .gallery-item .remove-item {
+        position: absolute;
+        top: 0.25rem;
+        right: 0.25rem;
+        background: rgba(239, 68, 68, 0.9);
+        color: white;
+        border-radius: 9999px;
+        padding: 0.25rem;
+        cursor: pointer;
+        opacity: 0;
+        transition: opacity 0.2s;
+    }
+    .gallery-item:hover .remove-item {
+        opacity: 1;
+    }
+    .sortable-ghost {
+        opacity: 0.4;
+        border-color: #8b5cf6;
+    }
+</style>
+{% endif %}
+{% endblock %}
+
 {% block tool_content %}
 <!-- ═══════════════ UPLOAD CARD ═══════════════ -->
 <div class="rounded-2xl bg-white border border-surface-100 p-4 sm:p-6 shadow-mega">
@@ -27,7 +79,8 @@
 
         <!-- File Selected State -->
         <div id="file-selected" class="hidden">
-            <div class="flex items-center justify-center gap-4">
+            <!-- Single File View -->
+            <div id="single-file-view" class="flex items-center justify-center gap-4">
                 <div class="w-14 h-14 rounded-xl bg-brand-50 border border-brand-100 flex items-center justify-center flex-shrink-0">
                     <i data-lucide="file-check-2" class="w-7 h-7 text-brand-600"></i>
                 </div>
@@ -35,14 +88,26 @@
                     <p id="file-name" class="text-surface-800 font-bold text-base truncate"></p>
                     <p id="file-size" class="text-xs text-surface-400 mt-0.5"></p>
                 </div>
-                <button id="remove-file-btn" class="p-2.5 rounded-xl hover:bg-red-50 text-surface-300 hover:text-red-500 transition-all flex-shrink-0" title="Remove file">
+                <button id="remove-file-btn" type="button" class="p-2.5 rounded-xl hover:bg-red-50 text-surface-300 hover:text-red-500 transition-all flex-shrink-0" title="Remove file">
                     <i data-lucide="x" class="w-5 h-5"></i>
                 </button>
+            </div>
+
+            <!-- Multiple Files Gallery View -->
+            <div id="multi-file-view" class="hidden text-left">
+                <div class="flex items-center justify-between mb-4 mt-2">
+                    <h3 class="text-sm font-bold text-surface-900 uppercase tracking-wider">Arrange Files</h3>
+                    <button id="add-more-btn" type="button" class="text-xs font-bold text-brand-600 hover:text-brand-700 flex items-center gap-1">
+                        <i data-lucide="plus-circle" class="w-4 h-4"></i> Add More
+                    </button>
+                </div>
+                <div id="image-gallery"></div>
+                <p class="text-[10px] text-surface-400 mt-4 italic">Drag items to rearrange the sequence</p>
             </div>
         </div>
 
         <!-- Hidden file input -->
-        <input type="file" id="file-input" class="hidden" accept="{{ tool.accept }}">
+        <input type="file" id="file-input" class="hidden" accept="{{ tool.accept }}" {% if tool.multi_file %}multiple{% endif %}>
     </div>
 
     <!-- Image format selector (only for PDF to Image) -->
@@ -144,13 +209,25 @@
     const errorMessage = document.getElementById('error-message');
     const downloadBtn = document.getElementById('download-btn');
     const convertAnotherBtn = document.getElementById('convert-another-btn');
+    const singleFileView = document.getElementById('single-file-view');
+    const multiFileView = document.getElementById('multi-file-view');
+    const imageGallery = document.getElementById('image-gallery');
+    const addMoreBtn = document.getElementById('add-more-btn');
 
-    let selectedFile = null;
+    let selectedFiles = [];
+    let sortable = null;
 
     dropZone.addEventListener('click', (e) => {
-        if (e.target.closest('#remove-file-btn')) return;
+        if (e.target.closest('#remove-file-btn') || e.target.closest('#add-more-btn')) return;
         fileInput.click();
     });
+
+    if (addMoreBtn) {
+        addMoreBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            fileInput.click();
+        });
+    }
 
     dropZone.addEventListener('dragover', (e) => {
         e.preventDefault();
@@ -165,36 +242,108 @@
     dropZone.addEventListener('drop', (e) => {
         e.preventDefault();
         dropZone.classList.remove('border-brand-400', 'bg-brand-50/40');
-        if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+        if (e.dataTransfer.files.length) {
+            if (fileInput.hasAttribute('multiple')) {
+                handleFiles(e.dataTransfer.files);
+            } else {
+                handleFiles([e.dataTransfer.files[0]]);
+            }
+        }
     });
 
     fileInput.addEventListener('change', (e) => {
-        if (e.target.files.length) handleFile(e.target.files[0]);
+        if (e.target.files.length) handleFiles(e.target.files);
     });
 
-    function handleFile(file) {
+    function handleFiles(files) {
+        let validFiles = [];
         const accept = dropZone.dataset.accept.split(',').map(s => s.trim().toLowerCase());
-        const ext = '.' + file.name.split('.').pop().toLowerCase();
 
-        if (!accept.includes(ext)) {
-            showError(`Invalid file type. Accepted: ${accept.join(', ')}`);
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i];
+            const ext = '.' + file.name.split('.').pop().toLowerCase();
+            
+            if (accept.includes(ext) || accept.includes('.*')) {
+                if (file.size <= 52428800) {
+                    validFiles.push(file);
+                }
+            }
+        }
+        
+        if (validFiles.length === 0) {
+            showError(`No valid files selected or files exceed 50MB limit.`);
             return;
         }
 
-        if (file.size > 52428800) {
-            showError('File exceeds 50MB limit.');
-            return;
+        if (fileInput.hasAttribute('multiple')) {
+            selectedFiles = [...selectedFiles, ...validFiles];
+            renderGallery();
+        } else {
+            selectedFiles = [validFiles[0]];
+            renderSingleFile(selectedFiles[0]);
         }
-
-        selectedFile = file;
-        fileName.textContent = file.name;
-        fileSize.textContent = formatFileSize(file.size);
+        
         uploadDefault.classList.add('hidden');
         fileSelected.classList.remove('hidden');
         convertBtn.disabled = false;
         errorSection.classList.add('hidden');
         lucide.createIcons();
     }
+
+    function renderSingleFile(file) {
+        singleFileView.classList.remove('hidden');
+        if (multiFileView) multiFileView.classList.add('hidden');
+        fileName.textContent = file.name;
+        fileSize.textContent = formatFileSize(file.size);
+    }
+
+    function renderGallery() {
+        singleFileView.classList.add('hidden');
+        if (multiFileView) multiFileView.classList.remove('hidden');
+        if (imageGallery) imageGallery.innerHTML = '';
+
+        selectedFiles.forEach((file, index) => {
+            const reader = new FileReader();
+            const item = document.createElement('div');
+            item.className = 'gallery-item';
+            item.dataset.index = index;
+            item.innerHTML = `
+                <img src="" alt="preview">
+                <div class="remove-item" onclick="removeGalleryItem(${index})">
+                    <i data-lucide="x" class="w-3 h-3"></i>
+                </div>
+            `;
+            imageGallery.appendChild(item);
+
+            reader.onload = (e) => {
+                item.querySelector('img').src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+
+        if (!sortable && typeof Sortable !== 'undefined' && imageGallery) {
+            sortable = new Sortable(imageGallery, {
+                animation: 150,
+                ghostClass: 'sortable-ghost',
+                onEnd: () => {
+                    const newOrder = Array.from(imageGallery.children).map(el => parseInt(el.dataset.index));
+                    const reorderedFiles = newOrder.map(idx => selectedFiles[idx]);
+                    selectedFiles = reorderedFiles;
+                    renderGallery();
+                }
+            });
+        }
+        lucide.createIcons();
+    }
+
+    window.removeGalleryItem = function(index) {
+        selectedFiles.splice(index, 1);
+        if (selectedFiles.length === 0) {
+            resetUpload();
+        } else {
+            renderGallery();
+        }
+    };
 
     function formatFileSize(bytes) {
         if (bytes === 0) return '0 Bytes';
@@ -210,7 +359,7 @@
     });
 
     function resetUpload() {
-        selectedFile = null;
+        selectedFiles = [];
         fileInput.value = '';
         uploadDefault.classList.remove('hidden');
         fileSelected.classList.add('hidden');
@@ -219,13 +368,17 @@
         successSection.classList.add('hidden');
         errorSection.classList.add('hidden');
         convertBtn.classList.remove('hidden');
+        if (sortable) {
+            sortable.destroy();
+            sortable = null;
+        }
         lucide.createIcons();
     }
 
     convertAnotherBtn.addEventListener('click', () => resetUpload());
 
     convertBtn.addEventListener('click', async () => {
-        if (!selectedFile) return;
+        if (selectedFiles.length === 0) return;
 
         convertBtn.classList.add('hidden');
         progressSection.classList.remove('hidden');
@@ -233,7 +386,8 @@
         errorSection.classList.add('hidden');
 
         const formData = new FormData();
-        formData.append('file', selectedFile);
+        selectedFiles.forEach(f => formData.append('files', f));
+        if (selectedFiles.length > 0) formData.append('file', selectedFiles[0]);
         formData.append('csrfmiddlewaretoken', CSRF_TOKEN);
 
         if (TOOL_SLUG === 'pdf-to-image') {
