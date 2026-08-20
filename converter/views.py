@@ -1726,25 +1726,71 @@ def convert_file(request, tool_slug):
 # ─── Speed Test Endpoints ─────────────────────────────────────
 @csrf_exempt
 def get_client_info(request):
-    """Retrieve client and server information for the speed test."""
-    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
-    ip = x_forwarded_for.split(',')[0] if x_forwarded_for else request.META.get('REMOTE_ADDR')
+    """Retrieve client and server information for the speed test via backend to avoid CORS/Adblock."""
+    import requests
     
-    # Generic fallback if no external API reach
+    ip = request.GET.get('ip')
+    if not ip or ip == '127.0.0.1' or ip.startswith('192.168.') or ip.startswith('10.'):
+        x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+        ip = x_forwarded_for.split(',')[0] if x_forwarded_for else request.META.get('REMOTE_ADDR')
+
     client_data = {
         'ip': ip,
-        'city': 'Detected',
-        'country_code': 'Network',
-        'org': 'Standard ISP'
+        'city': None,
+        'region': None,
+        'country_name': None,
+        'country_code': None,
+        'timezone': None,
+        'latitude': None,
+        'longitude': None,
+        'ip_type': None,
+        'org': None,
+        'asn': None
     }
     
-    # Attempt to get real metadata from ipapi securely on server-side (no CORS)
+    # Exclude localhost from geo lookup to save API calls
+    if ip == '127.0.0.1' or ip.startswith('192.168.') or ip.startswith('10.') or ip.startswith('172.16.'):
+        return JsonResponse(client_data)
+
+    # Primary Backend Geo Lookup: ipwho.is
     try:
-        import requests
+        resp = requests.get(f"https://ipwho.is/{ip}", timeout=3)
+        if resp.status_code == 200:
+            data = resp.json()
+            if data.get("success"):
+                client_data['city'] = data.get('city')
+                client_data['region'] = data.get('region')
+                client_data['country_name'] = data.get('country')
+                client_data['country_code'] = data.get('country_code')
+                client_data['latitude'] = data.get('latitude')
+                client_data['longitude'] = data.get('longitude')
+                client_data['ip_type'] = data.get('type')
+                tz = data.get('timezone', {})
+                client_data['timezone'] = tz.get('id') if isinstance(tz, dict) else None
+                conn = data.get('connection', {})
+                client_data['org'] = conn.get('isp') or conn.get('org')
+                client_data['asn'] = conn.get('asn')
+                return JsonResponse(client_data)
+    except Exception:
+        pass
+        
+    # Fallback Backend Geo Lookup: ipapi.co
+    try:
         resp = requests.get(f"https://ipapi.co/{ip}/json/", timeout=3)
         if resp.status_code == 200:
-            client_data = resp.json()
-    except:
+            data = resp.json()
+            if not data.get("error"):
+                client_data['city'] = data.get('city')
+                client_data['region'] = data.get('region')
+                client_data['country_name'] = data.get('country_name')
+                client_data['country_code'] = data.get('country_code')
+                client_data['latitude'] = data.get('latitude')
+                client_data['longitude'] = data.get('longitude')
+                client_data['ip_type'] = data.get('version')
+                client_data['timezone'] = data.get('timezone')
+                client_data['org'] = data.get('org')
+                client_data['asn'] = data.get('asn')
+    except Exception:
         pass
         
     return JsonResponse(client_data)

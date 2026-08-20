@@ -58,6 +58,236 @@
             </div>
         </div>
     </div>
+    <!-- ═══════════════ REACTION TYPES SECTION ═══════════════ -->
+    <div class="mt-8 sm:mt-12">
+        <div class="text-center mb-6">
+            <h3 class="text-xl sm:text-2xl font-black text-surface-900 tracking-tight">Chemical Equation Types</h3>
+            <p class="text-sm text-surface-500 mt-1">Explore common chemical reactions and balance them instantly.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <!-- Card 1 -->
+            <div class="rounded-2xl bg-white border border-surface-100 p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col h-full">
+                <div class="flex items-center gap-3 mb-3">
+                    <div class="w-8 h-8 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center font-black text-sm">1</div>
+                    <h4 class="font-black text-surface-800 text-base">Combination / Synthesis</h4>
+                </div>
+                <p class="text-xs text-surface-500 mb-4 flex-grow">Two or more substances combine to form one product.</p>
+                <div class="space-y-2 mb-4 p-3 rounded-xl bg-surface-50 border border-surface-100 font-mono text-sm">
+                    <div>
+                        <span class="text-[10px] uppercase font-bold text-surface-400 block mb-0.5 tracking-wider">Unbalanced</span>
+                        <span class="text-surface-700 font-bold">H2 + O2 = H2O</span>
+                    </div>
+                    <div>
+                        <span class="text-[10px] uppercase font-bold text-surface-400 block mb-0.5 tracking-wider">Balanced</span>
+                        <span class="text-brand-600 font-bold">2H2 + O2 = 2H2O</span>
+                    </div>
+                </div>
+                <button type="button" onclick="loadExample('H2 + O2 = H2O')"
+                    class="w-full py-2.5 rounded-xl border-2 border-surface-200 text-surface-600 font-bold text-xs uppercase tracking-widest hover:border-brand-300 hover:text-brand-600 hover:bg-brand-50 transition-all flex items-center justify-center gap-2">
+                    <i data-lucide="arrow-up-circle" class="w-4 h-4"></i> Try Example
+                </button>
+            </div>
+            <!-- Card 2 -->
+            <div class="rounded-2xl bg-white border border-surface-100 p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col h-full">
+                <div class="flex items-center gap-3 mb-3">
+                    <div class="w-8 h-8 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center font-black text-sm">2</div>
+                    <h4 class="font-black text-surface-800 text-base">Decomposition</h4>
+                </div>
+                <p class="text-xs text-surface-500 mb-4 flex-grow">One compound breaks down into two or more simpler substances.</p>
+                <div class="space-y-2 mb-4 p-3 rounded-xl bg-surface-50 border border-surface-100 font-mono text-sm">
+                    <div>
+                        <span class="text-[10px] uppercase font-bold text-surface-400 block mb-0.5 tracking-wider">Unbalanced</span>
+                        <span class="text-surface-700 font-bold">H2O = H2 + O2</span>
+                    </div>
+                    <div>
+                        <span class="text-[10px] uppercase font-bold text-surface-400 block mb-0.5 tracking-wider">Balanced</span>
+                        <span class="text-brand-600 font-bold">2H2O = 2H2 + O2</span>
+                    </div>
+                </div>
+                <button type="button" onclick="loadExample('H2O = H2 + O2')"
+                    class="w-full py-2.5 rounded-xl border-2 border-surface-200 text-surface-600 font-bold text-xs uppercase tracking-widest hover:border-brand-300 hover:text-brand-600 hover:bg-brand-50 transition-all flex items-center justify-center gap-2">
+                    <i data-lucide="arrow-up-circle" class="w-4 h-4"></i> Try Example
+                </button>
+            </div>
+            <!-- Card 3 -->
+            <div class="rounded-2xl bg-white border border-surface-100 p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col h-full">
+                <div class="flex items-center gap-3 mb-3">
+                    <div class="w-8 h-8 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center font-black text-sm">3</div>
+                    <h4 class="font-black text-surface-800 text-base">Single Displacement</h4>
+                </div>
+                <p class="text-xs text-surface-500 mb-4 flex-grow">One element replaces another element in a compound.</p>
+                <div class="space-y-2 mb-4 p-3 rounded-xl bg-surface-50 border border-surface-100 font-mono text-sm">
+                    <div>
+                        <span class="text-[10px] uppercase font-bold text-surface-400 block mb-0.5 tracking-wider">Unbalanced</span>
+                        <span class="text-surface-700 font-bold">Zn + HCl = ZnCl2 + H2</span>
+                    </div>
+                    <div>
+                        <span class="text-[10px] uppercase font-bold text-surface-400 block mb-0.5 tracking-wider">Balanced</span>
+                        <span class="text-brand-600 font-bold">Zn + 2HCl = ZnCl2 + H2</span>
+                    </div>
+                </div>
+                <button type="button" onclick="loadExample('Zn + HCl = ZnCl2 + H2')"
+                    class="w-full py-2.5 rounded-xl border-2 border-surface-200 text-surface-600 font-bold text-xs uppercase tracking-widest hover:border-brand-300 hover:text-brand-600 hover:bg-brand-50 transition-all flex items-center justify-center gap-2">
+                    <i data-lucide="arrow-up-circle" class="w-4 h-4"></i> Try Example
+                </button>
+            </div>
+            <!-- Card 4 -->
+            <div class="rounded-2xl bg-white border border-surface-100 p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col h-full">
+                <div class="flex items-center gap-3 mb-3">
+                    <div class="w-8 h-8 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center font-black text-sm">4</div>
+                    <h4 class="font-black text-surface-800 text-base">Double Displacement</h4>
+                </div>
+                <p class="text-xs text-surface-500 mb-4 flex-grow">Parts of two compounds swap places to form two new compounds.</p>
+                <div class="space-y-2 mb-4 p-3 rounded-xl bg-surface-50 border border-surface-100 font-mono text-sm">
+                    <div>
+                        <span class="text-[10px] uppercase font-bold text-surface-400 block mb-0.5 tracking-wider">Unbalanced</span>
+                        <span class="text-surface-700 font-bold">AgNO3 + NaCl = AgCl + NaNO3</span>
+                    </div>
+                    <div>
+                        <span class="text-[10px] uppercase font-bold text-surface-400 block mb-0.5 tracking-wider">Balanced</span>
+                        <span class="text-brand-600 font-bold">AgNO3 + NaCl = AgCl + NaNO3</span>
+                    </div>
+                </div>
+                <button type="button" onclick="loadExample('AgNO3 + NaCl = AgCl + NaNO3')"
+                    class="w-full py-2.5 rounded-xl border-2 border-surface-200 text-surface-600 font-bold text-xs uppercase tracking-widest hover:border-brand-300 hover:text-brand-600 hover:bg-brand-50 transition-all flex items-center justify-center gap-2">
+                    <i data-lucide="arrow-up-circle" class="w-4 h-4"></i> Try Example
+                </button>
+            </div>
+            <!-- Card 5 -->
+            <div class="rounded-2xl bg-white border border-surface-100 p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col h-full">
+                <div class="flex items-center gap-3 mb-3">
+                    <div class="w-8 h-8 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center font-black text-sm">5</div>
+                    <h4 class="font-black text-surface-800 text-base">Combustion</h4>
+                </div>
+                <p class="text-xs text-surface-500 mb-4 flex-grow">A substance reacts with oxygen, releasing energy (often forming CO2 and H2O).</p>
+                <div class="space-y-2 mb-4 p-3 rounded-xl bg-surface-50 border border-surface-100 font-mono text-sm">
+                    <div>
+                        <span class="text-[10px] uppercase font-bold text-surface-400 block mb-0.5 tracking-wider">Unbalanced</span>
+                        <span class="text-surface-700 font-bold">CH4 + O2 = CO2 + H2O</span>
+                    </div>
+                    <div>
+                        <span class="text-[10px] uppercase font-bold text-surface-400 block mb-0.5 tracking-wider">Balanced</span>
+                        <span class="text-brand-600 font-bold">CH4 + 2O2 = CO2 + 2H2O</span>
+                    </div>
+                </div>
+                <button type="button" onclick="loadExample('CH4 + O2 = CO2 + H2O')"
+                    class="w-full py-2.5 rounded-xl border-2 border-surface-200 text-surface-600 font-bold text-xs uppercase tracking-widest hover:border-brand-300 hover:text-brand-600 hover:bg-brand-50 transition-all flex items-center justify-center gap-2">
+                    <i data-lucide="arrow-up-circle" class="w-4 h-4"></i> Try Example
+                </button>
+            </div>
+            <!-- Card 6 -->
+            <div class="rounded-2xl bg-white border border-surface-100 p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col h-full">
+                <div class="flex items-center gap-3 mb-3">
+                    <div class="w-8 h-8 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center font-black text-sm">6</div>
+                    <h4 class="font-black text-surface-800 text-base">Acid + Base / Neutralization</h4>
+                </div>
+                <p class="text-xs text-surface-500 mb-4 flex-grow">An acid and a base react to form salt and water.</p>
+                <div class="space-y-2 mb-4 p-3 rounded-xl bg-surface-50 border border-surface-100 font-mono text-sm">
+                    <div>
+                        <span class="text-[10px] uppercase font-bold text-surface-400 block mb-0.5 tracking-wider">Unbalanced</span>
+                        <span class="text-surface-700 font-bold">H2SO4 + NaOH = Na2SO4 + H2O</span>
+                    </div>
+                    <div>
+                        <span class="text-[10px] uppercase font-bold text-surface-400 block mb-0.5 tracking-wider">Balanced</span>
+                        <span class="text-brand-600 font-bold">H2SO4 + 2NaOH = Na2SO4 + 2H2O</span>
+                    </div>
+                </div>
+                <button type="button" onclick="loadExample('H2SO4 + NaOH = Na2SO4 + H2O')"
+                    class="w-full py-2.5 rounded-xl border-2 border-surface-200 text-surface-600 font-bold text-xs uppercase tracking-widest hover:border-brand-300 hover:text-brand-600 hover:bg-brand-50 transition-all flex items-center justify-center gap-2">
+                    <i data-lucide="arrow-up-circle" class="w-4 h-4"></i> Try Example
+                </button>
+            </div>
+            <!-- Card 7 -->
+            <div class="rounded-2xl bg-white border border-surface-100 p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col h-full">
+                <div class="flex items-center gap-3 mb-3">
+                    <div class="w-8 h-8 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center font-black text-sm">7</div>
+                    <h4 class="font-black text-surface-800 text-base">Redox</h4>
+                </div>
+                <p class="text-xs text-surface-500 mb-4 flex-grow">A reaction involving the transfer of electrons (oxidation and reduction).</p>
+                <div class="space-y-2 mb-4 p-3 rounded-xl bg-surface-50 border border-surface-100 font-mono text-sm">
+                    <div>
+                        <span class="text-[10px] uppercase font-bold text-surface-400 block mb-0.5 tracking-wider">Unbalanced</span>
+                        <span class="text-surface-700 font-bold">Fe + O2 = Fe2O3</span>
+                    </div>
+                    <div>
+                        <span class="text-[10px] uppercase font-bold text-surface-400 block mb-0.5 tracking-wider">Balanced</span>
+                        <span class="text-brand-600 font-bold">4Fe + 3O2 = 2Fe2O3</span>
+                    </div>
+                </div>
+                <button type="button" onclick="loadExample('Fe + O2 = Fe2O3')"
+                    class="w-full py-2.5 rounded-xl border-2 border-surface-200 text-surface-600 font-bold text-xs uppercase tracking-widest hover:border-brand-300 hover:text-brand-600 hover:bg-brand-50 transition-all flex items-center justify-center gap-2">
+                    <i data-lucide="arrow-up-circle" class="w-4 h-4"></i> Try Example
+                </button>
+            </div>
+            <!-- Card 8 -->
+            <div class="rounded-2xl bg-white border border-surface-100 p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col h-full">
+                <div class="flex items-center gap-3 mb-3">
+                    <div class="w-8 h-8 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center font-black text-sm">8</div>
+                    <h4 class="font-black text-surface-800 text-base">Metal + Acid</h4>
+                </div>
+                <p class="text-xs text-surface-500 mb-4 flex-grow">A metal reacts with an acid to produce a salt and hydrogen gas.</p>
+                <div class="space-y-2 mb-4 p-3 rounded-xl bg-surface-50 border border-surface-100 font-mono text-sm">
+                    <div>
+                        <span class="text-[10px] uppercase font-bold text-surface-400 block mb-0.5 tracking-wider">Unbalanced</span>
+                        <span class="text-surface-700 font-bold">Mg + HCl = MgCl2 + H2</span>
+                    </div>
+                    <div>
+                        <span class="text-[10px] uppercase font-bold text-surface-400 block mb-0.5 tracking-wider">Balanced</span>
+                        <span class="text-brand-600 font-bold">Mg + 2HCl = MgCl2 + H2</span>
+                    </div>
+                </div>
+                <button type="button" onclick="loadExample('Mg + HCl = MgCl2 + H2')"
+                    class="w-full py-2.5 rounded-xl border-2 border-surface-200 text-surface-600 font-bold text-xs uppercase tracking-widest hover:border-brand-300 hover:text-brand-600 hover:bg-brand-50 transition-all flex items-center justify-center gap-2">
+                    <i data-lucide="arrow-up-circle" class="w-4 h-4"></i> Try Example
+                </button>
+            </div>
+            <!-- Card 9 -->
+            <div class="rounded-2xl bg-white border border-surface-100 p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col h-full">
+                <div class="flex items-center gap-3 mb-3">
+                    <div class="w-8 h-8 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center font-black text-sm">9</div>
+                    <h4 class="font-black text-surface-800 text-base">Metal + Water</h4>
+                </div>
+                <p class="text-xs text-surface-500 mb-4 flex-grow">A metal reacts with water to produce a metal hydroxide and hydrogen gas.</p>
+                <div class="space-y-2 mb-4 p-3 rounded-xl bg-surface-50 border border-surface-100 font-mono text-sm">
+                    <div>
+                        <span class="text-[10px] uppercase font-bold text-surface-400 block mb-0.5 tracking-wider">Unbalanced</span>
+                        <span class="text-surface-700 font-bold">Na + H2O = NaOH + H2</span>
+                    </div>
+                    <div>
+                        <span class="text-[10px] uppercase font-bold text-surface-400 block mb-0.5 tracking-wider">Balanced</span>
+                        <span class="text-brand-600 font-bold">2Na + 2H2O = 2NaOH + H2</span>
+                    </div>
+                </div>
+                <button type="button" onclick="loadExample('Na + H2O = NaOH + H2')"
+                    class="w-full py-2.5 rounded-xl border-2 border-surface-200 text-surface-600 font-bold text-xs uppercase tracking-widest hover:border-brand-300 hover:text-brand-600 hover:bg-brand-50 transition-all flex items-center justify-center gap-2">
+                    <i data-lucide="arrow-up-circle" class="w-4 h-4"></i> Try Example
+                </button>
+            </div>
+            <!-- Card 10 -->
+            <div class="rounded-2xl bg-white border border-surface-100 p-5 shadow-sm hover:shadow-md transition-shadow flex flex-col h-full">
+                <div class="flex items-center gap-3 mb-3">
+                    <div class="w-8 h-8 rounded-lg bg-brand-50 text-brand-600 flex items-center justify-center font-black text-sm">10</div>
+                    <h4 class="font-black text-surface-800 text-base">Precipitation</h4>
+                </div>
+                <p class="text-xs text-surface-500 mb-4 flex-grow">Two soluble salts react to form an insoluble solid (precipitate).</p>
+                <div class="space-y-2 mb-4 p-3 rounded-xl bg-surface-50 border border-surface-100 font-mono text-sm">
+                    <div>
+                        <span class="text-[10px] uppercase font-bold text-surface-400 block mb-0.5 tracking-wider">Unbalanced</span>
+                        <span class="text-surface-700 font-bold">BaCl2 + Na2SO4 = BaSO4 + NaCl</span>
+                    </div>
+                    <div>
+                        <span class="text-[10px] uppercase font-bold text-surface-400 block mb-0.5 tracking-wider">Balanced</span>
+                        <span class="text-brand-600 font-bold">BaCl2 + Na2SO4 = BaSO4 + 2NaCl</span>
+                    </div>
+                </div>
+                <button type="button" onclick="loadExample('BaCl2 + Na2SO4 = BaSO4 + NaCl')"
+                    class="w-full py-2.5 rounded-xl border-2 border-surface-200 text-surface-600 font-bold text-xs uppercase tracking-widest hover:border-brand-300 hover:text-brand-600 hover:bg-brand-50 transition-all flex items-center justify-center gap-2">
+                    <i data-lucide="arrow-up-circle" class="w-4 h-4"></i> Try Example
+                </button>
+            </div>
+        </div>
+    </div>
 </div>
 {% endblock %}
 
@@ -73,6 +303,11 @@
     const error = document.getElementById('error-section');
     const errorMsg = document.getElementById('error-message');
     const copyBtn = document.getElementById('copy-btn');
+
+    window.loadExample = function(unbalancedEq) {
+        input.value = unbalancedEq;
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
 
     input.addEventListener('keypress', (e) => {
         if (e.key === 'Enter') btn.click();
