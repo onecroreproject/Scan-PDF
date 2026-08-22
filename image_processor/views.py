@@ -16,7 +16,7 @@ from .utils import (
     compress_image,
     resize_image,
     rotate_image,
-    watermark_image,
+    apply_watermark,
     crop_image,
     merge_images,
     change_gif_speed,
@@ -158,8 +158,8 @@ IMAGE_TOOLS = {
         'title': 'Watermark Image',
         'description': 'Protect your brand by adding custom text watermarks to your photos.',
         'icon': 'stamp',
-        'accept': '.jpg,.jpeg,.png',
-        'allowed_extensions': ['.jpg', '.jpeg', '.png'],
+        'accept': '.jpg,.jpeg,.png,.webp,.pdf',
+        'allowed_extensions': ['.jpg', '.jpeg', '.png', '.webp', '.pdf'],
         'category': 'image-pro',
         'color': '#0891b2',
         'gradient': 'from-cyan-500 to-cyan-700',
@@ -251,8 +251,28 @@ def process_tool(request, tool_slug):
             angle = request.POST.get('angle', 90)
             output_path = rotate_image(input_paths[0], original_name, angle=angle)
         elif tool_slug == 'watermark-image':
-            text = request.POST.get('text', 'ScanPDF')
-            output_path = watermark_image(input_paths[0], original_name, text=text)
+            kwargs = {
+                'watermark_type': request.POST.get('watermark_type', 'text'),
+                'text': request.POST.get('text', 'CONFIDENTIAL'),
+                'font_size': int(request.POST.get('font_size', 48)),
+                'font_family': request.POST.get('font_family', 'Arial'),
+                'color': request.POST.get('color', '#000000'),
+                'opacity': int(request.POST.get('opacity', 30)),
+                'rotation': int(request.POST.get('rotation', 0)),
+                'position': request.POST.get('position', 'center'),
+                'bold': request.POST.get('bold') == 'true',
+                'italic': request.POST.get('italic') == 'true',
+                'tile': request.POST.get('tile') == 'true',
+                'logo_width': int(request.POST.get('logo_width', 200)),
+            }
+            logo_file = request.FILES.get('watermark_logo')
+            logo_path = None
+            if logo_file:
+                logo_path = save_uploaded_file(logo_file)
+                input_paths.append(logo_path)  # Ensures cleanup
+            kwargs['logo_path'] = logo_path
+            
+            output_path = apply_watermark(input_paths[0], original_name, **kwargs)
         elif tool_slug == 'cut-image':
             l, t, r, b = request.POST.get('left'), request.POST.get('top'), request.POST.get('right'), request.POST.get('bottom')
             output_path = crop_image(input_paths[0], original_name, l, t, r, b)

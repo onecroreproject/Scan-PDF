@@ -170,11 +170,133 @@
         </div>
         {% endif %}
 
-        <!-- Watermark Text -->
+        <!-- Watermark Tool UI -->
         {% if tool_slug == 'watermark-image' %}
-        <div class="space-y-3">
-            <label class="text-[11px] font-black text-surface-400 uppercase tracking-widest">Watermark Text</label>
-            <input type="text" id="watermark-text" value="ScanPDF" class="w-full px-4 py-3 rounded-xl border border-surface-200 focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 outline-none transition-all font-semibold">
+        <div class="space-y-6">
+            <!-- Tabs -->
+            <div class="flex gap-2 p-1 rounded-xl bg-surface-100/50">
+                <button type="button" id="tab-text" class="flex-1 py-2.5 rounded-lg text-sm font-bold bg-white text-surface-900 shadow-sm transition-all" onclick="switchWatermarkTab('text')">Text Watermark</button>
+                <button type="button" id="tab-image" class="flex-1 py-2.5 rounded-lg text-sm font-semibold text-surface-500 hover:text-surface-700 hover:bg-surface-200/50 transition-all" onclick="switchWatermarkTab('image')">Logo / Image</button>
+            </div>
+            
+            <input type="hidden" id="watermark-type" value="text">
+
+            <!-- Text Settings -->
+            <div id="wm-text-settings" class="space-y-4 block">
+                <div class="space-y-2">
+                    <label class="text-[11px] font-black text-surface-400 uppercase tracking-widest">Text Content</label>
+                    <input type="text" id="watermark-text" value="CONFIDENTIAL" class="w-full px-4 py-3 rounded-xl border border-surface-200 focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 outline-none transition-all font-bold">
+                </div>
+                
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="space-y-2">
+                        <label class="text-[11px] font-black text-surface-400 uppercase tracking-widest">Font Size</label>
+                        <select id="watermark-font-size" class="w-full px-4 py-3 rounded-xl border border-surface-200 focus:border-brand-500 outline-none font-semibold text-surface-700 bg-white">
+                            <option value="12">12px</option>
+                            <option value="18">18px</option>
+                            <option value="24">24px</option>
+                            <option value="32">32px</option>
+                            <option value="48" selected>48px</option>
+                            <option value="64">64px</option>
+                            <option value="96">96px</option>
+                        </select>
+                    </div>
+                    <div class="space-y-2">
+                        <label class="text-[11px] font-black text-surface-400 uppercase tracking-widest">Color</label>
+                        <div class="flex items-center gap-3">
+                            <input type="color" id="watermark-color" value="#000000" class="w-12 h-12 rounded-xl border border-surface-200 cursor-pointer">
+                            <div class="flex gap-2">
+                                <label class="flex items-center gap-1.5 cursor-pointer">
+                                    <input type="checkbox" id="watermark-bold" class="w-4 h-4 rounded border-surface-300 text-brand-600 focus:ring-brand-500">
+                                    <span class="text-xs font-bold text-surface-700">B</span>
+                                </label>
+                                <label class="flex items-center gap-1.5 cursor-pointer">
+                                    <input type="checkbox" id="watermark-italic" class="w-4 h-4 rounded border-surface-300 text-brand-600 focus:ring-brand-500">
+                                    <span class="text-xs font-bold italic text-surface-700">I</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Image Settings -->
+            <div id="wm-image-settings" class="space-y-4 hidden">
+                <div class="space-y-2">
+                    <label class="text-[11px] font-black text-surface-400 uppercase tracking-widest">Upload Logo</label>
+                    <input type="file" id="watermark-logo-input" accept=".png,.jpg,.jpeg,.webp" class="block w-full text-sm text-surface-500 file:mr-4 file:py-2.5 file:px-4 file:rounded-xl file:border-0 file:text-sm file:font-semibold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100 transition-all cursor-pointer">
+                </div>
+                <div class="space-y-2">
+                    <label class="text-[11px] font-black text-surface-400 uppercase tracking-widest">Logo Width (px)</label>
+                    <input type="number" id="watermark-logo-width" value="200" min="10" class="w-full px-4 py-3 rounded-xl border border-surface-200 outline-none font-semibold">
+                </div>
+            </div>
+
+            <hr class="border-surface-100 border-dashed my-4">
+
+            <!-- Common Settings -->
+            <div class="space-y-5">
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center">
+                        <label class="text-[11px] font-black text-surface-400 uppercase tracking-widest">Opacity</label>
+                        <span id="wm-opacity-val" class="text-sm font-bold text-brand-600">30%</span>
+                    </div>
+                    <input type="range" id="watermark-opacity" min="10" max="100" value="30" class="w-full h-2 bg-surface-100 rounded-lg appearance-none cursor-pointer accent-brand-500" oninput="document.getElementById('wm-opacity-val').textContent = this.value + '%'">
+                </div>
+
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center">
+                        <label class="text-[11px] font-black text-surface-400 uppercase tracking-widest">Rotation</label>
+                        <span id="wm-rotation-val" class="text-sm font-bold text-brand-600">0°</span>
+                    </div>
+                    <input type="range" id="watermark-rotation" min="-90" max="90" step="15" value="0" class="w-full h-2 bg-surface-100 rounded-lg appearance-none cursor-pointer accent-brand-500" oninput="document.getElementById('wm-rotation-val').textContent = this.value + '°'">
+                </div>
+
+                <div class="space-y-3">
+                    <label class="text-[11px] font-black text-surface-400 uppercase tracking-widest">Position</label>
+                    <select id="watermark-position" class="w-full px-4 py-3 rounded-xl border border-surface-200 focus:border-brand-500 outline-none font-semibold text-surface-700 bg-white">
+                        <option value="top-left">Top Left</option>
+                        <option value="top-center">Top Center</option>
+                        <option value="top-right">Top Right</option>
+                        <option value="center-left">Center Left</option>
+                        <option value="center" selected>Center</option>
+                        <option value="center-right">Center Right</option>
+                        <option value="bottom-left">Bottom Left</option>
+                        <option value="bottom-center">Bottom Center</option>
+                        <option value="bottom-right">Bottom Right</option>
+                    </select>
+                </div>
+
+                <label class="flex items-center gap-3 p-3 rounded-xl border border-surface-200 cursor-pointer hover:bg-surface-50 transition-all">
+                    <input type="checkbox" id="watermark-tile" class="w-5 h-5 rounded border-surface-300 text-brand-600 focus:ring-brand-500 cursor-pointer">
+                    <div>
+                        <p class="text-sm font-bold text-surface-800">Repeat / Tile</p>
+                        <p class="text-[11px] text-surface-500 font-medium mt-0.5">Repeat watermark across entire page</p>
+                    </div>
+                </label>
+            </div>
+            
+            <script>
+                function switchWatermarkTab(type) {
+                    document.getElementById('watermark-type').value = type;
+                    const tabText = document.getElementById('tab-text');
+                    const tabImage = document.getElementById('tab-image');
+                    const settingsText = document.getElementById('wm-text-settings');
+                    const settingsImage = document.getElementById('wm-image-settings');
+                    
+                    if (type === 'text') {
+                        tabText.className = "flex-1 py-2.5 rounded-lg text-sm font-bold bg-white text-surface-900 shadow-sm transition-all";
+                        tabImage.className = "flex-1 py-2.5 rounded-lg text-sm font-semibold text-surface-500 hover:text-surface-700 hover:bg-surface-200/50 transition-all";
+                        settingsText.classList.remove('hidden');
+                        settingsImage.classList.add('hidden');
+                    } else {
+                        tabImage.className = "flex-1 py-2.5 rounded-lg text-sm font-bold bg-white text-surface-900 shadow-sm transition-all";
+                        tabText.className = "flex-1 py-2.5 rounded-lg text-sm font-semibold text-surface-500 hover:text-surface-700 hover:bg-surface-200/50 transition-all";
+                        settingsImage.classList.remove('hidden');
+                        settingsText.classList.add('hidden');
+                    }
+                }
+            </script>
         </div>
         {% endif %}
 
@@ -614,8 +736,25 @@
         if (document.getElementById('radius')) formData.append('radius', document.getElementById('radius').value);
         if (document.getElementById('factor')) formData.append('factor', document.getElementById('factor').value);
         if (document.getElementById('speed')) formData.append('speed', document.getElementById('speed').value);
-        if (document.getElementById('color')) formData.append('color', document.getElementById('color').value);
-        if (document.getElementById('watermark-text')) formData.append('text', document.getElementById('watermark-text').value);
+        if (document.getElementById('color') && TOOL_SLUG !== 'watermark-image') formData.append('color', document.getElementById('color').value);
+        
+        if (TOOL_SLUG === 'watermark-image') {
+            formData.append('watermark_type', document.getElementById('watermark-type').value);
+            formData.append('text', document.getElementById('watermark-text').value);
+            formData.append('font_size', document.getElementById('watermark-font-size').value);
+            formData.append('color', document.getElementById('watermark-color').value);
+            formData.append('opacity', document.getElementById('watermark-opacity').value);
+            formData.append('rotation', document.getElementById('watermark-rotation').value);
+            formData.append('position', document.getElementById('watermark-position').value);
+            formData.append('bold', document.getElementById('watermark-bold').checked);
+            formData.append('italic', document.getElementById('watermark-italic').checked);
+            formData.append('tile', document.getElementById('watermark-tile').checked);
+            formData.append('logo_width', document.getElementById('watermark-logo-width').value);
+            const logoInput = document.getElementById('watermark-logo-input');
+            if (logoInput && logoInput.files[0]) {
+                formData.append('watermark_logo', logoInput.files[0]);
+            }
+        }
         if (document.getElementById('width')) formData.append('width', document.getElementById('width').value);
         if (document.getElementById('height')) formData.append('height', document.getElementById('height').value);
         if (document.getElementById('angle')) formData.append('angle', document.getElementById('angle').value);

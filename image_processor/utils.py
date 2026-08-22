@@ -144,24 +144,150 @@ def rotate_image(input_path, original_name, angle=90):
     img.save(output_path, quality=95)
     return output_path
 
-def watermark_image(input_path, original_name, text="ScanPDF", opacity=128):
-    img = Image.open(input_path).convert("RGBA")
-    txt = Image.new('RGBA', img.size, (255, 255, 255, 0))
+def _hex_to_rgb(hex_color):
+    if not hex_color: return (0,0,0)
+    hex_color = hex_color.lstrip('#')
+    if len(hex_color) != 6: return (0,0,0)
+    return tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
+
+def _get_position(w, h, obj_w, obj_h, position):
+    pad = 20
+    if obj_w > w: obj_w = w
+    if obj_h > h: obj_h = h
     
-    # Attempt to find a font
-    try:
-        font = ImageFont.truetype("arial.ttf", int(img.size[0] / 10))
-    except:
-        font = ImageFont.load_default()
+    if position == 'top-left': return (pad, pad)
+    if position == 'top-center': return (w/2 - obj_w/2, pad)
+    if position == 'top-right': return (w - obj_w - pad, pad)
+    if position == 'center-left': return (pad, h/2 - obj_h/2)
+    if position == 'center': return (w/2 - obj_w/2, h/2 - obj_h/2)
+    if position == 'center-right': return (w - obj_w - pad, h/2 - obj_h/2)
+    if position == 'bottom-left': return (pad, h - obj_h - pad)
+    if position == 'bottom-center': return (w/2 - obj_w/2, h - obj_h - pad)
+    if position == 'bottom-right': return (w - obj_w - pad, h - obj_h - pad)
+    return (w/2 - obj_w/2, h/2 - obj_h/2)
+
+def _create_watermark_element(**kwargs):
+    opacity = int((kwargs.get('opacity', 30) / 100.0) * 255)
+    rotation = kwargs.get('rotation', 0)
+    watermark_type = kwargs.get('watermark_type', 'text')
+    
+    if watermark_type == 'text':
+        text = kwargs.get('text', 'CONFIDENTIAL')
+        font_size = kwargs.get('font_size', 48)
+        color = kwargs.get('color', '#000000')
+        rgb = _hex_to_rgb(color)
         
-    d = ImageDraw.Draw(txt)
-    # Position in center
-    w, h = img.size
-    d.text((w/2, h/2), text, fill=(255, 255, 255, opacity), font=font, anchor="mm")
+        try:
+            font = ImageFont.truetype("arial.ttf", font_size)
+        except:
+            font = ImageFont.load_default()
+            
+        dummy = Image.new('RGBA', (1,1))
+        d = ImageDraw.Draw(dummy)
+        left, top, right, bottom = d.textbbox((0, 0), text, font=font)
+        tw = right - left
+        th = bottom - top
+        
+        element = Image.new('RGBA', (tw + 20, th + 20), (255, 255, 255, 0))
+        d = ImageDraw.Draw(element)
+        d.text((10, 10), text, fill=(rgb[0], rgb[1], rgb[2], opacity), font=font)
+    else:
+        logo_path = kwargs.get('logo_path')
+        if not logo_path or not os.path.exists(logo_path):
+            element = Image.new('RGBA', (10, 10), (0,0,0,0))
+        else:
+            element = Image.open(logo_path).convert("RGBA")
+            alpha = element.split()[3]
+            alpha = ImageEnhance.Brightness(alpha).enhance(kwargs.get('opacity', 30) / 100.0)
+            element.putalpha(alpha)
+            
+            logo_width = kwargs.get('logo_width', 200)
+            lw, lh = element.size
+            new_lh = int((logo_width / float(lw)) * lh)
+            element = element.resize((logo_width, new_lh), Image.Resampling.LANCZOS)
+            
+    if rotation != 0:
+        element = element.rotate(-rotation, expand=True)
+        
+    return element
+
+def apply_watermark(input_path, original_name, **kwargs):
+    ext = os.path.splitext(original_name)[1].lower()
     
-    combined = Image.alpha_composite(img, txt)
-    output_path = get_output_path(original_name, 'jpg', '_watermarked')
-    combined.convert("RGB").save(output_path, quality=95)
+    element = _create_watermark_element(**kwargs)
+    
+    if ext == '.pdf':
+        return _watermark_pdf(input_path, original_name, element, **kwargs)
+    else:
+        return _watermark_image(input_path, original_name, element, **kwargs)
+
+def _watermark_image(input_path, original_name, element, **kwargs):
+    img = Image.open(input_path).convert("RGBA")
+    w, h = img.size
+    watermark_layer = Image.new('RGBA', img.size, (255, 255, 255, 0))
+    
+    ew, eh = element.size
+    tile = kwargs.get('tile', False)
+    position = kwargs.get('position', 'center')
+    
+    if tile:
+        spacing = 50
+        for y in range(0, h, eh + spacing):
+            for x in range(0, w, ew + spacing):
+                watermark_layer.paste(element, (x, y), element)
+    else:
+        x, y = _get_position(w, h, ew, eh, position)
+        watermark_layer.paste(element, (int(x), int(y)), element)
+        
+    combined = Image.alpha_composite(img, watermark_layer)
+    
+    ext = os.path.splitext(original_name)[1].lower()
+    if ext == '.png':
+        output_path = get_output_path(original_name, 'png', '_watermarked')
+        combined.save(output_path, 'PNG')
+    elif ext == '.webp':
+        output_path = get_output_path(original_name, 'webp', '_watermarked')
+        combined.save(output_path, 'WEBP')
+    else:
+        output_path = get_output_path(original_name, 'jpg', '_watermarked')
+        combined.convert("RGB").save(output_path, 'JPEG', quality=95)
+        
+    return output_path
+
+def _watermark_pdf(input_path, original_name, element, **kwargs):
+    try:
+        import fitz
+    except ImportError:
+        pass
+        
+    doc = fitz.open(input_path)
+    
+    img_byte_arr = io.BytesIO()
+    element.save(img_byte_arr, format='PNG')
+    img_bytes = img_byte_arr.getvalue()
+    
+    ew, eh = element.size
+    tile = kwargs.get('tile', False)
+    position = kwargs.get('position', 'center')
+    
+    for page in doc:
+        rect = page.rect
+        w, h = rect.width, rect.height
+        
+        if tile:
+            spacing = 50
+            for y in range(0, int(h), eh + spacing):
+                for x in range(0, int(w), ew + spacing):
+                    target_rect = fitz.Rect(x, y, x + ew, y + eh)
+                    page.insert_image(target_rect, stream=img_bytes)
+        else:
+            x, y = _get_position(w, h, ew, eh, position)
+            target_rect = fitz.Rect(x, y, x + ew, y + eh)
+            page.insert_image(target_rect, stream=img_bytes)
+            
+    output_path = get_output_path(original_name, 'pdf', '_watermarked')
+    doc.save(output_path)
+    doc.close()
     return output_path
 
 def crop_image(input_path, original_name, left=None, top=None, right=None, bottom=None):

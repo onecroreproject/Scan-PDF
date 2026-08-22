@@ -46,3 +46,10 @@ python manage.py check_ffmpeg
   - `imageio-ffmpeg` (already in `requirements.txt`)
 - This repo also lists `ffmpeg` in `Aptfile` and `packages.txt` as a **Linux fallback** for buildpack-style environments.
 
+## HTML to Image Setup (Playwright)
+
+This project uses Playwright for robust HTML to Image rendering. After running `pip install -r requirements.txt`, you must install the Chromium browser binary:
+
+```bash
+python -m playwright install chromium
+```

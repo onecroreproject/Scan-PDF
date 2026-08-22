@@ -3268,69 +3268,72 @@ def jpg_to_png(input_path, original_name):
 # 23. HTML TO IMAGE
 # ═══════════════════════════════════════════════════════════════
 def html_to_image(input_path, original_name, url=None, base_url=None):
-    """Convert an HTML file or a URL to a pixel-perfect PNG using Chrome headless via html2image."""
-    from html2image import Html2Image
-    import uuid
+    """Convert an HTML file or a URL to a pixel-perfect PNG using Playwright Chromium headless."""
+    from playwright.sync_api import sync_playwright, TimeoutError as PlaywrightTimeoutError
+    import tempfile
 
     try:
-        # Prepare output
         output_path = get_output_path(original_name, 'png')
-        output_dir = os.path.dirname(output_path)
-        # Use a unique temp name to avoid collisions, then rename
-        temp_name = f'_h2i_{uuid.uuid4().hex[:8]}.png'
 
-        hti = Html2Image(
-            browser='chrome',
-            output_path=output_dir,
-            custom_flags=[
-                '--no-sandbox',
-                '--disable-gpu',
-                '--hide-scrollbars',
-                '--disable-extensions',
-            ],
-        )
-
-        if url:
-            # Direct URL Mode
-            hti.screenshot(
-                url=url,
-                save_as=temp_name,
-                size=(1280, 2000), # Taller for better "full page" view
+        with sync_playwright() as p:
+            browser = p.chromium.launch(
+                headless=True,
+                args=[
+                    '--no-sandbox',
+                    '--disable-setuid-sandbox',
+                    '--disable-gpu',
+                    '--disable-dev-shm-usage',
+                ]
             )
-        else:
-            # File Mode
-            with open(input_path, 'r', encoding='utf-8', errors='replace') as f:
-                html_content = f.read()
+            context = browser.new_context(
+                viewport={'width': 1280, 'height': 800},
+                ignore_https_errors=True
+            )
+            page = context.new_page()
 
-            if '{%' in html_content or '{{' in html_content:
-                try:
-                    from django.template import Engine, Context
-                    t = Engine.get_default().from_string(html_content)
-                    html_content = t.render(Context({}))
-                except Exception:
-                    # Fallback to raw HTML if it's not a valid Django template or cannot be rendered
-                    pass
+            # Optional base_url handling for template parsing
+            html_content = ""
+            if not url and input_path:
+                with open(input_path, 'r', encoding='utf-8', errors='replace') as f:
+                    html_content = f.read()
+                
+                # Render Django template if applicable
+                if '{%' in html_content or '{{' in html_content:
+                    try:
+                        from django.template import Engine, Context
+                        t = Engine.get_default().from_string(html_content)
+                        html_content = t.render(Context({}))
+                    except Exception:
+                        pass
+                        
+                if base_url:
+                    if '<head>' in html_content:
+                        html_content = html_content.replace('<head>', f'<head><base href="{base_url}">')
+                    else:
+                        html_content = f'<head><base href="{base_url}"></head>\n' + html_content
 
-            if base_url:
-                if '<head>' in html_content:
-                    html_content = html_content.replace('<head>', f'<head><base href="{base_url}">')
+            try:
+                if url:
+                    page.goto(url, wait_until='networkidle', timeout=15000)
                 else:
-                    html_content = f'<head><base href="{base_url}"></head>\n' + html_content
+                    page.set_content(html_content, wait_until='networkidle', timeout=15000)
+            except PlaywrightTimeoutError:
+                # If networkidle times out (e.g. infinite polling), we still try to take a screenshot
+                pass
 
-            hti.screenshot(
-                html_str=html_content,
-                save_as=temp_name,
-                size=(1280, 2000),
+            # Give a small buffer for late rendering fonts/animations
+            page.wait_for_timeout(500)
+
+            page.screenshot(
+                path=output_path,
+                full_page=True,
+                type='png'
             )
 
-        temp_output = os.path.join(output_dir, temp_name)
-        if not os.path.exists(temp_output):
-            raise Exception("Capture failed - image was not generated.")
+            browser.close()
 
-        # Rename temp file to final output path
-        if os.path.exists(output_path):
-            os.remove(output_path)
-        os.rename(temp_output, output_path)
+        if not os.path.exists(output_path):
+            raise Exception("Capture failed - image was not generated.")
 
         return output_path
     except Exception as e:
