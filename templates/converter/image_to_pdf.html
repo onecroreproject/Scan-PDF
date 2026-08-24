@@ -2,76 +2,310 @@
 {% load static %}
 
 {% block tool_content %}
-<!-- ═══════════════ UPLOAD CARD ═══════════════ -->
-<div class="rounded-2xl bg-white border border-surface-100 p-4 sm:p-5 shadow-mega">
-    
-    <!-- Drag & Drop Zone -->
-    <div id="drop-zone" class="relative rounded-2xl border-2 border-dashed border-brand-100 bg-brand-50/10 hover:bg-brand-50/30 hover:border-brand-400 transition-all duration-300 p-6 sm:p-10 md:p-12 text-center cursor-pointer group">
 
-        <div id="upload-default" class="space-y-4">
-            <div class="w-14 h-14 rounded-2xl bg-surface-50 border border-surface-100 flex items-center justify-center mx-auto group-hover:bg-brand-50 group-hover:border-brand-200 group-hover:scale-105 transition-all duration-300">
-                <i data-lucide="images" class="w-8 h-8 text-surface-300 group-hover:text-brand-500 transition-colors"></i>
-            </div>
-            <div>
-                <p class="text-base font-semibold text-surface-700 mb-1">
-                    Drop images here, or <span class="text-brand-600 underline underline-offset-4 decoration-brand-200">browse</span>
-                </p>
-                <p class="text-xs text-surface-400">
-                    Select JPG or PNG files &nbsp;•&nbsp; They will be merged into one PDF
-                </p>
-            </div>
-        </div>
+<style>
+
+/* =========================================================
+   PAGE HEADING
+   ========================================================= */
+
+.tool-heading {
+    font-size: 3.5rem;
+    line-height: 0.95;
+    font-weight: 900;
+    letter-spacing: -0.04em;
+}
+
+.gradient-text {
+    background: linear-gradient(
+        135deg,
+        #7c3aed,
+        #a855f7,
+        #ec4899
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+
+/* =========================================================
+   PURPLE BUTTON
+   ========================================================= */
+
+.purple-btn {
+    background: linear-gradient(
+        135deg,
+        #6d28d9 0%,
+        #7c3aed 45%,
+        #a855f7 100%
+    );
+    color: white;
+    box-shadow: 0 8px 25px rgba(124, 58, 237, 0.25);
+    transition: all 0.25s ease;
+}
+
+.purple-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 30px rgba(124, 58, 237, 0.38);
+}
+
+.purple-btn:active {
+    transform: translateY(0);
+}
+
+.purple-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+
+/* =========================================================
+   SELECT FILE AREA
+   ========================================================= */
+
+.select-file-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    border: 2px dashed transparent;
+    border-radius: 20px;
+    transition: all 0.25s ease;
+}
+
+.select-file-area.drag-active {
+    border-color: #7c3aed;
+    background: #faf5ff;
+}
+
+
+/* =========================================================
+   SELECTED FILE CARD
+   ========================================================= */
+
+.selected-file-card {
+    width: 100%;
+    padding: 0.85rem 1rem;
+    border-radius: 1rem;
+    background: #ddd6fe;
+    border: 1px solid #ddd6fe;
+}
+
+.remove-file-btn {
+    width: 34px;
+    height: 34px;
+    border-radius: 10px;
+    border: 1px solid #ddd6fe;
+    background: #f5f3ff;
+    color: #7c3aed;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.remove-file-btn:hover {
+    background: #7c3aed;
+    color: white;
+}
+
+
+/* =========================================================
+   PROGRESS
+   ========================================================= */
+
+.progress-card {
+    background: #fafafa;
+    border: 1px solid #f1f5f9;
+    border-radius: 1rem;
+    padding: 1rem 1.5rem;
+}
+
+.progress-spinner {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 3px solid #e2e8f0;
+    border-top-color: #7c3aed;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+
+/* =========================================================
+   SUCCESS CARD
+   ========================================================= */
+
+.success-card {
+    text-align: center;
+    padding: 1.5rem;
+    border-radius: 1rem;
+    background: #faf5ff;
+    border: 1px solid #e9d5ff;
+}
+
+.success-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 1rem;
+    background: #ede9fe;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+}
+
+.success-icon i {
+    color: #7c3aed;
+}
+
+
+/* =========================================================
+   ERROR
+   ========================================================= */
+
+.error-card {
+    padding: 1.25rem;
+    border-radius: 1rem;
+    background: #fef2f2;
+    border: 1px solid #fee2e2;
+}
+
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 768px) {
+    .tool-heading { font-size: 3rem; }
+}
+
+@media (max-width: 480px) {
+    .tool-heading { font-size: 2.6rem; }
+}
+
+</style>
+
+
+<!-- =========================================================
+     PAGE HEADER
+     ========================================================= -->
+
+<section class="text-center mb-8 sm:mb-10">
+
+    <h1 class="tool-heading text-surface-900 mb-3">
+        <span class="block">{{ s1 }}</span>
+        <span class="block gradient-text">{{ highlight }}</span>
+    </h1>
+
+    <p class="max-w-3xl mx-auto text-sm sm:text-base lg:text-lg text-surface-500 leading-relaxed">
+        {{ seo_intro }}
+    </p>
+
+    {% if seo_keywords %}
+    <p class="max-w-3xl mx-auto mt-2 text-xs sm:text-sm text-surface-400 leading-relaxed">
+        {{ seo_keywords }}
+    </p>
+    {% endif %}
+
+</section>
+
+
+<!-- =========================================================
+     MAIN CARD
+     ========================================================= -->
+
+<div class="rounded-2xl bg-[#faf5ff] p-4 sm:p-6">
+
+    <!-- =====================================================
+         SELECT FILE AREA
+         ===================================================== -->
+    <div id="select-file-area" class="select-file-area">
+
+        <button type="button" id="select-file-btn"
+            class="purple-btn px-8 py-3 rounded-2xl text-white font-black text-sm sm:text-base uppercase tracking-widest flex items-center justify-center gap-3">
+            <i data-lucide="images" class="w-5 h-5"></i>
+            Select Images
+        </button>
+
+        <p class="text-xs text-surface-400 mt-3">
+            Max 50MB each &nbsp;&nbsp;•&nbsp;&nbsp; Accepted:
+            <span class="text-surface-500 font-medium">.jpg, .jpeg, .png</span>
+        </p>
 
         <input type="file" id="file-input" class="hidden" accept=".jpg,.jpeg,.png" multiple>
     </div>
 
-    <!-- File list -->
-    <div id="file-list" class="hidden mt-3 space-y-3"></div>
 
-    <button id="add-more-btn" class="hidden mt-4 w-full py-3.5 rounded-2xl border-2 border-dashed border-surface-200 text-surface-400 text-sm font-bold hover:border-brand-300 hover:text-brand-600 transition-all flex items-center justify-center gap-2">
-        <i data-lucide="plus" class="w-4 h-4"></i> Add More Images
+    <!-- =====================================================
+         FILE LIST
+         ===================================================== -->
+    <div id="file-list" class="hidden mt-4 space-y-2.5"></div>
+
+
+    <!-- Add More Button -->
+    <button id="add-more-btn" class="hidden mt-4 w-full py-3 rounded-2xl border-2 border-dashed border-violet-200 text-violet-500 text-sm font-bold hover:bg-violet-50 transition-all flex items-center justify-center gap-2">
+        <i data-lucide="plus" class="w-4 h-4"></i>
+        Add More Images
     </button>
 
-    <!-- Convert Button -->
-    <button id="convert-btn" disabled
-        class="w-full mt-4 py-3 sm:py-4 rounded-2xl bg-gradient-to-r {{ tool.gradient }} text-white font-black text-sm sm:text-base uppercase tracking-widest disabled:opacity-20 disabled:cursor-not-allowed hover:shadow-2xl hover:shadow-brand-500/30 hover:-translate-y-1 active:translate-y-0 transition-all flex items-center justify-center gap-3">
-        <i data-lucide="file-check" class="w-5 h-5"></i>
-        Create PDF
-    </button>
 
-    <!-- ═══════════════ PROGRESS STATE ═══════════════ -->
+    <!-- =====================================================
+         CONVERT BUTTON
+         ===================================================== -->
+    <div class="text-center">
+        <button id="convert-btn" disabled
+            class="purple-btn w-auto mx-auto px-8 py-3 mt-5 sm:py-4 rounded-2xl text-white font-black text-sm sm:text-base uppercase tracking-widest flex items-center justify-center gap-3">
+            <i data-lucide="file-check" class="w-5 h-5"></i>
+            Create PDF
+        </button>
+    </div>
+
+
+    <!-- =====================================================
+         PROGRESS STATE
+         ===================================================== -->
     <div id="progress-section" class="hidden mt-4">
-        <div class="flex items-center gap-4 py-4 px-5 rounded-2xl bg-surface-50 border border-surface-100">
+        <div class="progress-card flex items-center gap-4">
             <div class="relative flex-shrink-0">
-                <div class="w-9 h-9 rounded-full border-[3px] border-surface-200 border-t-brand-500 animate-spin"></div>
+                <div class="progress-spinner"></div>
             </div>
             <div class="min-w-0">
                 <p class="text-surface-800 font-bold text-base">Processing images…</p>
-                <p class="text-xs text-surface-400 mt-1">Converting and merging into PDF</p>
+                <p class="text-xs text-surface-400 mt-1">Merging into a single PDF</p>
             </div>
-        </div>
-        <div class="w-full h-1.5 rounded-full bg-surface-100 overflow-hidden mt-4">
-            <div class="h-full bg-gradient-to-r {{ tool.gradient }} rounded-full animate-progress-bar"></div>
         </div>
     </div>
 
-    <!-- ═══════════════ SUCCESS STATE ═══════════════ -->
+
+    <!-- =====================================================
+         SUCCESS STATE
+         ===================================================== -->
     <div id="success-section" class="hidden mt-4">
-        <div class="text-center py-4 px-5 rounded-2xl bg-emerald-50/50 border border-emerald-100">
-            <div class="w-16 h-16 rounded-xl bg-emerald-100 flex items-center justify-center mx-auto mb-2 animate-success-pop">
-                <i data-lucide="check-circle-2" class="w-8 h-8 text-emerald-600"></i>
+        <div class="success-card">
+            <div class="success-icon">
+                <i data-lucide="check-circle-2" class="w-8 h-8"></i>
             </div>
             <h3 class="text-lg font-black text-surface-900 mb-1">PDF Created!</h3>
-            <p class="text-surface-500 text-sm mb-4">Your document is ready for download.</p>
+            <p class="text-surface-500 text-sm mb-6">Your document is ready to download.</p>
 
             <div class="flex flex-col sm:flex-row gap-3 justify-center">
                 <a id="download-btn" href="#"
-                    class="inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-black text-sm hover:from-emerald-400 hover:to-emerald-500 transition-all shadow-xl shadow-emerald-500/20">
+                    class="purple-btn inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-2xl text-white font-black text-sm"
+                    style="background: linear-gradient(135deg, #16a34a, #22c55e); box-shadow: 0 4px 12px rgba(34, 197, 94, 0.25);">
                     <i data-lucide="download" class="w-5 h-5"></i>
                     Download PDF
                 </a>
-                <button id="convert-another-btn"
-                    class="inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-2xl bg-white border border-surface-200 text-surface-600 font-bold text-sm hover:bg-surface-50 transition-all shadow-sm">
+                <button type="button" id="convert-another-btn"
+                    class="purple-btn inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-2xl text-white font-black text-sm">
                     <i data-lucide="refresh-cw" class="w-4 h-4"></i>
                     Convert More
                 </button>
@@ -79,10 +313,13 @@
         </div>
     </div>
 
-    <!-- ═══════════════ ERROR STATE ═══════════════ -->
+
+    <!-- =====================================================
+         ERROR STATE
+         ===================================================== -->
     <div id="error-section" class="hidden mt-4">
-        <div class="p-5 rounded-2xl bg-red-50 border border-red-100 flex items-start gap-4 animate-shake">
-            <div class="w-9 h-9 rounded-xl bg-red-100 flex items-center justify-center flex-shrink-0 mt-0.5">
+        <div class="error-card flex items-start gap-4">
+            <div class="w-9 h-9 rounded-xl bg-red-100 flex items-center justify-center flex-shrink-0">
                 <i data-lucide="alert-triangle" class="w-5 h-5 text-red-500"></i>
             </div>
             <div class="min-w-0 pt-1">
@@ -91,157 +328,185 @@
             </div>
         </div>
     </div>
+
 </div>
+
 {% endblock %}
+
 
 {% block extra_scripts %}
 <script>
-    const CONVERT_URL = '{% url "converter:convert_file" tool_slug %}';
-    const CSRF_TOKEN = '{{ csrf_token }}';
-    
-    const dropZone = document.getElementById('drop-zone');
-    const fileInput = document.getElementById('file-input');
-    const fileList = document.getElementById('file-list');
-    const addMoreBtn = document.getElementById('add-more-btn');
-    const convertBtn = document.getElementById('convert-btn');
-    const progressSection = document.getElementById('progress-section');
-    const successSection = document.getElementById('success-section');
-    const errorSection = document.getElementById('error-section');
-    const downloadBtn = document.getElementById('download-btn');
-    const convertAnotherBtn = document.getElementById('convert-another-btn');
-    const uploadDefault = document.getElementById('upload-default');
+const CONVERT_URL = '{% url "converter:convert_file" tool_slug %}';
+const CSRF_TOKEN = '{{ csrf_token }}';
 
-    let selectedFiles = [];
+const selectFileArea = document.getElementById('select-file-area');
+const selectFileBtn = document.getElementById('select-file-btn');
+const fileInput = document.getElementById('file-input');
+const fileList = document.getElementById('file-list');
+const addMoreBtn = document.getElementById('add-more-btn');
+const convertBtn = document.getElementById('convert-btn');
+const progressSection = document.getElementById('progress-section');
+const successSection = document.getElementById('success-section');
+const errorSection = document.getElementById('error-section');
+const errorMessage = document.getElementById('error-message');
+const downloadBtn = document.getElementById('download-btn');
+const convertAnotherBtn = document.getElementById('convert-another-btn');
 
-    // Drag and Drop
-    dropZone.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        dropZone.classList.add('border-brand-500', 'bg-brand-50/50');
+let selectedFiles = [];
+
+selectFileBtn.addEventListener('click', () => fileInput.click());
+addMoreBtn.addEventListener('click', () => fileInput.click());
+
+fileInput.addEventListener('change', () => {
+    if (fileInput.files.length) handleFiles(fileInput.files);
+});
+
+selectFileArea.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    selectFileArea.classList.add('drag-active');
+});
+
+selectFileArea.addEventListener('dragleave', () => {
+    selectFileArea.classList.remove('drag-active');
+});
+
+selectFileArea.addEventListener('drop', (e) => {
+    e.preventDefault();
+    selectFileArea.classList.remove('drag-active');
+    if (e.dataTransfer.files.length) handleFiles(e.dataTransfer.files);
+});
+
+function handleFiles(files) {
+    const valid = Array.from(files).filter(f => {
+        const name = f.name.toLowerCase();
+        return name.endsWith('.jpg') || name.endsWith('.jpeg') || name.endsWith('.png');
     });
 
-    dropZone.addEventListener('dragleave', () => {
-        dropZone.classList.remove('border-brand-500', 'bg-brand-50/50');
-    });
-
-    dropZone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        dropZone.classList.remove('border-brand-500', 'bg-brand-50/50');
-        handleFiles(e.dataTransfer.files);
-    });
-
-    dropZone.addEventListener('click', () => fileInput.click());
-
-    fileInput.addEventListener('change', () => {
-        handleFiles(fileInput.files);
-    });
-
-    addMoreBtn.addEventListener('click', () => fileInput.click());
-
-    function handleFiles(files) {
-        const newFiles = Array.from(files);
-        selectedFiles = [...selectedFiles, ...newFiles];
-        updateFileList();
+    if (valid.length === 0) {
+        showError('Please select JPG or PNG images only.');
+        return;
     }
 
-    function updateFileList() {
-        if (selectedFiles.length > 0) {
-            uploadDefault.classList.add('hidden');
-            fileList.classList.remove('hidden');
-            addMoreBtn.classList.remove('hidden');
-            convertBtn.disabled = false;
-        } else {
-            uploadDefault.classList.remove('hidden');
-            fileList.classList.add('hidden');
-            addMoreBtn.classList.add('hidden');
-            convertBtn.disabled = true;
-        }
+    selectedFiles = [...selectedFiles, ...valid];
+    updateFileList();
+    errorSection.classList.add('hidden');
+}
 
-        fileList.innerHTML = '';
-        selectedFiles.forEach((file, index) => {
-            const item = document.createElement('div');
-            item.className = 'flex items-center justify-between p-3 rounded-xl bg-surface-50 border border-surface-100 animate-fade-in-up';
-            item.style.animationDelay = `${index * 0.05}s`;
-            
-            const size = (file.size / (1024 * 1024)).toFixed(2);
-            
-            item.innerHTML = `
-                <div class="flex items-center gap-3 min-w-0">
-                    <div class="w-10 h-10 rounded-lg bg-white border border-surface-100 flex items-center justify-center flex-shrink-0">
-                        <i data-lucide="image" class="w-5 h-5 text-brand-500"></i>
-                    </div>
-                    <div class="min-w-0">
-                        <p class="text-sm font-bold text-surface-800 truncate">${file.name}</p>
-                        <p class="text-[10px] text-surface-400 uppercase font-bold tracking-wider">${size} MB</p>
-                    </div>
-                </div>
-                <button onclick="removeFile(${index})" class="p-2 rounded-lg hover:bg-red-50 text-surface-300 hover:text-red-500 transition-all">
-                    <i data-lucide="trash-2" class="w-4 h-4"></i>
-                </button>
-            `;
-            fileList.appendChild(item);
-        });
-        lucide.createIcons();
-    }
-
-    window.removeFile = (index) => {
-        selectedFiles.splice(index, 1);
-        updateFileList();
-    };
-
-    convertBtn.addEventListener('click', async () => {
-        if (selectedFiles.length === 0) return;
-
+function updateFileList() {
+    if (selectedFiles.length === 0) {
+        fileList.classList.add('hidden');
+        addMoreBtn.classList.add('hidden');
         convertBtn.disabled = true;
-        convertBtn.classList.add('hidden');
-        progressSection.classList.remove('hidden');
-        errorSection.classList.add('hidden');
+        selectFileArea.classList.remove('hidden');
+        return;
+    }
 
-        const formData = new FormData();
-        selectedFiles.forEach(file => {
-            formData.append('files', file);
+    selectFileArea.classList.add('hidden');
+    fileList.classList.remove('hidden');
+    addMoreBtn.classList.remove('hidden');
+    convertBtn.disabled = false;
+
+    fileList.innerHTML = '';
+
+    selectedFiles.forEach((file, index) => {
+        const item = document.createElement('div');
+        item.className = 'selected-file-card flex items-center gap-3';
+
+        item.innerHTML = `
+            <div class="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center flex-shrink-0">
+                <i data-lucide="image" class="w-5 h-5 text-purple-600"></i>
+            </div>
+            <div class="min-w-0 flex-1 text-left">
+                <p class="text-sm font-bold text-surface-800 truncate">${file.name}</p>
+                <p class="text-xs text-surface-400 mt-0.5">${formatFileSize(file.size)}</p>
+            </div>
+            <button type="button" onclick="removeFile(${index})" class="remove-file-btn" title="Remove">
+                <i data-lucide="x" class="w-4 h-4"></i>
+            </button>
+        `;
+        fileList.appendChild(item);
+    });
+
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+window.removeFile = function(index) {
+    selectedFiles.splice(index, 1);
+    updateFileList();
+};
+
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+convertBtn.addEventListener('click', async () => {
+    if (selectedFiles.length === 0) return;
+
+    convertBtn.classList.add('hidden');
+    progressSection.classList.remove('hidden');
+    successSection.classList.add('hidden');
+    errorSection.classList.add('hidden');
+
+    const formData = new FormData();
+    selectedFiles.forEach(file => formData.append('files', file));
+    formData.append('csrfmiddlewaretoken', CSRF_TOKEN);
+
+    try {
+        const response = await fetch(CONVERT_URL, {
+            method: 'POST',
+            body: formData
         });
 
-        try {
-            const response = await fetch(CONVERT_URL, {
-                method: 'POST',
-                headers: {
-                    'X-CSRFToken': CSRF_TOKEN
-                },
-                body: formData
-            });
-
-            if (!response.ok) {
+        if (!response.ok) {
+            let message = 'Conversion failed.';
+            try {
                 const data = await response.json();
-                throw new Error(data.error || 'Conversion failed');
-            }
-
-            const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
-            const contentDisposition = response.headers.get('Content-Disposition');
-            let filename = 'converted_images.pdf';
-            if (contentDisposition && contentDisposition.indexOf('filename=') !== -1) {
-                filename = contentDisposition.split('filename=')[1].replace(/"/g, '');
-            }
-
-            downloadBtn.href = url;
-            downloadBtn.download = filename;
-            
-            progressSection.classList.add('hidden');
-            successSection.classList.remove('hidden');
-        } catch (err) {
-            errorSection.classList.remove('hidden');
-            document.getElementById('error-message').textContent = err.message;
-            progressSection.classList.add('hidden');
-            convertBtn.classList.remove('hidden');
-            convertBtn.disabled = false;
+                message = data.error || message;
+            } catch (e) {}
+            throw new Error(message);
         }
-    });
 
-    convertAnotherBtn.addEventListener('click', () => {
-        selectedFiles = [];
-        updateFileList();
-        successSection.classList.add('hidden');
+        const disposition = response.headers.get('Content-Disposition');
+        let outputFilename = 'images_to_pdf.pdf';
+        if (disposition) {
+            const match = disposition.match(/filename="(.+?)"/);
+            if (match) outputFilename = match[1];
+        }
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        downloadBtn.href = url;
+        downloadBtn.download = outputFilename;
+
+        progressSection.classList.add('hidden');
+        successSection.classList.remove('hidden');
+
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    } catch (error) {
+        progressSection.classList.add('hidden');
         convertBtn.classList.remove('hidden');
-    });
+        showError(error.message);
+    }
+});
+
+convertAnotherBtn.addEventListener('click', () => {
+    selectedFiles = [];
+    updateFileList();
+    successSection.classList.add('hidden');
+    convertBtn.classList.remove('hidden');
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+});
+
+function showError(message) {
+    errorMessage.textContent = message;
+    errorSection.classList.remove('hidden');
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+if (typeof lucide !== 'undefined') lucide.createIcons();
 </script>
 {% endblock %}

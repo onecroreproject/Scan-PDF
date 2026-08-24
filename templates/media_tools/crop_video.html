@@ -1,0 +1,910 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta
+        name="viewport"
+        content="width=device-width, initial-scale=1.0"
+    >
+
+    <title>Crop Video</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f5f5f5;
+            color: #222;
+        }
+
+        .crop-page {
+            max-width: 1100px;
+            margin: 30px auto;
+            padding: 20px;
+        }
+
+        .crop-card {
+            background: #ffffff;
+            border: 1px solid #ddd;
+            border-radius: 12px;
+            padding: 24px;
+        }
+
+        h1 {
+            margin-top: 0;
+        }
+
+        .upload-section {
+            margin-bottom: 25px;
+        }
+
+        .upload-section label {
+            display: block;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        input[type="file"],
+        input[type="number"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+        }
+
+        .editor-section {
+            display: none;
+        }
+
+        .video-info {
+            margin: 15px 0;
+            padding: 10px;
+            background: #f0f0f0;
+            border-radius: 6px;
+        }
+
+        /*
+        ----------------------------------------------------
+        Video editor
+        ----------------------------------------------------
+        */
+
+        .editor-wrapper {
+            width: 100%;
+            display: flex;
+            justify-content: center;
+            background: #111;
+            padding: 20px;
+            border-radius: 10px;
+            overflow: hidden;
+        }
+
+        .video-editor {
+            position: relative;
+            display: inline-block;
+            max-width: 100%;
+            line-height: 0;
+            user-select: none;
+        }
+
+        #videoPreview {
+            display: block;
+            max-width: 100%;
+            max-height: 600px;
+            width: auto;
+            height: auto;
+        }
+
+        /*
+        ----------------------------------------------------
+        Crop rectangle
+        ----------------------------------------------------
+        */
+
+        #cropBox {
+            position: absolute;
+            border: 2px solid #ffffff;
+            background: rgba(255, 255, 255, 0.08);
+            cursor: move;
+            min-width: 30px;
+            min-height: 30px;
+            box-shadow:
+                0 0 0 9999px rgba(0, 0, 0, 0.55);
+        }
+
+        .crop-grid {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+        }
+
+        .crop-grid::before,
+        .crop-grid::after {
+            content: "";
+            position: absolute;
+            pointer-events: none;
+        }
+
+        .crop-grid::before {
+            left: 33.33%;
+            top: 0;
+            bottom: 0;
+            width: 1px;
+            background: rgba(255, 255, 255, 0.45);
+
+            box-shadow:
+                33.33% 0 0 rgba(255, 255, 255, 0.45);
+        }
+
+        .crop-grid::after {
+            top: 33.33%;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: rgba(255, 255, 255, 0.45);
+
+            box-shadow:
+                0 33.33% 0 rgba(255, 255, 255, 0.45);
+        }
+
+        /*
+        ----------------------------------------------------
+        Resize handles
+        ----------------------------------------------------
+        */
+
+        .handle {
+            position: absolute;
+            width: 14px;
+            height: 14px;
+            background: #ffffff;
+            border: 1px solid #222;
+            border-radius: 50%;
+            z-index: 5;
+        }
+
+        .handle.nw {
+            left: -7px;
+            top: -7px;
+            cursor: nwse-resize;
+        }
+
+        .handle.ne {
+            right: -7px;
+            top: -7px;
+            cursor: nesw-resize;
+        }
+
+        .handle.sw {
+            left: -7px;
+            bottom: -7px;
+            cursor: nesw-resize;
+        }
+
+        .handle.se {
+            right: -7px;
+            bottom: -7px;
+            cursor: nwse-resize;
+        }
+
+        /*
+        ----------------------------------------------------
+        Controls
+        ----------------------------------------------------
+        */
+
+        .controls {
+            margin-top: 25px;
+        }
+
+        .control-title {
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .ratio-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .ratio-btn {
+            padding: 9px 15px;
+            border: 1px solid #bbb;
+            background: #fff;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .ratio-btn:hover {
+            background: #eee;
+        }
+
+        .ratio-btn.active {
+            background: #222;
+            color: #fff;
+            border-color: #222;
+        }
+
+        /*
+        ----------------------------------------------------
+        Dimensions
+        ----------------------------------------------------
+        */
+
+        .dimensions {
+            display: grid;
+            grid-template-columns:
+                repeat(4, 1fr);
+            gap: 12px;
+            margin-top: 20px;
+        }
+
+        .dimension-box {
+            background: #f4f4f4;
+            padding: 12px;
+            border-radius: 6px;
+        }
+
+        .dimension-box strong {
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        /*
+        ----------------------------------------------------
+        Custom crop
+        ----------------------------------------------------
+        */
+
+        .custom-section {
+            display: none;
+            margin-top: 20px;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+
+        .custom-fields {
+            display: grid;
+            grid-template-columns:
+                1fr 1fr;
+            gap: 15px;
+        }
+
+        /*
+        ----------------------------------------------------
+        Rotation
+        ----------------------------------------------------
+        */
+
+        .rotation-controls {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 20px;
+        }
+
+        .rotation-btn {
+            padding: 9px 15px;
+            border: 1px solid #bbb;
+            background: #fff;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .rotation-value {
+            min-width: 60px;
+            text-align: center;
+            font-weight: 700;
+        }
+
+        /*
+        ----------------------------------------------------
+        Submit
+        ----------------------------------------------------
+        */
+
+        .submit-section {
+            margin-top: 25px;
+        }
+
+        .crop-submit {
+            width: 100%;
+            padding: 14px;
+            border: 0;
+            border-radius: 7px;
+            background: #222;
+            color: white;
+            font-size: 16px;
+            cursor: pointer;
+        }
+
+        .crop-submit:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /*
+        ----------------------------------------------------
+        Spinner
+        ----------------------------------------------------
+        */
+
+        #processingOverlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0, 0, 0, 0.65);
+            z-index: 9999;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .processing-box {
+            background: #ffffff;
+            padding: 30px;
+            border-radius: 12px;
+            text-align: center;
+            min-width: 280px;
+        }
+
+        .spinner {
+            width: 45px;
+            height: 45px;
+            margin: 0 auto 15px;
+            border: 4px solid #ddd;
+            border-top-color: #222;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /*
+        ----------------------------------------------------
+        Error messages
+        ----------------------------------------------------
+        */
+
+        .error-message {
+            margin: 10px 0;
+            padding: 10px;
+            background: #ffe5e5;
+            color: #b00020;
+            border-radius: 6px;
+        }
+
+        /*
+        ----------------------------------------------------
+        Responsive
+        ----------------------------------------------------
+        */
+
+        @media (max-width: 700px) {
+
+            .crop-page {
+                padding: 10px;
+                margin: 10px auto;
+            }
+
+            .crop-card {
+                padding: 15px;
+            }
+
+            .dimensions {
+                grid-template-columns:
+                    repeat(2, 1fr);
+            }
+
+            .custom-fields {
+                grid-template-columns: 1fr;
+            }
+
+            .editor-wrapper {
+                padding: 10px;
+            }
+
+            #videoPreview {
+                max-height: 400px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="crop-page">
+
+    <div class="crop-card">
+
+        <h1>Crop Video</h1>
+
+        <p>
+            Upload a video and select the area you want to keep.
+            Drag or resize the crop area before processing.
+        </p>
+
+
+        <!-- ==================================================
+             Django errors
+        =================================================== -->
+
+        {% if form.errors %}
+
+            <div class="error-message">
+
+                Please correct the errors below.
+
+                {{ form.errors }}
+
+            </div>
+
+        {% endif %}
+
+
+        <!-- ==================================================
+             FORM
+        =================================================== -->
+
+        <form
+            method="POST"
+            enctype="multipart/form-data"
+            id="cropForm"
+        >
+
+            {% csrf_token %}
+
+
+            <!-- ==================================================
+                 Video upload
+            =================================================== -->
+
+            <div class="upload-section">
+
+                <label for="{{ form.video.id_for_label }}">
+                    Select Video
+                </label>
+
+                {{ form.video }}
+
+            </div>
+
+
+            <!-- ==================================================
+                 Editor
+            =================================================== -->
+
+            <div
+                class="editor-section"
+                id="editorSection"
+            >
+
+                <!-- Video information -->
+
+                <div class="video-info">
+
+                    <strong>
+                        Original Video:
+                    </strong>
+
+                    <span id="originalDimensions">
+                        Loading...
+                    </span>
+
+                </div>
+
+
+                <!-- Video -->
+
+                <div class="editor-wrapper">
+
+                    <div
+                        class="video-editor"
+                        id="videoEditor"
+                    >
+
+                        <video
+                            id="videoPreview"
+                            preload="metadata"
+                            playsinline
+                        ></video>
+
+
+                        <!-- Crop rectangle -->
+
+                        <div
+                            id="cropBox"
+                        >
+
+                            <div
+                                class="crop-grid"
+                            ></div>
+
+
+                            <div
+                                class="handle nw"
+                                data-handle="nw"
+                            ></div>
+
+                            <div
+                                class="handle ne"
+                                data-handle="ne"
+                            ></div>
+
+                            <div
+                                class="handle sw"
+                                data-handle="sw"
+                            ></div>
+
+                            <div
+                                class="handle se"
+                                data-handle="se"
+                            ></div>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- ==================================================
+                     Ratio
+                =================================================== -->
+
+                <div class="controls">
+
+                    <div class="control-title">
+                        Aspect Ratio
+                    </div>
+
+
+                    <div class="ratio-buttons">
+
+                        <button
+                            type="button"
+                            class="ratio-btn active"
+                            data-ratio="free"
+                        >
+                            Free
+                        </button>
+
+                        <button
+                            type="button"
+                            class="ratio-btn"
+                            data-ratio="1:1"
+                        >
+                            1:1
+                        </button>
+
+                        <button
+                            type="button"
+                            class="ratio-btn"
+                            data-ratio="2:2"
+                        >
+                            2:2
+                        </button>
+
+                        <button
+                            type="button"
+                            class="ratio-btn"
+                            data-ratio="3:7"
+                        >
+                            3:7
+                        </button>
+
+                        <button
+                            type="button"
+                            class="ratio-btn"
+                            data-ratio="8:5"
+                        >
+                            8:5
+                        </button>
+
+                        <button
+                            type="button"
+                            class="ratio-btn"
+                            data-ratio="4:3"
+                        >
+                            4:3
+                        </button>
+
+                        <button
+                            type="button"
+                            class="ratio-btn"
+                            data-ratio="16:9"
+                        >
+                            16:9
+                        </button>
+
+                        <button
+                            type="button"
+                            class="ratio-btn"
+                            data-ratio="9:16"
+                        >
+                            9:16
+                        </button>
+
+                        <button
+                            type="button"
+                            class="ratio-btn"
+                            data-ratio="custom"
+                        >
+                            Custom
+                        </button>
+
+                    </div>
+
+                </div>
+
+
+                <!-- ==================================================
+                     Crop dimensions
+                =================================================== -->
+
+                <div class="dimensions">
+
+                    <div class="dimension-box">
+
+                        <strong>
+                            Crop Width
+                        </strong>
+
+                        <span id="cropWidthDisplay">
+                            0 px
+                        </span>
+
+                    </div>
+
+
+                    <div class="dimension-box">
+
+                        <strong>
+                            Crop Height
+                        </strong>
+
+                        <span id="cropHeightDisplay">
+                            0 px
+                        </span>
+
+                    </div>
+
+
+                    <div class="dimension-box">
+
+                        <strong>
+                            X Position
+                        </strong>
+
+                        <span id="cropXDisplay">
+                            0 px
+                        </span>
+
+                    </div>
+
+
+                    <div class="dimension-box">
+
+                        <strong>
+                            Y Position
+                        </strong>
+
+                        <span id="cropYDisplay">
+                            0 px
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <!-- ==================================================
+                     Custom dimensions
+                =================================================== -->
+
+                <div
+                    class="custom-section"
+                    id="customSection"
+                >
+
+                    <div class="control-title">
+                        Custom Crop Size
+                    </div>
+
+
+                    <div class="custom-fields">
+
+                        <div>
+
+                            <label
+                                for="{{ form.custom_width.id_for_label }}"
+                            >
+                                Width
+                            </label>
+
+                            {{ form.custom_width }}
+
+                        </div>
+
+
+                        <div>
+
+                            <label
+                                for="{{ form.custom_height.id_for_label }}"
+                            >
+                                Height
+                            </label>
+
+                            {{ form.custom_height }}
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- ==================================================
+                     Rotation
+                =================================================== -->
+
+                <div class="rotation-controls">
+
+                    <strong>
+                        Rotation:
+                    </strong>
+
+
+                    <button
+                        type="button"
+                        class="rotation-btn"
+                        id="rotateLeft"
+                    >
+                        ↶ 90°
+                    </button>
+
+
+                    <span
+                        class="rotation-value"
+                        id="rotationDisplay"
+                    >
+                        0°
+                    </span>
+
+
+                    <button
+                        type="button"
+                        class="rotation-btn"
+                        id="rotateRight"
+                    >
+                        ↷ 90°
+                    </button>
+
+                </div>
+
+
+                <!-- ==================================================
+                     Hidden backend values
+                =================================================== -->
+
+                <input
+                    type="hidden"
+                    name="crop_ratio"
+                    id="cropRatioInput"
+                    value="free"
+                >
+
+
+                <input
+                    type="hidden"
+                    name="crop_x"
+                    id="cropXInput"
+                    value="0"
+                >
+
+
+                <input
+                    type="hidden"
+                    name="crop_y"
+                    id="cropYInput"
+                    value="0"
+                >
+
+
+                <input
+                    type="hidden"
+                    name="crop_width"
+                    id="cropWidthInput"
+                    value="0"
+                >
+
+
+                <input
+                    type="hidden"
+                    name="crop_height"
+                    id="cropHeightInput"
+                    value="0"
+                >
+
+
+                <input
+                    type="hidden"
+                    name="rotation"
+                    id="rotationInput"
+                    value="0"
+                >
+
+
+                <!-- ==================================================
+                     Submit
+                =================================================== -->
+
+                <div class="submit-section">
+
+                    <button
+                        type="submit"
+                        class="crop-submit"
+                        id="cropSubmit"
+                    >
+                        Crop Video
+                    </button>
+
+                </div>
+
+            </div>
+
+        </form>
+
+    </div>
+
+</div>
+
+
+<!-- ============================================================
+     Processing overlay
+============================================================= -->
+
+<div
+    id="processingOverlay"
+>
+
+    <div class="processing-box">
+
+        <div class="spinner"></div>
+
+        <strong>
+            Processing your video...
+        </strong>
+
+        <p>
+            Please wait while your video is being cropped.
+        </p>
+
+        <small>
+            Do not close or refresh this page.
+        </small>
+
+    </div>
+
+</div>
+
+
+<!-- ============================================================
+     JavaScript
+============================================================= -->
+
+<script src="{% static 'media_tools/js/crop_video.js' %}"></script>
+
+</body>
+</html>

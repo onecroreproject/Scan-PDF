@@ -42,10 +42,7 @@
     gap: 0.6rem;
   }
 
-  .page-header h1::before {
-    content: "🎬";
-    font-size: 2.1rem;
-  }
+
 
   .subhead {
     margin-top: 0.7rem;
@@ -360,15 +357,219 @@
     background: #cbd5e1;
     border-radius: 10px;
   }
+
+  .remove-file {
+  float: right;
+  border: none;
+  background: transparent;
+  color: #ef4444;
+  font-size: 1.2rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.remove-file:hover {
+  color: #b91c1c;
+}
+
+.loading-card {
+  display: none;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  padding: 3rem 2.5rem;
+  margin-bottom: 2rem;
+  text-align: center;
+  box-shadow: 0 10px 40px -12px rgba(15, 23, 42, 0.08);
+}
+
+.loading-card.show {
+  display: block;
+}
+
+.loading-icon {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  animation: pulse 1.2s infinite;
+}
+
+.loading-card h2 {
+  color: #0f172a;
+  margin-bottom: 0.5rem;
+}
+
+.loading-card p {
+  color: #64748b;
+  margin-bottom: 1.5rem;
+}
+
+.loading-bar-container {
+  max-width: 550px;
+  height: 12px;
+  margin: auto;
+  background: #e2e8f0;
+  border-radius: 50px;
+  overflow: hidden;
+}
+
+.loading-bar {
+  width: 0%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    #7c3aed,
+    #a855f7,
+    #ec4899
+  );
+  border-radius: 50px;
+  transition: width 0.4s ease;
+}
+
+.loading-percentage {
+  margin-top: 0.7rem;
+  color: #7c3aed;
+  font-weight: 700;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.15);
+  }
+}
+.remove-file {
+    float: right;
+    border: none;
+    background: transparent;
+    color: #ef4444;
+    font-size: 1.2rem;
+    font-weight: 700;
+    cursor: pointer;
+    padding: 0 5px;
+}
+
+.remove-file:hover {
+    color: #b91c1c;
+}
+
+/* ===== Main Heading ===== */
+
+.page-header {
+    text-align: center;
+    margin-bottom: 2.5rem;
+}
+
+.page-header h1 {
+  display: flex;
+  flex-direction: column;
+    font-size: 4.2rem;
+    font-weight: 800;
+    line-height: 1;
+    letter-spacing: -0.04em;
+    margin: 0 0 2rem;
+    color: #0f172a;
+}
+
+
+/* ===== Purple Gradient Text ===== */
+
+.gradient-text {
+    background: linear-gradient(
+        135deg,
+        #7c3aed,
+        #a855f7,
+        #ec4899
+    );
+
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+
+.seo-heading {
+    max-width: 1100px;
+    margin: 0 auto 2rem;
+    text-align: center;
+    font-family: Arial, sans-serif;
+}
+
+.seo-main {
+    margin: 0;
+    color: #64748b;
+    font-size: 1.65rem;
+    font-weight: 400;
+    line-height: 1.55;
+}
+
+.seo-keywords {
+    margin: 0.8rem 0 0;
+    color: #94a3b8;
+    font-size: 1.15rem;
+    font-weight: 400;
+    line-height: 1.5;
+}
+
+
+/* ===== Mobile ===== */
+
+@media (max-width: 768px) {
+
+    .page-header h1 {
+        font-size: 3.2rem;
+    }
+
+    .seo-content {
+        padding: 0 1rem;
+    }
+
+    .seo-section h2 {
+        font-size: 1.2rem;
+    }
+
+    .seo-section p {
+        font-size: 0.94rem;
+    }
+}
+
+
+@media (max-width: 480px) {
+
+    .page-header h1 {
+        font-size: 2.7rem;
+    }
+
+    .seo-section {
+        margin-bottom: 1.4rem;
+    }
+}
 </style>
 
 <div class="page-wrapper">
 
   <!-- Header -->
-  <div class="page-header">
-    <h1>Merge Videos</h1>
-    <p class="subhead">Upload two or more video files to combine them into one seamless video.</p>
-  </div>
+ <div class="page-header">
+
+  <h1>
+    Merge <span class="gradient-text">Videos</span>
+  </h1>
+
+ 
+ 
+
+  <p class="max-w-3xl mx-auto text-sm sm:text-base lg:text-lg text-surface-500 leading-relaxed">
+   Merge multiple videos online into one seamless video. Upload your video clips one by one and combine them into a single video.
+
+    </p>
+
+
+    <p class="max-w-3xl mx-auto mt-2 text-xs sm:text-sm text-surface-400 leading-relaxed">
+       merge video online, video merger, combine videos, merge MP4, free video merger
+</p>
+</div>
 
   <!-- Django Messages -->
   {% if messages %}
@@ -391,12 +592,10 @@
           Choose file
         </button>
         <input
-          type="file"
-          name="videos"
-          id="id_videos"
-          multiple
-          accept="video/*"
-          required
+        type="file"
+    name="videos"
+    id="id_videos"
+    accept="video/*"
         >
       </div>
 
@@ -419,116 +618,312 @@
     </form>
   </div>
 
+  <div class="loading-card" id="loadingCard">
+
+  <div class="loading-icon">🎬</div>
+
+  <h2>Merging your videos...</h2>
+
+  <p id="loadingMessage">
+    Preparing your videos...
+  </p>
+
+  <div class="loading-bar-container">
+    <div class="loading-bar" id="loadingBar"></div>
+  </div>
+
+  <div class="loading-percentage" id="loadingPercentage">
+    0%
+  </div>
+
+</div>
+
   <!-- Selected files (dynamic – JS unchanged) -->
   <div id="selectedFiles" class="selected-files-section" style="display: none;">
     <!-- JS will populate -->
   </div>
 
-  <!-- Features – 6 cards -->
-  <section class="features">
-    <h2>How to Merge Videos</h2>
-    <p class="lead">
-      Easily combine multiple clips into one complete video. Perfect for social media, presentations, travel videos, and more.
-    </p>
-
-    <div class="info-grid">
-      <div class="info-card">
-        <h3>Upload Multiple Videos</h3>
-        <p>
-          Select at least two video files. You can upload clips from your phone, camera, YouTube, Instagram, TikTok, or any supported source.
-        </p>
-      </div>
-
-      <div class="info-card">
-        <h3>Supported Formats</h3>
-        <p>
-          Works with MP4, MOV, AVI, MKV, WEBM and other common formats. Files are validated before processing begins.
-        </p>
-      </div>
-
-      <div class="info-card">
-        <h3>Order Matters</h3>
-        <p>
-          Videos are merged in the exact order you select them. Arrange your clips carefully before uploading for the best result.
-        </p>
-      </div>
-
-      <div class="info-card">
-        <h3>Processing Time</h3>
-        <p>
-          Time depends on file size, duration, resolution, and number of videos. Short clips finish quickly; longer ones may take several minutes.
-        </p>
-      </div>
-
-      <div class="info-card">
-        <h3>Do Not Close the Page</h3>
-        <p>
-          Please wait until processing is complete. Do not refresh or close the browser while the videos are being merged.
-        </p>
-      </div>
-
-      <div class="info-card">
-        <h3>Download Result</h3>
-        <p>
-          After successful processing you will be redirected to the result page where you can preview and download the final merged video.
-        </p>
-      </div>
-    </div>
-
-    <div class="tip-box">
-      💡 <strong>Tip:</strong> For faster results, use MP4 videos with moderate resolution. Upload the clips in the order you want them to appear in the final video.
-    </div>
-  </section>
+  
 
 </div>
 
 <!-- JavaScript: show selected file list + make the blue button open the file dialog -->
 <script>
-  (function() {
+(function () {
+
     const videoInput = document.getElementById("id_videos");
     const selectedContainer = document.getElementById("selectedFiles");
     const chooseBtn = document.querySelector(".choose-file-btn");
+    const form = document.querySelector(".form-card");
+    const formElement = form.querySelector("form");
+    const mergeButton = document.querySelector(".btn-merge");
 
-    // Make the blue button trigger the file input
-    chooseBtn.addEventListener("click", function() {
-      videoInput.click();
+    // This stores ALL files selected across multiple clicks
+    let selectedFiles = [];
+
+    // Open browser file picker
+    chooseBtn.addEventListener("click", function () {
+        videoInput.click();
     });
 
+
+    // Every time user selects a file
+    videoInput.addEventListener("change", function () {
+
+        if (!this.files || this.files.length === 0) {
+            return;
+        }
+
+        // Because multiple is NOT used, this will contain one file
+        const newFile = this.files[0];
+
+        // Add new file to our permanent list
+        selectedFiles.push(newFile);
+
+        // Show all selected files
+        updateSelectedFiles();
+
+        // Reset input ONLY after copying the file
+        // This allows the user to open the browser again
+        this.value = "";
+
+    });
+
+
     function updateSelectedFiles() {
-      const files = videoInput.files;
-      selectedContainer.innerHTML = "";
-      if (files.length === 0) {
+
+        selectedContainer.innerHTML = "";
+
+        if (selectedFiles.length === 0) {
+
+            selectedContainer.style.display = "none";
+
+            return;
+        }
+
+
+        selectedContainer.style.display = "block";
+
+
+        // Heading
+        const heading = document.createElement("h3");
+
+        heading.innerHTML =
+            `📁 Selected Videos <span>${selectedFiles.length}</span>`;
+
+        selectedContainer.appendChild(heading);
+
+
+        // File list
+        const list = document.createElement("ol");
+
+        list.className = "file-list";
+
+
+        selectedFiles.forEach(function (file, index) {
+
+            const item = document.createElement("li");
+
+            item.innerHTML = `
+                <span>${file.name}</span>
+
+                <button
+                    type="button"
+                    class="remove-file"
+                    data-index="${index}">
+                    ×
+                </button>
+            `;
+
+            list.appendChild(item);
+
+        });
+
+
+        selectedContainer.appendChild(list);
+
+
+        // Validation message
+        if (selectedFiles.length < 2) {
+
+            const warning = document.createElement("div");
+
+            warning.className = "warning-message";
+
+            warning.textContent =
+                "⚠️ Please select at least two videos.";
+
+            selectedContainer.appendChild(warning);
+
+            // Disable merge button
+            mergeButton.disabled = true;
+
+        } else {
+
+            // Two or more videos
+            mergeButton.disabled = false;
+
+        }
+    }
+
+
+    // Remove individual video
+    selectedContainer.addEventListener("click", function (event) {
+
+        if (!event.target.classList.contains("remove-file")) {
+            return;
+        }
+
+
+        const index = Number(
+            event.target.dataset.index
+        );
+
+
+        // Remove selected video
+        selectedFiles.splice(index, 1);
+
+
+        // Update screen
+        updateSelectedFiles();
+
+    });
+
+
+    // Submit / Merge
+    formElement.addEventListener("submit", function (event) {
+
+        // Safety validation
+        if (selectedFiles.length < 2) {
+
+            event.preventDefault();
+
+            alert("Please select at least two videos.");
+
+            return;
+        }
+
+
+        /*
+         * IMPORTANT:
+         * Put ALL accumulated files back into
+         * the actual Django file input.
+         */
+        const dataTransfer = new DataTransfer();
+
+
+        selectedFiles.forEach(function (file) {
+
+            dataTransfer.items.add(file);
+
+        });
+
+
+        videoInput.files = dataTransfer.files;
+
+
+        /*
+         * Now Django will receive:
+         *
+         * videos = video1
+         * videos = video2
+         * videos = video3
+         * ...
+         */
+
+
+        // Hide form
+        form.style.display = "none";
+
+        // Hide selected files
         selectedContainer.style.display = "none";
-        return;
-      }
-      selectedContainer.style.display = "block";
 
-      const heading = document.createElement("h3");
-      heading.innerHTML = `📁 Selected Videos <span>${files.length}</span>`;
-      selectedContainer.appendChild(heading);
+        // Show loading card
+        const loadingCard =
+            document.getElementById("loadingCard");
 
-      const list = document.createElement("ol");
-      list.className = "file-list";
-      for (let i = 0; i < files.length; i++) {
-        const item = document.createElement("li");
-        item.textContent = files[i].name;
-        list.appendChild(item);
-      }
-      selectedContainer.appendChild(list);
+        if (loadingCard) {
 
-      if (files.length < 2) {
-        const warning = document.createElement("div");
-        warning.className = "warning-message";
-        warning.textContent = "⚠️ Please select at least two videos.";
-        selectedContainer.appendChild(warning);
-      }
+            loadingCard.classList.add("show");
+
+            startLoading();
+
+        }
+
+    });
+
+
+    function startLoading() {
+
+        let progress = 0;
+
+        const loadingBar =
+            document.getElementById("loadingBar");
+
+        const loadingPercentage =
+            document.getElementById("loadingPercentage");
+
+        const loadingMessage =
+            document.getElementById("loadingMessage");
+
+
+        if (!loadingBar) {
+            return;
+        }
+
+
+        window.mergeLoadingInterval =
+            setInterval(function () {
+
+                if (progress < 90) {
+
+                    progress += Math.random() * 4;
+
+
+                    if (progress > 90) {
+                        progress = 90;
+                    }
+
+
+                    progress = Math.floor(progress);
+
+
+                    loadingBar.style.width =
+                        progress + "%";
+
+
+                    loadingPercentage.textContent =
+                        progress + "%";
+
+
+                    if (progress < 30) {
+
+                        loadingMessage.textContent =
+                            "Preparing your videos...";
+
+                    } else if (progress < 60) {
+
+                        loadingMessage.textContent =
+                            "Uploading videos...";
+
+                    } else {
+
+                        loadingMessage.textContent =
+                            "Merging your videos...";
+
+                    }
+
+                }
+
+            }, 500);
+
     }
 
-    videoInput.addEventListener("change", updateSelectedFiles);
-    if (videoInput.files.length > 0) {
-      updateSelectedFiles();
-    }
-  })();
+
+    // Initial state
+    updateSelectedFiles();
+
+})();
 </script>
 
 {% endblock %}

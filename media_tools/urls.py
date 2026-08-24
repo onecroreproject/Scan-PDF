@@ -17,5 +17,11 @@ urlpatterns =[
         views.merge_video_view,
         name="merge_video",
     ),
+    path(
+        "crop-video/",
+        views.crop_video_view,
+        name="crop_video",
+    ),
+
 
 ]

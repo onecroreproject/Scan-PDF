@@ -2,304 +2,1627 @@
 {% load static %}
 
 {% block extra_head %}
+
 <!-- CKEditor 5 Document Build -->
 <script src="https://cdn.ckeditor.com/ckeditor5/40.0.0/decoupled-document/ckeditor.js"></script>
+
 <style>
+
+/* =========================================================
+   PAGE HEADING
+   ========================================================= */
+
+.tool-heading {
+    font-size: 3.5rem;
+    line-height: 0.95;
+    font-weight: 900;
+    letter-spacing: -0.04em;
+}
+
+.gradient-text {
+    background: linear-gradient(
+        135deg,
+        #7c3aed,
+        #a855f7,
+        #ec4899
+    );
+
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+
+/* =========================================================
+   PURPLE BUTTON
+   ========================================================= */
+
+.purple-btn {
+    background: linear-gradient(
+        135deg,
+        #6d28d9 0%,
+        #7c3aed 45%,
+        #a855f7 100%
+    );
+
+    color: white;
+
+    box-shadow:
+        0 8px 25px rgba(124, 58, 237, 0.25);
+
+    transition: all 0.25s ease;
+}
+
+.purple-btn:hover {
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 12px 30px rgba(124, 58, 237, 0.38);
+}
+
+.purple-btn:active {
+    transform: translateY(0);
+}
+
+.purple-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+
+/* =========================================================
+   SELECT FILE AREA
+   ========================================================= */
+
+.select-file-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    padding: 2rem;
+
+    border: 2px dashed transparent;
+    border-radius: 20px;
+
+    transition: all 0.25s ease;
+}
+
+.select-file-area.drag-active {
+    border-color: #7c3aed;
+    background: #faf5ff;
+}
+
+
+/* =========================================================
+   DROP ZONE
+   ========================================================= */
+
+#drop-zone {
+    width: 100%;
+
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+
+    cursor: pointer;
+
+    transition: all 0.25s ease;
+}
+
+
+/* =========================================================
+   UPLOAD ICON
+   ========================================================= */
+
+.upload-icon {
+    width: 64px;
+    height: 64px;
+
+    border-radius: 1rem;
+
+    background: #ede9fe;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    margin: 0 auto 1rem;
+}
+
+.upload-icon i {
+    color: #7c3aed;
+}
+
+
+/* =========================================================
+   EDITOR CONTAINER
+   ========================================================= */
+
+.editor-container {
+    display: flex;
+    flex-direction: column;
+
+    height: calc(100vh - 200px);
+
+    background: #f8fafc;
+
+    border-radius: 1.5rem;
+
+    overflow: hidden;
+
+    border: 1px solid #e2e8f0;
+
+    box-shadow:
+        0 4px 6px -1px rgba(0, 0, 0, 0.08),
+        0 2px 4px -1px rgba(0, 0, 0, 0.04);
+}
+
+
+/* =========================================================
+   TOOLBAR
+   ========================================================= */
+
+#toolbar-container {
+    background: #f8fafc;
+
+    border-bottom: 1px solid #f1f5f9;
+
+    padding: 0.5rem;
+
+    z-index: 10;
+}
+
+.ck-toolbar {
+    border: none !important;
+    background: transparent !important;
+}
+
+.ck.ck-toolbar {
+    border-radius: 0 !important;
+}
+
+.ck.ck-toolbar .ck-toolbar__items {
+    flex-wrap: wrap;
+}
+
+
+/* =========================================================
+   EDITOR CONTENT
+   ========================================================= */
+
+.editor-content-wrapper {
+    flex: 1;
+
+    overflow: hidden;
+
+    display: flex;
+    flex-direction: column;
+
+    background: #f8fafc;
+}
+
+#editor {
+    flex: 1;
+
+    width: 100%;
+    height: 100%;
+
+    padding: 3rem;
+
+    background: #ffffff;
+
+    outline: none;
+
+    word-wrap: break-word;
+
+    border: none;
+
+    overflow-y: auto;
+}
+
+.ck-content {
+    font-family: 'Inter', sans-serif !important;
+    font-size: 11pt !important;
+    line-height: 1.6;
+}
+
+
+/* =========================================================
+   DOCUMENT STATUS
+   ========================================================= */
+
+.doc-status {
+    font-size: 10px;
+
+    font-weight: 900;
+
+    color: #059669;
+
+    background: #ecfdf5;
+
+    padding: 0.375rem 0.75rem;
+
+    border-radius: 0.5rem;
+
+    border: 1px solid #d1fae5;
+
+    text-transform: uppercase;
+
+    letter-spacing: 0.1em;
+
+    display: inline-flex;
+
+    align-items: center;
+
+    gap: 0.5rem;
+}
+
+
+/* =========================================================
+   PAGE NAVIGATION
+   ========================================================= */
+
+.page-nav-btn {
+    width: 38px;
+    height: 38px;
+
+    border-radius: 10px;
+
+    border: 1px solid #ddd6fe;
+
+    background: #f5f3ff;
+
+    color: #7c3aed;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    cursor: pointer;
+
+    transition: all 0.2s ease;
+}
+
+.page-nav-btn:hover:not(:disabled) {
+    background: #7c3aed;
+
+    color: white;
+
+    transform: translateY(-1px);
+}
+
+.page-nav-btn:disabled {
+    opacity: 0.4;
+
+    cursor: not-allowed;
+
+    transform: none;
+}
+
+.page-indicator {
+    min-width: 110px;
+
+    text-align: center;
+
+    font-size: 12px;
+
+    font-weight: 800;
+
+    color: #475569;
+
+    background: #ffffff;
+
+    border: 1px solid #e2e8f0;
+
+    border-radius: 10px;
+
+    padding: 0.625rem 1rem;
+}
+
+
+/* =========================================================
+   EXPORT PAGE BUTTON
+   ========================================================= */
+
+.export-page-btn {
+    background: #ffffff;
+
+    border: 1px solid #ddd6fe;
+
+    color: #7c3aed;
+
+    transition: all 0.25s ease;
+}
+
+.export-page-btn:hover {
+    background: #faf5ff;
+
+    border-color: #a78bfa;
+
+    transform: translateY(-2px);
+}
+
+
+/* =========================================================
+   REFRESH BUTTON
+   ========================================================= */
+
+.refresh-btn {
+    width: 44px;
+    height: 44px;
+
+    border-radius: 12px;
+
+    background: #ffffff;
+
+    border: 1px solid #e2e8f0;
+
+    color: #94a3b8;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    transition: all 0.25s ease;
+}
+
+.refresh-btn:hover {
+    color: #ef4444;
+
+    border-color: #fecaca;
+
+    background: #fef2f2;
+}
+
+
+/* =========================================================
+   LOADING OVERLAY
+   ========================================================= */
+
+#loading-overlay {
+    backdrop-filter: blur(8px);
+}
+
+.loading-card {
+    position: relative;
+
+    background: #ffffff;
+
+    border-radius: 1rem;
+
+    padding: 3rem;
+
+    max-width: 24rem;
+
+    width: 100%;
+
+    box-shadow:
+        0 20px 50px rgba(15, 23, 42, 0.18);
+
+    text-align: center;
+}
+
+.loading-spinner {
+    width: 64px;
+    height: 64px;
+
+    border-radius: 50%;
+
+    border: 4px solid #e2e8f0;
+
+    border-top-color: #7c3aed;
+
+    animation: spin 0.8s linear infinite;
+
+    margin: 0 auto;
+}
+
+.loading-icon {
+    position: absolute;
+
+    inset: 0;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    color: #7c3aed;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 768px) {
+
+    .tool-heading {
+        font-size: 3rem;
+    }
+
     .editor-container {
-        display: flex;
-        flex-direction: column;
-        height: calc(100vh - 200px);
-        background: #f8fafc;
-        border-radius: 1.5rem;
-        overflow: hidden;
-        border: 1px solid #e2e8f0;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
-    }
-
-    #toolbar-container {
-        background: #fff;
-        border-bottom: 2px solid #f1f5f9;
-        padding: 0.5rem;
-        z-index: 10;
-    }
-
-    .editor-content-wrapper {
-        flex: 1;
-        overflow: hidden;
-        display: flex;
-        flex-direction: column;
-        background: #fff;
+        height: calc(100vh - 170px);
     }
 
     #editor {
-        flex: 1;
-        width: 100%;
-        height: 100%;
-        padding: 3rem;
-        background: white;
-        outline: none;
-        word-wrap: break-word;
-        border: none;
-        overflow-y: auto;
+        padding: 1.5rem;
     }
 
-    .ck-content {
-        font-family: 'Inter', sans-serif !important;
-        font-size: 11pt !important;
-        line-height: 1.6;
+    #toolbar-container {
+        overflow-x: auto;
     }
-    
-    .ck-toolbar { border: none !important; background: transparent !important; }
-    
-    #loading-overlay { backdrop-filter: blur(8px); }
+
+}
+
+@media (max-width: 480px) {
+
+    .tool-heading {
+        font-size: 2.6rem;
+    }
+
+    .select-file-area {
+        padding: 1.5rem 1rem;
+    }
+
+    #editor {
+        padding: 1rem;
+    }
+
+}
+
 </style>
+
 {% endblock %}
+
 
 {% block tool_content %}
-<!-- Initial Upload UI -->
-<div id="upload-stage" class="max-w-xl mx-auto animate-fade-in-up">
-    <div class="bg-white rounded-2xl border border-surface-100 p-8 shadow-mega">
-        <div id="drop-zone" class="relative rounded-xl border-2 border-dashed border-brand-100 bg-brand-50/10 hover:bg-brand-50/30 hover:border-brand-400 transition-all duration-300 p-12 text-center cursor-pointer group">
-            <input type="file" id="file-input" class="hidden" accept=".pdf">
-            <div class="space-y-3">
-                <div class="w-14 h-14 rounded-2xl bg-white border border-surface-100 flex items-center justify-center mx-auto shadow-sm group-hover:scale-110 group-hover:shadow-brand-200/50 transition-all duration-500">
-                    <i data-lucide="file-edit" class="w-8 h-8 text-surface-300 group-hover:text-brand-500"></i>
+
+
+<!-- =========================================================
+     PAGE HEADER
+     ========================================================= -->
+
+<section class="text-center mb-8 sm:mb-10">
+
+    <h1 class="tool-heading text-surface-900 mb-3">
+
+        <span class="block">
+            {{ s1 }}
+        </span>
+
+        <span class="block gradient-text">
+            {{ highlight }}
+        </span>
+
+    </h1>
+
+
+    <!-- SEO INTRO -->
+
+    <p class="max-w-3xl mx-auto text-sm sm:text-base lg:text-lg text-surface-500 leading-relaxed">
+
+        {{ seo_intro }}
+
+    </p>
+
+
+    <!-- SEO KEYWORDS -->
+
+    {% if seo_keywords %}
+
+    <p class="max-w-3xl mx-auto mt-2 text-xs sm:text-sm text-surface-400 leading-relaxed">
+
+        {{ seo_keywords }}
+
+    </p>
+
+    {% endif %}
+
+</section>
+
+
+
+<!-- =========================================================
+     MAIN TOOL CARD
+     ========================================================= -->
+
+<div class="rounded-2xl bg-[#faf5ff] p-4 sm:p-6">
+
+
+    <!-- =====================================================
+         UPLOAD STAGE
+         ===================================================== -->
+
+    <div
+        id="upload-stage"
+        class="max-w-2xl mx-auto animate-fade-in-up"
+    >
+
+
+        <!-- SELECT FILE AREA -->
+
+        <div
+            id="select-file-area"
+            class="select-file-area"
+        >
+
+            <!-- DROP ZONE -->
+
+            <div
+                id="drop-zone"
+                class="relative"
+            >
+
+
+                <!-- UPLOAD ICON -->
+
+                <div class="upload-icon">
+
+                    <i
+                        data-lucide="file-edit"
+                        class="w-7 h-7"
+                    ></i>
+
                 </div>
-                <div>
-                    <p class="text-xl font-black text-surface-900 leading-tight">Drop PDF to start editing</p>
-                    <p class="text-[11px] text-surface-400 font-bold uppercase tracking-widest mt-2 px-10">We'll automatically convert layout into editable text blocks</p>
+
+
+                <!-- SELECT FILE BUTTON -->
+
+                <button
+                    type="button"
+                    id="select-file-btn"
+                    class="purple-btn px-8 py-3 rounded-2xl text-white font-black text-sm sm:text-base uppercase tracking-widest flex items-center justify-center gap-3"
+                >
+
+                    <i
+                        data-lucide="upload"
+                        class="w-5 h-5"
+                    ></i>
+
+                    Select PDF
+
+                </button>
+
+
+                <!-- DESCRIPTION -->
+
+                <p class="text-sm font-bold text-surface-700 mt-4">
+
+                    Drop your PDF here, or
+
+                    <span class="text-violet-600">
+                        browse
+                    </span>
+
+                </p>
+
+
+                <!-- SHORT DESCRIPTION -->
+
+                <p class="text-xs text-surface-400 mt-2">
+
+                    Convert PDF pages into editable text and formatting with ease.
+
+                </p>
+
+
+                <!-- FILE INFORMATION -->
+
+                <p class="text-xs text-surface-400 mt-3">
+
+                    Max 50MB
+                    &nbsp;&nbsp;•&nbsp;&nbsp;
+                    Accepted:
+
+                    <span class="text-surface-500 font-medium">
+                        .pdf
+                    </span>
+
+                </p>
+
+
+                <!-- HIDDEN FILE INPUT -->
+
+                <input
+                    type="file"
+                    id="file-input"
+                    class="hidden"
+                    accept=".pdf"
+                >
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- =====================================================
+         EDITOR UI
+         ===================================================== -->
+
+    <div
+        id="editor-wrapper"
+        class="hidden animate-fade-in-up"
+    >
+
+
+        <!-- EDITOR HEADER -->
+
+        <div
+            class="flex flex-col lg:flex-row items-start lg:items-center justify-between gap-4 mb-5 px-1"
+        >
+
+
+            <!-- LEFT -->
+
+            <div class="flex items-center gap-3 flex-wrap">
+
+
+                <!-- STATUS -->
+
+                <span
+                    id="doc-status"
+                    class="doc-status"
+                >
+
+                    <span
+                        class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"
+                    ></span>
+
+                    READY
+
+                </span>
+
+
+                <!-- PAGE NAVIGATION -->
+
+                <div
+                    id="page-nav"
+                    class="hidden items-center gap-2 ml-0 lg:ml-2"
+                >
+
+                    <button
+                        type="button"
+                        id="prev-page-btn"
+                        class="page-nav-btn"
+                        title="Previous page"
+                    >
+
+                        <i
+                            data-lucide="chevron-left"
+                            class="w-4 h-4"
+                        ></i>
+
+                    </button>
+
+
+                    <span
+                        id="page-indicator"
+                        class="page-indicator"
+                    >
+                        Page 1
+                    </span>
+
+
+                    <button
+                        type="button"
+                        id="next-page-btn"
+                        class="page-nav-btn"
+                        title="Next page"
+                    >
+
+                        <i
+                            data-lucide="chevron-right"
+                            class="w-4 h-4"
+                        ></i>
+
+                    </button>
+
                 </div>
-            </div>
-        </div>
-    </div>
-</div>
 
-<!-- Editor UI (Hidden Initially) -->
-<div id="editor-wrapper" class="hidden animate-fade-in-up">
-    <div class="flex items-center justify-between mb-6 px-2">
-        <div class="flex items-center gap-3">
-             <span id="doc-status" class="text-[10px] font-black text-emerald-600 bg-emerald-50 px-3 py-1.5 rounded-lg border border-emerald-100 uppercase tracking-widest flex items-center gap-2">
-                <span class="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></span> READY
-            </span>
-            <div id="page-nav" class="hidden flex items-center gap-2 ml-4">
-                <button id="prev-page-btn" class="p-2 text-surface-500 hover:text-brand-600 hover:bg-surface-100 rounded bg-white border border-surface-200 shadow-sm transition-colors disabled:opacity-50">
-                    <i data-lucide="chevron-left" class="w-4 h-4"></i>
+            </div>
+
+
+
+            <!-- RIGHT -->
+
+            <div class="flex items-center gap-2.5 flex-wrap">
+
+
+                <!-- EXPORT PAGE -->
+
+                <button
+                    type="button"
+                    id="download-page-btn"
+                    class="hidden export-page-btn items-center justify-center gap-2.5 px-6 py-3 rounded-2xl font-black text-xs uppercase tracking-widest"
+                >
+
+                    <i
+                        data-lucide="file-down"
+                        class="w-4 h-4"
+                    ></i>
+
+                    Export Page
+
                 </button>
-                <span id="page-indicator" class="text-xs font-bold text-surface-700 bg-white border border-surface-200 rounded-lg px-4 py-1.5 shadow-sm">Page 1</span>
-                <button id="next-page-btn" class="p-2 text-surface-500 hover:text-brand-600 hover:bg-surface-100 rounded bg-white border border-surface-200 shadow-sm transition-colors disabled:opacity-50">
-                    <i data-lucide="chevron-right" class="w-4 h-4"></i>
+
+
+                <!-- EXPORT ALL -->
+
+                <button
+                    type="button"
+                    id="download-btn"
+                    class="purple-btn inline-flex items-center justify-center gap-2.5 px-6 py-3 rounded-2xl text-white font-black text-xs uppercase tracking-widest"
+                >
+
+                    <i
+                        data-lucide="download"
+                        class="w-4 h-4"
+                    ></i>
+
+                    Export All
+
                 </button>
+
+
+                <!-- REFRESH -->
+
+                <button
+                    type="button"
+                    onclick="location.reload()"
+                    class="refresh-btn"
+                    title="Start over"
+                >
+
+                    <i
+                        data-lucide="refresh-cw"
+                        class="w-4 h-4"
+                    ></i>
+
+                </button>
+
             </div>
+
         </div>
-        <div class="flex gap-3">
-             <button id="download-page-btn" class="hidden items-center gap-2 px-6 py-3 bg-white border border-brand-200 text-brand-700 font-black text-xs uppercase tracking-widest rounded-xl shadow-sm hover:bg-brand-50 transition-all active:translate-y-0.5">
-                <i data-lucide="file-down" class="w-4 h-4"></i> Export Page
-             </button>
-             <button id="download-btn" class="flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-brand-600 to-brand-700 text-white font-black text-xs uppercase tracking-widest rounded-xl shadow-lg hover:shadow-brand-500/30 transition-all hover:-translate-y-0.5 active:translate-y-0">
-                <i data-lucide="download" class="w-4 h-4"></i> Export All
-            </button>
-            <button onclick="location.reload()" class="p-3 text-surface-400 hover:text-red-500 transition-colors bg-white border border-surface-100 rounded-xl shadow-sm">
-                <i data-lucide="refresh-cw" class="w-4 h-4"></i>
-            </button>
+
+
+
+        <!-- EDITOR -->
+
+        <div class="editor-container">
+
+            <div id="toolbar-container"></div>
+
+
+            <div class="editor-content-wrapper">
+
+                <div id="editor">
+
+                    <!-- Content loaded via AJAX -->
+
+                </div>
+
+            </div>
+
         </div>
+
     </div>
 
-    <div class="editor-container">
-        <div id="toolbar-container"></div>
-        <div class="editor-content-wrapper">
-            <div id="editor">
-                <!-- Content loaded via AJAX -->
-            </div>
-        </div>
-    </div>
 </div>
 
-<!-- Processing Overlay -->
-<div id="loading-overlay" class="hidden fixed inset-0 z-[100] flex items-center justify-center">
-    <div class="absolute inset-0 bg-surface-900/40"></div>
-    <div class="relative bg-white rounded-2xl p-12 max-w-sm w-full shadow-mega text-center transform transition-all animate-success-pop">
-        <div class="relative w-24 h-24 mx-auto mb-4">
-            <div class="absolute inset-0 border-4 border-surface-50 rounded-full"></div>
-            <div class="absolute inset-0 border-4 border-t-brand-500 border-r-transparent border-b-transparent border-l-transparent rounded-full animate-spin"></div>
-            <div class="absolute inset-0 flex items-center justify-center text-brand-500">
-                <i data-lucide="sparkles" class="w-8 h-8 animate-pulse"></i>
+
+
+<!-- =========================================================
+     PROCESSING OVERLAY
+     ========================================================= -->
+
+<div
+    id="loading-overlay"
+    class="hidden fixed inset-0 z-[100] flex items-center justify-center p-4"
+>
+
+
+    <!-- BACKDROP -->
+
+    <div
+        class="absolute inset-0 bg-surface-900/40"
+    ></div>
+
+
+    <!-- LOADING CARD -->
+
+    <div
+        class="loading-card animate-success-pop"
+    >
+
+        <div class="relative w-20 h-20 mx-auto mb-5">
+
+            <div class="loading-spinner"></div>
+
+            <div class="loading-icon">
+
+                <i
+                    data-lucide="sparkles"
+                    class="w-7 h-7 animate-pulse"
+                ></i>
+
             </div>
+
         </div>
-        <h3 id="loading-title" class="text-xl font-black text-surface-900 mb-2 uppercase tracking-tight">AI Engine Busy</h3>
-        <p id="loading-desc" class="text-surface-500 text-xs font-medium leading-relaxed">Deconstructing PDF layers into editable semantic structures...</p>
+
+
+        <h3
+            id="loading-title"
+            class="text-xl font-black text-surface-900 mb-2 uppercase tracking-tight"
+        >
+
+            AI Engine Busy
+
+        </h3>
+
+
+        <p
+            id="loading-desc"
+            class="text-surface-500 text-xs font-medium leading-relaxed"
+        >
+
+            Deconstructing PDF layers into editable semantic structures...
+
+        </p>
+
     </div>
+
 </div>
+
+
 {% endblock %}
 
-{% block extra_scripts %}
-<script>
-    const API_URL = '{% url "converter:convert_file" "edit-pdf" %}';
-    const CSRF_TOKEN = '{{ csrf_token }}';
-    
-    let editorInstance;
-    let pagesData = [];
-    let currentPageIndex = 0;
-    
-    const dropZone = document.getElementById('drop-zone');
-    const fileInput = document.getElementById('file-input');
-    const uploadStage = document.getElementById('upload-stage');
-    const editorWrapper = document.getElementById('editor-wrapper');
-    const downloadBtn = document.getElementById('download-btn');
-    const downloadPageBtn = document.getElementById('download-page-btn');
-    const pageNav = document.getElementById('page-nav');
-    const prevPageBtn = document.getElementById('prev-page-btn');
-    const nextPageBtn = document.getElementById('next-page-btn');
-    const pageIndicator = document.getElementById('page-indicator');
-    const loadingOverlay = document.getElementById('loading-overlay');
-    const loadingTitle = document.getElementById('loading-title');
-    const loadingDesc = document.getElementById('loading-desc');
 
-    dropZone.onclick = () => fileInput.click();
-    fileInput.onchange = (e) => handleUpload(e.target.files[0]);
+{% block extra_scripts %}
+
+<script>
+
+    const API_URL =
+        '{% url "converter:convert_file" "edit-pdf" %}';
+
+    const CSRF_TOKEN =
+        '{{ csrf_token }}';
+
+
+    let editorInstance;
+
+    let pagesData = [];
+
+    let currentPageIndex = 0;
+
+
+    const dropZone =
+        document.getElementById('drop-zone');
+
+    const fileInput =
+        document.getElementById('file-input');
+
+    const uploadStage =
+        document.getElementById('upload-stage');
+
+    const editorWrapper =
+        document.getElementById('editor-wrapper');
+
+    const downloadBtn =
+        document.getElementById('download-btn');
+
+    const downloadPageBtn =
+        document.getElementById('download-page-btn');
+
+    const pageNav =
+        document.getElementById('page-nav');
+
+    const prevPageBtn =
+        document.getElementById('prev-page-btn');
+
+    const nextPageBtn =
+        document.getElementById('next-page-btn');
+
+    const pageIndicator =
+        document.getElementById('page-indicator');
+
+    const loadingOverlay =
+        document.getElementById('loading-overlay');
+
+    const loadingTitle =
+        document.getElementById('loading-title');
+
+    const loadingDesc =
+        document.getElementById('loading-desc');
+
+
+    /* =====================================================
+       SELECT FILE BUTTON
+       ===================================================== */
+
+    const selectFileBtn =
+        document.getElementById('select-file-btn');
+
+
+    if (selectFileBtn) {
+
+        selectFileBtn.onclick = function (event) {
+
+            event.stopPropagation();
+
+            fileInput.click();
+
+        };
+
+    }
+
+
+    /* =====================================================
+       DROP ZONE CLICK
+       ===================================================== */
+
+    dropZone.onclick = function () {
+
+        fileInput.click();
+
+    };
+
+
+    /* =====================================================
+       FILE INPUT
+       ===================================================== */
+
+    fileInput.onchange = function (e) {
+
+        handleUpload(
+            e.target.files[0]
+        );
+
+    };
+
+
+    /* =====================================================
+       HANDLE UPLOAD
+       ===================================================== */
 
     async function handleUpload(file) {
+
         if (!file) return;
-        
-        showLoading("Converting PDF", "Preparing your document for precision editing. This may take a moment...");
-        
-        const fd = new FormData();
-        fd.append('file', file);
-        fd.append('csrfmiddlewaretoken', CSRF_TOKEN);
-        
+
+
+        showLoading(
+            "Converting PDF",
+            "Preparing your document for precision editing. This may take a moment..."
+        );
+
+
+        const fd =
+            new FormData();
+
+
+        fd.append(
+            'file',
+            file
+        );
+
+
+        fd.append(
+            'csrfmiddlewaretoken',
+            CSRF_TOKEN
+        );
+
+
         try {
-            const resp = await fetch(API_URL, { method: 'POST', body: fd });
-            const ct = resp.headers.get('content-type') || '';
-            if (ct.includes('application/json')) {
-                const data = await resp.json();
+
+            const resp =
+                await fetch(
+                    API_URL,
+                    {
+                        method: 'POST',
+                        body: fd
+                    }
+                );
+
+
+            const ct =
+                resp.headers.get(
+                    'content-type'
+                ) || '';
+
+
+            if (
+                ct.includes(
+                    'application/json'
+                )
+            ) {
+
+                const data =
+                    await resp.json();
+
+
                 if (data.success) {
-                    pagesData = data.pages || [];
-                    currentPageIndex = 0;
-                    
-                    if (pagesData.length > 0) {
-                        if (pagesData.length > 1) {
-                            pageNav.classList.remove('hidden');
-                            pageNav.classList.add('flex');
-                            downloadPageBtn.classList.remove('hidden');
-                            downloadPageBtn.classList.add('flex');
+
+                    pagesData =
+                        data.pages || [];
+
+
+                    currentPageIndex =
+                        0;
+
+
+                    if (
+                        pagesData.length > 0
+                    ) {
+
+                        if (
+                            pagesData.length > 1
+                        ) {
+
+                            pageNav.classList.remove(
+                                'hidden'
+                            );
+
+                            pageNav.classList.add(
+                                'flex'
+                            );
+
+
+                            downloadPageBtn.classList.remove(
+                                'hidden'
+                            );
+
+                            downloadPageBtn.classList.add(
+                                'flex'
+                            );
+
+
                             updatePaginationUI();
+
                         }
 
-                        initEditor(pagesData[0]);
-                        uploadStage.classList.add('hidden');
-                        editorWrapper.classList.remove('hidden');
+
+                        initEditor(
+                            pagesData[0]
+                        );
+
+
+                        uploadStage.classList.add(
+                            'hidden'
+                        );
+
+
+                        editorWrapper.classList.remove(
+                            'hidden'
+                        );
+
                     } else {
-                        alert("No editable pages found in this PDF.");
+
+                        alert(
+                            "No editable pages found in this PDF."
+                        );
+
                     }
+
                 } else {
-                    alert(data.error || "Upload failed. Please try a standard PDF.");
+
+                    alert(
+                        data.error ||
+                        "Upload failed. Please try a standard PDF."
+                    );
+
                 }
+
             } else {
-                alert("Server returned an unexpected response. Please try a different PDF.");
+
+                alert(
+                    "Server returned an unexpected response. Please try a different PDF."
+                );
+
             }
+
         } catch (e) {
-            alert("Error: " + e.message);
+
+            alert(
+                "Error: " +
+                e.message
+            );
+
         } finally {
+
             hideLoading();
+
         }
+
     }
+
+
+    /* =====================================================
+       INITIALIZE EDITOR
+       ===================================================== */
 
     async function initEditor(html) {
-        const editorEl = document.querySelector('#editor');
-        editorEl.innerHTML = html;
+
+        const editorEl =
+            document.querySelector(
+                '#editor'
+            );
+
+
+        editorEl.innerHTML =
+            html;
+
 
         try {
-            const editor = await DecoupledEditor.create(editorEl, {
-                placeholder: 'Type or paste your content here...',
-                toolbar: {
-                    items: [
-                        'heading', '|', 'bold', 'italic', 'underline', 'strikethrough', 'link', '|',
-                        'bulletedList', 'numberedList', 'todoList', '|',
-                        'outdent', 'indent', 'alignment', '|',
-                        'imageUpload', 'blockQuote', 'insertTable', 'mediaEmbed', '|',
-                        'undo', 'redo', 'fontSize', 'fontFamily', 'fontColor', 'fontBackgroundColor', 'highlight'
-                    ]
-                }
-            });
-            
-            const toolbarContainer = document.querySelector('#toolbar-container');
-            toolbarContainer.appendChild(editor.ui.view.toolbar.element);
-            editorInstance = editor;
+
+            const editor =
+                await DecoupledEditor.create(
+                    editorEl,
+                    {
+                        placeholder:
+                            'Type or paste your content here...',
+
+                        toolbar: {
+
+                            items: [
+
+                                'heading',
+                                '|',
+
+                                'bold',
+                                'italic',
+                                'underline',
+                                'strikethrough',
+                                'link',
+
+                                '|',
+
+                                'bulletedList',
+                                'numberedList',
+                                'todoList',
+
+                                '|',
+
+                                'outdent',
+                                'indent',
+                                'alignment',
+
+                                '|',
+
+                                'imageUpload',
+                                'blockQuote',
+                                'insertTable',
+                                'mediaEmbed',
+
+                                '|',
+
+                                'undo',
+                                'redo',
+
+                                'fontSize',
+                                'fontFamily',
+                                'fontColor',
+                                'fontBackgroundColor',
+                                'highlight'
+
+                            ]
+
+                        }
+
+                    }
+                );
+
+
+            const toolbarContainer =
+                document.querySelector(
+                    '#toolbar-container'
+                );
+
+
+            toolbarContainer.appendChild(
+                editor.ui.view.toolbar.element
+            );
+
+
+            editorInstance =
+                editor;
+
+
             lucide.createIcons();
-        } catch (error) { console.error(error); }
+
+        } catch (error) {
+
+            console.error(
+                error
+            );
+
+        }
+
     }
 
-    async function executeDownload(htmlContent, filename) {
-        showLoading("Exporting PDF", "Finalizing your edits and re-aligning document layers...");
-        const fd = new FormData();
-        fd.append('html_content', htmlContent);
-        fd.append('csrfmiddlewaretoken', CSRF_TOKEN);
-        
+
+    /* =====================================================
+       EXECUTE DOWNLOAD
+       ===================================================== */
+
+    async function executeDownload(
+        htmlContent,
+        filename
+    ) {
+
+        showLoading(
+            "Exporting PDF",
+            "Finalizing your edits and re-aligning document layers..."
+        );
+
+
+        const fd =
+            new FormData();
+
+
+        fd.append(
+            'html_content',
+            htmlContent
+        );
+
+
+        fd.append(
+            'csrfmiddlewaretoken',
+            CSRF_TOKEN
+        );
+
+
         try {
-            const resp = await fetch(API_URL, { method: 'POST', body: fd });
-            if (!resp.ok) throw new Error("Conversion failed");
-            
-            const blob = await resp.blob();
-            const url = window.URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = filename;
-            document.body.appendChild(a);
+
+            const resp =
+                await fetch(
+                    API_URL,
+                    {
+                        method: 'POST',
+                        body: fd
+                    }
+                );
+
+
+            if (!resp.ok) {
+
+                throw new Error(
+                    "Conversion failed"
+                );
+
+            }
+
+
+            const blob =
+                await resp.blob();
+
+
+            const url =
+                window.URL.createObjectURL(
+                    blob
+                );
+
+
+            const a =
+                document.createElement(
+                    'a'
+                );
+
+
+            a.href =
+                url;
+
+
+            a.download =
+                filename;
+
+
+            document.body.appendChild(
+                a
+            );
+
+
             a.click();
+
+
             a.remove();
-        } catch (e) { alert(e.message); } 
-        finally { hideLoading(); }
+
+        } catch (e) {
+
+            alert(
+                e.message
+            );
+
+        } finally {
+
+            hideLoading();
+
+        }
+
     }
 
-    downloadBtn.onclick = async () => {
-        if (!editorInstance) return;
-        pagesData[currentPageIndex] = editorInstance.getData();
-        const pageBreakHtml = '\n<div class="pdf-page-break" style="page-break-after:always; border-bottom: 2px dashed #cbd5e1; margin: 40px 0; position:relative;"><span style="position:absolute; top:-12px; left:50%; transform:translateX(-50%); background:white; padding:0 10px; color:#94a3b8; font-size:10pt;">Page Break</span></div>\n';
-        const combinedHtml = pagesData.join(pageBreakHtml);
-        await executeDownload(combinedHtml, "document_edited.pdf");
-    };
 
-    downloadPageBtn.onclick = async () => {
-        if (!editorInstance) return;
-        const pageHtml = editorInstance.getData();
-        pagesData[currentPageIndex] = pageHtml;
-        await executeDownload(pageHtml, `page_${currentPageIndex + 1}_edited.pdf`);
-    };
+    /* =====================================================
+       EXPORT ALL
+       ===================================================== */
 
-    function showLoading(title, desc) {
-        loadingTitle.innerText = title;
-        loadingDesc.innerText = desc;
-        loadingOverlay.classList.remove('hidden');
+    downloadBtn.onclick =
+        async function () {
+
+            if (!editorInstance) return;
+
+
+            pagesData[
+                currentPageIndex
+            ] =
+                editorInstance.getData();
+
+
+            const pageBreakHtml =
+                '\n<div class="pdf-page-break" style="page-break-after:always; border-bottom: 2px dashed #cbd5e1; margin: 40px 0; position:relative;"><span style="position:absolute; top:-12px; left:50%; transform:translateX(-50%); background:white; padding:0 10px; color:#94a3b8; font-size:10pt;">Page Break</span></div>\n';
+
+
+            const combinedHtml =
+                pagesData.join(
+                    pageBreakHtml
+                );
+
+
+            await executeDownload(
+                combinedHtml,
+                "document_edited.pdf"
+            );
+
+        };
+
+
+    /* =====================================================
+       EXPORT CURRENT PAGE
+       ===================================================== */
+
+    downloadPageBtn.onclick =
+        async function () {
+
+            if (!editorInstance) return;
+
+
+            const pageHtml =
+                editorInstance.getData();
+
+
+            pagesData[
+                currentPageIndex
+            ] =
+                pageHtml;
+
+
+            await executeDownload(
+                pageHtml,
+                `page_${currentPageIndex + 1}_edited.pdf`
+            );
+
+        };
+
+
+    /* =====================================================
+       SHOW LOADING
+       ===================================================== */
+
+    function showLoading(
+        title,
+        desc
+    ) {
+
+        loadingTitle.innerText =
+            title;
+
+
+        loadingDesc.innerText =
+            desc;
+
+
+        loadingOverlay.classList.remove(
+            'hidden'
+        );
+
     }
 
-    function hideLoading() { loadingOverlay.classList.add('hidden'); }
+
+    /* =====================================================
+       HIDE LOADING
+       ===================================================== */
+
+    function hideLoading() {
+
+        loadingOverlay.classList.add(
+            'hidden'
+        );
+
+    }
+
+
+    /* =====================================================
+       UPDATE PAGINATION
+       ===================================================== */
 
     function updatePaginationUI() {
-        pageIndicator.textContent = `Page ${currentPageIndex + 1} of ${pagesData.length}`;
-        prevPageBtn.disabled = currentPageIndex === 0;
-        nextPageBtn.disabled = currentPageIndex === pagesData.length - 1;
+
+        pageIndicator.textContent =
+            `Page ${currentPageIndex + 1} of ${pagesData.length}`;
+
+
+        prevPageBtn.disabled =
+            currentPageIndex === 0;
+
+
+        nextPageBtn.disabled =
+            currentPageIndex ===
+            pagesData.length - 1;
+
     }
+
+
+    /* =====================================================
+       GO TO PAGE
+       ===================================================== */
 
     function goToPage(index) {
-        if (index < 0 || index >= pagesData.length) return;
-        if (editorInstance) {
-            pagesData[currentPageIndex] = editorInstance.getData();
+
+        if (
+            index < 0 ||
+            index >= pagesData.length
+        ) {
+
+            return;
+
         }
-        currentPageIndex = index;
-        editorInstance.setData(pagesData[currentPageIndex]);
+
+
+        if (editorInstance) {
+
+            pagesData[
+                currentPageIndex
+            ] =
+                editorInstance.getData();
+
+        }
+
+
+        currentPageIndex =
+            index;
+
+
+        editorInstance.setData(
+            pagesData[
+                currentPageIndex
+            ]
+        );
+
+
         updatePaginationUI();
+
     }
 
-    if (prevPageBtn) prevPageBtn.onclick = () => goToPage(currentPageIndex - 1);
-    if (nextPageBtn) nextPageBtn.onclick = () => goToPage(currentPageIndex + 1);
+
+    /* =====================================================
+       PAGE BUTTONS
+       ===================================================== */
+
+    if (prevPageBtn) {
+
+        prevPageBtn.onclick =
+            function () {
+
+                goToPage(
+                    currentPageIndex - 1
+                );
+
+            };
+
+    }
 
 
+    if (nextPageBtn) {
 
-    dropZone.ondragover = e => { e.preventDefault(); dropZone.classList.add('border-brand-400'); };
-    dropZone.ondragleave = () => dropZone.classList.remove('border-brand-400');
-    dropZone.ondrop = e => {
-        e.preventDefault();
-        dropZone.classList.remove('border-brand-400');
-        if (e.dataTransfer.files.length) handleUpload(e.dataTransfer.files[0]);
-    };
+        nextPageBtn.onclick =
+            function () {
+
+                goToPage(
+                    currentPageIndex + 1
+                );
+
+            };
+
+    }
+
+
+    /* =====================================================
+       DRAG OVER
+       ===================================================== */
+
+    dropZone.ondragover =
+        function (e) {
+
+            e.preventDefault();
+
+            dropZone.classList.add(
+                'drag-active'
+            );
+
+        };
+
+
+    /* =====================================================
+       DRAG LEAVE
+       ===================================================== */
+
+    dropZone.ondragleave =
+        function () {
+
+            dropZone.classList.remove(
+                'drag-active'
+            );
+
+        };
+
+
+    /* =====================================================
+       DROP
+       ===================================================== */
+
+    dropZone.ondrop =
+        function (e) {
+
+            e.preventDefault();
+
+
+            dropZone.classList.remove(
+                'drag-active'
+            );
+
+
+            if (
+                e.dataTransfer.files.length
+            ) {
+
+                handleUpload(
+                    e.dataTransfer.files[0]
+                );
+
+            }
+
+        };
+
+
+    /* =====================================================
+       INITIAL ICONS
+       ===================================================== */
+
+    if (
+        typeof lucide !== 'undefined'
+    ) {
+
+        lucide.createIcons();
+
+    }
+
 </script>
+
 {% endblock %}

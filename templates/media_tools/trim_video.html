@@ -26,26 +26,7 @@
     padding: 2.5rem 1.5rem 4rem;
   }
 
-  /* ===== Header ===== */
-  .page-header {
-    text-align: center;
-    margin-bottom: 2.25rem;
-  }
-
-  .page-header h1 {
-    font-size: 2.4rem;
-    font-weight: 700;
-    letter-spacing: -0.03em;
-    color: #0f172a;
-    display: inline-flex;
-    align-items: center;
-    gap: 0.6rem;
-  }
-
-  .page-header h1::before {
-    content: "✂️";
-    font-size: 2.1rem;
-  }
+  
 
   .subhead {
     margin-top: 0.7rem;
@@ -253,10 +234,26 @@
     gap: 0.5rem;
   }
 
-  .btn-trim:hover {
-    background: #1e293b;
-    transform: translateY(-2px);
-  }
+.btn-trim {
+  background: linear-gradient(135deg, #7c3aed, #a855f7, #ec4899);
+  color: white;
+  border: none;
+  padding: 0.95rem 2.8rem;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 1.05rem;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 6px 20px rgba(124, 58, 237, 0.30);
+}
+
+.btn-trim:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(124, 58, 237, 0.40);
+}
 
   @media (max-width: 480px) {
     .btn-trim {
@@ -364,16 +361,148 @@
     font-size: 0.95rem;
     line-height: 1.55;
   }
+
+  /* ===== Video Processing Loading Card ===== */
+.loading-card {
+  display: none;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 20px;
+  padding: 3rem 2.5rem;
+  box-shadow: 0 10px 40px -12px rgba(15, 23, 42, 0.08);
+  margin-bottom: 2rem;
+  text-align: center;
+  animation: fadeSlideUp 0.4s ease forwards;
+}
+
+.loading-card.show {
+  display: block;
+}
+
+.loading-icon {
+  font-size: 2.5rem;
+  margin-bottom: 1rem;
+  animation: scissorsPulse 1.2s infinite ease-in-out;
+}
+
+.loading-card h2 {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #0f172a;
+  margin-bottom: 0.5rem;
+}
+
+.loading-card p {
+  color: #64748b;
+  font-size: 0.95rem;
+  margin-bottom: 1.5rem;
+}
+
+.loading-bar-container {
+  width: 100%;
+  max-width: 500px;
+  height: 12px;
+  background: #e2e8f0;
+  border-radius: 999px;
+  overflow: hidden;
+  margin: 0 auto;
+}
+
+.loading-bar {
+  height: 100%;
+  width: 0%;
+  background: #2563eb;
+  border-radius: 999px;
+  transition: width 0.5s ease;
+}
+
+.loading-percentage {
+  margin-top: 0.8rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #2563eb;
+}
+
+@keyframes scissorsPulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+
+  50% {
+    transform: scale(1.15);
+  }
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, #7c3aed, #a855f7, #ec4899);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.seo-heading {
+    max-width: 1100px;
+    margin: 0 auto 2rem;
+    text-align: center;
+    font-family: Arial, sans-serif;
+}
+
+.seo-main {
+    margin: 0;
+    color: #64748b;
+    font-size: 1.15rem;
+    font-weight: 400;
+    line-height: 1.15;
+}
+
+.seo-keywords {
+    margin: 0.8rem 0 0;
+    color: #94a3b8;
+    font-size: 1.05rem;
+    font-weight: 400;
+    line-height: 1.5;
+}
+.main-title {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 3.5rem;
+  line-height: 0.95;
+  font-weight: 900;
+  letter-spacing: -0.04em;
+}
+
+.main-title .gradient-text {
+  background: linear-gradient(135deg, #7c3aed, #a855f7, #ec4899);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
 </style>
 
-<div class="page-wrapper">
 
-  <!-- Header -->
-  <div class="page-header">
-    <h1>Trim Video</h1>
-    <p class="subhead">Upload a video and select the start & end time to keep only the part you need.</p>
-  </div>
+<div class="page-wrapper" >
+<div class="page-header">
+<h1 class="main-title">
+  <span>Trim</span>
+  <span class="gradient-text">Video</span>
+</h1>
+ <br>
+  <p class="max-w-3xl mx-auto text-sm sm:text-base lg:text-lg text-surface-500 leading-relaxed">
+      Trim videos online quickly and easily. Upload a video, select the start and end time, and <center class="max-w-3xl mx-auto text-sm sm:text-base lg:text-lg text-surface-500 leading-relaxed">keep only the section you need.</center>
+    
 
+    </p>
+
+
+    <center><p class="max-w-3xl mx-auto mt-2 text-xs sm:text-sm text-surface-400 leading-relaxed">
+       trim video online, video trimmer, cut video, trim MP4, free video trimmer
+</p>
+</center>
+</div>
+
+
+<br>
   <!-- Django Messages -->
   {% if messages %}
     <div class="messages">
@@ -436,76 +565,149 @@
       </div>
     </form>
   </div>
+  </div>
 
-  <!-- Features cards -->
-  <section class="features">
-    <h2>Online Video Trimmer</h2>
-    <p class="lead">
-      Quickly remove unwanted parts from any video. No software needed — just upload, set the time range, and download.
-    </p>
+  <!-- Video Processing Loading Card -->
+<div class="loading-card" id="loadingCard">
 
-    <div class="info-grid">
-      <div class="info-card">
-        <h3>How to Trim a Video</h3>
-        <p>Upload a video, enter the start time and end time in seconds, then click Trim Video. The selected portion will be ready to download.</p>
-      </div>
+  <div class="loading-icon">✂️</div>
 
-      <div class="info-card">
-        <h3>What Is Video Trimming?</h3>
-        <p>Trimming keeps only the part you need and removes the rest. The original file stays untouched — a new clean file is created.</p>
-      </div>
+  <h2>Trimming your video...</h2>
 
-      <div class="info-card">
-        <h3>Choose Start & End Time</h3>
-        <p>Start time is where the kept section begins. End time is where it finishes. End must be greater than start and within the video length.</p>
-      </div>
+  <p id="loadingMessage">
+    Please wait while your video is being processed.
+  </p>
 
-      <div class="info-card">
-        <h3>Who Can Use It?</h3>
-        <p>Students, teachers, content creators, marketers, and anyone who needs a quick cut without heavy editing software.</p>
-      </div>
+  <div class="loading-bar-container">
+    <div class="loading-bar" id="loadingBar"></div>
+  </div>
 
-      <div class="info-card">
-        <h3>Supported Formats</h3>
-        <p>MP4, MOV, AVI, MKV, WEBM, FLV, WMV, M4V and more. Unsupported files are rejected with a clear message.</p>
-      </div>
+  <div class="loading-percentage" id="loadingPercentage">
+    0%
+  </div>
 
-      <div class="info-card">
-        <h3>Why Use an Online Trimmer?</h3>
-        <p>When you only need to cut a short section, a full editor is overkill. Upload → set times → process → download. Fast and simple.</p>
-      </div>
-    </div>
+</div>
 
-    <div class="tip-box">
-      💡 <strong>Tip:</strong> For best results, use accurate start and end times and prefer MP4 files with moderate resolution.
-    </div>
-  </section>
+  <!-- Header -->
+
+
+
+</div>
 
 </div>
 
 <script>
+  const form = document.querySelector('.form-card');
   const fileInput = document.querySelector('.choose-file-wrap input[type="file"]');
   const chooseBtn = document.querySelector('.choose-file-btn');
   const timeFields = document.getElementById('timeFields');
   const selectedFileName = document.getElementById('selectedFileName');
 
-  // Open file dialog when blue button is clicked
+  const loadingCard = document.getElementById('loadingCard');
+  const loadingBar = document.getElementById('loadingBar');
+  const loadingPercentage = document.getElementById('loadingPercentage');
+  const loadingMessage = document.getElementById('loadingMessage');
+
+  // Open file dialog
   chooseBtn.addEventListener('click', function () {
     fileInput.click();
   });
 
-  // After user selects a file → show Start & End fields
+
+  // After user selects a file
   fileInput.addEventListener('change', function () {
+
     if (this.files && this.files.length > 0) {
+
       selectedFileName.style.display = 'block';
-      selectedFileName.textContent = '📁 ' + this.files[0].name;
+
+      selectedFileName.textContent =
+        '📁 ' + this.files[0].name;
 
       timeFields.classList.add('show');
+
     } else {
+
       selectedFileName.style.display = 'none';
+
       timeFields.classList.remove('show');
     }
   });
+
+
+  // When user clicks "Trim Video"
+  form.addEventListener('submit', function () {
+
+    // Hide the form card
+    form.style.display = 'none';
+
+    // Show loading card
+    loadingCard.classList.add('show');
+
+    // Start loading animation
+    startLoading();
+
+  });
+
+
+  function startLoading() {
+
+    let progress = 0;
+
+    const interval = setInterval(function () {
+
+      if (progress < 90) {
+
+        // Slow down as it gets closer to 90%
+        progress += Math.random() * 5;
+
+        if (progress > 90) {
+          progress = 90;
+        }
+
+        updateLoading(progress);
+
+      }
+
+    }, 500);
+
+
+    // Store interval so it can be cleared if needed
+    window.loadingInterval = interval;
+  }
+
+
+  function updateLoading(progress) {
+
+    progress = Math.floor(progress);
+
+    loadingBar.style.width = progress + '%';
+
+    loadingPercentage.textContent = progress + '%';
+
+
+    if (progress < 30) {
+
+      loadingMessage.textContent =
+        'Uploading your video...';
+
+    } else if (progress < 60) {
+
+      loadingMessage.textContent =
+        'Processing your video...';
+
+    } else if (progress < 90) {
+
+      loadingMessage.textContent =
+        'Trimming the selected portion...';
+
+    } else {
+
+      loadingMessage.textContent =
+        'Almost finished...';
+
+    }
+  }
 </script>
 
 {% endblock %}

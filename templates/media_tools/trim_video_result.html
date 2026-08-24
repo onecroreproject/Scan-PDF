@@ -262,27 +262,239 @@
     text-align: right;
     opacity: 0.8;
   }
+
+    .btn-trim {
+    background: #0f172a;
+    color: white;
+    border: none;
+    padding: 0.95rem 2.8rem;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 1.05rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+.btn-trim {
+   background: linear-gradient(135deg, #16a34a, #22c55e);
+  color: white;
+  border: none;
+  padding: 0.95rem 2.8rem;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 1.05rem;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 6px 20px rgba(124, 58, 237, 0.30);
+}
+
+.btn-trim:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(124, 58, 237, 0.40);
+}
+
+    .trim-another {
+    background: #0f172a;
+    color: white;
+    border: none;
+    padding: 0.95rem 2.8rem;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 1.05rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+.trim-another {
+
+    background: linear-gradient(135deg, #2563eb, #3b82f6);
+  color: white;
+  border: none;
+  padding: 0.95rem 2.8rem;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 1.05rem;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 6px 20px rgba(124, 58, 237, 0.30);
+}
+
+.trim-another:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(124, 58, 237, 0.40);
+}
+
+
+    .btn-open {
+    background: #0f172a;
+    color: white;
+    border: none;
+    padding: 0.95rem 2.8rem;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 1.05rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+.btn-open{
+  background: linear-gradient(135deg, #6d28d9, #9333ea);
+  color: white;
+  border: none;
+  padding: 0.95rem 2.8rem;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 1.05rem;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  box-shadow: 0 6px 20px rgba(124, 58, 237, 0.30);
+}
+
+.btn-open:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 28px rgba(124, 58, 237, 0.40);
+}
+
+.gradient-text {
+  background: linear-gradient(135deg, #7c3aed, #a855f7, #ec4899);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.seo-text {
+  max-width: 760px;
+  margin: 0.8rem auto 0;
+  color: #64748b;
+  font-size: 0.96rem;
+  line-height: 1.7;
+}
+
+.toast-container {
+  position: fixed;
+  top: 25px;
+  right: 25px;
+  z-index: 9999;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.toast-message {
+  min-width: 300px;
+  max-width: 420px;
+  padding: 15px 18px;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #334155;
+  border-left: 5px solid #7c3aed;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+
+  font-size: 0.95rem;
+  font-weight: 500;
+
+  animation: toastIn 0.4s ease;
+}
+
+.toast-close {
+  border: none;
+  background: transparent;
+  color: #64748b;
+  font-size: 1.4rem;
+  cursor: pointer;
+  line-height: 1;
+}
+
+.toast-close:hover {
+  color: #0f172a;
+}
+
+@keyframes toastIn {
+  from {
+    opacity: 0;
+    transform: translateX(100px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes toastOut {
+  from {
+    opacity: 1;
+    transform: translateX(0);
+  }
+
+  to {
+    opacity: 0;
+    transform: translateX(100px);
+  }
+}
+
+@media (max-width: 600px) {
+  .toast-container {
+    top: 15px;
+    left: 15px;
+    right: 15px;
+  }
+
+  .toast-message {
+    min-width: auto;
+    width: 100%;
+  }
+}
 </style>
+<div style="background: linear-gradient(135deg, #f8f9fb, #e7def0, #f8edf2)">
 
 <div class="page-wrapper">
   <div class="result-card">
 
     <!-- Header -->
     <div class="title-wrapper">
-      <span class="title-icon">✂️</span>
-      <h1>Video Trimmed</h1>
+      <h1>
+    Trimmed
+    <span class="gradient-text">Video</span>
+      </h1>
     </div>
 
     <!-- Django messages -->
-    {% if messages %}
-      <div class="message-list">
-        {% for message in messages %}
-          <div class="message-item {% if message.tags %}{{ message.tags }}{% endif %}">
-            {{ message }}
-          </div>
-        {% endfor %}
+{% if messages %}
+  <div class="toast-container" id="toastContainer">
+    {% for message in messages %}
+      <div class="toast-message {% if message.tags %}{{ message.tags }}{% endif %}">
+        <span>{{ message }}</span>
+        <button type="button" class="toast-close" onclick="closeToast(this)">
+          ×
+        </button>
       </div>
-    {% endif %}
+    {% endfor %}
+  </div>
+{% endif %}
 
     <!-- Video player -->
     {% if video_url %}
@@ -295,10 +507,10 @@
 
       <!-- Action buttons -->
       <div class="action-grid">
-        <a href="{{ video_url }}" download class="btn btn-download">
+        <a href="{{ video_url }}" download class="btn btn-download btn-trim">
           <span>⬇️</span> Download trimmed video
         </a>
-        <a href="{{ video_url }}" target="_blank" rel="noopener noreferrer" class="btn btn-outline">
+        <a href="{{ video_url }}" target="_blank" rel="noopener noreferrer" class="btn btn-outline btn-open">
           <span>🔍</span> Open in new tab
         </a>
       </div>
@@ -312,7 +524,7 @@
 
     <!-- Secondary actions -->
     <div class="secondary-actions">
-      <a href="{% url 'media_tools:trim_video' %}" class="link-trim-another">
+      <a href="{% url 'media_tools:trim_video' %}" class="link-trim-another trim-another">
         <span class="arrow">⟳</span> Trim another video
       </a>
 
@@ -322,5 +534,39 @@
 
   </div>
 </div>
+</div>
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
 
+    const toasts = document.querySelectorAll(".toast-message");
+
+    toasts.forEach(function (toast) {
+
+      // Automatically disappear after 3 seconds
+      setTimeout(function () {
+        toast.style.animation = "toastOut 0.4s ease forwards";
+
+        setTimeout(function () {
+          toast.remove();
+        }, 400);
+
+      }, 3000);
+
+    });
+
+  });
+
+
+  function closeToast(button) {
+
+    const toast = button.parentElement;
+
+    toast.style.animation = "toastOut 0.4s ease forwards";
+
+    setTimeout(function () {
+      toast.remove();
+    }, 400);
+
+  }
+</script>
 {% endblock %}

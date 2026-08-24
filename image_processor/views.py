@@ -61,7 +61,13 @@ IMAGE_TOOLS = {
         'category': 'image-pro',
         'color': '#8b5cf6',
         'gradient': 'from-purple-500 to-indigo-600',
+
+        's1': 'Blur Images',
+        'highlight': 'Online in Seconds',
+        'seo_intro': 'Blur images online with our easy-to-use image blur tool. Apply a smooth blur effect to JPG, JPEG, and PNG images without installing software.',
+        'seo_keywords': 'blur image online, blur photo, image blur tool, blur JPG, blur PNG, online image editor',
     },
+
     'brighten-image': {
         'title': 'Brighten Image',
         'description': 'Adjust the brightness of your images to make them pop.',
@@ -71,7 +77,13 @@ IMAGE_TOOLS = {
         'category': 'image-pro',
         'color': '#facc15',
         'gradient': 'from-yellow-400 to-amber-500',
+
+        's1': 'Brighten Images',
+        'highlight': 'Online Easily',
+        'seo_intro': 'Brighten images online quickly and easily. Improve dark photos and adjust image brightness without complicated editing software.',
+        'seo_keywords': 'brighten image online, brighten photo, image brightness tool, brighten JPG, brighten PNG',
     },
+
     'change-gif-speed': {
         'title': 'Change GIF Speed',
         'description': 'Speed up or slow down your animated GIFs easily.',
@@ -81,7 +93,13 @@ IMAGE_TOOLS = {
         'category': 'image-pro',
         'color': '#ef4444',
         'gradient': 'from-red-500 to-orange-600',
+
+        's1': 'Change GIF Speed',
+        'highlight': 'Online Instantly',
+        'seo_intro': 'Change GIF animation speed online. Speed up or slow down animated GIFs easily without installing any software.',
+        'seo_keywords': 'change GIF speed, GIF speed changer, speed up GIF, slow down GIF, animated GIF editor',
     },
+
     'change-background': {
         'title': 'Change Background',
         'description': 'Remove subject and replace it with a custom solid background color.',
@@ -91,7 +109,13 @@ IMAGE_TOOLS = {
         'category': 'image-pro',
         'color': '#10b981',
         'gradient': 'from-emerald-400 to-teal-500',
+
+        's1': 'Change Image',
+        'highlight': 'Background Online',
+        'seo_intro': 'Change image backgrounds online with an easy background editing tool. Replace your existing background with a custom color.',
+        'seo_keywords': 'change image background, background changer, replace image background, photo background editor, online background changer',
     },
+
     'compress-image': {
         'title': 'Compress Image',
         'description': 'Reduce image file size with optimal quality compression.',
@@ -101,7 +125,13 @@ IMAGE_TOOLS = {
         'category': 'image-pro',
         'color': '#dc2626',
         'gradient': 'from-red-500 to-red-700',
+
+        's1': 'Compress Images',
+        'highlight': 'Without Losing Quality',
+        'seo_intro': 'Compress JPG, JPEG, and PNG images online to reduce file size while maintaining excellent image quality.',
+        'seo_keywords': 'compress image online, image compressor, compress JPG, compress PNG, reduce image size, photo compressor',
     },
+
     'cut-image': {
         'title': 'Cut Image',
         'description': 'Crop your image to focus on what matters.',
@@ -111,7 +141,13 @@ IMAGE_TOOLS = {
         'category': 'image-pro',
         'color': '#84cc16',
         'gradient': 'from-lime-500 to-lime-700',
+
+        's1': 'Crop Images',
+        'highlight': 'Online with Ease',
+        'seo_intro': 'Crop images online quickly and easily. Select the area you want to keep and create the perfect image dimensions.',
+        'seo_keywords': 'crop image online, crop photo, image cropper, JPG cropper, PNG cropper, online photo editor',
     },
+
     'merge-images': {
         'title': 'Merge Images',
         'description': 'Combine multiple images side-by-side or stacked.',
@@ -122,7 +158,13 @@ IMAGE_TOOLS = {
         'color': '#f43f5e',
         'gradient': 'from-rose-500 to-pink-600',
         'multi_file': True,
+
+        's1': 'Merge Images',
+        'highlight': 'Online into One',
+        'seo_intro': 'Merge multiple images into one image online. Combine JPG and PNG files horizontally or vertically with ease.',
+        'seo_keywords': 'merge images online, combine images, join photos, merge JPG, merge PNG, image merger',
     },
+
     'remove-background': {
         'title': 'Remove Background',
         'description': 'Automatically remove image backgrounds with AI precision.',
@@ -132,7 +174,13 @@ IMAGE_TOOLS = {
         'category': 'image-pro',
         'color': '#06b6d4',
         'gradient': 'from-cyan-400 to-blue-500',
+
+        's1': 'Remove Image',
+        'highlight': 'Background Automatically',
+        'seo_intro': 'Remove image backgrounds online with AI-powered background removal. Create clean transparent images quickly and easily.',
+        'seo_keywords': 'remove background online, background remover, remove photo background, transparent background, AI background remover',
     },
+
     'resize-image': {
         'title': 'Resize Image',
         'description': 'Resize your image by width, height, or percentage.',
@@ -142,7 +190,13 @@ IMAGE_TOOLS = {
         'category': 'image-pro',
         'color': '#f97316',
         'gradient': 'from-orange-500 to-red-500',
+
+        's1': 'Resize Images',
+        'highlight': 'Online to Any Size',
+        'seo_intro': 'Resize JPG, JPEG, and PNG images online by setting custom width and height. Quickly optimize images for websites and social media.',
+        'seo_keywords': 'resize image online, image resizer, resize photo, resize JPG, resize PNG, image dimensions',
     },
+
     'rotate-image': {
         'title': 'Rotate Image',
         'description': 'Rotate your images clockwise or counter-clockwise.',
@@ -152,7 +206,13 @@ IMAGE_TOOLS = {
         'category': 'image-pro',
         'color': '#8b5cf6',
         'gradient': 'from-purple-500 to-indigo-600',
+
+        's1': 'Rotate Images',
+        'highlight': 'Online in One Click',
+        'seo_intro': 'Rotate images online clockwise or counter-clockwise. Quickly fix image orientation without installing an image editor.',
+        'seo_keywords': 'rotate image online, rotate photo, image rotator, rotate JPG, rotate PNG, photo rotation tool',
     },
+
     'watermark-image': {
         'title': 'Watermark Image',
         'description': 'Protect your brand by adding custom text watermarks to your photos.',
@@ -162,9 +222,13 @@ IMAGE_TOOLS = {
         'category': 'image-pro',
         'color': '#0891b2',
         'gradient': 'from-cyan-500 to-cyan-700',
+
+        's1': 'Watermark Images',
+        'highlight': 'Online Easily',
+        'seo_intro': 'Add text watermarks to images online to protect your photos and brand. Create customized watermarked JPG and PNG images.',
+        'seo_keywords': 'watermark image online, add watermark, photo watermark, image watermark tool, text watermark, watermark JPG',
     },
 
-    # --- Converters ---
     'image-converter': {
         'title': 'Image Converter',
         'description': 'Convert images between multiple formats like JPG, PNG, WEBP, etc.',
@@ -174,7 +238,47 @@ IMAGE_TOOLS = {
         'category': 'image-conv',
         'color': '#475569',
         'gradient': 'from-slate-500 to-slate-700',
+
+        's1': 'Convert Images',
+        'highlight': 'Between Any Format',
+        'seo_intro': 'Convert images online between popular formats including JPG, PNG, BMP, WEBP, and more with our simple image converter.',
+        'seo_keywords': 'image converter, convert image online, JPG converter, PNG converter, WEBP converter, image format converter',
     },
+
+    'jpg-converter': {
+        'title': 'JPG Converter',
+        'description': 'Convert any image format to JPG.',
+        'icon': 'file-image',
+        'accept': '.png,.bmp,.webp,.tiff',
+        'allowed_extensions': ['.png', '.bmp', '.webp', '.tiff'],
+        'category': 'image-conv',
+        'color': '#2b6cb0',
+        'gradient': 'from-blue-500 to-blue-700',
+        'target': 'jpg',
+
+        's1': 'Convert Images to',
+        'highlight': 'JPG Online',
+        'seo_intro': 'Convert PNG, BMP, WEBP, and TIFF images to JPG online quickly. Get high-quality JPG files with our free image converter.',
+        'seo_keywords': 'JPG converter, convert to JPG, PNG to JPG, WEBP to JPG, BMP to JPG, TIFF to JPG',
+    },
+
+    'png-converter': {
+        'title': 'PNG Converter',
+        'description': 'Convert any image format to PNG.',
+        'icon': 'file-image',
+        'accept': '.jpg,.jpeg,.bmp,.webp,.tiff',
+        'allowed_extensions': ['.jpg', '.jpeg', '.bmp', '.webp', '.tiff'],
+        'category': 'image-conv',
+        'color': '#276749',
+        'gradient': 'from-green-500 to-emerald-700',
+        'target': 'png',
+
+        's1': 'Convert Images to',
+        'highlight': 'PNG Online',
+        'seo_intro': 'Convert JPG, JPEG, BMP, WEBP, and TIFF images to PNG online while preserving excellent image quality.',
+        'seo_keywords': 'PNG converter, convert to PNG, JPG to PNG, WEBP to PNG, BMP to PNG, image converter',
+    },
+
     'jpg-converter': { 'title': 'JPG Converter', 'description': 'Convert any image format to JPG.', 'icon': 'file-image', 'accept': '.png,.bmp,.webp,.tiff', 'allowed_extensions': ['.png', '.bmp', '.webp', '.tiff'], 'category': 'image-conv', 'color': '#2b6cb0', 'gradient': 'from-blue-500 to-blue-700', 'target': 'jpg' },
     'png-converter': { 'title': 'PNG Converter', 'description': 'Convert any image format to PNG.', 'icon': 'file-image', 'accept': '.jpg,.jpeg,.bmp,.webp,.tiff', 'allowed_extensions': ['.jpg', '.jpeg', '.bmp', '.webp', '.tiff'], 'category': 'image-conv', 'color': '#276749', 'gradient': 'from-green-500 to-emerald-700', 'target': 'png' },
     'bmp-converter': { 'title': 'BMP Converter', 'description': 'Convert any image format to Windows Bitmap.', 'icon': 'file-image', 'accept': '.*', 'allowed_extensions': ['.jpg', '.jpeg', '.png', '.webp'], 'category': 'image-conv', 'color': '#c05621', 'gradient': 'from-orange-500 to-red-500', 'target': 'bmp' },
@@ -186,21 +290,64 @@ IMAGE_TOOLS = {
 }
 
 def tool_page(request, tool_slug):
+
     if tool_slug not in IMAGE_TOOLS:
         raise Http404("Tool not found")
-    
+
     tool = IMAGE_TOOLS[tool_slug]
-    
-    # Selecting the template. Use a generic converter template for now if it exists,
-    # or create a custom one for specific parameter needs.
-    template = 'image_processor/tool_detail.html'
-    
+
     context = {
         'tool': tool,
         'tool_slug': tool_slug,
-        'page_title': f'{tool["title"]} — Image Editor',
+
+        # Page heading
+        's1': tool.get(
+            's1',
+            tool['title']
+        ),
+
+        'highlight': tool.get(
+            'highlight',
+            'Online'
+        ),
+
+        # SEO
+        'seo_title': tool.get(
+            'seo_title',
+            tool['title']
+        ),
+
+        'seo_description': tool.get(
+            'seo_description',
+            tool['description']
+        ),
+
+        'seo_keywords': tool.get(
+            'seo_keywords',
+            ''
+        ),
+
+        'seo_h1': tool.get(
+            'seo_h1',
+            f"{tool['title']} Online"
+        ),
+
+        'seo_intro': tool.get(
+            'seo_intro',
+            tool['description']
+        ),
+
+        'page_title': tool.get(
+            'seo_title',
+            f'{tool["title"]} — Image Editor'
+        ),
     }
-    return render(request, template, context)
+
+    return render(
+        request,
+        'image_processor/tool_detail.html',
+        context
+    )
 
 @csrf_exempt
 @require_POST

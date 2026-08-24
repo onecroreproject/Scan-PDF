@@ -1,0 +1,116 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Cropped Video Result</title>
+</head>
+
+<body>
+
+    <h1>Video Cropped Successfully</h1>
+
+    <p>
+        Your video has been cropped successfully.
+    </p>
+
+
+    <!-- Original file -->
+
+    {% if original_filename %}
+        <div>
+            <strong>Original Video:</strong>
+
+            {{ original_filename }}
+        </div>
+    {% endif %}
+
+
+    <!-- Selected ratio -->
+
+    {% if crop_ratio %}
+        <div>
+            <strong>Crop Ratio:</strong>
+
+            {{ crop_ratio }}
+        </div>
+    {% endif %}
+
+
+    <hr>
+
+
+    <!-- Cropped video -->
+
+    <h2>Cropped Video Preview</h2>
+
+    {% if output_url %}
+
+        <video
+            controls
+            preload="metadata"
+            width="640"
+            style="max-width: 100%;"
+        >
+            <source
+                src="{{ output_url }}"
+                type="video/mp4"
+            >
+
+            Your browser does not support video playback.
+        </video>
+
+    {% else %}
+
+        <p>
+            Cropped video is not available.
+        </p>
+
+    {% endif %}
+
+
+    <br>
+    <br>
+
+
+    <!-- Download -->
+
+    {% if output_url %}
+
+        <a
+            href="{{ output_url }}"
+            download
+        >
+            Download Cropped Video
+        </a>
+
+    {% endif %}
+
+
+    <br>
+    <br>
+
+
+    <!-- Crop another video -->
+
+    <a
+        href="{% url 'media_tools:crop_video' %}"
+    >
+        Crop Another Video
+    </a>
+
+
+    <br>
+    <br>
+
+
+    <!-- Back -->
+
+    <a href="javascript:history.back()">
+        Back
+    </a>
+
+
+</body>
+</html>

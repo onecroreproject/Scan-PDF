@@ -2,192 +2,524 @@
 {% load static %}
 
 {% block tool_content %}
-<div class="rounded-2xl bg-white border border-surface-100 p-4 sm:p-5 shadow-mega">
-    <div class="space-y-4">
-        <!-- Drag & Drop Zone -->
-        <div id="drop-zone" class="relative rounded-2xl border-2 border-dashed border-brand-100 bg-brand-50/10 hover:bg-brand-50/30 hover:border-brand-400 transition-all duration-300 p-10 sm:p-14 text-center cursor-pointer group">
-            
-            <!-- Default State -->
-            <div id="upload-default" class="space-y-4">
-                <div class="w-14 h-14 rounded-2xl bg-surface-50 border border-surface-100 flex items-center justify-center mx-auto group-hover:bg-brand-50 group-hover:border-brand-200 group-hover:scale-105 transition-all duration-300">
-                    <i data-lucide="scissors" class="w-8 h-8 text-surface-300 group-hover:text-brand-500 transition-colors"></i>
-                </div>
-                <div>
-                    <p class="text-base font-semibold text-surface-700 mb-1">
-                        Drop PDF to extract pages, or <span class="text-brand-600 underline underline-offset-4 decoration-brand-200">browse</span>
-                    </p>
-                    <p class="text-xs text-surface-400">Max 50MB&nbsp;&nbsp;•&nbsp;&nbsp;Accepted: .pdf</p>
-                </div>
-            </div>
 
-            <!-- File Selected State -->
-            <div id="file-selected" class="hidden">
-                <div class="flex items-center justify-center gap-6">
-                    <div class="relative">
-                        <div class="w-14 h-14 rounded-2xl bg-brand-50 border border-brand-100 flex items-center justify-center flex-shrink-0">
-                            <i data-lucide="file-check" class="w-8 h-8 text-brand-600"></i>
-                        </div>
-                    </div>
-                    <div class="text-left min-w-0">
-                        <p id="file-name" class="text-surface-800 font-bold text-base truncate max-w-[180px]"></p>
-                        <p id="file-size" class="text-xs text-surface-400 mt-0.5 font-medium"></p>
-                    </div>
-                    <button id="remove-file-btn" class="p-2.5 rounded-xl hover:bg-red-50 text-surface-300 hover:text-red-500 transition-all flex-shrink-0" title="Remove file">
-                        <i data-lucide="trash-2" class="w-5 h-5"></i>
-                    </button>
-                </div>
-            </div>
+<style>
 
-            <input type="file" id="file-input" class="hidden" accept=".pdf">
+/* =========================================================
+   PAGE HEADING
+   ========================================================= */
+
+.tool-heading {
+    font-size: 3.5rem;
+    line-height: 0.95;
+    font-weight: 900;
+    letter-spacing: -0.04em;
+}
+
+.gradient-text {
+    background: linear-gradient(
+        135deg,
+        #7c3aed,
+        #a855f7,
+        #ec4899
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+
+/* =========================================================
+   PURPLE BUTTON
+   ========================================================= */
+
+.purple-btn {
+    background: linear-gradient(
+        135deg,
+        #6d28d9 0%,
+        #7c3aed 45%,
+        #a855f7 100%
+    );
+    color: white;
+    box-shadow: 0 8px 25px rgba(124, 58, 237, 0.25);
+    transition: all 0.25s ease;
+}
+
+.purple-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 30px rgba(124, 58, 237, 0.38);
+}
+
+.purple-btn:active {
+    transform: translateY(0);
+}
+
+.purple-btn:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+
+/* =========================================================
+   SELECT FILE AREA
+   ========================================================= */
+
+.select-file-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 2rem;
+    border: 2px dashed transparent;
+    border-radius: 20px;
+    transition: all 0.25s ease;
+}
+
+.select-file-area.drag-active {
+    border-color: #7c3aed;
+    background: #faf5ff;
+}
+
+
+/* =========================================================
+   SELECTED FILE CARD
+   ========================================================= */
+
+.selected-file-card {
+    width: 100%;
+    max-width: 620px;
+    margin-top: 1.25rem;
+    padding: 1rem;
+    border-radius: 1rem;
+    background: #ddd6fe;
+    border: 1px solid #ddd6fe;
+}
+
+.remove-file-btn {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    border: 1px solid #ddd6fe;
+    background: #f5f3ff;
+    color: #7c3aed;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.remove-file-btn:hover {
+    background: #7c3aed;
+    color: white;
+}
+
+
+/* =========================================================
+   PROGRESS
+   ========================================================= */
+
+.progress-card {
+    background: #fafafa;
+    border: 1px solid #f1f5f9;
+    border-radius: 1rem;
+    padding: 1rem 1.5rem;
+}
+
+.progress-spinner {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 3px solid #e2e8f0;
+    border-top-color: #7c3aed;
+    animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+
+/* =========================================================
+   SUCCESS CARD
+   ========================================================= */
+
+.success-card {
+    text-align: center;
+    padding: 1.5rem;
+    border-radius: 1rem;
+    background: #faf5ff;
+    border: 1px solid #e9d5ff;
+}
+
+.success-icon {
+    width: 64px;
+    height: 64px;
+    border-radius: 1rem;
+    background: #ede9fe;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1rem;
+}
+
+.success-icon i {
+    color: #7c3aed;
+}
+
+
+/* =========================================================
+   ERROR
+   ========================================================= */
+
+.error-card {
+    padding: 1.25rem;
+    border-radius: 1rem;
+    background: #fef2f2;
+    border: 1px solid #fee2e2;
+}
+
+
+/* =========================================================
+   MOBILE
+   ========================================================= */
+
+@media (max-width: 768px) {
+    .tool-heading { font-size: 3rem; }
+}
+
+@media (max-width: 480px) {
+    .tool-heading { font-size: 2.6rem; }
+}
+
+</style>
+
+
+<!-- =========================================================
+     PAGE HEADER
+     ========================================================= -->
+
+<section class="text-center mb-8 sm:mb-10">
+
+    <h1 class="tool-heading text-surface-900 mb-3">
+        <span class="block">{{ s1 }}</span>
+        <span class="block gradient-text">{{ highlight }}</span>
+    </h1>
+
+    <p class="max-w-3xl mx-auto text-sm sm:text-base lg:text-lg text-surface-500 leading-relaxed">
+        {{ seo_intro }}
+    </p>
+
+    {% if seo_keywords %}
+    <p class="max-w-3xl mx-auto mt-2 text-xs sm:text-sm text-surface-400 leading-relaxed">
+        {{ seo_keywords }}
+    </p>
+    {% endif %}
+
+</section>
+
+
+<!-- =========================================================
+     MAIN CARD
+     ========================================================= -->
+
+<div class="rounded-2xl bg-[#faf5ff] p-4 sm:p-6">
+
+    <!-- =====================================================
+         SELECT FILE
+         ===================================================== -->
+    <div id="select-file-area" class="select-file-area">
+
+        <!-- Select File Button -->
+        <button type="button" id="select-file-btn"
+            class="purple-btn px-8 py-3 rounded-2xl text-white font-black text-sm sm:text-base uppercase tracking-widest flex items-center justify-center gap-3">
+            <i data-lucide="upload" class="w-5 h-5"></i>
+            Select File
+        </button>
+
+        <p class="text-xs text-surface-400 mt-3">
+            Max 50MB &nbsp;&nbsp;•&nbsp;&nbsp; Accepted:
+            <span class="text-surface-500 font-medium">.pdf</span>
+        </p>
+
+        <!-- Selected File -->
+        <div id="file-selected" class="hidden selected-file-card">
+            <div class="flex items-center gap-4">
+                <div class="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center flex-shrink-0">
+                    <i data-lucide="file-check-2" class="w-6 h-6 text-purple-600"></i>
+                </div>
+                <div class="text-left min-w-0 flex-1">
+                    <p id="file-name" class="text-surface-800 font-bold text-sm truncate"></p>
+                    <p id="file-size" class="text-xs text-surface-400 mt-1"></p>
+                </div>
+                <button type="button" id="remove-file-btn" class="remove-file-btn" title="Remove file">
+                    <i data-lucide="x" class="w-5 h-5"></i>
+                </button>
+            </div>
         </div>
 
-        <!-- Extraction Controls (Initially Hidden) -->
-        <div id="initial-upload-area" class="hidden space-y-4 pt-4 border-t border-surface-50 animate-fade-in-up">
-            <h3 class="text-sm font-black text-surface-400 uppercase tracking-widest text-center">Extraction Settings</h3>
-            
-            <div class="space-y-3">
-                <!-- Page Extraction Input -->
-                <div class="space-y-2">
-                    <label class="text-[11px] font-black text-surface-500 uppercase tracking-wider ml-1">Pages to Extract</label>
-                    <div class="relative group">
-                        <input type="text" id="pages-input" placeholder="e.g. 1, 3, 5-7" 
-                            class="w-full px-6 py-3 rounded-2xl bg-surface-50 border-2 border-surface-100 focus:bg-white focus:border-brand-500 transition-all text-sm font-bold text-surface-900">
-                        <i data-lucide="lasso-select" class="absolute right-5 top-1/2 -translate-y-1/2 w-5 h-5 text-surface-200 group-focus-within:text-brand-500 transition-colors"></i>
-                    </div>
-                    <p class="px-1 text-[10px] text-surface-400 font-medium leading-relaxed italic">
-                        Specify exactly which pages you want to keep in the new PDF. Separate with commas or use dashes for ranges.
-                    </p>
-                </div>
-            </div>
+        <input type="file" id="file-input" class="hidden" accept=".pdf">
+    </div>
 
-            <button id="convert-btn" disabled 
-                class="w-full py-3 rounded-2xl bg-gradient-to-r {{ tool.gradient }} text-white font-black text-base uppercase tracking-widest shadow-xl shadow-brand-500/20 hover:shadow-brand-500/40 hover:-translate-y-1 active:scale-95 transition-all flex items-center justify-center gap-3">
-                <i data-lucide="external-link" class="w-5 h-5"></i>
-                Extract Pages
-            </button>
+
+    <!-- =====================================================
+         EXTRACTION SETTINGS
+         ===================================================== -->
+    <div id="extraction-settings" class="hidden mt-4 pt-4 border-t border-surface-50">
+
+        <div class="text-center mb-4">
+            <span class="text-[11px] font-black text-surface-400 uppercase tracking-widest">
+                Pages to Extract
+            </span>
         </div>
 
-        <!-- ═══════════════ PROGRESS STATE ═══════════════ -->
-        <div id="progress-section" class="hidden mt-4">
-            <div class="flex items-center gap-5 py-4 px-5 rounded-2xl bg-surface-50 border border-surface-100">
-                <div class="relative flex-shrink-0">
-                    <div class="w-9 h-9 rounded-full border-[3px] border-surface-200 border-t-brand-500 animate-spin"></div>
-                </div>
-                <div>
-                    <p class="text-surface-800 font-black text-base">Extracting Content...</p>
-                    <p class="text-xs text-surface-400 mt-1">Isolating requested pages into a new document.</p>
-                </div>
-            </div>
+        <div class="max-w-md mx-auto">
+            <input type="text" id="pages-input" placeholder="e.g. 1, 3, 5-7"
+                class="w-full px-5 py-3 rounded-2xl bg-white border border-surface-200 focus:border-violet-500 focus:ring-2 focus:ring-violet-100 outline-none text-sm font-bold text-surface-800 transition-all">
+            <p class="mt-2 text-[11px] text-surface-400 text-center">
+                Use commas or dashes (example: 1, 3, 5-7)
+            </p>
         </div>
+    </div>
 
-        <!-- ═══════════════ SUCCESS STATE ═══════════════ -->
-        <div id="success-section" class="hidden mt-4">
-            <div class="text-center py-4 px-5 rounded-2xl bg-emerald-50/50 border border-emerald-100">
-                <div class="w-14 h-14 rounded-xl bg-emerald-100 flex items-center justify-center mx-auto mb-2 animate-success-pop shadow-inner">
-                    <i data-lucide="check" class="w-8 h-8 text-emerald-600"></i>
-                </div>
-                <h3 class="text-lg font-black text-surface-900 mb-1">Extracted!</h3>
-                <p class="text-surface-500 text-sm mb-4">Your new PDF containing only the selected pages is ready.</p>
-                <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                    <a id="download-btn" href="#" download
-                        class="inline-flex items-center justify-center gap-2.5 px-10 py-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-black text-sm hover:from-emerald-400 hover:to-emerald-500 transition-all shadow-xl shadow-emerald-500/20">
-                        <i data-lucide="download" class="w-5 h-5"></i> Download File
-                    </a>
-                    <button onclick="window.location.reload()"
-                        class="inline-flex items-center justify-center gap-2.5 px-10 py-4 rounded-2xl bg-white border border-surface-200 text-surface-600 font-bold text-sm hover:bg-surface-50 transition-all shadow-sm">
-                        <i data-lucide="refresh-cw" class="w-4 h-4"></i> Start Over
-                    </button>
-                </div>
+
+    <!-- =====================================================
+         CONVERT BUTTON
+         ===================================================== -->
+    <div class="text-center">
+        <button id="convert-btn" disabled
+            class="purple-btn w-auto mx-auto px-8 py-3 mt-5 sm:py-4 rounded-2xl text-white font-black text-sm sm:text-base uppercase tracking-widest flex items-center justify-center gap-3">
+            <i data-lucide="scissors" class="w-5 h-5"></i>
+            Extract Pages
+        </button>
+    </div>
+
+
+    <!-- =====================================================
+         PROGRESS STATE
+         ===================================================== -->
+    <div id="progress-section" class="hidden mt-4">
+        <div class="progress-card flex items-center gap-4">
+            <div class="relative flex-shrink-0">
+                <div class="progress-spinner"></div>
             </div>
-        </div>
-
-        <!-- ═══════════════ ERROR STATE ═══════════════ -->
-        <div id="error-section" class="hidden mt-4">
-            <div class="p-5 rounded-2xl bg-red-50 border border-red-100 flex items-start gap-4 animate-shake">
-                <div class="w-9 h-9 rounded-xl bg-red-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <i data-lucide="alert-octagon" class="w-6 h-6 text-red-500"></i>
-                </div>
-                <div class="pt-0.5">
-                    <h4 class="font-black text-red-700 text-sm uppercase tracking-wider mb-1">Extraction Failed</h4>
-                    <p id="error-message" class="text-xs text-red-500 leading-relaxed font-bold"></p>
-                </div>
+            <div class="min-w-0">
+                <p class="text-surface-800 font-bold text-base">Extracting pages…</p>
+                <p class="text-xs text-surface-400 mt-1">This may take a moment</p>
             </div>
         </div>
     </div>
+
+
+    <!-- =====================================================
+         SUCCESS STATE
+         ===================================================== -->
+    <div id="success-section" class="hidden mt-4">
+        <div class="success-card">
+            <div class="success-icon">
+                <i data-lucide="check-circle-2" class="w-8 h-8"></i>
+            </div>
+            <h3 class="text-lg font-black text-surface-900 mb-1">Extraction Complete!</h3>
+            <p class="text-surface-500 text-sm mb-6">Your new PDF with selected pages is ready.</p>
+
+            <div class="flex flex-col sm:flex-row gap-3 justify-center">
+                <a id="download-btn" href="#"
+                    class="purple-btn inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-2xl text-white font-black text-sm"
+                    style="background: linear-gradient(135deg, #16a34a, #22c55e); box-shadow: 0 4px 12px rgba(34, 197, 94, 0.25);">
+                    <i data-lucide="download" class="w-5 h-5"></i>
+                    Download File
+                </a>
+                <button type="button" id="convert-another-btn"
+                    class="purple-btn inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-2xl text-white font-black text-sm">
+                    <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                    Extract Another
+                </button>
+            </div>
+        </div>
+    </div>
+
+
+    <!-- =====================================================
+         ERROR STATE
+         ===================================================== -->
+    <div id="error-section" class="hidden mt-4">
+        <div class="error-card flex items-start gap-4">
+            <div class="w-9 h-9 rounded-xl bg-red-100 flex items-center justify-center flex-shrink-0">
+                <i data-lucide="alert-triangle" class="w-5 h-5 text-red-500"></i>
+            </div>
+            <div class="min-w-0 pt-1">
+                <h4 class="font-black text-red-700 text-sm uppercase tracking-wider mb-1">Extraction Failed</h4>
+                <p id="error-message" class="text-xs text-red-500 leading-relaxed font-semibold"></p>
+            </div>
+        </div>
+    </div>
+
 </div>
+
 {% endblock %}
+
 
 {% block extra_scripts %}
 <script>
-    const CONVERT_URL = '{% url "converter:convert_file" "extract-pages" %}';
-    const CSRF_TOKEN = '{{ csrf_token }}';
-    const dropZone = document.getElementById('drop-zone'), fileInput = document.getElementById('file-input');
-    const uploadDefault = document.getElementById('upload-default'), fileSelected = document.getElementById('file-selected'), fileName = document.getElementById('file-name'), fileSize = document.getElementById('file-size');
-    const convertBtn = document.getElementById('convert-btn'), pagesInput = document.getElementById('pages-input');
-    const progressSection = document.getElementById('progress-section'), successSection = document.getElementById('success-section'), errorSection = document.getElementById('error-section'), errorMessage = document.getElementById('error-message'), downloadBtn = document.getElementById('download-btn'), initialUploadArea = document.getElementById('initial-upload-area');
+const CONVERT_URL = '{% url "converter:convert_file" "extract-pages" %}';
+const CSRF_TOKEN = '{{ csrf_token }}';
 
-    let selectedFile = null;
+const selectFileArea = document.getElementById('select-file-area');
+const selectFileBtn = document.getElementById('select-file-btn');
+const fileInput = document.getElementById('file-input');
+const fileSelected = document.getElementById('file-selected');
+const fileName = document.getElementById('file-name');
+const fileSize = document.getElementById('file-size');
+const removeFileBtn = document.getElementById('remove-file-btn');
+const convertBtn = document.getElementById('convert-btn');
+const pagesInput = document.getElementById('pages-input');
+const extractionSettings = document.getElementById('extraction-settings');
+const progressSection = document.getElementById('progress-section');
+const successSection = document.getElementById('success-section');
+const errorSection = document.getElementById('error-section');
+const errorMessage = document.getElementById('error-message');
+const downloadBtn = document.getElementById('download-btn');
+const convertAnotherBtn = document.getElementById('convert-another-btn');
 
-    dropZone.onclick = e => { if (!e.target.closest('#remove-file-btn')) fileInput.click(); };
-    dropZone.ondragover = e => { e.preventDefault(); dropZone.classList.add('border-brand-400', 'bg-brand-50/40'); };
-    dropZone.ondragleave = () => { dropZone.classList.remove('border-brand-400', 'bg-brand-50/40'); };
-    dropZone.ondrop = e => { 
-        e.preventDefault(); 
-        dropZone.classList.remove('border-brand-400', 'bg-brand-50/40'); 
-        if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]); 
-    };
+let selectedFile = null;
 
-    fileInput.onchange = e => { if (e.target.files.length) handleFile(e.target.files[0]); };
+selectFileBtn.addEventListener('click', () => fileInput.click());
 
-    function handleFile(file) {
-        if (!file.name.toLowerCase().endsWith('.pdf')) { showError('Only PDF files are accepted.'); return; }
-        if (file.size > 52428800) { showError('File exceeds 50MB limit.'); return; }
-        selectedFile = file;
-        fileName.textContent = file.name;
-        fileSize.textContent = (file.size / 1024 / 1024).toFixed(2) + ' MB';
-        uploadDefault.classList.add('hidden'); 
-        fileSelected.classList.remove('hidden');
-        initialUploadArea.classList.remove('hidden');
-        convertBtn.disabled = false; 
-        errorSection.classList.add('hidden');
-        lucide.createIcons();
+fileInput.addEventListener('change', (e) => {
+    if (e.target.files.length) handleFile(e.target.files[0]);
+});
+
+selectFileArea.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    selectFileArea.classList.add('drag-active');
+});
+
+selectFileArea.addEventListener('dragleave', () => {
+    selectFileArea.classList.remove('drag-active');
+});
+
+selectFileArea.addEventListener('drop', (e) => {
+    e.preventDefault();
+    selectFileArea.classList.remove('drag-active');
+    if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+});
+
+function handleFile(file) {
+    if (!file.name.toLowerCase().endsWith('.pdf')) {
+        showError('Only PDF files are accepted.');
+        return;
+    }
+    if (file.size > 52428800) {
+        showError('File exceeds the 50MB limit.');
+        return;
     }
 
-    document.getElementById('remove-file-btn').onclick = e => { 
-        e.stopPropagation(); 
-        selectedFile = null; fileInput.value = '';
-        uploadDefault.classList.remove('hidden'); fileSelected.classList.add('hidden');
-        initialUploadArea.classList.add('hidden');
-        convertBtn.disabled = true; 
-        lucide.createIcons();
-    };
+    selectedFile = file;
+    fileName.textContent = file.name;
+    fileSize.textContent = formatFileSize(file.size);
+    fileSelected.classList.remove('hidden');
+    extractionSettings.classList.remove('hidden');
+    convertBtn.disabled = false;
+    errorSection.classList.add('hidden');
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+}
 
-    convertBtn.onclick = async () => {
-        const pages = pagesInput.value.trim();
-        if (!selectedFile || !pages) { showError('Please enter the pages to extract.'); return; }
-        
-        convertBtn.classList.add('hidden');
-        progressSection.classList.remove('hidden');
-        
-        const formData = new FormData();
-        formData.append('file', selectedFile);
-        formData.append('pages_to_extract', pages);
-        formData.append('csrfmiddlewaretoken', CSRF_TOKEN);
-        
-        try {
-            const res = await fetch(CONVERT_URL, { method: 'POST', body: formData });
-            if (!res.ok) { const d = await res.json(); throw new Error(d.error || 'Failed to extract pages.'); }
-            const blob = await res.blob();
-            const url = URL.createObjectURL(blob);
-            downloadBtn.href = url; downloadBtn.download = fileName.textContent.split('.')[0] + '_extracted.pdf';
-            progressSection.classList.add('hidden'); successSection.classList.remove('hidden');
-        } catch (err) {
-            showError(err.message);
-            progressSection.classList.add('hidden'); convertBtn.classList.remove('hidden');
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+}
+
+removeFileBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    resetUpload();
+});
+
+convertBtn.addEventListener('click', async () => {
+    const pages = pagesInput.value.trim();
+    if (!selectedFile) return;
+    if (!pages) {
+        showError('Please enter the pages to extract (e.g. 1, 3, 5-7).');
+        return;
+    }
+
+    convertBtn.classList.add('hidden');
+    successSection.classList.add('hidden');
+    errorSection.classList.add('hidden');
+    progressSection.classList.remove('hidden');
+
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+    formData.append('pages_to_extract', pages);
+    formData.append('csrfmiddlewaretoken', CSRF_TOKEN);
+
+    try {
+        const response = await fetch(CONVERT_URL, {
+            method: 'POST',
+            body: formData
+        });
+
+        if (!response.ok) {
+            let message = 'Extraction failed.';
+            try {
+                const data = await response.json();
+                message = data.error || message;
+            } catch (e) {}
+            throw new Error(message);
         }
-        lucide.createIcons();
-    };
 
-    function showError(msg) { errorMessage.textContent = msg; errorSection.classList.remove('hidden'); lucide.createIcons(); }
+        const disposition = response.headers.get('Content-Disposition');
+        let outputFilename = 'extracted_pages.pdf';
+        if (disposition) {
+            const match = disposition.match(/filename="(.+?)"/);
+            if (match) outputFilename = match[1];
+        }
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        downloadBtn.href = url;
+        downloadBtn.download = outputFilename;
+
+        selectFileArea.classList.add('hidden');
+        extractionSettings.classList.add('hidden');
+        progressSection.classList.add('hidden');
+        successSection.classList.remove('hidden');
+
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    } catch (error) {
+        progressSection.classList.add('hidden');
+        convertBtn.classList.remove('hidden');
+        showError(error.message);
+    }
+});
+
+convertAnotherBtn.addEventListener('click', () => resetUpload());
+
+function resetUpload() {
+    selectedFile = null;
+    fileInput.value = '';
+    pagesInput.value = '';
+    selectFileArea.classList.remove('hidden');
+    fileSelected.classList.add('hidden');
+    extractionSettings.classList.add('hidden');
+    convertBtn.disabled = true;
+    convertBtn.classList.remove('hidden');
+    progressSection.classList.add('hidden');
+    successSection.classList.add('hidden');
+    errorSection.classList.add('hidden');
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+function showError(message) {
+    errorMessage.textContent = message;
+    errorSection.classList.remove('hidden');
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+}
+
+if (typeof lucide !== 'undefined') lucide.createIcons();
 </script>
 {% endblock %}

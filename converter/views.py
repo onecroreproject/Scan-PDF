@@ -115,13 +115,22 @@ TOOLS = {
         'accept': '.docx',
         'allowed_extensions': ['.docx'],
         'converter': convert_word_to_pdf,
-        'color': '#2b6cb0',
-        'gradient': 'from-blue-500 to-blue-700',
+        'color': '#7c3aed',
+        'gradient': 'from-violet-600 to-purple-900',
         'category': 'convert',
+
+        'seo_title': 'Word to PDF Converter Online – Free DOCX to PDF',
+        'seo_description': 'Convert Word documents to PDF online for free. Upload a DOCX file and quickly create a professional PDF without registration.',
+        'seo_keywords': 'word to pdf, docx to pdf, convert word to pdf, word pdf converter, free word to pdf',
+        'seo_h1': 'Word to PDF Converter',
+        's1': 'Word to',
+        'highlight': 'PDF Converter',
+        'seo_intro': 'Convert Word documents to PDF online quickly and easily. Upload your DOCX file and create a professional PDF without installing software or creating an account.',
     },
+
     'pptx-to-pdf': {
         'title': 'PowerPoint to PDF',
-        'description': 'Transform PowerPoint presentations (.pptx) into shareable PDF documents.',
+        'description': 'Convert PowerPoint presentations to PDF files quickly and easily.',
         'icon': 'presentation',
         'accept': '.pptx',
         'allowed_extensions': ['.pptx'],
@@ -129,7 +138,16 @@ TOOLS = {
         'color': '#c05621',
         'gradient': 'from-orange-500 to-red-500',
         'category': 'convert',
+
+        'seo_title': 'PowerPoint to PDF Converter Online – Free PPTX to PDF',
+        'seo_description': 'Convert PowerPoint PPTX presentations to PDF online for free. Preserve your presentation content and create an easy-to-share PDF document.',
+        'seo_keywords': 'powerpoint to pdf, pptx to pdf, convert pptx to pdf, powerpoint pdf converter, free ppt to pdf',
+        'seo_h1': 'PowerPoint to PDF Converter',
+        's1': 'PowerPoint to',
+        'highlight': 'PDF Converter',
+        'seo_intro': 'Convert PowerPoint presentations to PDF online. Upload your PPTX file and quickly create a professional PDF that is easy to share and view.',
     },
+
     'excel-to-pdf': {
         'title': 'Excel to PDF',
         'description': 'Convert Excel spreadsheets (.xlsx) to clean, formatted PDF files.',
@@ -140,7 +158,16 @@ TOOLS = {
         'color': '#276749',
         'gradient': 'from-green-500 to-emerald-700',
         'category': 'convert',
+
+        'seo_title': 'Excel to PDF Converter Online – Free XLSX to PDF',
+        'seo_description': 'Convert Excel XLSX spreadsheets to PDF online for free. Turn your spreadsheets into clean, professional PDF documents in seconds.',
+        'seo_keywords': 'excel to pdf, xlsx to pdf, convert excel to pdf, excel pdf converter, free excel to pdf',
+        'seo_h1': 'Excel to PDF Converter',
+        's1': 'Excel to',
+        'highlight': 'PDF Converter',
+        'seo_intro': 'Convert Excel spreadsheets to PDF online without complicated software. Upload your XLSX file and create a clean, shareable PDF document.',
     },
+
     'html-to-pdf': {
         'title': 'HTML to PDF',
         'description': 'Convert any webpage URL or HTML file to a pixel-perfect PDF document.',
@@ -151,7 +178,16 @@ TOOLS = {
         'color': '#6b46c1',
         'gradient': 'from-purple-500 to-indigo-700',
         'category': 'convert',
+
+        'seo_title': 'HTML to PDF Converter Online – Free HTML to PDF',
+        'seo_description': 'Convert HTML files and web pages to PDF online. Create high-quality PDF documents from HTML quickly and easily.',
+        'seo_keywords': 'html to pdf, html converter, convert html to pdf, webpage to pdf, html pdf converter',
+        'seo_h1': 'HTML to PDF Converter',
+        's1': 'HTML to',
+        'highlight': 'PDF Converter',
+        'seo_intro': 'Convert HTML files into professional PDF documents online. Create a PDF from your HTML content while maintaining a clean layout and formatting.',
     },
+
     'pdf-to-image': {
         'title': 'PDF to Image',
         'description': 'Convert PDF pages to high-quality PNG or JPG images effortlessly.',
@@ -162,7 +198,16 @@ TOOLS = {
         'color': '#b83280',
         'gradient': 'from-pink-500 to-rose-600',
         'category': 'convert',
+
+        'seo_title': 'PDF to JPG & PNG Converter Online – Free PDF to Image',
+        'seo_description': 'Convert PDF pages to high-quality JPG or PNG images online for free. Extract individual PDF pages as image files quickly.',
+        'seo_keywords': 'pdf to image, pdf to jpg, pdf to png, convert pdf to image, pdf image converter',
+        'seo_h1': 'PDF to Image Converter',
+        's1': 'PDF to',
+        'highlight': 'Image Converter',
+        'seo_intro': 'Convert PDF pages into JPG or PNG images online. Upload your PDF, choose your preferred image format, and download high-quality images.',
     },
+
     'pdf-to-word': {
         'title': 'PDF to Word',
         'description': 'Convert PDF files to editable Word documents (.docx) with accurate formatting.',
@@ -173,7 +218,16 @@ TOOLS = {
         'color': '#0d9488',
         'gradient': 'from-teal-500 to-teal-700',
         'category': 'convert',
+
+        'seo_title': 'PDF to Word Converter Online – Free PDF to DOCX',
+        'seo_description': 'Convert PDF files to editable Word DOCX documents online for free. Quickly extract PDF content into an editable Word file.',
+        'seo_keywords': 'pdf to word, pdf to docx, convert pdf to word, pdf word converter, free pdf to word',
+        'seo_h1': 'PDF to Word Converter',
+        's1': 'PDF to',
+        'highlight': 'Word Converter',
+        'seo_intro': 'Convert PDF documents into editable Word files online. Upload your PDF and create a DOCX document that you can edit and reuse.',
     },
+
     'pdf-to-pptx': {
         'title': 'PDF to PowerPoint',
         'description': 'Transform PDF files into editable PowerPoint presentations (.pptx).',
@@ -184,7 +238,16 @@ TOOLS = {
         'color': '#d97706',
         'gradient': 'from-amber-500 to-amber-700',
         'category': 'convert',
+
+        'seo_title': 'PDF to PowerPoint Converter Online – Free PDF to PPTX',
+        'seo_description': 'Convert PDF files to editable PowerPoint PPTX presentations online. Quickly transform PDF content into a presentation format.',
+        'seo_keywords': 'pdf to powerpoint, pdf to pptx, convert pdf to ppt, pdf ppt converter, free pdf to powerpoint',
+        'seo_h1': 'PDF to PowerPoint Converter',
+        's1': 'PDF to',
+        'highlight': 'PowerPoint Converter',
+        'seo_intro': 'Convert PDF documents into PowerPoint presentations online. Upload your PDF and transform it into an editable PPTX file.',
     },
+
     'pdf-to-excel': {
         'title': 'PDF to Excel',
         'description': 'Extract tables from PDF files into editable Excel workbooks (.xlsx).',
@@ -195,7 +258,16 @@ TOOLS = {
         'color': '#0891b2',
         'gradient': 'from-cyan-500 to-cyan-700',
         'category': 'convert',
+
+        'seo_title': 'PDF to Excel Converter Online – Free PDF to XLSX',
+        'seo_description': 'Convert PDF tables into editable Excel XLSX spreadsheets online. Extract structured data from PDF files quickly and easily.',
+        'seo_keywords': 'pdf to excel, pdf to xlsx, convert pdf to excel, pdf excel converter, extract pdf table',
+        'seo_h1': 'PDF to Excel Converter',
+        's1': 'PDF to',
+        'highlight': 'Excel Converter',
+        'seo_intro': 'Convert PDF tables and data into editable Excel spreadsheets. Upload your PDF and create an XLSX workbook from your document.',
     },
+
     'merge-pdf': {
         'title': 'Merge PDF',
         'description': 'Combine multiple PDF files into a single document in your desired order.',
@@ -207,19 +279,16 @@ TOOLS = {
         'gradient': 'from-violet-500 to-violet-700',
         'category': 'pdf-tools',
         'multi_file': True,
+
+        'seo_title': 'Merge PDF Files Online – Free PDF Merger',
+        'seo_description': 'Merge multiple PDF files into one document online for free. Combine PDFs in your preferred order without registration.',
+        'seo_keywords': 'merge pdf, combine pdf, pdf merger, merge pdf files, combine pdf online',
+        'seo_h1': 'Merge PDF Files Online',
+        's1': 'Merge',
+        'highlight': 'PDF Files Online',
+        'seo_intro': 'Combine multiple PDF files into one organized document. Upload your PDFs, arrange them in the desired order, and merge them into a single file.',
     },
-    'merge-word': {
-        'title': 'Merge Word',
-        'description': 'Combine multiple Word documents (.docx) into a single file.',
-        'icon': 'file-type',
-        'accept': '.docx',
-        'allowed_extensions': ['.docx'],
-        'converter': merge_word_files,
-        'color': '#2b6cb0',
-        'gradient': 'from-blue-600 to-indigo-700',
-        'category': 'convert',
-        'multi_file': True,
-    },
+
     'split-pdf': {
         'title': 'Split PDF',
         'description': 'Split a PDF into individual pages or custom page ranges instantly.',
@@ -230,7 +299,16 @@ TOOLS = {
         'color': '#059669',
         'gradient': 'from-emerald-500 to-emerald-700',
         'category': 'pdf-tools',
+
+        'seo_title': 'Split PDF Online – Free PDF Splitter',
+        'seo_description': 'Split PDF files into individual pages or custom page ranges online for free. Extract the pages you need quickly.',
+        'seo_keywords': 'split pdf, pdf splitter, split pdf pages, extract pdf pages, split pdf online',
+        'seo_h1': 'Split PDF Online',
+        's1': 'Split',
+        'highlight': 'PDF Online',
+        'seo_intro': 'Split PDF documents into individual pages or custom page ranges. Upload your PDF and extract exactly the pages you need.',
     },
+
     'compress-pdf': {
         'title': 'Compress PDF',
         'description': 'Reduce your PDF file size while maintaining visual quality.',
@@ -241,7 +319,16 @@ TOOLS = {
         'color': '#dc2626',
         'gradient': 'from-red-500 to-red-700',
         'category': 'pdf-tools',
+
+        'seo_title': 'Compress PDF Online – Free PDF Compressor',
+        'seo_description': 'Reduce PDF file size online while maintaining good visual quality. Compress large PDF documents quickly and easily.',
+        'seo_keywords': 'compress pdf, pdf compressor, reduce pdf size, compress pdf online, shrink pdf',
+        'seo_h1': 'Compress PDF Online',
+        's1': 'Compress',
+        'highlight': 'PDF Online',
+        'seo_intro': 'Reduce the size of large PDF documents without unnecessary complexity. Upload your PDF and create a smaller, easier-to-share file.',
     },
+
     'remove-pages': {
         'title': 'Remove Pages',
         'description': 'Delete specific pages from your PDF document easily.',
@@ -252,7 +339,16 @@ TOOLS = {
         'color': '#ea580c',
         'gradient': 'from-orange-500 to-orange-700',
         'category': 'pdf-tools',
+
+        'seo_title': 'Remove Pages from PDF Online – Free PDF Page Remover',
+        'seo_description': 'Remove unwanted pages from PDF files online. Delete specific PDF pages quickly and create a clean document.',
+        'seo_keywords': 'remove pages from pdf, delete pdf pages, pdf page remover, remove pdf page',
+        'seo_h1': 'Remove Pages from PDF',
+        's1': 'Remove Pages from',
+        'highlight': 'PDF',
+        'seo_intro': 'Delete unwanted pages from your PDF document. Select the pages you want to remove and create a cleaner PDF file.',
     },
+
     'extract-pages': {
         'title': 'Extract Pages',
         'description': 'Pull specific pages out of a PDF into a new file.',
@@ -263,7 +359,16 @@ TOOLS = {
         'color': '#0891b2',
         'gradient': 'from-cyan-500 to-cyan-700',
         'category': 'pdf-tools',
+
+        'seo_title': 'Extract Pages from PDF Online – Free PDF Page Extractor',
+        'seo_description': 'Extract selected pages from PDF files and save them as a new PDF document online for free.',
+        'seo_keywords': 'extract pages from pdf, pdf page extractor, extract pdf pages, save pdf pages',
+        'seo_h1': 'Extract Pages from PDF',
+        's1': 'Extract Pages from',
+        'highlight': 'PDF',
+        'seo_intro': 'Extract specific pages from a PDF and create a new document containing only the pages you need.',
     },
+
     'organize-pdf': {
         'title': 'Organize PDF',
         'description': 'Reorder and rearrange the pages of your PDF effortlessly.',
@@ -274,7 +379,16 @@ TOOLS = {
         'color': '#7c3aed',
         'gradient': 'from-violet-500 to-violet-700',
         'category': 'pdf-tools',
+
+        'seo_title': 'Organize PDF Pages Online – Free PDF Page Organizer',
+        'seo_description': 'Reorder and organize PDF pages online. Rearrange your document pages into the correct order quickly and easily.',
+        'seo_keywords': 'organize pdf, reorder pdf pages, rearrange pdf pages, pdf page organizer',
+        'seo_h1': 'Organize PDF Pages',
+        's1': 'Organize',
+        'highlight': 'PDF Pages',
+        'seo_intro': 'Rearrange PDF pages into the order you want. Organize your document quickly and create a properly structured PDF.',
     },
+
     'repair-pdf': {
         'title': 'Repair PDF',
         'description': 'Fix corrupted or broken PDF files and recover content.',
@@ -285,7 +399,16 @@ TOOLS = {
         'color': '#b91c1c',
         'gradient': 'from-rose-500 to-rose-700',
         'category': 'pdf-tools',
+
+        'seo_title': 'Repair PDF Online – Free PDF Repair Tool',
+        'seo_description': 'Try to repair corrupted or damaged PDF files online and recover accessible document content.',
+        'seo_keywords': 'repair pdf, fix corrupted pdf, damaged pdf repair, pdf repair tool, recover pdf',
+        'seo_h1': 'Repair PDF Online',
+        's1': 'Repair',
+        'highlight': 'PDF Online',
+        'seo_intro': 'Attempt to repair damaged or corrupted PDF documents and recover usable content from broken files.',
     },
+
     'ocr-pdf': {
         'title': 'OCR to PDF',
         'description': 'Convert scanned PDFs, Word documents, and images into searchable, selectable PDF documents or extract their text directly.',
@@ -297,7 +420,16 @@ TOOLS = {
         'gradient': 'from-teal-500 to-teal-700',
         'category': 'pdf-tools',
         'multi_file': True,
+
+        'seo_title': 'OCR PDF Online – Convert Scanned Documents to Searchable PDF',
+        'seo_description': 'Use OCR to convert scanned PDFs, images, and documents into searchable and selectable PDF files or extract text online.',
+        'seo_keywords': 'ocr pdf, pdf ocr, scanned pdf to text, image to text, searchable pdf, ocr online',
+        'seo_h1': 'OCR PDF Converter',
+        's1': 'OCR',
+        'highlight': 'PDF Converter',
+        'seo_intro': 'Convert scanned documents and images into searchable PDF files using OCR technology. Extract text from scanned PDFs, JPGs, PNGs, and supported documents.',
     },
+
     'rotate-pdf': {
         'title': 'Rotate PDF',
         'description': 'Rotate all or specific pages of your PDF by 90°, 180°, or 270°.',
@@ -308,7 +440,16 @@ TOOLS = {
         'color': '#6366f1',
         'gradient': 'from-indigo-500 to-indigo-700',
         'category': 'pdf-tools',
+
+        'seo_title': 'Rotate PDF Online – Free PDF Page Rotator',
+        'seo_description': 'Rotate PDF pages online by 90, 180, or 270 degrees. Fix incorrectly oriented PDF pages quickly.',
+        'seo_keywords': 'rotate pdf, rotate pdf pages, pdf rotator, rotate pdf online',
+        'seo_h1': 'Rotate PDF Online',
+        's1': 'Rotate',
+        'highlight': 'PDF Online',
+        'seo_intro': 'Rotate PDF pages to the correct orientation. Quickly turn individual pages or entire documents by 90, 180, or 270 degrees.',
     },
+
     'add-watermark': {
         'title': 'Add Watermark',
         'description': 'Overlay a custom text watermark on every page of your PDF.',
@@ -319,7 +460,16 @@ TOOLS = {
         'color': '#0ea5e9',
         'gradient': 'from-sky-500 to-sky-700',
         'category': 'pdf-tools',
+
+        'seo_title': 'Add Watermark to PDF Online – Free PDF Watermark Tool',
+        'seo_description': 'Add custom text watermarks to PDF documents online. Protect and brand your PDF files with a personalized watermark.',
+        'seo_keywords': 'add watermark to pdf, pdf watermark, watermark pdf online, pdf watermark tool',
+        'seo_h1': 'Add Watermark to PDF',
+        's1': 'Add Watermark to',
+        'highlight': 'PDF',
+        'seo_intro': 'Add a custom text watermark to your PDF documents. Use watermarks for branding, identification, or document labeling.',
     },
+
     'remove-watermark': {
         'title': 'Remove Watermark',
         'description': 'Attempt to detect and remove watermarks from your PDF.',
@@ -330,7 +480,16 @@ TOOLS = {
         'color': '#f43f5e',
         'gradient': 'from-rose-500 to-rose-700',
         'category': 'pdf-tools',
+
+        'seo_title': 'Remove Watermark from PDF Online – PDF Watermark Remover',
+        'seo_description': 'Attempt to remove watermarks from PDF documents online. Upload a PDF and process watermark removal.',
+        'seo_keywords': 'remove watermark pdf, pdf watermark remover, erase pdf watermark, remove watermark online',
+        'seo_h1': 'Remove Watermark from PDF',
+        's1': 'Remove Watermark from',
+        'highlight': 'PDF',
+        'seo_intro': 'Attempt to remove watermarks from PDF documents using an online PDF watermark removal tool.',
     },
+
     'crop-pdf': {
         'title': 'Crop PDF',
         'description': 'Crop whitespace or set custom margins to resize your PDF pages.',
@@ -341,7 +500,16 @@ TOOLS = {
         'color': '#84cc16',
         'gradient': 'from-lime-500 to-lime-700',
         'category': 'pdf-tools',
+
+        'seo_title': 'Crop PDF Online – Free PDF Page Cropper',
+        'seo_description': 'Crop PDF pages and remove unwanted whitespace or margins online. Resize PDF page areas quickly and easily.',
+        'seo_keywords': 'crop pdf, crop pdf pages, pdf cropper, trim pdf, crop pdf online',
+        'seo_h1': 'Crop PDF Online',
+        's1': 'Crop',
+        'highlight': 'PDF Online',
+        'seo_intro': 'Crop PDF pages to remove unwanted whitespace and adjust page margins for a cleaner document layout.',
     },
+
     'edit-pdf': {
         'title': 'Edit PDF',
         'description': 'Add text annotations and notes to your PDF pages.',
@@ -352,7 +520,16 @@ TOOLS = {
         'color': '#8b5cf6',
         'gradient': 'from-violet-500 to-purple-700',
         'category': 'pdf-tools',
+
+        'seo_title': 'Edit PDF Online – Free PDF Editor',
+        'seo_description': 'Edit PDF documents online by adding text, annotations, and notes to your PDF pages.',
+        'seo_keywords': 'edit pdf, pdf editor, edit pdf online, annotate pdf, pdf annotation tool',
+        'seo_h1': 'Edit PDF Online',
+        's1': 'Edit',
+        'highlight': 'PDF Online',
+        'seo_intro': 'Make quick changes to PDF documents by adding text annotations and notes directly to your PDF pages.',
     },
+
     'unlock-pdf': {
         'title': 'Unlock PDF',
         'description': 'Remove password protection from your secured PDF files.',
@@ -363,7 +540,16 @@ TOOLS = {
         'color': '#10b981',
         'gradient': 'from-emerald-500 to-emerald-700',
         'category': 'pdf-tools',
+
+        'seo_title': 'Unlock PDF Online – Free PDF Password Remover',
+        'seo_description': 'Unlock password-protected PDF files online when you have authorization to access the document.',
+        'seo_keywords': 'unlock pdf, remove pdf password, pdf password remover, unlock pdf online',
+        'seo_h1': 'Unlock PDF Online',
+        's1': 'Unlock',
+        'highlight': 'PDF Online',
+        'seo_intro': 'Unlock secured PDF documents when you have permission to access them. Remove supported PDF restrictions and make your document accessible.',
     },
+
     'protect-pdf': {
         'title': 'Protect PDF',
         'description': 'Encrypt your PDF with a password to restrict access.',
@@ -374,7 +560,16 @@ TOOLS = {
         'color': '#ef4444',
         'gradient': 'from-red-500 to-red-700',
         'category': 'pdf-tools',
+
+        'seo_title': 'Protect PDF with Password Online – Free PDF Security Tool',
+        'seo_description': 'Protect PDF documents with password encryption online. Add security to your PDF files and restrict unauthorized access.',
+        'seo_keywords': 'protect pdf, password protect pdf, encrypt pdf, pdf password, secure pdf',
+        'seo_h1': 'Protect PDF with Password',
+        's1': 'Protect PDF with',
+        'highlight': 'Password',
+        'seo_intro': 'Add password protection to PDF documents to help restrict unauthorized access and keep sensitive files secure.',
     },
+
     'png-to-jpg': {
         'title': 'PNG to JPG',
         'description': 'Convert PNG images to high-quality JPEG format instantly.',
@@ -385,7 +580,16 @@ TOOLS = {
         'color': '#2b6cb0',
         'gradient': 'from-blue-500 to-blue-700',
         'category': 'convert',
+
+        'seo_title': 'PNG to JPG Converter Online – Free PNG to JPEG',
+        'seo_description': 'Convert PNG images to JPG format online for free. Reduce image file size and create compatible JPEG images quickly.',
+        'seo_keywords': 'png to jpg, png to jpeg, convert png to jpg, png jpg converter',
+        'seo_h1': 'PNG to JPG Converter',
+        's1': 'PNG to',
+        'highlight': 'JPG Converter',
+        'seo_intro': 'Convert PNG images to JPG online. Upload your PNG file and quickly create a JPEG image suitable for websites, sharing, and storage.',
     },
+
     'jpg-to-png': {
         'title': 'JPG to PNG',
         'description': 'Convert JPEG images to PNG format with lossless quality.',
@@ -396,7 +600,16 @@ TOOLS = {
         'color': '#276749',
         'gradient': 'from-green-500 to-emerald-700',
         'category': 'convert',
+
+        'seo_title': 'JPG to PNG Converter Online – Free JPEG to PNG',
+        'seo_description': 'Convert JPG and JPEG images to PNG format online for free. Create PNG images for editing, transparency, and high-quality graphics.',
+        'seo_keywords': 'jpg to png, jpeg to png, convert jpg to png, jpg png converter',
+        'seo_h1': 'JPG to PNG Converter',
+        's1': 'JPG to',
+        'highlight': 'PNG Converter',
+        'seo_intro': 'Convert JPG and JPEG images to PNG online. Create high-quality PNG files for editing, graphics, and images that require transparency.',
     },
+
     'html-to-image': {
         'title': 'HTML to Image',
         'description': 'Capture a pixel-perfect image of your HTML files.',
@@ -407,7 +620,16 @@ TOOLS = {
         'color': '#c05621',
         'gradient': 'from-orange-500 to-red-500',
         'category': 'convert',
+
+        'seo_title': 'HTML to Image Converter Online – Free HTML Screenshot Tool',
+        'seo_description': 'Convert HTML files into high-quality images online. Capture HTML content as an image while preserving its visual layout.',
+        'seo_keywords': 'html to image, html screenshot, convert html to image, html image converter',
+        'seo_h1': 'HTML to Image Converter',
+        's1': 'HTML to',
+        'highlight': 'Image Converter',
+        'seo_intro': 'Convert HTML content into an image online. Create a visual snapshot of your HTML file while preserving its page layout.',
     },
+
     'resize-image': {
         'title': 'Resize Image',
         'description': 'Set an exact width and height for your JPG images.',
@@ -418,7 +640,16 @@ TOOLS = {
         'color': '#0d9488',
         'gradient': 'from-teal-500 to-teal-700',
         'category': 'image-tools',
+
+        'seo_title': 'Resize Image Online – Free JPG PNG Image Resizer',
+        'seo_description': 'Resize JPG, JPEG, and PNG images online. Set custom image dimensions quickly while preparing images for websites or sharing.',
+        'seo_keywords': 'resize image, image resizer, resize jpg, resize png, image resize online',
+        'seo_h1': 'Resize Image Online',
+        's1': 'Resize',
+        'highlight': 'Image Online',
+        'seo_intro': 'Resize JPG, JPEG, and PNG images to custom dimensions. Enter your preferred width and height and create a properly sized image.',
     },
+
     'scale-image': {
         'title': 'Scale Image',
         'description': 'Scale your image up or down by a percentage.',
@@ -429,7 +660,16 @@ TOOLS = {
         'color': '#7c3aed',
         'gradient': 'from-violet-500 to-violet-700',
         'category': 'image-tools',
+
+        'seo_title': 'Scale Image Online – Free Image Scaling Tool',
+        'seo_description': 'Scale JPG and PNG images up or down by percentage online. Quickly change image dimensions while maintaining proportions.',
+        'seo_keywords': 'scale image, image scaling, enlarge image, reduce image size, scale jpg png',
+        'seo_h1': 'Scale Image Online',
+        's1': 'Scale',
+        'highlight': 'Image Online',
+        'seo_intro': 'Scale images up or down using a percentage-based resize tool. Quickly adjust image dimensions while maintaining the desired proportions.',
     },
+
     'rotate-image': {
         'title': 'Rotate Image',
         'description': 'Rotate your image by any angle with one click.',
@@ -440,7 +680,16 @@ TOOLS = {
         'color': '#6366f1',
         'gradient': 'from-indigo-500 to-indigo-700',
         'category': 'image-tools',
+
+        'seo_title': 'Rotate Image Online – Free JPG PNG Image Rotator',
+        'seo_description': 'Rotate JPG, JPEG, and PNG images online by any angle. Correct image orientation quickly with a simple image rotator.',
+        'seo_keywords': 'rotate image, image rotator, rotate jpg, rotate png, rotate image online',
+        'seo_h1': 'Rotate Image Online',
+        's1': 'Rotate',
+        'highlight': 'Image Online',
+        'seo_intro': 'Rotate JPG, JPEG, and PNG images by your preferred angle. Correct image orientation quickly without installing image editing software.',
     },
+
     'watermark-image': {
         'title': 'Add Watermark',
         'description': 'Overlay a custom text watermark on your images.',
@@ -451,7 +700,16 @@ TOOLS = {
         'color': '#0ea5e9',
         'gradient': 'from-sky-500 to-sky-700',
         'category': 'image-tools',
+
+        'seo_title': 'Add Watermark to Image Online – Free Image Watermark Tool',
+        'seo_description': 'Add custom text watermarks to JPG and PNG images online. Protect, label, or brand your images quickly.',
+        'seo_keywords': 'watermark image, add watermark to image, image watermark, watermark jpg png',
+        'seo_h1': 'Add Watermark to Image',
+        's1': 'Add Watermark to',
+        'highlight': 'Image',
+        'seo_intro': 'Add a custom text watermark to your images for branding, identification, or protection. Upload your image and apply a personalized watermark.',
     },
+
     'compress-image': {
         'title': 'Compress Image',
         'description': 'Reduce your image file size while keeping great quality.',
@@ -462,7 +720,16 @@ TOOLS = {
         'color': '#dc2626',
         'gradient': 'from-red-500 to-red-700',
         'category': 'image-tools',
+
+        'seo_title': 'Compress Image Online – Free JPG PNG Image Compressor',
+        'seo_description': 'Compress JPG, JPEG, and PNG images online to reduce file size while maintaining good image quality.',
+        'seo_keywords': 'compress image, image compressor, compress jpg, compress png, reduce image size',
+        'seo_h1': 'Compress Image Online',
+        's1': 'Compress',
+        'highlight': 'Image Online',
+        'seo_intro': 'Reduce JPG and PNG image file sizes while maintaining good visual quality. Compress images for websites, email, and faster sharing.',
     },
+
     'crop-image': {
         'title': 'Crop Image',
         'description': 'Crop your image to a precise rectangle selection.',
@@ -473,6 +740,14 @@ TOOLS = {
         'color': '#84cc16',
         'gradient': 'from-lime-500 to-lime-700',
         'category': 'image-tools',
+
+        'seo_title': 'Crop Image Online – Free JPG PNG Image Cropper',
+        'seo_description': 'Crop JPG and PNG images online with a precise rectangular selection. Remove unwanted areas and create the perfect image size.',
+        'seo_keywords': 'crop image, image cropper, crop jpg, crop png, crop image online',
+        'seo_h1': 'Crop Image Online',
+        's1': 'Crop',
+        'highlight': 'Image Online',
+        'seo_intro': 'Crop JPG, JPEG, and PNG images to remove unwanted areas or create the exact composition you need.',
     },
 
     'chemical-balancer': {
@@ -485,7 +760,16 @@ TOOLS = {
         'color': '#8b5cf6',
         'gradient': 'from-violet-500 to-purple-600',
         'category': 'generate',
+
+        'seo_title': 'Chemical Equation Balancer Online – Free Chemistry Tool',
+        'seo_description': 'Balance chemical equations online using stoichiometry. Quickly find balanced coefficients for common chemical reactions.',
+        'seo_keywords': 'chemical equation balancer, balance chemical equations, chemistry calculator, stoichiometry calculator',
+        'seo_h1': 'Chemical Equation Balancer',
+        's1': 'Chemical Equation',
+        'highlight': 'Balancer',
+        'seo_intro': 'Balance chemical equations online using stoichiometry. Enter a chemical reaction and calculate the correct coefficients.',
     },
+
     'password-generator': {
         'title': 'Password Generator',
         'description': 'Create secure, random passwords for your accounts.',
@@ -496,7 +780,16 @@ TOOLS = {
         'color': '#059669',
         'gradient': 'from-emerald-500 to-teal-600',
         'category': 'generate',
+
+        'seo_title': 'Strong Password Generator Online – Free Secure Password Tool',
+        'seo_description': 'Generate strong random passwords online for free. Create secure passwords using customizable length and character options.',
+        'seo_keywords': 'password generator, strong password generator, secure password generator, random password generator',
+        'seo_h1': 'Strong Password Generator',
+        's1': 'Strong Password',
+        'highlight': 'Generator',
+        'seo_intro': 'Create strong, random passwords online. Customize password length and character types to generate secure passwords for your accounts.',
     },
+
     'unit-converter': {
         'title': 'Unit Converter',
         'description': 'Convert between length, weight, temp, and more.',
@@ -507,7 +800,16 @@ TOOLS = {
         'color': '#3b82f6',
         'gradient': 'from-blue-500 to-indigo-600',
         'category': 'other',
+
+        'seo_title': 'Unit Converter Online – Length, Weight, Temperature & More',
+        'seo_description': 'Convert units online including length, weight, temperature, volume, and more with a simple free unit converter.',
+        'seo_keywords': 'unit converter, online unit converter, length converter, weight converter, temperature converter',
+        'seo_h1': 'Online Unit Converter',
+        's1': 'Online Unit',
+        'highlight': 'Converter',
+        'seo_intro': 'Convert common units for length, weight, temperature, volume, and more using a fast and easy online unit converter.',
     },
+
     'speed-test': {
         'title': 'Speed Test',
         'description': 'Check your internet connection speed in seconds.',
@@ -518,6 +820,14 @@ TOOLS = {
         'color': '#f59e0b',
         'gradient': 'from-amber-400 to-orange-500',
         'category': 'other',
+
+        'seo_title': 'Internet Speed Test Online – Check Download & Upload Speed',
+        'seo_description': 'Test your internet connection speed online. Check download speed, upload speed, latency, and connection information.',
+        'seo_keywords': 'internet speed test, wifi speed test, broadband speed test, download speed test, upload speed test',
+        'seo_h1': 'Internet Speed Test',
+        's1': 'Internet',
+        'highlight': 'Speed Test',
+        'seo_intro': 'Check your internet connection performance with an online speed test. Measure download speed, upload speed, and connection details.',
     },
 
     'qrcode-generator': {
@@ -530,7 +840,16 @@ TOOLS = {
         'color': '#111827',
         'gradient': 'from-gray-700 to-black',
         'category': 'generate',
+
+        'seo_title': 'QR Code Generator Online – Free Custom QR Code Maker',
+        'seo_description': 'Create QR codes online for URLs, text, Wi-Fi, and more. Generate custom QR codes quickly without registration.',
+        'seo_keywords': 'qr code generator, free qr code generator, qr code maker, create qr code, online qr generator',
+        'seo_h1': 'Free QR Code Generator',
+        's1': 'Free QR Code',
+        'highlight': 'Generator',
+        'seo_intro': 'Create QR codes online for websites, text, Wi-Fi information, and more. Generate a QR code quickly and easily.',
     },
+
     'meme-generator': {
         'title': 'Meme Generator',
         'description': 'Create funny memes by adding text to your images.',
@@ -541,7 +860,16 @@ TOOLS = {
         'color': '#facc15',
         'gradient': 'from-yellow-400 to-yellow-600',
         'category': 'generate',
+
+        'seo_title': 'Meme Generator Online – Create Free Custom Memes',
+        'seo_description': 'Create custom memes online by adding text to your JPG and PNG images. Make and download memes quickly.',
+        'seo_keywords': 'meme generator, meme maker, create meme online, free meme generator, custom meme maker',
+        'seo_h1': 'Free Meme Generator',
+        's1': 'Free Meme',
+        'highlight': 'Generator',
+        'seo_intro': 'Create custom memes online by uploading an image and adding your own text. Make funny memes quickly and easily.',
     },
+
     'name-generator': {
         'title': 'Name Generator',
         'description': 'Generate random names for people, places, or companies.',
@@ -552,7 +880,16 @@ TOOLS = {
         'color': '#2dd4bf',
         'gradient': 'from-teal-400 to-cyan-500',
         'category': 'generate',
+
+        'seo_title': 'Random Name Generator Online – Free Name Ideas',
+        'seo_description': 'Generate random name ideas for people, places, businesses, characters, and creative projects with a free online name generator.',
+        'seo_keywords': 'name generator, random name generator, business name generator, character name generator',
+        'seo_h1': 'Random Name Generator',
+        's1': 'Random Name',
+        'highlight': 'Generator',
+        'seo_intro': 'Generate creative name ideas for people, places, companies, characters, and other projects using a simple online name generator.',
     },
+
     'story-generator': {
         'title': 'AI Story Generator',
         'description': 'Generate creative stories from different genres using Gemini AI.',
@@ -563,7 +900,16 @@ TOOLS = {
         'color': '#4ade80',
         'gradient': 'from-green-400 to-emerald-500',
         'category': 'ai-tools',
+
+        'seo_title': 'AI Story Generator Online – Create Stories with AI',
+        'seo_description': 'Generate creative stories online with AI. Create original fiction, characters, plots, and stories across different genres.',
+        'seo_keywords': 'ai story generator, story generator, ai writing tool, generate stories with ai, free story generator',
+        'seo_h1': 'AI Story Generator',
+        's1': 'AI Story',
+        'highlight': 'Generator',
+        'seo_intro': 'Create original stories with AI. Choose a genre or idea and generate creative plots, characters, and storytelling content online.',
     },
+
     'image-to-pdf': {
         'title': 'Image to PDF',
         'description': 'Convert one or more images (.jpg, .png) into a single PDF document.',
@@ -575,7 +921,16 @@ TOOLS = {
         'gradient': 'from-sky-500 to-indigo-600',
         'category': 'convert',
         'multi_file': True,
+
+        'seo_title': 'Image to PDF Converter Online – JPG PNG to PDF',
+        'seo_description': 'Convert JPG, JPEG, and PNG images to PDF online for free. Combine multiple images into a single PDF document.',
+        'seo_keywords': 'image to pdf, jpg to pdf, png to pdf, convert image to pdf, photo to pdf',
+        'seo_h1': 'Image to PDF Converter',
+        's1': 'Image to',
+        'highlight': 'PDF Converter',
+        'seo_intro': 'Convert JPG, JPEG, and PNG images into a single PDF document. Upload one or multiple images and create a PDF quickly.',
     },
+
     'pdf-to-pdfa': {
         'title': 'PDF to PDF/A',
         'description': 'Convert your PDF to PDF/A archival format for long-term preservation and compliance.',
@@ -586,7 +941,16 @@ TOOLS = {
         'color': '#0d9488',
         'gradient': 'from-teal-500 to-teal-700',
         'category': 'convert',
+
+        'seo_title': 'PDF to PDF/A Converter Online – Archival PDF Conversion',
+        'seo_description': 'Convert PDF documents to PDF/A archival format for long-term preservation, document archiving, and compliance workflows.',
+        'seo_keywords': 'pdf to pdfa, pdf to pdf/a, pdfa converter, archival pdf, pdf archival format',
+        'seo_h1': 'PDF to PDF/A Converter',
+        's1': 'PDF to',
+        'highlight': 'PDF/A Converter',
+        'seo_intro': 'Convert PDF documents to PDF/A archival format for long-term document preservation and compatible archival workflows.',
     },
+
     'sign-pdf': {
         'title': 'Sign PDF',
         'description': 'Draw, type, or upload a signature and place it on any page of your PDF.',
@@ -597,7 +961,16 @@ TOOLS = {
         'color': '#059669',
         'gradient': 'from-emerald-500 to-emerald-700',
         'category': 'pdf-tools',
+
+        'seo_title': 'Sign PDF Online – Free PDF Signature Tool',
+        'seo_description': 'Sign PDF documents online by drawing, typing, or adding a signature image to your PDF pages.',
+        'seo_keywords': 'sign pdf, pdf signature, electronic signature pdf, sign pdf online, add signature to pdf',
+        'seo_h1': 'Sign PDF Online',
+        's1': 'Sign',
+        'highlight': 'PDF Online',
+        'seo_intro': 'Add a signature to your PDF document online. Draw, type, or upload your signature and place it on the required PDF page.',
     },
+
     'redact-pdf': {
         'title': 'Redact PDF',
         'description': 'Permanently black out sensitive text and areas in your PDF documents.',
@@ -608,7 +981,16 @@ TOOLS = {
         'color': '#dc2626',
         'gradient': 'from-red-600 to-red-800',
         'category': 'pdf-tools',
+
+        'seo_title': 'Redact PDF Online – Free PDF Redaction Tool',
+        'seo_description': 'Redact sensitive information from PDF documents by permanently covering confidential text and areas.',
+        'seo_keywords': 'redact pdf, pdf redaction, redact pdf online, hide sensitive information pdf',
+        'seo_h1': 'Redact PDF Online',
+        's1': 'Redact',
+        'highlight': 'PDF Online',
+        'seo_intro': 'Remove sensitive information from PDF documents by redacting confidential text and areas before sharing the document.',
     },
+
     'audio-editor': {
         'title': 'Audio Editor',
         'description': 'A professional-grade audio editing suite to trim, change volume, speed, pitch and apply equalizer effects.',
@@ -619,7 +1001,16 @@ TOOLS = {
         'color': '#10b981',
         'gradient': 'from-emerald-500 to-teal-600',
         'category': 'audio-tools',
+
+        'seo_title': 'Online Audio Editor – Free MP3 WAV Audio Editing Tool',
+        'seo_description': 'Edit audio online with tools for trimming, volume, speed, pitch, and equalizer effects. Supports common audio formats.',
+        'seo_keywords': 'audio editor, online audio editor, mp3 editor, wav editor, trim audio, audio editing tool',
+        'seo_h1': 'Online Audio Editor',
+        's1': 'Online',
+        'highlight': 'Audio Editor',
+        'seo_intro': 'Edit audio files online with tools for trimming, volume adjustment, speed, pitch, and equalizer effects.',
     },
+
     'merge-audio': {
         'title': 'Merge Audio',
         'description': 'Combine multiple audio files into one track with in-page preview and processing status.',
@@ -631,7 +1022,16 @@ TOOLS = {
         'gradient': 'from-emerald-500 to-green-700',
         'category': 'audio-tools',
         'multi_file': True,
+
+        'seo_title': 'Merge Audio Files Online – Free Audio Merger',
+        'seo_description': 'Combine multiple MP3, WAV, OGG, M4A, or FLAC audio files into one track online.',
+        'seo_keywords': 'merge audio, merge mp3, combine audio files, audio merger, join mp3 files',
+        'seo_h1': 'Merge Audio Files Online',
+        's1': 'Merge',
+        'highlight': 'Audio Files Online',
+        'seo_intro': 'Combine multiple audio files into a single track. Upload your audio files, arrange them in order, and merge them into one file.',
     },
+
     'extract-audio-from-video': {
         'title': 'Extract Audio From Video',
         'description': 'Upload a video, preview it, and extract full audio or a custom start-to-end range.',
@@ -642,7 +1042,16 @@ TOOLS = {
         'color': '#2563eb',
         'gradient': 'from-blue-500 to-indigo-700',
         'category': 'audio-tools',
+
+        'seo_title': 'Extract Audio from Video Online – Free Video to Audio Tool',
+        'seo_description': 'Extract audio from MP4, MOV, AVI, MKV, and WebM videos online. Choose the full audio or a custom section to extract.',
+        'seo_keywords': 'extract audio from video, video to audio, mp4 to mp3, extract mp3 from video, video audio extractor',
+        'seo_h1': 'Extract Audio from Video',
+        's1': 'Extract Audio from',
+        'highlight': 'Video',
+        'seo_intro': 'Extract audio tracks from supported video files online. Upload a video and extract the complete audio or a selected time range.',
     },
+
     'video-converter': {
         'title': 'Video Converter',
         'description': 'Convert videos between formats like MP4, AVI, MOV, MKV, and more.',
@@ -650,11 +1059,20 @@ TOOLS = {
         'accept': '.mp4,.avi,.mov,.mkv,.wmv,.flv,.3gp',
         'allowed_extensions': ['.mp4', '.avi', '.mov', '.mkv', '.wmv', '.flv', '.3gp'],
         'converter': convert_video_format,
-        'color': '#8b5cf6',
-        'gradient': 'from-violet-500 to-purple-700',
+        'color': '#7b69a7',
+        'gradient': 'from-violet-800 to-purple-900',
         'category': 'convert',
+
+        'seo_title': 'Video Converter Online – Free MP4, AVI, MOV & MKV Converter',
+        'seo_description': 'Convert videos online between MP4, AVI, MOV, MKV, WMV, FLV, and 3GP formats with a simple free video converter.',
+        'seo_keywords': 'video converter, online video converter, mp4 converter, avi converter, mov converter, mkv converter',
+        'seo_h1': 'Online Video Converter',
+        's1': 'Online',
+        'highlight': 'Video Converter',
+        'seo_intro': 'Convert video files between popular formats including MP4, AVI, MOV, MKV, WMV, FLV, and 3GP using an easy online video converter.',
     },
 }
+
 
 
 def home(request):
@@ -668,6 +1086,7 @@ def home(request):
         'tools': all_tools,
         'page_title': 'ScanPDF',
         'IMAGE_TOOLS_KEYS': list(IMAGE_TOOLS.keys())
+        
     }
     return render(request, 'converter/home.html', context)
 
@@ -759,6 +1178,16 @@ def convert_page(request, tool_slug):
         'tool_slug': tool_slug,
         'form': form,
         'page_title': f'{tool["title"]} — ScanPDF',
+                'tool': tool,
+        'tool_slug': tool_slug,
+        'seo_title': tool.get('seo_title', tool['title']),
+        'seo_description': tool.get('seo_description', tool['description']),
+        'seo_keywords': tool.get('seo_keywords', ''),
+        'seo_h1': tool.get('seo_h1', tool['title']),
+        'seo_intro': tool.get('seo_intro', tool['description']),
+
+    's1': tool.get('s1', ''),
+    'highlight': tool.get('highlight', ''),
     }
     return render(request, template, context)
 
