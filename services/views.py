@@ -181,26 +181,6 @@ def payment_history_view(request):
         'page_title': 'Billing History — ScanPDF'
     })
 
-def features_view(request):
-    """Placeholder view for future SaaS features."""
-    return render(request, 'services/placeholder_page.html', {
-        'title': 'Premium Features',
-        'subtitle': 'Explore our next-generation tools designed for scale.',
-        'features': [
-            {'name': 'Dynamic QR Codes', 'desc': 'Create, edit, and track dynamic QR codes with advanced analytics.'},
-            {'name': 'Short URLs', 'desc': 'Branded short URLs that maximize CTR.'},
-            {'name': 'Detailed Analytics', 'desc': 'Geo scan data, device analytics, and OS breakdowns.'},
-            {'name': 'API Access', 'desc': 'High-performance endpoint APIs for custom workflows.'},
-            {'name': 'Custom Domains', 'desc': 'Configure custom domains for branding short codes.'},
-            {'name': 'Bulk Actions', 'desc': 'Perform operations on multiple codes in batch uploads.'},
-            {'name': 'GPS Tracking', 'desc': 'Precise geographical location maps for scans.'},
-            {'name': 'Team Management', 'desc': 'Role management and collaboration workspaces.'},
-            {'name': 'CSV Exports', 'desc': 'Download tabular data and analytics logs.'},
-            {'name': 'Webhooks', 'desc': 'Event listener notifications triggered by scan instances.'}
-        ],
-        'page_title': 'Features — ScanPDF Services'
-    })
-
 def support_view(request):
     """Placeholder view for customer support."""
     return render(request, 'services/placeholder_page.html', {
