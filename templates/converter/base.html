@@ -818,26 +818,91 @@
 
     <!-- ═══════════════ FOOTER ═══════════════ -->
     {% block footer %}
-    <footer class="bg-surface-50 border-t border-surface-100 mt-auto">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <div class="flex flex-col sm:flex-row justify-between items-center w-full gap-4">
-                <!-- Brand -->
-                <div class="text-[10px] text-surface-400 text-center font-bold uppercase tracking-widest">
-                    DLK Groups Powered By ScanPDF
-                </div>
+    <style>
+        .footer-left {
+            display: flex;
+            align-items: center;
+            gap: 7px;
+        }
 
-                <!-- Copyright -->
-                <div class="text-[10px] text-surface-400 text-center font-bold uppercase tracking-widest">
-                    &copy; 2026 ScanPDF. All rights reserved.
+        .footer-security-tooltip {
+            position: relative;
+            display: inline-flex;
+            align-items: center;
+        }
+
+        .footer-security-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 2px;
+            border: 0;
+            background: transparent;
+            cursor: pointer;
+            color: #8b5cf6;
+        }
+
+        .footer-security-message {
+            position: absolute;
+            left: 50%;
+            bottom: calc(100% + 10px);
+            width: max-content;
+            max-width: 320px;
+            padding: 9px 12px;
+            background: #ffffff;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+            font-size: 12px;
+            line-height: 1.5;
+            color: #475569;
+            opacity: 0;
+            visibility: hidden;
+            pointer-events: none;
+            transform: translate(-50%, 4px);
+            transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s ease;
+            z-index: 9999;
+        }
+
+        .footer-security-tooltip:hover .footer-security-message,
+        .footer-security-tooltip:focus-within .footer-security-message,
+        .footer-security-tooltip.is-open .footer-security-message {
+            opacity: 1;
+            visibility: visible;
+            transform: translate(-50%, 0);
+        }
+    </style>
+    <footer class="bg-surface-50 border-t border-surface-100 mt-auto overflow-visible">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 overflow-visible">
+            <div class="footer-left">
+                <span class="text-[10px] text-surface-400 font-bold uppercase tracking-widest">© DLK Groups</span>
+
+                <div class="footer-security-tooltip" id="ft-sec-tooltip">
+                    <button type="button" class="footer-security-icon" aria-label="Security and file deletion information" onclick="document.getElementById('ft-sec-tooltip').classList.toggle('is-open'); event.stopPropagation();">
+                        <i data-lucide="eye" class="w-4 h-4"></i>
+                    </button>
+
+                    <div class="footer-security-message" role="tooltip">
+                        Your files are processed securely and automatically deleted after conversion.
+                    </div>
                 </div>
-            </div>
-            
-            <div class="w-full flex items-center justify-center gap-2 mt-[18px] text-[12px] text-surface-500 font-medium text-center">
-                <i data-lucide="shield-check" class="w-4 h-4 text-brand-500"></i>
-                <span>Your files are processed securely and automatically deleted after conversion.</span>
             </div>
         </div>
     </footer>
+    <script>
+        document.addEventListener('click', function(e) {
+            const t = document.getElementById('ft-sec-tooltip');
+            if (t && !t.contains(e.target)) {
+                t.classList.remove('is-open');
+            }
+        });
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                const t = document.getElementById('ft-sec-tooltip');
+                if (t) t.classList.remove('is-open');
+            }
+        });
+    </script>
     {% endblock %}
 
     <!-- Tools Data -->
