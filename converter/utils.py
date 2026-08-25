@@ -3501,6 +3501,8 @@ def balance_chemical_equation(equation_str):
         parts = eq_normalized.split('=')
         def strip_coeff(side_str):
             items = filter(None, [s.strip() for s in side_str.replace('+', ' + ').split(' + ')])
+            # Strip leading coefficients (e.g. 2H2O -> H2O)
+            items = [re.sub(r'^\d+\s*', '', s).strip() for s in items]
             return [re.sub(r'([A-Z])0', r'\1O', s).strip() for s in items]
         reactants, products = strip_coeff(parts[0]), strip_coeff(parts[1])
         reac, prod = balance_stoichiometry(reactants, products)
@@ -3513,7 +3515,7 @@ def balance_chemical_equation(equation_str):
             return ' + '.join(items)
         return f"{format_side(reac)} = {format_side(prod)}"
     except Exception as e:
-        raise Exception(f"Balance error: {e}")
+        raise ValueError("Invalid chemical equation. Please check the formula and try again.")
 
 
 # ═══════════════════════════════════════════════════════════════

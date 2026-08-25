@@ -819,22 +819,22 @@
     <!-- ═══════════════ FOOTER ═══════════════ -->
     {% block footer %}
     <footer class="bg-surface-50 border-t border-surface-100 mt-auto">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="py-4 grid grid-cols-1 gap-4 sm:grid-cols-3 items-center">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+            <div class="flex flex-col sm:flex-row justify-between items-center w-full gap-4">
                 <!-- Brand -->
-                <div class="text-[10px] text-surface-400 text-center sm:text-left font-bold uppercase tracking-widest">
+                <div class="text-[10px] text-surface-400 text-center font-bold uppercase tracking-widest">
                     DLK Groups Powered By ScanPDF
                 </div>
 
-                <!-- Links -->
-                <div class="flex items-center justify-center gap-4 sm:gap-6">
-                    <!-- Optional: minimalist links if needed -->
-                </div>
-
                 <!-- Copyright -->
-                <p class="text-[10px] text-surface-400 text-center sm:text-right font-bold uppercase tracking-widest">
+                <div class="text-[10px] text-surface-400 text-center font-bold uppercase tracking-widest">
                     &copy; 2026 ScanPDF. All rights reserved.
-                </p>
+                </div>
+            </div>
+            
+            <div class="w-full flex items-center justify-center gap-2 mt-[18px] text-[12px] text-surface-500 font-medium text-center">
+                <i data-lucide="shield-check" class="w-4 h-4 text-brand-500"></i>
+                <span>Your files are processed securely and automatically deleted after conversion.</span>
             </div>
         </div>
     </footer>
