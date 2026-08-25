@@ -12,66 +12,7 @@
     
     .acc-head.open .acc-arrow { transform: rotate(180deg) }
 
-    /* Dynamic QR special pill */
-    .type-pill.dynamic-pill {
-        background: linear-gradient(135deg, #f59e0b, #ef4444) !important;
-        color: white !important;
-        border-color: transparent !important;
-        box-shadow: 0 4px 15px rgba(245, 158, 11, 0.35);
-        position: relative;
-        overflow: hidden;
-    }
-    .type-pill.dynamic-pill::after {
-        content: 'NEW';
-        position: absolute;
-        top: -1px; right: -1px;
-        background: #dc2626;
-        color: white;
-        font-size: 6px;
-        font-weight: 900;
-        padding: 2px 5px;
-        border-radius: 0 10px 0 6px;
-        letter-spacing: 0.1em;
-    }
-    .type-pill.dynamic-pill.active {
-        box-shadow: 0 6px 25px rgba(245, 158, 11, 0.5);
-        transform: translateY(-2px);
-    }
-
-    /* Dynamic form card */
-    .dynamic-card {
-        background: linear-gradient(135deg, #fefce8, #fff7ed);
-        border: 2px solid #fbbf24;
-        border-radius: 1rem;
-        padding: 1.5rem;
-    }
-    .dynamic-card .dyn-field {
-        width: 100%; padding: .75rem 1.25rem; border-radius: 1rem;
-        border: 2px solid #fde68a; font-size: .85rem; font-weight: 600;
-        outline: none; transition: all .3s;
-        background: white; color: #1e293b;
-    }
-    .dynamic-card .dyn-field:focus {
-        border-color: #f59e0b; box-shadow: 0 4px 20px rgba(245, 158, 11, 0.15);
-    }
-    .dynamic-login-prompt {
-        text-align: center; padding: 2rem;
-    }
-    .dynamic-login-prompt .btn-dyn-login {
-        display: inline-flex; align-items: center; gap: 8px;
-        padding: 14px 28px; border-radius: 14px;
-        background: linear-gradient(135deg, #f59e0b, #ef4444);
-        color: white; font-size: 13px; font-weight: 800;
-        text-transform: uppercase; letter-spacing: 0.08em;
-        border: none; cursor: pointer; text-decoration: none;
-        box-shadow: 0 6px 24px rgba(245, 158, 11, 0.35);
-        transition: all 0.3s;
-    }
-    .dynamic-login-prompt .btn-dyn-login:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 10px 32px rgba(245, 158, 11, 0.5);
-    }
-
+    /* Type Pill Styles */
     .type-pill {
         color: #64748b; background: transparent; transition: all 0.3s ease;
     }
@@ -254,7 +195,7 @@
 
     <!-- Content Type Pills -->
     <div class="w-full overflow-x-auto lg:overflow-visible scrollbar-hide">
-        <div class="flex lg:grid lg:grid-cols-9 gap-[4px] w-max lg:w-full min-w-full p-1.5 bg-white/50 backdrop-blur-md rounded-2xl border border-surface-200 shadow-sm box-border">
+        <div class="flex lg:grid lg:grid-cols-8 gap-[4px] w-max lg:w-full min-w-full p-1.5 bg-white/50 backdrop-blur-md rounded-2xl border border-surface-200 shadow-sm box-border">
             <button onclick="switchType('url')" class="type-pill active flex items-center justify-center gap-[5px] px-[6px] py-[11px] rounded-xl text-[11px] font-black uppercase tracking-wider border border-transparent hover:border-surface-200 whitespace-nowrap min-w-0"><i data-lucide="link" class="w-[14px] h-[14px]"></i> URL</button>
             <button onclick="switchType('text')" class="type-pill flex items-center justify-center gap-[5px] px-[6px] py-[11px] rounded-xl text-[11px] font-black uppercase tracking-wider border border-transparent hover:border-surface-200 whitespace-nowrap min-w-0"><i data-lucide="type" class="w-[14px] h-[14px]"></i> Text</button>
             <button onclick="switchType('email')" class="type-pill flex items-center justify-center gap-[5px] px-[6px] py-[11px] rounded-xl text-[11px] font-black uppercase tracking-wider border border-transparent hover:border-surface-200 whitespace-nowrap min-w-0"><i data-lucide="mail" class="w-[14px] h-[14px]"></i> Email</button>
@@ -263,7 +204,6 @@
             <button onclick="switchType('vcard')" class="type-pill flex items-center justify-center gap-[5px] px-[6px] py-[11px] rounded-xl text-[11px] font-black uppercase tracking-wider border border-transparent hover:border-surface-200 whitespace-nowrap min-w-0"><i data-lucide="contact" class="w-[14px] h-[14px]"></i> vCard</button>
             <button onclick="switchType('wifi')" class="type-pill flex items-center justify-center gap-[5px] px-[6px] py-[11px] rounded-xl text-[11px] font-black uppercase tracking-wider border border-transparent hover:border-surface-200 whitespace-nowrap min-w-0"><i data-lucide="wifi" class="w-[14px] h-[14px]"></i> WiFi</button>
             <button onclick="switchType('location')" class="type-pill flex items-center justify-center gap-[5px] px-[6px] py-[11px] rounded-xl text-[11px] font-black uppercase tracking-wider border border-transparent hover:border-surface-200 whitespace-nowrap min-w-0"><i data-lucide="map-pin" class="w-[14px] h-[14px]"></i> Location</button>
-            <button onclick="switchType('dynamic')" class="type-pill dynamic-pill flex items-center justify-center gap-[5px] px-[6px] py-[11px] rounded-xl text-[11px] font-black uppercase tracking-wider border border-transparent whitespace-nowrap min-w-0"><i data-lucide="zap" class="w-[14px] h-[14px]"></i> Dynamic</button>
         </div>
     </div>
 
@@ -385,103 +325,7 @@
                         here?" to get coordinates.</p>
                 </div>
 
-                <!-- DYNAMIC QR -->
-                <div id="form-dynamic" class="type-form space-y-4">
-                    <div id="dyn-login-check">
-                        <!-- Will be replaced by JS based on auth status -->
-                        <div class="dynamic-login-prompt">
-                            <div style="margin-bottom:16px">
-                                <i data-lucide="zap" style="width:40px;height:40px;color:#f59e0b;margin:0 auto;display:block"></i>
-                            </div>
-                            <h3 style="font-size:16px;font-weight:900;color:#1e293b;margin-bottom:6px;">Dynamic QR Codes</h3>
-                            <p style="font-size:12px;color:#64748b;margin-bottom:20px;max-width:300px;margin-left:auto;margin-right:auto;">Create QR codes that you can edit later without reprinting. Login required.</p>
-                            <a href="/qr/login/" class="btn-dyn-login">
-                                <i data-lucide="log-in" style="width:16px;height:16px"></i>
-                                Login to Use Dynamic QR
-                            </a>
-                            <p style="font-size:11px;color:#94a3b8;margin-top:12px;">Don't have an account? <a href="/qr/register/" style="color:#f59e0b;font-weight:700;">Register here</a></p>
-                        </div>
-                    </div>
-                    <div id="dyn-form" class="dynamic-card" style="display:none;">
-                        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
-                            <div style="display:flex;align-items:center;gap:8px;">
-                                <i data-lucide="zap" style="width:18px;height:18px;color:#f59e0b"></i>
-                                <span style="font-size:12px;font-weight:900;color:#92400e;text-transform:uppercase;letter-spacing:0.1em;">Dynamic QR Mode</span>
-                            </div>
-                            <a href="/qr/dashboard/" style="font-size:11px;font-weight:700;color:#f59e0b;text-decoration:none;display:flex;align-items:center;gap:4px;">
-                                <i data-lucide="layout-dashboard" style="width:12px;height:12px"></i> Dashboard
-                            </a>
-                        </div>
-                        <div style="margin-bottom:14px;">
-                            <label class="field-label" style="color:#92400e;">QR Code Name</label>
-                            <input id="f-dyn-name" class="dyn-field" placeholder="My Business QR">
-                        </div>
-                        <div style="margin-bottom:14px;">
-                            <label class="field-label" style="color:#92400e;">QR Type</label>
-                            <select id="f-dyn-type" class="dyn-field" onchange="switchDynSubForm(this.value)">
-                                <option value="url">URL (Website)</option>
-                                <option value="text">Plain Text</option>
-                                <option value="email">Email</option>
-                                <option value="phone">Phone</option>
-                                <option value="sms">SMS</option>
-                                <option value="vcard">vCard (Contact)</option>
-                                <option value="wifi">WiFi</option>
-                                <option value="location">Location</option>
-                            </select>
-                        </div>
-                        
-                        <div id="dyn-subforms" class="space-y-4 pt-2 border-t border-[#fde68a]">
-                            <!-- URL -->
-                            <div id="dform-url" class="dyn-subform active">
-                                <label class="field-label">Destination URL</label>
-                                <input id="f-dyn-url" type="url" class="dyn-field" placeholder="https://example.com">
-                            </div>
-                            <!-- TEXT -->
-                            <div id="dform-text" class="dyn-subform hidden">
-                                <label class="field-label">Text Content</label>
-                                <textarea id="f-dyn-text" class="dyn-field min-h-[100px]" placeholder="Enter text here..."></textarea>
-                            </div>
-                            <!-- EMAIL -->
-                            <div id="dform-email" class="dyn-subform hidden space-y-3">
-                                <div><label class="field-label">Email Address</label><input id="f-dyn-email-to" class="dyn-field" placeholder="name@example.com"></div>
-                                <div><label class="field-label">Subject</label><input id="f-dyn-email-sub" class="dyn-field" placeholder="Hello!"></div>
-                                <textarea id="f-dyn-email-body" class="dyn-field min-h-[80px]" placeholder="Message..."></textarea>
-                            </div>
-                            <!-- PHONE -->
-                            <div id="dform-phone" class="dyn-subform hidden">
-                                <label class="field-label">Phone Number</label>
-                                <input id="f-dyn-phone" class="dyn-field" placeholder="+91...">
-                            </div>
-                            <!-- SMS -->
-                            <div id="dform-sms" class="dyn-subform hidden space-y-3">
-                                <input id="f-dyn-sms-num" class="dyn-field" placeholder="Phone Number">
-                                <textarea id="f-dyn-sms-msg" class="dyn-field" placeholder="Message..."></textarea>
-                            </div>
-                            <!-- VCARD -->
-                            <div id="dform-vcard" class="dyn-subform hidden space-y-3">
-                                <input id="f-dyn-vc-fn" class="dyn-field" placeholder="First Name">
-                                <input id="f-dyn-vc-ln" class="dyn-field" placeholder="Last Name">
-                                <input id="f-dyn-vc-org" class="dyn-field" placeholder="Company">
-                                <input id="f-dyn-vc-email" class="dyn-field" placeholder="Email">
-                                <input id="f-dyn-vc-pm" class="dyn-field" placeholder="Mobile">
-                            </div>
-                            <!-- WIFI -->
-                            <div id="dform-wifi" class="dyn-subform hidden space-y-3">
-                                <input id="f-dyn-wifi-ssid" class="dyn-field" placeholder="WiFi Name">
-                                <input id="f-dyn-wifi-pass" class="dyn-field" type="password" placeholder="Password">
-                                <select id="f-dyn-wifi-enc" class="dyn-field">
-                                    <option value="WPA">WPA/WPA2</option><option value="WEP">WEP</option><option value="nopass">Open</option>
-                                </select>
-                            </div>
-                            <!-- LOCATION -->
-                            <div id="dform-location" class="dyn-subform hidden space-y-3">
-                                <input id="f-dyn-loc-lat" class="dyn-field" placeholder="Latitude">
-                                <input id="f-dyn-loc-lng" class="dyn-field" placeholder="Longitude">
-                            </div>
-                        </div>
-                        <p style="font-size:10px;color:#b45309;margin-top:12px;font-weight:600;">⚡ You can change this content later in your dashboard without reprinting the QR code.</p>
-                    </div>
-                </div>
+
             </div>
         </div>
 
@@ -932,11 +776,240 @@
     </div>
 </div>
 
-<div class="qr-seo-content">
-    <h2>QR Code Generator</h2>
-    <p><strong>QR Code Generator</strong> helps you quickly create free QR codes for URLs, text, email, phone numbers, SMS, Wi-Fi, vCards, and locations.</p>
-    <p>Customize your QR code with colors, logos, body shapes, eye frames, and design styles to match your brand or personal needs.</p>
-    <p>Generate, preview, and download high-quality QR codes in seconds for websites, business cards, marketing materials, sharing, and everyday use.</p>
+<!-- ================= SEO / INFO SECTIONS ================= -->
+<div class="mt-16 border-t border-surface-100 pt-16 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8">
+    <!-- SECTION 1: GET STARTED -->
+    <section class="max-w-7xl mx-auto mb-24">
+        <div class="text-center mb-12">
+            <span class="text-[10px] font-black text-brand-600 uppercase tracking-widest">Get Started</span>
+            <h2 class="text-3xl font-black text-surface-900 mt-2 mb-4">Create Your Custom QR Code in 4 Simple Steps</h2>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            <div class="text-center">
+                <div class="w-12 h-12 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center font-black text-xl mx-auto mb-4">1</div>
+                <h3 class="font-bold text-surface-900 mb-2">Add QR Content</h3>
+                <p class="text-sm text-surface-500 leading-relaxed">Choose the QR code type you need, such as URL, Text, Email, Phone, SMS, vCard, Wi-Fi, or Location. Enter the required information in the form and review it before generating the QR code.</p>
+            </div>
+            <div class="text-center">
+                <div class="w-12 h-12 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center font-black text-xl mx-auto mb-4">2</div>
+                <h3 class="font-bold text-surface-900 mb-2">Customize Your Design</h3>
+                <p class="text-sm text-surface-500 leading-relaxed">Personalize the QR code with foreground and background colors, gradients, a logo image, body shapes, eye frames, and eye ball styles. Use high-contrast colors to maintain reliable scanning.</p>
+            </div>
+            <div class="text-center">
+                <div class="w-12 h-12 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center font-black text-xl mx-auto mb-4">3</div>
+                <h3 class="font-bold text-surface-900 mb-2">Generate and Preview</h3>
+                <p class="text-sm text-surface-500 leading-relaxed">Click <strong>Create QR Code</strong> to generate your customized QR code. Check the live preview and confirm that the design, content, logo, and selected styles appear correctly.</p>
+            </div>
+            <div class="text-center">
+                <div class="w-12 h-12 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center font-black text-xl mx-auto mb-4">4</div>
+                <h3 class="font-bold text-surface-900 mb-2">Download Your QR Code</h3>
+                <p class="text-sm text-surface-500 leading-relaxed">Download the finished QR code in the available high-quality format such as PNG, JPG/JPEG, or SVG. Use the downloaded QR code for digital sharing, websites, print materials, business cards, menus, or marketing.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 2 & 3: ABOUT & QR PREVIEWS -->
+    <section class="bg-brand-50/50 py-16 mb-24 border-y border-brand-100/50 -mx-4 sm:-mx-6 lg:-mx-8 px-4 sm:px-6 lg:px-8">
+        <div class="max-w-4xl mx-auto text-center mb-12">
+            <span class="text-[10px] font-black text-brand-600 uppercase tracking-widest">About</span>
+            <h2 class="text-2xl font-black text-surface-900 mt-2 mb-6">Free QR Code Generator for Custom and High-Quality QR Codes</h2>
+            <p class="text-base text-surface-600 leading-relaxed"><strong>ScanPDF QR Code Generator</strong> makes it easy to create customized QR codes for websites, text, contact details, messages, Wi-Fi networks, locations, and more. Generate professional QR codes with custom colors, logos, body patterns, finder-frame styles, and downloadable high-resolution output.</p>
+        </div>
+        
+        <!-- QR Previews Strip -->
+        <div class="max-w-7xl mx-auto overflow-hidden">
+            <div class="flex flex-wrap justify-center gap-6">
+                <div class="w-32 h-32 bg-white rounded-2xl p-4 shadow-sm border border-surface-100 flex items-center justify-center">
+                    <i data-lucide="qr-code" class="w-full h-full text-brand-500"></i>
+                </div>
+                <div class="w-32 h-32 bg-white rounded-2xl p-4 shadow-sm border border-surface-100 flex items-center justify-center">
+                    <i data-lucide="qr-code" class="w-full h-full text-blue-500"></i>
+                </div>
+                <div class="w-32 h-32 bg-white rounded-2xl p-4 shadow-sm border border-surface-100 flex items-center justify-center">
+                    <i data-lucide="qr-code" class="w-full h-full text-emerald-500"></i>
+                </div>
+                <div class="w-32 h-32 bg-white rounded-2xl p-4 shadow-sm border border-surface-100 flex items-center justify-center">
+                    <i data-lucide="qr-code" class="w-full h-full text-orange-500"></i>
+                </div>
+                <div class="w-32 h-32 bg-white rounded-2xl p-4 shadow-sm border border-surface-100 flex items-center justify-center">
+                    <i data-lucide="qr-code" class="w-full h-full text-pink-500"></i>
+                </div>
+                <div class="w-32 h-32 bg-white rounded-2xl p-4 shadow-sm border border-surface-100 flex items-center justify-center">
+                    <i data-lucide="qr-code" class="w-full h-full text-slate-800"></i>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 4: FEATURE DETAILS -->
+    <section class="max-w-6xl mx-auto mb-24">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-16 gap-y-12">
+            <div>
+                <h3 class="font-black text-lg text-surface-900 mb-3 flex items-center gap-2"><i data-lucide="infinity" class="w-5 h-5 text-brand-500"></i> No Scan Limit for Static QR Codes</h3>
+                <p class="text-sm text-surface-500 leading-relaxed">Static QR codes generated from URL, text, email, phone, SMS, Wi-Fi, vCard, and location content can be scanned repeatedly. The QR information is stored directly in the generated code, allowing it to continue working as long as the encoded destination or information remains valid.</p>
+            </div>
+            <div>
+                <h3 class="font-black text-lg text-surface-900 mb-3 flex items-center gap-2"><i data-lucide="maximize" class="w-5 h-5 text-brand-500"></i> High-Resolution QR Codes</h3>
+                <p class="text-sm text-surface-500 leading-relaxed">Generate QR codes suitable for both digital and print use. High-resolution output helps maintain clear edges and reliable scanning when QR codes are placed on documents, posters, menus, cards, labels, or marketing materials.</p>
+            </div>
+            <div>
+                <h3 class="font-black text-lg text-surface-900 mb-3 flex items-center gap-2"><i data-lucide="image" class="w-5 h-5 text-brand-500"></i> QR Codes with Logo</h3>
+                <p class="text-sm text-surface-500 leading-relaxed">Upload a logo image and place it in the center of the QR code to create a more recognizable branded design. The QR generator maintains appropriate spacing and error-correction settings to help preserve scan reliability.</p>
+            </div>
+            <div>
+                <h3 class="font-black text-lg text-surface-900 mb-3 flex items-center gap-2"><i data-lucide="file-code-2" class="w-5 h-5 text-brand-500"></i> Vector QR Code Output</h3>
+                <p class="text-sm text-surface-500 leading-relaxed">Use SVG output where available when you need a scalable QR code for professional design or printing. Vector QR codes can be enlarged without the pixelation normally associated with raster image formats.</p>
+            </div>
+            <div>
+                <h3 class="font-black text-lg text-surface-900 mb-3 flex items-center gap-2"><i data-lucide="palette" class="w-5 h-5 text-brand-500"></i> Custom Design and Colors</h3>
+                <p class="text-sm text-surface-500 leading-relaxed">Customize the appearance of your QR code with foreground colors, background colors, gradients, body patterns, eye frames, and eye ball styles. The live preview lets you review your design before downloading.</p>
+            </div>
+            <div>
+                <h3 class="font-black text-lg text-surface-900 mb-3 flex items-center gap-2"><i data-lucide="briefcase" class="w-5 h-5 text-brand-500"></i> Free for Personal and Commercial Use</h3>
+                <p class="text-sm text-surface-500 leading-relaxed">Generated QR codes can be used for everyday sharing, business materials, websites, presentations, menus, product packaging, events, marketing campaigns, and other appropriate personal or commercial uses.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- SECTION 5: WHY USE SCANPDF -->
+    <section class="max-w-7xl mx-auto mb-24">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="p-6 rounded-3xl border border-surface-100 bg-white shadow-sm flex flex-col items-center text-center hover:border-brand-200 transition-colors">
+                <div class="w-12 h-12 rounded-2xl bg-brand-50 text-brand-500 flex items-center justify-center mb-4">
+                    <i data-lucide="zap" class="w-6 h-6"></i>
+                </div>
+                <h4 class="font-bold text-surface-900 mb-2">Fast QR Creation</h4>
+                <p class="text-xs text-surface-500 leading-relaxed">Create a QR code in seconds with an instant preview.</p>
+            </div>
+            <div class="p-6 rounded-3xl border border-surface-100 bg-white shadow-sm flex flex-col items-center text-center hover:border-brand-200 transition-colors">
+                <div class="w-12 h-12 rounded-2xl bg-brand-50 text-brand-500 flex items-center justify-center mb-4">
+                    <i data-lucide="palette" class="w-6 h-6"></i>
+                </div>
+                <h4 class="font-bold text-surface-900 mb-2">Custom QR Designs</h4>
+                <p class="text-xs text-surface-500 leading-relaxed">Adjust colors, logos, body styles, eye frames, and eye ball shapes.</p>
+            </div>
+            <div class="p-6 rounded-3xl border border-surface-100 bg-white shadow-sm flex flex-col items-center text-center hover:border-brand-200 transition-colors">
+                <div class="w-12 h-12 rounded-2xl bg-brand-50 text-brand-500 flex items-center justify-center mb-4">
+                    <i data-lucide="qr-code" class="w-6 h-6"></i>
+                </div>
+                <h4 class="font-bold text-surface-900 mb-2">Multiple QR Types</h4>
+                <p class="text-xs text-surface-500 leading-relaxed">Create QR codes for URLs, text, email, phone, SMS, vCards, Wi-Fi, and locations.</p>
+            </div>
+            <div class="p-6 rounded-3xl border border-surface-100 bg-white shadow-sm flex flex-col items-center text-center hover:border-brand-200 transition-colors">
+                <div class="w-12 h-12 rounded-2xl bg-brand-50 text-brand-500 flex items-center justify-center mb-4">
+                    <i data-lucide="download" class="w-6 h-6"></i>
+                </div>
+                <h4 class="font-bold text-surface-900 mb-2">High-Quality Downloads</h4>
+                <p class="text-xs text-surface-500 leading-relaxed">Download QR codes in supported high-resolution image and vector formats.</p>
+            </div>
+        </div>
+    </section>
+
+    <section class="max-w-[1050px] mx-auto mb-24">
+        <div class="text-center mb-10">
+            <h2 class="text-2xl font-black text-surface-900 uppercase tracking-wider">Frequently Asked Questions</h2>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-4 items-start">
+            
+            <!-- Left Column -->
+            <div class="flex flex-col gap-[14px]">
+                <details class="group border border-surface-100 rounded-2xl bg-white overflow-hidden w-full">
+                    <summary class="flex justify-between items-center font-bold cursor-pointer list-none p-5 text-surface-900 hover:bg-surface-50 transition-colors focus:outline-none">
+                        <span>What is a QR code?</span>
+                        <span class="transition group-open:rotate-180"><i data-lucide="chevron-down" class="w-5 h-5 text-surface-400"></i></span>
+                    </summary>
+                    <div class="p-5 pt-0 text-surface-500 text-sm leading-relaxed border-t border-surface-50 mt-2">
+                        A QR code is a two-dimensional barcode that stores information such as a website URL, text, contact details, phone numbers, Wi-Fi credentials, or location data. A smartphone camera or QR scanner can read the code and open the encoded information.
+                    </div>
+                </details>
+                <details class="group border border-surface-100 rounded-2xl bg-white overflow-hidden w-full">
+                    <summary class="flex justify-between items-center font-bold cursor-pointer list-none p-5 text-surface-900 hover:bg-surface-50 transition-colors focus:outline-none">
+                        <span>Is the QR Code Generator free?</span>
+                        <span class="transition group-open:rotate-180"><i data-lucide="chevron-down" class="w-5 h-5 text-surface-400"></i></span>
+                    </summary>
+                    <div class="p-5 pt-0 text-surface-500 text-sm leading-relaxed border-t border-surface-50 mt-2">
+                        The QR Generator can be used to create supported QR code types directly from the ScanPDF website. Users can customize and download the generated QR code using the available design and output options.
+                    </div>
+                </details>
+                <details class="group border border-surface-100 rounded-2xl bg-white overflow-hidden w-full">
+                    <summary class="flex justify-between items-center font-bold cursor-pointer list-none p-5 text-surface-900 hover:bg-surface-50 transition-colors focus:outline-none">
+                        <span>What QR code types can I create?</span>
+                        <span class="transition group-open:rotate-180"><i data-lucide="chevron-down" class="w-5 h-5 text-surface-400"></i></span>
+                    </summary>
+                    <div class="p-5 pt-0 text-surface-500 text-sm leading-relaxed border-t border-surface-50 mt-2">
+                        The QR Generator supports URL, Text, Email, Phone, SMS, vCard, Wi-Fi, and Location.
+                    </div>
+                </details>
+                <details class="group border border-surface-100 rounded-2xl bg-white overflow-hidden w-full">
+                    <summary class="flex justify-between items-center font-bold cursor-pointer list-none p-5 text-surface-900 hover:bg-surface-50 transition-colors focus:outline-none">
+                        <span>Can I customize the QR code design?</span>
+                        <span class="transition group-open:rotate-180"><i data-lucide="chevron-down" class="w-5 h-5 text-surface-400"></i></span>
+                    </summary>
+                    <div class="p-5 pt-0 text-surface-500 text-sm leading-relaxed border-t border-surface-50 mt-2">
+                        Yes. You can customize foreground and background colors, gradients, logo images, QR body shapes, finder eye frames, and eye ball styles.
+                    </div>
+                </details>
+                <details class="group border border-surface-100 rounded-2xl bg-white overflow-hidden w-full">
+                    <summary class="flex justify-between items-center font-bold cursor-pointer list-none p-5 text-surface-900 hover:bg-surface-50 transition-colors focus:outline-none">
+                        <span>Can I add a logo to my QR code?</span>
+                        <span class="transition group-open:rotate-180"><i data-lucide="chevron-down" class="w-5 h-5 text-surface-400"></i></span>
+                    </summary>
+                    <div class="p-5 pt-0 text-surface-500 text-sm leading-relaxed border-t border-surface-50 mt-2">
+                        Yes. Use the <strong>Add Logo Image</strong> section to upload a logo and place it inside the QR code. Always verify the completed code using a QR scanner after applying a logo.
+                    </div>
+                </details>
+            </div>
+
+            <!-- Right Column -->
+            <div class="flex flex-col gap-[14px]">
+                <details class="group border border-surface-100 rounded-2xl bg-white overflow-hidden w-full">
+                    <summary class="flex justify-between items-center font-bold cursor-pointer list-none p-5 text-surface-900 hover:bg-surface-50 transition-colors focus:outline-none">
+                        <span>Why is my QR code not scanning?</span>
+                        <span class="transition group-open:rotate-180"><i data-lucide="chevron-down" class="w-5 h-5 text-surface-400"></i></span>
+                    </summary>
+                    <div class="p-5 pt-0 text-surface-500 text-sm leading-relaxed border-t border-surface-50 mt-2">
+                        Make sure the foreground and background have strong contrast, avoid overly complex styling, keep sufficient empty space around the QR code, and confirm that the encoded data is valid. Test the QR code using a real phone before publishing or printing it.
+                    </div>
+                </details>
+                <details class="group border border-surface-100 rounded-2xl bg-white overflow-hidden w-full">
+                    <summary class="flex justify-between items-center font-bold cursor-pointer list-none p-5 text-surface-900 hover:bg-surface-50 transition-colors focus:outline-none">
+                        <span>Which QR format should I download?</span>
+                        <span class="transition group-open:rotate-180"><i data-lucide="chevron-down" class="w-5 h-5 text-surface-400"></i></span>
+                    </summary>
+                    <div class="p-5 pt-0 text-surface-500 text-sm leading-relaxed border-t border-surface-50 mt-2">
+                        PNG or JPG/JPEG is convenient for websites and general digital use. SVG is recommended when available for scalable graphics or professional printing because it can be resized without losing quality.
+                    </div>
+                </details>
+                <details class="group border border-surface-100 rounded-2xl bg-white overflow-hidden w-full">
+                    <summary class="flex justify-between items-center font-bold cursor-pointer list-none p-5 text-surface-900 hover:bg-surface-50 transition-colors focus:outline-none">
+                        <span>Do customized QR codes still scan?</span>
+                        <span class="transition group-open:rotate-180"><i data-lucide="chevron-down" class="w-5 h-5 text-surface-400"></i></span>
+                    </summary>
+                    <div class="p-5 pt-0 text-surface-500 text-sm leading-relaxed border-t border-surface-50 mt-2">
+                        Yes, provided the design maintains sufficient contrast and does not interfere with important QR finder patterns. Always scan-test heavily customized QR codes before using them publicly.
+                    </div>
+                </details>
+                <details class="group border border-surface-100 rounded-2xl bg-white overflow-hidden w-full">
+                    <summary class="flex justify-between items-center font-bold cursor-pointer list-none p-5 text-surface-900 hover:bg-surface-50 transition-colors focus:outline-none">
+                        <span>Can I create a Wi-Fi QR code?</span>
+                        <span class="transition group-open:rotate-180"><i data-lucide="chevron-down" class="w-5 h-5 text-surface-400"></i></span>
+                    </summary>
+                    <div class="p-5 pt-0 text-surface-500 text-sm leading-relaxed border-t border-surface-50 mt-2">
+                        Yes. Select the Wi-Fi QR type and enter the required network information. Scanning the resulting QR code can help supported devices connect using the encoded Wi-Fi details.
+                    </div>
+                </details>
+                <details class="group border border-surface-100 rounded-2xl bg-white overflow-hidden w-full">
+                    <summary class="flex justify-between items-center font-bold cursor-pointer list-none p-5 text-surface-900 hover:bg-surface-50 transition-colors focus:outline-none">
+                        <span>Can I create a vCard QR code?</span>
+                        <span class="transition group-open:rotate-180"><i data-lucide="chevron-down" class="w-5 h-5 text-surface-400"></i></span>
+                    </summary>
+                    <div class="p-5 pt-0 text-surface-500 text-sm leading-relaxed border-t border-surface-50 mt-2">
+                        Yes. The vCard option allows contact details to be encoded into a QR code, making it easier for users to save contact information after scanning.
+                    </div>
+                </details>
+            </div>
+        </div>
+    </section>
 </div>
 
 </div>
@@ -973,13 +1046,7 @@
     }
 
     /* ── Content-type pills ── */
-    function switchDynSubForm(type) {
-        document.querySelectorAll('.dyn-subform').forEach(f => f.classList.add('hidden'));
-        document.getElementById('dform-' + type).classList.remove('hidden');
-    }
-
     var currentType = 'url';
-    let isDynamicAuth = false;
 
     function switchType(t) {
         currentType = t;
@@ -987,29 +1054,6 @@
         event.target.closest('.type-pill').classList.add('active');
         document.querySelectorAll('.type-form').forEach(f => f.classList.remove('active'));
         document.getElementById('form-' + t).classList.add('active');
-
-        // If switching to dynamic, check auth status
-        if (t === 'dynamic') {
-            checkDynamicAuth();
-        }
-    }
-
-    async function checkDynamicAuth() {
-        try {
-            const resp = await fetch('/qr/api/auth-status/');
-            const data = await resp.json();
-            isDynamicAuth = data.authenticated;
-            if (data.authenticated) {
-                document.getElementById('dyn-login-check').style.display = 'none';
-                document.getElementById('dyn-form').style.display = 'block';
-            } else {
-                document.getElementById('dyn-login-check').style.display = 'block';
-                document.getElementById('dyn-form').style.display = 'none';
-            }
-            lucide.createIcons();
-        } catch (e) {
-            console.error('Auth check failed:', e);
-        }
     }
 
     /* ── Build data string from form ── */
@@ -1058,9 +1102,7 @@
                 const lng = document.getElementById('f-loc-lng').value.trim() || '0';
                 return `geo:${lat},${lng}`;
             }
-            case 'dynamic': {
-                return '__DYNAMIC__';  // Handled specially in generateQR
-            }
+
         }
         return '';
     }
@@ -1187,116 +1229,6 @@
 
     const genBtn = document.getElementById('gen-btn');
     genBtn.onclick = async () => {
-        // Dynamic QR: special flow
-        if (currentType === 'dynamic') {
-            if (!isDynamicAuth) {
-                alert('Please login to create dynamic QR codes.');
-                return;
-            }
-            const dName = document.getElementById('f-dyn-name').value.trim();
-            const dType = document.getElementById('f-dyn-type').value;
-            let dUrl = '';
-            let dData = {};
-
-            if (!dName) { alert('Please enter a name for your QR code.'); return; }
-
-            // Collect data based on sub-type
-            if (dType === 'url') {
-                dUrl = document.getElementById('f-dyn-url').value.trim();
-                if (!dUrl) { alert('Please enter a destination URL.'); return; }
-            } else if (dType === 'text') {
-                dData.text = document.getElementById('f-dyn-text').value.trim();
-            } else if (dType === 'email') {
-                dData.email = document.getElementById('f-dyn-email-to').value.trim();
-                dData.subject = document.getElementById('f-dyn-email-sub').value.trim();
-                dData.body = document.getElementById('f-dyn-email-body').value.trim();
-            } else if (dType === 'phone') {
-                dData.phone = document.getElementById('f-dyn-phone').value.trim();
-            } else if (dType === 'sms') {
-                dData.phone = document.getElementById('f-dyn-sms-num').value.trim();
-                dData.message = document.getElementById('f-dyn-sms-msg').value.trim();
-            } else if (dType === 'vcard') {
-                dData.first_name = document.getElementById('f-dyn-vc-fn').value.trim();
-                dData.last_name = document.getElementById('f-dyn-vc-ln').value.trim();
-                dData.organization = document.getElementById('f-dyn-vc-org').value.trim();
-                dData.email = document.getElementById('f-dyn-vc-email').value.trim();
-                dData.phone_mobile = document.getElementById('f-dyn-vc-pm').value.trim();
-            } else if (dType === 'wifi') {
-                dData.ssid = document.getElementById('f-dyn-wifi-ssid').value.trim();
-                dData.password = document.getElementById('f-dyn-wifi-pass').value.trim();
-                dData.encryption = document.getElementById('f-dyn-wifi-enc').value;
-            } else if (dType === 'location') {
-                dData.latitude = document.getElementById('f-dyn-loc-lat').value.trim();
-                dData.longitude = document.getElementById('f-dyn-loc-lng').value.trim();
-            }
-
-            genBtn.disabled = true;
-            const orig = genBtn.innerHTML;
-            genBtn.innerHTML = '<div class="w-5 h-5 rounded-full border-2 border-white border-t-transparent animate-spin"></div> &nbsp; CREATING DYNAMIC QR...';
-
-            document.getElementById('scanner').classList.remove('hidden');
-            document.getElementById('qr-img').classList.add('hidden');
-            document.getElementById('placeholder').classList.remove('hidden');
-            document.getElementById('actions').classList.add('hidden');
-
-            try {
-                // Step 1: Create dynamic QR record
-                const fd = new FormData();
-                fd.append('qr_name', dName);
-                fd.append('qr_type', dType);
-                if (dUrl) fd.append('destination_url', dUrl);
-                fd.append('qr_data', JSON.stringify(dData));
-                fd.append('fg_color', document.getElementById('fg-color').value);
-                fd.append('bg_color', document.getElementById('bg-color').value);
-                fd.append('csrfmiddlewaretoken', CSRF);
-
-                const createResp = await fetch('/qr/create/', { method: 'POST', body: fd });
-                const createData = await createResp.json();
-
-                if (!createData.success) {
-                    throw new Error(createData.error || 'Failed to create dynamic QR');
-                }
-
-                // Step 2: Generate QR image pointing to the redirect URL
-                const imgFd = new FormData();
-                imgFd.append('text', createData.redirect_url);
-                imgFd.append('fg_color', document.getElementById('fg-color').value);
-                imgFd.append('bg_color', document.getElementById('bg-color').value);
-                imgFd.append('style', document.querySelector('input[name="body"]:checked').value);
-                imgFd.append('eye_style', document.querySelector('input[name="eye"]:checked').value);
-                imgFd.append('ball_style', document.querySelector('input[name="ball"]:checked').value);
-                imgFd.append('output_format', 'png');
-                if (logoFile) imgFd.append('logo', logoFile);
-                imgFd.append('csrfmiddlewaretoken', CSRF);
-
-                const imgResp = await fetch('/qr/api/generate-image/', { method: 'POST', body: imgFd });
-                if (!imgResp.ok) throw new Error('Failed to generate QR image');
-                const blob = await imgResp.blob();
-
-                await new Promise(r => setTimeout(r, 600));
-
-                const url = window.URL.createObjectURL(blob);
-                document.getElementById('qr-img').src = url;
-                document.getElementById('dl-png').href = url;
-
-                document.getElementById('scanner').classList.add('hidden');
-                document.getElementById('placeholder').classList.add('hidden');
-                document.getElementById('qr-bg').classList.remove('hidden');
-                document.getElementById('qr-img').classList.remove('hidden');
-                document.getElementById('actions').classList.remove('hidden');
-                document.getElementById('qr-box').scrollIntoView({ behavior: 'smooth', block: 'center' });
-
-                alert('Dynamic QR created! You can manage it from the Dashboard.');
-            } catch (err) {
-                alert(err.message);
-                document.getElementById('scanner').classList.add('hidden');
-            } finally {
-                genBtn.disabled = false;
-                genBtn.innerHTML = orig;
-                lucide.createIcons();
-            }
-            return;
-        }
 
         // Standard QR flow
         genBtn.disabled = true;
