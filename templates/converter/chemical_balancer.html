@@ -59,6 +59,236 @@
         </div>
     </div>
 </div>
+
+<!-- Reaction Types Section -->
+<div class="mt-12 space-y-6 animate-fade-in-up" style="animation-delay: 100ms;">
+    <div class="text-center space-y-2">
+        <h2 class="text-xl font-black text-surface-900 tracking-tight">Chemical Equation Types</h2>
+        <p class="text-sm font-medium text-surface-500">Explore common chemical reactions and balance them instantly.</p>
+    </div>
+    
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- 1 -->
+        <div class="rounded-2xl bg-white border border-surface-100 p-5 shadow-sm hover:shadow-card-hover transition-shadow flex flex-col">
+            <div class="flex items-center gap-3 mb-3">
+                <div class="w-8 h-8 rounded-xl bg-brand-50 flex items-center justify-center text-brand-600 font-black text-sm">1</div>
+                <h3 class="text-sm font-black text-surface-900 uppercase tracking-widest">Combination / Synthesis</h3>
+            </div>
+            <p class="text-xs text-surface-500 font-medium mb-4 flex-1">Two or more substances combine to form one product.</p>
+            
+            <div class="space-y-3 bg-surface-50 p-4 rounded-xl border border-surface-100 mb-4">
+                <div>
+                    <span class="text-[9px] font-black text-surface-400 uppercase tracking-widest block mb-1">Unbalanced</span>
+                    <code class="text-sm font-bold text-surface-900">H2 + O2 = H2O</code>
+                </div>
+                <div>
+                    <span class="text-[9px] font-black text-surface-400 uppercase tracking-widest block mb-1">Balanced</span>
+                    <code class="text-sm font-bold text-brand-600">2H2 + O2 = 2H2O</code>
+                </div>
+            </div>
+            
+            <button onclick="tryExample('H2 + O2 = H2O')" class="w-full py-2.5 rounded-xl bg-white border-2 border-surface-200 text-surface-600 font-bold text-xs uppercase tracking-widest hover:border-brand-500 hover:text-brand-600 transition-all">Try Example</button>
+        </div>
+
+        <!-- 2 -->
+        <div class="rounded-2xl bg-white border border-surface-100 p-5 shadow-sm hover:shadow-card-hover transition-shadow flex flex-col">
+            <div class="flex items-center gap-3 mb-3">
+                <div class="w-8 h-8 rounded-xl bg-brand-50 flex items-center justify-center text-brand-600 font-black text-sm">2</div>
+                <h3 class="text-sm font-black text-surface-900 uppercase tracking-widest">Decomposition</h3>
+            </div>
+            <p class="text-xs text-surface-500 font-medium mb-4 flex-1">A single compound breaks down into two or more elements or new compounds.</p>
+            
+            <div class="space-y-3 bg-surface-50 p-4 rounded-xl border border-surface-100 mb-4">
+                <div>
+                    <span class="text-[9px] font-black text-surface-400 uppercase tracking-widest block mb-1">Unbalanced</span>
+                    <code class="text-sm font-bold text-surface-900">H2O = H2 + O2</code>
+                </div>
+                <div>
+                    <span class="text-[9px] font-black text-surface-400 uppercase tracking-widest block mb-1">Balanced</span>
+                    <code class="text-sm font-bold text-brand-600">2H2O = 2H2 + O2</code>
+                </div>
+            </div>
+            
+            <button onclick="tryExample('H2O = H2 + O2')" class="w-full py-2.5 rounded-xl bg-white border-2 border-surface-200 text-surface-600 font-bold text-xs uppercase tracking-widest hover:border-brand-500 hover:text-brand-600 transition-all">Try Example</button>
+        </div>
+
+        <!-- 3 -->
+        <div class="rounded-2xl bg-white border border-surface-100 p-5 shadow-sm hover:shadow-card-hover transition-shadow flex flex-col">
+            <div class="flex items-center gap-3 mb-3">
+                <div class="w-8 h-8 rounded-xl bg-brand-50 flex items-center justify-center text-brand-600 font-black text-sm">3</div>
+                <h3 class="text-sm font-black text-surface-900 uppercase tracking-widest">Single Displacement</h3>
+            </div>
+            <p class="text-xs text-surface-500 font-medium mb-4 flex-1">An element reacts with a compound and takes the place of another element.</p>
+            
+            <div class="space-y-3 bg-surface-50 p-4 rounded-xl border border-surface-100 mb-4">
+                <div>
+                    <span class="text-[9px] font-black text-surface-400 uppercase tracking-widest block mb-1">Unbalanced</span>
+                    <code class="text-sm font-bold text-surface-900">Zn + HCl = ZnCl2 + H2</code>
+                </div>
+                <div>
+                    <span class="text-[9px] font-black text-surface-400 uppercase tracking-widest block mb-1">Balanced</span>
+                    <code class="text-sm font-bold text-brand-600">Zn + 2HCl = ZnCl2 + H2</code>
+                </div>
+            </div>
+            
+            <button onclick="tryExample('Zn + HCl = ZnCl2 + H2')" class="w-full py-2.5 rounded-xl bg-white border-2 border-surface-200 text-surface-600 font-bold text-xs uppercase tracking-widest hover:border-brand-500 hover:text-brand-600 transition-all">Try Example</button>
+        </div>
+
+        <!-- 4 -->
+        <div class="rounded-2xl bg-white border border-surface-100 p-5 shadow-sm hover:shadow-card-hover transition-shadow flex flex-col">
+            <div class="flex items-center gap-3 mb-3">
+                <div class="w-8 h-8 rounded-xl bg-brand-50 flex items-center justify-center text-brand-600 font-black text-sm">4</div>
+                <h3 class="text-sm font-black text-surface-900 uppercase tracking-widest">Double Displacement</h3>
+            </div>
+            <p class="text-xs text-surface-500 font-medium mb-4 flex-1">Two compounds react, and the ions of the two reactants switch places.</p>
+            
+            <div class="space-y-3 bg-surface-50 p-4 rounded-xl border border-surface-100 mb-4">
+                <div>
+                    <span class="text-[9px] font-black text-surface-400 uppercase tracking-widest block mb-1">Unbalanced</span>
+                    <code class="text-sm font-bold text-surface-900">AgNO3 + NaCl = AgCl + NaNO3</code>
+                </div>
+                <div>
+                    <span class="text-[9px] font-black text-surface-400 uppercase tracking-widest block mb-1">Balanced</span>
+                    <code class="text-sm font-bold text-brand-600">AgNO3 + NaCl = AgCl + NaNO3</code>
+                </div>
+            </div>
+            
+            <button onclick="tryExample('AgNO3 + NaCl = AgCl + NaNO3')" class="w-full py-2.5 rounded-xl bg-white border-2 border-surface-200 text-surface-600 font-bold text-xs uppercase tracking-widest hover:border-brand-500 hover:text-brand-600 transition-all">Try Example</button>
+        </div>
+
+        <!-- 5 -->
+        <div class="rounded-2xl bg-white border border-surface-100 p-5 shadow-sm hover:shadow-card-hover transition-shadow flex flex-col">
+            <div class="flex items-center gap-3 mb-3">
+                <div class="w-8 h-8 rounded-xl bg-brand-50 flex items-center justify-center text-brand-600 font-black text-sm">5</div>
+                <h3 class="text-sm font-black text-surface-900 uppercase tracking-widest">Combustion</h3>
+            </div>
+            <p class="text-xs text-surface-500 font-medium mb-4 flex-1">A substance reacts with oxygen gas, releasing energy in the form of light and heat.</p>
+            
+            <div class="space-y-3 bg-surface-50 p-4 rounded-xl border border-surface-100 mb-4">
+                <div>
+                    <span class="text-[9px] font-black text-surface-400 uppercase tracking-widest block mb-1">Unbalanced</span>
+                    <code class="text-sm font-bold text-surface-900">CH4 + O2 = CO2 + H2O</code>
+                </div>
+                <div>
+                    <span class="text-[9px] font-black text-surface-400 uppercase tracking-widest block mb-1">Balanced</span>
+                    <code class="text-sm font-bold text-brand-600">CH4 + 2O2 = CO2 + 2H2O</code>
+                </div>
+            </div>
+            
+            <button onclick="tryExample('CH4 + O2 = CO2 + H2O')" class="w-full py-2.5 rounded-xl bg-white border-2 border-surface-200 text-surface-600 font-bold text-xs uppercase tracking-widest hover:border-brand-500 hover:text-brand-600 transition-all">Try Example</button>
+        </div>
+
+        <!-- 6 -->
+        <div class="rounded-2xl bg-white border border-surface-100 p-5 shadow-sm hover:shadow-card-hover transition-shadow flex flex-col">
+            <div class="flex items-center gap-3 mb-3">
+                <div class="w-8 h-8 rounded-xl bg-brand-50 flex items-center justify-center text-brand-600 font-black text-sm">6</div>
+                <h3 class="text-sm font-black text-surface-900 uppercase tracking-widest">Acid + Base / Neutralization</h3>
+            </div>
+            <p class="text-xs text-surface-500 font-medium mb-4 flex-1">An acid and a base react to form a salt and water.</p>
+            
+            <div class="space-y-3 bg-surface-50 p-4 rounded-xl border border-surface-100 mb-4">
+                <div>
+                    <span class="text-[9px] font-black text-surface-400 uppercase tracking-widest block mb-1">Unbalanced</span>
+                    <code class="text-sm font-bold text-surface-900">H2SO4 + NaOH = Na2SO4 + H2O</code>
+                </div>
+                <div>
+                    <span class="text-[9px] font-black text-surface-400 uppercase tracking-widest block mb-1">Balanced</span>
+                    <code class="text-sm font-bold text-brand-600">H2SO4 + 2NaOH = Na2SO4 + 2H2O</code>
+                </div>
+            </div>
+            
+            <button onclick="tryExample('H2SO4 + NaOH = Na2SO4 + H2O')" class="w-full py-2.5 rounded-xl bg-white border-2 border-surface-200 text-surface-600 font-bold text-xs uppercase tracking-widest hover:border-brand-500 hover:text-brand-600 transition-all">Try Example</button>
+        </div>
+
+        <!-- 7 -->
+        <div class="rounded-2xl bg-white border border-surface-100 p-5 shadow-sm hover:shadow-card-hover transition-shadow flex flex-col">
+            <div class="flex items-center gap-3 mb-3">
+                <div class="w-8 h-8 rounded-xl bg-brand-50 flex items-center justify-center text-brand-600 font-black text-sm">7</div>
+                <h3 class="text-sm font-black text-surface-900 uppercase tracking-widest">Redox</h3>
+            </div>
+            <p class="text-xs text-surface-500 font-medium mb-4 flex-1">A reaction involving the transfer of electrons between two species.</p>
+            
+            <div class="space-y-3 bg-surface-50 p-4 rounded-xl border border-surface-100 mb-4">
+                <div>
+                    <span class="text-[9px] font-black text-surface-400 uppercase tracking-widest block mb-1">Unbalanced</span>
+                    <code class="text-sm font-bold text-surface-900">Fe + O2 = Fe2O3</code>
+                </div>
+                <div>
+                    <span class="text-[9px] font-black text-surface-400 uppercase tracking-widest block mb-1">Balanced</span>
+                    <code class="text-sm font-bold text-brand-600">4Fe + 3O2 = 2Fe2O3</code>
+                </div>
+            </div>
+            
+            <button onclick="tryExample('Fe + O2 = Fe2O3')" class="w-full py-2.5 rounded-xl bg-white border-2 border-surface-200 text-surface-600 font-bold text-xs uppercase tracking-widest hover:border-brand-500 hover:text-brand-600 transition-all">Try Example</button>
+        </div>
+
+        <!-- 8 -->
+        <div class="rounded-2xl bg-white border border-surface-100 p-5 shadow-sm hover:shadow-card-hover transition-shadow flex flex-col">
+            <div class="flex items-center gap-3 mb-3">
+                <div class="w-8 h-8 rounded-xl bg-brand-50 flex items-center justify-center text-brand-600 font-black text-sm">8</div>
+                <h3 class="text-sm font-black text-surface-900 uppercase tracking-widest">Metal + Acid</h3>
+            </div>
+            <p class="text-xs text-surface-500 font-medium mb-4 flex-1">A reactive metal displaces hydrogen from an acid.</p>
+            
+            <div class="space-y-3 bg-surface-50 p-4 rounded-xl border border-surface-100 mb-4">
+                <div>
+                    <span class="text-[9px] font-black text-surface-400 uppercase tracking-widest block mb-1">Unbalanced</span>
+                    <code class="text-sm font-bold text-surface-900">Mg + HCl = MgCl2 + H2</code>
+                </div>
+                <div>
+                    <span class="text-[9px] font-black text-surface-400 uppercase tracking-widest block mb-1">Balanced</span>
+                    <code class="text-sm font-bold text-brand-600">Mg + 2HCl = MgCl2 + H2</code>
+                </div>
+            </div>
+            
+            <button onclick="tryExample('Mg + HCl = MgCl2 + H2')" class="w-full py-2.5 rounded-xl bg-white border-2 border-surface-200 text-surface-600 font-bold text-xs uppercase tracking-widest hover:border-brand-500 hover:text-brand-600 transition-all">Try Example</button>
+        </div>
+
+        <!-- 9 -->
+        <div class="rounded-2xl bg-white border border-surface-100 p-5 shadow-sm hover:shadow-card-hover transition-shadow flex flex-col">
+            <div class="flex items-center gap-3 mb-3">
+                <div class="w-8 h-8 rounded-xl bg-brand-50 flex items-center justify-center text-brand-600 font-black text-sm">9</div>
+                <h3 class="text-sm font-black text-surface-900 uppercase tracking-widest">Metal + Water</h3>
+            </div>
+            <p class="text-xs text-surface-500 font-medium mb-4 flex-1">A metal reacts with water to produce a metal hydroxide and hydrogen gas.</p>
+            
+            <div class="space-y-3 bg-surface-50 p-4 rounded-xl border border-surface-100 mb-4">
+                <div>
+                    <span class="text-[9px] font-black text-surface-400 uppercase tracking-widest block mb-1">Unbalanced</span>
+                    <code class="text-sm font-bold text-surface-900">Na + H2O = NaOH + H2</code>
+                </div>
+                <div>
+                    <span class="text-[9px] font-black text-surface-400 uppercase tracking-widest block mb-1">Balanced</span>
+                    <code class="text-sm font-bold text-brand-600">2Na + 2H2O = 2NaOH + H2</code>
+                </div>
+            </div>
+            
+            <button onclick="tryExample('Na + H2O = NaOH + H2')" class="w-full py-2.5 rounded-xl bg-white border-2 border-surface-200 text-surface-600 font-bold text-xs uppercase tracking-widest hover:border-brand-500 hover:text-brand-600 transition-all">Try Example</button>
+        </div>
+
+        <!-- 10 -->
+        <div class="rounded-2xl bg-white border border-surface-100 p-5 shadow-sm hover:shadow-card-hover transition-shadow flex flex-col">
+            <div class="flex items-center gap-3 mb-3">
+                <div class="w-8 h-8 rounded-xl bg-brand-50 flex items-center justify-center text-brand-600 font-black text-sm">10</div>
+                <h3 class="text-sm font-black text-surface-900 uppercase tracking-widest">Precipitation</h3>
+            </div>
+            <p class="text-xs text-surface-500 font-medium mb-4 flex-1">Two aqueous solutions combine to form a solid precipitate.</p>
+            
+            <div class="space-y-3 bg-surface-50 p-4 rounded-xl border border-surface-100 mb-4">
+                <div>
+                    <span class="text-[9px] font-black text-surface-400 uppercase tracking-widest block mb-1">Unbalanced</span>
+                    <code class="text-sm font-bold text-surface-900">BaCl2 + Na2SO4 = BaSO4 + NaCl</code>
+                </div>
+                <div>
+                    <span class="text-[9px] font-black text-surface-400 uppercase tracking-widest block mb-1">Balanced</span>
+                    <code class="text-sm font-bold text-brand-600">BaCl2 + Na2SO4 = BaSO4 + 2NaCl</code>
+                </div>
+            </div>
+            
+            <button onclick="tryExample('BaCl2 + Na2SO4 = BaSO4 + NaCl')" class="w-full py-2.5 rounded-xl bg-white border-2 border-surface-200 text-surface-600 font-bold text-xs uppercase tracking-widest hover:border-brand-500 hover:text-brand-600 transition-all">Try Example</button>
+        </div>
+    </div>
+</div>
 {% endblock %}
 
 {% block extra_scripts %}
@@ -124,5 +354,16 @@
         lucide.createIcons();
         setTimeout(() => { copyBtn.innerHTML = original; lucide.createIcons(); }, 2000);
     });
+
+    function tryExample(eq) {
+        input.value = eq;
+        btn.click();
+        
+        // Scroll back up to the top smoothly to see the result
+        window.scrollTo({
+            top: 0,
+            behavior: 'smooth'
+        });
+    }
 </script>
 {% endblock %}

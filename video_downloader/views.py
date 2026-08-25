@@ -101,10 +101,12 @@ def analyze_url(request):
         
         return JsonResponse(result)
         
+    except services.YTDLPError as e:
+        return JsonResponse({'success': False, 'error_code': e.code, 'message': str(e)}, status=400)
     except ValueError as e:
-        return JsonResponse({'error': str(e)}, status=400)
+        return JsonResponse({'success': False, 'error_code': 'VALIDATION_ERROR', 'message': str(e)}, status=400)
     except Exception as e:
-        return JsonResponse({'error': f"Server execution error: {str(e)}"}, status=500)
+        return JsonResponse({'success': False, 'error_code': 'INTERNAL_ERROR', 'message': "An internal error occurred. Please try again."}, status=500)
 
 @require_http_methods(["POST", "GET"])
 def download_video(request):
@@ -146,7 +148,9 @@ def download_video(request):
         response = FileResponse(open(filepath, 'rb'), as_attachment=True, filename=download_name)
         return response
         
+    except services.YTDLPError as e:
+        return JsonResponse({'success': False, 'error_code': e.code, 'message': str(e)}, status=400)
     except ValueError as e:
-        return JsonResponse({'error': str(e)}, status=400)
+        return JsonResponse({'success': False, 'error_code': 'VALIDATION_ERROR', 'message': str(e)}, status=400)
     except Exception as e:
-        return JsonResponse({'error': f"Download failed: {str(e)}"}, status=500)
+        return JsonResponse({'success': False, 'error_code': 'INTERNAL_ERROR', 'message': "An internal error occurred. Please try again."}, status=500)

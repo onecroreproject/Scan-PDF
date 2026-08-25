@@ -36,11 +36,11 @@ def get_ytdl_base_options():
         },
     }
     
-    # Try to use cookies.txt if it exists in the project base directory
-    cookies_file = os.path.join(settings.BASE_DIR, 'cookies.txt')
-    if os.path.exists(cookies_file):
+    # Secure Optional Authentication Support
+    cookies_file = os.environ.get('YTDLP_COOKIE_FILE')
+    if cookies_file and os.path.exists(cookies_file):
         options['cookiefile'] = cookies_file
-        logger.info(f"Loaded cookies file from: {cookies_file}")
+        logger.info("Loaded secure cookies file from environment variable.")
     
     # Try to use bundled FFmpeg if available
     ffmpeg_dir = getattr(settings, 'FFMPEG_BIN_DIR', None)
@@ -49,42 +49,52 @@ def get_ytdl_base_options():
         
     return options
 
-def _is_bot_error(e, url):
+class YTDLPError(Exception):
+    def __init__(self, code, message):
+        self.code = code
+        self.message = message
+        super().__init__(self.message)
+
+def _categorize_error(e, url):
     error_msg = str(e).lower()
-    bot_keywords = [
-        'sign in', 'bot', 'age', 'verify', 
-        'cookies-from-browser', 'authentication', 
-        'logged-in', 'empty media response', 'login'
-    ]
-    return any(keyword in error_msg for keyword in bot_keywords)
+    
+    if any(k in error_msg for k in ['sign in', 'bot', 'age', 'verify', 'cookies-from-browser', 'authentication', 'logged-in', 'login', 'empty media response']):
+        return "YOUTUBE_BOT_CHALLENGE", "Unable to analyze this video from the current server. Please try again later."
+    
+    if any(k in error_msg for k in ['video unavailable', 'unavailable video']):
+        return "VIDEO_UNAVAILABLE", "This video is unavailable."
+        
+    if any(k in error_msg for k in ['private video']):
+        return "AUTH_REQUIRED", "This video requires authorized access."
+        
+    if any(k in error_msg for k in ['http error 429', 'too many requests']):
+        return "RATE_LIMITED", "YouTube is temporarily limiting requests. Please try again shortly."
+        
+    if any(k in error_msg for k in ['network', 'timeout', 'timed out', 'connection']):
+        return "NETWORK_ERROR", "A network error occurred while reaching the video server."
+        
+    if any(k in error_msg for k in ['format is not available', 'requested format']):
+        return "FORMAT_UNAVAILABLE", "The requested format is not available."
+        
+    return "UNKNOWN_YOUTUBE_ERROR", "Unable to prepare this download."
 
 def _execute_with_retry(execute_func, url, options):
     """
-    Executes a yt-dlp function. If it fails due to YouTube bot detection,
-    retries with browser cookies in order: Chrome, Edge, Firefox.
+    Executes a yt-dlp function. Removes unsupported headless browser retries.
     """
     try:
         return execute_func(options)
     except Exception as e:
-        error_msg = str(e)
-        if not _is_bot_error(e, url):
-            raise ValueError(f"Extraction failed: {error_msg}")
-            
-        logger.warning(f"Bot/age detection encountered for {url}. Retrying with browser cookies...")
-        browsers = ['chrome', 'edge', 'firefox']
-        
-        for browser in browsers:
-            retry_options = options.copy()
-            retry_options['cookiesfrombrowser'] = [(browser, None, None, None)]
-            
-            try:
-                logger.info(f"Retrying with {browser} cookies...")
-                return execute_func(retry_options)
-            except Exception as retry_e:
-                logger.warning(f"{browser} cookie retry failed: {retry_e}")
-                error_msg = f"{error_msg} | {browser} retry: {str(retry_e)}"
-                
-        raise ValueError(f"Platform blocked access. Hostinger restricts outbound media requests and your IP might be banned. Details: {error_msg}")
+        code, safe_msg = _categorize_error(e, url)
+        logger.warning(
+            "youtube_analysis_failed",
+            extra={
+                "video_url": url,
+                "error_type": code,
+                "raw_error": str(e)
+            }
+        )
+        raise YTDLPError(code, safe_msg)
 
 
 def verify_video_audio_streams(filepath):
@@ -254,9 +264,6 @@ def analyze_video(url):
             final_video_formats = []
             for height in sorted(video_formats_by_height.keys(), reverse=True):
                 fmt = video_formats_by_height[height]
-                original_id = fmt['format_id']
-                if fmt['raw_acodec'] == 'none':
-                    fmt['format_id'] = f"{original_id}+bestaudio/best"
                 final_video_formats.append(fmt)
                 
             seen_abr = set()
@@ -305,6 +312,39 @@ def download_format(url, format_id, format_type):
     Downloads the specific format.
     Returns the absolute path to the downloaded file.
     """
+    import shutil
+    
+    # 1. Fresh Metadata Extraction and Validation
+    try:
+        fresh_info = analyze_video(url)
+    except YTDLPError:
+        raise
+    except Exception as e:
+        raise YTDLPError("INVALID_URL", f"Failed to retrieve metadata: {str(e)}")
+        
+    formats = fresh_info.get('formats', [])
+    selected_fmt = next((f for f in formats if str(f.get('format_id')) == str(format_id)), None)
+    
+    # Special case: bestaudio/best and bestvideo+bestaudio/best are pseudo format IDs used in fallbacks
+    if not selected_fmt and format_id not in ('bestaudio/best', 'bestvideo+bestaudio/best'):
+        raise YTDLPError("FORMAT_UNAVAILABLE", "The requested format is not available for this video.")
+    
+    ffmpeg_available = bool(shutil.which('ffmpeg'))
+    ffmpeg_dir = getattr(settings, 'FFMPEG_BIN_DIR', None)
+    if not ffmpeg_available and ffmpeg_dir and os.path.exists(ffmpeg_dir):
+        ffmpeg_available = bool(shutil.which('ffmpeg', path=ffmpeg_dir))
+
+    actual_ytdl_format = format_id
+    if format_type == 'Video + Audio':
+        if selected_fmt and selected_fmt.get('raw_acodec') == 'none':
+            if not ffmpeg_available:
+                raise YTDLPError("FFMPEG_REQUIRED", "This quality requires media merging, which is currently unavailable.")
+            actual_ytdl_format = f"{format_id}+bestaudio/best"
+            
+    if format_type == 'Audio Only':
+        if not ffmpeg_available:
+            raise YTDLPError("FFMPEG_REQUIRED", "Audio extraction requires media merging, which is currently unavailable.")
+
     temp_dir = os.path.join(settings.MEDIA_ROOT, 'video_downloads')
     os.makedirs(temp_dir, exist_ok=True)
     cleanup_old_files(temp_dir)
@@ -316,10 +356,10 @@ def download_format(url, format_id, format_type):
     options['outtmpl'] = output_template
     
     if format_type == 'Video + Audio':
-        options['format'] = format_id
+        options['format'] = actual_ytdl_format
         options['merge_output_format'] = 'mp4'
     if format_type == 'Audio Only':
-        options['format'] = format_id
+        options['format'] = actual_ytdl_format
         options['postprocessors'] = [{
             'key': 'FFmpegExtractAudio',
             'preferredcodec': 'mp3',
@@ -406,9 +446,11 @@ def download_format(url, format_id, format_type):
                 
             return downloaded_file, info.get('title', 'video')
             
+    except YTDLPError:
+        raise
     except Exception as e:
         logger.error(f"Error downloading video URL {url} format {format_id}: {e}")
-        raise ValueError(str(e))
+        raise YTDLPError("DOWNLOAD_FAILED", f"Failed to download file: {str(e)}")
 
 def cleanup_old_files(directory, max_age_seconds=600):
     """Deletes files older than max_age_seconds in the given directory."""

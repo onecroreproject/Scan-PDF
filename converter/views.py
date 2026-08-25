@@ -2142,23 +2142,55 @@ def get_client_info(request):
     x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
     ip = x_forwarded_for.split(',')[0] if x_forwarded_for else request.META.get('REMOTE_ADDR')
     
-    # Generic fallback if no external API reach
+    import requests
+    
+    # In local development, determine the true public internet IP
+    if ip in ['127.0.0.1', '::1', 'localhost'] or ip.startswith('192.168.') or ip.startswith('10.') or ip.startswith('172.16.'):
+        try:
+            ip = requests.get('https://api.ipify.org', timeout=3).text.strip()
+        except:
+            pass
+
     client_data = {
-        'ip': ip,
-        'city': 'Detected',
-        'country_code': 'Network',
-        'org': 'Standard ISP'
+        'ip': ip if ip else 'Unavailable',
+        'city': 'Unavailable',
+        'country_name': '',
+        'org': 'Unavailable'
     }
     
-    # Attempt to get real metadata from ipapi securely on server-side (no CORS)
-    try:
-        import requests
-        resp = requests.get(f"https://ipapi.co/{ip}/json/", timeout=3)
-        if resp.status_code == 200:
-            client_data = resp.json()
-    except:
-        pass
-        
+    if client_data['ip'] != 'Unavailable':
+        try:
+            # Determine IP Type
+            client_data['ip_type'] = 'IPv6' if ':' in client_data['ip'] else 'IPv4'
+            
+            # Using ip-api.com which has higher reliability without User-Agent blocks
+            resp = requests.get(f"http://ip-api.com/json/{ip}", timeout=4)
+            if resp.status_code == 200:
+                data = resp.json()
+                if data.get('status') == 'success':
+                    client_data['city'] = data.get('city', 'Unavailable')
+                    client_data['region'] = data.get('regionName', 'Unavailable')
+                    client_data['country'] = data.get('country', 'Unavailable')
+                    client_data['countryCode'] = data.get('countryCode', 'Unavailable')
+                    client_data['timezone'] = data.get('timezone', 'Unavailable')
+                    client_data['lat'] = data.get('lat', 'Unavailable')
+                    client_data['lon'] = data.get('lon', 'Unavailable')
+                    
+                    region = data.get('regionName', '')
+                    country = data.get('country', '')
+                    loc_parts = [p for p in [client_data['city'], region, country] if p and p != 'Unavailable']
+                    if loc_parts:
+                        client_data['full_location'] = ', '.join(loc_parts)
+                    else:
+                        client_data['full_location'] = 'Unavailable'
+                        
+                    client_data['isp'] = data.get('isp', 'Unavailable')
+                    client_data['org'] = data.get('org', 'Unavailable')
+                    client_data['asn'] = data.get('as', 'Unavailable')
+        except:
+            client_data['full_location'] = 'Unavailable'
+            pass
+            
     return JsonResponse(client_data)
 
 @csrf_exempt

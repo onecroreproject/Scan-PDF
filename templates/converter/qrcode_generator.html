@@ -150,40 +150,139 @@
     }
     .dyn-subform { display: none; }
     .dyn-subform.active { display: block; animation: fadeIn 0.4s ease; }
+
+    * { box-sizing: border-box; }
+    .field, .dyn-field { min-height: 46px; }
+    textarea.field, textarea.dyn-field { min-height: 78px !important; }
+    .qr-preview-column { padding-top: 0 !important; margin-top: 0 !important; transform: none !important; }
+
+    /* Customize Design Active State */
+    .shape-opt input:checked + div {
+        border-color: #7c3cff !important;
+        box-shadow: 0 0 0 3px rgba(124, 60, 255, 0.15) !important;
+        background-color: rgba(124, 60, 255, 0.05) !important;
+    }
+
+    /* SEO Content */
+    .qr-seo-content {
+        max-width: 900px;
+        margin: 45px auto 30px;
+        padding: 0 24px;
+        text-align: center;
+    }
+    .qr-seo-content h2 {
+        font-size: 14px;
+        font-weight: 900;
+        text-transform: uppercase;
+        letter-spacing: 0.1em;
+        color: #1e293b;
+        margin-bottom: 16px;
+    }
+    .qr-seo-content p {
+        margin: 0 0 10px;
+        font-size: 14px;
+        line-height: 1.7;
+        color: #64748b;
+    }
+    .qr-seo-content p:last-child {
+        margin-bottom: 0;
+    }
+
+    /* Preview Info Tooltip */
+    .preview-info-wrapper {
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+    }
+    .preview-info-button {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        background: transparent;
+        border: 0;
+        color: #94a3b8;
+        transition: color 0.2s;
+    }
+    .preview-info-button:hover,
+    .preview-info-button:focus {
+        color: #8b5cf6;
+        outline: none;
+    }
+    .preview-info-tooltip {
+        position: absolute;
+        bottom: calc(100% + 10px);
+        left: 50%;
+        transform: translateX(-50%) translateY(4px);
+        width: 260px;
+        padding: 10px 12px;
+        background: #0f172a;
+        color: #ffffff;
+        border-radius: 12px;
+        box-shadow: 0 10px 40px -10px rgba(0,0,0,0.3);
+        font-size: 11px;
+        font-weight: 500;
+        line-height: 1.5;
+        text-align: center;
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        z-index: 9999;
+        transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s ease;
+    }
+    .preview-info-tooltip::after {
+        content: '';
+        position: absolute;
+        top: 100%;
+        left: 50%;
+        transform: translateX(-50%);
+        border-width: 6px;
+        border-style: solid;
+        border-color: #0f172a transparent transparent transparent;
+    }
+    .preview-info-wrapper:hover .preview-info-tooltip,
+    .preview-info-wrapper:focus-within .preview-info-tooltip {
+        opacity: 1;
+        visibility: visible;
+        transform: translateX(-50%) translateY(0);
+    }
 </style>
 {% endblock %}
 
 {% block tool_content %}
-<div class="flex flex-col lg:flex-row gap-8 items-start">
+<div class="qr-generator-wrapper w-full max-w-[1200px] mx-auto space-y-[30px]">
 
-    <!-- ═══════════  LEFT: CONFIGURATION  ═══════════ -->
-    <div class="flex-1 w-full space-y-5 min-w-0">
-
-        <!-- Content Type Pills -->
-        <div class="overflow-x-auto scrollbar-hide pb-4 pt-1">
-            <div class="flex gap-2 min-w-max p-1.5 bg-white/50 backdrop-blur-md rounded-2xl border border-surface-200 shadow-sm">
-                <button onclick="switchType('url')" class="type-pill active flex items-center gap-2 px-5 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest border border-transparent hover:border-surface-200"><i data-lucide="link" class="w-4 h-4"></i> URL</button>
-                <button onclick="switchType('text')" class="type-pill flex items-center gap-2 px-5 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest border border-transparent hover:border-surface-200"><i data-lucide="type" class="w-4 h-4"></i> Text</button>
-                <button onclick="switchType('email')" class="type-pill flex items-center gap-2 px-5 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest border border-transparent hover:border-surface-200"><i data-lucide="mail" class="w-4 h-4"></i> Email</button>
-                <button onclick="switchType('phone')" class="type-pill flex items-center gap-2 px-5 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest border border-transparent hover:border-surface-200"><i data-lucide="phone" class="w-4 h-4"></i> Phone</button>
-                <button onclick="switchType('sms')" class="type-pill flex items-center gap-2 px-5 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest border border-transparent hover:border-surface-200"><i data-lucide="message-square" class="w-4 h-4"></i> SMS</button>
-                <button onclick="switchType('vcard')" class="type-pill flex items-center gap-2 px-5 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest border border-transparent hover:border-surface-200"><i data-lucide="contact" class="w-4 h-4"></i> vCard</button>
-                <button onclick="switchType('wifi')" class="type-pill flex items-center gap-2 px-5 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest border border-transparent hover:border-surface-200"><i data-lucide="wifi" class="w-4 h-4"></i> WiFi</button>
-                <button onclick="switchType('location')" class="type-pill flex items-center gap-2 px-5 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest border border-transparent hover:border-surface-200"><i data-lucide="map-pin" class="w-4 h-4"></i> Location</button>
-                <button onclick="switchType('dynamic')" class="type-pill dynamic-pill flex items-center gap-2 px-5 py-3 rounded-xl text-[10px] font-black uppercase tracking-widest border border-transparent"><i data-lucide="zap" class="w-4 h-4"></i> Dynamic</button>
-            </div>
+    <!-- Content Type Pills -->
+    <div class="w-full overflow-x-auto lg:overflow-visible scrollbar-hide">
+        <div class="flex lg:grid lg:grid-cols-9 gap-[4px] w-max lg:w-full min-w-full p-1.5 bg-white/50 backdrop-blur-md rounded-2xl border border-surface-200 shadow-sm box-border">
+            <button onclick="switchType('url')" class="type-pill active flex items-center justify-center gap-[5px] px-[6px] py-[11px] rounded-xl text-[11px] font-black uppercase tracking-wider border border-transparent hover:border-surface-200 whitespace-nowrap min-w-0"><i data-lucide="link" class="w-[14px] h-[14px]"></i> URL</button>
+            <button onclick="switchType('text')" class="type-pill flex items-center justify-center gap-[5px] px-[6px] py-[11px] rounded-xl text-[11px] font-black uppercase tracking-wider border border-transparent hover:border-surface-200 whitespace-nowrap min-w-0"><i data-lucide="type" class="w-[14px] h-[14px]"></i> Text</button>
+            <button onclick="switchType('email')" class="type-pill flex items-center justify-center gap-[5px] px-[6px] py-[11px] rounded-xl text-[11px] font-black uppercase tracking-wider border border-transparent hover:border-surface-200 whitespace-nowrap min-w-0"><i data-lucide="mail" class="w-[14px] h-[14px]"></i> Email</button>
+            <button onclick="switchType('phone')" class="type-pill flex items-center justify-center gap-[5px] px-[6px] py-[11px] rounded-xl text-[11px] font-black uppercase tracking-wider border border-transparent hover:border-surface-200 whitespace-nowrap min-w-0"><i data-lucide="phone" class="w-[14px] h-[14px]"></i> Phone</button>
+            <button onclick="switchType('sms')" class="type-pill flex items-center justify-center gap-[5px] px-[6px] py-[11px] rounded-xl text-[11px] font-black uppercase tracking-wider border border-transparent hover:border-surface-200 whitespace-nowrap min-w-0"><i data-lucide="message-square" class="w-[14px] h-[14px]"></i> SMS</button>
+            <button onclick="switchType('vcard')" class="type-pill flex items-center justify-center gap-[5px] px-[6px] py-[11px] rounded-xl text-[11px] font-black uppercase tracking-wider border border-transparent hover:border-surface-200 whitespace-nowrap min-w-0"><i data-lucide="contact" class="w-[14px] h-[14px]"></i> vCard</button>
+            <button onclick="switchType('wifi')" class="type-pill flex items-center justify-center gap-[5px] px-[6px] py-[11px] rounded-xl text-[11px] font-black uppercase tracking-wider border border-transparent hover:border-surface-200 whitespace-nowrap min-w-0"><i data-lucide="wifi" class="w-[14px] h-[14px]"></i> WiFi</button>
+            <button onclick="switchType('location')" class="type-pill flex items-center justify-center gap-[5px] px-[6px] py-[11px] rounded-xl text-[11px] font-black uppercase tracking-wider border border-transparent hover:border-surface-200 whitespace-nowrap min-w-0"><i data-lucide="map-pin" class="w-[14px] h-[14px]"></i> Location</button>
+            <button onclick="switchType('dynamic')" class="type-pill dynamic-pill flex items-center justify-center gap-[5px] px-[6px] py-[11px] rounded-xl text-[11px] font-black uppercase tracking-wider border border-transparent whitespace-nowrap min-w-0"><i data-lucide="zap" class="w-[14px] h-[14px]"></i> Dynamic</button>
         </div>
+    </div>
+
+    <!-- Main Content Layout -->
+    <div class="grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_360px] gap-[30px] items-start">
+        
+        <!-- ═══════════  LEFT: CONFIGURATION  ═══════════ -->
+        <div class="w-full space-y-[20px] min-w-0">
 
         <!-- ── ACCORDION 1: ENTER CONTENT ── -->
         <div class="rounded-2xl bg-white border border-surface-100 shadow-mega overflow-hidden">
             <button onclick="toggleAcc('content')"
-                class="acc-head open w-full px-6 py-4.5 flex items-center justify-between hover:bg-surface-50/60 transition-colors">
+                class="acc-head open w-full px-[24px] h-[48px] flex items-center justify-between hover:bg-surface-50/60 transition-colors">
                 <span class="flex items-center gap-3"><i data-lucide="message-square"
                         class="w-5 h-5 text-brand-500"></i><span
                         class="text-xs font-black uppercase tracking-widest">Enter Content</span></span>
                 <i data-lucide="chevron-down" class="acc-arrow w-4 h-4 transition-transform"></i>
             </button>
-            <div id="acc-content" class="acc-body open px-6 pb-6 pt-2 border-t border-surface-50">
+            <div id="acc-content" class="acc-body open px-[24px] pb-[24px] pt-2 border-t border-surface-50">
                 <!-- URL -->
                 <div id="form-url" class="type-form active space-y-3">
                     <label class="field-label">Your URL</label>
@@ -389,12 +488,12 @@
         <!-- ── ACCORDION 2: SET COLORS ── -->
         <div class="rounded-2xl bg-white border border-surface-100 shadow-mega overflow-hidden">
             <button onclick="toggleAcc('colors')"
-                class="acc-head w-full px-6 py-4.5 flex items-center justify-between hover:bg-surface-50/60 transition-colors">
+                class="acc-head w-full px-[24px] h-[48px] flex items-center justify-between hover:bg-surface-50/60 transition-colors">
                 <span class="flex items-center gap-3"><i data-lucide="palette" class="w-5 h-5 text-brand-500"></i><span
                         class="text-xs font-black uppercase tracking-widest">Set Colors</span></span>
                 <i data-lucide="chevron-down" class="acc-arrow w-4 h-4 transition-transform"></i>
             </button>
-            <div id="acc-colors" class="acc-body px-6 pb-6 pt-2 border-t border-surface-50 space-y-6">
+            <div id="acc-colors" class="acc-body px-[24px] pb-[24px] pt-2 border-t border-surface-50 space-y-6">
                 <div class="grid grid-cols-2 gap-6">
                     <div><label class="field-label">Foreground</label><input type="color" id="fg-color" value="#000000"
                             class="color-swatch w-full h-12 cursor-pointer rounded-xl border-2 border-surface-100 overflow-hidden bg-transparent">
@@ -416,12 +515,12 @@
         <!-- ── ACCORDION 3: ADD LOGO ── -->
         <div class="rounded-2xl bg-white border border-surface-100 shadow-mega overflow-hidden">
             <button onclick="toggleAcc('logo')"
-                class="acc-head w-full px-6 py-4.5 flex items-center justify-between hover:bg-surface-50/60 transition-colors">
+                class="acc-head w-full px-[24px] h-[48px] flex items-center justify-between hover:bg-surface-50/60 transition-colors">
                 <span class="flex items-center gap-3"><i data-lucide="image" class="w-5 h-5 text-brand-500"></i><span
                         class="text-xs font-black uppercase tracking-widest">Add Logo Image</span></span>
                 <i data-lucide="chevron-down" class="acc-arrow w-4 h-4 transition-transform"></i>
             </button>
-            <div id="acc-logo" class="acc-body px-6 pb-6 pt-2 border-t border-surface-50 space-y-6">
+            <div id="acc-logo" class="acc-body px-[24px] pb-[24px] pt-2 border-t border-surface-50 space-y-6">
                 <!-- Upload -->
                 <div
                     class="relative flex flex-col items-center p-6 bg-surface-50 rounded-2xl border-2 border-dashed border-surface-200 hover:border-brand-400 transition-all cursor-pointer group">
@@ -555,222 +654,208 @@
         <!-- ── ACCORDION 4: CUSTOMIZE DESIGN ── -->
         <div class="rounded-2xl bg-white border border-surface-100 shadow-mega overflow-hidden">
             <button onclick="toggleAcc('design')"
-                class="acc-head w-full px-6 py-4.5 flex items-center justify-between hover:bg-surface-50/60 transition-colors">
+                class="acc-head w-full px-[24px] h-[48px] flex items-center justify-between hover:bg-surface-50/60 transition-colors">
                 <span class="flex items-center gap-3"><i data-lucide="layout" class="w-5 h-5 text-brand-500"></i><span
                         class="text-xs font-black uppercase tracking-widest">Customize Design</span></span>
                 <i data-lucide="chevron-down" class="acc-arrow w-4 h-4 transition-transform"></i>
             </button>
-            <div id="acc-design" class="acc-body px-6 pb-6 pt-2 border-t border-surface-50 space-y-8">
+            <div id="acc-design" class="acc-body px-[24px] pb-[24px] pt-2 border-t border-surface-50 space-y-8">
                 <!-- Body Shape -->
                 <div>
                     <label class="field-label mb-3 block">Body Shape</label>
-                    <div class="grid grid-cols-6 sm:grid-cols-8 gap-2">
-                        <label class="shape-opt cursor-pointer"><input type="radio" name="body" value="square" checked
-                                class="sr-only">
-                            <div
-                                class="aspect-square rounded-lg border-2 border-surface-100 flex items-center justify-center p-2">
-                                <div class="w-full h-full bg-surface-800"></div>
+                    <div class="flex flex-wrap gap-1.5">
+                        <label class="shape-opt cursor-pointer relative group"><input type="radio" name="body" value="square" class="sr-only peer" checked>
+                            <div class="w-10 h-10 rounded border-2 border-surface-100 flex items-center justify-center bg-white text-surface-800 transition-all peer-checked:border-brand-500 peer-checked:bg-brand-50 peer-checked:text-brand-600 hover:border-brand-300">
+                                <svg width="24" height="24" viewBox="0 0 40 40" fill="currentColor"><rect x="0" y="0" width="12" height="12"/><rect x="14" y="0" width="12" height="12"/><rect x="0" y="14" width="12" height="12"/><rect x="14" y="14" width="12" height="12"/><rect x="28" y="14" width="12" height="12"/><rect x="0" y="28" width="12" height="12"/><rect x="14" y="28" width="12" height="12"/><rect x="28" y="28" width="12" height="12"/></svg>
                             </div>
                         </label>
-                        <label class="shape-opt cursor-pointer"><input type="radio" name="body" value="rounded"
-                                class="sr-only">
-                            <div
-                                class="aspect-square rounded-lg border-2 border-surface-100 flex items-center justify-center p-2">
-                                <div class="w-full h-full bg-surface-800 rounded-md"></div>
+                        <label class="shape-opt cursor-pointer relative group"><input type="radio" name="body" value="rounded" class="sr-only peer">
+                            <div class="w-10 h-10 rounded border-2 border-surface-100 flex items-center justify-center bg-white text-surface-800 transition-all peer-checked:border-brand-500 peer-checked:bg-brand-50 peer-checked:text-brand-600 hover:border-brand-300">
+                                <svg width="24" height="24" viewBox="0 0 40 40" fill="currentColor"><rect x="0" y="0" width="12" height="12" rx="3"/><rect x="14" y="0" width="12" height="12" rx="3"/><rect x="0" y="14" width="12" height="12" rx="3"/><rect x="14" y="14" width="12" height="12" rx="3"/><rect x="28" y="14" width="12" height="12" rx="3"/><rect x="0" y="28" width="12" height="12" rx="3"/><rect x="14" y="28" width="12" height="12" rx="3"/><rect x="28" y="28" width="12" height="12" rx="3"/></svg>
                             </div>
                         </label>
-                        <label class="shape-opt cursor-pointer"><input type="radio" name="body" value="circle"
-                                class="sr-only">
-                            <div
-                                class="aspect-square rounded-lg border-2 border-surface-100 flex items-center justify-center p-2">
-                                <div class="w-full h-full bg-surface-800 rounded-full"></div>
+                        <label class="shape-opt cursor-pointer relative group"><input type="radio" name="body" value="circle" class="sr-only peer">
+                            <div class="w-10 h-10 rounded border-2 border-surface-100 flex items-center justify-center bg-white text-surface-800 transition-all peer-checked:border-brand-500 peer-checked:bg-brand-50 peer-checked:text-brand-600 hover:border-brand-300">
+                                <svg width="24" height="24" viewBox="0 0 40 40" fill="currentColor"><circle cx="6" cy="6" r="6"/><circle cx="20" cy="6" r="6"/><circle cx="6" cy="20" r="6"/><circle cx="20" cy="20" r="6"/><circle cx="34" cy="20" r="6"/><circle cx="6" cy="34" r="6"/><circle cx="20" cy="34" r="6"/><circle cx="34" cy="34" r="6"/></svg>
                             </div>
                         </label>
-                        <label class="shape-opt cursor-pointer"><input type="radio" name="body" value="diamond"
-                                class="sr-only">
-                            <div
-                                class="aspect-square rounded-lg border-2 border-surface-100 flex items-center justify-center p-2">
-                                <div class="w-full h-full bg-surface-800 rotate-45 scale-[.7]"></div>
+                        <label class="shape-opt cursor-pointer relative group"><input type="radio" name="body" value="diamond" class="sr-only peer">
+                            <div class="w-10 h-10 rounded border-2 border-surface-100 flex items-center justify-center bg-white text-surface-800 transition-all peer-checked:border-brand-500 peer-checked:bg-brand-50 peer-checked:text-brand-600 hover:border-brand-300">
+                                <svg width="24" height="24" viewBox="0 0 40 40"><path d="M6,0 l6,6 -6,6 -6,-6 z M20,0 l6,6 -6,6 -6,-6 z M6,14 l6,6 -6,6 -6,-6 z M20,14 l6,6 -6,6 -6,-6 z M34,14 l6,6 -6,6 -6,-6 z M6,28 l6,6 -6,6 -6,-6 z M20,28 l6,6 -6,6 -6,-6 z M34,28 l6,6 -6,6 -6,-6 z" fill="currentColor"/></svg>
                             </div>
                         </label>
-                        <label class="shape-opt cursor-pointer"><input type="radio" name="body" value="dot"
-                                class="sr-only">
-                            <div
-                                class="aspect-square rounded-lg border-2 border-surface-100 flex items-center justify-center p-3">
-                                <div class="w-3/4 h-3/4 bg-surface-800 rounded-full"></div>
+                        <label class="shape-opt cursor-pointer relative group"><input type="radio" name="body" value="dot" class="sr-only peer">
+                            <div class="w-10 h-10 rounded border-2 border-surface-100 flex items-center justify-center bg-white text-surface-800 transition-all peer-checked:border-brand-500 peer-checked:bg-brand-50 peer-checked:text-brand-600 hover:border-brand-300">
+                                <svg width="24" height="24" viewBox="0 0 40 40" fill="currentColor"><circle cx="6" cy="6" r="4.5"/><circle cx="20" cy="6" r="4.5"/><circle cx="6" cy="20" r="4.5"/><circle cx="20" cy="20" r="4.5"/><circle cx="34" cy="20" r="4.5"/><circle cx="6" cy="34" r="4.5"/><circle cx="20" cy="34" r="4.5"/><circle cx="34" cy="34" r="4.5"/></svg>
                             </div>
                         </label>
-                        <label class="shape-opt cursor-pointer"><input type="radio" name="body" value="small-square"
-                                class="sr-only">
-                            <div
-                                class="aspect-square rounded-lg border-2 border-surface-100 flex items-center justify-center p-3">
-                                <div class="w-3/4 h-3/4 bg-surface-800"></div>
+                        <label class="shape-opt cursor-pointer relative group"><input type="radio" name="body" value="small-square" class="sr-only peer">
+                            <div class="w-10 h-10 rounded border-2 border-surface-100 flex items-center justify-center bg-white text-surface-800 transition-all peer-checked:border-brand-500 peer-checked:bg-brand-50 peer-checked:text-brand-600 hover:border-brand-300">
+                                <svg width="24" height="24" viewBox="0 0 40 40" fill="currentColor"><rect x="2" y="2" width="8" height="8"/><rect x="16" y="2" width="8" height="8"/><rect x="2" y="16" width="8" height="8"/><rect x="16" y="16" width="8" height="8"/><rect x="30" y="16" width="8" height="8"/><rect x="2" y="30" width="8" height="8"/><rect x="16" y="30" width="8" height="8"/><rect x="30" y="30" width="8" height="8"/></svg>
                             </div>
                         </label>
-                        <label class="shape-opt cursor-pointer"><input type="radio" name="body" value="hline"
-                                class="sr-only">
-                            <div
-                                class="aspect-square rounded-lg border-2 border-surface-100 flex items-center justify-center p-2">
-                                <div class="w-full h-1/2 bg-surface-800"></div>
+                        <label class="shape-opt cursor-pointer relative group"><input type="radio" name="body" value="hline" class="sr-only peer">
+                            <div class="w-10 h-10 rounded border-2 border-surface-100 flex items-center justify-center bg-white text-surface-800 transition-all peer-checked:border-brand-500 peer-checked:bg-brand-50 peer-checked:text-brand-600 hover:border-brand-300">
+                                <svg width="24" height="24" viewBox="0 0 40 40" fill="currentColor"><rect x="0" y="3" width="12" height="6"/><rect x="14" y="3" width="12" height="6"/><rect x="0" y="17" width="12" height="6"/><rect x="14" y="17" width="12" height="6"/><rect x="28" y="17" width="12" height="6"/><rect x="0" y="31" width="12" height="6"/><rect x="14" y="31" width="12" height="6"/><rect x="28" y="31" width="12" height="6"/></svg>
                             </div>
                         </label>
-                        <label class="shape-opt cursor-pointer"><input type="radio" name="body" value="vline"
-                                class="sr-only">
-                            <div
-                                class="aspect-square rounded-lg border-2 border-surface-100 flex items-center justify-center p-2">
-                                <div class="w-1/2 h-full bg-surface-800"></div>
+                        <label class="shape-opt cursor-pointer relative group"><input type="radio" name="body" value="vline" class="sr-only peer">
+                            <div class="w-10 h-10 rounded border-2 border-surface-100 flex items-center justify-center bg-white text-surface-800 transition-all peer-checked:border-brand-500 peer-checked:bg-brand-50 peer-checked:text-brand-600 hover:border-brand-300">
+                                <svg width="24" height="24" viewBox="0 0 40 40" fill="currentColor"><rect x="3" y="0" width="6" height="12"/><rect x="17" y="0" width="6" height="12"/><rect x="3" y="14" width="6" height="12"/><rect x="17" y="14" width="6" height="12"/><rect x="31" y="14" width="6" height="12"/><rect x="3" y="28" width="6" height="12"/><rect x="17" y="28" width="6" height="12"/><rect x="31" y="28" width="6" height="12"/></svg>
                             </div>
                         </label>
-                        <label class="shape-opt cursor-pointer"><input type="radio" name="body" value="star"
-                                class="sr-only">
-                            <div
-                                class="aspect-square rounded-lg border-2 border-surface-100 flex items-center justify-center p-2 text-surface-800 text-lg font-black">
-                                ✦</div>
-                        </label>
-                        <label class="shape-opt cursor-pointer"><input type="radio" name="body" value="cross"
-                                class="sr-only">
-                            <div
-                                class="aspect-square rounded-lg border-2 border-surface-100 flex items-center justify-center p-2 text-surface-800 text-lg font-black">
-                                ✚</div>
-                        </label>
-                        <label class="shape-opt cursor-pointer"><input type="radio" name="body" value="leaf"
-                                class="sr-only">
-                            <div
-                                class="aspect-square rounded-lg border-2 border-surface-100 flex items-center justify-center p-2">
-                                <div class="w-full h-full bg-surface-800 rounded-full rounded-tl-none rounded-br-none">
-                                </div>
+                        <label class="shape-opt cursor-pointer relative group"><input type="radio" name="body" value="star" class="sr-only peer">
+                            <div class="w-10 h-10 rounded border-2 border-surface-100 flex items-center justify-center bg-white text-surface-800 transition-all peer-checked:border-brand-500 peer-checked:bg-brand-50 peer-checked:text-brand-600 hover:border-brand-300">
+                                <svg width="24" height="24" viewBox="0 0 40 40"><path d="M6,0 l2,4 4,2 -4,2 -2,4 -2,-4 -4,-2 4,-2 z M20,0 l2,4 4,2 -4,2 -2,4 -2,-4 -4,-2 4,-2 z M6,14 l2,4 4,2 -4,2 -2,4 -2,-4 -4,-2 4,-2 z M20,14 l2,4 4,2 -4,2 -2,4 -2,-4 -4,-2 4,-2 z M34,14 l2,4 4,2 -4,2 -2,4 -2,-4 -4,-2 4,-2 z M6,28 l2,4 4,2 -4,2 -2,4 -2,-4 -4,-2 4,-2 z M20,28 l2,4 4,2 -4,2 -2,4 -2,-4 -4,-2 4,-2 z M34,28 l2,4 4,2 -4,2 -2,4 -2,-4 -4,-2 4,-2 z" fill="currentColor"/></svg>
                             </div>
                         </label>
-                        <label class="shape-opt cursor-pointer"><input type="radio" name="body" value="clover"
-                                class="sr-only">
-                            <div
-                                class="aspect-square rounded-lg border-2 border-surface-100 flex items-center justify-center p-2 text-surface-800 text-lg font-black">
-                                ✿</div>
+                        <label class="shape-opt cursor-pointer relative group"><input type="radio" name="body" value="cross" class="sr-only peer">
+                            <div class="w-10 h-10 rounded border-2 border-surface-100 flex items-center justify-center bg-white text-surface-800 transition-all peer-checked:border-brand-500 peer-checked:bg-brand-50 peer-checked:text-brand-600 hover:border-brand-300">
+                                <svg width="24" height="24" viewBox="0 0 40 40"><path d="M3,0 h6 v3 h3 v6 h-3 v3 h-6 v-3 h-3 v-6 h3 z M17,0 h6 v3 h3 v6 h-3 v3 h-6 v-3 h-3 v-6 h3 z M3,14 h6 v3 h3 v6 h-3 v3 h-6 v-3 h-3 v-6 h3 z M17,14 h6 v3 h3 v6 h-3 v3 h-6 v-3 h-3 v-6 h3 z M31,14 h6 v3 h3 v6 h-3 v3 h-6 v-3 h-3 v-6 h3 z M3,28 h6 v3 h3 v6 h-3 v3 h-6 v-3 h-3 v-6 h3 z M17,28 h6 v3 h3 v6 h-3 v3 h-6 v-3 h-3 v-6 h3 z M31,28 h6 v3 h3 v6 h-3 v3 h-6 v-3 h-3 v-6 h3 z" fill="currentColor"/></svg>
+                            </div>
+                        </label>
+                        <label class="shape-opt cursor-pointer relative group"><input type="radio" name="body" value="leaf" class="sr-only peer">
+                            <div class="w-10 h-10 rounded border-2 border-surface-100 flex items-center justify-center bg-white text-surface-800 transition-all peer-checked:border-brand-500 peer-checked:bg-brand-50 peer-checked:text-brand-600 hover:border-brand-300">
+                                <svg width="24" height="24" viewBox="0 0 40 40"><path d="M0,0 h6 a6,6 0 0,1 6,6 v6 h-6 a6,6 0 0,1 -6,-6 z M14,0 h6 a6,6 0 0,1 6,6 v6 h-6 a6,6 0 0,1 -6,-6 z M0,14 h6 a6,6 0 0,1 6,6 v6 h-6 a6,6 0 0,1 -6,-6 z M14,14 h6 a6,6 0 0,1 6,6 v6 h-6 a6,6 0 0,1 -6,-6 z M28,14 h6 a6,6 0 0,1 6,6 v6 h-6 a6,6 0 0,1 -6,-6 z M0,28 h6 a6,6 0 0,1 6,6 v6 h-6 a6,6 0 0,1 -6,-6 z M14,28 h6 a6,6 0 0,1 6,6 v6 h-6 a6,6 0 0,1 -6,-6 z M28,28 h6 a6,6 0 0,1 6,6 v6 h-6 a6,6 0 0,1 -6,-6 z" fill="currentColor"/></svg>
+                            </div>
+                        </label>
+                        <label class="shape-opt cursor-pointer relative group"><input type="radio" name="body" value="clover" class="sr-only peer">
+                            <div class="w-10 h-10 rounded border-2 border-surface-100 flex items-center justify-center bg-white text-surface-800 transition-all peer-checked:border-brand-500 peer-checked:bg-brand-50 peer-checked:text-brand-600 hover:border-brand-300">
+                                <svg width="24" height="24" viewBox="0 0 40 40"><path d="M6,0 a3,3 0 0,1 3,3 a3,3 0 0,1 3,-3 a3,3 0 0,1 0,6 a3,3 0 0,1 -3,3 a3,3 0 0,1 3,3 a3,3 0 0,1 -6,0 a3,3 0 0,1 -3,3 a3,3 0 0,1 0,-6 a3,3 0 0,1 -3,-3 a3,3 0 0,1 6,0 z M20,0 a3,3 0 0,1 3,3 a3,3 0 0,1 3,-3 a3,3 0 0,1 0,6 a3,3 0 0,1 -3,3 a3,3 0 0,1 3,3 a3,3 0 0,1 -6,0 a3,3 0 0,1 -3,3 a3,3 0 0,1 0,-6 a3,3 0 0,1 -3,-3 a3,3 0 0,1 6,0 z M6,14 a3,3 0 0,1 3,3 a3,3 0 0,1 3,-3 a3,3 0 0,1 0,6 a3,3 0 0,1 -3,3 a3,3 0 0,1 3,3 a3,3 0 0,1 -6,0 a3,3 0 0,1 -3,3 a3,3 0 0,1 0,-6 a3,3 0 0,1 -3,-3 a3,3 0 0,1 6,0 z M20,14 a3,3 0 0,1 3,3 a3,3 0 0,1 3,-3 a3,3 0 0,1 0,6 a3,3 0 0,1 -3,3 a3,3 0 0,1 3,3 a3,3 0 0,1 -6,0 a3,3 0 0,1 -3,3 a3,3 0 0,1 0,-6 a3,3 0 0,1 -3,-3 a3,3 0 0,1 6,0 z M34,14 a3,3 0 0,1 3,3 a3,3 0 0,1 3,-3 a3,3 0 0,1 0,6 a3,3 0 0,1 -3,3 a3,3 0 0,1 3,3 a3,3 0 0,1 -6,0 a3,3 0 0,1 -3,3 a3,3 0 0,1 0,-6 a3,3 0 0,1 -3,-3 a3,3 0 0,1 6,0 z M6,28 a3,3 0 0,1 3,3 a3,3 0 0,1 3,-3 a3,3 0 0,1 0,6 a3,3 0 0,1 -3,3 a3,3 0 0,1 3,3 a3,3 0 0,1 -6,0 a3,3 0 0,1 -3,3 a3,3 0 0,1 0,-6 a3,3 0 0,1 -3,-3 a3,3 0 0,1 6,0 z M20,28 a3,3 0 0,1 3,3 a3,3 0 0,1 3,-3 a3,3 0 0,1 0,6 a3,3 0 0,1 -3,3 a3,3 0 0,1 3,3 a3,3 0 0,1 -6,0 a3,3 0 0,1 -3,3 a3,3 0 0,1 0,-6 a3,3 0 0,1 -3,-3 a3,3 0 0,1 6,0 z M34,28 a3,3 0 0,1 3,3 a3,3 0 0,1 3,-3 a3,3 0 0,1 0,6 a3,3 0 0,1 -3,3 a3,3 0 0,1 3,3 a3,3 0 0,1 -6,0 a3,3 0 0,1 -3,3 a3,3 0 0,1 0,-6 a3,3 0 0,1 -3,-3 a3,3 0 0,1 6,0 z" fill="currentColor"/></svg>
+                            </div>
+                        </label>
+                        <label class="shape-opt cursor-pointer relative group"><input type="radio" name="body" value="hexagon" class="sr-only peer">
+                            <div class="w-10 h-10 rounded border-2 border-surface-100 flex items-center justify-center bg-white text-surface-800 transition-all peer-checked:border-brand-500 peer-checked:bg-brand-50 peer-checked:text-brand-600 hover:border-brand-300">
+                                <svg width="24" height="24" viewBox="0 0 40 40"><path d="M6,0 l6,3 v6 l-6,3 -6,-3 v-6 z M20,0 l6,3 v6 l-6,3 -6,-3 v-6 z M6,14 l6,3 v6 l-6,3 -6,-3 v-6 z M20,14 l6,3 v6 l-6,3 -6,-3 v-6 z M34,14 l6,3 v6 l-6,3 -6,-3 v-6 z M6,28 l6,3 v6 l-6,3 -6,-3 v-6 z M20,28 l6,3 v6 l-6,3 -6,-3 v-6 z M34,28 l6,3 v6 l-6,3 -6,-3 v-6 z" fill="currentColor"/></svg>
+                            </div>
+                        </label>
+                        <label class="shape-opt cursor-pointer relative group"><input type="radio" name="body" value="octagon" class="sr-only peer">
+                            <div class="w-10 h-10 rounded border-2 border-surface-100 flex items-center justify-center bg-white text-surface-800 transition-all peer-checked:border-brand-500 peer-checked:bg-brand-50 peer-checked:text-brand-600 hover:border-brand-300">
+                                <svg width="24" height="24" viewBox="0 0 40 40"><path d="M4,0 h4 l4,4 v4 l-4,4 h-4 l-4,-4 v-4 z M18,0 h4 l4,4 v4 l-4,4 h-4 l-4,-4 v-4 z M4,14 h4 l4,4 v4 l-4,4 h-4 l-4,-4 v-4 z M18,14 h4 l4,4 v4 l-4,4 h-4 l-4,-4 v-4 z M32,14 h4 l4,4 v4 l-4,4 h-4 l-4,-4 v-4 z M4,28 h4 l4,4 v4 l-4,4 h-4 l-4,-4 v-4 z M18,28 h4 l4,4 v4 l-4,4 h-4 l-4,-4 v-4 z M32,28 h4 l4,4 v4 l-4,4 h-4 l-4,-4 v-4 z" fill="currentColor"/></svg>
+                            </div>
                         </label>
                     </div>
                 </div>
+                
                 <!-- Eye Frame Shape -->
                 <div>
                     <label class="field-label mb-3 block">Eye Frame Shape</label>
-                    <div class="grid grid-cols-6 sm:grid-cols-8 gap-2">
-                        <label class="shape-opt cursor-pointer"><input type="radio" name="eye" value="square" checked
-                                class="sr-only">
-                            <div
-                                class="aspect-square rounded-lg border-2 border-surface-100 flex items-center justify-center p-2.5">
-                                <div class="w-full h-full border-[3px] border-surface-800"></div>
+                    <div class="flex flex-wrap gap-1.5">
+                        <label class="shape-opt cursor-pointer relative group"><input type="radio" name="eye" value="square" class="sr-only peer" checked>
+                            <div class="w-10 h-10 rounded border-2 border-surface-100 flex items-center justify-center bg-white text-surface-800 transition-all peer-checked:border-brand-500 peer-checked:bg-brand-50 peer-checked:text-brand-600 hover:border-brand-300">
+                                <svg width="24" height="24" viewBox="0 0 40 40"><rect x="3" y="3" width="34" height="34" fill="none" stroke="currentColor" stroke-width="6"/></svg>
                             </div>
                         </label>
-                        <label class="shape-opt cursor-pointer"><input type="radio" name="eye" value="rounded"
-                                class="sr-only">
-                            <div
-                                class="aspect-square rounded-lg border-2 border-surface-100 flex items-center justify-center p-2.5">
-                                <div class="w-full h-full border-[3px] border-surface-800 rounded-lg"></div>
+                        <label class="shape-opt cursor-pointer relative group"><input type="radio" name="eye" value="rounded" class="sr-only peer">
+                            <div class="w-10 h-10 rounded border-2 border-surface-100 flex items-center justify-center bg-white text-surface-800 transition-all peer-checked:border-brand-500 peer-checked:bg-brand-50 peer-checked:text-brand-600 hover:border-brand-300">
+                                <svg width="24" height="24" viewBox="0 0 40 40"><rect x="3" y="3" width="34" height="34" rx="8" fill="none" stroke="currentColor" stroke-width="6"/></svg>
                             </div>
                         </label>
-                        <label class="shape-opt cursor-pointer"><input type="radio" name="eye" value="circle"
-                                class="sr-only">
-                            <div
-                                class="aspect-square rounded-lg border-2 border-surface-100 flex items-center justify-center p-2.5">
-                                <div class="w-full h-full border-[3px] border-surface-800 rounded-full"></div>
+                        <label class="shape-opt cursor-pointer relative group"><input type="radio" name="eye" value="circle" class="sr-only peer">
+                            <div class="w-10 h-10 rounded border-2 border-surface-100 flex items-center justify-center bg-white text-surface-800 transition-all peer-checked:border-brand-500 peer-checked:bg-brand-50 peer-checked:text-brand-600 hover:border-brand-300">
+                                <svg width="24" height="24" viewBox="0 0 40 40"><circle cx="20" cy="20" r="17" fill="none" stroke="currentColor" stroke-width="6"/></svg>
                             </div>
                         </label>
-                        <label class="shape-opt cursor-pointer"><input type="radio" name="eye" value="diamond"
-                                class="sr-only">
-                            <div
-                                class="aspect-square rounded-lg border-2 border-surface-100 flex items-center justify-center p-3">
-                                <div class="w-full h-full border-[3px] border-surface-800 rotate-45 scale-[.7]"></div>
+                        <label class="shape-opt cursor-pointer relative group"><input type="radio" name="eye" value="diamond" class="sr-only peer">
+                            <div class="w-10 h-10 rounded border-2 border-surface-100 flex items-center justify-center bg-white text-surface-800 transition-all peer-checked:border-brand-500 peer-checked:bg-brand-50 peer-checked:text-brand-600 hover:border-brand-300">
+                                <svg width="24" height="24" viewBox="0 0 40 40"><polygon points="20,3 37,20 20,37 3,20" fill="none" stroke="currentColor" stroke-width="6"/></svg>
                             </div>
                         </label>
-                        <label class="shape-opt cursor-pointer"><input type="radio" name="eye" value="leaf"
-                                class="sr-only">
-                            <div
-                                class="aspect-square rounded-lg border-2 border-surface-100 flex items-center justify-center p-2.5">
-                                <div
-                                    class="w-full h-full border-[3px] border-surface-800 rounded-full rounded-tl-none rounded-br-none">
-                                </div>
+                        <label class="shape-opt cursor-pointer relative group"><input type="radio" name="eye" value="leaf" class="sr-only peer">
+                            <div class="w-10 h-10 rounded border-2 border-surface-100 flex items-center justify-center bg-white text-surface-800 transition-all peer-checked:border-brand-500 peer-checked:bg-brand-50 peer-checked:text-brand-600 hover:border-brand-300">
+                                <svg width="24" height="24" viewBox="0 0 40 40"><path d="M 3 3 L 20 3 A 17 17 0 0 1 37 20 L 37 37 L 20 37 A 17 17 0 0 1 3 20 Z" fill="none" stroke="currentColor" stroke-width="6"/></svg>
                             </div>
                         </label>
-                        <label class="shape-opt cursor-pointer"><input type="radio" name="eye" value="dot"
-                                class="sr-only">
-                            <div
-                                class="aspect-square rounded-lg border-2 border-surface-100 flex items-center justify-center p-3">
-                                <div class="w-3/4 h-3/4 border-[3px] border-surface-800 rounded-full"></div>
+                        <label class="shape-opt cursor-pointer relative group"><input type="radio" name="eye" value="dot" class="sr-only peer">
+                            <div class="w-10 h-10 rounded border-2 border-surface-100 flex items-center justify-center bg-white text-surface-800 transition-all peer-checked:border-brand-500 peer-checked:bg-brand-50 peer-checked:text-brand-600 hover:border-brand-300">
+                                <svg width="24" height="24" viewBox="0 0 40 40"><circle cx="20" cy="20" r="14" fill="none" stroke="currentColor" stroke-width="8"/></svg>
+                            </div>
+                        </label>
+                        <label class="shape-opt cursor-pointer relative group"><input type="radio" name="eye" value="hexagon" class="sr-only peer">
+                            <div class="w-10 h-10 rounded border-2 border-surface-100 flex items-center justify-center bg-white text-surface-800 transition-all peer-checked:border-brand-500 peer-checked:bg-brand-50 peer-checked:text-brand-600 hover:border-brand-300">
+                                <svg width="24" height="24" viewBox="0 0 40 40"><polygon points="20,3 37,11 37,29 20,37 3,29 3,11" fill="none" stroke="currentColor" stroke-width="6"/></svg>
+                            </div>
+                        </label>
+                        <label class="shape-opt cursor-pointer relative group"><input type="radio" name="eye" value="octagon" class="sr-only peer">
+                            <div class="w-10 h-10 rounded border-2 border-surface-100 flex items-center justify-center bg-white text-surface-800 transition-all peer-checked:border-brand-500 peer-checked:bg-brand-50 peer-checked:text-brand-600 hover:border-brand-300">
+                                <svg width="24" height="24" viewBox="0 0 40 40"><polygon points="12,3 28,3 37,12 37,28 28,37 12,37 3,28 3,12" fill="none" stroke="currentColor" stroke-width="6"/></svg>
+                            </div>
+                        </label>
+                        <label class="shape-opt cursor-pointer relative group"><input type="radio" name="eye" value="star" class="sr-only peer">
+                            <div class="w-10 h-10 rounded border-2 border-surface-100 flex items-center justify-center bg-white text-surface-800 transition-all peer-checked:border-brand-500 peer-checked:bg-brand-50 peer-checked:text-brand-600 hover:border-brand-300">
+                                <svg width="24" height="24" viewBox="0 0 40 40"><polygon points="20,2 25.5,12 37,14 28,23 30,35 20,29 10,35 12,23 3,14 14.5,12" fill="none" stroke="currentColor" stroke-width="5"/></svg>
+                            </div>
+                        </label>
+                        <label class="shape-opt cursor-pointer relative group"><input type="radio" name="eye" value="small-square" class="sr-only peer">
+                            <div class="w-10 h-10 rounded border-2 border-surface-100 flex items-center justify-center bg-white text-surface-800 transition-all peer-checked:border-brand-500 peer-checked:bg-brand-50 peer-checked:text-brand-600 hover:border-brand-300">
+                                <svg width="24" height="24" viewBox="0 0 40 40"><rect x="6" y="6" width="28" height="28" fill="none" stroke="currentColor" stroke-width="8"/></svg>
                             </div>
                         </label>
                     </div>
                 </div>
+
                 <!-- Eye Ball Shape -->
                 <div>
                     <label class="field-label mb-3 block">Eye Ball Shape</label>
-                    <div class="grid grid-cols-6 sm:grid-cols-8 gap-2">
-                        <label class="shape-opt cursor-pointer"><input type="radio" name="ball" value="square" checked
-                                class="sr-only">
-                            <div
-                                class="aspect-square rounded-lg border-2 border-surface-100 flex items-center justify-center p-3">
-                                <div class="w-5 h-5 bg-surface-800"></div>
+                    <div class="flex flex-wrap gap-1.5">
+                        <label class="shape-opt cursor-pointer relative group"><input type="radio" name="ball" value="square" class="sr-only peer" checked>
+                            <div class="w-10 h-10 rounded border-2 border-surface-100 flex items-center justify-center bg-white text-surface-800 transition-all peer-checked:border-brand-500 peer-checked:bg-brand-50 peer-checked:text-brand-600 hover:border-brand-300">
+                                <svg width="24" height="24" viewBox="0 0 40 40"><rect x="10" y="10" width="20" height="20" fill="currentColor"/></svg>
                             </div>
                         </label>
-                        <label class="shape-opt cursor-pointer"><input type="radio" name="ball" value="rounded"
-                                class="sr-only">
-                            <div
-                                class="aspect-square rounded-lg border-2 border-surface-100 flex items-center justify-center p-3">
-                                <div class="w-5 h-5 bg-surface-800 rounded"></div>
+                        <label class="shape-opt cursor-pointer relative group"><input type="radio" name="ball" value="rounded" class="sr-only peer">
+                            <div class="w-10 h-10 rounded border-2 border-surface-100 flex items-center justify-center bg-white text-surface-800 transition-all peer-checked:border-brand-500 peer-checked:bg-brand-50 peer-checked:text-brand-600 hover:border-brand-300">
+                                <svg width="24" height="24" viewBox="0 0 40 40"><rect x="10" y="10" width="20" height="20" rx="5" fill="currentColor"/></svg>
                             </div>
                         </label>
-                        <label class="shape-opt cursor-pointer"><input type="radio" name="ball" value="circle"
-                                class="sr-only">
-                            <div
-                                class="aspect-square rounded-lg border-2 border-surface-100 flex items-center justify-center p-3">
-                                <div class="w-5 h-5 bg-surface-800 rounded-full"></div>
+                        <label class="shape-opt cursor-pointer relative group"><input type="radio" name="ball" value="circle" class="sr-only peer">
+                            <div class="w-10 h-10 rounded border-2 border-surface-100 flex items-center justify-center bg-white text-surface-800 transition-all peer-checked:border-brand-500 peer-checked:bg-brand-50 peer-checked:text-brand-600 hover:border-brand-300">
+                                <svg width="24" height="24" viewBox="0 0 40 40"><circle cx="20" cy="20" r="10" fill="currentColor"/></svg>
                             </div>
                         </label>
-                        <label class="shape-opt cursor-pointer"><input type="radio" name="ball" value="diamond"
-                                class="sr-only">
-                            <div
-                                class="aspect-square rounded-lg border-2 border-surface-100 flex items-center justify-center p-3">
-                                <div class="w-5 h-5 bg-surface-800 rotate-45 scale-75"></div>
+                        <label class="shape-opt cursor-pointer relative group"><input type="radio" name="ball" value="diamond" class="sr-only peer">
+                            <div class="w-10 h-10 rounded border-2 border-surface-100 flex items-center justify-center bg-white text-surface-800 transition-all peer-checked:border-brand-500 peer-checked:bg-brand-50 peer-checked:text-brand-600 hover:border-brand-300">
+                                <svg width="24" height="24" viewBox="0 0 40 40"><polygon points="20,10 30,20 20,30 10,20" fill="currentColor"/></svg>
                             </div>
                         </label>
-                        <label class="shape-opt cursor-pointer"><input type="radio" name="ball" value="star"
-                                class="sr-only">
-                            <div
-                                class="aspect-square rounded-lg border-2 border-surface-100 flex items-center justify-center text-surface-800 text-sm font-black">
-                                ✦</div>
-                        </label>
-                        <label class="shape-opt cursor-pointer"><input type="radio" name="ball" value="cross"
-                                class="sr-only">
-                            <div
-                                class="aspect-square rounded-lg border-2 border-surface-100 flex items-center justify-center text-surface-800 text-sm font-black">
-                                ✚</div>
-                        </label>
-                        <label class="shape-opt cursor-pointer"><input type="radio" name="ball" value="leaf"
-                                class="sr-only">
-                            <div
-                                class="aspect-square rounded-lg border-2 border-surface-100 flex items-center justify-center p-3">
-                                <div class="w-5 h-5 bg-surface-800 rounded-full rounded-tl-none rounded-br-none"></div>
+                        <label class="shape-opt cursor-pointer relative group"><input type="radio" name="ball" value="star" class="sr-only peer">
+                            <div class="w-10 h-10 rounded border-2 border-surface-100 flex items-center justify-center bg-white text-surface-800 transition-all peer-checked:border-brand-500 peer-checked:bg-brand-50 peer-checked:text-brand-600 hover:border-brand-300">
+                                <svg width="24" height="24" viewBox="0 0 40 40"><polygon points="20,8 24,15 32,16 26,22 28,30 20,26 12,30 14,22 8,16 16,15" fill="currentColor"/></svg>
                             </div>
                         </label>
-                        <label class="shape-opt cursor-pointer"><input type="radio" name="ball" value="hline"
-                                class="sr-only">
-                            <div
-                                class="aspect-square rounded-lg border-2 border-surface-100 flex items-center justify-center p-3">
-                                <div class="w-5 h-2 bg-surface-800"></div>
+                        <label class="shape-opt cursor-pointer relative group"><input type="radio" name="ball" value="cross" class="sr-only peer">
+                            <div class="w-10 h-10 rounded border-2 border-surface-100 flex items-center justify-center bg-white text-surface-800 transition-all peer-checked:border-brand-500 peer-checked:bg-brand-50 peer-checked:text-brand-600 hover:border-brand-300">
+                                <svg width="24" height="24" viewBox="0 0 40 40"><path d="M16,10 h8 v6 h6 v8 h-6 v6 h-8 v-6 h-6 v-8 h6 z" fill="currentColor"/></svg>
                             </div>
                         </label>
-                        <label class="shape-opt cursor-pointer"><input type="radio" name="ball" value="vline"
-                                class="sr-only">
-                            <div
-                                class="aspect-square rounded-lg border-2 border-surface-100 flex items-center justify-center p-3">
-                                <div class="w-2 h-5 bg-surface-800"></div>
+                        <label class="shape-opt cursor-pointer relative group"><input type="radio" name="ball" value="leaf" class="sr-only peer">
+                            <div class="w-10 h-10 rounded border-2 border-surface-100 flex items-center justify-center bg-white text-surface-800 transition-all peer-checked:border-brand-500 peer-checked:bg-brand-50 peer-checked:text-brand-600 hover:border-brand-300">
+                                <svg width="24" height="24" viewBox="0 0 40 40"><path d="M10,10 h10 a10,10 0 0,1 10,10 v10 h-10 a10,10 0 0,1 -10,-10 z" fill="currentColor"/></svg>
                             </div>
                         </label>
-                        <label class="shape-opt cursor-pointer"><input type="radio" name="ball" value="clover"
-                                class="sr-only">
-                            <div
-                                class="aspect-square rounded-lg border-2 border-surface-100 flex items-center justify-center text-surface-800 text-sm font-black">
-                                ✿</div>
+                        <label class="shape-opt cursor-pointer relative group"><input type="radio" name="ball" value="hline" class="sr-only peer">
+                            <div class="w-10 h-10 rounded border-2 border-surface-100 flex items-center justify-center bg-white text-surface-800 transition-all peer-checked:border-brand-500 peer-checked:bg-brand-50 peer-checked:text-brand-600 hover:border-brand-300">
+                                <svg width="24" height="24" viewBox="0 0 40 40"><rect x="10" y="16" width="20" height="8" fill="currentColor"/></svg>
+                            </div>
+                        </label>
+                        <label class="shape-opt cursor-pointer relative group"><input type="radio" name="ball" value="vline" class="sr-only peer">
+                            <div class="w-10 h-10 rounded border-2 border-surface-100 flex items-center justify-center bg-white text-surface-800 transition-all peer-checked:border-brand-500 peer-checked:bg-brand-50 peer-checked:text-brand-600 hover:border-brand-300">
+                                <svg width="24" height="24" viewBox="0 0 40 40"><rect x="16" y="10" width="8" height="20" fill="currentColor"/></svg>
+                            </div>
+                        </label>
+                        <label class="shape-opt cursor-pointer relative group"><input type="radio" name="ball" value="clover" class="sr-only peer">
+                            <div class="w-10 h-10 rounded border-2 border-surface-100 flex items-center justify-center bg-white text-surface-800 transition-all peer-checked:border-brand-500 peer-checked:bg-brand-50 peer-checked:text-brand-600 hover:border-brand-300">
+                                <svg width="24" height="24" viewBox="0 0 40 40"><circle cx="15" cy="15" r="5" fill="currentColor"/><circle cx="25" cy="15" r="5" fill="currentColor"/><circle cx="15" cy="25" r="5" fill="currentColor"/><circle cx="25" cy="25" r="5" fill="currentColor"/></svg>
+                            </div>
                         </label>
                     </div>
+                </div>
+
+                <!-- Reset Design Button -->
+                <div class="flex justify-end pt-4 border-t border-surface-50 mt-4">
+                    <button type="button" onclick="resetDesign()" class="text-[11px] font-bold text-surface-400 hover:text-surface-800 transition-colors flex items-center gap-1.5 uppercase tracking-widest">
+                        <i data-lucide="rotate-ccw" class="w-3.5 h-3.5"></i> Reset Design
+                    </button>
                 </div>
             </div>
         </div>
@@ -783,13 +868,13 @@
     </div>
 
     <!-- ═══════════  RIGHT: PREVIEW  ═══════════ -->
-    <div class="w-full lg:w-[480px] flex flex-col gap-6 lg:sticky lg:top-8">
-        <div class="rounded-3xl bg-white border border-surface-100 p-8 shadow-mega flex flex-col items-center">
+    <div class="qr-preview-column w-full max-w-[500px] mx-auto lg:max-w-full flex flex-col gap-[24px] lg:sticky lg:top-8 min-w-0">
+        <div class="qr-preview-card rounded-3xl bg-white border border-surface-100 p-6 shadow-mega flex flex-col items-center w-full lg:w-[390px] mx-auto">
             <label
                 class="w-full text-center text-[10px] font-black text-surface-400 uppercase tracking-widest mb-6">Preview</label>
             <div id="qr-box"
-                class="relative w-full bg-white dot-grid rounded-3xl border-2 border-surface-200 flex items-center justify-center overflow-hidden mb-8 group shadow-inner"
-                style="min-height:380px; aspect-ratio:1/1;">
+                class="qr-preview-box relative w-full max-w-[310px] bg-white dot-grid rounded-3xl border-2 border-surface-200 flex items-center justify-center overflow-hidden mb-8 group shadow-inner mx-auto"
+                style="aspect-ratio:1/1;">
                 
                 <div id="scanner" class="scanner-line hidden"></div>
                 
@@ -801,8 +886,20 @@
                 <div id="qr-bg" class="hidden absolute inset-0 bg-brand-500/5 rounded-full animate-ping opacity-0 filter blur-xl scale-75"></div>
                 <img id="qr-img" class="hidden absolute inset-0 w-full h-full object-contain p-6 drop-shadow-2xl z-20 hover:scale-105 transition-transform duration-500">
             </div>
-            <div class="w-full flex items-center gap-3 mb-6">
+            <div class="w-full flex items-center gap-3 mb-6 relative">
                 <span class="text-[9px] font-black text-surface-400 uppercase tracking-widest">Resolution</span>
+                
+                <!-- Info Tooltip -->
+                <div class="preview-info-wrapper">
+                    <button type="button" class="preview-info-button" aria-label="QR scan performance information">
+                        <i data-lucide="info" class="w-4 h-4"></i>
+                    </button>
+                    <div class="preview-info-tooltip" role="tooltip">
+                        Use high-contrast colors for best scan performance.<br>
+                        Dark foreground on a light background is recommended.
+                    </div>
+                </div>
+
                 <span class="text-xs font-bold text-surface-800 ml-auto">1000 × 1000 Px</span>
             </div>
             <!-- Download Actions: PNG + JPG Only -->
@@ -832,16 +929,17 @@
                 </button>
             </div>
         </div>
-        <div class="p-5 rounded-2xl bg-amber-50 border border-amber-100">
-            <div class="flex gap-3 items-start">
-                <i data-lucide="alert-triangle" class="w-5 h-5 text-amber-500 flex-shrink-0 mt-0.5"></i>
-                <p class="text-[11px] text-amber-800 font-bold leading-relaxed">Use high-contrast colors for best scan
-                    performance. Dark foreground on a light background is recommended.</p>
-            </div>
-        </div>
     </div>
 </div>
 
+<div class="qr-seo-content">
+    <h2>QR Code Generator</h2>
+    <p><strong>QR Code Generator</strong> helps you quickly create free QR codes for URLs, text, email, phone numbers, SMS, Wi-Fi, vCards, and locations.</p>
+    <p>Customize your QR code with colors, logos, body shapes, eye frames, and design styles to match your brand or personal needs.</p>
+    <p>Generate, preview, and download high-quality QR codes in seconds for websites, business cards, marketing materials, sharing, and everyday use.</p>
+</div>
+
+</div>
 <!-- Logo Crop Modal -->
 <div id="crop-modal" class="hidden fixed inset-0 z-[120] flex items-center justify-center">
     <div class="absolute inset-0 bg-surface-900/60 backdrop-blur-sm"></div>
@@ -1032,6 +1130,7 @@
             cropModal.classList.add('hidden');
             cropper.destroy(); cropper = null;
             document.getElementById('logo-file').value = '';
+            triggerLivePreview();
         }, 'image/png');
     }
     function clearLogo(e) {
@@ -1041,6 +1140,7 @@
         document.getElementById('logo-preview').classList.add('hidden');
         document.getElementById('logo-empty').classList.remove('hidden');
         document.querySelectorAll('.logo-preset').forEach(p => p.classList.remove('active'));
+        triggerLivePreview();
     }
 
     /* ── Preset logo: generate a canvas-based image ── */
@@ -1061,6 +1161,7 @@
             document.getElementById('logo-preview-img').src = c.toDataURL();
             document.getElementById('logo-preview').classList.remove('hidden');
             document.getElementById('logo-empty').classList.add('hidden');
+            triggerLivePreview();
         }, 'image/png');
     }
 
@@ -1279,6 +1380,43 @@
             alert("Clipboard access failed. Either the browser blocked it or you need HTTPS.");
             btn.innerHTML = orig; btn.disabled = false; lucide.createIcons();
         }
+    };
+
+    /* ── Live Preview & Reset Design ── */
+    let liveUpdateTimer = null;
+    function triggerLivePreview() {
+        if (!buildQRData()) return;
+        clearTimeout(liveUpdateTimer);
+        liveUpdateTimer = setTimeout(async () => {
+            const qrBox = document.getElementById('qr-box');
+            qrBox.style.opacity = '0.5';
+            try {
+                const blob = await generateQR('png');
+                if (blob) {
+                    const url = window.URL.createObjectURL(blob);
+                    document.getElementById('qr-img').src = url;
+                    document.getElementById('dl-png').href = url;
+                    document.getElementById('placeholder').classList.add('hidden');
+                    document.getElementById('qr-bg').classList.remove('hidden');
+                    document.getElementById('qr-img').classList.remove('hidden');
+                    document.getElementById('actions').classList.remove('hidden');
+                }
+            } catch(e) {}
+            finally {
+                qrBox.style.opacity = '1';
+            }
+        }, 300);
+    }
+
+    document.querySelectorAll('input[name="body"], input[name="eye"], input[name="ball"], #fg-color, #bg-color, #gradient-type').forEach(el => {
+        el.addEventListener('change', triggerLivePreview);
+    });
+
+    window.resetDesign = () => {
+        document.querySelector('input[name="body"][value="square"]').checked = true;
+        document.querySelector('input[name="eye"][value="square"]').checked = true;
+        document.querySelector('input[name="ball"][value="square"]').checked = true;
+        triggerLivePreview();
     };
 </script>
 {% endblock %}
