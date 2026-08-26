@@ -1,44 +1,89 @@
 {% extends 'admin_dashboard/base.html' %}
 
-{% block title %}Subscriptions | SaaS Admin{% endblock %}
+{% block title %}Subscriptions | ScanPDF Admin{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h3 class="fw-bold m-0">Subscriptions Management</h3>
+<div class="mb-8 flex items-center justify-between">
+    <div>
+        <h1 class="text-2xl font-black text-surface-900">Subscriptions</h1>
+        <p class="text-surface-500 font-medium">Monitor active and expired user plans.</p>
+    </div>
+    <div class="flex items-center gap-3">
+        <button class="px-4 py-2 bg-white rounded-xl shadow-sm border border-surface-200 text-sm font-bold text-surface-700 hover:bg-surface-50 flex items-center gap-2 transition-colors">
+            <i data-lucide="filter" class="w-4 h-4"></i> Filter Status
+        </button>
+    </div>
 </div>
 
-<div class="card-table">
-    <div class="card-table-header">
-        <h4>All Subscriptions</h4>
+<div class="bg-white border border-surface-100 rounded-3xl shadow-sm overflow-hidden">
+    <div class="p-6 border-b border-surface-100 flex justify-between items-center bg-surface-50/50">
+        <h3 class="text-sm font-black uppercase tracking-widest text-surface-900">All Subscriptions</h3>
+        <div class="relative">
+            <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-surface-400"></i>
+            <input type="text" placeholder="Search subscriptions..." class="pl-10 pr-4 py-2 bg-white border border-surface-200 rounded-xl text-sm font-semibold focus:ring-2 focus:ring-brand-500 outline-none w-64 shadow-sm">
+        </div>
     </div>
-    <div class="table-responsive">
-        <table class="table table-hover mb-0">
+    
+    <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
             <thead>
-                <tr>
-                    <th>User</th>
-                    <th>Plan</th>
-                    <th>Billing</th>
-                    <th>Start Date</th>
-                    <th>End Date</th>
-                    <th>Status</th>
+                <tr class="bg-surface-50 border-b border-surface-100">
+                    <th class="px-6 py-4 text-xs font-black text-surface-500 uppercase tracking-widest">User</th>
+                    <th class="px-6 py-4 text-xs font-black text-surface-500 uppercase tracking-widest">Plan</th>
+                    <th class="px-6 py-4 text-xs font-black text-surface-500 uppercase tracking-widest">Cycle</th>
+                    <th class="px-6 py-4 text-xs font-black text-surface-500 uppercase tracking-widest">Price</th>
+                    <th class="px-6 py-4 text-xs font-black text-surface-500 uppercase tracking-widest">Status</th>
+                    <th class="px-6 py-4 text-xs font-black text-surface-500 uppercase tracking-widest">Renewal Date</th>
+                    <th class="px-6 py-4 text-xs font-black text-surface-500 uppercase tracking-widest text-right">Actions</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody class="divide-y divide-surface-100">
                 {% for sub in subscriptions %}
-                <tr>
-                    <td class="fw-bold">{{ sub.user.username }}</td>
-                    <td><span class="badge badge-soft-info">{{ sub.plan.name }}</span></td>
-                    <td>{{ sub.billing_cycle|title }}</td>
-                    <td>{{ sub.start_date|date:"M d, Y" }}</td>
-                    <td>{{ sub.end_date|date:"M d, Y"|default:"-" }}</td>
-                    <td>
+                <tr class="hover:bg-surface-50/50 transition-colors group">
+                    <td class="px-6 py-4">
+                        <div class="flex items-center gap-3">
+                            <img src="https://ui-avatars.com/api/?name={{ sub.user.username }}&background=f1f5f9&color=64748b" class="w-8 h-8 rounded-lg" alt="Avatar">
+                            <div>
+                                <a href="{% url 'custom_admin:user_detail' sub.user.id %}" class="text-sm font-bold text-brand-600 hover:underline">{{ sub.user.username }}</a>
+                                <p class="text-[10px] font-medium text-surface-500">{{ sub.user.email }}</p>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="text-sm font-black text-surface-900">{{ sub.plan.name }}</span>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="text-xs font-bold text-surface-500 uppercase tracking-wider">{{ sub.billing_cycle }}</span>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="text-sm font-black text-surface-900">{{ sub.currency }} {{ sub.price_at_purchase }}</span>
+                    </td>
+                    <td class="px-6 py-4">
                         {% if sub.status == 'Active' %}
-                            <span class="badge badge-soft-success">Active</span>
-                        {% elif sub.status == 'Expired' %}
-                            <span class="badge badge-soft-danger">Expired</span>
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-widest bg-emerald-50 text-emerald-600 border border-emerald-100">
+                            Active
+                        </span>
+                        {% elif sub.status == 'Cancelled' %}
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-widest bg-amber-50 text-amber-600 border border-amber-100">
+                            Cancelled
+                        </span>
                         {% else %}
-                            <span class="badge badge-soft-secondary">{{ sub.status }}</span>
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-widest bg-red-50 text-red-600 border border-red-100">
+                            {{ sub.status }}
+                        </span>
                         {% endif %}
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="text-sm font-medium text-surface-500">{{ sub.renewal_date|date:"M d, Y"|default:"N/A" }}</span>
+                    </td>
+                    <td class="px-6 py-4 text-right">
+                        <a href="{% url 'custom_admin:user_detail' sub.user.id %}" class="text-xs font-bold text-brand-600 hover:text-brand-700">View Details</a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="7" class="px-6 py-12 text-center text-surface-500 font-medium">
+                        No subscriptions found.
                     </td>
                 </tr>
                 {% endfor %}

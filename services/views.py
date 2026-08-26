@@ -9,30 +9,31 @@ import datetime
 
 def get_or_create_plans():
     """Initializes standard subscription plans if they do not exist."""
+    # Deactivate the unwanted business plan
+    try:
+        business_plan = Plan.objects.get(code='business')
+        business_plan.is_active = False
+        business_plan.is_public = False
+        business_plan.save()
+    except Plan.DoesNotExist:
+        pass
+
     plans_data = [
         {
             'name': 'FREE', 'code': 'free', 'monthly_price': 0, 'yearly_price': 0,
-            'max_dynamic_qrs': 5, 'max_short_urls': 10, 'max_team_members': 0, 'max_domains': 0, 'max_api_requests': 0,
-            'analytics_access': False, 'csv_export': False, 'gps_tracking': False, 'bulk_qr': False, 'webhooks': False
+            'description': 'Perfect to get started', 'display_order': 1
         },
         {
             'name': 'PRO', 'code': 'pro', 'monthly_price': 499, 'yearly_price': 4999,
-            'max_dynamic_qrs': 100, 'max_short_urls': 100, 'max_team_members': 0, 'max_domains': 1, 'max_api_requests': 0,
-            'analytics_access': True, 'csv_export': False, 'gps_tracking': False, 'bulk_qr': False, 'webhooks': False
-        },
-        {
-            'name': 'BUSINESS', 'code': 'business', 'monthly_price': 999, 'yearly_price': 9999,
-            'max_dynamic_qrs': 1000, 'max_short_urls': 1000, 'max_team_members': 3, 'max_domains': 3, 'max_api_requests': 5000,
-            'analytics_access': True, 'csv_export': True, 'gps_tracking': True, 'bulk_qr': True, 'webhooks': False
+            'description': 'For serious creators', 'is_popular': True, 'display_order': 2
         },
         {
             'name': 'BUSINESS+', 'code': 'business_plus', 'monthly_price': 1999, 'yearly_price': 19999,
-            'max_dynamic_qrs': 999999, 'max_short_urls': 999999, 'max_team_members': 99, 'max_domains': 99, 'max_api_requests': 999999,
-            'analytics_access': True, 'csv_export': True, 'gps_tracking': True, 'bulk_qr': True, 'webhooks': True
+            'description': 'Enterprise scale', 'display_order': 3
         }
     ]
     for data in plans_data:
-        Plan.objects.get_or_create(code=data['code'], defaults=data)
+        Plan.objects.update_or_create(code=data['code'], defaults=data)
 
 def pricing_view(request):
     """Renders the premium SaaS pricing page with active subscription info."""
@@ -41,21 +42,15 @@ def pricing_view(request):
     
     current_subscription = None
     if is_logged_in:
-        current_subscription = Subscription.objects.filter(user=request.user, status='Active').first()
-        if not current_subscription:
-            # Auto-assign Free plan if user has no subscription at all
-            free_plan = Plan.objects.get(code='free')
-            current_subscription = Subscription.objects.create(
-                user=request.user,
-                plan=free_plan,
-                status='Active',
-                billing_cycle='monthly',
-                payment_status='Paid'
-            )
+        from .limit_service import PlanLimitService
+        current_subscription = PlanLimitService.get_active_subscription(request.user)
             
+    plans = Plan.objects.filter(is_active=True).order_by('display_order', 'id')
+    
     return render(request, 'services/pricing.html', {
         'is_logged_in': is_logged_in,
         'current_subscription': current_subscription,
+        'plans': plans,
         'page_title': 'Pricing Plans — ScanPDF Services'
     })
 

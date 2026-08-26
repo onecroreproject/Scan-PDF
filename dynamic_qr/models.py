@@ -97,8 +97,13 @@ class DynamicQRCode(models.Model):
     # Analytics
     scan_count = models.PositiveIntegerField(default=0)
 
-    # Status
+    # Status & Advanced Short URL Features
     is_active = models.BooleanField(default=True)
+    custom_alias = models.CharField(max_length=50, blank=True, null=True, unique=True, db_index=True, help_text="Custom URL alias")
+    domain = models.CharField(max_length=100, default='default', help_text="Domain used for the short URL")
+    password = models.CharField(max_length=128, blank=True, null=True, help_text="Hashed password for protected links")
+    expiry_date = models.DateTimeField(null=True, blank=True, help_text="When the link expires")
+    require_gps = models.BooleanField(default=False, help_text="Require GPS location to access")
 
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
@@ -186,6 +191,8 @@ class QRAnalytics(models.Model):
     city = models.CharField(max_length=100, default='Unknown')
     latitude = models.FloatField(null=True, blank=True)
     longitude = models.FloatField(null=True, blank=True)
+    referrer = models.CharField(max_length=500, null=True, blank=True, help_text="HTTP Referrer")
+    is_bot = models.BooleanField(default=False, help_text="Whether this scan/click was made by a bot")
 
     class Meta:
         ordering = ['-timestamp']

@@ -1,0 +1,73 @@
+{% extends 'admin_dashboard/base.html' %}
+{% block admin_content %}
+<div class="mb-8 flex items-center justify-between">
+    <div>
+        <h1 class="text-2xl font-black text-slate-900">Feature Management</h1>
+        <p class="text-slate-500 font-medium">Define dynamic features available for plans.</p>
+    </div>
+</div>
+
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+    <div class="lg:col-span-2 space-y-4">
+        {% for feature in features %}
+        <div class="bg-white p-5 rounded-2xl border border-slate-100 shadow-sm flex items-start justify-between group">
+            <div>
+                <h3 class="font-black text-slate-900 text-lg flex items-center gap-2">
+                    {{ feature.name }}
+                    {% if not feature.is_public %}
+                        <span class="text-[10px] uppercase font-bold tracking-wider text-amber-600 bg-amber-50 px-2 py-0.5 rounded">Internal</span>
+                    {% endif %}
+                </h3>
+                <p class="text-sm font-bold text-slate-500 font-mono mt-1 mb-2">{{ feature.key }}</p>
+                <p class="text-sm text-slate-600 font-medium">{{ feature.description|default:"No description provided." }}</p>
+            </div>
+            <div class="text-right">
+                <span class="text-xs font-black uppercase tracking-widest text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-lg">{{ feature.get_type_display }}</span>
+            </div>
+        </div>
+        {% empty %}
+        <div class="text-center py-12 bg-slate-50 rounded-2xl border border-slate-200 border-dashed">
+            <p class="text-slate-500 font-bold">No features defined yet.</p>
+        </div>
+        {% endfor %}
+    </div>
+
+    <div>
+        <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm sticky top-8">
+            <h2 class="text-lg font-black mb-6">Create New Feature</h2>
+            <form method="POST" class="space-y-5">
+                {% csrf_token %}
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Display Name</label>
+                    <input type="text" name="name" required class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-indigo-500 outline-none font-semibold" placeholder="e.g. Password Protection">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Feature Key</label>
+                    <input type="text" name="key" required class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-indigo-500 outline-none font-mono text-sm" placeholder="e.g. password_protection">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Type</label>
+                    <select name="type" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-indigo-500 outline-none font-semibold">
+                        <option value="BOOLEAN">Boolean (ON/OFF)</option>
+                        <option value="NUMERIC">Numeric Limit</option>
+                        <option value="UNLIMITED">Unlimited</option>
+                        <option value="SELECT">Select Text</option>
+                        <option value="DURATION">Duration</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Description</label>
+                    <textarea name="description" rows="2" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-indigo-500 outline-none text-sm"></textarea>
+                </div>
+                <label class="flex items-center gap-2 mt-2 font-bold text-slate-700">
+                    <input type="checkbox" name="is_public" checked class="w-5 h-5 text-indigo-600 rounded"> Show on Public Pricing
+                </label>
+                
+                <button type="submit" class="w-full mt-4 px-6 py-4 bg-indigo-600 text-white font-black rounded-xl hover:bg-indigo-700 shadow-lg shadow-indigo-200">
+                    Add Feature
+                </button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

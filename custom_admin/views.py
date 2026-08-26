@@ -80,8 +80,71 @@ def payments_view(request):
 
 @superuser_required
 def plans_view(request):
-    plans = Plan.objects.all()
+    plans = Plan.objects.filter(is_active=True).order_by('display_order', 'id')
     return render(request, 'admin_dashboard/plans.html', {'plans': plans})
+
+@superuser_required
+def plan_edit_view(request, plan_id):
+    from services.models import Feature, PlanFeature
+    plan = get_object_or_404(Plan, id=plan_id)
+    features = Feature.objects.all().order_by('display_order', 'name')
+    
+    if request.method == 'POST':
+        plan.name = request.POST.get('name', plan.name)
+        plan.description = request.POST.get('description', '')
+        plan.monthly_price = request.POST.get('monthly_price', 0)
+        plan.yearly_price = request.POST.get('yearly_price', 0)
+        plan.is_active = request.POST.get('is_active') == 'on'
+        plan.is_popular = request.POST.get('is_popular') == 'on'
+        
+        # Legacy limits
+        plan.max_short_urls = request.POST.get('max_short_urls', 10)
+        
+        plan.save()
+        
+        # Save dynamic features
+        for feature in features:
+            pf, _ = PlanFeature.objects.get_or_create(plan=plan, feature=feature)
+            if feature.type == 'BOOLEAN':
+                pf.value_boolean = request.POST.get(f'feature_{feature.id}') == 'on'
+            elif feature.type == 'NUMERIC':
+                val = request.POST.get(f'feature_{feature.id}')
+                pf.value_numeric = int(val) if val else None
+            elif feature.type == 'UNLIMITED':
+                pass # Unlimited is just enabled by existence
+            else:
+                pf.value_text = request.POST.get(f'feature_{feature.id}', '')
+            pf.save()
+            
+        ActivityLog.objects.create(user=request.user, action=f"Updated Plan: {plan.name}")
+        return redirect('custom_admin:plans')
+        
+    # Get current plan features
+    plan_features = {pf.feature_id: pf for pf in plan.features.all()}
+    return render(request, 'admin_dashboard/plan_edit.html', {
+        'plan': plan, 
+        'features': features,
+        'plan_features': plan_features
+    })
+
+@superuser_required
+def features_view(request):
+    from services.models import Feature
+    if request.method == 'POST':
+        name = request.POST.get('name')
+        key = request.POST.get('key')
+        ftype = request.POST.get('type')
+        if name and key:
+            Feature.objects.create(
+                name=name, key=key, type=ftype,
+                description=request.POST.get('description', ''),
+                is_public=request.POST.get('is_public') == 'on'
+            )
+            ActivityLog.objects.create(user=request.user, action=f"Created Feature: {name}")
+            return redirect('custom_admin:features')
+            
+    features = Feature.objects.all().order_by('display_order', 'name')
+    return render(request, 'admin_dashboard/features.html', {'features': features})
 
 @superuser_required
 def qrcodes_view(request):

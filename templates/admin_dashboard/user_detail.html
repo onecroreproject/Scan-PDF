@@ -1,169 +1,187 @@
 {% extends 'admin_dashboard/base.html' %}
 
-{% block title %}User Detail | SaaS Admin{% endblock %}
+{% block title %}User Detail | ScanPDF Admin{% endblock %}
 
 {% block content %}
-<div class="mb-4">
-    <a href="{% url 'custom_admin:users' %}" class="btn btn-outline-secondary btn-sm"><i class="fa-solid fa-arrow-left"></i> Back to Users</a>
+<div class="mb-8 flex items-center justify-between">
+    <div>
+        <h1 class="text-2xl font-black text-surface-900">User Profile</h1>
+        <p class="text-surface-500 font-medium">Detailed view of user activity and subscription.</p>
+    </div>
+    <a href="{% url 'custom_admin:users' %}" class="px-4 py-2 bg-white rounded-xl shadow-sm border border-surface-200 text-sm font-bold text-surface-700 hover:bg-surface-50 flex items-center gap-2 transition-colors">
+        <i data-lucide="arrow-left" class="w-4 h-4"></i> Back to Users
+    </a>
 </div>
 
-<div class="profile-header">
-    <img src="https://ui-avatars.com/api/?name={{ target_user.username }}&background=f1f5f9&color=64748b&size=150" alt="">
-    <div class="profile-header-info flex-grow-1">
-        <h2>{{ target_user.first_name }} {{ target_user.last_name }}</h2>
-        <p>@{{ target_user.username }} • {{ target_user.email }}</p>
-        <div class="mt-3">
-            {% if target_user.is_active %}
-                <span class="badge badge-soft-success">Active Account</span>
-            {% else %}
-                <span class="badge badge-soft-danger">Inactive Account</span>
-            {% endif %}
-            <span class="badge badge-soft-secondary">Joined {{ target_user.date_joined|date:"M d, Y" }}</span>
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Left Column: User Info & Subscription -->
+    <div class="space-y-6 lg:col-span-1">
+        
+        <!-- User Card -->
+        <div class="bg-white rounded-3xl p-6 shadow-sm border border-surface-100">
+            <div class="flex flex-col items-center text-center">
+                <img src="https://ui-avatars.com/api/?name={{ user_obj.username }}&background=64748b&color=fff&size=128" class="w-24 h-24 rounded-2xl shadow-sm mb-4" alt="Avatar">
+                <h3 class="text-xl font-black text-surface-900 mb-1">{{ user_obj.username }} {% if user_obj.is_superuser %}<i data-lucide="shield-check" class="w-5 h-5 text-brand-500 inline ml-1" title="Superuser"></i>{% endif %}</h3>
+                <p class="text-sm font-medium text-surface-500 mb-4">{{ user_obj.email }}</p>
+                
+                <div class="flex gap-2 w-full justify-center">
+                    {% if user_obj.is_active %}
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest bg-emerald-50 text-emerald-600 border border-emerald-100">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500"></span> Active
+                    </span>
+                    {% else %}
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-black uppercase tracking-widest bg-red-50 text-red-600 border border-red-100">
+                        <span class="w-2 h-2 rounded-full bg-red-500"></span> Suspended
+                    </span>
+                    {% endif %}
+                </div>
+            </div>
+            
+            <div class="mt-6 pt-6 border-t border-surface-100 space-y-4">
+                <div class="flex justify-between items-center">
+                    <span class="text-xs font-bold text-surface-400 uppercase tracking-widest">Joined</span>
+                    <span class="text-sm font-semibold text-surface-900">{{ user_obj.date_joined|date:"M d, Y" }}</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-xs font-bold text-surface-400 uppercase tracking-widest">Last Login</span>
+                    <span class="text-sm font-semibold text-surface-900">{{ user_obj.last_login|date:"M d, Y"|default:"Never" }}</span>
+                </div>
+            </div>
         </div>
-    </div>
-</div>
 
-<div class="row g-4 mb-4">
-    <div class="col-md-6">
-        <div class="card-table h-100">
-            <div class="card-table-header">
-                <h4>Subscription Details</h4>
-            </div>
-            <div class="p-4">
-                {% if subscription %}
-                    <h5 class="fw-bold text-primary">{{ subscription.plan.name }} Plan</h5>
-                    <p class="text-muted mb-4">{{ subscription.billing_cycle|title }} Billing</p>
-                    
-                    <div class="d-flex justify-content-between mb-2">
-                        <span>Status</span>
-                        <span class="badge badge-soft-success">{{ subscription.status }}</span>
-                    </div>
-                    <div class="d-flex justify-content-between mb-2">
-                        <span>Start Date</span>
-                        <span class="fw-medium">{{ subscription.start_date|date:"M d, Y" }}</span>
-                    </div>
-                    <div class="d-flex justify-content-between mb-2">
-                        <span>Expiry Date</span>
-                        <span class="fw-medium">{{ subscription.end_date|date:"M d, Y" }}</span>
-                    </div>
-                {% else %}
-                    <h5 class="fw-bold text-secondary">FREE Plan</h5>
-                    <p class="text-muted">No active premium subscription.</p>
-                {% endif %}
-            </div>
-        </div>
-    </div>
-    
-    <div class="col-md-6">
-        <div class="card-table h-100">
-            <div class="card-table-header">
-                <h4>Usage Statistics</h4>
-            </div>
-            <div class="p-4">
+        <!-- Subscription Card -->
+        <div class="bg-white rounded-3xl p-6 shadow-sm border border-surface-100 relative overflow-hidden">
+            {% if subscription %}
+                <div class="absolute top-0 right-0 bg-brand-500 text-white text-[10px] font-black uppercase tracking-widest px-3 py-1 rounded-bl-xl">
+                    Active
+                </div>
+                <h4 class="text-sm font-black text-surface-900 uppercase tracking-widest mb-6">Current Plan</h4>
+                
                 <div class="mb-4">
-                    <div class="d-flex justify-content-between mb-1">
-                        <span>Dynamic QR Codes</span>
-                        <span class="fw-bold">{{ qrs.count }} / {% if subscription %}{{ subscription.plan.max_dynamic_qrs }}{% else %}5{% endif %}</span>
+                    <h3 class="text-3xl font-black text-surface-900">{{ subscription.plan.name }}</h3>
+                    <p class="text-sm font-bold text-brand-600">{{ subscription.billing_cycle|title }} Billing</p>
+                </div>
+                
+                <div class="space-y-4 mt-6">
+                    <div class="flex justify-between items-center border-b border-surface-50 pb-3">
+                        <span class="text-xs font-bold text-surface-400 uppercase tracking-widest">Price</span>
+                        <span class="text-sm font-bold text-surface-900">{{ subscription.currency }} {{ subscription.price_at_purchase }}</span>
                     </div>
-                    <div class="progress" style="height: 8px;">
-                        <div class="progress-bar bg-purple" role="progressbar" style="width: {% if subscription %}{{ qrs.count|floatformat:2 }}{% else %}0{% endif %}%; background-color:#4f46e5;"></div>
+                    <div class="flex justify-between items-center border-b border-surface-50 pb-3">
+                        <span class="text-xs font-bold text-surface-400 uppercase tracking-widest">Started</span>
+                        <span class="text-sm font-bold text-surface-900">{{ subscription.start_date|date:"M d, Y" }}</span>
+                    </div>
+                    <div class="flex justify-between items-center">
+                        <span class="text-xs font-bold text-surface-400 uppercase tracking-widest">Renews</span>
+                        <span class="text-sm font-bold text-surface-900">{{ subscription.renewal_date|date:"M d, Y"|default:"N/A" }}</span>
                     </div>
                 </div>
                 
-                <div>
-                    <div class="d-flex justify-content-between mb-1">
-                        <span>Short URLs</span>
-                        <span class="fw-bold">{{ shorts.count }} / {% if subscription %}{{ subscription.plan.max_short_urls }}{% else %}10{% endif %}</span>
-                    </div>
-                    <div class="progress" style="height: 8px;">
-                        <div class="progress-bar bg-blue" role="progressbar" style="width: {% if subscription %}{{ shorts.count|floatformat:2 }}{% else %}0{% endif %}%; background-color:#2563eb;"></div>
-                    </div>
+                <div class="mt-6 pt-4">
+                    <button class="w-full py-2.5 bg-surface-100 hover:bg-surface-200 text-surface-700 rounded-xl text-sm font-black transition-colors uppercase tracking-wider">
+                        Manage Plan
+                    </button>
                 </div>
-            </div>
+            {% else %}
+                <div class="text-center py-8">
+                    <div class="w-16 h-16 rounded-full bg-surface-50 mx-auto mb-4 flex items-center justify-center">
+                        <i data-lucide="tag" class="w-8 h-8 text-surface-300"></i>
+                    </div>
+                    <h4 class="text-base font-black text-surface-900 mb-1">No Active Plan</h4>
+                    <p class="text-sm text-surface-500 font-medium">This user is on the default tier.</p>
+                </div>
+            {% endif %}
         </div>
     </div>
-</div>
 
-<div class="card-table mb-4">
-    <div class="card-table-header">
-        <h4>Payment History</h4>
-    </div>
-    <div class="table-responsive">
-        <table class="table mb-0">
-            <thead>
-                <tr>
-                    <th>TXN ID</th>
-                    <th>Date</th>
-                    <th>Amount</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for p in payments %}
-                <tr>
-                    <td class="font-monospace text-muted">{{ p.transaction_id }}</td>
-                    <td>{{ p.created_at|date:"M d, Y" }}</td>
-                    <td class="fw-bold">₹{{ p.amount }}</td>
-                    <td>
-                        {% if p.payment_status == 'Paid' %}
-                            <span class="badge badge-soft-success">Paid</span>
-                        {% else %}
-                            <span class="badge badge-soft-danger">{{ p.payment_status }}</span>
+    <!-- Right Column: Data Tables -->
+    <div class="lg:col-span-2 space-y-6">
+        
+        <!-- Short URLs Table -->
+        <div class="bg-white rounded-3xl shadow-sm border border-surface-100 overflow-hidden">
+            <div class="p-6 border-b border-surface-100 flex justify-between items-center bg-surface-50/50">
+                <h3 class="text-sm font-black uppercase tracking-widest text-surface-900 flex items-center gap-2">
+                    <i data-lucide="link" class="w-4 h-4 text-brand-600"></i> Short URLs ({{ shorts.count }})
+                </h3>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full text-left">
+                    <thead>
+                        <tr class="bg-surface-50 border-b border-surface-100">
+                            <th class="px-6 py-3 text-[10px] font-black text-surface-400 uppercase tracking-widest">Short Link</th>
+                            <th class="px-6 py-3 text-[10px] font-black text-surface-400 uppercase tracking-widest">Destination</th>
+                            <th class="px-6 py-3 text-[10px] font-black text-surface-400 uppercase tracking-widest text-right">Clicks</th>
+                            <th class="px-6 py-3 text-[10px] font-black text-surface-400 uppercase tracking-widest text-right">Created</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-surface-100 max-h-64 overflow-y-auto">
+                        {% for link in shorts|slice:":5" %}
+                        <tr class="hover:bg-surface-50/50 transition-colors">
+                            <td class="px-6 py-3">
+                                <a href="http://{{ request.get_host }}/{{ link.custom_alias|default:link.short_code }}" target="_blank" class="text-sm font-bold text-brand-600 hover:underline">
+                                    /{{ link.custom_alias|default:link.short_code }}
+                                </a>
+                            </td>
+                            <td class="px-6 py-3">
+                                <p class="text-xs font-medium text-surface-500 truncate max-w-[200px]" title="{{ link.url }}">{{ link.url }}</p>
+                            </td>
+                            <td class="px-6 py-3 text-right">
+                                <span class="text-sm font-black text-surface-900">{{ link.scan_count }}</span>
+                            </td>
+                            <td class="px-6 py-3 text-right">
+                                <span class="text-xs font-medium text-surface-500">{{ link.created_at|date:"M d, Y" }}</span>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="4" class="px-6 py-8 text-center text-surface-400 text-sm font-medium">No Short URLs created yet.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            {% if shorts.count > 5 %}
+            <div class="p-4 bg-surface-50 border-t border-surface-100 text-center">
+                <a href="{% url 'custom_admin:shorturls' %}?user={{ user_obj.id }}" class="text-xs font-black text-brand-600 uppercase tracking-widest hover:text-brand-700">View all {{ shorts.count }} Links</a>
+            </div>
+            {% endif %}
+        </div>
+        
+        <!-- Activity Log -->
+        <div class="bg-white rounded-3xl shadow-sm border border-surface-100 overflow-hidden">
+            <div class="p-6 border-b border-surface-100 flex justify-between items-center bg-surface-50/50">
+                <h3 class="text-sm font-black uppercase tracking-widest text-surface-900 flex items-center gap-2">
+                    <i data-lucide="activity" class="w-4 h-4 text-blue-600"></i> Recent Activity
+                </h3>
+            </div>
+            
+            <div class="p-6">
+                {% if activity %}
+                <div class="space-y-6">
+                    {% for log in activity|slice:":5" %}
+                    <div class="flex gap-4 relative">
+                        {% if not forloop.last %}
+                        <div class="absolute top-8 bottom-[-24px] left-3 w-px bg-surface-200"></div>
                         {% endif %}
-                    </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="4" class="text-center text-muted py-4">No payment history found.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                        <div class="w-6 h-6 rounded-full bg-surface-100 border-2 border-white flex items-center justify-center shrink-0 z-10 relative mt-1">
+                            <span class="w-2 h-2 rounded-full bg-brand-500"></span>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-surface-900">{{ log.action }}</p>
+                            <p class="text-xs font-medium text-surface-400 mt-1">{{ log.created_at|timesince }} ago</p>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+                {% else %}
+                <div class="text-center py-8">
+                    <p class="text-sm font-medium text-surface-400">No activity logged.</p>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+
     </div>
 </div>
-
-<div class="row g-4">
-    <div class="col-md-6">
-        <div class="card-table h-100">
-            <div class="card-table-header">
-                <h4>Recent QR Codes</h4>
-            </div>
-            <ul class="list-group list-group-flush">
-                {% for qr in qrs|slice:":5" %}
-                <li class="list-group-item d-flex justify-content-between align-items-center py-3">
-                    <div>
-                        <div class="fw-bold">{{ qr.qr_name }}</div>
-                        <div class="small text-muted">{{ qr.destination_url|truncatechars:30 }}</div>
-                    </div>
-                    <span class="small text-muted">{{ qr.created_at|date:"M d" }}</span>
-                </li>
-                {% empty %}
-                <li class="list-group-item text-center text-muted py-4">No QR codes created.</li>
-                {% endfor %}
-            </ul>
-        </div>
-    </div>
-    
-    <div class="col-md-6">
-        <div class="card-table h-100">
-            <div class="card-table-header">
-                <h4>Activity Timeline</h4>
-            </div>
-            <ul class="list-group list-group-flush">
-                {% for log in activity|slice:":5" %}
-                <li class="list-group-item py-3">
-                    <div class="d-flex justify-content-between">
-                        <span class="fw-medium">{{ log.action }}</span>
-                        <span class="small text-muted">{{ log.created_at|date:"M d, H:i" }}</span>
-                    </div>
-                    <div class="small text-muted mt-1">Status: {{ log.status }}</div>
-                </li>
-                {% empty %}
-                <li class="list-group-item text-center text-muted py-4">No recent activity.</li>
-                {% endfor %}
-            </ul>
-        </div>
-    </div>
-</div>
-
 {% endblock %}

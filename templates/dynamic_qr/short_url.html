@@ -53,9 +53,15 @@
             <p class="text-slate-500 font-bold mt-1 text-sm">Managing your trackable Link deployments</p>
         </div>
         
-        <button onclick="openCreateModal()" class="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-2xl font-black transition-all hover:bg-indigo-700 shadow-lg shadow-indigo-100">
-            <i data-lucide="plus" class="w-5 h-5"></i> Create New Link
-        </button>
+        <div class="flex items-center gap-4">
+            <div class="bg-slate-50 px-4 py-2 rounded-xl border border-slate-100 flex flex-col items-end">
+                <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Usage</span>
+                <span class="text-sm font-bold text-slate-700">{{ usage_current }} / {{ usage_limit }}</span>
+            </div>
+            <button onclick="openCreateModal()" class="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-2xl font-black transition-all hover:bg-indigo-700 shadow-lg shadow-indigo-100">
+                <i data-lucide="plus" class="w-5 h-5"></i> Create New Link
+            </button>
+        </div>
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-12" id="url-grid">
@@ -121,7 +127,7 @@
                         <a href="{% url 'dynamic_qr:short_url_analytics' item.id %}" class="h-8 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg flex items-center justify-center border border-slate-100" title="View">
                             <i data-lucide="eye" class="w-3.5 h-3.5"></i>
                         </a>
-                        <button onclick="openEditModal('{{ item.id }}', '{{ item.qr_name|escapejs }}', '{{ item.destination_url|escapejs }}')" class="h-8 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg flex items-center justify-center border border-slate-100" title="Edit">
+                        <button onclick="openEditModal('{{ item.id }}', '{{ item.qr_name|escapejs }}', '{{ item.destination_url|escapejs }}', '{{ item.custom_alias|default_if_none:''|escapejs }}', '{{ item.require_gps }}')" class="h-8 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg flex items-center justify-center border border-slate-100" title="Edit">
                             <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
                         </button>
                         <a href="{{ item.destination_url }}" target="_blank" rel="noopener" class="h-8 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg flex items-center justify-center border border-slate-100" title="Open Target">
@@ -177,6 +183,41 @@
                     <input type="url" name="destination_url" id="form-dest-url" class="form-input-custom" placeholder="https://..." required>
                 </div>
 
+                {% if has_custom_alias %}
+                <div>
+                    <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest block px-1">Custom Alias (Optional)</label>
+                    <input type="text" name="custom_alias" id="form-custom-alias" class="form-input-custom" placeholder="e.g. my-promo">
+                </div>
+                {% endif %}
+                
+                <div class="grid grid-cols-2 gap-4">
+                    {% if has_password %}
+                    <div>
+                        <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest block px-1">Password (Optional)</label>
+                        <input type="password" name="password" id="form-password" class="form-input-custom" placeholder="Leave blank for public">
+                    </div>
+                    {% endif %}
+                    {% if has_expiry %}
+                    <div>
+                        <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest block px-1">Expiry Date (Optional)</label>
+                        <input type="datetime-local" name="expiry_date" id="form-expiry-date" class="form-input-custom">
+                    </div>
+                    {% endif %}
+                </div>
+
+                {% if has_gps %}
+                <div class="bg-slate-50 p-5 rounded-2xl flex items-center justify-between border border-slate-100">
+                    <div>
+                        <p class="font-black text-slate-900 text-sm">Require GPS Tracking</p>
+                        <p class="text-[10px] font-bold text-slate-400">Ask for precise location permission</p>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" name="require_gps" id="form-require-gps">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                {% endif %}
+
                 <div id="regenerate-option" style="display: none;" class="bg-slate-50 p-5 rounded-2xl flex items-center justify-between border border-slate-100">
                     <div>
                         <p class="font-black text-slate-900 text-sm">Regenerate Short Code?</p>
@@ -222,12 +263,16 @@
         modal.style.display = 'flex';
     }
 
-    function openEditModal(id, name, url) {
+    function openEditModal(id, name, url, alias, reqGps) {
         isEdit = true;
         document.getElementById('modal-title').innerText = 'Edit Link';
         document.getElementById('form-qr-id').value = id;
         document.getElementById('form-qr-name').value = name;
         document.getElementById('form-dest-url').value = url;
+        document.getElementById('form-custom-alias').value = alias || '';
+        document.getElementById('form-password').value = '';
+        document.getElementById('form-expiry-date').value = '';
+        document.getElementById('form-require-gps').checked = reqGps === 'True';
         document.getElementById('regenerate-option').style.display = 'flex';
         modal.style.display = 'flex';
     }
