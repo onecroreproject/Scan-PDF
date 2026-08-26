@@ -568,13 +568,28 @@ def dqr_create_view(request):
 
 
 @dqr_login_required
-@check_short_url_limit
 def dqr_short_url_view(request):
     """Specialized tool for Short URLs: List and Create."""
     if request.method == 'GET':
+        from services.limit_service import PlanLimitService
         short_urls = DynamicQRCode.objects.filter(user=request.user, qr_type='custom-url').order_by('-created_at')
+        
+        # Pass feature access flags to hide/show UI components
+        has_custom_alias = PlanLimitService.check_feature_access(request.user, 'custom_alias')
+        has_password = PlanLimitService.check_feature_access(request.user, 'password_protection')
+        has_expiry = PlanLimitService.check_feature_access(request.user, 'link_expiry')
+        has_gps = PlanLimitService.check_feature_access(request.user, 'gps_tracking')
+        
+        allowed, current_usage, limit, _ = PlanLimitService.check_usage_limit(request.user, 'short_urls')
+        
         return render(request, 'dynamic_qr/short_url.html', {
-            'short_urls': short_urls
+            'short_urls': short_urls,
+            'has_custom_alias': has_custom_alias,
+            'has_password': has_password,
+            'has_expiry': has_expiry,
+            'has_gps': has_gps,
+            'usage_current': current_usage,
+            'usage_limit': limit
         })
     
     try:
@@ -582,6 +597,14 @@ def dqr_short_url_view(request):
         qr_name = request.POST.get('qr_name', 'Short URL').strip()
         destination_url = request.POST.get('destination_url', '').strip()
         regenerate = request.POST.get('regenerate_code') == 'on'
+        
+        from services.limit_service import PlanLimitService
+        
+        # Check creation limits
+        if not qr_id:
+            allowed, usage, limit, msg = PlanLimitService.check_usage_limit(request.user, 'short_urls', increment=False)
+            if not allowed:
+                return JsonResponse({'error': msg or 'Short URL limit reached.'}, status=403)
         
         if not destination_url:
             return JsonResponse({'error': 'URL is required.'}, status=400)
@@ -591,26 +614,86 @@ def dqr_short_url_view(request):
         
         qr_data = {'destination_url': destination_url}
         
+        custom_alias = request.POST.get('custom_alias', '').strip()
+        domain = request.POST.get('domain', 'default').strip()
+        password = request.POST.get('password', '').strip()
+        expiry_date_str = request.POST.get('expiry_date', '').strip()
+        require_gps = request.POST.get('require_gps') == 'on'
+
+        # Validate unique alias
+        if custom_alias:
+            allowed = PlanLimitService.check_feature_access(request.user, 'custom_alias')
+            if not allowed:
+                return JsonResponse({'error': 'Custom Alias feature is not available in your plan.'}, status=403)
+                
+            if DynamicQRCode.objects.exclude(id=qr_id).filter(custom_alias=custom_alias).exists():
+                return JsonResponse({'error': 'Custom alias is already in use.'}, status=400)
+            if DynamicQRCode.objects.exclude(id=qr_id).filter(short_code=custom_alias).exists():
+                return JsonResponse({'error': 'Custom alias conflicts with an existing short code.'}, status=400)
+
+        # Parse expiry date
+        expiry_date = None
+        if expiry_date_str:
+            from dateutil.parser import parse
+            try:
+                expiry_date = parse(expiry_date_str)
+            except:
+                return JsonResponse({'error': 'Invalid expiry date format.'}, status=400)
+
+        # Hash password
+        hashed_password = None
+        if password:
+            allowed = PlanLimitService.check_feature_access(request.user, 'password_protection')
+            if not allowed:
+                return JsonResponse({'error': 'Password Protection is not available in your plan.'}, status=403)
+                
+            from django.contrib.auth.hashers import make_password
+            hashed_password = make_password(password)
+
+        if expiry_date:
+            allowed = PlanLimitService.check_feature_access(request.user, 'link_expiry')
+            if not allowed:
+                return JsonResponse({'error': 'Link Expiry is not available in your plan.'}, status=403)
+                
+        if require_gps:
+            allowed = PlanLimitService.check_feature_access(request.user, 'gps_tracking')
+            if not allowed:
+                return JsonResponse({'error': 'GPS Tracking is not available in your plan.'}, status=403)
+
         if qr_id:
             # Update existing
             qr = get_object_or_404(DynamicQRCode, id=qr_id, user=request.user)
             qr.qr_name = qr_name
             qr.destination_url = destination_url
             qr.qr_data = qr_data
+            qr.custom_alias = custom_alias or None
+            qr.domain = domain
+            if password: # only update if new password provided
+                qr.password = hashed_password
+            qr.expiry_date = expiry_date
+            qr.require_gps = require_gps
+
             if regenerate:
                 from .models import generate_short_code
                 qr.short_code = generate_short_code()
             qr.save()
         else:
             # Create new
-            qr = DynamicQRCode.objects.create(
+            qr = DynamicQRCode(
                 user=request.user,
                 qr_name=qr_name,
                 qr_type='custom-url',
                 destination_url=destination_url,
                 qr_data=qr_data,
-                design_options={}
+                design_options={},
+                custom_alias=custom_alias or None,
+                domain=domain,
+                password=hashed_password,
+                expiry_date=expiry_date,
+                require_gps=require_gps
             )
+            qr.save()
+            PlanLimitService.check_usage_limit(request.user, 'short_urls', increment=True)
         
         return JsonResponse({
             'success': True, 
@@ -959,10 +1042,25 @@ def dqr_redirect_view(request, short_code):
     When someone scans the dynamic QR code, they hit this URL.
     De-duplicates hits to prevent double-counting from pre-fetchers.
     """
-    qr = get_object_or_404(DynamicQRCode, short_code=short_code)
+    from django.db.models import Q
+    qr = get_object_or_404(DynamicQRCode, Q(short_code=short_code) | Q(custom_alias=short_code))
 
     if not qr.is_active:
         return render(request, 'dynamic_qr/qr_disabled.html', {'qr': qr})
+        
+    if qr.expiry_date and timezone.now() > qr.expiry_date:
+        return render(request, 'dynamic_qr/qr_disabled.html', {'qr': qr, 'expired': True})
+        
+    if qr.password and not request.session.get(f'qr_auth_{qr.id}'):
+        if request.method == 'POST':
+            from django.contrib.auth.hashers import check_password
+            pw = request.POST.get('password', '')
+            if check_password(pw, qr.password):
+                request.session[f'qr_auth_{qr.id}'] = True
+                return redirect(request.path)
+            else:
+                return render(request, 'dynamic_qr/qr_password.html', {'qr': qr, 'error': 'Incorrect password'})
+        return render(request, 'dynamic_qr/qr_password.html', {'qr': qr})
 
     # Logic for Logging (only once every 5 seconds per session)
     now_ts = timezone.now().timestamp()
@@ -1000,6 +1098,9 @@ def dqr_redirect_view(request, short_code):
         device = 'Desktop'
         if 'mobile' in ua or 'android' in ua or 'iphone' in ua: device = 'Mobile'
         elif 'tablet' in ua or 'ipad' in ua: device = 'Tablet'
+        
+        referrer = request.META.get('HTTP_REFERER', '')[:500]
+        is_bot = any(b in ua for b in ['bot', 'crawl', 'spider', 'slurp', 'mediapartners'])
 
         # Geolocation logic
         country, country_code, region, city = 'Unknown', 'XX', 'Unknown', 'Unknown'
@@ -1046,7 +1147,8 @@ def dqr_redirect_view(request, short_code):
                 qr_code=qr, ip_address=ip, user_agent=ua[:500], 
                 browser=browser, os=os, device_type=device,
                 country=country, country_code=country_code, region=region, city=city,
-                latitude=lat, longitude=lon
+                latitude=lat, longitude=lon,
+                referrer=referrer, is_bot=is_bot
             )
         except OperationalError:
             # Manual fallback for DB schema mismatch if migrations haven't run
@@ -1054,15 +1156,22 @@ def dqr_redirect_view(request, short_code):
                 with connection.cursor() as cursor:
                     cursor.execute('CREATE TABLE IF NOT EXISTS "dynamic_qr_qranalytics" ("id" integer NOT NULL PRIMARY KEY AUTOINCREMENT, "timestamp" datetime NOT NULL, "ip_address" char(39) NULL, "user_agent" text NULL, "browser" varchar(50) NULL, "os" varchar(50) NULL, "device_type" varchar(50) NULL, "country" varchar(100) NOT NULL DEFAULT "Unknown", "country_code" varchar(10) NOT NULL DEFAULT "XX", "region" varchar(100) NOT NULL DEFAULT "Unknown", "city" varchar(100) NOT NULL DEFAULT "Unknown", "latitude" float NULL, "longitude" float NULL, "qr_code_id" uuid NOT NULL REFERENCES "dynamic_qr_dynamicqrcode" ("id") DEFERRABLE INITIALLY DEFERRED);')
                     # Try to add missing columns if table exists but is old
-                    cols = ["country_code", "region", "latitude", "longitude"]
+                    cols = ["country_code", "region", "latitude", "longitude", "referrer", "is_bot"]
                     for col in cols:
-                        try: cursor.execute(f'ALTER TABLE "dynamic_qr_qranalytics" ADD COLUMN "{col}" {"float" if "tude" in col else "varchar(100)"};')
+                        try:
+                            if col == 'referrer':
+                                cursor.execute(f'ALTER TABLE "dynamic_qr_qranalytics" ADD COLUMN "{col}" varchar(500);')
+                            elif col == 'is_bot':
+                                cursor.execute(f'ALTER TABLE "dynamic_qr_qranalytics" ADD COLUMN "{col}" bool NOT NULL DEFAULT 0;')
+                            else:
+                                cursor.execute(f'ALTER TABLE "dynamic_qr_qranalytics" ADD COLUMN "{col}" {"float" if "tude" in col else "varchar(100)"};')
                         except: pass
                 QRAnalytics.objects.create(
                     qr_code=qr, ip_address=ip, user_agent=ua[:500], 
                     browser=browser, os=os, device_type=device,
                     country=country, country_code=country_code, region=region, city=city,
-                    latitude=lat, longitude=lon
+                    latitude=lat, longitude=lon,
+                    referrer=referrer, is_bot=is_bot
                 )
             except: pass
         except: pass

@@ -4,92 +4,162 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Custom Admin Dashboard{% endblock %}</title>
-    <!-- Bootstrap 5 CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Font Awesome -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Google Fonts (Inter) -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <!-- Custom CSS -->
-    <link rel="stylesheet" href="{% static 'admin_dashboard/css/dashboard.css' %}">
+    <title>{% block title %}ScanPDF Admin{% endblock %}</title>
+
+    <!-- Tailwind CSS via CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+                        display: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+                    },
+                    colors: {
+                        brand: {
+                            50: '#f5f3ff', 100: '#ede9fe', 200: '#ddd6fe', 300: '#c4b5fd',
+                            400: '#a78bfa', 500: '#8b5cf6', 600: '#7c3aed', 700: '#6d28d9',
+                            800: '#5b21b6', 900: '#4c1d95', 950: '#2e1065',
+                        },
+                        surface: {
+                            50: '#f8fafc', 100: '#f1f5f9', 200: '#e2e8f0', 300: '#cbd5e1',
+                            400: '#94a3b8', 500: '#64748b', 600: '#475569', 700: '#334155',
+                            800: '#1e293b', 900: '#0f172a',
+                        }
+                    },
+                    boxShadow: {
+                        'glass': '0 8px 32px 0 rgba(124, 58, 237, 0.06)',
+                        'card': '0 1px 3px rgba(0,0,0,0.04), 0 8px 24px rgba(0,0,0,0.04)',
+                        'card-hover': '0 4px 12px rgba(0,0,0,0.06), 0 20px 48px rgba(0,0,0,0.06)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@0.263.0/dist/umd/lucide.min.js"></script>
+
     {% block extra_css %}{% endblock %}
+    
+    <style>
+        body { font-family: 'Inter', sans-serif; background-color: #f8fafc; }
+        /* Scrollbar styling */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+    </style>
 </head>
-<body>
+<body class="flex h-screen overflow-hidden text-surface-900">
 
     <!-- Sidebar -->
-    <nav id="sidebar">
-        <div class="sidebar-header">
-            <i class="fa-solid fa-bolt text-warning me-2"></i> ScanPDF Admin
+    <aside class="w-64 bg-surface-900 text-white flex flex-col hidden md:flex h-full shadow-2xl z-20">
+        <div class="h-20 flex items-center px-6 border-b border-surface-800">
+            <a href="{% url 'custom_admin:dashboard' %}" class="flex items-center gap-3">
+                <div class="w-10 h-10 rounded-xl bg-brand-600 flex items-center justify-center shadow-glass">
+                    <i data-lucide="zap" class="w-6 h-6 text-white"></i>
+                </div>
+                <span class="text-xl font-black tracking-tight">ScanPDF <span class="text-brand-400">Admin</span></span>
+            </a>
         </div>
-
-        <ul class="list-unstyled components">
-            <li class="{% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
-                <a href="{% url 'custom_admin:dashboard' %}"><i class="fa-solid fa-chart-pie"></i> Dashboard</a>
-            </li>
-            <li class="{% if request.resolver_match.url_name == 'users' or request.resolver_match.url_name == 'user_detail' %}active{% endif %}">
-                <a href="{% url 'custom_admin:users' %}"><i class="fa-solid fa-users"></i> Users</a>
-            </li>
-            <li class="{% if request.resolver_match.url_name == 'subscriptions' %}active{% endif %}">
-                <a href="{% url 'custom_admin:subscriptions' %}"><i class="fa-solid fa-id-card"></i> Subscriptions</a>
-            </li>
-            <li class="{% if request.resolver_match.url_name == 'payments' %}active{% endif %}">
-                <a href="{% url 'custom_admin:payments' %}"><i class="fa-solid fa-credit-card"></i> Payments</a>
-            </li>
-            <li class="{% if request.resolver_match.url_name == 'plans' %}active{% endif %}">
-                <a href="{% url 'custom_admin:plans' %}"><i class="fa-solid fa-tags"></i> Plans</a>
-            </li>
-            <li class="{% if request.resolver_match.url_name == 'qrcodes' %}active{% endif %}">
-                <a href="{% url 'custom_admin:qrcodes' %}"><i class="fa-solid fa-qrcode"></i> QR Codes</a>
-            </li>
-            <li class="{% if request.resolver_match.url_name == 'shorturls' %}active{% endif %}">
-                <a href="{% url 'custom_admin:shorturls' %}"><i class="fa-solid fa-link"></i> Short URLs</a>
-            </li>
-            <li class="{% if request.resolver_match.url_name == 'reports' %}active{% endif %}">
-                <a href="{% url 'custom_admin:reports' %}"><i class="fa-solid fa-chart-line"></i> Reports</a>
-            </li>
-            <li class="{% if request.resolver_match.url_name == 'activity' %}active{% endif %}">
-                <a href="{% url 'custom_admin:activity' %}"><i class="fa-solid fa-history"></i> Activity Logs</a>
-            </li>
-            <li class="{% if request.resolver_match.url_name == 'settings' %}active{% endif %}">
-                <a href="{% url 'custom_admin:settings' %}"><i class="fa-solid fa-cog"></i> Settings</a>
-            </li>
-        </ul>
-    </nav>
+        
+        <div class="flex-1 overflow-y-auto py-6 px-4 space-y-1">
+            <div class="text-[10px] font-black text-surface-500 uppercase tracking-widest px-3 mb-2 mt-4">System</div>
+            
+            <a href="{% url 'custom_admin:dashboard' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold transition-all {% if request.resolver_match.url_name == 'dashboard' %}bg-brand-600 text-white shadow-glass{% else %}text-surface-400 hover:text-white hover:bg-surface-800{% endif %}">
+                <i data-lucide="layout-dashboard" class="w-5 h-5"></i> Dashboard
+            </a>
+            
+            <div class="text-[10px] font-black text-surface-500 uppercase tracking-widest px-3 mb-2 mt-6">Management</div>
+            
+            <a href="{% url 'custom_admin:users' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold transition-all {% if request.resolver_match.url_name == 'users' or request.resolver_match.url_name == 'user_detail' %}bg-brand-600 text-white shadow-glass{% else %}text-surface-400 hover:text-white hover:bg-surface-800{% endif %}">
+                <i data-lucide="users" class="w-5 h-5"></i> Users
+            </a>
+            
+            <a href="{% url 'custom_admin:subscriptions' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold transition-all {% if request.resolver_match.url_name == 'subscriptions' %}bg-brand-600 text-white shadow-glass{% else %}text-surface-400 hover:text-white hover:bg-surface-800{% endif %}">
+                <i data-lucide="credit-card" class="w-5 h-5"></i> Subscriptions
+            </a>
+            
+            <a href="{% url 'custom_admin:plans' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold transition-all {% if 'plan' in request.resolver_match.url_name %}bg-brand-600 text-white shadow-glass{% else %}text-surface-400 hover:text-white hover:bg-surface-800{% endif %}">
+                <i data-lucide="tags" class="w-5 h-5"></i> Plans & Pricing
+            </a>
+            
+            <a href="{% url 'custom_admin:features' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold transition-all {% if request.resolver_match.url_name == 'features' %}bg-brand-600 text-white shadow-glass{% else %}text-surface-400 hover:text-white hover:bg-surface-800{% endif %}">
+                <i data-lucide="toggle-right" class="w-5 h-5"></i> Features
+            </a>
+            
+            <a href="{% url 'custom_admin:shorturls' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold transition-all {% if request.resolver_match.url_name == 'shorturls' %}bg-brand-600 text-white shadow-glass{% else %}text-surface-400 hover:text-white hover:bg-surface-800{% endif %}">
+                <i data-lucide="link" class="w-5 h-5"></i> Short URLs
+            </a>
+            
+            <a href="{% url 'custom_admin:payments' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold transition-all {% if request.resolver_match.url_name == 'payments' %}bg-brand-600 text-white shadow-glass{% else %}text-surface-400 hover:text-white hover:bg-surface-800{% endif %}">
+                <i data-lucide="receipt" class="w-5 h-5"></i> Payments
+            </a>
+            
+            <div class="text-[10px] font-black text-surface-500 uppercase tracking-widest px-3 mb-2 mt-6">Insights</div>
+            
+            <a href="{% url 'custom_admin:reports' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold transition-all {% if request.resolver_match.url_name == 'reports' %}bg-brand-600 text-white shadow-glass{% else %}text-surface-400 hover:text-white hover:bg-surface-800{% endif %}">
+                <i data-lucide="bar-chart-2" class="w-5 h-5"></i> Analytics
+            </a>
+            
+            <a href="{% url 'custom_admin:activity' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold transition-all {% if request.resolver_match.url_name == 'activity' %}bg-brand-600 text-white shadow-glass{% else %}text-surface-400 hover:text-white hover:bg-surface-800{% endif %}">
+                <i data-lucide="activity" class="w-5 h-5"></i> Audit Logs
+            </a>
+            
+            <a href="{% url 'custom_admin:settings' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold transition-all {% if request.resolver_match.url_name == 'settings' %}bg-brand-600 text-white shadow-glass{% else %}text-surface-400 hover:text-white hover:bg-surface-800{% endif %}">
+                <i data-lucide="settings" class="w-5 h-5"></i> Settings
+            </a>
+        </div>
+    </aside>
 
     <!-- Main Content -->
-    <div id="content">
+    <div class="flex-1 flex flex-col h-full bg-surface-50">
         <!-- Top Navbar -->
-        <div class="top-navbar">
-            <div class="search-box">
-                <i class="fa-solid fa-search"></i>
-                <input type="text" placeholder="Search users, transactions...">
+        <header class="h-20 bg-white border-b border-surface-200 flex items-center justify-between px-8 shadow-sm z-10">
+            <div class="flex items-center gap-4">
+                <div class="relative hidden sm:block">
+                    <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-surface-400"></i>
+                    <input type="text" placeholder="Search..." class="pl-10 pr-4 py-2 bg-surface-100 border-none rounded-xl text-sm font-semibold focus:ring-2 focus:ring-brand-500 w-64 outline-none">
+                </div>
             </div>
             
-            <div class="nav-user">
-                <span id="current-datetime" class="text-muted small fw-medium"></span>
-                <i class="fa-solid fa-bell"></i>
-                <div class="nav-profile">
-                    <img src="https://ui-avatars.com/api/?name={{ request.user.username }}&background=4f46e5&color=fff" alt="Admin">
-                    <span>{{ request.user.username }}</span>
+            <div class="flex items-center gap-6">
+                <button class="text-surface-400 hover:text-surface-600 relative">
+                    <i data-lucide="bell" class="w-5 h-5"></i>
+                    <span class="absolute top-0 right-0 w-2 h-2 bg-red-500 rounded-full border-2 border-white"></span>
+                </button>
+                
+                <div class="flex items-center gap-3 border-l border-surface-200 pl-6">
+                    <div class="text-right hidden sm:block">
+                        <p class="text-sm font-black text-surface-900">{{ request.user.username }}</p>
+                        <p class="text-[10px] font-bold text-surface-400 uppercase tracking-widest">Super User</p>
+                    </div>
+                    <img src="https://ui-avatars.com/api/?name={{ request.user.username }}&background=7c3aed&color=fff&bold=true" alt="Admin" class="w-10 h-10 rounded-xl shadow-sm">
+                    <a href="{% url 'custom_admin:logout' %}" class="ml-2 p-2 text-surface-400 hover:text-red-500 transition-colors bg-surface-100 rounded-lg hover:bg-red-50" title="Logout">
+                        <i data-lucide="log-out" class="w-4 h-4"></i>
+                    </a>
                 </div>
-                <!-- Custom logout view to handle GET and redirect to home -->
-                <a href="{% url 'custom_admin:logout' %}" class="btn btn-sm btn-outline-danger ms-3"><i class="fa-solid fa-sign-out-alt"></i> Logout</a>
             </div>
-        </div>
+        </header>
 
         <!-- Page Content -->
-        <div class="page-content">
+        <main class="flex-1 overflow-y-auto p-8">
+            {% block admin_content %}
             {% block content %}{% endblock %}
-        </div>
+            {% endblock %}
+        </main>
     </div>
 
-    <!-- Bootstrap 5 JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Custom JS -->
-    <script src="{% static 'admin_dashboard/js/dashboard.js' %}"></script>
+    <script>
+        lucide.createIcons();
+    </script>
     {% block extra_js %}{% endblock %}
 </body>
 </html>

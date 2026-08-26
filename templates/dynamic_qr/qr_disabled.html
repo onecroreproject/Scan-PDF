@@ -25,8 +25,13 @@
         <div class="icon-box">
             <i data-lucide="shield-alert" style="width: 60px; height: 60px;"></i>
         </div>
+        {% if expired %}
+        <h1>Link Expired</h1>
+        <p>This short link has reached its expiration date and is no longer accessible.</p>
+        {% else %}
         <h1>Resource Paused</h1>
         <p>This QR code or short link has been temporarily paused by its owner and is not currently reachable.</p>
+        {% endif %}
         
         <div style="margin-bottom: 40px; font-size: 13px; font-weight: 700; color: var(--slate-500); background: #f1f5f9; padding: 12px 20px; border-radius: 12px; display: inline-block;">
             Redirecting to homepage in <span id="countdown">5</span> seconds...

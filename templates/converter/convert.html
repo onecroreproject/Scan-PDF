@@ -10,7 +10,7 @@
    ========================================================= */
 
 .tool-heading {
-    font-size: 3.5rem;
+    font-size: clamp(1.75rem, 5vw + 0.75rem, 3.5rem);
     line-height: 0.95;
     font-weight: 900;
     letter-spacing: -0.04em;
@@ -243,7 +243,7 @@
 @media (max-width: 768px) {
 
     .tool-heading {
-        font-size: 3rem;
+        font-size: clamp(1.75rem, 7vw, 3rem);
     }
 
 }
@@ -251,7 +251,7 @@
 @media (max-width: 480px) {
 
     .tool-heading {
-        font-size: 2.6rem;
+        font-size: clamp(1.625rem, 8vw, 2.6rem);
     }
 
 }

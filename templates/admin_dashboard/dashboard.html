@@ -1,150 +1,133 @@
 {% extends 'admin_dashboard/base.html' %}
 
-{% block title %}Dashboard | SaaS Admin{% endblock %}
+{% block title %}Dashboard | ScanPDF Admin{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h3 class="fw-bold m-0">Overview</h3>
-</div>
-
-<div class="row g-4 mb-4">
-    <div class="col-md-3">
-        <div class="metric-card">
-            <div class="metric-icon bg-purple-light">
-                <i class="fa-solid fa-users"></i>
-            </div>
-            <div class="metric-info">
-                <h5>Total Users</h5>
-                <h2>{{ total_users }}</h2>
-            </div>
-        </div>
+<div class="mb-8 flex items-center justify-between">
+    <div>
+        <h1 class="text-2xl font-black text-surface-900">Platform Overview</h1>
+        <p class="text-surface-500 font-medium">Real-time metrics and system health.</p>
     </div>
-    <div class="col-md-3">
-        <div class="metric-card">
-            <div class="metric-icon bg-green-light">
-                <i class="fa-solid fa-user-check"></i>
-            </div>
-            <div class="metric-info">
-                <h5>Active Users</h5>
-                <h2>{{ active_users }}</h2>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="metric-card">
-            <div class="metric-icon bg-red-light">
-                <i class="fa-solid fa-user-xmark"></i>
-            </div>
-            <div class="metric-info">
-                <h5>Inactive Users</h5>
-                <h2>{{ inactive_users }}</h2>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="metric-card">
-            <div class="metric-icon bg-yellow-light">
-                <i class="fa-solid fa-user-plus"></i>
-            </div>
-            <div class="metric-info">
-                <h5>Today's Users</h5>
-                <h2>{{ today_users }}</h2>
-            </div>
-        </div>
+    <div class="px-4 py-2 bg-white rounded-xl shadow-sm border border-surface-200 text-sm font-bold text-surface-600 flex items-center gap-2">
+        <i data-lucide="calendar" class="w-4 h-4"></i> Today
     </div>
 </div>
 
-<div class="row g-4 mb-4">
-    <div class="col-md-3">
-        <div class="metric-card">
-            <div class="metric-icon bg-blue-light">
-                <i class="fa-solid fa-credit-card"></i>
+<!-- Key Metrics Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+    
+    <!-- Total Users -->
+    <div class="bg-white rounded-3xl p-6 shadow-sm border border-surface-100 flex items-center gap-6">
+        <div class="w-14 h-14 rounded-2xl bg-brand-50 flex items-center justify-center shrink-0">
+            <i data-lucide="users" class="w-7 h-7 text-brand-600"></i>
+        </div>
+        <div>
+            <p class="text-xs font-black text-surface-400 uppercase tracking-widest mb-1">Total Users</p>
+            <h3 class="text-3xl font-black text-surface-900">{{ total_users }}</h3>
+        </div>
+    </div>
+
+    <!-- Active Users -->
+    <div class="bg-white rounded-3xl p-6 shadow-sm border border-surface-100 flex items-center gap-6">
+        <div class="w-14 h-14 rounded-2xl bg-emerald-50 flex items-center justify-center shrink-0">
+            <i data-lucide="user-check" class="w-7 h-7 text-emerald-600"></i>
+        </div>
+        <div>
+            <p class="text-xs font-black text-surface-400 uppercase tracking-widest mb-1">Active Users</p>
+            <h3 class="text-3xl font-black text-surface-900">{{ active_users }}</h3>
+        </div>
+    </div>
+
+    <!-- Subscriptions -->
+    <div class="bg-white rounded-3xl p-6 shadow-sm border border-surface-100 flex items-center gap-6">
+        <div class="w-14 h-14 rounded-2xl bg-amber-50 flex items-center justify-center shrink-0">
+            <i data-lucide="credit-card" class="w-7 h-7 text-amber-600"></i>
+        </div>
+        <div>
+            <p class="text-xs font-black text-surface-400 uppercase tracking-widest mb-1">Subscriptions</p>
+            <h3 class="text-3xl font-black text-surface-900">{{ total_subscriptions }}</h3>
+        </div>
+    </div>
+
+    <!-- Monthly Revenue -->
+    <div class="bg-white rounded-3xl p-6 shadow-sm border border-surface-100 flex items-center gap-6">
+        <div class="w-14 h-14 rounded-2xl bg-blue-50 flex items-center justify-center shrink-0">
+            <i data-lucide="indian-rupee" class="w-7 h-7 text-blue-600"></i>
+        </div>
+        <div>
+            <p class="text-xs font-black text-surface-400 uppercase tracking-widest mb-1">Revenue (30d)</p>
+            <h3 class="text-3xl font-black text-surface-900">₹{{ monthly_revenue|default:"0" }}</h3>
+        </div>
+    </div>
+
+</div>
+
+<!-- Secondary Metrics -->
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
+    
+    <!-- Link Creation Stats -->
+    <div class="bg-white rounded-3xl p-6 shadow-sm border border-surface-100">
+        <h4 class="text-sm font-black text-surface-900 uppercase tracking-widest mb-6">Asset Generation</h4>
+        
+        <div class="space-y-4">
+            <div class="flex items-center justify-between p-4 bg-surface-50 rounded-2xl">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center text-brand-600">
+                        <i data-lucide="link" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm font-bold text-surface-900">Short URLs</p>
+                        <p class="text-xs font-medium text-surface-500">Custom redirects</p>
+                    </div>
+                </div>
+                <span class="text-xl font-black text-surface-900">{{ short_urls_created }}</span>
             </div>
-            <div class="metric-info">
-                <h5>Total Payments</h5>
-                <h2>{{ total_payments }}</h2>
+            
+            <div class="flex items-center justify-between p-4 bg-surface-50 rounded-2xl">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-white shadow-sm flex items-center justify-center text-brand-600">
+                        <i data-lucide="qr-code" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <p class="text-sm font-bold text-surface-900">Dynamic QR Codes</p>
+                        <p class="text-xs font-medium text-surface-500">Trackable codes</p>
+                    </div>
+                </div>
+                <span class="text-xl font-black text-surface-900">{{ dynamic_qrs_created }}</span>
             </div>
         </div>
     </div>
-    <div class="col-md-3">
-        <div class="metric-card">
-            <div class="metric-icon bg-green-light">
-                <i class="fa-solid fa-indian-rupee-sign"></i>
+    
+    <!-- Financial Insights -->
+    <div class="bg-white rounded-3xl p-6 shadow-sm border border-surface-100">
+        <h4 class="text-sm font-black text-surface-900 uppercase tracking-widest mb-6">Subscription Health</h4>
+        
+        <div class="grid grid-cols-2 gap-4">
+            <div class="p-4 bg-surface-50 rounded-2xl border border-surface-100">
+                <p class="text-xs font-bold text-surface-500 uppercase tracking-wider mb-2">Pending Renewals (7d)</p>
+                <div class="flex items-end gap-2">
+                    <span class="text-2xl font-black text-surface-900">{{ pending_renewals }}</span>
+                    <span class="text-sm font-medium text-amber-500 mb-1">accounts</span>
+                </div>
             </div>
-            <div class="metric-info">
-                <h5>Monthly Revenue</h5>
-                <h2>₹{{ monthly_revenue }}</h2>
+            
+            <div class="p-4 bg-surface-50 rounded-2xl border border-surface-100">
+                <p class="text-xs font-bold text-surface-500 uppercase tracking-wider mb-2">Expired Plans</p>
+                <div class="flex items-end gap-2">
+                    <span class="text-2xl font-black text-surface-900">{{ expired_plans }}</span>
+                    <span class="text-sm font-medium text-red-500 mb-1">accounts</span>
+                </div>
             </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="metric-card">
-            <div class="metric-icon bg-purple-light">
-                <i class="fa-solid fa-indian-rupee-sign"></i>
-            </div>
-            <div class="metric-info">
-                <h5>Yearly Revenue</h5>
-                <h2>₹{{ yearly_revenue }}</h2>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="metric-card">
-            <div class="metric-icon bg-yellow-light">
-                <i class="fa-solid fa-id-card"></i>
-            </div>
-            <div class="metric-info">
-                <h5>Total Subscriptions</h5>
-                <h2>{{ total_subscriptions }}</h2>
+            
+            <div class="col-span-2 p-4 bg-brand-50 rounded-2xl border border-brand-100 flex items-center justify-between">
+                <div>
+                    <p class="text-xs font-black text-brand-600 uppercase tracking-wider mb-1">Yearly Revenue</p>
+                    <span class="text-2xl font-black text-brand-900">₹{{ yearly_revenue|default:"0" }}</span>
+                </div>
+                <i data-lucide="trending-up" class="w-8 h-8 text-brand-400 opacity-50"></i>
             </div>
         </div>
     </div>
 </div>
 
-<div class="row g-4 mb-4">
-    <div class="col-md-3">
-        <div class="metric-card">
-            <div class="metric-icon bg-red-light">
-                <i class="fa-solid fa-calendar-xmark"></i>
-            </div>
-            <div class="metric-info">
-                <h5>Expired Plans</h5>
-                <h2>{{ expired_plans }}</h2>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="metric-card">
-            <div class="metric-icon bg-yellow-light">
-                <i class="fa-solid fa-hourglass-half"></i>
-            </div>
-            <div class="metric-info">
-                <h5>Pending Renewals</h5>
-                <h2>{{ pending_renewals }}</h2>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="metric-card">
-            <div class="metric-icon bg-purple-light">
-                <i class="fa-solid fa-qrcode"></i>
-            </div>
-            <div class="metric-info">
-                <h5>Dynamic QR Created</h5>
-                <h2>{{ dynamic_qrs_created }}</h2>
-            </div>
-        </div>
-    </div>
-    <div class="col-md-3">
-        <div class="metric-card">
-            <div class="metric-icon bg-blue-light">
-                <i class="fa-solid fa-link"></i>
-            </div>
-            <div class="metric-info">
-                <h5>Short URLs Created</h5>
-                <h2>{{ short_urls_created }}</h2>
-            </div>
-        </div>
-    </div>
-</div>
 {% endblock %}

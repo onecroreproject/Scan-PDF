@@ -1,44 +1,87 @@
 {% extends 'admin_dashboard/base.html' %}
 
-{% block title %}Payments | SaaS Admin{% endblock %}
+{% block title %}Payments | ScanPDF Admin{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h3 class="fw-bold m-0">Payment Transactions</h3>
+<div class="mb-8 flex items-center justify-between">
+    <div>
+        <h1 class="text-2xl font-black text-surface-900">Payments</h1>
+        <p class="text-surface-500 font-medium">Track all transactions and revenue.</p>
+    </div>
+    <div class="flex items-center gap-3">
+        <button class="px-4 py-2 bg-brand-600 rounded-xl shadow-sm text-sm font-bold text-white hover:bg-brand-700 flex items-center gap-2 transition-colors">
+            <i data-lucide="download" class="w-4 h-4"></i> Export Ledger
+        </button>
+    </div>
 </div>
 
-<div class="card-table">
-    <div class="card-table-header">
-        <h4>All Payments</h4>
+<div class="bg-white border border-surface-100 rounded-3xl shadow-sm overflow-hidden">
+    <div class="p-6 border-b border-surface-100 flex justify-between items-center bg-surface-50/50">
+        <h3 class="text-sm font-black uppercase tracking-widest text-surface-900">Transaction History</h3>
+        <div class="relative">
+            <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-surface-400"></i>
+            <input type="text" placeholder="Search transaction ID..." class="pl-10 pr-4 py-2 bg-white border border-surface-200 rounded-xl text-sm font-semibold focus:ring-2 focus:ring-brand-500 outline-none w-64 shadow-sm">
+        </div>
     </div>
-    <div class="table-responsive">
-        <table class="table table-hover mb-0">
+    
+    <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
             <thead>
-                <tr>
-                    <th>TXN ID</th>
-                    <th>User</th>
-                    <th>Plan</th>
-                    <th>Amount</th>
-                    <th>Date</th>
-                    <th>Gateway</th>
-                    <th>Status</th>
+                <tr class="bg-surface-50 border-b border-surface-100">
+                    <th class="px-6 py-4 text-xs font-black text-surface-500 uppercase tracking-widest">Transaction ID</th>
+                    <th class="px-6 py-4 text-xs font-black text-surface-500 uppercase tracking-widest">User</th>
+                    <th class="px-6 py-4 text-xs font-black text-surface-500 uppercase tracking-widest">Amount</th>
+                    <th class="px-6 py-4 text-xs font-black text-surface-500 uppercase tracking-widest">Method</th>
+                    <th class="px-6 py-4 text-xs font-black text-surface-500 uppercase tracking-widest">Status</th>
+                    <th class="px-6 py-4 text-xs font-black text-surface-500 uppercase tracking-widest">Date</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody class="divide-y divide-surface-100">
                 {% for p in payments %}
-                <tr>
-                    <td class="font-monospace text-muted">{{ p.transaction_id }}</td>
-                    <td class="fw-bold">{{ p.user.username }}</td>
-                    <td>{{ p.subscription.plan.name|default:"-" }}</td>
-                    <td class="fw-bold">₹{{ p.amount }}</td>
-                    <td>{{ p.created_at|date:"M d, Y H:i" }}</td>
-                    <td>{{ p.gateway }}</td>
-                    <td>
-                        {% if p.payment_status == 'Paid' %}
-                            <span class="badge badge-soft-success">Paid</span>
+                <tr class="hover:bg-surface-50/50 transition-colors group">
+                    <td class="px-6 py-4">
+                        <span class="text-sm font-bold text-brand-600 font-mono">{{ p.transaction_id|default:"-" }}</span>
+                    </td>
+                    <td class="px-6 py-4">
+                        <div class="flex items-center gap-3">
+                            <img src="https://ui-avatars.com/api/?name={{ p.user.username }}&background=f1f5f9&color=64748b" class="w-8 h-8 rounded-lg" alt="Avatar">
+                            <div>
+                                <a href="{% url 'custom_admin:user_detail' p.user.id %}" class="text-sm font-bold text-surface-900 hover:text-brand-600 hover:underline">{{ p.user.username }}</a>
+                                <p class="text-[10px] font-medium text-surface-500">{{ p.user.email }}</p>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="text-sm font-black text-surface-900">₹{{ p.amount }}</span>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-widest bg-surface-100 text-surface-600 border border-surface-200">
+                            {{ p.payment_method|default:"Stripe" }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4">
+                        {% if p.payment_status == 'Paid' or p.payment_status == 'Success' or p.payment_status == 'succeeded' %}
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-widest bg-emerald-50 text-emerald-600 border border-emerald-100">
+                            Success
+                        </span>
+                        {% elif p.payment_status == 'Failed' %}
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-widest bg-red-50 text-red-600 border border-red-100">
+                            Failed
+                        </span>
                         {% else %}
-                            <span class="badge badge-soft-danger">{{ p.payment_status }}</span>
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-widest bg-amber-50 text-amber-600 border border-amber-100">
+                            {{ p.payment_status }}
+                        </span>
                         {% endif %}
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="text-sm font-medium text-surface-500">{{ p.created_at|date:"M d, Y, h:i A" }}</span>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="px-6 py-12 text-center text-surface-500 font-medium">
+                        No transactions found.
                     </td>
                 </tr>
                 {% endfor %}

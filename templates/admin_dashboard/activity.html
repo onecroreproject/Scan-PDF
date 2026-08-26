@@ -1,47 +1,82 @@
 {% extends 'admin_dashboard/base.html' %}
 
-{% block title %}Activity Logs | SaaS Admin{% endblock %}
+{% block title %}Audit Logs | ScanPDF Admin{% endblock %}
 
 {% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h3 class="fw-bold m-0">System Activity Logs</h3>
+<div class="mb-8 flex items-center justify-between">
+    <div>
+        <h1 class="text-2xl font-black text-surface-900">Audit Logs</h1>
+        <p class="text-surface-500 font-medium">System-wide activity and security audit trail.</p>
+    </div>
+    <div class="flex items-center gap-3">
+        <button class="px-4 py-2 bg-white rounded-xl shadow-sm border border-surface-200 text-sm font-bold text-surface-700 hover:bg-surface-50 flex items-center gap-2 transition-colors">
+            <i data-lucide="filter" class="w-4 h-4"></i> Filter
+        </button>
+    </div>
 </div>
 
-<div class="card-table">
-    <div class="card-table-header">
-        <h4>Recent Activity</h4>
+<div class="bg-white border border-surface-100 rounded-3xl shadow-sm overflow-hidden">
+    <div class="p-6 border-b border-surface-100 flex justify-between items-center bg-surface-50/50">
+        <h3 class="text-sm font-black uppercase tracking-widest text-surface-900">Recent Activity</h3>
+        <div class="relative">
+            <i data-lucide="search" class="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-surface-400"></i>
+            <input type="text" placeholder="Search logs..." class="pl-10 pr-4 py-2 bg-white border border-surface-200 rounded-xl text-sm font-semibold focus:ring-2 focus:ring-brand-500 outline-none w-64 shadow-sm">
+        </div>
     </div>
-    <div class="table-responsive">
-        <table class="table table-hover mb-0">
+    
+    <div class="overflow-x-auto">
+        <table class="w-full text-left border-collapse">
             <thead>
-                <tr>
-                    <th>Date & Time</th>
-                    <th>User</th>
-                    <th>Action</th>
-                    <th>IP Address</th>
-                    <th>Status</th>
+                <tr class="bg-surface-50 border-b border-surface-100">
+                    <th class="px-6 py-4 text-xs font-black text-surface-500 uppercase tracking-widest">Timestamp</th>
+                    <th class="px-6 py-4 text-xs font-black text-surface-500 uppercase tracking-widest">User/Admin</th>
+                    <th class="px-6 py-4 text-xs font-black text-surface-500 uppercase tracking-widest">Action</th>
+                    <th class="px-6 py-4 text-xs font-black text-surface-500 uppercase tracking-widest">Target</th>
+                    <th class="px-6 py-4 text-xs font-black text-surface-500 uppercase tracking-widest">Details</th>
                 </tr>
             </thead>
-            <tbody>
+            <tbody class="divide-y divide-surface-100">
                 {% for log in logs %}
-                <tr>
-                    <td>{{ log.created_at|date:"Y-m-d H:i:s" }}</td>
-                    <td class="fw-bold">{{ log.user.username|default:"System" }}</td>
-                    <td>{{ log.action }}</td>
-                    <td class="font-monospace text-muted">{{ log.ip_address|default:"-" }}</td>
-                    <td>
-                        {% if log.status == 'Success' %}
-                            <span class="badge badge-soft-success">Success</span>
-                        {% elif log.status == 'Failed' or log.status == 'Expired' or log.status == 'Cancelled' %}
-                            <span class="badge badge-soft-danger">{{ log.status }}</span>
+                <tr class="hover:bg-surface-50/50 transition-colors group">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="text-sm font-bold text-surface-900">{{ log.created_at|date:"M d, Y" }}</span>
+                        <p class="text-[10px] font-medium text-surface-500">{{ log.created_at|time:"h:i:s A" }}</p>
+                    </td>
+                    <td class="px-6 py-4">
+                        {% if log.user %}
+                        <a href="{% url 'custom_admin:user_detail' log.user.id %}" class="flex items-center gap-2">
+                            <img src="https://ui-avatars.com/api/?name={{ log.user.username }}&background=f1f5f9&color=64748b" class="w-6 h-6 rounded-md" alt="Avatar">
+                            <span class="text-sm font-bold {% if log.user.is_superuser %}text-brand-600{% else %}text-surface-900{% endif %} hover:underline">
+                                {{ log.user.username }} {% if log.user.is_superuser %}(Admin){% endif %}
+                            </span>
+                        </a>
                         {% else %}
-                            <span class="badge badge-soft-secondary">{{ log.status }}</span>
+                        <span class="text-sm font-medium text-surface-500 italic">System</span>
                         {% endif %}
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[10px] font-black uppercase tracking-widest bg-blue-50 text-blue-600 border border-blue-100">
+                            {{ log.action }}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4">
+                        <span class="text-sm font-medium text-surface-600">{{ log.target|default:"-" }}</span>
+                    </td>
+                    <td class="px-6 py-4 max-w-xs">
+                        <p class="text-xs font-mono text-surface-500 truncate" title="From: {{ log.old_value }} → To: {{ log.new_value }}">
+                            {% if log.old_value or log.new_value %}
+                                {{ log.old_value|default:"None" }} → {{ log.new_value|default:"None" }}
+                            {% else %}
+                                -
+                            {% endif %}
+                        </p>
                     </td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="5" class="text-center text-muted py-4">No activity logs found.</td>
+                    <td colspan="5" class="px-6 py-12 text-center text-surface-500 font-medium">
+                        No audit logs available.
+                    </td>
                 </tr>
                 {% endfor %}
             </tbody>
