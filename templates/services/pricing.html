@@ -2,7 +2,6 @@
 {% load static %}
 
 {% block content %}
-<!-- Link to extracted CSS file -->
 <link rel="stylesheet" href="{% static 'css/pricing.css' %}">
 
 <div class="min-h-screen bg-surface-50 py-20 px-4 sm:px-6 lg:px-8">
@@ -19,84 +18,113 @@
             <!-- Billing Toggle -->
             <div class="flex items-center justify-center gap-4 mt-8">
                 <span id="billing-monthly-label" class="text-sm font-bold text-brand-600 transition-colors">Monthly Billing</span>
-                <button id="billing-toggle" type="button" class="relative inline-flex h-7 w-14 shrink-0 cursor-pointer rounded-full border-2 border-transparent bg-brand-600 transition-colors duration-200 ease-in-out focus:outline-none" role="switch" aria-checked="false">
-                    <span id="toggle-circle" aria-hidden="true" class="pointer-events-none inline-block h-6 w-6 translate-x-0 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out"></span>
+                <button id="billing-toggle" type="button"
+                    class="relative inline-flex h-7 w-14 shrink-0 cursor-pointer rounded-full border-2 border-transparent bg-brand-600 transition-colors duration-200 ease-in-out focus:outline-none"
+                    role="switch" aria-checked="false">
+                    <span id="toggle-circle" aria-hidden="true"
+                        class="pointer-events-none inline-block h-6 w-6 translate-x-0 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out">
+                    </span>
                 </button>
                 <span id="billing-yearly-label" class="text-sm font-bold text-surface-400 transition-colors">
-                    Yearly Billing <span class="ml-1.5 inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-bold text-emerald-700 uppercase tracking-wider">Save 20%</span>
+                    Yearly Billing
+                    <span class="ml-1.5 inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-bold text-emerald-700 uppercase tracking-wider">Save 20%</span>
                 </span>
             </div>
         </div>
 
         <!-- Pricing Cards Grid -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch max-w-6xl mx-auto">
-            
+
             {% for plan in plans %}
-            <div class="flex flex-col bg-white rounded-3xl {% if plan.is_popular %}border-2 border-brand-500 shadow-elevated{% else %}border border-surface-100 shadow-card hover:shadow-card-hover hover:border-brand-200{% endif %} transition-all p-8 relative overflow-hidden group">
+            <div class="flex flex-col bg-white rounded-3xl
+                {% if plan.is_popular %}border-2 border-brand-500 shadow-elevated{% else %}border border-surface-100 shadow-card hover:shadow-card-hover hover:border-brand-200{% endif %}
+                transition-all p-8 relative overflow-hidden group">
+
                 {% if plan.is_popular %}
                 <div class="absolute top-0 right-0 bg-brand-500 text-white text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded-bl-2xl">
                     Popular
                 </div>
                 {% endif %}
+
                 <div class="space-y-4 flex-1">
-                    <div class="flex justify-between items-start">
-                        <div>
-                            <h3 class="text-xl font-black text-surface-900 uppercase tracking-wider">{{ plan.name }}</h3>
-                            <p class="text-xs text-surface-500 font-bold mt-1">{{ plan.description|default:"For your tracking needs" }}</p>
-                        </div>
+                    <!-- Plan name & description -->
+                    <div>
+                        <h3 class="text-xl font-black text-surface-900 uppercase tracking-wider">{{ plan.name }}</h3>
+                        <p class="text-xs text-surface-500 font-bold mt-1">{{ plan.description|default:"For your tracking needs" }}</p>
                     </div>
+
+                    <!-- Price display -->
                     <div class="py-4">
-                        {% if plan.code == 'business_plus' %}
+                        {% if plan.pricing_type == 'contact' %}
                         <span class="text-3xl font-black text-surface-900 uppercase tracking-wider">Contact Us</span>
                         {% else %}
-                        <span id="price-{{ plan.code }}" class="text-5xl font-black text-surface-900 price-animate" data-monthly="{{ plan.monthly_price }}" data-yearly="{{ plan.yearly_price }}">₹{{ plan.monthly_price }}</span>
+                        <span id="price-{{ plan.code }}"
+                            class="text-5xl font-black text-surface-900 price-animate"
+                            data-monthly="{{ plan.monthly_price }}"
+                            data-yearly="{{ plan.yearly_price }}">
+                            ₹{{ plan.monthly_price }}
+                        </span>
                         <span id="period-{{ plan.code }}" class="text-surface-500 text-sm font-bold price-animate">/month</span>
                         {% endif %}
                     </div>
-                    <div class="pt-4 border-t border-surface-50">
-                        <h4 class="text-sm font-black text-surface-900 uppercase tracking-widest mb-4">SHORT URL</h4>
-                        <ul class="space-y-3 max-h-96 overflow-y-auto pr-2 [&::-webkit-scrollbar]:w-1.5 [&::-webkit-scrollbar-thumb]:bg-surface-200 [&::-webkit-scrollbar-thumb]:rounded-full">
-                            {% for pf in plan.features.all %}
-                                {% if pf.feature.is_public %}
-                                    <li class="flex items-start gap-3 text-sm text-surface-600 font-medium">
-                                        {% if pf.feature.type == 'BOOLEAN' and not pf.value_boolean %}
-                                            <i data-lucide="x" class="w-5 h-5 text-surface-300 shrink-0"></i>
-                                            <span class="text-surface-400 line-through">{{ pf.feature.name }}</span>
-                                        {% else %}
-                                            <i data-lucide="check" class="w-5 h-5 text-emerald-500 shrink-0"></i>
-                                            <span>
-                                                {% if plan.code == 'business_plus' %}
-                                                    {% if pf.feature.type == 'BOOLEAN' %}
-                                                        {{ pf.feature.name }}
-                                                    {% else %}
-                                                        Unlimited {{ pf.feature.name }}
-                                                    {% endif %}
-                                                {% else %}
-                                                    {% if pf.feature.type == 'BOOLEAN' %}
-                                                        {{ pf.feature.name }}
-                                                    {% else %}
-                                                        {{ pf.get_display_value }} {{ pf.feature.name }}
-                                                    {% endif %}
-                                                {% endif %}
-                                            </span>
-                                        {% endif %}
+
+                    <!-- ── Dynamic Sections & Features ── -->
+                    <div class="pt-4 border-t border-surface-50 space-y-5">
+                        {% with sections=plan.sections.all %}
+                        {% if sections %}
+                            {% for section in sections %}
+                            {% if section.is_enabled %}
+                            <div>
+                                <!-- Section header -->
+                                <h4 class="text-[10px] font-black text-surface-400 uppercase tracking-widest mb-3">{{ section.name }}</h4>
+
+                                <ul class="space-y-2.5 max-h-72 overflow-y-auto pr-1
+                                    [&::-webkit-scrollbar]:w-1.5
+                                    [&::-webkit-scrollbar-thumb]:bg-surface-200
+                                    [&::-webkit-scrollbar-thumb]:rounded-full">
+
+                                    {% for feat in section.features.all %}
+                                    {% if feat.is_enabled %}
+                                    <li class="flex items-start gap-3 text-sm text-surface-600 font-medium"
+                                        data-monthly-display="{{ feat.get_monthly_display|escapejs }}"
+                                        data-yearly-display="{{ feat.get_yearly_display|escapejs }}">
+                                        <i data-lucide="check" class="w-5 h-5 text-emerald-500 shrink-0 mt-0.5"></i>
+                                        <span class="feat-label">{{ feat.get_monthly_display }}</span>
                                     </li>
-                                {% endif %}
+                                    {% endif %}
+                                    {% endfor %}
+
+                                </ul>
+                            </div>
+                            {% endif %}
                             {% endfor %}
-                        </ul>
+                        {% else %}
+                            <p class="text-xs text-surface-400 italic">No features configured yet.</p>
+                        {% endif %}
+                        {% endwith %}
                     </div>
                 </div>
+
+                <!-- CTA Button -->
                 <div class="mt-8">
                     {% if is_logged_in and current_subscription.plan.id == plan.id %}
                     <button class="w-full py-4 px-6 rounded-2xl bg-surface-100 text-surface-400 text-sm font-black transition-all cursor-not-allowed uppercase tracking-wider" disabled>
                         Current Plan
                     </button>
-                    {% elif plan.code == 'business_plus' %}
-                    <a href="mailto:contact@scanpdf.com" class="block w-full py-4 px-6 rounded-2xl bg-surface-900 hover:bg-surface-800 text-white text-center text-sm font-black transition-all uppercase tracking-wider">
+                    {% elif plan.pricing_type == 'contact' %}
+                    <a href="mailto:contact@scanpdf.com"
+                        class="block w-full py-4 px-6 rounded-2xl bg-surface-900 hover:bg-surface-800 text-white text-center text-sm font-black transition-all uppercase tracking-wider">
                         Contact Us
                     </a>
                     {% else %}
-                    <a href="{% if is_logged_in %}{% url 'services:payment_confirm' plan.code 'monthly' %}{% else %}{% url 'dynamic_qr:login' %}?next={% url 'services:pricing' %}{% endif %}" data-plan="{{ plan.code }}" class="plan-btn block w-full py-4 px-6 rounded-2xl {% if plan.is_popular %}bg-brand-600 hover:bg-brand-700 text-white{% else %}bg-surface-900 hover:bg-surface-800 text-white{% endif %} text-center text-sm font-black transition-all uppercase tracking-wider">
+                    <a href="{% if is_logged_in %}{% url 'services:payment_confirm' plan.code 'monthly' %}{% else %}{% url 'dynamic_qr:login' %}?next={% url 'services:pricing' %}{% endif %}"
+                        id="plan-btn-{{ plan.code }}"
+                        data-plan="{{ plan.code }}"
+                        data-monthly-url="{% if is_logged_in %}{% url 'services:payment_confirm' plan.code 'monthly' %}{% else %}{% url 'dynamic_qr:login' %}?next={% url 'services:pricing' %}{% endif %}"
+                        data-yearly-url="{% if is_logged_in %}{% url 'services:payment_confirm' plan.code 'yearly' %}{% else %}{% url 'dynamic_qr:login' %}?next={% url 'services:pricing' %}{% endif %}"
+                        class="plan-btn block w-full py-4 px-6 rounded-2xl
+                            {% if plan.is_popular %}bg-brand-600 hover:bg-brand-700 text-white{% else %}bg-surface-900 hover:bg-surface-800 text-white{% endif %}
+                            text-center text-sm font-black transition-all uppercase tracking-wider">
                         {% if plan.code == 'pro' %}Pay Now{% else %}Get Started{% endif %}
                     </a>
                     {% endif %}
@@ -108,29 +136,57 @@
     </div>
 </div>
 
-<!-- Premium Subscription Future Upgrade Modal -->
-<div id="upgrade-modal" class="fixed inset-0 bg-surface-900/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4 opacity-0 pointer-events-none transition-all duration-300">
-    <div class="bg-white rounded-3xl p-8 max-w-md w-full border border-surface-100 shadow-mega transform scale-95 transition-all duration-300 space-y-6">
-        <div class="text-center space-y-4">
-            <div class="w-16 h-16 rounded-full bg-brand-50 flex items-center justify-center mx-auto text-brand-600">
-                <i data-lucide="shield-check" class="w-8 h-8"></i>
-            </div>
-            <h3 class="text-2xl font-black text-surface-900">Future Upgrade Architecture Ready</h3>
-            <p class="text-sm text-surface-500 font-semibold leading-relaxed">
-                You are currently logged in. The database architecture for the <span id="modal-plan-name" class="text-brand-600 font-extrabold"></span> plan is prepared. Subscription billing and payment integration will be activated in the next phase.
-            </p>
-        </div>
-        <div class="flex gap-4">
-            <button onclick="closeUpgradeModal()" class="flex-1 py-3 px-4 rounded-xl border border-surface-200 hover:bg-surface-50 text-surface-700 text-sm font-black transition-all uppercase tracking-wider">
-                Cancel
-            </button>
-            <button onclick="closeUpgradeModal()" class="flex-1 py-3 px-4 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-sm font-black transition-all uppercase tracking-wider">
-                Confirm Plan
-            </button>
-        </div>
-    </div>
-</div>
-
-<!-- Link to extracted JS file -->
 <script src="{% static 'js/pricing.js' %}"></script>
+
+<script>
+// ── Monthly/Yearly Toggle Logic ──
+(function () {
+    let isYearly = false;
+    const toggle = document.getElementById('billing-toggle');
+    const circle = document.getElementById('toggle-circle');
+    const monthLabel = document.getElementById('billing-monthly-label');
+    const yearLabel  = document.getElementById('billing-yearly-label');
+
+    function applyBillingMode() {
+        // 1. Update price displays
+        document.querySelectorAll('[id^="price-"]').forEach(el => {
+            const monthly = el.dataset.monthly;
+            const yearly  = el.dataset.yearly;
+            el.textContent = '₹' + (isYearly ? yearly : monthly);
+        });
+        document.querySelectorAll('[id^="period-"]').forEach(el => {
+            el.textContent = isYearly ? '/year' : '/month';
+        });
+
+        // 2. Update feature labels
+        document.querySelectorAll('[data-monthly-display]').forEach(li => {
+            const display = isYearly ? li.dataset.yearlyDisplay : li.dataset.monthlyDisplay;
+            li.querySelector('.feat-label').textContent = display;
+        });
+
+        // 3. Update plan button URLs
+        document.querySelectorAll('.plan-btn[data-monthly-url]').forEach(btn => {
+            btn.href = isYearly ? btn.dataset.yearlyUrl : btn.dataset.monthlyUrl;
+        });
+
+        // 4. Toggle appearance
+        toggle.setAttribute('aria-checked', String(isYearly));
+        circle.style.transform = isYearly ? 'translateX(28px)' : 'translateX(0)';
+        toggle.style.backgroundColor = isYearly ? '#059669' : '#7c3aed';
+        monthLabel.classList.toggle('text-brand-600', !isYearly);
+        monthLabel.classList.toggle('text-surface-400', isYearly);
+        yearLabel.classList.toggle('text-brand-600', isYearly);
+        yearLabel.classList.toggle('text-surface-400', !isYearly);
+    }
+
+    toggle.addEventListener('click', () => {
+        isYearly = !isYearly;
+        applyBillingMode();
+    });
+
+    // Init
+    applyBillingMode();
+})();
+</script>
+
 {% endblock %}

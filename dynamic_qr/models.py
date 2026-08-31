@@ -99,6 +99,9 @@ class DynamicQRCode(models.Model):
 
     # Status & Advanced Short URL Features
     is_active = models.BooleanField(default=True)
+    header_enabled = models.BooleanField(default=False, help_text="Show a custom header banner on the redirect page")
+    header_data = models.JSONField(default=dict, blank=True, help_text="Custom header configuration (text, color, etc.)")
+    qr_enabled = models.BooleanField(default=False, help_text="Generate a QR code linking to this short URL")
     custom_alias = models.CharField(max_length=50, blank=True, null=True, unique=True, db_index=True, help_text="Custom URL alias")
     domain = models.CharField(max_length=100, default='default', help_text="Domain used for the short URL")
     password = models.CharField(max_length=128, blank=True, null=True, help_text="Hashed password for protected links")
@@ -193,6 +196,9 @@ class QRAnalytics(models.Model):
     longitude = models.FloatField(null=True, blank=True)
     referrer = models.CharField(max_length=500, null=True, blank=True, help_text="HTTP Referrer")
     is_bot = models.BooleanField(default=False, help_text="Whether this scan/click was made by a bot")
+    is_qr_scan = models.BooleanField(default=False, help_text="True if originated from a QR code scan")
+    source = models.CharField(max_length=50, default='Direct', help_text="Traffic source (QR, Direct, Referral, etc.)")
+    visitor_id = models.CharField(max_length=64, blank=True, null=True, help_text="Hashed IP+UA for unique visitor tracking")
 
     class Meta:
         ordering = ['-timestamp']

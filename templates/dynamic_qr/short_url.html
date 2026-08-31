@@ -56,97 +56,150 @@
         <div class="flex items-center gap-4">
             <div class="bg-slate-50 px-4 py-2 rounded-xl border border-slate-100 flex flex-col items-end">
                 <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Usage</span>
-                <span class="text-sm font-bold text-slate-700">{{ usage_current }} / {{ usage_limit }}</span>
+                <span class="text-sm font-bold {% if not can_create_more %}text-red-500{% else %}text-slate-700{% endif %}">{{ usage_current }} / {{ usage_limit }}</span>
             </div>
+            {% if can_create_more %}
             <button onclick="openCreateModal()" class="inline-flex items-center gap-2 px-6 py-3 bg-indigo-600 text-white rounded-2xl font-black transition-all hover:bg-indigo-700 shadow-lg shadow-indigo-100">
                 <i data-lucide="plus" class="w-5 h-5"></i> Create New Link
             </button>
+            {% else %}
+            <a href="{% url 'services:pricing' %}" class="inline-flex items-center gap-2 px-6 py-3 bg-amber-500 text-white rounded-2xl font-black transition-all hover:bg-amber-600 shadow-lg shadow-amber-100">
+                <i data-lucide="arrow-up-circle" class="w-5 h-5"></i> Upgrade Plan
+            </a>
+            {% endif %}
         </div>
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-12" id="url-grid">
-        {% for item in short_urls %}
-        <div class="qr-card bg-white border border-slate-100 p-5 flex flex-col relative" id="qr-card-{{ item.id }}">
-            <!-- Status Flag -->
-            <div class="absolute top-5 right-5">
-                {% if item.is_active %}
-                    <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-[10px] font-black uppercase tracking-wider">
-                        <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse"></span>
-                        Active
-                    </span>
-                {% else %}
-                    <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-100 text-slate-400 rounded-full text-[10px] font-black uppercase tracking-wider">
-                        Paused
-                    </span>
-                {% endif %}
-            </div>
+    <!-- Toolbar: Search, Filters, Date Range -->
+    <div class="bg-white border border-slate-100 rounded-2xl p-4 mb-6 flex flex-col md:flex-row items-center gap-4">
+        <form method="GET" class="flex-1 flex flex-col md:flex-row gap-4 w-full" id="filter-form">
+            <!-- Filters Dropdown (Mock/Basic for now) -->
+            <select name="status" onchange="document.getElementById('filter-form').submit()" class="bg-slate-50 border border-slate-100 text-slate-700 text-sm rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-100 outline-none">
+                <option value="">All Status</option>
+                <option value="active" {% if current_filters.status == 'active' %}selected{% endif %}>Active</option>
+                <option value="inactive" {% if current_filters.status == 'inactive' %}selected{% endif %}>Inactive</option>
+            </select>
 
-            <div class="p-0">
-                <div class="flex items-start justify-between mb-4">
-                    <div class="flex items-center gap-3">
-                        <div class="w-12 h-12 bg-indigo-50 rounded-xl p-2 border border-indigo-100 flex items-center justify-center">
-                            <i data-lucide="link" class="w-6 h-6 text-indigo-600"></i>
+            <!-- Date Range -->
+            <select name="date_range" onchange="document.getElementById('filter-form').submit()" class="bg-slate-50 border border-slate-100 text-slate-700 text-sm rounded-xl px-4 py-2.5 focus:ring-2 focus:ring-indigo-100 outline-none">
+                <option value="all" {% if current_filters.date_range == 'all' %}selected{% endif %}>All Time</option>
+                <option value="today" {% if current_filters.date_range == 'today' %}selected{% endif %}>Today</option>
+                <option value="7days" {% if current_filters.date_range == '7days' %}selected{% endif %}>Last 7 Days</option>
+                <option value="30days" {% if current_filters.date_range == '30days' %}selected{% endif %}>Last 30 Days</option>
+            </select>
+
+            <!-- Search -->
+            <div class="relative flex-1">
+                <i data-lucide="search" class="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2"></i>
+                <input type="text" name="q" value="{{ search_query }}" placeholder="Search links, alias, or target URL..." class="bg-slate-50 border border-slate-100 text-slate-700 text-sm rounded-xl pl-10 pr-4 py-2.5 w-full focus:ring-2 focus:ring-indigo-100 outline-none">
+            </div>
+            
+            <button type="submit" class="hidden">Search</button>
+        </form>
+    </div>
+
+    <!-- All Links List -->
+    <div class="flex flex-col gap-4 mb-12" id="url-list">
+        {% for item in short_urls %}
+        <div class="bg-white border border-slate-100 rounded-2xl p-5 flex flex-col relative transition-shadow hover:shadow-lg hover:shadow-slate-100/50" id="qr-card-{{ item.id }}">
+            <div class="flex flex-col md:flex-row gap-6">
+                <!-- Left: Link Details -->
+                <div class="flex-1">
+                    <div class="flex items-center gap-3 mb-3">
+                        <div class="w-10 h-10 bg-indigo-50 rounded-xl flex items-center justify-center shrink-0">
+                            <i data-lucide="link" class="w-5 h-5 text-indigo-600"></i>
                         </div>
                         <div>
-                            <h3 class="text-[13px] font-black text-slate-900 truncate max-w-[120px]" title="{{ item.qr_name }}">{{ item.qr_name }}</h3>
-                            <div class="flex items-center gap-2 mt-0.5">
-                                <span class="text-[9px] font-bold text-slate-400 uppercase tracking-widest">Short URL</span>
-                                <span class="w-1 h-1 rounded-full bg-slate-200"></span>
-                                <span class="text-[9px] font-mono font-bold text-indigo-500">{{ item.short_code }}</span>
+                            <h3 class="text-base font-black text-slate-900 truncate max-w-sm" title="{{ item.qr_name }}" id="title-{{ item.id }}">{{ item.qr_name|default:"Untitled Link" }}</h3>
+                            <div class="flex items-center gap-2 mt-0.5 text-xs font-medium text-slate-500">
+                                <span><i data-lucide="calendar" class="w-3 h-3 inline mr-1 -mt-0.5"></i>{{ item.created_at|date:"Y-m-d H:i" }}</span>
+                                {% if item.expiry_date %}
+                                <span class="w-1 h-1 rounded-full bg-slate-300"></span>
+                                <span><i data-lucide="clock" class="w-3 h-3 inline mr-1 -mt-0.5 text-amber-500"></i>Expiry: {{ item.expiry_date|date:"Y-m-d" }}</span>
+                                {% endif %}
+                                <span id="status-badge-{{ item.id }}">
+                                {% if item.is_active %}
+                                <span class="w-1 h-1 rounded-full bg-slate-300"></span>
+                                <span class="text-emerald-600 font-bold">Active</span>
+                                {% else %}
+                                <span class="w-1 h-1 rounded-full bg-slate-300"></span>
+                                <span class="text-slate-400 font-bold">Inactive</span>
+                                {% endif %}
+                                </span>
                             </div>
                         </div>
                     </div>
+
+                    <div class="pl-13 space-y-2 ml-13">
+                        <!-- Short URL -->
+                        <div class="flex items-center gap-2 group/link">
+                            <a href="{{ request.scheme }}://{{ request.get_host }}/qr/r/{{ item.short_code }}" target="_blank" class="text-sm font-bold text-indigo-600 hover:underline truncate max-w-md" id="url-{{ item.id }}">
+                                {{ request.scheme }}://{{ request.get_host }}/qr/r/{{ item.short_code }}
+                            </a>
+                            <button onclick="copyUrlText('url-{{ item.id }}')" class="text-slate-400 hover:text-indigo-600 opacity-0 group-hover/link:opacity-100 transition-opacity">
+                                <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </div>
+                        
+                        <!-- Destination -->
+                        <div class="flex items-center gap-2">
+                            <i data-lucide="corner-down-right" class="w-3.5 h-3.5 text-slate-300"></i>
+                            <a href="{{ item.destination_url }}" target="_blank" class="text-xs font-medium text-slate-500 hover:text-slate-700 truncate max-w-md" title="{{ item.destination_url }}" id="dest-url-{{ item.id }}">
+                                {{ item.destination_url }}
+                            </a>
+                        </div>
+                    </div>
                 </div>
 
-                <!-- Link Display -->
-                <div class="mb-4 bg-slate-50 p-2.5 rounded-xl border border-slate-50 relative group/link">
-                    <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Your Link</p>
-                    <p class="text-[10px] font-black text-slate-900 truncate pr-6" id="url-{{ item.id }}">
-                        {{ request.scheme }}://{{ request.get_host }}/qr/r/{{ item.short_code }}
-                    </p>
-                    <button onclick="copyUrlText('url-{{ item.id }}')" class="absolute top-1/2 -translate-y-1/2 right-2 text-indigo-600 hover:text-indigo-800 opacity-0 group-hover/link:opacity-100 transition-opacity">
-                        <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                <!-- Right: Stats & QR Preview (Desktop) -->
+                <div class="hidden md:flex items-center gap-6 pr-4">
+                    <div class="text-center">
+                        <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Clicks</p>
+                        <p class="text-xl font-black text-slate-900">{{ item.scan_count }}</p>
+                    </div>
+                    {% if item.qr_enabled %}
+                    <div class="w-16 h-16 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-center p-1">
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data={{ request.scheme }}://{{ request.get_host }}/qr/r/{{ item.short_code|urlencode }}" class="w-full h-full object-contain rounded-lg mix-blend-multiply opacity-80" alt="QR Preview">
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Footer Actions -->
+            <div class="mt-5 pt-4 border-t border-slate-50 flex items-center justify-between">
+                <div class="flex items-center gap-1.5 overflow-x-auto pb-1 md:pb-0">
+                    <button onclick="toggleStatus('{{ item.id }}')" id="toggle-btn-{{ item.id }}" class="h-8 px-3 {% if item.is_active %}bg-emerald-50 text-emerald-600{% else %}bg-slate-100 text-slate-500{% endif %} rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors" title="Enable/Disable Link">
+                        <i data-lucide="power" class="w-3.5 h-3.5"></i>
                     </button>
+                    <button onclick="copyUrlText('url-{{ item.id }}')" class="h-8 px-3 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors" title="Copy Short URL">
+                        <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copy
+                    </button>
+                    <button onclick="shareUrl('{{ request.scheme }}://{{ request.get_host }}/qr/r/{{ item.short_code }}')" class="h-8 px-3 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors" title="Share Short URL">
+                        <i data-lucide="share-2" class="w-3.5 h-3.5"></i> Share
+                    </button>
+                    <button onclick="openEditModal('{{ item.id }}', '{{ item.qr_name|escapejs }}', '{{ item.destination_url|escapejs }}', '{{ item.custom_alias|default_if_none:''|escapejs }}', '{{ item.require_gps }}', '{{ item.header_enabled }}', '{{ item.qr_enabled }}', '{% if item.password %}True{% else %}False{% endif %}', '{% if item.expiry_date %}True{% else %}False{% endif %}')" class="h-8 px-3 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors" title="Edit Short URL">
+                        <i data-lucide="pencil" class="w-3.5 h-3.5"></i> Edit
+                    </button>
+                    <button onclick="deleteQR('{{ item.id }}')" class="h-8 px-3 bg-slate-50 hover:bg-red-50 text-slate-400 hover:text-red-600 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors" title="Delete Short URL">
+                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Delete
+                    </button>
+                    
+                    {% if item.qr_enabled %}
+                    <a href="{% url 'dynamic_qr:download' item.id %}" class="h-8 px-3 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors">
+                        <i data-lucide="qr-code" class="w-3.5 h-3.5"></i> QR
+                    </a>
+                    {% endif %}
+                    
+                    {% if item.require_gps %}
+                    <span class="h-8 px-3 bg-slate-50 text-indigo-600 rounded-lg text-xs font-bold flex items-center gap-1.5">
+                        <i data-lucide="map-pin" class="w-3.5 h-3.5"></i> GPS
+                    </span>
+                    {% endif %}
                 </div>
-
-                <!-- Stats Snippet -->
-                <div class="grid grid-cols-2 gap-2 mb-4">
-                    <div class="bg-slate-50/50 p-2.5 rounded-xl border border-slate-50">
-                        <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Clicks</p>
-                        <p class="text-sm font-black text-slate-900">{{ item.scan_count }}</p>
-                    </div>
-                    <div class="bg-slate-50/50 p-2.5 rounded-xl border border-slate-50">
-                        <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest mb-0.5">Target</p>
-                        <p class="text-[10px] font-bold text-slate-700 truncate">{{ item.destination_url }}</p>
-                    </div>
-                </div>
-
-                <!-- Action Grid (Short URL only — no QR download) -->
-                <div class="flex flex-col gap-2">
-                    <div class="grid grid-cols-4 gap-1.5">
-                        <a href="{% url 'dynamic_qr:short_url_analytics' item.id %}" class="h-8 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg flex items-center justify-center border border-slate-100" title="View">
-                            <i data-lucide="eye" class="w-3.5 h-3.5"></i>
-                        </a>
-                        <button onclick="openEditModal('{{ item.id }}', '{{ item.qr_name|escapejs }}', '{{ item.destination_url|escapejs }}', '{{ item.custom_alias|default_if_none:''|escapejs }}', '{{ item.require_gps }}')" class="h-8 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg flex items-center justify-center border border-slate-100" title="Edit">
-                            <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
-                        </button>
-                        <a href="{{ item.destination_url }}" target="_blank" rel="noopener" class="h-8 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg flex items-center justify-center border border-slate-100" title="Open Target">
-                            <i data-lucide="external-link" class="w-3.5 h-3.5"></i>
-                        </a>
-                        <button onclick="shareUrl('{{ request.scheme }}://{{ request.get_host }}/qr/r/{{ item.short_code }}')" class="h-8 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg flex items-center justify-center border border-slate-100" title="Share">
-                            <i data-lucide="share-2" class="w-3.5 h-3.5"></i>
-                        </button>
-                        <button onclick="toggleStatus('{{ item.id }}')" 
-                                class="h-8 bg-slate-50 hover:bg-slate-100 {% if item.is_active %}text-emerald-600{% else %}text-slate-400{% endif %} rounded-lg flex items-center justify-center border border-slate-100" title="Status">
-                            <i data-lucide="power" class="w-3.5 h-3.5"></i>
-                        </button>
-                        <button onclick="deleteQR('{{ item.id }}')" 
-                                class="h-8 bg-slate-50 hover:bg-red-50 text-slate-400 hover:text-red-600 rounded-lg flex items-center justify-center border border-slate-100 col-span-3 group" title="Delete">
-                            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                            <span class="text-[8px] font-black uppercase ml-1">Archive Link</span>
-                        </button>
-                    </div>
-                </div>
+                
+                <a href="{% url 'dynamic_qr:short_url_analytics' item.id %}" class="h-8 px-4 bg-indigo-600 text-white hover:bg-indigo-700 rounded-lg text-xs font-black flex items-center gap-2 shadow-sm transition-colors shrink-0 ml-4">
+                    <i data-lucide="bar-chart-2" class="w-3.5 h-3.5"></i> View Details
+                </a>
             </div>
         </div>
         {% empty %}
@@ -156,17 +209,74 @@
             </div>
             <h3 class="text-2xl font-black text-slate-900 mb-2">No Links Found</h3>
             <p class="text-slate-500 font-medium mb-10 max-w-sm mx-auto">Shorten your first URL to see it displayed here using our premium card layout.</p>
+            {% if can_create_more %}
             <button onclick="openCreateModal()" class="new-btn mx-auto">Create Now</button>
+            {% else %}
+            <a href="{% url 'services:pricing' %}" class="inline-flex items-center justify-center gap-2 px-6 py-3 bg-amber-500 text-white rounded-2xl font-black transition-all hover:bg-amber-600 w-48 mx-auto">
+                Upgrade to Create
+            </a>
+            {% endif %}
         </div>
         {% endfor %}
     </div>
 
+    <!-- Pagination -->
+    {% if short_urls.has_other_pages %}
+    <div class="flex items-center justify-between border-t border-slate-100 bg-white px-4 py-3 sm:px-6 rounded-2xl mb-12 shadow-sm">
+        <div class="hidden sm:flex sm:flex-1 sm:items-center sm:justify-between">
+            <div>
+                <p class="text-sm text-slate-700 font-medium">
+                    Showing <span class="font-bold">{{ short_urls.start_index }}</span> to <span class="font-bold">{{ short_urls.end_index }}</span> of <span class="font-bold">{{ short_urls.paginator.count }}</span> results
+                </p>
+            </div>
+            <div>
+                <nav class="isolate inline-flex -space-x-px rounded-md shadow-sm" aria-label="Pagination">
+                    {% if short_urls.has_previous %}
+                    <a href="?page={{ short_urls.previous_page_number }}&q={{ search_query }}&date_range={{ current_filters.date_range }}&status={{ current_filters.status }}" class="relative inline-flex items-center rounded-l-md px-2 py-2 text-slate-400 ring-1 ring-inset ring-slate-300 hover:bg-slate-50 focus:z-20 focus:outline-offset-0">
+                        <span class="sr-only">Previous</span>
+                        <i data-lucide="chevron-left" class="h-5 w-5"></i>
+                    </a>
+                    {% else %}
+                    <span class="relative inline-flex items-center rounded-l-md px-2 py-2 text-slate-300 ring-1 ring-inset ring-slate-200 cursor-not-allowed">
+                        <i data-lucide="chevron-left" class="h-5 w-5"></i>
+                    </span>
+                    {% endif %}
+                    
+                    {% for i in short_urls.paginator.page_range %}
+                        {% if short_urls.number == i %}
+                        <span aria-current="page" class="relative z-10 inline-flex items-center bg-indigo-600 px-4 py-2 text-sm font-semibold text-white focus:z-20 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-indigo-600">{{ i }}</span>
+                        {% elif i > short_urls.number|add:'-3' and i < short_urls.number|add:'3' %}
+                        <a href="?page={{ i }}&q={{ search_query }}&date_range={{ current_filters.date_range }}&status={{ current_filters.status }}" class="relative inline-flex items-center px-4 py-2 text-sm font-semibold text-slate-900 ring-1 ring-inset ring-slate-300 hover:bg-slate-50 focus:z-20 focus:outline-offset-0">{{ i }}</a>
+                        {% endif %}
+                    {% endfor %}
+
+                    {% if short_urls.has_next %}
+                    <a href="?page={{ short_urls.next_page_number }}&q={{ search_query }}&date_range={{ current_filters.date_range }}&status={{ current_filters.status }}" class="relative inline-flex items-center rounded-r-md px-2 py-2 text-slate-400 ring-1 ring-inset ring-slate-300 hover:bg-slate-50 focus:z-20 focus:outline-offset-0">
+                        <span class="sr-only">Next</span>
+                        <i data-lucide="chevron-right" class="h-5 w-5"></i>
+                    </a>
+                    {% else %}
+                    <span class="relative inline-flex items-center rounded-r-md px-2 py-2 text-slate-300 ring-1 ring-inset ring-slate-200 cursor-not-allowed">
+                        <i data-lucide="chevron-right" class="h-5 w-5"></i>
+                    </span>
+                    {% endif %}
+                </nav>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Create/Edit Modal -->
-    <div id="url-modal" class="modal">
-        <div class="modal-content">
-            <div class="flex justify-between items-center mb-8">
+    <div id="url-modal" class="modal overflow-y-auto pt-10 pb-10">
+        <div class="modal-content my-auto">
+            <div class="flex justify-between items-center mb-8 sticky top-0 bg-white z-10 pb-4 border-b border-slate-50">
                 <h3 class="text-2xl font-black text-slate-900" id="modal-title">Create Short URL</h3>
-                <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x"></i></button>
+                <div class="flex items-center gap-4">
+                    <button type="button" onclick="alert('Bulk import functionality coming soon.')" class="px-3 py-1.5 bg-slate-100 text-slate-600 rounded-lg text-xs font-bold hover:bg-slate-200 transition-colors">
+                        Bulk Import
+                    </button>
+                    <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x"></i></button>
+                </div>
             </div>
             
             <form id="shortener-form" class="space-y-6">
@@ -174,51 +284,175 @@
                 <input type="hidden" name="qr_id" id="form-qr-id">
                 
                 <div>
-                    <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest block px-1">Name</label>
-                    <input type="text" name="qr_name" id="form-qr-name" class="form-input-custom" placeholder="e.g. Personal Portfolio" required>
+                    <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest block px-1">Link Title (optional)</label>
+                    <input type="text" name="qr_name" id="form-qr-name" class="form-input-custom" placeholder="e.g. Personal Portfolio">
                 </div>
                 
                 <div>
-                    <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest block px-1">Destination URL</label>
-                    <input type="url" name="destination_url" id="form-dest-url" class="form-input-custom" placeholder="https://..." required>
+                    <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest block px-1">Destination URL *</label>
+                    <input type="url" name="destination_url" id="form-dest-url" class="form-input-custom" placeholder="https://example.com/my-long-url" required>
                 </div>
 
-                {% if has_custom_alias %}
-                <div>
-                    <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest block px-1">Custom Alias (Optional)</label>
-                    <input type="text" name="custom_alias" id="form-custom-alias" class="form-input-custom" placeholder="e.g. my-promo">
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                    <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest block px-1 mb-2">Short Link</label>
+                    <div class="flex gap-2">
+                        <select name="domain" id="form-domain" class="form-input-custom !mt-0 !w-1/3 !bg-white">
+                            <option value="default">scanpdf.link</option>
+                        </select>
+                        <div class="relative w-2/3">
+                            <input type="text" name="custom_alias" id="form-custom-alias" class="form-input-custom !mt-0 !bg-white w-full" placeholder="custom-alias" {% if not has_custom_alias %}disabled{% endif %}>
+                            {% if not has_custom_alias %}
+                            <div class="absolute inset-y-0 right-3 flex items-center">
+                                <a href="{% url 'services:pricing' %}" class="text-[9px] uppercase tracking-widest bg-amber-100 text-amber-600 px-2 py-1 rounded-md font-bold">Upgrade</a>
+                            </div>
+                            {% endif %}
+                        </div>
+                    </div>
                 </div>
-                {% endif %}
+
+                <!-- Header Toggle -->
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="font-black text-slate-900 text-sm flex items-center gap-2">Header {% if not has_header %}<a href="{% url 'services:pricing' %}" class="text-[9px] uppercase tracking-widest bg-amber-100 text-amber-600 px-2 py-0.5 rounded-md font-bold">Upgrade</a>{% endif %}</p>
+                            <p class="text-[10px] font-bold text-slate-400">Add a custom header to your short link.</p>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" name="header_enabled" id="form-header-enabled" onchange="togglePanel('header-panel', this.checked)" {% if not has_header %}disabled{% endif %}>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div id="header-panel" class="hidden mt-4 pt-4 border-t border-slate-200 grid gap-3">
+                        <input type="text" name="header_text" id="form-header-text" class="form-input-custom !bg-white !py-2 !text-sm" placeholder="Banner Text">
+                        <div class="flex gap-2">
+                            <input type="color" name="header_bg_color" id="form-header-bg" class="w-10 h-10 rounded-lg cursor-pointer" value="#6366f1" title="Background Color">
+                            <input type="color" name="header_text_color" id="form-header-color" class="w-10 h-10 rounded-lg cursor-pointer" value="#ffffff" title="Text Color">
+                        </div>
+                    </div>
+                </div>
                 
-                <div class="grid grid-cols-2 gap-4">
-                    {% if has_password %}
-                    <div>
-                        <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest block px-1">Password (Optional)</label>
-                        <input type="password" name="password" id="form-password" class="form-input-custom" placeholder="Leave blank for public">
+                <!-- QR Toggle & Panel -->
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="font-black text-slate-900 text-sm flex items-center gap-2">QR Code {% if not has_qr %}<a href="{% url 'services:pricing' %}" class="text-[9px] uppercase tracking-widest bg-amber-100 text-amber-600 px-2 py-0.5 rounded-md font-bold">Upgrade</a>{% endif %}</p>
+                            <p class="text-[10px] font-bold text-slate-400">Generate a custom QR Code for this short link.</p>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" name="qr_enabled" id="form-qr-enabled" onchange="togglePanel('qr-config-panel', this.checked); updatePreview();" {% if not has_qr %}disabled{% endif %}>
+                            <span class="slider"></span>
+                        </label>
                     </div>
-                    {% endif %}
-                    {% if has_expiry %}
-                    <div>
-                        <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest block px-1">Expiry Date (Optional)</label>
-                        <input type="datetime-local" name="expiry_date" id="form-expiry-date" class="form-input-custom">
+                    
+                    <div id="qr-config-panel" class="hidden mt-6 pt-6 border-t border-slate-200 grid grid-cols-1 lg:grid-cols-2 gap-8">
+                        
+                        <div class="space-y-6">
+                            <!-- Pattern -->
+                            <div>
+                                <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest block px-1 mb-2">QR Pattern</label>
+                                <div id="body-patterns" class="flex gap-2 overflow-x-auto pb-2 scrollbar-hide"></div>
+                            </div>
+                            
+                            <!-- Frame & Border -->
+                            <div>
+                                <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest block px-1 mb-2">Eyes / Border Pattern</label>
+                                <div id="eye-patterns" class="flex gap-2 overflow-x-auto pb-2 scrollbar-hide"></div>
+                                <div id="ball-patterns" class="flex gap-2 overflow-x-auto mt-2 pb-2 scrollbar-hide"></div>
+                            </div>
+                            
+                            <!-- Colors -->
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest block px-1 mb-2">Foreground Color</label>
+                                    <input type="color" name="fg_color" id="fg-picker-inline" value="#000000" class="w-full h-10 rounded-lg cursor-pointer border-0 p-0">
+                                </div>
+                                <div>
+                                    <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest block px-1 mb-2">Background Color</label>
+                                    <input type="color" name="bg_color" id="bg-picker-inline" value="#ffffff" class="w-full h-10 rounded-lg cursor-pointer border-0 p-0">
+                                </div>
+                            </div>
+                            
+                            <!-- Logo -->
+                            <div>
+                                <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest block px-1 mb-2">Add Logo on QR</label>
+                                <div id="preset-logos" class="flex gap-2 overflow-x-auto pb-2 mb-3"></div>
+                                <label class="flex items-center justify-center gap-2 p-3 border-2 border-dashed border-indigo-200 rounded-xl bg-indigo-50 text-indigo-600 font-bold text-xs cursor-pointer hover:bg-indigo-100 transition-colors">
+                                    <i data-lucide="upload-cloud" class="w-4 h-4"></i> Upload Custom Logo
+                                    <input type="file" id="logo-upload" accept="image/*" class="hidden">
+                                </label>
+                                <input type="hidden" name="logo_cropped" id="logo-cropped-data">
+                                <input type="hidden" name="design_options" id="design-options-input">
+                                <input type="hidden" id="body_style" name="body_style" value="square">
+                                <input type="hidden" id="eye_style" name=\"eye_style\" value="square">
+                                <input type="hidden" id="ball_style" name=\"ball_style\" value="square">
+                            </div>
+                        </div>
+                        
+                        <!-- Preview Window -->
+                        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 flex flex-col items-center justify-center relative">
+                            <h4 class="text-[10px] font-black uppercase tracking-[0.2em] mb-6 text-indigo-400">Live Preview</h4>
+                            <div class="w-48 h-48 bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-center p-3 relative overflow-hidden">
+                                <img id="qr-preview-img" src="" alt="QR Preview" class="w-full h-full object-contain hidden">
+                                <div id="qr-preview-placeholder" class="text-slate-300 flex flex-col items-center">
+                                    <i data-lucide="qr-code" class="w-12 h-12 mb-2"></i>
+                                    <span class="text-[10px] font-bold uppercase tracking-widest">Loading...</span>
+                                </div>
+                            </div>
+                        </div>
+                        
                     </div>
-                    {% endif %}
                 </div>
 
-                {% if has_gps %}
-                <div class="bg-slate-50 p-5 rounded-2xl flex items-center justify-between border border-slate-100">
-                    <div>
-                        <p class="font-black text-slate-900 text-sm">Require GPS Tracking</p>
-                        <p class="text-[10px] font-bold text-slate-400">Ask for precise location permission</p>
+                <!-- GPS Toggle -->
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="font-black text-slate-900 text-sm flex items-center gap-2">GPS Enabled {% if not has_gps %}<a href="{% url 'services:pricing' %}" class="text-[9px] uppercase tracking-widest bg-amber-100 text-amber-600 px-2 py-0.5 rounded-md font-bold">Upgrade</a>{% endif %}</p>
+                            <p class="text-[10px] font-bold text-slate-400">Enable location tracking where available.</p>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" name="require_gps" id="form-require-gps" {% if not has_gps %}disabled{% endif %}>
+                            <span class="slider"></span>
+                        </label>
                     </div>
-                    <label class="switch">
-                        <input type="checkbox" name="require_gps" id="form-require-gps">
-                        <span class="slider"></span>
-                    </label>
                 </div>
-                {% endif %}
 
-                <div id="regenerate-option" style="display: none;" class="bg-slate-50 p-5 rounded-2xl flex items-center justify-between border border-slate-100">
+                <!-- Password Toggle -->
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="font-black text-slate-900 text-sm flex items-center gap-2">Password Protected {% if not has_password %}<a href="{% url 'services:pricing' %}" class="text-[9px] uppercase tracking-widest bg-amber-100 text-amber-600 px-2 py-0.5 rounded-md font-bold">Upgrade</a>{% endif %}</p>
+                            <p class="text-[10px] font-bold text-slate-400">Restrict access with a password.</p>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" name="password_enabled" id="form-password-enabled" onchange="togglePanel('password-panel', this.checked)" {% if not has_password %}disabled{% endif %}>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div id="password-panel" class="hidden mt-4 pt-4 border-t border-slate-200 grid grid-cols-2 gap-4">
+                        <input type="password" name="password" id="form-password" class="form-input-custom !bg-white !py-2 !text-sm" placeholder="Password">
+                        <input type="password" id="form-password-confirm" class="form-input-custom !bg-white !py-2 !text-sm" placeholder="Confirm Password">
+                    </div>
+                </div>
+
+                <!-- Expiry Toggle -->
+                <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="font-black text-slate-900 text-sm flex items-center gap-2">Link Expiry {% if not has_expiry %}<a href="{% url 'services:pricing' %}" class="text-[9px] uppercase tracking-widest bg-amber-100 text-amber-600 px-2 py-0.5 rounded-md font-bold">Upgrade</a>{% endif %}</p>
+                            <p class="text-[10px] font-bold text-slate-400">Set an expiration date/time.</p>
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" name="expiry_enabled" id="form-expiry-enabled" onchange="togglePanel('expiry-panel', this.checked)" {% if not has_expiry %}disabled{% endif %}>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div id="expiry-panel" class="hidden mt-4 pt-4 border-t border-slate-200">
+                        <input type="datetime-local" name="expiry_date" id="form-expiry-date" class="form-input-custom !bg-white !py-2 !text-sm w-full">
+                    </div>
+                </div>
+
+                <div id="regenerate-option" style="display: none;" class="bg-slate-50 p-4 rounded-xl flex items-center justify-between border border-slate-100">
                     <div>
                         <p class="font-black text-slate-900 text-sm">Regenerate Short Code?</p>
                         <p class="text-[10px] font-bold text-slate-400">Generates a fresh short code for this link.</p>
@@ -229,18 +463,48 @@
                     </label>
                 </div>
                 
-                <div class="pt-4">
-                    <button type="submit" class="new-btn w-full justify-center py-4 text-lg" id="submit-btn">
-                        <span>Save Link</span>
+                <div class="pt-4 flex gap-4 sticky bottom-0 bg-white py-4 border-t border-slate-50 z-10">
+                    <button type="button" onclick="closeModal()" class="flex-1 py-4 text-lg bg-slate-100 text-slate-600 rounded-xl font-black hover:bg-slate-200 transition-colors">
+                        Cancel
+                    </button>
+                    <button type="submit" class="new-btn flex-1 justify-center py-4 text-lg" id="submit-btn">
+                        <span>Create Link</span>
                         <i data-lucide="arrow-right" class="w-5 h-5"></i>
                     </button>
                 </div>
             </form>
+    </div>
+    
+    <!-- Cropper Modal -->
+    <div class="modal-overlay hidden fixed inset-0 bg-black/80 z-[1000] flex items-center justify-center p-5" id="cropper-modal">
+        <div class="modal-content bg-white rounded-3xl w-full max-w-[600px] p-8">
+            <h3 class="text-xl font-black text-slate-900 mb-6">Crop Your Logo</h3>
+            <div class="cropper-container w-full aspect-square bg-slate-100 rounded-2xl overflow-hidden mb-6">
+                <img id="crop-image" src="" class="max-w-full">
+            </div>
+            <div class="flex gap-4">
+                <button type="button" class="flex-1 h-14 bg-slate-100 text-slate-600 rounded-xl font-bold" onclick="closeCropper()">Cancel</button>
+                <button type="button" class="flex-1 h-14 bg-indigo-600 text-white rounded-xl font-black uppercase tracking-widest" onclick="applyCrop()">Apply & Use</button>
+            </div>
         </div>
     </div>
-{% endblock %}
-
-    <div id="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 z-[100] hidden">
+    
+    <!-- Delete Confirmation Modal -->
+    <div class="modal-overlay hidden fixed inset-0 bg-black/80 z-[2000] flex items-center justify-center p-5" id="delete-modal">
+        <div class="modal-content bg-white rounded-3xl w-full max-w-[400px] p-8 text-center shadow-2xl">
+            <div class="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i data-lucide="alert-triangle" class="w-8 h-8"></i>
+            </div>
+            <h3 class="text-xl font-black text-slate-900 mb-2">Delete Short URL?</h3>
+            <p class="text-sm font-medium text-slate-500 mb-6">Are you sure you want to delete this Short URL?<br>This action cannot be undone.</p>
+            <div class="flex gap-4">
+                <button type="button" class="flex-1 h-12 bg-slate-100 text-slate-600 rounded-xl font-bold" onclick="closeDeleteModal()">Cancel</button>
+                <button type="button" class="flex-1 h-12 bg-red-600 hover:bg-red-700 text-white rounded-xl font-black" id="confirm-delete-btn">Delete</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 z-[3000] hidden">
         <div class="bg-slate-900 text-white px-8 py-4 rounded-2xl shadow-2xl flex items-center gap-4 animate-bounce-in">
             <div class="w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center">
                 <i data-lucide="check" class="w-3 h-3"></i>
@@ -248,37 +512,316 @@
             <span class="font-black text-xs uppercase tracking-widest" id="toast-message">Success!</span>
         </div>
     </div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js"></script>
+{% endblock %}
 
 {% block dqr_scripts %}
     const modal = document.getElementById('url-modal');
     const form = document.getElementById('shortener-form');
     let isEdit = false;
+    let openModalCount = 0;
+    
+    function updateBodyScroll() {
+        document.body.style.overflow = openModalCount > 0 ? 'hidden' : '';
+    }
+    
+    const BODY_STYLES = ['square', 'rounded', 'circle', 'diamond', 'dot', 'small-square', 'hline', 'vline', 'star', 'cross', 'leaf', 'clover', 'hexagon', 'octagon'];
+    const EYE_STYLES = ['square', 'circle', 'rounded', 'diamond', 'leaf', 'dot', 'star', 'small-square', 'hexagon', 'octagon'];
+    const BRAND_LOGOS = [
+        { id: 'facebook', domain: 'facebook.com' },
+        { id: 'instagram', domain: 'instagram.com' },
+        { id: 'youtube', domain: 'youtube.com' },
+        { id: 'whatsapp', domain: 'whatsapp.com' },
+        { id: 'linkedin', domain: 'linkedin.com' },
+        { id: 'telegram', domain: 'telegram.org' },
+        { id: 'x', domain: 'x.com' },
+        { id: 'tiktok', domain: 'tiktok.com' },
+        { id: 'snapchat', domain: 'snapchat.com' },
+        { id: 'pinterest', domain: 'pinterest.com' },
+        { id: 'spotify', domain: 'spotify.com' },
+        { id: 'apple', domain: 'apple.com' },
+        { id: 'google', domain: 'google.com' },
+        { id: 'amazon', domain: 'amazon.com' }
+    ];
+
+    let cropper = null;
+    let selectedLogoUrl = null;
+    let updateTimeout = null;
+
+    function getPatternIcon(style, type) {
+        let color = '#6366f1'; 
+        if (type === 'body') color = document.getElementById('fg-picker-inline')?.value || '#000';
+        if (type === 'body') {
+            if (style === 'square') return `<rect x="5" y="5" width="14" height="14" fill="${color}" rx="1"/>`;
+            if (style === 'rounded') return `<rect x="5" y="5" width="14" height="14" fill="${color}" rx="4"/>`;
+            if (style === 'circle') return `<circle cx="12" cy="12" r="7" fill="${color}"/>`;
+            if (style === 'diamond') return `<path d="M12 4 L20 12 L12 20 L4 12 Z" fill="${color}"/>`;
+            if (style === 'dot') return `<circle cx="12" cy="12" r="4" fill="${color}"/>`;
+            if (style === 'small-square') return `<rect x="8" y="8" width="8" height="8" fill="${color}"/>`;
+            if (style === 'hline') return `<rect x="4" y="10" width="16" height="4" fill="${color}" rx="1"/>`;
+            if (style === 'vline') return `<rect x="10" y="4" width="4" height="16" fill="${color}" rx="1"/>`;
+            if (style === 'star') return `<path d="M12 4 L14 10 L20 10 L15 14 L17 20 L12 16 L7 20 L9 14 L4 10 L10 10 Z" fill="${color}"/>`;
+            if (style === 'cross') return `<path d="M9 4 H15 V9 H20 V15 H15 V20 H9 V15 H4 V9 H9 Z" fill="${color}"/>`;
+            if (style === 'leaf') return `<path d="M12 4 Q20 4 20 12 Q20 20 12 20 Q4 20 4 12 Q4 4 12 4" fill="${color}"/>`;
+            if (style === 'clover') return `<path d="M12 12 Q12 4 8 4 Q4 4 4 8 Q4 12 12 12 Q20 12 20 16 Q20 20 16 20 Q12 20 12 12 Z" fill="${color}"/>`;
+            if (style === 'hexagon') return `<path d="M12 4 L19 8 V16 L12 20 L5 16 V8 Z" fill="${color}"/>`;
+            if (style === 'octagon') return `<path d="M8 4 H16 L20 8 V16 L16 20 H8 L4 16 V8 Z" fill="${color}"/>`;
+        } else {
+            if (style === 'square') return `<rect x="4" y="4" width="16" height="16" stroke="${color}" stroke-width="2" fill="none" rx="1"/>`;
+            if (style === 'circle') return `<circle cx="12" cy="12" r="8" stroke="${color}" stroke-width="2" fill="none"/>`;
+            if (style === 'rounded') return `<rect x="4" y="4" width="16" height="16" stroke="${color}" stroke-width="2" fill="none" rx="5"/>`;
+            if (style === 'diamond') return `<path d="M12 4 L20 12 L12 20 L4 12 Z" stroke="${color}" stroke-width="2" fill="none"/>`;
+            if (style === 'leaf') return `<path d="M12 4 Q20 4 20 12 Q20 20 12 20 Q4 20 4 12 Q4 4 12 4" stroke="${color}" stroke-width="2" fill="none"/>`;
+            if (style === 'hexagon') return `<path d="M12 4 L19 8 V16 L12 20 L5 16 V8 Z" stroke="${color}" stroke-width="2" fill="none"/>`;
+            if (style === 'octagon') return `<path d="M8 4 H16 L20 8 V16 L16 20 H8 L4 16 V8 Z" stroke="${color}" stroke-width="2" fill="none"/>`;
+            if (style === 'star') return `<path d="M12 4 L14 10 L20 10 L15 14 L17 20 L12 16 L7 20 L9 14 L4 10 L10 10 Z" stroke="${color}" stroke-width="2" fill="none"/>`;
+            if (style === 'dot') return `<circle cx="12" cy="12" r="5" stroke="${color}" stroke-width="2" fill="none"/>`;
+            if (style === 'small-square') return `<rect x="7" y="7" width="10" height="10" stroke="${color}" stroke-width="2" fill="none"/>`;
+            if (style === 'clover') return `<path d="M12 12 Q12 4 8 4 Q4 4 4 8 Q4 12 12 12 Q20 12 20 16 Q20 20 16 20 Q12 20 12 12 Z" stroke="${color}" stroke-width="2" fill="none"/>`;
+        }
+        return `<rect x="4" y="4" width="16" height="16" fill="${color}" opacity="0.2"/>`;
+    }
+
+    function renderPatterns() {
+        const bodyGrid = document.getElementById('body-patterns');
+        if(!bodyGrid) return;
+        bodyGrid.innerHTML = '';
+        BODY_STYLES.forEach(s => {
+            const item = document.createElement('div');
+            item.className = 'w-10 h-10 shrink-0 border-2 rounded-xl cursor-pointer flex items-center justify-center transition-all hover:border-indigo-500 ' + (document.getElementById('body_style').value === s ? 'border-indigo-600 bg-indigo-50 shadow-md scale-110' : 'border-slate-100 bg-white');
+            item.dataset.val = s;
+            item.innerHTML = `<svg viewBox="0 0 24 24" class="w-6 h-6">${getPatternIcon(s, 'body')}</svg>`;
+            item.onclick = () => {
+                document.getElementById('body_style').value = s;
+                renderPatterns();
+                updatePreview();
+            };
+            bodyGrid.appendChild(item);
+        });
+
+        ['eye-patterns', 'ball-patterns'].forEach(gridId => {
+            const grid = document.getElementById(gridId);
+            const type = gridId.includes('eye') ? 'eye' : 'ball';
+            const valInput = type === 'eye' ? document.getElementById('eye_style') : document.getElementById('ball_style');
+            if(!grid || !valInput) return;
+            grid.innerHTML = '';
+            EYE_STYLES.forEach(s => {
+                const item = document.createElement('div');
+                item.className = 'w-10 h-10 shrink-0 border-2 rounded-xl cursor-pointer flex items-center justify-center transition-all hover:border-indigo-500 ' + (valInput.value === s ? 'border-indigo-600 bg-indigo-50 shadow-md scale-110' : 'border-slate-100 bg-white');
+                item.dataset.val = s;
+                item.innerHTML = `<svg viewBox="0 0 24 24" class="w-6 h-6">${getPatternIcon(s, type)}</svg>`;
+                item.onclick = () => {
+                    valInput.value = s;
+                    renderPatterns();
+                    updatePreview();
+                };
+                grid.appendChild(item);
+            });
+        });
+    }
+
+    function renderPresetLogos() {
+        const container = document.getElementById('preset-logos');
+        if(!container) return;
+        container.innerHTML = '';
+        
+        const noneItem = document.createElement('div');
+        const isNone = !document.getElementById('design-options-input').value.includes('logo_preset');
+        noneItem.className = 'w-10 h-10 shrink-0 border-2 rounded-xl cursor-pointer flex items-center justify-center bg-white ' + (isNone ? 'border-indigo-600' : 'border-slate-100');
+        noneItem.innerHTML = '<i data-lucide="x" class="w-4 h-4 text-slate-400"></i>';
+        noneItem.onclick = () => selectLogoPreset('none');
+        container.appendChild(noneItem);
+
+        BRAND_LOGOS.forEach(logo => {
+            const item = document.createElement('div');
+            item.className = 'w-10 h-10 shrink-0 border-2 rounded-xl cursor-pointer flex items-center justify-center bg-white p-1 ' + (document.getElementById('design-options-input').value.includes(`"logo_preset":"${logo.id}"`) ? 'border-indigo-600' : 'border-slate-100');
+            item.innerHTML = `<span class="text-[10px] font-bold text-slate-500 uppercase">${logo.id.substring(0,3)}</span>`;
+            item.onclick = () => selectLogoPreset(logo.id);
+            container.appendChild(item);
+        });
+        if(window.lucide) lucide.createIcons();
+    }
+
+    function selectLogoPreset(presetId) {
+        document.getElementById('logo-cropped-data').value = ''; 
+        let opts = {};
+        try { opts = JSON.parse(document.getElementById('design-options-input').value || '{}'); } catch(e){}
+        opts.logo_preset = presetId;
+        document.getElementById('design-options-input').value = JSON.stringify(opts);
+        renderPresetLogos();
+        updatePreview();
+    }
+
+    // Color Pickers logic
+    document.getElementById('fg-picker-inline')?.addEventListener('input', () => { renderPatterns(); updatePreview(); });
+    document.getElementById('bg-picker-inline')?.addEventListener('input', () => { updatePreview(); });
+
+    // Logo Upload Logic
+    document.getElementById('logo-upload')?.addEventListener('change', (e) => {
+        if (e.target.files && e.target.files[0]) {
+            const reader = new FileReader();
+            reader.onload = (re) => openCropper(re.target.result);
+            reader.readAsDataURL(e.target.files[0]);
+        }
+    });
+
+    function openCropper(imageSrc) {
+        document.getElementById('cropper-modal').style.display = 'flex';
+        openModalCount++;
+        updateBodyScroll();
+        const img = document.getElementById('crop-image');
+        img.src = imageSrc;
+        if (cropper) cropper.destroy();
+        cropper = new Cropper(img, {
+            aspectRatio: 1,
+            viewMode: 1,
+            background: false,
+        });
+    }
+
+    function closeCropper() {
+        document.getElementById('cropper-modal').style.display = 'none';
+        if (openModalCount > 0) openModalCount--;
+        updateBodyScroll();
+        if (cropper) cropper.destroy();
+        document.getElementById('logo-upload').value = '';
+    }
+
+    function applyCrop() {
+        if (!cropper) return;
+        const canvas = cropper.getCroppedCanvas({ width: 300, height: 300 });
+        const dataUrl = canvas.toDataURL('image/png');
+        document.getElementById('logo-cropped-data').value = dataUrl;
+        
+        let opts = {};
+        try { opts = JSON.parse(document.getElementById('design-options-input').value || '{}'); } catch(e){}
+        opts.logo_preset = 'none';
+        document.getElementById('design-options-input').value = JSON.stringify(opts);
+        
+        renderPresetLogos();
+        updatePreview();
+        closeCropper();
+    }
+
+    function updatePreview() {
+        clearTimeout(updateTimeout);
+        updateTimeout = setTimeout(() => {
+            const qrEnabled = document.getElementById('form-qr-enabled')?.checked;
+            if (!qrEnabled) return;
+            
+            const img = document.getElementById('qr-preview-img');
+            const placeholder = document.getElementById('qr-preview-placeholder');
+            
+            const formData = new FormData(document.getElementById('shortener-form'));
+            
+            const params = new URLSearchParams();
+            params.append('text', formData.get('destination_url') || 'https://scanpdf.com');
+            params.append('fg_color', formData.get('fg_color') || '#000000');
+            params.append('bg_color', formData.get('bg_color') || '#ffffff');
+            params.append('style', formData.get('body_style') || 'square');
+            params.append('eye_style', formData.get('eye_style') || 'square');
+            params.append('ball_style', formData.get('ball_style') || 'square');
+            params.append('design_options', formData.get('design_options') || '{}');
+            
+            const logoData = formData.get('logo_cropped');
+            
+            fetch("{% url 'dynamic_qr:generate_image' %}?" + params.toString(), {
+                method: 'POST',
+                headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+                body: (() => {
+                    const fd = new FormData();
+                    if(logoData) fd.append('logo_cropped', logoData);
+                    return fd;
+                })()
+            })
+            .then(r => r.blob())
+            .then(blob => {
+                if (blob.type.includes('image')) {
+                    img.src = URL.createObjectURL(blob);
+                    img.classList.remove('hidden');
+                    placeholder.classList.add('hidden');
+                }
+            })
+            .catch(err => console.error("Preview failed:", err));
+        }, 500);
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+        // Portal modals to document.body to escape stacking contexts
+        const rootElements = ['url-modal', 'cropper-modal', 'delete-modal', 'toast'];
+        rootElements.forEach(id => {
+            const el = document.getElementById(id);
+            if (el) document.body.appendChild(el);
+        });
+
+        renderPatterns();
+        renderPresetLogos();
+        document.getElementById('form-dest-url').addEventListener('input', updatePreview);
+    });
+
+    function togglePanel(panelId, isChecked) {
+        const panel = document.getElementById(panelId);
+        if (panel) {
+            panel.style.display = isChecked ? 'grid' : 'none';
+        }
+    }
 
     function openCreateModal() {
+        {% if not can_create_more %}
+        return; // UI already handles this with the upgrade button, but safety first
+        {% endif %}
         isEdit = false;
         document.getElementById('modal-title').innerText = 'Create Short URL';
         document.getElementById('form-qr-id').value = '';
         form.reset();
         document.getElementById('regenerate-option').style.display = 'none';
+        
+        // Hide dynamic panels
+        togglePanel('header-panel', false);
+        togglePanel('password-panel', false);
+        togglePanel('expiry-panel', false);
+        
         modal.style.display = 'flex';
+        openModalCount++;
+        updateBodyScroll();
     }
 
-    function openEditModal(id, name, url, alias, reqGps) {
+    function openEditModal(id, name, url, alias, reqGps, hasHeader, hasQr, hasPassword, hasExpiry) {
         isEdit = true;
         document.getElementById('modal-title').innerText = 'Edit Link';
         document.getElementById('form-qr-id').value = id;
         document.getElementById('form-qr-name').value = name;
         document.getElementById('form-dest-url').value = url;
         document.getElementById('form-custom-alias').value = alias || '';
-        document.getElementById('form-password').value = '';
-        document.getElementById('form-expiry-date').value = '';
+        
+        document.getElementById('form-header-enabled').checked = hasHeader === 'True';
+        togglePanel('header-panel', hasHeader === 'True');
+        
+        document.getElementById('form-qr-enabled').checked = hasQr === 'True';
+        
         document.getElementById('form-require-gps').checked = reqGps === 'True';
+        
+        document.getElementById('form-password-enabled').checked = hasPassword === 'True';
+        togglePanel('password-panel', hasPassword === 'True');
+        document.getElementById('form-password').value = '';
+        document.getElementById('form-password-confirm').value = '';
+        
+        document.getElementById('form-expiry-enabled').checked = hasExpiry === 'True';
+        togglePanel('expiry-panel', hasExpiry === 'True');
+        // Expiry date loading needs custom formatting if we pass it, leaving empty for now
+        document.getElementById('form-expiry-date').value = '';
+        
         document.getElementById('regenerate-option').style.display = 'flex';
         modal.style.display = 'flex';
+        openModalCount++;
+        updateBodyScroll();
     }
 
     function closeModal() {
         modal.style.display = 'none';
+        if (openModalCount > 0) openModalCount--;
+        updateBodyScroll();
     }
 
     window.onclick = function(event) {
@@ -291,18 +834,52 @@
                 method: 'POST',
                 headers: { 'X-CSRFToken': '{{ csrf_token }}' }
             });
-            if (response.ok) {
-                location.reload();
+            const data = await response.json();
+            if (response.ok && data.success) {
+                const toggleBtn = document.getElementById(`toggle-btn-${qrId}`);
+                const statusBadge = document.getElementById(`status-badge-${qrId}`);
+                
+                if (data.is_active) {
+                    if(toggleBtn) toggleBtn.className = 'h-8 px-3 bg-emerald-50 text-emerald-600 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors';
+                    if(statusBadge) statusBadge.innerHTML = '<span class="w-1 h-1 rounded-full bg-slate-300"></span><span class="text-emerald-600 font-bold">Active</span>';
+                    showToast('Short URL enabled.');
+                } else {
+                    if(toggleBtn) toggleBtn.className = 'h-8 px-3 bg-slate-100 text-slate-500 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors';
+                    if(statusBadge) statusBadge.innerHTML = '<span class="w-1 h-1 rounded-full bg-slate-300"></span><span class="text-slate-400 font-bold">Inactive</span>';
+                    showToast('Short URL disabled.');
+                }
             } else {
-                showToast('Action Failed', true);
+                showToast('Unable to update link status.', true);
             }
         } catch (err) {
             console.error('Failed to toggle status');
         }
     }
 
-    async function deleteQR(qrId) {
-        if (!confirm('Are you sure you want to delete/archive this link?')) return;
+    let qrToDelete = null;
+
+    function deleteQR(qrId) {
+        qrToDelete = qrId;
+        document.getElementById('delete-modal').style.display = 'flex';
+        openModalCount++;
+        updateBodyScroll();
+        document.getElementById('confirm-delete-btn').onclick = confirmDeleteQR;
+    }
+
+    function closeDeleteModal() {
+        document.getElementById('delete-modal').style.display = 'none';
+        if (openModalCount > 0) openModalCount--;
+        updateBodyScroll();
+        qrToDelete = null;
+    }
+
+    async function confirmDeleteQR() {
+        if (!qrToDelete) return;
+        const qrId = qrToDelete;
+        const btn = document.getElementById('confirm-delete-btn');
+        btn.innerText = 'Deleting...';
+        btn.disabled = true;
+        
         try {
             const response = await fetch(`/qr/delete/${qrId}/`, {
                 method: 'POST',
@@ -314,22 +891,31 @@
                     card.style.opacity = '0';
                     card.style.transform = 'scale(0.9)';
                     setTimeout(() => card.remove(), 400);
-                } else {
-                    location.reload();
                 }
-                showToast('Link archived successfully');
+                showToast('Short URL deleted successfully.');
+                closeDeleteModal();
+                if (isEdit && document.getElementById('form-qr-id').value == qrId) {
+                    closeModal(); // also close the edit modal if it belongs to this deleted record
+                }
             } else {
-                showToast('Delete Action Failed', true);
+                showToast('Unable to delete Short URL.', true);
+                btn.disabled = false;
+                btn.innerText = 'Delete';
             }
         } catch (err) {
             console.error('Failed to delete link');
+            btn.disabled = false;
+            btn.innerText = 'Delete';
         }
     }
 
     function showToast(message, isError = false) {
         const toast = document.getElementById('toast');
+        if (!toast) return;
+        
         const msg = document.getElementById('toast-message');
-        msg.textContent = message;
+        if (msg) msg.textContent = message;
+        
         toast.classList.remove('hidden');
         setTimeout(() => toast.classList.add('hidden'), 3000);
     }
@@ -342,6 +928,7 @@
         btn.disabled = true;
 
         const formData = new FormData(form);
+        const isEditing = document.getElementById('form-qr-id').value !== '';
         try {
             const response = await fetch('{% url "dynamic_qr:short_url" %}', {
                 method: 'POST',
@@ -349,14 +936,29 @@
             });
             const data = await response.json();
             if (data.success) {
-                location.reload();
+                if (isEditing) {
+                    const qrId = data.id; // from backend response
+                    const titleEl = document.getElementById(`title-${qrId}`);
+                    const destEl = document.getElementById(`dest-url-${qrId}`);
+                    
+                    if (titleEl) titleEl.innerText = data.qr_name || 'Untitled Link';
+                    if (destEl) {
+                        destEl.href = formData.get('destination_url');
+                        destEl.innerText = formData.get('destination_url');
+                        destEl.title = formData.get('destination_url');
+                    }
+                    
+                    showToast('Short URL updated successfully.', false);
+                    closeModal();
+                } else {
+                    location.reload();
+                }
             } else {
-                alert(data.error || 'Error saving link');
-                btn.disabled = false;
-                btnText.innerText = 'Save Link';
+                showToast(data.error || 'Error saving link', true);
             }
         } catch (error) {
             console.error(error);
+        } finally {
             btn.disabled = false;
             btnText.innerText = 'Save Link';
         }
@@ -365,16 +967,35 @@
     function copyUrlText(id) {
         const text = document.getElementById(id).innerText.trim();
         navigator.clipboard.writeText(text).then(() => {
-            showToast('Short link copied!');
+            showToast('Copied!');
+        }).catch(() => {
+            showToast('Unable to copy link.', true);
         });
     }
 
     function shareUrl(url) {
         if (navigator.share) {
-            navigator.share({ title: 'Short Link', url: url });
+            navigator.share({ title: 'Short Link', url: url }).then(() => {
+                showToast('Shared successfully');
+            }).catch(() => {});
         } else {
-            navigator.clipboard.writeText(url);
-            showToast('Link blocked. Link copied to clipboard.');
+            navigator.clipboard.writeText(url).then(() => {
+                showToast('Copied!');
+            }).catch(() => {
+                showToast('Unable to copy link.', true);
+            });
         }
+    }
+
+    // Search Debounce Logic
+    const localSearchInput = document.querySelector('input[name="q"]');
+    if (localSearchInput) {
+        let debounceTimer;
+        localSearchInput.addEventListener('input', function() {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => {
+                document.getElementById('filter-form').submit();
+            }, 500);
+        });
     }
 {% endblock %}

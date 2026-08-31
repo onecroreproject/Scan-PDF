@@ -1,92 +1,666 @@
 {% extends 'admin_dashboard/base.html' %}
+
+{% block title %}Edit Plan: {{ plan.name }} | ScanPDF Admin{% endblock %}
+
+{% block extra_css %}
+<style>
+    .section-card { transition: box-shadow 0.2s; }
+    .section-card.dragging { opacity: 0.5; }
+    .feature-row { transition: background-color 0.15s; }
+    .feature-row:hover { background-color: #f8fafc; }
+    .badge-boolean { background: #ede9fe; color: #6d28d9; }
+    .badge-limit { background: #ecfdf5; color: #065f46; }
+    .badge-text { background: #fff7ed; color: #9a3412; }
+    .badge-unlimited { background: #eff6ff; color: #1d4ed8; }
+    .modal-overlay { background: rgba(15,23,42,0.55); backdrop-filter: blur(4px); }
+    input:focus, select:focus, textarea:focus { border-color: #7c3aed !important; outline: none; }
+    .tab-btn.active { background: #7c3aed; color: #fff; }
+    .toast { animation: slideIn 0.3s ease; }
+    @keyframes slideIn { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+</style>
+{% endblock %}
+
 {% block admin_content %}
-<div class="mb-8 flex items-center justify-between">
-    <div>
-        <h1 class="text-2xl font-black text-slate-900">Edit Plan: {{ plan.name }}</h1>
-        <p class="text-slate-500 font-medium">Manage pricing, limits, and dynamic features.</p>
+
+<!-- Success Toast -->
+<div id="toast" class="fixed top-6 right-6 z-[200] hidden">
+    <div class="toast bg-white border border-surface-200 rounded-2xl shadow-card-hover px-6 py-4 flex items-center gap-3">
+        <div class="w-8 h-8 rounded-xl bg-emerald-50 flex items-center justify-center shrink-0">
+            <i data-lucide="check-circle" class="w-4 h-4 text-emerald-500"></i>
+        </div>
+        <span id="toast-msg" class="text-sm font-bold text-surface-800"></span>
     </div>
-    <a href="{% url 'custom_admin:plans' %}" class="px-4 py-2 bg-slate-100 text-slate-700 font-bold rounded-lg hover:bg-slate-200">Back to Plans</a>
 </div>
 
-<form method="POST" class="space-y-8">
+<!-- Page Header -->
+<div class="mb-8 flex items-center justify-between flex-wrap gap-4">
+    <div>
+        <div class="flex items-center gap-3 mb-1">
+            <a href="{% url 'custom_admin:plans' %}" class="text-surface-400 hover:text-brand-600 transition-colors">
+                <i data-lucide="arrow-left" class="w-5 h-5"></i>
+            </a>
+            <h1 class="text-2xl font-black text-surface-900">Edit Plan: <span class="text-brand-600">{{ plan.name }}</span></h1>
+            {% if plan.is_popular %}<span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-brand-100 text-brand-700">Popular</span>{% endif %}
+            {% if not plan.is_active %}<span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-red-100 text-red-700">Inactive</span>{% endif %}
+        </div>
+        <p class="text-surface-500 font-medium text-sm ml-8">{{ plan.description }}</p>
+    </div>
+    <a href="{% url 'custom_admin:plans' %}" class="px-4 py-2 bg-surface-100 text-surface-700 font-bold rounded-xl hover:bg-surface-200 transition-colors text-sm flex items-center gap-2">
+        <i data-lucide="x" class="w-4 h-4"></i> Cancel
+    </a>
+</div>
+
+{% if saved %}
+<script>document.addEventListener('DOMContentLoaded', () => showToast('Plan details saved successfully!'));</script>
+{% endif %}
+
+<!-- ═══════════════════════════ PLAN DETAILS FORM ════════════════════════════ -->
+<form method="POST" id="plan-details-form" class="space-y-6 mb-10">
     {% csrf_token %}
-    
-    <!-- Basic Info -->
-    <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
-        <h2 class="text-lg font-black mb-4">Basic Information</h2>
-        <div class="grid grid-cols-2 gap-6">
+    <div class="bg-white rounded-2xl border border-surface-100 shadow-sm overflow-hidden">
+        <div class="px-8 py-5 border-b border-surface-100 flex items-center justify-between">
             <div>
-                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Plan Name</label>
-                <input type="text" name="name" value="{{ plan.name }}" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-indigo-500 focus:bg-white outline-none font-semibold">
-            </div>
-            <div>
-                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Description</label>
-                <input type="text" name="description" value="{{ plan.description }}" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl focus:border-indigo-500 focus:bg-white outline-none">
-            </div>
-            <div class="flex items-center gap-4 mt-2">
-                <label class="flex items-center gap-2 font-bold text-slate-700">
-                    <input type="checkbox" name="is_active" {% if plan.is_active %}checked{% endif %} class="w-5 h-5 text-indigo-600 rounded"> Active
-                </label>
-                <label class="flex items-center gap-2 font-bold text-slate-700">
-                    <input type="checkbox" name="is_popular" {% if plan.is_popular %}checked{% endif %} class="w-5 h-5 text-indigo-600 rounded"> Popular Badge
-                </label>
+                <h2 class="text-base font-black text-surface-900 flex items-center gap-2">
+                    <i data-lucide="info" class="w-4 h-4 text-brand-600"></i> Plan Details
+                </h2>
             </div>
         </div>
-    </div>
-
-    <!-- Pricing -->
-    <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
-        <h2 class="text-lg font-black mb-4">Pricing (INR)</h2>
-        <div class="grid grid-cols-2 gap-6">
+        <div class="p-8 grid grid-cols-1 md:grid-cols-2 gap-6">
             <div>
-                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Monthly Price</label>
-                <input type="number" name="monthly_price" value="{{ plan.monthly_price }}" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold">
+                <label class="block text-xs font-black text-surface-500 uppercase tracking-widest mb-2">Plan Name</label>
+                <input type="text" name="name" value="{{ plan.name }}" class="w-full px-4 py-3 bg-surface-50 border border-surface-200 rounded-xl font-bold text-surface-900 transition-colors" required>
             </div>
             <div>
-                <label class="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">Yearly Price</label>
-                <input type="number" name="yearly_price" value="{{ plan.yearly_price }}" class="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl font-mono font-bold">
+                <label class="block text-xs font-black text-surface-500 uppercase tracking-widest mb-2">Plan Code</label>
+                <input type="text" value="{{ plan.code }}" class="w-full px-4 py-3 bg-surface-100 border border-surface-200 rounded-xl font-mono text-surface-500 cursor-not-allowed" readonly title="Plan code cannot be changed">
             </div>
-        </div>
-    </div>
+            <div class="md:col-span-2">
+                <label class="block text-xs font-black text-surface-500 uppercase tracking-widest mb-2">Description</label>
+                <input type="text" name="description" value="{{ plan.description }}" class="w-full px-4 py-3 bg-surface-50 border border-surface-200 rounded-xl text-surface-900 transition-colors">
+            </div>
 
-    <!-- Dynamic Features -->
-    <div class="bg-white p-6 rounded-2xl border border-slate-100 shadow-sm">
-        <h2 class="text-lg font-black mb-4">Features & Limits</h2>
-        <div class="grid grid-cols-2 gap-x-8 gap-y-6">
-            {% for feature in features %}
-                <div class="flex flex-col justify-center border-b border-slate-50 pb-4">
-                    <div class="flex items-center justify-between mb-2">
-                        <label class="text-sm font-bold text-slate-700">{{ feature.name }}</label>
-                        <span class="text-[10px] uppercase font-bold tracking-wider text-slate-400 bg-slate-100 px-2 py-1 rounded">{{ feature.type }}</span>
+            <!-- Pricing -->
+            <div>
+                <label class="block text-xs font-black text-surface-500 uppercase tracking-widest mb-2">Monthly Price (₹)</label>
+                <input type="number" name="monthly_price" value="{{ plan.monthly_price }}" min="0" class="w-full px-4 py-3 bg-surface-50 border border-surface-200 rounded-xl font-mono font-bold text-surface-900 transition-colors">
+            </div>
+            <div>
+                <label class="block text-xs font-black text-surface-500 uppercase tracking-widest mb-2">Yearly Price (₹)</label>
+                <input type="number" name="yearly_price" value="{{ plan.yearly_price }}" min="0" class="w-full px-4 py-3 bg-surface-50 border border-surface-200 rounded-xl font-mono font-bold text-surface-900 transition-colors">
+            </div>
+            <div>
+                <label class="block text-xs font-black text-surface-500 uppercase tracking-widest mb-2">Pricing Type</label>
+                <select name="pricing_type" class="w-full px-4 py-3 bg-surface-50 border border-surface-200 rounded-xl font-bold text-surface-900 transition-colors">
+                    <option value="fixed" {% if plan.pricing_type == 'fixed' %}selected{% endif %}>Fixed Price</option>
+                    <option value="contact" {% if plan.pricing_type == 'contact' %}selected{% endif %}>Contact Us</option>
+                </select>
+            </div>
+            <div class="flex items-center gap-8 mt-2">
+                <label class="flex items-center gap-3 cursor-pointer">
+                    <div class="relative">
+                        <input type="checkbox" name="is_active" class="sr-only peer" {% if plan.is_active %}checked{% endif %}>
+                        <div class="w-11 h-6 bg-surface-200 peer-checked:bg-brand-600 rounded-full transition-colors"></div>
+                        <div class="absolute left-0.5 top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform peer-checked:translate-x-5"></div>
                     </div>
-                    
-                    {% if feature.type == 'BOOLEAN' %}
-                        <label class="flex items-center gap-2 mt-1">
-                            <input type="checkbox" name="feature_{{ feature.id }}" 
-                                {% for fid, pf in plan_features.items %}{% if fid == feature.id and pf.value_boolean %}checked{% endif %}{% endfor %}
-                                class="w-5 h-5 text-indigo-600 rounded border-slate-300">
-                            <span class="text-sm font-semibold text-slate-600">Enable Feature</span>
-                        </label>
-                    {% elif feature.type == 'NUMERIC' %}
-                        <input type="number" name="feature_{{ feature.id }}" 
-                            value="{% for fid, pf in plan_features.items %}{% if fid == feature.id %}{{ pf.value_numeric|default:'' }}{% endif %}{% endfor %}"
-                            class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg font-mono" placeholder="Enter limit (e.g. 1500)">
-                    {% elif feature.type == 'UNLIMITED' %}
-                        <p class="text-xs text-indigo-600 font-bold bg-indigo-50 px-3 py-2 rounded-lg inline-block w-max">Unlimited Access Provided</p>
-                    {% else %}
-                        <input type="text" name="feature_{{ feature.id }}" 
-                            value="{% for fid, pf in plan_features.items %}{% if fid == feature.id %}{{ pf.value_text|default:'' }}{% endif %}{% endfor %}"
-                            class="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-lg" placeholder="Enter value">
-                    {% endif %}
-                </div>
-            {% endfor %}
+                    <span class="text-sm font-bold text-surface-700">Active</span>
+                </label>
+                <label class="flex items-center gap-3 cursor-pointer">
+                    <div class="relative">
+                        <input type="checkbox" name="is_popular" class="sr-only peer" {% if plan.is_popular %}checked{% endif %}>
+                        <div class="w-11 h-6 bg-surface-200 peer-checked:bg-brand-600 rounded-full transition-colors"></div>
+                        <div class="absolute left-0.5 top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform peer-checked:translate-x-5"></div>
+                    </div>
+                    <span class="text-sm font-bold text-surface-700">Popular Badge</span>
+                </label>
+            </div>
         </div>
-    </div>
-
-    <div class="flex justify-end pt-4 pb-12">
-        <button type="submit" class="px-8 py-4 bg-indigo-600 text-white font-black rounded-xl hover:bg-indigo-700 shadow-lg shadow-indigo-200 flex items-center gap-2">
-            <i data-lucide="save" class="w-5 h-5"></i> Save Plan Changes
-        </button>
+        <div class="px-8 py-5 border-t border-surface-100 flex justify-end">
+            <button type="submit" class="px-6 py-3 bg-brand-600 hover:bg-brand-700 text-white font-black rounded-xl transition-colors flex items-center gap-2 text-sm">
+                <i data-lucide="save" class="w-4 h-4"></i> Save Plan Details
+            </button>
+        </div>
     </div>
 </form>
+
+<!-- ══════════════════════════ PLAN CONTENT BUILDER ═════════════════════════ -->
+<div class="bg-white rounded-2xl border border-surface-100 shadow-sm overflow-hidden mb-10">
+    <div class="px-8 py-5 border-b border-surface-100 flex items-center justify-between">
+        <h2 class="text-base font-black text-surface-900 flex items-center gap-2">
+            <i data-lucide="layout-list" class="w-4 h-4 text-brand-600"></i>
+            Plan Content
+            <span class="text-xs font-bold text-surface-400 ml-1">(Sections & Features)</span>
+        </h2>
+        <button onclick="openAddSectionModal()" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white font-black rounded-xl transition-colors text-sm flex items-center gap-2">
+            <i data-lucide="plus" class="w-4 h-4"></i> Add Section
+        </button>
+    </div>
+
+    <div id="sections-container" class="p-6 space-y-4">
+        {% for section in sections %}
+        <div class="section-card border border-surface-200 rounded-2xl overflow-hidden" id="section-{{ section.id }}" data-section-id="{{ section.id }}">
+            <!-- Section Header -->
+            <div class="flex items-center justify-between px-6 py-4 bg-surface-50 border-b border-surface-100">
+                <div class="flex items-center gap-3">
+                    <button class="move-btn text-surface-400 hover:text-surface-600 cursor-move" title="Drag to reorder">
+                        <i data-lucide="grip-vertical" class="w-5 h-5"></i>
+                    </button>
+                    <div>
+                        <h3 id="section-name-{{ section.id }}" class="text-sm font-black text-surface-900 uppercase tracking-widest">{{ section.name }}</h3>
+                        <span class="text-xs text-surface-400">{{ section.features.count }} feature{{ section.features.count|pluralize }}</span>
+                    </div>
+                    {% if not section.is_enabled %}
+                    <span class="inline-flex items-center px-2 py-0.5 rounded-md text-[10px] font-black uppercase tracking-widest bg-surface-100 text-surface-400 border border-surface-200">Hidden</span>
+                    {% endif %}
+                </div>
+                <div class="flex items-center gap-2">
+                    <button onclick="moveSectionUp({{ section.id }})" class="p-2 text-surface-400 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-colors" title="Move Up">
+                        <i data-lucide="chevron-up" class="w-4 h-4"></i>
+                    </button>
+                    <button onclick="moveSectionDown({{ section.id }})" class="p-2 text-surface-400 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-colors" title="Move Down">
+                        <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                    </button>
+                    <button onclick="openEditSectionModal({{ section.id }}, '{{ section.name|escapejs }}', {{ section.is_enabled|yesno:'true,false' }})" class="p-2 text-surface-400 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-colors" title="Edit Section">
+                        <i data-lucide="pencil" class="w-4 h-4"></i>
+                    </button>
+                    <button onclick="confirmDeleteSection({{ section.id }}, '{{ section.name|escapejs }}')" class="p-2 text-surface-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Delete Section">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Features List -->
+            <div id="features-{{ section.id }}" class="divide-y divide-surface-50">
+                {% for feat in section.features.all %}
+                <div class="feature-row flex items-center justify-between px-6 py-3" id="feat-{{ feat.id }}" data-feat-id="{{ feat.id }}">
+                    <div class="flex items-start gap-3 flex-1 min-w-0">
+                        <div class="mt-0.5 text-surface-300 cursor-move shrink-0">
+                            <i data-lucide="grip-vertical" class="w-4 h-4"></i>
+                        </div>
+                        <div class="min-w-0">
+                            <div class="flex items-center gap-2 flex-wrap">
+                                <span class="text-sm font-bold text-surface-800 {% if not feat.is_enabled %}opacity-40 line-through{% endif %}">{{ feat.name }}</span>
+                                <span class="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded badge-{{ feat.feature_type|lower }}">{{ feat.feature_type }}</span>
+                                {% if feat.is_unlimited %}<span class="text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded bg-blue-50 text-blue-700">∞ unlimited</span>{% endif %}
+                            </div>
+                            <div class="text-xs text-surface-400 mt-0.5 space-x-3">
+                                {% if feat.feature_type == 'LIMIT' %}
+                                    <span>Monthly: <span class="font-bold text-surface-600">{{ feat.monthly_value|default:"—" }} {{ feat.monthly_label }}</span></span>
+                                    <span>Yearly: <span class="font-bold text-surface-600">{{ feat.yearly_value|default:"—" }} {{ feat.yearly_label }}</span></span>
+                                {% elif feat.feature_type == 'TEXT' %}
+                                    <span>Monthly: <span class="font-bold text-surface-600">{{ feat.monthly_text|default:"—" }}</span></span>
+                                    <span>Yearly: <span class="font-bold text-surface-600">{{ feat.yearly_text|default:"—" }}</span></span>
+                                {% elif feat.feature_type == 'UNLIMITED' %}
+                                    <span class="font-bold text-blue-600">Unlimited</span>
+                                {% else %}
+                                    <span class="font-bold text-surface-600">Boolean toggle</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-1 shrink-0 ml-4">
+                        <button onclick="moveFeatUp({{ feat.id }}, {{ section.id }})" class="p-1.5 text-surface-300 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-colors" title="Move Up">
+                            <i data-lucide="chevron-up" class="w-3.5 h-3.5"></i>
+                        </button>
+                        <button onclick="moveFeatDown({{ feat.id }}, {{ section.id }})" class="p-1.5 text-surface-300 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-colors" title="Move Down">
+                            <i data-lucide="chevron-down" class="w-3.5 h-3.5"></i>
+                        </button>
+                        <button onclick="openEditFeatModal({{ feat.id }})" class="p-1.5 text-surface-400 hover:text-brand-600 hover:bg-brand-50 rounded-lg transition-colors" title="Edit">
+                            <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+                        </button>
+                        <button onclick="confirmDeleteFeat({{ feat.id }}, '{{ feat.name|escapejs }}')" class="p-1.5 text-surface-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors" title="Delete">
+                            <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                        </button>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+
+            <!-- Add Feature Button -->
+            <div class="px-6 py-3 border-t border-surface-50 bg-surface-50/50">
+                <button onclick="openAddFeatModal({{ section.id }})" class="text-sm font-bold text-brand-600 hover:text-brand-700 flex items-center gap-1.5 transition-colors">
+                    <i data-lucide="plus" class="w-4 h-4"></i> Add Feature
+                </button>
+            </div>
+        </div>
+        {% empty %}
+        <div id="no-sections-msg" class="text-center py-16">
+            <div class="w-16 h-16 rounded-2xl bg-surface-100 flex items-center justify-center mx-auto mb-4">
+                <i data-lucide="layout-list" class="w-8 h-8 text-surface-400"></i>
+            </div>
+            <p class="text-surface-500 font-bold mb-4">No sections configured yet.</p>
+            <button onclick="openAddSectionModal()" class="px-6 py-3 bg-brand-600 hover:bg-brand-700 text-white font-black rounded-xl transition-colors text-sm inline-flex items-center gap-2">
+                <i data-lucide="plus" class="w-4 h-4"></i> Add Section Header
+            </button>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+
+<!-- Safe JSON embed for the JavaScript Plan Builder (no ORM objects) -->
+{{ sections_json_data|json_script:"plan-builder-data" }}
+
+<!-- ════════════════════════════ MODALS ══════════════════════════════════════ -->
+
+<!-- Add/Edit Section Modal -->
+<div id="section-modal" class="fixed inset-0 modal-overlay z-[100] flex items-center justify-center p-4 opacity-0 pointer-events-none transition-all duration-200">
+    <div class="bg-white rounded-3xl p-8 max-w-md w-full shadow-2xl space-y-6 transform scale-95 transition-all duration-200">
+        <h3 id="section-modal-title" class="text-xl font-black text-surface-900">Add Section Header</h3>
+        <div>
+            <label class="block text-xs font-black text-surface-500 uppercase tracking-widest mb-2">Section Name</label>
+            <input type="text" id="section-name-input" placeholder="e.g. SHORT URL" class="w-full px-4 py-3 bg-surface-50 border border-surface-200 rounded-xl font-bold text-surface-900 uppercase tracking-wider">
+        </div>
+        <div class="flex items-center gap-3" id="section-enabled-wrap">
+            <label class="flex items-center gap-3 cursor-pointer">
+                <div class="relative">
+                    <input type="checkbox" id="section-enabled-input" class="sr-only peer" checked>
+                    <div class="w-11 h-6 bg-surface-200 peer-checked:bg-brand-600 rounded-full transition-colors"></div>
+                    <div class="absolute left-0.5 top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform peer-checked:translate-x-5"></div>
+                </div>
+                <span class="text-sm font-bold text-surface-700">Enabled (visible on pricing page)</span>
+            </label>
+        </div>
+        <div class="flex gap-3 pt-2">
+            <button onclick="closeModal('section-modal')" class="flex-1 py-3 px-4 rounded-xl border border-surface-200 hover:bg-surface-50 text-surface-700 text-sm font-black transition-all uppercase tracking-wider">Cancel</button>
+            <button id="section-save-btn" class="flex-1 py-3 px-4 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-sm font-black transition-all uppercase tracking-wider">Save</button>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Feature Modal -->
+<div id="feat-modal" class="fixed inset-0 modal-overlay z-[100] flex items-center justify-center p-4 opacity-0 pointer-events-none transition-all duration-200">
+    <div class="bg-white rounded-3xl p-8 max-w-2xl w-full shadow-2xl space-y-5 transform scale-95 transition-all duration-200 max-h-screen overflow-y-auto">
+        <h3 id="feat-modal-title" class="text-xl font-black text-surface-900">Add Feature</h3>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            <div class="md:col-span-2">
+                <label class="block text-xs font-black text-surface-500 uppercase tracking-widest mb-2">Feature Name *</label>
+                <input type="text" id="feat-name" placeholder="e.g. Short URLs" class="w-full px-4 py-3 bg-surface-50 border border-surface-200 rounded-xl font-bold text-surface-900">
+            </div>
+
+            <div class="md:col-span-2">
+                <label class="block text-xs font-black text-surface-500 uppercase tracking-widest mb-2">Feature Type *</label>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                    {% for val, label in ftype_choices %}{% endfor %}
+                    <button type="button" onclick="setFeatType('BOOLEAN')" class="ftype-btn py-2 px-3 rounded-xl border-2 text-xs font-black transition-colors" data-type="BOOLEAN">Boolean</button>
+                    <button type="button" onclick="setFeatType('LIMIT')" class="ftype-btn py-2 px-3 rounded-xl border-2 text-xs font-black transition-colors" data-type="LIMIT">Limit</button>
+                    <button type="button" onclick="setFeatType('TEXT')" class="ftype-btn py-2 px-3 rounded-xl border-2 text-xs font-black transition-colors" data-type="TEXT">Text</button>
+                    <button type="button" onclick="setFeatType('UNLIMITED')" class="ftype-btn py-2 px-3 rounded-xl border-2 text-xs font-black transition-colors" data-type="UNLIMITED">Unlimited</button>
+                </div>
+                <input type="hidden" id="feat-type" value="BOOLEAN">
+            </div>
+
+            <!-- LIMIT fields -->
+            <div id="limit-fields" class="md:col-span-2 grid grid-cols-2 gap-4 hidden">
+                <div>
+                    <label class="block text-xs font-black text-surface-500 uppercase tracking-widest mb-2">Monthly Value</label>
+                    <input type="number" id="feat-monthly-value" placeholder="e.g. 100" class="w-full px-4 py-3 bg-surface-50 border border-surface-200 rounded-xl font-mono font-bold">
+                </div>
+                <div>
+                    <label class="block text-xs font-black text-surface-500 uppercase tracking-widest mb-2">Yearly Value</label>
+                    <input type="number" id="feat-yearly-value" placeholder="e.g. 1200" class="w-full px-4 py-3 bg-surface-50 border border-surface-200 rounded-xl font-mono font-bold">
+                </div>
+                <div>
+                    <label class="block text-xs font-black text-surface-500 uppercase tracking-widest mb-2">Monthly Label</label>
+                    <input type="text" id="feat-monthly-label" placeholder="e.g. Short URLs / month" class="w-full px-4 py-3 bg-surface-50 border border-surface-200 rounded-xl">
+                </div>
+                <div>
+                    <label class="block text-xs font-black text-surface-500 uppercase tracking-widest mb-2">Yearly Label</label>
+                    <input type="text" id="feat-yearly-label" placeholder="e.g. Short URLs / year" class="w-full px-4 py-3 bg-surface-50 border border-surface-200 rounded-xl">
+                </div>
+            </div>
+
+            <!-- TEXT fields -->
+            <div id="text-fields" class="md:col-span-2 grid grid-cols-2 gap-4 hidden">
+                <div>
+                    <label class="block text-xs font-black text-surface-500 uppercase tracking-widest mb-2">Monthly Text Value</label>
+                    <input type="text" id="feat-monthly-text" placeholder="e.g. 30 Days" class="w-full px-4 py-3 bg-surface-50 border border-surface-200 rounded-xl font-bold">
+                </div>
+                <div>
+                    <label class="block text-xs font-black text-surface-500 uppercase tracking-widest mb-2">Yearly Text Value</label>
+                    <input type="text" id="feat-yearly-text" placeholder="e.g. 365 Days" class="w-full px-4 py-3 bg-surface-50 border border-surface-200 rounded-xl font-bold">
+                </div>
+                <div>
+                    <label class="block text-xs font-black text-surface-500 uppercase tracking-widest mb-2">Monthly Label Suffix</label>
+                    <input type="text" id="feat-text-monthly-label" placeholder="e.g. Analytics History" class="w-full px-4 py-3 bg-surface-50 border border-surface-200 rounded-xl">
+                </div>
+                <div>
+                    <label class="block text-xs font-black text-surface-500 uppercase tracking-widest mb-2">Yearly Label Suffix</label>
+                    <input type="text" id="feat-text-yearly-label" placeholder="e.g. Analytics History" class="w-full px-4 py-3 bg-surface-50 border border-surface-200 rounded-xl">
+                </div>
+            </div>
+
+            <!-- UNLIMITED info -->
+            <div id="unlimited-info" class="md:col-span-2 hidden">
+                <div class="bg-blue-50 border border-blue-200 rounded-xl px-4 py-3 text-sm text-blue-700 font-semibold">
+                    ∞ This feature will display as <strong>Unlimited {Feature Name}</strong> on the public pricing page.
+                </div>
+            </div>
+
+            <!-- BOOLEAN info -->
+            <div id="boolean-info" class="md:col-span-2">
+                <div class="bg-violet-50 border border-violet-200 rounded-xl px-4 py-3 text-sm text-violet-700 font-semibold">
+                    ✓ This feature will display as <strong>✓ {Feature Name}</strong> on the public pricing page.
+                </div>
+            </div>
+
+            <div class="md:col-span-2">
+                <label class="flex items-center gap-3 cursor-pointer">
+                    <div class="relative">
+                        <input type="checkbox" id="feat-enabled" class="sr-only peer" checked>
+                        <div class="w-11 h-6 bg-surface-200 peer-checked:bg-brand-600 rounded-full transition-colors"></div>
+                        <div class="absolute left-0.5 top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform peer-checked:translate-x-5"></div>
+                    </div>
+                    <span class="text-sm font-bold text-surface-700">Enabled (visible on pricing page)</span>
+                </label>
+            </div>
+        </div>
+
+        <div class="flex gap-3 pt-2">
+            <button onclick="closeModal('feat-modal')" class="flex-1 py-3 px-4 rounded-xl border border-surface-200 hover:bg-surface-50 text-surface-700 text-sm font-black transition-all uppercase tracking-wider">Cancel</button>
+            <button id="feat-save-btn" class="flex-1 py-3 px-4 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-sm font-black transition-all uppercase tracking-wider">Save Feature</button>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirm Modal -->
+<div id="confirm-modal" class="fixed inset-0 modal-overlay z-[100] flex items-center justify-center p-4 opacity-0 pointer-events-none transition-all duration-200">
+    <div class="bg-white rounded-3xl p-8 max-w-sm w-full shadow-2xl space-y-6 transform scale-95 transition-all duration-200">
+        <div class="text-center">
+            <div class="w-14 h-14 rounded-2xl bg-red-50 flex items-center justify-center mx-auto mb-4">
+                <i data-lucide="trash-2" class="w-7 h-7 text-red-500"></i>
+            </div>
+            <h3 class="text-xl font-black text-surface-900 mb-2">Confirm Delete</h3>
+            <p id="confirm-msg" class="text-sm text-surface-500 font-medium"></p>
+        </div>
+        <div class="flex gap-3">
+            <button onclick="closeModal('confirm-modal')" class="flex-1 py-3 px-4 rounded-xl border border-surface-200 hover:bg-surface-50 text-surface-700 text-sm font-black transition-all uppercase tracking-wider">Cancel</button>
+            <button id="confirm-delete-btn" class="flex-1 py-3 px-4 rounded-xl bg-red-500 hover:bg-red-600 text-white text-sm font-black transition-all uppercase tracking-wider">Delete</button>
+        </div>
+    </div>
+</div>
+
+<script>
+const PLAN_ID = {{ plan.id }};
+const CSRF = '{{ csrf_token }}';
+
+// ─────── Utilities ───────
+function csrfPost(url, data) {
+    return fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'X-CSRFToken': CSRF },
+        body: JSON.stringify(data)
+    }).then(r => r.json());
+}
+
+function showToast(msg, isError=false) {
+    const t = document.getElementById('toast');
+    document.getElementById('toast-msg').textContent = msg;
+    t.classList.remove('hidden');
+    t.querySelector('div').style.borderColor = isError ? '#ef4444' : '#e2e8f0';
+    setTimeout(() => t.classList.add('hidden'), 3500);
+}
+
+function openModal(id) {
+    const m = document.getElementById(id);
+    m.classList.remove('opacity-0', 'pointer-events-none');
+    m.querySelector('div').classList.remove('scale-95');
+    lucide.createIcons();
+}
+function closeModal(id) {
+    const m = document.getElementById(id);
+    m.classList.add('opacity-0', 'pointer-events-none');
+    m.querySelector('div').classList.add('scale-95');
+}
+document.querySelectorAll('.modal-overlay').forEach(m => {
+    m.addEventListener('click', e => { if (e.target === m) closeModal(m.id); });
+});
+
+// ─────── Section Modal ───────
+let editingSectionId = null;
+function openAddSectionModal() {
+    editingSectionId = null;
+    document.getElementById('section-modal-title').textContent = 'Add Section Header';
+    document.getElementById('section-name-input').value = '';
+    document.getElementById('section-enabled-input').checked = true;
+    document.getElementById('section-enabled-wrap').style.display = 'flex';
+    document.getElementById('section-save-btn').onclick = saveSection;
+    openModal('section-modal');
+    setTimeout(() => document.getElementById('section-name-input').focus(), 100);
+}
+function openEditSectionModal(id, name, enabled) {
+    editingSectionId = id;
+    document.getElementById('section-modal-title').textContent = 'Edit Section';
+    document.getElementById('section-name-input').value = name;
+    document.getElementById('section-enabled-input').checked = enabled;
+    document.getElementById('section-enabled-wrap').style.display = 'flex';
+    document.getElementById('section-save-btn').onclick = saveSection;
+    openModal('section-modal');
+    setTimeout(() => document.getElementById('section-name-input').focus(), 100);
+}
+function saveSection() {
+    const name = document.getElementById('section-name-input').value.trim();
+    const enabled = document.getElementById('section-enabled-input').checked;
+    if (!name) { showToast('Section name is required.', true); return; }
+    if (editingSectionId) {
+        csrfPost(`/custom-admin/sections/${editingSectionId}/update/`, { name, is_enabled: enabled })
+            .then(d => {
+                if (d.error) { showToast(d.error, true); return; }
+                document.getElementById(`section-name-${editingSectionId}`).textContent = d.name;
+                closeModal('section-modal');
+                showToast('Section updated!');
+            });
+    } else {
+        csrfPost(`/custom-admin/plans/${PLAN_ID}/sections/create/`, { name })
+            .then(d => {
+                if (d.error) { showToast(d.error, true); return; }
+                closeModal('section-modal');
+                showToast('Section created! Refreshing…');
+                setTimeout(() => location.reload(), 800);
+            });
+    }
+}
+
+// ─────── Section Delete ───────
+function confirmDeleteSection(id, name) {
+    document.getElementById('confirm-msg').innerHTML = `Delete section <strong>"${name}"</strong>?<br><span class="text-red-500">This will remove all features inside this section from this plan.</span>`;
+    document.getElementById('confirm-delete-btn').onclick = () => {
+        csrfPost(`/custom-admin/sections/${id}/delete/`, {})
+            .then(d => {
+                document.getElementById(`section-${id}`).remove();
+                closeModal('confirm-modal');
+                showToast('Section deleted!');
+                checkEmptySections();
+            });
+    };
+    openModal('confirm-modal');
+}
+function checkEmptySections() {
+    if (!document.querySelector('.section-card')) {
+        document.getElementById('sections-container').innerHTML = `
+        <div class="text-center py-16">
+            <div class="w-16 h-16 rounded-2xl bg-surface-100 flex items-center justify-center mx-auto mb-4">
+                <i data-lucide="layout-list" class="w-8 h-8 text-surface-400"></i>
+            </div>
+            <p class="text-surface-500 font-bold mb-4">No sections configured yet.</p>
+            <button onclick="openAddSectionModal()" class="px-6 py-3 bg-brand-600 hover:bg-brand-700 text-white font-black rounded-xl transition-colors text-sm inline-flex items-center gap-2">
+                <i data-lucide="plus" class="w-4 h-4"></i> Add Section Header
+            </button>
+        </div>`;
+        lucide.createIcons();
+    }
+}
+
+// ─────── Section Reorder ───────
+function moveSectionUp(id) {
+    const card = document.getElementById(`section-${id}`);
+    const prev = card.previousElementSibling;
+    if (prev && prev.classList.contains('section-card')) {
+        card.parentNode.insertBefore(card, prev);
+        saveSectionOrder();
+    }
+}
+function moveSectionDown(id) {
+    const card = document.getElementById(`section-${id}`);
+    const next = card.nextElementSibling;
+    if (next && next.classList.contains('section-card')) {
+        card.parentNode.insertBefore(next, card);
+        saveSectionOrder();
+    }
+}
+function saveSectionOrder() {
+    const order = Array.from(document.querySelectorAll('.section-card')).map(c => c.dataset.sectionId);
+    csrfPost(`/custom-admin/plans/${PLAN_ID}/sections/reorder/`, { order })
+        .then(() => showToast('Section order saved!'));
+}
+
+// ─────── Feature Type UI ───────
+function setFeatType(type) {
+    document.getElementById('feat-type').value = type;
+    document.querySelectorAll('.ftype-btn').forEach(b => {
+        const active = b.dataset.type === type;
+        b.className = `ftype-btn py-2 px-3 rounded-xl border-2 text-xs font-black transition-colors ${
+            active ? 'border-brand-600 bg-brand-600 text-white' : 'border-surface-200 text-surface-600 hover:border-brand-300'
+        }`;
+    });
+    document.getElementById('limit-fields').classList.toggle('hidden', type !== 'LIMIT');
+    document.getElementById('text-fields').classList.toggle('hidden', type !== 'TEXT');
+    document.getElementById('unlimited-info').classList.toggle('hidden', type !== 'UNLIMITED');
+    document.getElementById('boolean-info').classList.toggle('hidden', type !== 'BOOLEAN');
+}
+
+// ─────── Feature Modal ───────
+let editingFeatId = null;
+let currentSectionId = null;
+function openAddFeatModal(sectionId) {
+    editingFeatId = null;
+    currentSectionId = sectionId;
+    document.getElementById('feat-modal-title').textContent = 'Add Feature';
+    ['feat-name','feat-monthly-value','feat-yearly-value','feat-monthly-label','feat-yearly-label',
+     'feat-monthly-text','feat-yearly-text','feat-text-monthly-label','feat-text-yearly-label'].forEach(id => {
+        const el = document.getElementById(id); if (el) el.value = '';
+    });
+    document.getElementById('feat-enabled').checked = true;
+    setFeatType('BOOLEAN');
+    document.getElementById('feat-save-btn').onclick = saveFeat;
+    openModal('feat-modal');
+    setTimeout(() => document.getElementById('feat-name').focus(), 100);
+}
+
+
+// ── Feature data — serialized safely in the Django view, embedded via json_script ──
+// sections_json_data is a plain list of dicts (no ORM objects) produced by _serialize_sections()
+const _sectionsData = JSON.parse(document.getElementById('plan-builder-data').textContent);
+
+// Build a flat map: featId → feature dict (including section_id)
+const _featData = {};
+_sectionsData.forEach(section => {
+    (section.features || []).forEach(feat => {
+        feat.section_id = section.id; // ensure section_id is present
+        _featData[feat.id] = feat;
+    });
+});
+
+function openEditFeatModal(featId) {
+    const d = _featData[featId];
+    if (!d) { showToast('Feature data not found', true); return; }
+    editingFeatId = featId;
+    currentSectionId = d.section_id;
+    document.getElementById('feat-modal-title').textContent = 'Edit Feature';
+    populateFeatModal(d);
+    document.getElementById('feat-save-btn').onclick = saveFeat;
+    openModal('feat-modal');
+}
+
+function populateFeatModal(d) {
+    document.getElementById('feat-name').value = d.name || '';
+    document.getElementById('feat-monthly-value').value = d.monthly_value ?? '';
+    document.getElementById('feat-yearly-value').value = d.yearly_value ?? '';
+    document.getElementById('feat-monthly-label').value = d.monthly_label || '';
+    document.getElementById('feat-yearly-label').value = d.yearly_label || '';
+    document.getElementById('feat-monthly-text').value = d.monthly_text || '';
+    document.getElementById('feat-yearly-text').value = d.yearly_text || '';
+    document.getElementById('feat-text-monthly-label').value = d.monthly_label || '';
+    document.getElementById('feat-text-yearly-label').value = d.yearly_label || '';
+    document.getElementById('feat-enabled').checked = d.is_enabled !== false;
+    setFeatType(d.feature_type || 'BOOLEAN');
+}
+
+function saveFeat() {
+    const name = document.getElementById('feat-name').value.trim();
+    const ftype = document.getElementById('feat-type').value;
+    if (!name) { showToast('Feature name is required.', true); return; }
+
+    const isTextType = ftype === 'TEXT';
+    const payload = {
+        name,
+        feature_type: ftype,
+        is_unlimited: ftype === 'UNLIMITED',
+        monthly_value: document.getElementById('feat-monthly-value').value || null,
+        yearly_value: document.getElementById('feat-yearly-value').value || null,
+        monthly_label: isTextType ? document.getElementById('feat-text-monthly-label').value : document.getElementById('feat-monthly-label').value,
+        yearly_label: isTextType ? document.getElementById('feat-text-yearly-label').value : document.getElementById('feat-yearly-label').value,
+        monthly_text: document.getElementById('feat-monthly-text').value,
+        yearly_text: document.getElementById('feat-yearly-text').value,
+        is_enabled: document.getElementById('feat-enabled').checked,
+    };
+
+    const url = editingFeatId
+        ? `/custom-admin/features/${editingFeatId}/update/`
+        : `/custom-admin/sections/${currentSectionId}/features/create/`;
+
+    csrfPost(url, payload).then(d => {
+        if (d.error) { showToast(d.error, true); return; }
+        closeModal('feat-modal');
+        showToast(editingFeatId ? 'Feature updated!' : 'Feature added!');
+        setTimeout(() => location.reload(), 600);
+    });
+}
+
+// ─────── Feature Delete ───────
+function confirmDeleteFeat(id, name) {
+    document.getElementById('confirm-msg').innerHTML = `Delete feature <strong>"${name}"</strong> from this section?`;
+    document.getElementById('confirm-delete-btn').onclick = () => {
+        csrfPost(`/custom-admin/features/${id}/delete/`, {})
+            .then(() => {
+                document.getElementById(`feat-${id}`).remove();
+                closeModal('confirm-modal');
+                showToast('Feature deleted!');
+                // Update window data
+                delete window._featData[id];
+            });
+    };
+    openModal('confirm-modal');
+}
+
+// ─────── Feature Reorder ───────
+function moveFeatUp(id, sectionId) {
+    const row = document.getElementById(`feat-${id}`);
+    const prev = row.previousElementSibling;
+    if (prev && prev.classList.contains('feature-row')) {
+        row.parentNode.insertBefore(row, prev);
+        saveFeatOrder(sectionId);
+    }
+}
+function moveFeatDown(id, sectionId) {
+    const row = document.getElementById(`feat-${id}`);
+    const next = row.nextElementSibling;
+    if (next && next.classList.contains('feature-row')) {
+        row.parentNode.insertBefore(next, row);
+        saveFeatOrder(sectionId);
+    }
+}
+function saveFeatOrder(sectionId) {
+    const container = document.getElementById(`features-${sectionId}`);
+    const order = Array.from(container.querySelectorAll('.feature-row')).map(r => r.dataset.featId);
+    csrfPost(`/custom-admin/sections/${sectionId}/features/reorder/`, { order })
+        .then(() => showToast('Feature order saved!'));
+}
+
+// ─────── Init ───────
+document.addEventListener('DOMContentLoaded', () => {
+    lucide.createIcons();
+    setFeatType('BOOLEAN');
+});
+</script>
 {% endblock %}

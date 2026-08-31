@@ -91,14 +91,6 @@
                 <i data-lucide="tags" class="w-5 h-5"></i> Plans & Pricing
             </a>
             
-            <a href="{% url 'custom_admin:features' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold transition-all {% if request.resolver_match.url_name == 'features' %}bg-brand-600 text-white shadow-glass{% else %}text-surface-400 hover:text-white hover:bg-surface-800{% endif %}">
-                <i data-lucide="toggle-right" class="w-5 h-5"></i> Features
-            </a>
-            
-            <a href="{% url 'custom_admin:shorturls' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold transition-all {% if request.resolver_match.url_name == 'shorturls' %}bg-brand-600 text-white shadow-glass{% else %}text-surface-400 hover:text-white hover:bg-surface-800{% endif %}">
-                <i data-lucide="link" class="w-5 h-5"></i> Short URLs
-            </a>
-            
             <a href="{% url 'custom_admin:payments' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold transition-all {% if request.resolver_match.url_name == 'payments' %}bg-brand-600 text-white shadow-glass{% else %}text-surface-400 hover:text-white hover:bg-surface-800{% endif %}">
                 <i data-lucide="receipt" class="w-5 h-5"></i> Payments
             </a>

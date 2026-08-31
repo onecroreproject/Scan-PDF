@@ -128,6 +128,26 @@ class Payment(models.Model):
         return f"{self.transaction_id} - {self.user.username} (₹{self.amount})"
 
 
+class SubscriptionSnapshot(models.Model):
+    """
+    Immutable snapshot of the plan entitlements at the exact time of purchase, renewal, or upgrade.
+    All limit and feature checks must run against this model, NOT the live PlanSectionFeature.
+    """
+    subscription = models.OneToOneField(Subscription, on_delete=models.CASCADE, related_name='snapshot')
+    plan_name = models.CharField(max_length=100)
+    plan_code = models.CharField(max_length=50)
+    price_at_purchase = models.IntegerField(default=0)
+    billing_cycle = models.CharField(max_length=20)
+    features_data = models.JSONField(
+        default=dict,
+        help_text="Serialized dict of feature configurations: { 'short_urls': {'enabled': True, 'limit': 1500, 'is_unlimited': False}, ... }"
+    )
+    snapshot_date = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Snapshot for {self.subscription}"
+
+
 class ActivityLog(models.Model):
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='activity_logs')
     action = models.CharField(max_length=255)
@@ -163,3 +183,105 @@ class UsageOverride(models.Model):
 
     def __str__(self):
         return f"Override for {self.user.username} on {self.feature_key}"
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Dynamic Plan Builder — Plan-local Sections & Features
+# ─────────────────────────────────────────────────────────────────────────────
+
+class PlanSection(models.Model):
+    """A section header inside a pricing plan (e.g. "SHORT URL", "ANALYTICS")."""
+    plan = models.ForeignKey(Plan, on_delete=models.CASCADE, related_name='sections')
+    name = models.CharField(max_length=100, help_text='Section header shown on pricing card, e.g. SHORT URL')
+    is_enabled = models.BooleanField(default=True)
+    display_order = models.IntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['display_order', 'id']
+
+    def __str__(self):
+        return f"{self.plan.name} → {self.name}"
+
+
+class PlanSectionFeature(models.Model):
+    """A single feature row inside a PlanSection, with separate monthly/yearly values."""
+
+    FEATURE_TYPE_CHOICES = [
+        ('BOOLEAN', 'Boolean (ON/OFF — shown as ✓ Feature Name)'),
+        ('LIMIT', 'Limit (numeric value + label, e.g. 100 Short URLs / month)'),
+        ('TEXT', 'Text (custom label, e.g. 30 Days Analytics History)'),
+        ('UNLIMITED', 'Unlimited (shown as ✓ Unlimited Feature Name)'),
+    ]
+
+    section = models.ForeignKey(PlanSection, on_delete=models.CASCADE, related_name='features')
+    name = models.CharField(max_length=200, help_text='Feature name, e.g. Short URLs')
+    description = models.TextField(blank=True, help_text='Optional internal note')
+    feature_type = models.CharField(max_length=20, choices=FEATURE_TYPE_CHOICES, default='BOOLEAN')
+
+    # LIMIT type: separate monthly and yearly numeric values
+    monthly_value = models.IntegerField(null=True, blank=True, help_text='Numeric value for monthly billing')
+    yearly_value = models.IntegerField(null=True, blank=True, help_text='Numeric value for yearly billing')
+
+    # LIMIT / TEXT type: human-readable labels shown on pricing card
+    monthly_label = models.CharField(
+        max_length=255, blank=True,
+        help_text='Full label for monthly display, e.g. Short URLs / month'
+    )
+    yearly_label = models.CharField(
+        max_length=255, blank=True,
+        help_text='Full label for yearly display, e.g. Short URLs / year'
+    )
+
+    # TEXT type: free-form text values (e.g. "30 Days", "365 Days")
+    monthly_text = models.CharField(max_length=255, blank=True, help_text='Text value for monthly (TEXT type)')
+    yearly_text = models.CharField(max_length=255, blank=True, help_text='Text value for yearly (TEXT type)')
+
+    # UNLIMITED type
+    is_unlimited = models.BooleanField(default=False, help_text='If True, displays as Unlimited regardless of values')
+
+    is_enabled = models.BooleanField(default=True)
+    display_order = models.IntegerField(default=0)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['display_order', 'id']
+
+    def __str__(self):
+        return f"{self.section.plan.name} / {self.section.name} → {self.name}"
+
+    def get_monthly_display(self):
+        """Returns the string shown on the monthly pricing card."""
+        if self.feature_type == 'UNLIMITED' or self.is_unlimited:
+            return f"Unlimited {self.name}"
+        if self.feature_type == 'BOOLEAN':
+            return self.name
+        if self.feature_type == 'LIMIT':
+            if self.monthly_value is not None:
+                label = self.monthly_label or self.name
+                return f"{self.monthly_value} {label}"
+            return self.name
+        if self.feature_type == 'TEXT':
+            text = self.monthly_text or ''
+            label = self.monthly_label or self.name
+            return f"{text} {label}".strip() if text else self.name
+        return self.name
+
+    def get_yearly_display(self):
+        """Returns the string shown on the yearly pricing card."""
+        if self.feature_type == 'UNLIMITED' or self.is_unlimited:
+            return f"Unlimited {self.name}"
+        if self.feature_type == 'BOOLEAN':
+            return self.name
+        if self.feature_type == 'LIMIT':
+            if self.yearly_value is not None:
+                label = self.yearly_label or self.name
+                return f"{self.yearly_value} {label}"
+            return self.name
+        if self.feature_type == 'TEXT':
+            text = self.yearly_text or ''
+            label = self.yearly_label or self.name
+            return f"{text} {label}".strip() if text else self.name
+        return self.name
