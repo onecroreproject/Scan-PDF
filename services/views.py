@@ -8,45 +8,150 @@ import random
 import datetime
 
 def get_or_create_plans():
-    """Initializes standard subscription plans if they do not exist."""
-    # Deactivate the unwanted business plan
-    try:
-        business_plan = Plan.objects.get(code='business')
-        business_plan.is_active = False
-        business_plan.is_public = False
-        business_plan.save()
-    except Plan.DoesNotExist:
-        pass
+    """Initializes standard subscription plans and seeds default section/feature content."""
+    from .models import PlanSection, PlanSectionFeature
+
+    # Deactivate old BUSINESS ₹999 plan
+    Plan.objects.filter(code='business').update(is_active=False)
 
     plans_data = [
         {
             'name': 'FREE', 'code': 'free', 'monthly_price': 0, 'yearly_price': 0,
-            'description': 'Perfect to get started', 'display_order': 1
+            'pricing_type': 'fixed', 'description': 'Perfect to get started', 'display_order': 1,
+            'is_active': True,
         },
         {
             'name': 'PRO', 'code': 'pro', 'monthly_price': 499, 'yearly_price': 4999,
-            'description': 'For serious creators', 'is_popular': True, 'display_order': 2
+            'pricing_type': 'fixed', 'description': 'For serious creators', 'is_popular': True,
+            'display_order': 2, 'is_active': True,
         },
         {
-            'name': 'BUSINESS+', 'code': 'business_plus', 'monthly_price': 1999, 'yearly_price': 19999,
-            'description': 'Enterprise scale', 'display_order': 3
-        }
+            'name': 'BUSINESS+', 'code': 'business_plus', 'monthly_price': 0, 'yearly_price': 0,
+            'pricing_type': 'contact', 'description': 'Enterprise scale', 'display_order': 3,
+            'is_active': True,
+        },
     ]
     for data in plans_data:
         Plan.objects.update_or_create(code=data['code'], defaults=data)
+
+    # Seed default content only if plan has no sections yet
+    _seed_default_sections()
+
+
+def _seed_default_sections():
+    """Seeds default PlanSection and PlanSectionFeature records for each plan if not yet configured."""
+    from .models import PlanSection, PlanSectionFeature
+
+    default_content = {
+        'free': {
+            'name': 'FREE', 'sections': [
+                {
+                    'name': 'SHORT URL', 'order': 0, 'features': [
+                        {'name': 'Short URLs', 'type': 'LIMIT', 'mv': 100, 'yv': 1200, 'ml': 'Short URLs / month', 'yl': 'Short URLs / year'},
+                        {'name': 'Link Redirection', 'type': 'UNLIMITED'},
+                        {'name': 'Link Expiry', 'type': 'BOOLEAN'},
+                        {'name': 'Edit Short Links', 'type': 'BOOLEAN'},
+                        {'name': 'Custom Alias', 'type': 'BOOLEAN'},
+                        {'name': 'UTM Builder & Tracking', 'type': 'BOOLEAN'},
+                        {'name': 'Basic Link Analytics', 'type': 'BOOLEAN'},
+                        {'name': 'Analytics History', 'type': 'TEXT', 'mt': '30 Days', 'yt': '365 Days', 'ml': 'Analytics History', 'yl': 'Analytics History'},
+                        {'name': 'Password Protection', 'type': 'BOOLEAN'},
+                        {'name': 'Collections', 'type': 'LIMIT', 'mv': 5, 'yv': 5, 'ml': 'Collections', 'yl': 'Collections'},
+                    ]
+                }
+            ]
+        },
+        'pro': {
+            'name': 'PRO', 'sections': [
+                {
+                    'name': 'SHORT URL', 'order': 0, 'features': [
+                        {'name': 'Short URLs', 'type': 'LIMIT', 'mv': 1500, 'yv': 15000, 'ml': 'Short URLs / month', 'yl': 'Short URLs / year'},
+                        {'name': 'Link Redirection', 'type': 'UNLIMITED'},
+                        {'name': 'Link Expiry', 'type': 'UNLIMITED'},
+                        {'name': 'Short Link Editing', 'type': 'UNLIMITED'},
+                        {'name': 'Custom Aliases', 'type': 'BOOLEAN'},
+                        {'name': 'Custom Domains', 'type': 'TEXT', 'mt': 'Up to 5', 'yt': 'Up to 5', 'ml': 'Custom Domains', 'yl': 'Custom Domains'},
+                        {'name': 'Bulk URL Import', 'type': 'TEXT', 'mt': 'Up to 500 links', 'yt': 'Up to 500 links', 'ml': 'Bulk URL Import', 'yl': 'Bulk URL Import'},
+                        {'name': 'Advanced Link Analytics', 'type': 'BOOLEAN'},
+                        {'name': 'GPS Tracking', 'type': 'BOOLEAN'},
+                        {'name': 'AI Insights', 'type': 'BOOLEAN'},
+                        {'name': 'UTM Builder & Tracking', 'type': 'BOOLEAN'},
+                        {'name': 'Collections', 'type': 'LIMIT', 'mv': 100, 'yv': 1000, 'ml': 'Collections', 'yl': 'Collections'},
+                    ]
+                }
+            ]
+        },
+        'business_plus': {
+            'name': 'BUSINESS+', 'sections': [
+                {
+                    'name': 'SHORT URL', 'order': 0, 'features': [
+                        {'name': 'Short URLs', 'type': 'UNLIMITED'},
+                        {'name': 'Link Redirection', 'type': 'UNLIMITED'},
+                        {'name': 'Link Expiry', 'type': 'UNLIMITED'},
+                        {'name': 'Short Link Editing', 'type': 'UNLIMITED'},
+                        {'name': 'Custom Aliases', 'type': 'UNLIMITED'},
+                        {'name': 'Custom Domains', 'type': 'UNLIMITED'},
+                        {'name': 'Bulk URL Import', 'type': 'UNLIMITED'},
+                        {'name': 'Custom Branded Short URLs', 'type': 'BOOLEAN'},
+                        {'name': 'Advanced Analytics', 'type': 'BOOLEAN'},
+                        {'name': 'AI Insights', 'type': 'BOOLEAN'},
+                        {'name': 'Collections', 'type': 'UNLIMITED'},
+                        {'name': 'Custom Analytics Reports', 'type': 'BOOLEAN'},
+                    ]
+                }
+            ]
+        },
+    }
+
+    for plan_code, plan_data in default_content.items():
+        try:
+            plan = Plan.objects.get(code=plan_code)
+        except Plan.DoesNotExist:
+            continue
+
+        # Only seed if this plan has zero sections
+        if plan.sections.exists():
+            continue
+
+        for sec_data in plan_data['sections']:
+            section = PlanSection.objects.create(
+                plan=plan,
+                name=sec_data['name'],
+                display_order=sec_data['order'],
+                is_enabled=True,
+            )
+            for order_idx, feat in enumerate(sec_data['features']):
+                ftype = feat['type']
+                PlanSectionFeature.objects.create(
+                    section=section,
+                    name=feat['name'],
+                    feature_type=ftype,
+                    is_unlimited=(ftype == 'UNLIMITED'),
+                    monthly_value=feat.get('mv'),
+                    yearly_value=feat.get('yv'),
+                    monthly_label=feat.get('ml', ''),
+                    yearly_label=feat.get('yl', ''),
+                    monthly_text=feat.get('mt', ''),
+                    yearly_text=feat.get('yt', ''),
+                    display_order=order_idx,
+                    is_enabled=True,
+                )
+
 
 def pricing_view(request):
     """Renders the premium SaaS pricing page with active subscription info."""
     get_or_create_plans()
     is_logged_in = request.user.is_authenticated and request.session.get('is_dqr_user')
-    
+
     current_subscription = None
     if is_logged_in:
         from .limit_service import PlanLimitService
         current_subscription = PlanLimitService.get_active_subscription(request.user)
-            
-    plans = Plan.objects.filter(is_active=True).order_by('display_order', 'id')
-    
+
+    plans = Plan.objects.filter(is_active=True).prefetch_related(
+        'sections__features'
+    ).order_by('display_order', 'id')
+
     return render(request, 'services/pricing.html', {
         'is_logged_in': is_logged_in,
         'current_subscription': current_subscription,
