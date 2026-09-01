@@ -42,8 +42,8 @@ import base64
 def dqr_login_required(view_func):
     """Decorator: redirect to pricing if not authenticated or not a QR user."""
     def wrapper(request, *args, **kwargs):
-        # Isolation: Check if authenticated
-        if not request.user.is_authenticated:
+        # Isolation: Check if authenticated AND has the dqr flag
+        if not request.user.is_authenticated or not request.session.get('is_dqr_user'):
             from django.urls import reverse
             login_url = reverse('dynamic_qr:login')
             next_url = request.get_full_path()
@@ -178,13 +178,14 @@ def dqr_repair_db(request):
 # ═══════════════════════════════════════════════════════════════
 def dqr_login_view(request):
     """Login page for dynamic QR feature only."""
-    if request.user.is_authenticated:
+    if request.user.is_authenticated and request.session.get('is_dqr_user'):
+        if request.user.is_superuser:
+            return redirect('custom_admin:dashboard')
+
         next_url = request.GET.get('next', '')
         if next_url:
             return redirect(next_url)
             
-        if request.user.is_superuser:
-            return redirect('custom_admin:dashboard')
         elif request.user.is_staff:
             return redirect('admin:index')
         return redirect('dynamic_qr:dashboard')
@@ -207,14 +208,17 @@ def dqr_login_view(request):
 
         if user is not None:
             login(request, user)
+            # Mark this session as a Dynamic QR session for isolation
+            request.session['is_dqr_user'] = True
             
+            # Redirect superusers to custom admin unconditionally
+            if user.is_superuser:
+                return redirect('custom_admin:dashboard')
+
             next_url = request.GET.get('next', '')
             if next_url:
                 return redirect(next_url)
             
-            # Redirect superusers to custom admin, staff to default admin
-            if user.is_superuser:
-                return redirect('custom_admin:dashboard')
             elif user.is_staff:
                 return redirect('admin:index')
                 
@@ -230,7 +234,7 @@ def dqr_login_view(request):
 # ═══════════════════════════════════════════════════════════════
 def dqr_register_view(request):
     """Register page for dynamic QR feature only."""
-    if request.user.is_authenticated:
+    if request.user.is_authenticated and request.session.get('is_dqr_user'):
         next_url = request.GET.get('next', '')
         return redirect(next_url if next_url else 'dynamic_qr:dashboard')
 
@@ -240,6 +244,7 @@ def dqr_register_view(request):
         if form.is_valid():
             user = form.save()
             login(request, user)
+            request.session['is_dqr_user'] = True
             next_url = request.GET.get('next', '')
             return redirect(next_url if next_url else 'dynamic_qr:dashboard')
 

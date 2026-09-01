@@ -6,7 +6,7 @@ class SubscriptionMiddleware:
         self.get_response = get_response
 
     def __call__(self, request):
-        if request.user.is_authenticated:
+        if request.user.is_authenticated and request.session.get('is_dqr_user'):
             request.subscription = get_user_subscription(request.user)
         else:
             request.subscription = None
