@@ -1,0 +1,7 @@
+{% extends 'errors/base.html' %}
+
+{% block error_title %}Conflict{% endblock %}
+{% block error_code %}409{% endblock %}
+{% block error_icon %}<i data-lucide="git-merge" class="w-12 h-12 text-white"></i>{% endblock %}
+{% block error_heading %}Conflict{% endblock %}
+{% block error_description %}The request could not be completed due to a conflict with the current state of the resource.{% endblock %}

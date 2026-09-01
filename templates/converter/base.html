@@ -206,8 +206,8 @@
             align-items: center;
             gap: 4px;
             line-height: 1;
-            padding-left: 8px;
-            padding-right: 8px;
+            padding-left: 6px;
+            padding-right: 6px;
             font-size: 12px;
             letter-spacing: 0.05em;
         }
@@ -215,8 +215,8 @@
         @media (min-width: 1280px) {
             #navbar .desktop-nav .group>button {
                 gap: 6px;
-                padding-left: 16px;
-                padding-right: 16px;
+                padding-left: 10px;
+                padding-right: 10px;
                 font-size: 14px;
                 letter-spacing: 0.1em;
             }
@@ -250,7 +250,8 @@
         #mega-menu-all-pdf,
         #mega-menu-image-tools,
         #mega-menu-important-tools,
-        #mega-menu-video-tools {
+        #mega-menu-video-tools,
+        #mega-menu-link-tools {
             visibility: hidden;
             opacity: 0;
             pointer-events: none;
@@ -260,7 +261,8 @@
         #mega-menu-all-pdf::before,
         #mega-menu-image-tools::before,
         #mega-menu-important-tools::before,
-        #mega-menu-video-tools::before {
+        #mega-menu-video-tools::before,
+        #mega-menu-link-tools::before {
             content: '';
             position: absolute;
             top: -30px;
@@ -273,7 +275,8 @@
         .group:hover>#mega-menu-all-pdf,
         .group:hover>#mega-menu-image-tools,
         .group:hover>#mega-menu-important-tools,
-        .group:hover>#mega-menu-video-tools {
+        .group:hover>#mega-menu-video-tools,
+        .group:hover>#mega-menu-link-tools {
             visibility: visible;
             opacity: 1;
             pointer-events: auto;
@@ -307,8 +310,8 @@
 
                 <!-- Desktop Nav: Properly Aligned -->
                 <div class="desktop-nav hidden md:flex items-center flex-1 justify-between ml-4 lg:ml-12 xl:ml-16 gap-3 lg:gap-6 xl:gap-10">
-                    <!-- Left Side Tools -->
-                    <div class="flex items-center gap-1 lg:gap-3 xl:gap-4">
+                <!-- Left Side Tools -->
+                    <div class="flex items-center gap-0 lg:gap-1 xl:gap-2">
                         <!-- Mega Menu: All PDF Tools -->
                         <div class="relative group">
                             <!-- Invisible Hover Bridge -->
@@ -642,6 +645,40 @@
                             </div>
                         </div>
 
+                        <!-- Link Tools Menu -->
+                        <div class="relative group">
+                            <!-- Invisible Hover Bridge -->
+                            <div class="absolute top-full left-1/2 -translate-x-1/2 w-[120%] h-[35px] bg-transparent z-40"></div>
+                            <button
+                                class="flex items-center gap-1.5 px-4 py-2 text-[14px] font-black text-surface-900 transition-all uppercase tracking-widest hover:text-brand-600">
+                                Link Tools <i data-lucide="chevron-down"
+                                    class="w-4 h-4 transition-transform group-hover:rotate-180"></i>
+                            </button>
+                            <div id="mega-menu-link-tools"
+                                class="absolute top-[65px] left-1/2 -translate-x-1/2 w-[240px] bg-white border border-surface-100 shadow-mega rounded-3xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 translate-y-2 group-hover:translate-y-0 z-50 overflow-hidden">
+                                <div class="grid grid-cols-1 max-h-[70vh] overflow-y-auto">
+                                    <div class="p-6 space-y-4">
+                                        <div class="flex items-center gap-3 mb-2 px-3">
+                                            <div class="w-1.5 h-6 bg-brand-500 rounded-full"></div>
+                                            <h3 class="text-[11px] font-black text-surface-400 uppercase tracking-[0.2em]">Link Tools</h3>
+                                        </div>
+                                        <div class="grid gap-0.5">
+                                            <a href="{% if request.user.is_authenticated and request.session.is_dqr_user %}{% url 'dynamic_qr:dashboard' %}{% else %}{% url 'services:pricing' %}{% endif %}"
+                                                class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="qr-code" class="w-4 h-4 text-brand-600"></i>
+                                                <span class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Dynamic QR</span>
+                                            </a>
+                                            <a href="{% if request.user.is_authenticated and request.session.is_dqr_user %}{% url 'dynamic_qr:short_url' %}{% else %}{% url 'services:pricing' %}{% endif %}"
+                                                class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="link" class="w-4 h-4 text-brand-600"></i>
+                                                <span class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Short URL</span>
+                                            </a>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
                         <!-- Important Tools (Styled like Image Tools mega) -->
                         <div class="relative group">
                             <!-- Invisible Hover Bridge -->
@@ -687,16 +724,6 @@
                     </div>
                 </div>
             </div>
-
-                        <!-- Dynamic QR Nav Link (Desktop) -->
-                        <a href="{% url 'services:pricing' %}"
-                            id="nav-dynamic-qr"
-                            class="hidden lg:flex items-center gap-1.5 px-2.5 xl:px-3.5 py-2 rounded-xl border border-brand-200 bg-brand-50 text-brand-700 text-[11px] xl:text-[13px] font-black uppercase tracking-widest transition-all duration-200 hover:bg-brand-100 hover:border-brand-400 hover:text-brand-800 hover:shadow-sm hover:-translate-y-px active:translate-y-0 whitespace-nowrap"
-                            style="letter-spacing: 0.08em;">
-                            <i data-lucide="qr-code" class="w-4 h-4"></i>
-                            <span class="hidden xl:inline">Dynamic QR</span>
-                            <span class="xl:hidden">QR</span>
-                        </a>
 
             <!-- Search Bar: Properly Aligned Right -->
                     <div class="relative flex-1 min-w-0 max-w-xs lg:max-w-sm group/search">
@@ -895,10 +922,10 @@
             display: flex;
             align-items: center;
             gap: 7px;
+            position: relative;
         }
 
         .footer-security-tooltip {
-            position: relative;
             display: inline-flex;
             align-items: center;
         }
@@ -916,8 +943,8 @@
 
         .footer-security-message {
             position: absolute;
-            right: 0;
-            left: auto;
+            left: 0;
+            right: auto;
             bottom: calc(100% + 10px);
             width: max-content;
             max-width: min(320px, calc(100vw - 2rem));

@@ -21,15 +21,17 @@
     </div>
     {% endif %}
 
-    <form method="POST" action="{% url 'dynamic_qr:register' %}{% if request.GET.next %}?next={{ request.GET.next|urlencode }}{% endif %}">
+    <form id="register-form" method="POST" action="{% url 'dynamic_qr:register' %}{% if request.GET.next %}?next={{ request.GET.next|urlencode }}{% endif %}">
         {% csrf_token %}
         <div class="field-group">
             <label class="field-label">Username</label>
-            <input type="text" name="username" class="dqr-field" placeholder="Choose a username" value="{{ form.username.value|default:'' }}" required>
+            <input type="text" id="username" name="username" class="dqr-field" placeholder="Choose a username" value="{{ form.username.value|default:'' }}" required>
+            <div id="username-msg" style="font-size:12px; margin-top:4px; display:none; font-weight:600;"></div>
         </div>
         <div class="field-group">
             <label class="field-label">Email Address</label>
-            <input type="email" name="email" class="dqr-field" placeholder="your@email.com" value="{{ form.email.value|default:'' }}" required>
+            <input type="email" id="email" name="email" class="dqr-field" placeholder="your@email.com" value="{{ form.email.value|default:'' }}" required>
+            <div id="email-msg" style="font-size:12px; margin-top:4px; display:none; font-weight:600;"></div>
         </div>
         <div class="field-group">
             <label class="field-label">Password</label>
@@ -39,6 +41,7 @@
                     <i data-lucide="eye" style="width:18px;height:18px"></i>
                 </button>
             </div>
+            <div id="pass-msg" style="font-size:12px; margin-top:4px; display:none; font-weight:600;"></div>
             <div style="display:flex;gap:10px;margin-top:8px;align-items:center;">
                 <button type="button" id="gen-pass" class="btn-primary" style="width:auto;padding:8px 12px;font-size:11px;letter-spacing:0.08em;">
                     Generate Password
@@ -54,8 +57,9 @@
                     <i data-lucide="eye" style="width:18px;height:18px"></i>
                 </button>
             </div>
+            <div id="confirm-msg" style="font-size:12px; margin-top:4px; display:none; font-weight:600;"></div>
         </div>
-        <button type="submit" class="btn-primary">
+        <button type="submit" id="register-submit-btn" class="btn-primary" disabled style="opacity:0.6;cursor:not-allowed;">
             <span style="display:flex;align-items:center;justify-content:center;gap:8px">
                 <i data-lucide="rocket" style="width:18px;height:18px"></i>
                 Create Account
@@ -84,29 +88,192 @@
         return pwd.split('').sort(() => Math.random() - 0.5).join('');
     }
 
-    function strengthHint(p) {
-        const rules = [
-            { ok: p.length >= 12, msg: "12+ chars" },
-            { ok: /[A-Z]/.test(p), msg: "uppercase" },
-            { ok: /[a-z]/.test(p), msg: "lowercase" },
-            { ok: /[0-9]/.test(p), msg: "number" },
-            { ok: /[^A-Za-z0-9]/.test(p), msg: "symbol" },
-        ];
-        const passed = rules.filter(r => r.ok).length;
-        return `${passed}/5 rules met: ` + rules.map(r => (r.ok ? "✓" : "✗") + " " + r.msg).join(", ");
+    function checkPasswordStrength(p) {
+        if (!p) return { ok: false, msg: "" };
+        if (p.length < 8) return { ok: false, msg: "Password must be at least 8 characters" };
+        if (!/[A-Z]/.test(p)) return { ok: false, msg: "Password must contain an uppercase letter" };
+        if (!/[a-z]/.test(p)) return { ok: false, msg: "Password must contain a lowercase letter" };
+        if (!/[0-9]/.test(p)) return { ok: false, msg: "Password must contain a number" };
+        return { ok: true, msg: "Strong password" };
     }
 
+    const form = document.getElementById('register-form');
+    const usernameInput = document.getElementById('username');
+    const emailInput = document.getElementById('email');
     const p1 = document.getElementById('password1');
     const p2 = document.getElementById('password2');
+    
+    const userMsg = document.getElementById('username-msg');
+    const emailMsg = document.getElementById('email-msg');
+    const passMsg = document.getElementById('pass-msg');
+    const confirmMsg = document.getElementById('confirm-msg');
+    
+    const submitBtn = document.getElementById('register-submit-btn');
     const hint = document.getElementById('pass-hint');
     const genBtn = document.getElementById('gen-pass');
+    
+    let validState = { username: false, email: false, pass1: false, pass2: false };
+    let timers = { username: null, email: null };
+    let abortControllers = { username: null, email: null };
 
-    if (p1 && hint) p1.addEventListener('input', () => hint.textContent = strengthHint(p1.value));
-    if (genBtn && p1 && p2) genBtn.addEventListener('click', () => {
-        const pwd = genStrongPassword(16);
-        p1.value = pwd;
-        p2.value = pwd;
-        hint.textContent = strengthHint(pwd);
+    function checkFormValidity() {
+        if (validState.username && validState.email && validState.pass1 && validState.pass2) {
+            submitBtn.disabled = false;
+            submitBtn.style.opacity = '1';
+            submitBtn.style.cursor = 'pointer';
+        } else {
+            submitBtn.disabled = true;
+            submitBtn.style.opacity = '0.6';
+            submitBtn.style.cursor = 'not-allowed';
+        }
+    }
+
+    function showMsg(el, text, isOk, isChecking = false) {
+        el.style.display = 'block';
+        el.style.color = isChecking ? '#64748b' : (isOk ? '#22c55e' : '#ef4444');
+        el.textContent = isChecking ? 'Checking...' : (isOk ? `✓ ${text}` : `✕ ${text}`);
+    }
+
+    // Username Validation
+    usernameInput.addEventListener('input', function() {
+        const val = this.value.trim();
+        validState.username = false;
+        checkFormValidity();
+        
+        if (timers.username) clearTimeout(timers.username);
+        if (abortControllers.username) abortControllers.username.abort();
+        
+        if (!val) {
+            userMsg.style.display = 'none';
+            return;
+        }
+        if (val.length < 3) {
+            showMsg(userMsg, 'Username must be at least 3 characters', false);
+            return;
+        }
+        if (!/^[a-zA-Z0-9_]+$/.test(val)) {
+            showMsg(userMsg, 'Username must contain only valid characters (letters, numbers, _)', false);
+            return;
+        }
+        
+        showMsg(userMsg, '', false, true);
+        timers.username = setTimeout(async () => {
+            abortControllers.username = new AbortController();
+            try {
+                const res = await fetch(`/qr/api/check-username/?username=${encodeURIComponent(val)}`, {
+                    signal: abortControllers.username.signal
+                });
+                const data = await res.json();
+                if (data.valid && data.available) {
+                    validState.username = true;
+                    showMsg(userMsg, data.message, true);
+                } else {
+                    showMsg(userMsg, data.message, false);
+                }
+                checkFormValidity();
+            } catch (e) {
+                if (e.name !== 'AbortError') console.error(e);
+            }
+        }, 500);
+    });
+
+    // Email Validation
+    emailInput.addEventListener('input', function() {
+        const val = this.value.trim();
+        validState.email = false;
+        checkFormValidity();
+        
+        if (timers.email) clearTimeout(timers.email);
+        if (abortControllers.email) abortControllers.email.abort();
+        
+        if (!val) {
+            emailMsg.style.display = 'none';
+            return;
+        }
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        if (!emailRegex.test(val)) {
+            showMsg(emailMsg, 'Please enter a valid email address', false);
+            return;
+        }
+        
+        showMsg(emailMsg, '', false, true);
+        timers.email = setTimeout(async () => {
+            abortControllers.email = new AbortController();
+            try {
+                const res = await fetch(`/qr/api/check-email/?email=${encodeURIComponent(val)}`, {
+                    signal: abortControllers.email.signal
+                });
+                const data = await res.json();
+                if (data.valid && data.available) {
+                    validState.email = true;
+                    showMsg(emailMsg, data.message, true);
+                } else {
+                    showMsg(emailMsg, data.message, false);
+                }
+                checkFormValidity();
+            } catch (e) {
+                if (e.name !== 'AbortError') console.error(e);
+            }
+        }, 500);
+    });
+
+    // Password Validation
+    function validatePasswords() {
+        const v1 = p1.value;
+        const v2 = p2.value;
+        
+        // Pass 1
+        validState.pass1 = false;
+        if (!v1) {
+            passMsg.style.display = 'none';
+        } else {
+            const res = checkPasswordStrength(v1);
+            showMsg(passMsg, res.msg, res.ok);
+            if (res.ok) validState.pass1 = true;
+        }
+        
+        // Pass 2
+        validState.pass2 = false;
+        if (!v2) {
+            confirmMsg.style.display = 'none';
+        } else if (v1 !== v2) {
+            showMsg(confirmMsg, 'Passwords do not match', false);
+        } else {
+            showMsg(confirmMsg, 'Passwords match', true);
+            validState.pass2 = true;
+        }
+        checkFormValidity();
+    }
+
+    if (p1) p1.addEventListener('input', validatePasswords);
+    if (p2) p2.addEventListener('input', validatePasswords);
+
+    if (genBtn && p1 && p2) {
+        genBtn.addEventListener('click', () => {
+            const pwd = genStrongPassword(16);
+            p1.value = pwd;
+            p2.value = pwd;
+            validatePasswords();
+            
+            // Re-trigger visual strength hint if needed
+            p1.dispatchEvent(new Event('input'));
+        });
+    }
+
+    // Existing show/hide pass functionality (already in auth_base or here via class toggle-pass)
+    document.querySelectorAll('.toggle-pass').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const input = this.previousElementSibling;
+            const icon = this.querySelector('i');
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.setAttribute('data-lucide', 'eye-off');
+            } else {
+                input.type = 'password';
+                icon.setAttribute('data-lucide', 'eye');
+            }
+            if (window.lucide) lucide.createIcons();
+        });
     });
 </script>
 {% endblock %}

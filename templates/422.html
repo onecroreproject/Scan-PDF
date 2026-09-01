@@ -1,0 +1,7 @@
+{% extends 'errors/base.html' %}
+
+{% block error_title %}Unprocessable Entity{% endblock %}
+{% block error_code %}422{% endblock %}
+{% block error_icon %}<i data-lucide="file-x" class="w-12 h-12 text-white"></i>{% endblock %}
+{% block error_heading %}Unprocessable Entity{% endblock %}
+{% block error_description %}The request was formatted correctly but contains invalid data.{% endblock %}

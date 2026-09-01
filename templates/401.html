@@ -1,0 +1,7 @@
+{% extends 'errors/base.html' %}
+
+{% block error_title %}Unauthorized{% endblock %}
+{% block error_code %}401{% endblock %}
+{% block error_icon %}<i data-lucide="lock" class="w-12 h-12 text-white"></i>{% endblock %}
+{% block error_heading %}Unauthorized{% endblock %}
+{% block error_description %}You must authenticate to access this page.{% endblock %}

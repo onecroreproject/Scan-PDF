@@ -15,34 +15,119 @@
 </div>
 {% endif %}
 
-<form method="POST" action="{% url 'dynamic_qr:login' %}{% if request.GET.next %}?next={{ request.GET.next|urlencode }}{% endif %}">
+<form id="login-form" method="POST" action="{% url 'dynamic_qr:login' %}{% if request.GET.next %}?next={{ request.GET.next|urlencode }}{% endif %}">
     {% csrf_token %}
     <div class="field-group">
         <label class="field-label">Username or Email</label>
-        <input type="text" name="username" class="dqr-field" placeholder="Enter username or email"
+        <input type="text" id="username" name="username" class="dqr-field" placeholder="Enter username or email"
             autocomplete="username" required>
+        <div id="username-error" style="color:#ef4444; font-size:12px; margin-top:4px; display:none;"></div>
     </div>
     <div class="field-group">
         <label class="field-label">Password</label>
         <div class="password-wrap">
-            <input type="password" name="password" class="dqr-field" placeholder="••••••••"
+            <input type="password" id="password" name="password" class="dqr-field" placeholder="••••••••"
                 autocomplete="current-password" required>
-            <button type="button" class="toggle-pass">
-                <i data-lucide="eye" style="width:18px;height:18px"></i>
+            <button type="button" class="toggle-pass" id="toggle-pass-btn">
+                <i data-lucide="eye" id="toggle-pass-icon" style="width:18px;height:18px"></i>
             </button>
         </div>
+        <div id="password-error" style="color:#ef4444; font-size:12px; margin-top:4px; display:none;"></div>
     </div>
     <div style="text-align:right;margin-bottom:20px;">
         <a href="{% url 'dynamic_qr:forgot_password' %}"
             style="color:#818cf8;font-size:12px;font-weight:600;text-decoration:none;">Forgot Password?</a>
     </div>
-    <button type="submit" class="btn-primary">
-        <span style="display:flex;align-items:center;justify-content:center;gap:8px">
-            <i data-lucide="log-in" style="width:18px;height:18px"></i>
-            Sign In
+    <button type="submit" class="btn-primary" id="login-submit-btn">
+        <span style="display:flex;align-items:center;justify-content:center;gap:8px" id="login-btn-text">
+            <i data-lucide="log-in" style="width:18px;height:18px" id="login-btn-icon"></i>
+            <span>Sign In</span>
         </span>
     </button>
 </form>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const form = document.getElementById('login-form');
+        const usernameInput = document.getElementById('username');
+        const passwordInput = document.getElementById('password');
+        const usernameError = document.getElementById('username-error');
+        const passwordError = document.getElementById('password-error');
+        const submitBtn = document.getElementById('login-submit-btn');
+        const btnText = document.querySelector('#login-btn-text span');
+        const btnIcon = document.getElementById('login-btn-icon');
+        const togglePassBtn = document.getElementById('toggle-pass-btn');
+        const togglePassIcon = document.getElementById('toggle-pass-icon');
+
+        // Toggle password visibility
+        if (togglePassBtn) {
+            togglePassBtn.addEventListener('click', function() {
+                if (passwordInput.type === 'password') {
+                    passwordInput.type = 'text';
+                    togglePassIcon.setAttribute('data-lucide', 'eye-off');
+                } else {
+                    passwordInput.type = 'password';
+                    togglePassIcon.setAttribute('data-lucide', 'eye');
+                }
+                if (window.lucide) {
+                    lucide.createIcons();
+                }
+            });
+        }
+
+        function validateUsername() {
+            const val = usernameInput.value.trim();
+            if (!val) {
+                usernameError.textContent = 'Username or email is required';
+                usernameError.style.display = 'block';
+                return false;
+            } else if (val.includes('@')) {
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(val)) {
+                    usernameError.textContent = 'Please enter a valid email address';
+                    usernameError.style.display = 'block';
+                    return false;
+                }
+            }
+            usernameError.style.display = 'none';
+            return true;
+        }
+
+        function validatePassword() {
+            if (!passwordInput.value) {
+                passwordError.textContent = 'Password is required';
+                passwordError.style.display = 'block';
+                return false;
+            }
+            passwordError.style.display = 'none';
+            return true;
+        }
+
+        usernameInput.addEventListener('input', validateUsername);
+        passwordInput.addEventListener('input', validatePassword);
+
+        form.addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            const isUserValid = validateUsername();
+            const isPassValid = validatePassword();
+            
+            // Trim on submit
+            usernameInput.value = usernameInput.value.trim();
+            
+            if (isUserValid && isPassValid) {
+                // Show loading state
+                submitBtn.disabled = true;
+                submitBtn.style.opacity = '0.7';
+                submitBtn.style.cursor = 'not-allowed';
+                btnText.textContent = 'Signing In...';
+                
+                // Allow form to submit conventionally
+                form.submit();
+            }
+        });
+    });
+</script>
 
 <div class="auth-links">
     <span style="color:#64748b">Don't have an account?</span>
