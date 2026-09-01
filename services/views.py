@@ -141,7 +141,7 @@ def _seed_default_sections():
 def pricing_view(request):
     """Renders the premium SaaS pricing page with active subscription info."""
     get_or_create_plans()
-    is_logged_in = request.user.is_authenticated
+    is_logged_in = request.user.is_authenticated and request.session.get('is_dqr_user')
 
     current_subscription = None
     if is_logged_in:
@@ -162,8 +162,9 @@ def pricing_view(request):
 @login_required(login_url='dynamic_qr:login')
 def payment_confirm_view(request, plan_code, cycle):
     """Summarizes checkout and initiates payment simulation."""
-    if not request.user.is_authenticated:
+    if not request.session.get('is_dqr_user'):
         return redirect('dynamic_qr:login')
+        
     get_or_create_plans()
     plan = get_object_or_404(Plan, code=plan_code)
     
