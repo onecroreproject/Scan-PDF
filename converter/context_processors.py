@@ -77,7 +77,7 @@ def tools_processor(request):
     }
 
     # Manually add Dynamic QR and Short URL to search
-    is_dqr_user = request.session.get('is_dqr_user', False)
+    is_dqr_user = request.user.is_authenticated
     
     metadata['dynamic-qr'] = {
         'title': 'Dynamic QR',
