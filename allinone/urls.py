@@ -8,9 +8,14 @@ from django.conf.urls.static import static
 
 from django.views.generic.base import RedirectView
 from django.contrib.staticfiles.storage import staticfiles_storage
+from django.http import HttpResponse
+
+def ads_txt(request):
+    return HttpResponse("google.com, pub-9024238607769692, DIRECT, f08c47fec0942fa0", content_type="text/plain")
 
 urlpatterns = [
     path('admin/', admin.site.urls),
+    path('ads.txt', ads_txt),
     path('', include('converter.urls')),
     path('image/', include('image_processor.urls')),
     path('audio/', include('audio_processor.urls')),

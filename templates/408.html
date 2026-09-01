@@ -1,0 +1,7 @@
+{% extends 'errors/base.html' %}
+
+{% block error_title %}Request Timeout{% endblock %}
+{% block error_code %}408{% endblock %}
+{% block error_icon %}<i data-lucide="clock" class="w-12 h-12 text-white"></i>{% endblock %}
+{% block error_heading %}Request Timeout{% endblock %}
+{% block error_description %}The server timed out waiting for the request.{% endblock %}

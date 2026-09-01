@@ -54,6 +54,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'services.middleware.SubscriptionMiddleware',
+    'allinone.middleware.CustomErrorPageMiddleware',
 ]
 
 ROOT_URLCONF = 'allinone.urls'

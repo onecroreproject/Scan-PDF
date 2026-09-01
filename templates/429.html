@@ -1,0 +1,7 @@
+{% extends 'errors/base.html' %}
+
+{% block error_title %}Too Many Requests{% endblock %}
+{% block error_code %}429{% endblock %}
+{% block error_icon %}<i data-lucide="gauge" class="w-12 h-12 text-white"></i>{% endblock %}
+{% block error_heading %}Too Many Requests{% endblock %}
+{% block error_description %}You've sent too many requests in a given amount of time. Please slow down.{% endblock %}

@@ -40,11 +40,14 @@ import base64
 # HELPER: Check if user is logged in for Dynamic QR
 # ═══════════════════════════════════════════════════════════════
 def dqr_login_required(view_func):
-    """Decorator: redirect to dynamic QR login if not authenticated or not a QR user."""
+    """Decorator: redirect to pricing if not authenticated or not a QR user."""
     def wrapper(request, *args, **kwargs):
         # Isolation: Check if authenticated AND has the dqr flag
         if not request.user.is_authenticated or not request.session.get('is_dqr_user'):
-            return redirect('dynamic_qr:login')
+            from django.urls import reverse
+            login_url = reverse('dynamic_qr:login')
+            next_url = request.get_full_path()
+            return redirect(f"{login_url}?next={next_url}")
         return view_func(request, *args, **kwargs)
     return wrapper
 
@@ -219,7 +222,7 @@ def dqr_login_view(request):
                 
             return redirect('dynamic_qr:dashboard')
         else:
-            error = "Invalid username/email or password."
+            error = "Invalid username or password"
 
     return render(request, 'dynamic_qr/login.html', {'error': error})
 
@@ -1670,5 +1673,41 @@ def dqr_download_view(request, qr_id):
     elif fmt == 'svg': ct = 'image/svg+xml'
     
     response = create_cleanup_response(output_path, content_type=ct)
-    response['Content-Disposition'] = f'attachment; filename="QR_{qr.short_code}.{fmt}"'
+    response['Content-Disposition'] = f'attachment; filename="qr_{qr.short_code}.{fmt}"'
     return response
+
+
+# ═══════════════════════════════════════════════════════════════
+# VALIDATION API
+# ═══════════════════════════════════════════════════════════════
+def dqr_check_username_view(request):
+    import re
+    username = request.GET.get('username', '').strip()
+    if not username:
+        return JsonResponse({'valid': False, 'message': 'Username is required'})
+    
+    if len(username) < 3:
+        return JsonResponse({'valid': False, 'message': 'Username is too short'})
+    
+    if not re.match(r'^[\w]+\Z', username):
+        return JsonResponse({'valid': False, 'message': 'Username must contain only valid characters'})
+        
+    if User.objects.filter(username__iexact=username).exists():
+        return JsonResponse({'valid': False, 'available': False, 'message': 'Username is already taken'})
+        
+    return JsonResponse({'valid': True, 'available': True, 'message': 'Username is available'})
+
+def dqr_check_email_view(request):
+    import re
+    email = request.GET.get('email', '').strip()
+    if not email:
+        return JsonResponse({'valid': False, 'message': 'Email is required'})
+        
+    email_regex = r'^[^\s@]+@[^\s@]+\.[^\s@]+$'
+    if not re.match(email_regex, email):
+        return JsonResponse({'valid': False, 'message': 'Please enter a valid email address'})
+        
+    if User.objects.filter(email__iexact=email).exists():
+        return JsonResponse({'valid': False, 'available': False, 'message': 'Email is already registered'})
+        
+    return JsonResponse({'valid': True, 'available': True, 'message': 'Email is available'})
