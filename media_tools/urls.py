@@ -2,9 +2,14 @@ from django.urls import path
 
 from . import views
 
+
+from .video_views import (
+    crop_video,resize_video,
+)
+
 app_name="media_tools"
 
-urlpatterns =[  
+urlpatterns =[
 
     path(
     "trim-video/",
@@ -23,5 +28,17 @@ urlpatterns =[
         name="crop_video",
     ),
 
+   
+    path(
+        "crop/",
+        crop_video,
+        name="crop",
+    ),
+
+path(
+    "video/resize/",
+    resize_video,
+    name="resize_video",
+),
 
 ]

@@ -2,32 +2,44 @@
 {% load static %}
 
 {% block content %}
+
 <section class="min-h-[40vh] pt-10 sm:pt-14 pb-6 sm:pb-8 relative overflow-hidden">
-    <!-- Background Accents -->
+
+    <!-- Background -->
     <div class="absolute inset-0 bg-gradient-to-b from-surface-50 via-white to-surface-50 -z-10"></div>
+
     <div class="absolute top-1/4 left-[5%] w-[400px] h-[400px] bg-brand-100/20 rounded-full blur-[100px] -z-10 animate-pulse-slow"></div>
+
     <div class="absolute bottom-1/4 right-[5%] w-[350px] h-[350px] bg-purple-100/20 rounded-full blur-[100px] -z-10 animate-pulse-slow-delayed"></div>
+
 
     <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
-        <!-- Tool Hero Section -->
-    
-
-        <!-- Tool Action Area -->
         <div class="max-w-5xl mx-auto">
+
             <div class="tool-card-container">
-                {% block tool_content %}{% endblock %}
+
+                {% block tool_content %}
+                {% endblock %}
+
             </div>
 
         </div>
+
     </div>
+
 </section>
+
 {% endblock %}
+
 
 {% block extra_head %}
-    {% block tool_head %}{% endblock %}
+    {% block tool_head %}
+    {% endblock %}
 {% endblock %}
 
+
 {% block extra_scripts %}
-    {% block tool_scripts %}{% endblock %}
+    {% block tool_scripts %}
+    {% endblock %}
 {% endblock %}

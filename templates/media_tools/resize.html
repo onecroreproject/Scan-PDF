@@ -1,0 +1,1336 @@
+{% extends 'converter/tool_base.html' %}
+{% load static %}
+
+{% block tool_content %}
+
+<style>
+/* =========================================================
+   RESIZE VIDEO ONLY
+   Scoped so it does NOT affect the navbar/base template
+========================================================= */
+
+.resize-video-page {
+    width: 100%;
+    max-width: 1450px;
+    margin: 0 auto;
+    padding: 40px 24px;
+    color: #18181b;
+}
+
+/* =========================
+   HEADER
+========================= */
+
+.resize-video-page .page-header {
+    text-align: center;
+    margin-bottom: 40px;
+}
+
+.resize-video-page .page-title {
+    margin: 0 0 14px;
+    font-size: clamp(1.75rem, 5vw + 0.75rem, 3.5rem);
+    line-height: 0.95;
+    font-weight: 900;
+    letter-spacing: -0.04em;
+    color: #1f2937;
+}
+
+.resize-video-page .gradient-text {
+    display: block;
+    background: linear-gradient(
+        135deg,
+        #7c3aed,
+        #a855f7,
+        #ec4899
+    );
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.resize-video-page .page-description {
+    max-width: 760px;
+    margin: 0 auto;
+    color: #6b7280;
+    font-size: 15px;
+    line-height: 1.7;
+}
+
+.resize-video-page .page-keywords {
+    max-width: 760px;
+    margin: 10px auto 0;
+    color: #9ca3af;
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+/* =========================
+   UPLOAD
+========================= */
+
+.resize-video-page #uploadSection {
+    margin-top: 35px;
+}
+
+.resize-video-page .upload-card {
+    background: #faf5ff;
+    border: 1px solid #ede9fe;
+    border-radius: 24px;
+    padding: 50px 30px;
+    text-align: center;
+}
+
+.resize-video-page .upload-icon {
+    width: 72px;
+    height: 72px;
+    margin: 0 auto 20px;
+    border-radius: 20px;
+    background: #ede9fe;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 32px;
+}
+
+.resize-video-page .upload-title {
+    margin: 0;
+    font-size: 25px;
+    font-weight: 700;
+}
+
+.resize-video-page .upload-description {
+    margin: 10px auto 25px;
+    max-width: 600px;
+    color: #71717a;
+    line-height: 1.6;
+}
+
+.resize-video-page .gradient-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    border-radius: 12px;
+    padding: 13px 25px;
+    color: #ffffff;
+    background: linear-gradient(
+        135deg,
+        #6d28d9 0%,
+        #7c3aed 45%,
+        #a855f7 100%
+    );
+    font-size: 15px;
+    font-weight: 700;
+    cursor: pointer;
+    text-decoration: none;
+    transition: all 0.2s ease;
+}
+
+.resize-video-page .gradient-button:hover {
+    color: #ffffff;
+    transform: translateY(-1px);
+    box-shadow: 0 8px 22px rgba(109, 40, 217, 0.25);
+}
+
+.resize-video-page #id_video {
+    display: none;
+}
+
+/* =========================
+   EDITOR
+========================= */
+
+.resize-video-page #editorSection {
+    display: none;
+    margin-top: 35px;
+    background: #09090b;
+    border-radius: 24px;
+    overflow: hidden;
+    border: 1px solid #27272a;
+}
+
+.resize-video-page .editor-header {
+    padding: 16px 20px;
+    background: #18181b;
+    border-bottom: 1px solid #27272a;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 15px;
+}
+
+.resize-video-page .editor-header-title {
+    color: #ffffff;
+    font-size: 17px;
+    font-weight: 700;
+}
+
+.resize-video-page .editor-file-name {
+    color: #a1a1aa;
+    font-size: 13px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.resize-video-page .editor-main {
+    display: grid;
+    grid-template-columns: 70% 30%;
+    min-height: 650px;
+}
+
+/* =========================
+   VIDEO
+========================= */
+
+.resize-video-page .video-workspace {
+    min-width: 0;
+    padding: 25px;
+    background: #09090b;
+    display: flex;
+    flex-direction: column;
+}
+
+.resize-video-page .video-stage-wrapper {
+    flex: 1;
+    min-height: 500px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background:
+        repeating-conic-gradient(
+            #18181b 0% 25%,
+            #111113 0% 50%
+        ) 50% / 24px 24px;
+    border-radius: 16px;
+    overflow: hidden;
+    position: relative;
+}
+
+.resize-video-page .video-stage {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    background: #000000;
+    transition: width 0.2s ease, height 0.2s ease;
+}
+
+.resize-video-page #videoPreview {
+    display: block;
+    max-width: none;
+    max-height: none;
+    object-fit: contain;
+    transform-origin: center center;
+    transition: transform 0.08s linear;
+    user-select: none;
+}
+
+.resize-video-page .video-info {
+    margin-top: 15px;
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    color: #a1a1aa;
+    font-size: 12px;
+}
+
+/* =========================
+   OPTIONS
+========================= */
+
+.resize-video-page .options-panel {
+    background: #18181b;
+    border-left: 1px solid #27272a;
+    padding: 22px;
+    overflow-y: auto;
+}
+
+.resize-video-page .option-section {
+    padding-bottom: 22px;
+    margin-bottom: 22px;
+    border-bottom: 1px solid #27272a;
+}
+
+.resize-video-page .option-section:last-child {
+    border-bottom: none;
+}
+
+.resize-video-page .option-title {
+    margin-bottom: 12px;
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+/* =========================
+   DIMENSIONS
+========================= */
+
+.resize-video-page .dimension-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+}
+
+.resize-video-page .field-label {
+    display: block;
+    margin-bottom: 6px;
+    color: #a1a1aa;
+    font-size: 12px;
+}
+
+.resize-video-page .dark-input {
+    width: 100%;
+    padding: 10px 11px;
+    border: 1px solid #3f3f46;
+    border-radius: 9px;
+    outline: none;
+    background: #09090b;
+    color: #ffffff;
+}
+
+.resize-video-page .dark-input:focus {
+    border-color: #8b5cf6;
+}
+
+.resize-video-page .lock-row {
+    margin-top: 10px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: #a1a1aa;
+    font-size: 12px;
+}
+
+/* =========================
+   RATIO
+========================= */
+
+.resize-video-page .ratio-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+}
+
+.resize-video-page .ratio-button {
+    padding: 10px 4px;
+    border: 1px solid #3f3f46;
+    border-radius: 8px;
+    background: #09090b;
+    color: #d4d4d8;
+    cursor: pointer;
+    font-size: 11px;
+}
+
+.resize-video-page .ratio-button:hover,
+.resize-video-page .ratio-button.active {
+    border-color: #8b5cf6;
+    background: #2e1065;
+    color: #ffffff;
+}
+
+/* =========================
+   FIT / FILL
+========================= */
+
+.resize-video-page .segmented-control {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 5px;
+    padding: 4px;
+    background: #09090b;
+    border-radius: 10px;
+}
+
+.resize-video-page .segment-button {
+    padding: 9px;
+    border: none;
+    border-radius: 7px;
+    background: transparent;
+    color: #a1a1aa;
+    cursor: pointer;
+    font-weight: 600;
+}
+
+.resize-video-page .segment-button.active {
+    background: #7c3aed;
+    color: #ffffff;
+}
+
+/* =========================
+   ZOOM
+========================= */
+
+.resize-video-page .zoom-control {
+    display: grid;
+    grid-template-columns: 42px 1fr 42px;
+    gap: 8px;
+    align-items: center;
+}
+
+.resize-video-page .control-button {
+    width: 42px;
+    height: 38px;
+    border: 1px solid #3f3f46;
+    border-radius: 8px;
+    background: #09090b;
+    color: #ffffff;
+    cursor: pointer;
+    font-size: 18px;
+}
+
+.resize-video-page .control-button:hover {
+    border-color: #8b5cf6;
+}
+
+.resize-video-page .zoom-value {
+    text-align: center;
+    color: #ffffff;
+    font-size: 13px;
+    font-weight: 600;
+}
+
+/* =========================
+   POSITION
+========================= */
+
+.resize-video-page .position-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 7px;
+    max-width: 180px;
+    margin: 0 auto;
+}
+
+.resize-video-page .position-button {
+    height: 38px;
+    border: 1px solid #3f3f46;
+    border-radius: 8px;
+    background: #09090b;
+    color: #ffffff;
+    cursor: pointer;
+}
+
+.resize-video-page .position-button:hover {
+    border-color: #8b5cf6;
+}
+
+.resize-video-page .position-center {
+    background: #27272a;
+}
+
+/* =========================
+   COLORS
+========================= */
+
+.resize-video-page .color-grid {
+    display: grid;
+    grid-template-columns: repeat(7, 1fr);
+    gap: 7px;
+}
+
+.resize-video-page .color-button {
+    width: 100%;
+    aspect-ratio: 1;
+    border-radius: 7px;
+    border: 2px solid transparent;
+    cursor: pointer;
+}
+
+.resize-video-page .color-button.active {
+    border-color: #ffffff;
+    box-shadow: 0 0 0 2px #8b5cf6;
+}
+
+/* =========================
+   FORMAT
+========================= */
+
+.resize-video-page .format-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 7px;
+}
+
+.resize-video-page .format-button {
+    padding: 9px 3px;
+    border: 1px solid #3f3f46;
+    border-radius: 8px;
+    background: #09090b;
+    color: #d4d4d8;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 600;
+}
+
+.resize-video-page .format-button.active,
+.resize-video-page .format-button:hover {
+    border-color: #8b5cf6;
+    background: #2e1065;
+    color: #ffffff;
+}
+
+/* =========================
+   FOOTER
+========================= */
+
+.resize-video-page .editor-footer {
+    padding: 18px 22px;
+    background: #18181b;
+    border-top: 1px solid #27272a;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+}
+
+.resize-video-page .secondary-button {
+    padding: 12px 20px;
+    border: 1px solid #3f3f46;
+    border-radius: 10px;
+    background: #09090b;
+    color: #ffffff;
+    cursor: pointer;
+}
+
+.resize-video-page .secondary-button:hover {
+    border-color: #71717a;
+}
+
+/* =========================
+   PROCESSING
+========================= */
+
+.resize-video-page #processingSection {
+    display: none;
+    margin-top: 25px;
+    padding: 30px;
+    background: #faf5ff;
+    border: 1px solid #ede9fe;
+    border-radius: 20px;
+    text-align: center;
+}
+
+.resize-video-page .spinner {
+    width: 42px;
+    height: 42px;
+    margin: 0 auto 15px;
+    border: 4px solid #ddd6fe;
+    border-top-color: #7c3aed;
+    border-radius: 50%;
+    animation: resizeVideoSpin 0.8s linear infinite;
+}
+
+@keyframes resizeVideoSpin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.resize-video-page .progress-text {
+    color: #52525b;
+    font-size: 14px;
+}
+
+/* =========================
+   RESULT
+========================= */
+
+.resize-video-page #resultSection {
+    display: none;
+    margin-top: 25px;
+    padding: 30px;
+    background: #faf5ff;
+    border: 1px solid #ddd6fe;
+    border-radius: 20px;
+    text-align: center;
+}
+
+.resize-video-page .download-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 13px 26px;
+    border-radius: 12px;
+    color: #ffffff !important;
+    background: linear-gradient(
+        135deg,
+        #6d28d9 0%,
+        #7c3aed 45%,
+        #a855f7 100%
+    );
+    font-size: 15px;
+    font-weight: 700;
+    text-decoration: none !important;
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 6px 18px rgba(109, 40, 217, 0.18);
+}
+
+.resize-video-page .download-button:hover {
+    color: #ffffff !important;
+    transform: translateY(-2px);
+    box-shadow: 0 10px 25px rgba(109, 40, 217, 0.30);
+}
+
+/* =========================
+   ERRORS
+========================= */
+
+.resize-video-page .error-message {
+    margin-top: 20px;
+    padding: 13px 15px;
+    border-radius: 10px;
+    background: #fef2f2;
+    border: 1px solid #fecaca;
+    color: #b91c1c;
+    font-size: 14px;
+}
+
+/* =========================
+   RESPONSIVE
+========================= */
+
+@media (max-width: 1000px) {
+
+    .resize-video-page .editor-main {
+        grid-template-columns: 1fr;
+    }
+
+    .resize-video-page .options-panel {
+        border-left: none;
+        border-top: 1px solid #27272a;
+    }
+
+    .resize-video-page .video-stage-wrapper {
+        min-height: 450px;
+    }
+}
+
+@media (max-width: 700px) {
+
+    .resize-video-page {
+        padding: 25px 15px;
+    }
+
+    .resize-video-page .page-title {
+        font-size: 32px;
+    }
+
+    .resize-video-page .upload-card {
+        padding: 35px 20px;
+    }
+
+    .resize-video-page .editor-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .resize-video-page .video-workspace {
+        padding: 12px;
+    }
+
+    .resize-video-page .video-stage-wrapper {
+        min-height: 300px;
+    }
+
+    .resize-video-page .options-panel {
+        padding: 15px;
+    }
+
+    .resize-video-page .editor-footer {
+        flex-direction: column;
+    }
+
+    .resize-video-page .editor-footer button {
+        width: 100%;
+    }
+}
+</style>
+
+
+<div class="resize-video-page">
+
+    <section class="page-header">
+
+        <h1 class="page-title">
+            Resize
+            <span class="gradient-text">Video</span>
+        </h1>
+
+        <p class="page-description">
+            Resize your video online with custom dimensions,
+            aspect ratios, zoom, positioning and background
+            controls. Preview your changes in real time before
+            processing the final video.
+        </p>
+
+        <p class="page-keywords">
+            Video Resizer • Resize MP4 • Resize MOV • Resize WEBM
+            • Change Video Dimensions • Video Aspect Ratio
+            • Resize Video Online • Custom Video Size
+        </p>
+
+    </section>
+
+    <form
+        id="resizeForm"
+        method="POST"
+        enctype="multipart/form-data"
+        action=""
+    >
+
+        {% csrf_token %}
+
+        {{ form.width.as_hidden }}
+        {{ form.height.as_hidden }}
+        {{ form.aspect_ratio.as_hidden }}
+        {{ form.fit_mode.as_hidden }}
+        {{ form.zoom.as_hidden }}
+        {{ form.position_x.as_hidden }}
+        {{ form.position_y.as_hidden }}
+        {{ form.background_color.as_hidden }}
+        {{ form.output_format.as_hidden }}
+
+        <!-- =========================
+             UPLOAD SECTION
+        ========================== -->
+
+        <section id="uploadSection">
+
+            <div class="upload-card">
+
+            
+             
+
+                <label
+                    for="id_video"
+                    class="gradient-button"
+                >
+                    Select Video
+                </label>
+
+                {{ form.video }}
+
+            </div>
+
+        </section>
+
+
+        <!-- =========================
+             EDITOR SECTION
+        ========================== -->
+
+        <section id="editorSection">
+
+            <!-- Editor Header -->
+
+            <div class="editor-header">
+
+                <div class="editor-header-title">
+                    Resize Video Editor
+                </div>
+
+                <div
+                    id="editorFileName"
+                    class="editor-file-name"
+                >
+                    No file selected
+                </div>
+
+            </div>
+
+
+            <!-- Editor Main -->
+
+            <div class="editor-main">
+
+
+                <!-- =====================
+                     VIDEO WORKSPACE
+                ====================== -->
+
+                <div class="video-workspace">
+
+                    <div class="video-stage-wrapper">
+
+                        <div
+                            id="videoStage"
+                            class="video-stage"
+                        >
+
+                            <video
+                                id="videoPreview"
+                                controls
+                                playsinline
+                            ></video>
+
+                        </div>
+
+                    </div>
+
+
+                    <div class="video-info">
+
+                        <span id="sourceDimensions">
+                            Original: —
+                        </span>
+
+                        <span id="currentDimensions">
+                            Output: —
+                        </span>
+
+                    </div>
+
+                </div>
+
+
+                <!-- =====================
+                     OPTIONS PANEL
+                ====================== -->
+
+                <aside class="options-panel">
+
+
+                    <!-- DIMENSIONS -->
+
+                    <div class="option-section">
+
+                        <div class="option-title">
+                            Dimensions
+                        </div>
+
+                        <div class="dimension-grid">
+
+                            <div>
+
+                                <label
+                                    class="field-label"
+                                    for="widthControl"
+                                >
+                                    Width
+                                </label>
+
+                                <input
+                                    type="number"
+                                    id="widthControl"
+                                    class="dark-input"
+                                    min="2"
+                                    value="1280"
+                                >
+
+                            </div>
+
+
+                            <div>
+
+                                <label
+                                    class="field-label"
+                                    for="heightControl"
+                                >
+                                    Height
+                                </label>
+
+                                <input
+                                    type="number"
+                                    id="heightControl"
+                                    class="dark-input"
+                                    min="2"
+                                    value="720"
+                                >
+
+                            </div>
+
+                        </div>
+
+
+                        <label class="lock-row">
+
+                            <input
+                                type="checkbox"
+                                id="lockAspectRatio"
+                                checked
+                            >
+
+                            Lock aspect ratio
+
+                        </label>
+
+                    </div>
+
+
+                    <!-- ASPECT RATIO -->
+
+                    <div class="option-section">
+
+                        <div class="option-title">
+                            Aspect Ratio
+                        </div>
+
+                        <div class="ratio-grid">
+
+                            <button
+                                type="button"
+                                class="ratio-button active"
+                                data-ratio="16:9"
+                            >
+                                16:9
+                            </button>
+
+                            <button
+                                type="button"
+                                class="ratio-button"
+                                data-ratio="3:2"
+                            >
+                                3:2
+                            </button>
+
+                            <button
+                                type="button"
+                                class="ratio-button"
+                                data-ratio="4:3"
+                            >
+                                4:3
+                            </button>
+
+                            <button
+                                type="button"
+                                class="ratio-button"
+                                data-ratio="1:1"
+                            >
+                                1:1
+                            </button>
+
+                            <button
+                                type="button"
+                                class="ratio-button"
+                                data-ratio="4:5"
+                            >
+                                4:5
+                            </button>
+
+                            <button
+                                type="button"
+                                class="ratio-button"
+                                data-ratio="9:16"
+                            >
+                                9:16
+                            </button>
+
+                            <button
+                                type="button"
+                                class="ratio-button"
+                                data-ratio="21:9"
+                            >
+                                21:9
+                            </button>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- FIT / FILL -->
+
+                    <div class="option-section">
+
+                        <div class="option-title">
+                            Video Mode
+                        </div>
+
+                        <div class="segmented-control">
+
+                            <button
+                                type="button"
+                                class="segment-button active"
+                                data-fit="fit"
+                            >
+                                Fit
+                            </button>
+
+                            <button
+                                type="button"
+                                class="segment-button"
+                                data-fit="fill"
+                            >
+                                Fill
+                            </button>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- ZOOM -->
+
+                    <div class="option-section">
+
+                        <div class="option-title">
+                            Zoom
+                        </div>
+
+                        <div class="zoom-control">
+
+                            <button
+                                type="button"
+                                id="zoomMinus"
+                                class="control-button"
+                            >
+                                −
+                            </button>
+
+                            <div
+                                id="zoomValue"
+                                class="zoom-value"
+                            >
+                                100%
+                            </div>
+
+                            <button
+                                type="button"
+                                id="zoomPlus"
+                                class="control-button"
+                            >
+                                +
+                            </button>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- POSITION -->
+
+                    <div class="option-section">
+
+                        <div class="option-title">
+                            Position
+                        </div>
+
+                        <div class="position-grid">
+
+                            <button
+                                type="button"
+                                class="position-button"
+                                data-position="up"
+                            >
+                                ↑
+                            </button>
+
+                            <button
+                                type="button"
+                                class="position-button position-center"
+                                data-position="center"
+                            >
+                                ●
+                            </button>
+
+                            <button
+                                type="button"
+                                class="position-button"
+                                data-position="right"
+                            >
+                                →
+                            </button>
+
+                            <button
+                                type="button"
+                                class="position-button"
+                                data-position="left"
+                            >
+                                ←
+                            </button>
+
+                            <button
+                                type="button"
+                                class="position-button"
+                                data-position="down"
+                            >
+                                ↓
+                            </button>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- BACKGROUND -->
+
+                    <div class="option-section">
+
+                        <div class="option-title">
+                            Background
+                        </div>
+
+                        <div class="color-grid">
+
+                            <button
+                                type="button"
+                                class="color-button active"
+                                data-color="#000000"
+                                style="background:#000000;"
+                            ></button>
+
+                            <button
+                                type="button"
+                                class="color-button"
+                                data-color="#ffffff"
+                                style="background:#ffffff;"
+                            ></button>
+
+                            <button
+                                type="button"
+                                class="color-button"
+                                data-color="#ef4444"
+                                style="background:#ef4444;"
+                            ></button>
+
+                            <button
+                                type="button"
+                                class="color-button"
+                                data-color="#f97316"
+                                style="background:#f97316;"
+                            ></button>
+
+                            <button
+                                type="button"
+                                class="color-button"
+                                data-color="#eab308"
+                                style="background:#eab308;"
+                            ></button>
+
+                            <button
+                                type="button"
+                                class="color-button"
+                                data-color="#22c55e"
+                                style="background:#22c55e;"
+                            ></button>
+
+                            <button
+                                type="button"
+                                class="color-button"
+                                data-color="#06b6d4"
+                                style="background:#06b6d4;"
+                            ></button>
+
+                            <button
+                                type="button"
+                                class="color-button"
+                                data-color="#3b82f6"
+                                style="background:#3b82f6;"
+                            ></button>
+
+                            <button
+                                type="button"
+                                class="color-button"
+                                data-color="#6366f1"
+                                style="background:#6366f1;"
+                            ></button>
+
+                            <button
+                                type="button"
+                                class="color-button"
+                                data-color="#8b5cf6"
+                                style="background:#8b5cf6;"
+                            ></button>
+
+                            <button
+                                type="button"
+                                class="color-button"
+                                data-color="#ec4899"
+                                style="background:#ec4899;"
+                            ></button>
+
+                            <button
+                                type="button"
+                                class="color-button"
+                                data-color="#f43f5e"
+                                style="background:#f43f5e;"
+                            ></button>
+
+                            <button
+                                type="button"
+                                class="color-button"
+                                data-color="#64748b"
+                                style="background:#64748b;"
+                            ></button>
+
+                            <button
+                                type="button"
+                                class="color-button"
+                                data-color="#1e293b"
+                                style="background:#1e293b;"
+                            ></button>
+
+                        </div>
+
+                    </div>
+
+
+                    <!-- OUTPUT FORMAT -->
+
+                    <div class="option-section">
+
+                        <div class="option-title">
+                            Output Format
+                        </div>
+
+                        <div class="format-grid">
+
+                            <button
+                                type="button"
+                                class="format-button active"
+                                data-format="mp4"
+                            >
+                                MP4
+                            </button>
+
+                            <button
+                                type="button"
+                                class="format-button"
+                                data-format="mov"
+                            >
+                                MOV
+                            </button>
+
+                            <button
+                                type="button"
+                                class="format-button"
+                                data-format="webm"
+                            >
+                                WEBM
+                            </button>
+
+                            <button
+                                type="button"
+                                class="format-button"
+                                data-format="avi"
+                            >
+                                AVI
+                            </button>
+
+                            <button
+                                type="button"
+                                class="format-button"
+                                data-format="mkv"
+                            >
+                                MKV
+                            </button>
+
+                            <button
+                                type="button"
+                                class="format-button"
+                                data-format="gif"
+                            >
+                                GIF
+                            </button>
+
+                            <button
+                                type="button"
+                                class="format-button"
+                                data-format="m4v"
+                            >
+                                M4V
+                            </button>
+
+                        </div>
+
+                    </div>
+
+
+                </aside>
+
+            </div>
+
+
+            <!-- =====================
+                 EDITOR FOOTER
+            ====================== -->
+
+            <div class="editor-footer">
+
+                <button
+                    type="button"
+                    id="changeVideoButton"
+                    class="secondary-button"
+                >
+                    Change Video
+                </button>
+
+                <button
+                    type="submit"
+                    id="resizeButton"
+                    class="gradient-button"
+                >
+                    Resize Video
+                </button>
+
+            </div>
+
+        </section>
+
+    </form>
+
+
+    <!-- =========================
+         PROCESSING
+    ========================== -->
+
+    <section
+        id="processingSection"
+    >
+
+        <div class="spinner"></div>
+
+        <div class="progress-text">
+            Processing your video...
+        </div>
+
+    </section>
+
+
+    <!-- =========================
+         RESULT
+    ========================== -->
+
+   
+   <div
+    id="resultSection"
+    style="{% if output_url %}display:block;{% else %}display:none;{% endif %}"
+>
+    {% if output_url %}
+        <a
+            href="{{ output_url }}"
+            download
+            class="download-button"
+        >
+            Download Resized Video
+        </a>
+    {% endif %}
+</div>
+
+    <!-- =========================
+         SERVER ERRORS
+    ========================== -->
+
+    {% if form.non_field_errors %}
+
+    <div class="error-message">
+
+        {{ form.non_field_errors }}
+
+    </div>
+
+    {% endif %}
+
+
+</div>
+
+
+<script src="{% static 'media_tools/js/resize.js' %}"></script>
+
+
+
+{% endblock %}

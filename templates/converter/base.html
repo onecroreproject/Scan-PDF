@@ -587,6 +587,23 @@
                                         <span
                                             class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Merge Video</span>
                                     </a>
+                             <a href="{% url 'media_tools:crop' %}"
+    class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+    <i data-lucide="crop" class="w-4 h-4 text-brand-600"></i>
+    <span
+        class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">
+        Crop Video
+    </span>
+</a>
+
+<a href="{% url 'media_tools:resize_video' %}"
+    class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+    <i data-lucide="scaling" class="w-4 h-4 text-brand-600"></i>
+    <span
+        class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">
+        Resize Video
+    </span>
+</a>
 
                                     <a href="{% url 'video_downloader:facebook_downloader' %}"
                                         class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
@@ -629,6 +646,8 @@
                                         <span
                                             class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Reddit</span>
                                     </a>
+
+                                    
 
                                     <a href="{% url 'video_downloader:dailymotion_downloader' %}"
                                         class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
