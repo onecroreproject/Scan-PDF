@@ -1082,11 +1082,25 @@ def home(request):
     from image_processor.views import IMAGE_TOOLS
     all_tools.update(IMAGE_TOOLS)
     
+    # Auto-discover videos from Django Admin (HeroVideo model)
+    from .models import HeroVideo
+    
+    short_url_videos = []
+    qr_code_videos = []
+    # Fetch active videos, ordering is already handled by Meta class ("order", "id")
+    for video_obj in HeroVideo.objects.filter(is_active=True):
+        if video_obj.video:
+            if video_obj.section == 'qr_code':
+                qr_code_videos.append(video_obj.video.url)
+            else:
+                short_url_videos.append(video_obj.video.url)
+    
     context = {
         'tools': all_tools,
         'page_title': 'ScanPDF',
-        'IMAGE_TOOLS_KEYS': list(IMAGE_TOOLS.keys())
-        
+        'IMAGE_TOOLS_KEYS': list(IMAGE_TOOLS.keys()),
+        'hero_videos': short_url_videos,
+        'qr_hero_videos': qr_code_videos,
     }
     return render(request, 'converter/home.html', context)
 

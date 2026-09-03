@@ -1,0 +1,84 @@
+{% extends 'admin_dashboard/base.html' %}
+{% load static %}
+
+{% block title %}{{ title }} - ScanPDF Admin{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto space-y-6">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between">
+        <h1 class="text-3xl font-black tracking-tight text-surface-900">{{ title }}</h1>
+        <a href="{% url 'custom_admin:hero_videos' %}" class="text-surface-500 hover:text-surface-900 font-bold text-sm transition-colors flex items-center gap-2">
+            <i data-lucide="arrow-left" class="w-4 h-4"></i> Back to Videos
+        </a>
+    </div>
+
+    <!-- Form Card -->
+    <div class="bg-white rounded-2xl shadow-card p-6 md:p-8">
+        <form method="post" enctype="multipart/form-data" class="space-y-6">
+            {% csrf_token %}
+            
+            {% if form.errors %}
+                <div class="bg-red-50 text-red-600 p-4 rounded-xl text-sm font-bold border border-red-100">
+                    Please correct the errors below.
+                    {{ form.errors }}
+                </div>
+            {% endif %}
+
+            <!-- Title -->
+            <div>
+                <label class="block text-sm font-bold text-surface-900 mb-2">Title</label>
+                {{ form.title }}
+                {% if form.title.help_text %}
+                <p class="text-xs text-surface-500 mt-1">{{ form.title.help_text }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Video Upload -->
+            <div>
+                <label class="block text-sm font-bold text-surface-900 mb-2">Video File</label>
+                {% if video and video.video %}
+                    <div class="mb-4 text-sm text-surface-600 font-medium p-3 bg-surface-50 rounded-xl border border-surface-200">
+                        Current: <a href="{{ video.video.url }}" class="text-brand-600 hover:underline" target="_blank">{{ video.video.name }}</a>
+                    </div>
+                {% endif %}
+                {{ form.video }}
+                <p class="text-xs text-surface-500 mt-2">Supported formats: .mp4, .webm, .mov, .m4v</p>
+            </div>
+
+            <div class="grid grid-cols-2 gap-6">
+                <!-- Order -->
+                <div>
+                    <label class="block text-sm font-bold text-surface-900 mb-2">Order</label>
+                    {{ form.order }}
+                    {% if form.order.help_text %}
+                    <p class="text-xs text-surface-500 mt-1">{{ form.order.help_text }}</p>
+                    {% endif %}
+                </div>
+
+                <!-- Status -->
+                <div>
+                    <label class="block text-sm font-bold text-surface-900 mb-2">Status</label>
+                    <label class="flex items-center gap-3 mt-3">
+                        {{ form.is_active }}
+                        <span class="text-sm font-medium text-surface-700">Active</span>
+                    </label>
+                    {% if form.is_active.help_text %}
+                    <p class="text-xs text-surface-500 mt-2">{{ form.is_active.help_text }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="pt-6 border-t border-surface-200 flex items-center justify-end gap-4">
+                <a href="{% url 'custom_admin:hero_videos' %}" class="px-5 py-2.5 text-surface-600 font-bold hover:bg-surface-50 rounded-xl transition-colors">
+                    Cancel
+                </a>
+                <button type="submit" class="px-6 py-2.5 bg-brand-600 text-white font-bold rounded-xl shadow-glass hover:bg-brand-700 transition-all flex items-center gap-2">
+                    <i data-lucide="save" class="w-4 h-4"></i> Save Video
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

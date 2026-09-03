@@ -3,43 +3,94 @@
 
 {% block extra_head %}
 <style>
-    .auth-page-wrapper {
-        min-height: calc(100vh - 140px); /* Using min-height to allow expansion */
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        padding: 40px 20px; /* Added more padding for breathing room */
-        background: #f8fafc;
-        position: relative;
+    /* Prevent default navbar from taking space in auth layout if possible, or adjust height */
+    body {
+        background-color: #f8fafc;
     }
 
-    /* Responsive layout */
-    body {
-        min-height: 100vh;
+    /* Make main act as a flex container so child wrapper can align */
+    main.flex-grow {
         display: flex;
         flex-direction: column;
     }
 
-    /* Animated background orbs */
-    .auth-page-wrapper::before, .auth-page-wrapper::after {
+    /* Fill the available space between navbar and footer naturally */
+    .auth-page-wrapper {
+        flex: 1 1 auto;
+        display: flex;
+        /* margin: auto 0 prevents top clipping if child is taller than parent in flex */
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+        padding: 16px 0;
+    }
+
+    /* Centered container with responsive left/right spacing */
+    .auth-page-container {
+        display: flex;
+        width: calc(100% - 24px); /* Mobile default (12px each side) */
+        max-width: 1180px; /* Adjusted down from 1240px */
+        margin: auto; /* Fallback for safe centering */
+        background: #fff;
+        border-radius: 24px;
+        overflow: hidden; /* Only for corner radius */
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
+        border: 1px solid #e2e8f0;
+        /* NO height constraints */
+    }
+
+    @media (min-width: 768px) {
+        .auth-page-container {
+            width: calc(100% - 56px); /* Tablet (28px each side) */
+        }
+    }
+
+    @media (min-width: 1024px) {
+        .auth-page-container {
+            width: calc(100% - 180px); /* Desktop (90px each side) */
+        }
+    }
+
+    /* Left Panel - Branding */
+    .auth-brand-panel {
+        display: none;
+        position: relative;
+        overflow: hidden; /* For blurred circles only */
+        background: #f8fafc;
+        border-right: 1px solid #e2e8f0;
+    }
+    
+    @media (min-width: 1024px) {
+        .auth-brand-panel {
+            display: flex;
+            flex-direction: column;
+            width: 45%;
+            padding: 24px 32px;
+        }
+    }
+
+    .auth-brand-panel::before, .auth-brand-panel::after {
         content: '';
         position: absolute;
         border-radius: 50%;
-        filter: blur(80px);
-        opacity: 0.15;
-        animation: float 8s ease-in-out infinite;
+        filter: blur(100px);
+        opacity: 0.2;
         pointer-events: none;
     }
-    .auth-page-wrapper::before {
-        width: 300px; height: 300px;
-        background: radial-gradient(circle, #8b5cf6, transparent);
-        top: -50px; left: -50px;
+    
+    .auth-brand-panel::before {
+        width: 400px; height: 400px;
+        background: #8b5cf6; /* brand-500 */
+        top: -100px; left: -100px;
+        animation: float 8s ease-in-out infinite;
     }
-    .auth-page-wrapper::after {
-        width: 250px; height: 250px;
-        background: radial-gradient(circle, #c4b5fd, transparent);
-        bottom: -40px; right: -40px;
-        animation-delay: 4s;
+    
+    .auth-brand-panel::after {
+        width: 300px; height: 300px;
+        background: #c4b5fd; /* brand-300 */
+        bottom: -50px; right: -50px;
+        animation: float 8s ease-in-out infinite reverse;
+        animation-delay: 2s;
     }
 
     @keyframes float {
@@ -47,98 +98,477 @@
         50% { transform: translateY(-20px) scale(1.05); }
     }
 
-    .auth-card {
+    .auth-brand-content {
         position: relative;
         z-index: 10;
-        width: 100%;
-        max-width: 380px;
-        background: white;
-        border: 1px solid #e2e8f0;
-        border-radius: 20px;
-        padding: 24px 28px;
-        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
-        animation: cardIn 0.5s ease-out;
-        margin: auto;
+        display: flex;
+        flex-direction: column;
+        height: 100%;
     }
+
+    .auth-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 4px 12px;
+        background: rgba(139, 92, 246, 0.1);
+        border: 1px solid rgba(139, 92, 246, 0.2);
+        border-radius: 100px;
+        color: #6d28d9; /* brand-700 */
+        font-size: 11px;
+        font-weight: 600;
+        margin-bottom: 16px;
+        width: fit-content;
+    }
+    
+    .auth-features-list {
+        margin-top: 0;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+    }
+    
+    .auth-feature-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        color: #475569;
+        font-weight: 500;
+        font-size: 13px;
+    }
+    
+    .auth-feature-icon {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 28px;
+        height: 28px;
+        background: white;
+        border-radius: 6px;
+        color: #8b5cf6;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+    }
+
+    .auth-trust-section {
+        margin-top: 24px;
+    }
+    
+    .auth-trust-title {
+        font-size: 11px;
+        font-weight: 600;
+        color: #64748b;
+        margin-bottom: 8px;
+    }
+    
+    .auth-trust-avatars {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+    
+    .avatar-group {
+        display: flex;
+    }
+    
+    .avatar-group img {
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        border: 2px solid #f8fafc;
+        margin-left: -8px;
+    }
+    
+    .avatar-group img:first-child {
+        margin-left: 0;
+    }
+    
+    .trust-rating {
+        display: flex;
+        flex-direction: column;
+        gap: 2px;
+    }
+    
+    .stars {
+        display: flex;
+        gap: 2px;
+        color: #eab308;
+    }
+    
+    .trust-text {
+        font-size: 10px;
+        color: #64748b;
+        font-weight: 500;
+    }
+
+    /* Right Panel - Form */
+    .auth-form-panel {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 24px 20px;
+        position: relative;
+        background: white;
+        /* NO overflow constraints */
+    }
+
+    .form-content {
+        width: 100%;
+        max-width: 420px;
+        margin: 0 auto;
+    }
+
+    /* Mobile Header */
+    .mobile-auth-header {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 24px;
+        gap: 8px;
+    }
+    
+    .mobile-auth-header img {
+        height: 28px;
+    }
+    
+    .mobile-auth-header span {
+        font-size: 18px;
+        font-weight: 800;
+        color: #0f172a;
+    }
+
+    @media (min-width: 1024px) {
+        .mobile-auth-header {
+            display: none;
+        }
+        .auth-form-panel {
+            padding: 20px 32px;
+        }
+    }
+
+    .auth-card {
+        width: 100%;
+        background: transparent;
+        border: none;
+        padding: 0;
+        box-shadow: none;
+        animation: cardIn 0.3s ease-out;
+    }
+
+    @media (max-width: 640px) {
+        .auth-form-panel {
+            padding: 20px;
+        }
+    }
+
     @keyframes cardIn {
         from { opacity: 0; transform: translateY(10px); }
         to { opacity: 1; transform: translateY(0); }
     }
 
-    .auth-logo { text-align: center; margin-bottom: 20px; }
-    .auth-logo .icon-wrap {
-        width: 44px; height: 44px;
-        background: linear-gradient(135deg, #8b5cf6, #7c3aed);
-        border-radius: 12px;
-        display: inline-flex;
-        align-items: center; justify-content: center;
-        margin-bottom: 10px;
-        box-shadow: 0 8px 16px rgba(124, 58, 237, 0.2);
+    .auth-header-text {
+        margin-bottom: 16px;
     }
-    .auth-logo .icon-wrap i { width: 22px; height: 22px; color: white; }
-    .auth-logo h1 { font-size: 18px; font-weight: 900; color: #1e293b; letter-spacing: -0.02em; }
-    .auth-logo p { font-size: 11px; color: #64748b; margin-top: 2px; }
+    
+    .auth-header-text h1 {
+        font-size: 24px;
+        font-weight: 800;
+        color: #0f172a;
+        letter-spacing: -0.03em;
+        line-height: 1.2;
+        margin-bottom: 4px;
+    }
+    
+    .auth-header-text p {
+        font-size: 13px;
+        color: #64748b;
+        margin-top: 0;
+        margin-bottom: 14px;
+    }
+
+    /* Form Fields */
+    .field-group { 
+        margin-bottom: 12px; 
+    }
+    
+    .field-label { 
+        display: block; 
+        font-size: 12px; 
+        font-weight: 600; 
+        color: #334155; 
+        margin-bottom: 5px; 
+    }
+
+    .input-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+    
+    .input-icon {
+        position: absolute;
+        left: 14px;
+        color: #94a3b8;
+        display: flex;
+        align-items: center;
+        pointer-events: none;
+    }
 
     .dqr-field {
-        width: 100%; padding: 10px 14px; border-radius: 10px;
-        border: 2px solid #e2e8f0;
-        background: #f8fafc;
-        color: #1e293b; font-size: 14px; font-weight: 500; outline: none;
+        width: 100%; 
+        padding: 10px 14px 10px 42px; 
+        border-radius: 10px;
+        border: 1px solid #cbd5e1;
+        background: #fff;
+        color: #0f172a; 
+        font-size: 13px;
+        height: 42px;
         transition: all 0.2s ease;
     }
-    .dqr-field::placeholder { color: #94a3b8; }
-    .dqr-field:focus { border-color: #8b5cf6; background: white; box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.1); }
+    
+    .dqr-field::placeholder { 
+        color: #94a3b8; 
+    }
+    
+    .dqr-field:focus { 
+        border-color: #8b5cf6; 
+        outline: none;
+        box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1); 
+    }
 
-    .field-group { margin-bottom: 12px; }
-    .field-label { display: block; font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.1em; color: #64748b; margin-bottom: 4px; }
+    .dqr-field:focus ~ .input-icon {
+        color: #8b5cf6;
+    }
 
-    .password-wrap { position: relative; }
+    .password-wrap { 
+        position: relative; 
+        display: flex;
+        align-items: center;
+    }
+    
     .toggle-pass {
-        position: absolute; right: 12px; top: 50%; transform: translateY(-50%);
-        background: none; border: none; color: #94a3b8;
-        cursor: pointer; padding: 4px; display: flex; align-items: center;
+        position: absolute; 
+        right: 12px; 
+        background: none; 
+        border: none; 
+        color: #94a3b8;
+        cursor: pointer; 
+        display: flex; 
+        align-items: center;
+        padding: 0;
     }
-    .toggle-pass:hover { color: #8b5cf6; }
+    
+    .toggle-pass:hover { 
+        color: #64748b; 
+    }
 
+    /* Checkboxes */
+    .checkbox-wrap {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        margin-top: 8px;
+    }
+    
+    .checkbox-wrap input[type="checkbox"] {
+        width: 14px;
+        height: 14px;
+        border-radius: 4px;
+        border: 1px solid #cbd5e1;
+        accent-color: #8b5cf6;
+        margin-top: 2px;
+        cursor: pointer;
+    }
+    
+    .checkbox-wrap label {
+        font-size: 12px;
+        color: #475569;
+        cursor: pointer;
+        line-height: 1.4;
+    }
+    
+    .checkbox-wrap label a {
+        color: #8b5cf6;
+        font-weight: 600;
+        text-decoration: none;
+    }
+    
+    .checkbox-wrap label a:hover {
+        text-decoration: underline;
+    }
+
+    /* Buttons */
     .btn-primary {
-        width: 100%; padding: 12px; border: none; border-radius: 10px;
-        background: linear-gradient(135deg, #8b5cf6, #7c3aed);
-        color: white; font-size: 13px; font-weight: 800; text-transform: uppercase;
-        letter-spacing: 0.1em; cursor: pointer; transition: all 0.3s ease;
+        width: 100%; 
+        height: 42px;
+        padding: 0;
+        border: none; 
+        border-radius: 10px;
+        background: #8b5cf6;
+        color: white; 
+        font-size: 14px; 
+        font-weight: 600; 
+        cursor: pointer; 
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        box-shadow: 0 4px 10px rgba(139, 92, 246, 0.2);
     }
-    .btn-primary:hover { transform: translateY(-1px); box-shadow: 0 8px 20px rgba(124, 58, 237, 0.3); }
+    
+    .btn-primary:hover:not(:disabled) { 
+        background: #7c3aed;
+        transform: translateY(-1px); 
+        box-shadow: 0 6px 14px rgba(139, 92, 246, 0.25); 
+    }
+    
+    .btn-primary:disabled {
+        opacity: 0.7;
+        cursor: not-allowed;
+    }
 
-    .auth-links { text-align: center; margin-top: 16px; }
-    .auth-links a { color: #64748b; font-size: 12px; text-decoration: none; transition: color 0.2s; }
-    .auth-links a:hover { color: #8b5cf6; }
+    .auth-links { 
+        text-align: center; 
+        margin-top: 12px; 
+        font-size: 13px;
+        color: #64748b;
+    }
+    
+    .auth-links a { 
+        color: #8b5cf6; 
+        font-weight: 600; 
+        text-decoration: none; 
+        transition: color 0.2s; 
+    }
+    
+    .auth-links a:hover { 
+        color: #7c3aed;
+        text-decoration: underline;
+    }
 
-    .error-box { background: #fee2e2; border: 1px solid #ef4444; border-radius: 10px; padding: 8px 12px; margin-bottom: 12px; color: #b91c1c; font-size: 11px; display: flex; align-items: center; gap: 8px; }
-    .success-box { background: #dcfce7; border: 1px solid #22c55e; border-radius: 10px; padding: 8px 12px; margin-bottom: 12px; color: #15803d; font-size: 11px; display: flex; align-items: center; gap: 8px; }
+    .error-box { 
+        background: #fee2e2; 
+        border: 1px solid #fecaca; 
+        border-radius: 10px; 
+        padding: 10px 14px; 
+        margin-bottom: 12px; 
+        color: #b91c1c; 
+        font-size: 12px; 
+        display: flex; 
+        align-items: flex-start; 
+        gap: 10px; 
+    }
+    
+    .error-box i {
+        margin-top: 1px;
+    }
 
-    @media (max-height: 600px) {
-        .auth-card { padding: 16px 20px; max-width: 340px; }
-        .auth-logo { margin-bottom: 12px; }
-        .auth-logo .icon-wrap { width: 36px; height: 36px; margin-bottom: 6px; }
-        .btn-primary { padding: 10px; }
+    .form-bottom-security {
+        text-align: center;
+        margin-top: 24px;
+    }
+    
+    .form-bottom-security p {
+        font-size: 11px;
+        color: #64748b;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 4px;
     }
 </style>
 {% block extra_style %}{% endblock %}
 {% endblock %}
 
 {% block content %}
-<div class="auth-page-wrapper">
-    <div class="auth-card">
-        <div class="auth-logo">
-            {% block auth_header %}
-            <div class="icon-wrap">
-                <i data-lucide="qr-code"></i>
+<main class="auth-page-wrapper">
+    <div class="auth-page-container">
+
+    <!-- Left Branding Panel (Desktop Only) -->
+    <div class="auth-brand-panel">
+        <div class="auth-brand-content">
+
+            <div class="auth-badge">
+                <i data-lucide="shield-check" style="width: 14px; height: 14px;"></i>
+                Secure. Fast. Reliable.
             </div>
+
+            {% block brand_heading %}
+            <!-- This block will be overridden by login/register to provide specific text -->
+            <h1 style="font-size: 40px; font-weight: 800; color: #0f172a; line-height: 1.1; margin-bottom: 16px; letter-spacing: -0.03em;">Welcome to ScanPDF</h1>
+            <p style="font-size: 16px; color: #475569; line-height: 1.5; max-width: 400px;">Join ScanPDF and start creating dynamic QR codes and managing PDFs with ease.</p>
             {% endblock %}
+
+            <div class="auth-features-list">
+                <div class="auth-feature-item">
+                    <div class="auth-feature-icon"><i data-lucide="qr-code" style="width: 16px; height: 16px;"></i></div>
+                    Create Dynamic QR Codes
+                </div>
+                <div class="auth-feature-item">
+                    <div class="auth-feature-icon"><i data-lucide="file-text" style="width: 16px; height: 16px;"></i></div>
+                    Powerful PDF Tools
+                </div>
+                <div class="auth-feature-item">
+                    <div class="auth-feature-icon"><i data-lucide="shield" style="width: 16px; height: 16px;"></i></div>
+                    Secure & Private
+                </div>
+                <div class="auth-feature-item">
+                    <div class="auth-feature-icon"><i data-lucide="cloud" style="width: 16px; height: 16px;"></i></div>
+                    Cloud Sync & Storage
+                </div>
+            </div>
+
+            <div class="auth-trust-section">
+                <div class="auth-trust-title">Trusted by thousands of users worldwide</div>
+                <div class="auth-trust-avatars">
+                    <div class="avatar-group">
+                        <!-- Placholder avatars (can be removed if no images exist, or use default ui-avatars) -->
+                        <img src="https://ui-avatars.com/api/?name=J&background=e2e8f0&color=475569" alt="User">
+                        <img src="https://ui-avatars.com/api/?name=A&background=cbd5e1&color=334155" alt="User">
+                        <img src="https://ui-avatars.com/api/?name=M&background=94a3b8&color=ffffff" alt="User">
+                        <img src="https://ui-avatars.com/api/?name=S&background=64748b&color=ffffff" alt="User">
+                    </div>
+                    <div class="trust-rating">
+                        <div class="stars">
+                            <i data-lucide="star" fill="currentColor" style="width: 12px; height: 12px;"></i>
+                            <i data-lucide="star" fill="currentColor" style="width: 12px; height: 12px;"></i>
+                            <i data-lucide="star" fill="currentColor" style="width: 12px; height: 12px;"></i>
+                            <i data-lucide="star" fill="currentColor" style="width: 12px; height: 12px;"></i>
+                            <i data-lucide="star" fill="currentColor" style="width: 12px; height: 12px;"></i>
+                        </div>
+                        <div class="trust-text">4.8/5 from 2,500+ reviews</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Form Panel -->
+    <div class="auth-form-panel">
+        <div class="mobile-auth-header">
+            <img src="{% static 'images/logo.png' %}" alt="ScanPDF">
         </div>
         
-        {% block auth_content %}{% endblock %}
+        <div class="auth-card form-content">
+            <div class="auth-header-text">
+                {% block auth_header %}{% endblock %}
+            </div>
+            
+            {% block auth_content %}{% endblock %}
+        </div>
+        
+        <div class="form-bottom-security">
+            <p>
+                <i data-lucide="lock" style="width: 14px; height: 14px;"></i>
+                Your data is encrypted and secure
+            </p>
+            <p style="margin-top: 4px; opacity: 0.7;">We never share your information with anyone.</p>
+        </div>
     </div>
-</div>
+    </div>
+</main>
 {% endblock %}
 
 {% block extra_scripts %}
@@ -146,17 +576,22 @@
     // Toggle password visibility
     document.querySelectorAll('.toggle-pass').forEach(btn => {
         btn.addEventListener('click', () => {
-            const input = btn.parentElement.querySelector('input');
+            const wrap = btn.closest('.password-wrap');
+            const input = wrap.querySelector('input');
+            const icon = btn.querySelector('i');
             if (input.type === 'password') {
                 input.type = 'text';
-                btn.innerHTML = '<i data-lucide="eye-off" style="width:18px;height:18px"></i>';
+                icon.setAttribute('data-lucide', 'eye-off');
             } else {
                 input.type = 'password';
-                btn.innerHTML = '<i data-lucide="eye" style="width:18px;height:18px"></i>';
+                icon.setAttribute('data-lucide', 'eye');
             }
-            lucide.createIcons();
+            if(window.lucide) {
+                lucide.createIcons();
+            }
         });
     });
 </script>
 {% block auth_scripts %}{% endblock %}
 {% endblock %}
+

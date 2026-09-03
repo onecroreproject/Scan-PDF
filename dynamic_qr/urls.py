@@ -27,6 +27,7 @@ urlpatterns = [
 
     # QR redirect (short URL)
     path('r/<str:short_code>/', views.dqr_redirect_view, name='redirect'),
+    path('r/<str:header>/<str:short_code>/', views.dqr_redirect_with_header_view, name='redirect_header'),
 
     # API
     path('api/auth-status/', views.dqr_auth_status, name='auth_status'),

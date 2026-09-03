@@ -1,10 +1,15 @@
 {% extends 'dynamic_qr/auth_base.html' %}
 
-{% block title %}Register — Dynamic QR{% endblock %}
+{% block title %}Register — ScanPDF{% endblock %}
+
+{% block brand_heading %}
+<h1 style="font-size: 40px; font-weight: 800; color: #0f172a; line-height: 1.1; margin-bottom: 16px; letter-spacing: -0.03em;">Create Your<br>Account</h1>
+<p style="font-size: 16px; color: #475569; line-height: 1.5; max-width: 400px;">Join ScanPDF and start creating dynamic QR codes and managing PDFs with ease.</p>
+{% endblock %}
 
 {% block auth_header %}
-<h1>Create Account</h1>
-<p>Register to create dynamic QR codes</p>
+<h1>Create your account</h1>
+<p>Fill in the details below to get started.</p>
 {% endblock %}
 
 {% block auth_content %}
@@ -24,52 +29,75 @@
     <form id="register-form" method="POST" action="{% url 'dynamic_qr:register' %}{% if request.GET.next %}?next={{ request.GET.next|urlencode }}{% endif %}">
         {% csrf_token %}
         <div class="field-group">
-            <label class="field-label">Username</label>
-            <input type="text" id="username" name="username" class="dqr-field" placeholder="Choose a username" value="{{ form.username.value|default:'' }}" required>
+            <label class="field-label" for="username">Username</label>
+            <div class="input-wrapper">
+                <i data-lucide="user" class="input-icon" style="width: 18px; height: 18px;"></i>
+                <input type="text" id="username" name="username" class="dqr-field" placeholder="Enter your username" value="{{ form.username.value|default:'' }}" required autocomplete="username">
+            </div>
             <div id="username-msg" style="font-size:12px; margin-top:4px; display:none; font-weight:600;"></div>
         </div>
+
         <div class="field-group">
-            <label class="field-label">Email Address</label>
-            <input type="email" id="email" name="email" class="dqr-field" placeholder="your@email.com" value="{{ form.email.value|default:'' }}" required>
+            <label class="field-label" for="email">Email Address</label>
+            <div class="input-wrapper">
+                <i data-lucide="mail" class="input-icon" style="width: 18px; height: 18px;"></i>
+                <input type="email" id="email" name="email" class="dqr-field" placeholder="Enter your email" value="{{ form.email.value|default:'' }}" required autocomplete="email">
+            </div>
             <div id="email-msg" style="font-size:12px; margin-top:4px; display:none; font-weight:600;"></div>
         </div>
+
         <div class="field-group">
-            <label class="field-label">Password</label>
+            <label class="field-label" for="password1">Password</label>
             <div class="password-wrap">
-                <input type="password" name="password1" id="password1" class="dqr-field" placeholder="Create a strong password" required>
+                <i data-lucide="lock" class="input-icon" style="width: 18px; height: 18px;"></i>
+                <input type="password" name="password1" id="password1" class="dqr-field" placeholder="Enter your password" required autocomplete="new-password">
                 <button type="button" class="toggle-pass">
                     <i data-lucide="eye" style="width:18px;height:18px"></i>
                 </button>
             </div>
             <div id="pass-msg" style="font-size:12px; margin-top:4px; display:none; font-weight:600;"></div>
-            <div style="display:flex;gap:10px;margin-top:8px;align-items:center;">
-                <button type="button" id="gen-pass" class="btn-primary" style="width:auto;padding:8px 12px;font-size:11px;letter-spacing:0.08em;">
-                    Generate Password
-                </button>
-                <span id="pass-hint" style="font-size:11px;color:#64748b;font-weight:600;"></span>
+            
+            <!-- Password Strength Indicator (Re-styled) -->
+            <div style="display: flex; gap: 4px; margin-top: 6px; margin-bottom: 6px;">
+                <div id="str-1" style="height: 4px; flex: 1; background: #e2e8f0; border-radius: 2px;"></div>
+                <div id="str-2" style="height: 4px; flex: 1; background: #e2e8f0; border-radius: 2px;"></div>
+                <div id="str-3" style="height: 4px; flex: 1; background: #e2e8f0; border-radius: 2px;"></div>
+                <div id="str-4" style="height: 4px; flex: 1; background: #e2e8f0; border-radius: 2px;"></div>
             </div>
+
+            <button type="button" id="gen-pass" style="width:100%; height: 38px; background: #f1f5f9; border: 1px solid #e2e8f0; border-radius: 8px; color: #475569; font-size: 12px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: all 0.2s;">
+                <i data-lucide="wand-2" style="width: 14px; height: 14px;"></i>
+                Generate strong password
+            </button>
         </div>
+
         <div class="field-group">
-            <label class="field-label">Confirm Password</label>
+            <label class="field-label" for="password2">Confirm Password</label>
             <div class="password-wrap">
-                <input type="password" name="password2" id="password2" class="dqr-field" placeholder="Confirm your password" required>
+                <i data-lucide="lock" class="input-icon" style="width: 18px; height: 18px;"></i>
+                <input type="password" name="password2" id="password2" class="dqr-field" placeholder="Confirm your password" required autocomplete="new-password">
                 <button type="button" class="toggle-pass">
                     <i data-lucide="eye" style="width:18px;height:18px"></i>
                 </button>
             </div>
             <div id="confirm-msg" style="font-size:12px; margin-top:4px; display:none; font-weight:600;"></div>
         </div>
-        <button type="submit" id="register-submit-btn" class="btn-primary" disabled style="opacity:0.6;cursor:not-allowed;">
-            <span style="display:flex;align-items:center;justify-content:center;gap:8px">
-                <i data-lucide="rocket" style="width:18px;height:18px"></i>
-                Create Account
+
+        <div class="checkbox-wrap" style="margin-bottom: 16px;">
+            <input type="checkbox" id="terms" name="terms" required>
+            <label for="terms">I agree to the <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a></label>
+        </div>
+
+        <button type="submit" id="register-submit-btn" class="btn-primary" disabled>
+            <span id="register-btn-text" style="display:flex; align-items:center; justify-content:center; gap:8px;">
+                <span>Create Account</span>
             </span>
         </button>
     </form>
 
     <div class="auth-links">
-        <span style="color:#64748b">Already have an account?</span>
-        <a href="{% url 'dynamic_qr:login' %}{% if request.GET.next %}?next={{ request.GET.next|urlencode }}{% endif %}" style="color:#8b5cf6;font-weight:700;">Sign In</a>
+        Already have an account? 
+        <a href="{% url 'dynamic_qr:login' %}{% if request.GET.next %}?next={{ request.GET.next|urlencode }}{% endif %}">Sign in</a>
     </div>
 {% endblock %}
 
@@ -89,12 +117,29 @@
     }
 
     function checkPasswordStrength(p) {
-        if (!p) return { ok: false, msg: "" };
-        if (p.length < 8) return { ok: false, msg: "Password must be at least 8 characters" };
-        if (!/[A-Z]/.test(p)) return { ok: false, msg: "Password must contain an uppercase letter" };
-        if (!/[a-z]/.test(p)) return { ok: false, msg: "Password must contain a lowercase letter" };
-        if (!/[0-9]/.test(p)) return { ok: false, msg: "Password must contain a number" };
-        return { ok: true, msg: "Strong password" };
+        if (!p) return { ok: false, msg: "", score: 0 };
+        let score = 0;
+        if (p.length > 5) score += 1;
+        if (p.length > 7) score += 1;
+        if (/[A-Z]/.test(p)) score += 1;
+        if (/[0-9]/.test(p) && /[^A-Za-z0-9]/.test(p)) score += 1;
+        
+        let msg = "";
+        let ok = false;
+        if (p.length < 8) { msg = "Password must be at least 8 characters"; }
+        else if (!/[A-Z]/.test(p)) { msg = "Password must contain an uppercase letter"; }
+        else if (!/[a-z]/.test(p)) { msg = "Password must contain a lowercase letter"; }
+        else if (!/[0-9]/.test(p)) { msg = "Password must contain a number"; }
+        else { ok = true; msg = "Strong password"; }
+        
+        return { ok: ok, msg: msg, score: score };
+    }
+
+    function updateStrengthBars(score) {
+        const colors = ['#e2e8f0', '#ef4444', '#f59e0b', '#84cc16', '#22c55e'];
+        for(let i=1; i<=4; i++) {
+            document.getElementById(`str-${i}`).style.background = (i <= score) ? colors[score] : '#e2e8f0';
+        }
     }
 
     const form = document.getElementById('register-form');
@@ -102,6 +147,7 @@
     const emailInput = document.getElementById('email');
     const p1 = document.getElementById('password1');
     const p2 = document.getElementById('password2');
+    const terms = document.getElementById('terms');
     
     const userMsg = document.getElementById('username-msg');
     const emailMsg = document.getElementById('email-msg');
@@ -109,7 +155,6 @@
     const confirmMsg = document.getElementById('confirm-msg');
     
     const submitBtn = document.getElementById('register-submit-btn');
-    const hint = document.getElementById('pass-hint');
     const genBtn = document.getElementById('gen-pass');
     
     let validState = { username: false, email: false, pass1: false, pass2: false };
@@ -117,21 +162,20 @@
     let abortControllers = { username: null, email: null };
 
     function checkFormValidity() {
-        if (validState.username && validState.email && validState.pass1 && validState.pass2) {
+        if (validState.username && validState.email && validState.pass1 && validState.pass2 && terms.checked) {
             submitBtn.disabled = false;
-            submitBtn.style.opacity = '1';
-            submitBtn.style.cursor = 'pointer';
         } else {
             submitBtn.disabled = true;
-            submitBtn.style.opacity = '0.6';
-            submitBtn.style.cursor = 'not-allowed';
         }
     }
 
+    if(terms) terms.addEventListener('change', checkFormValidity);
+
     function showMsg(el, text, isOk, isChecking = false) {
+        if(!text) { el.style.display = 'none'; return; }
         el.style.display = 'block';
         el.style.color = isChecking ? '#64748b' : (isOk ? '#22c55e' : '#ef4444');
-        el.textContent = isChecking ? 'Checking...' : (isOk ? `✓ ${text}` : `✕ ${text}`);
+        el.textContent = isChecking ? 'Checking...' : text;
     }
 
     // Username Validation
@@ -144,7 +188,7 @@
         if (abortControllers.username) abortControllers.username.abort();
         
         if (!val) {
-            userMsg.style.display = 'none';
+            showMsg(userMsg, '', false);
             return;
         }
         if (val.length < 3) {
@@ -152,7 +196,7 @@
             return;
         }
         if (!/^[a-zA-Z0-9_]+$/.test(val)) {
-            showMsg(userMsg, 'Username must contain only valid characters (letters, numbers, _)', false);
+            showMsg(userMsg, 'Username must contain only letters, numbers, and underscores', false);
             return;
         }
         
@@ -187,7 +231,7 @@
         if (abortControllers.email) abortControllers.email.abort();
         
         if (!val) {
-            emailMsg.style.display = 'none';
+            showMsg(emailMsg, '', false);
             return;
         }
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -225,17 +269,19 @@
         // Pass 1
         validState.pass1 = false;
         if (!v1) {
-            passMsg.style.display = 'none';
+            showMsg(passMsg, '', false);
+            updateStrengthBars(0);
         } else {
             const res = checkPasswordStrength(v1);
             showMsg(passMsg, res.msg, res.ok);
+            updateStrengthBars(res.score);
             if (res.ok) validState.pass1 = true;
         }
         
         // Pass 2
         validState.pass2 = false;
         if (!v2) {
-            confirmMsg.style.display = 'none';
+            showMsg(confirmMsg, '', false);
         } else if (v1 !== v2) {
             showMsg(confirmMsg, 'Passwords do not match', false);
         } else {
@@ -260,20 +306,17 @@
         });
     }
 
-    // Existing show/hide pass functionality (already in auth_base or here via class toggle-pass)
-    document.querySelectorAll('.toggle-pass').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const input = this.previousElementSibling;
-            const icon = this.querySelector('i');
-            if (input.type === 'password') {
-                input.type = 'text';
-                icon.setAttribute('data-lucide', 'eye-off');
-            } else {
-                input.type = 'password';
-                icon.setAttribute('data-lucide', 'eye');
-            }
-            if (window.lucide) lucide.createIcons();
-        });
+    form.addEventListener('submit', function(e) {
+        if (!validState.username || !validState.email || !validState.pass1 || !validState.pass2 || !terms.checked) {
+            e.preventDefault();
+            return;
+        }
+        // Trim on submit
+        usernameInput.value = usernameInput.value.trim();
+        emailInput.value = emailInput.value.trim();
+        
+        submitBtn.disabled = true;
+        document.querySelector('#register-btn-text span').textContent = 'Creating Account...';
     });
 </script>
 {% endblock %}

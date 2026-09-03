@@ -39,8 +39,9 @@
             <a href="{% url 'custom_admin:plans' %}" class="text-surface-400 hover:text-brand-600 transition-colors">
                 <i data-lucide="arrow-left" class="w-5 h-5"></i>
             </a>
-            <h1 class="text-2xl font-black text-surface-900">Edit Plan: <span class="text-brand-600">{{ plan.name }}</span></h1>
-            {% if plan.is_popular %}<span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-brand-100 text-brand-700">Popular</span>{% endif %}
+            <div class="flex items-center gap-4">
+                <h1 class="text-2xl font-black text-surface-900 tracking-tight">Edit Plan: {{ plan.name }}</h1>
+            </div>
             {% if not plan.is_active %}<span class="inline-flex items-center px-2.5 py-1 rounded-full text-[10px] font-black uppercase tracking-widest bg-red-100 text-red-700">Inactive</span>{% endif %}
         </div>
         <p class="text-surface-500 font-medium text-sm ml-8">{{ plan.description }}</p>
@@ -103,14 +104,6 @@
                         <div class="absolute left-0.5 top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform peer-checked:translate-x-5"></div>
                     </div>
                     <span class="text-sm font-bold text-surface-700">Active</span>
-                </label>
-                <label class="flex items-center gap-3 cursor-pointer">
-                    <div class="relative">
-                        <input type="checkbox" name="is_popular" class="sr-only peer" {% if plan.is_popular %}checked{% endif %}>
-                        <div class="w-11 h-6 bg-surface-200 peer-checked:bg-brand-600 rounded-full transition-colors"></div>
-                        <div class="absolute left-0.5 top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform peer-checked:translate-x-5"></div>
-                    </div>
-                    <span class="text-sm font-bold text-surface-700">Popular Badge</span>
                 </label>
             </div>
         </div>

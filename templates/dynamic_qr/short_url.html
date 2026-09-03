@@ -133,8 +133,8 @@
                     <div class="pl-13 space-y-2 ml-13">
                         <!-- Short URL -->
                         <div class="flex items-center gap-2 group/link">
-                            <a href="{{ request.scheme }}://{{ request.get_host }}/qr/r/{{ item.short_code }}" target="_blank" class="text-sm font-bold text-indigo-600 hover:underline truncate max-w-md" id="url-{{ item.id }}">
-                                {{ request.scheme }}://{{ request.get_host }}/qr/r/{{ item.short_code }}
+                            <a href="{{ request.scheme }}://{{ request.get_host }}{{ item.public_url_path }}" target="_blank" class="text-sm font-bold text-indigo-600 hover:underline truncate max-w-md" id="url-{{ item.id }}">
+                                {{ request.scheme }}://{{ request.get_host }}{{ item.public_url_path }}
                             </a>
                             <button onclick="copyUrlText('url-{{ item.id }}')" class="text-slate-400 hover:text-indigo-600 opacity-0 group-hover/link:opacity-100 transition-opacity">
                                 <i data-lucide="copy" class="w-3.5 h-3.5"></i>
@@ -159,7 +159,7 @@
                     </div>
                     {% if item.qr_enabled %}
                     <div class="w-16 h-16 bg-slate-50 rounded-xl border border-slate-100 flex items-center justify-center p-1">
-                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data={{ request.scheme }}://{{ request.get_host }}/qr/r/{{ item.short_code|urlencode }}" class="w-full h-full object-contain rounded-lg mix-blend-multiply opacity-80" alt="QR Preview">
+                        <img src="https://api.qrserver.com/v1/create-qr-code/?size=150x150&data={{ request.scheme }}://{{ request.get_host }}{{ item.public_url_path|urlencode }}" class="w-full h-full object-contain rounded-lg mix-blend-multiply opacity-80" alt="QR Preview">
                     </div>
                     {% endif %}
                 </div>
@@ -174,7 +174,7 @@
                     <button onclick="copyUrlText('url-{{ item.id }}')" class="h-8 px-3 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors" title="Copy Short URL">
                         <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copy
                     </button>
-                    <button onclick="shareUrl('{{ request.scheme }}://{{ request.get_host }}/qr/r/{{ item.short_code }}')" class="h-8 px-3 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors" title="Share Short URL">
+                    <button onclick="shareUrl('{{ request.scheme }}://{{ request.get_host }}{{ item.public_url_path }}')" class="h-8 px-3 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors" title="Share Short URL">
                         <i data-lucide="share-2" class="w-3.5 h-3.5"></i> Share
                     </button>
                     <button onclick="openEditModal('{{ item.id }}', '{{ item.qr_name|escapejs }}', '{{ item.destination_url|escapejs }}', '{{ item.custom_alias|default_if_none:''|escapejs }}', '{{ item.require_gps }}', '{{ item.header_enabled }}', '{{ item.qr_enabled }}', '{% if item.password %}True{% else %}False{% endif %}', '{% if item.expiry_date %}True{% else %}False{% endif %}')" class="h-8 px-3 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors" title="Edit Short URL">
@@ -272,10 +272,7 @@
             <div class="flex justify-between items-center mb-8 sticky top-0 bg-white z-10 pb-4 border-b border-slate-50">
                 <h3 class="text-2xl font-black text-slate-900" id="modal-title">Create Short URL</h3>
                 <div class="flex items-center gap-4">
-                    <button type="button" onclick="alert('Bulk import functionality coming soon.')" class="px-3 py-1.5 bg-slate-100 text-slate-600 rounded-lg text-xs font-bold hover:bg-slate-200 transition-colors">
-                        Bulk Import
-                    </button>
-                    <button onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x"></i></button>
+                    <button type="button" onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x"></i></button>
                 </div>
             </div>
             
@@ -293,22 +290,8 @@
                     <input type="url" name="destination_url" id="form-dest-url" class="form-input-custom" placeholder="https://example.com/my-long-url" required>
                 </div>
 
-                <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
-                    <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest block px-1 mb-2">Short Link</label>
-                    <div class="flex gap-2">
-                        <select name="domain" id="form-domain" class="form-input-custom !mt-0 !w-1/3 !bg-white">
-                            <option value="default">scanpdf.link</option>
-                        </select>
-                        <div class="relative w-2/3">
-                            <input type="text" name="custom_alias" id="form-custom-alias" class="form-input-custom !mt-0 !bg-white w-full" placeholder="custom-alias" {% if not has_custom_alias %}disabled{% endif %}>
-                            {% if not has_custom_alias %}
-                            <div class="absolute inset-y-0 right-3 flex items-center">
-                                <a href="{% url 'services:pricing' %}" class="text-[9px] uppercase tracking-widest bg-amber-100 text-amber-600 px-2 py-1 rounded-md font-bold">Upgrade</a>
-                            </div>
-                            {% endif %}
-                        </div>
-                    </div>
-                </div>
+                <input type="hidden" name="domain" id="form-domain" value="default">
+                <input type="hidden" name="custom_alias" id="form-custom-alias" value="">
 
                 <!-- Header Toggle -->
                 <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
@@ -323,10 +306,24 @@
                         </label>
                     </div>
                     <div id="header-panel" class="hidden mt-4 pt-4 border-t border-slate-200 grid gap-3">
-                        <input type="text" name="header_text" id="form-header-text" class="form-input-custom !bg-white !py-2 !text-sm" placeholder="Banner Text">
-                        <div class="flex gap-2">
-                            <input type="color" name="header_bg_color" id="form-header-bg" class="w-10 h-10 rounded-lg cursor-pointer" value="#6366f1" title="Background Color">
-                            <input type="color" name="header_text_color" id="form-header-color" class="w-10 h-10 rounded-lg cursor-pointer" value="#ffffff" title="Text Color">
+                        <div class="flex justify-between items-center mb-1">
+                            <label class="text-xs font-bold text-slate-600">Header Text</label>
+                            {% if has_header %}
+                            <span class="text-[10px] font-black {% if header_limit != '-1' and used_headers_count >= header_limit|add:0 %}text-red-500{% else %}text-indigo-600{% endif %}">
+                                Usage: {{ used_headers_count }} / {% if header_limit == '-1' %}Unlimited{% else %}{{ header_limit }}{% endif %}
+                            </span>
+                            {% endif %}
+                        </div>
+                        
+                        <input type="text" name="header" id="form-header-text" class="form-input-custom !bg-white !py-2 !text-sm" placeholder="e.g. HELLO" oninput="updateLiveHeaderPreview();" pattern="^[A-Za-z0-9_-]+$" title="Only letters, numbers, hyphens, and underscores" maxlength="30" {% if header_limit != '-1' and used_headers_count >= header_limit|add:0 %}disabled placeholder="Header limit reached."{% endif %}>
+                        
+                        {% if header_limit != '-1' and used_headers_count >= header_limit|add:0 %}
+                        <p class="text-[10px] text-red-500 font-bold">Header limit reached. You have used {{ used_headers_count }} of {{ header_limit }} Header-enabled links. <a href="{% url 'services:pricing' %}" class="underline">Upgrade</a> to create more.</p>
+                        {% endif %}
+                        
+                        <div class="mt-2 p-3 bg-slate-100 rounded-lg border border-slate-200">
+                            <p class="text-[10px] font-black text-slate-400 uppercase tracking-widest mb-1">Preview</p>
+                            <p class="text-xs font-medium text-slate-700 truncate" id="header-preview-url">{{ request.scheme }}://{{ request.get_host }}/<span id="header-preview-span" class="text-indigo-600 font-black">HEADER</span>/short-code</p>
                         </div>
                     </div>
                 </div>
@@ -547,7 +544,15 @@
 
     let cropper = null;
     let selectedLogoUrl = null;
-    let updateTimeout = null;
+    function updateLiveHeaderPreview() {
+        const headerText = document.getElementById('form-header-text').value.trim();
+        const previewUrl = document.getElementById('header-preview-url');
+        if (headerText) {
+            previewUrl.innerHTML = `{{ request.scheme }}://{{ request.get_host }}/<span id="header-preview-span" class="text-indigo-600 font-black">${headerText}</span>/short-code`;
+        } else {
+            previewUrl.innerHTML = `{{ request.scheme }}://{{ request.get_host }}/short-code`;
+        }
+    }
 
     function getPatternIcon(style, type) {
         let color = '#6366f1'; 

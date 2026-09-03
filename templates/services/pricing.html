@@ -36,15 +36,7 @@
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch max-w-6xl mx-auto">
 
             {% for plan in plans %}
-            <div class="flex flex-col bg-white rounded-3xl
-                {% if plan.is_popular %}border-2 border-brand-500 shadow-elevated{% else %}border border-surface-100 shadow-card hover:shadow-card-hover hover:border-brand-200{% endif %}
-                transition-all p-8 relative overflow-hidden group">
-
-                {% if plan.is_popular %}
-                <div class="absolute top-0 right-0 bg-brand-500 text-white text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded-bl-2xl">
-                    Popular
-                </div>
-                {% endif %}
+            <div class="relative bg-white rounded-[2rem] p-8 flex flex-col h-full transition-all duration-300 {% if plan.code == 'pro' %}border-2 border-brand-500 shadow-elevated{% else %}border border-surface-100 shadow-card hover:shadow-card-hover hover:border-brand-200{% endif %}">
 
                 <div class="space-y-4 flex-1">
                     <!-- Plan name & description -->
@@ -123,7 +115,7 @@
                         data-monthly-url="{% if is_logged_in %}{% url 'services:payment_confirm' plan.code 'monthly' %}{% else %}{% url 'dynamic_qr:login' %}?next={% url 'services:pricing' %}{% endif %}"
                         data-yearly-url="{% if is_logged_in %}{% url 'services:payment_confirm' plan.code 'yearly' %}{% else %}{% url 'dynamic_qr:login' %}?next={% url 'services:pricing' %}{% endif %}"
                         class="plan-btn block w-full py-4 px-6 rounded-2xl
-                            {% if plan.is_popular %}bg-brand-600 hover:bg-brand-700 text-white{% else %}bg-surface-900 hover:bg-surface-800 text-white{% endif %}
+                            bg-surface-900 hover:bg-surface-800 text-white
                             text-center text-sm font-black transition-all uppercase tracking-wider">
                         {% if plan.code == 'pro' %}Pay Now{% else %}Get Started{% endif %}
                     </a>

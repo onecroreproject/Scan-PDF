@@ -401,3 +401,50 @@ def settings_view(request):
 def logout_view(request):
     logout(request)
     return redirect('converter:home')
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Hero Videos
+# ─────────────────────────────────────────────────────────────────────────────
+from converter.models import HeroVideo
+from .forms import HeroVideoForm
+from django.contrib import messages
+
+@superuser_required
+def hero_videos_view(request):
+    videos = HeroVideo.objects.all()
+    return render(request, 'admin_dashboard/hero_videos.html', {'videos': videos})
+
+@superuser_required
+def hero_video_add_view(request):
+    if request.method == 'POST':
+        form = HeroVideoForm(request.POST, request.FILES)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Hero video uploaded successfully.')
+            return redirect('custom_admin:hero_videos')
+    else:
+        form = HeroVideoForm()
+    return render(request, 'admin_dashboard/hero_video_form.html', {'form': form, 'title': 'Add Hero Video'})
+
+@superuser_required
+def hero_video_edit_view(request, video_id):
+    video = get_object_or_404(HeroVideo, id=video_id)
+    if request.method == 'POST':
+        form = HeroVideoForm(request.POST, request.FILES, instance=video)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Hero video updated successfully.')
+            return redirect('custom_admin:hero_videos')
+    else:
+        form = HeroVideoForm(instance=video)
+    return render(request, 'admin_dashboard/hero_video_form.html', {'form': form, 'title': 'Edit Hero Video', 'video': video})
+
+@superuser_required
+def hero_video_delete_view(request, video_id):
+    video = get_object_or_404(HeroVideo, id=video_id)
+    if request.method == 'POST':
+        video.delete()
+        messages.success(request, 'Hero video deleted successfully.')
+        return redirect('custom_admin:hero_videos')
+    return render(request, 'admin_dashboard/hero_video_confirm_delete.html', {'video': video})

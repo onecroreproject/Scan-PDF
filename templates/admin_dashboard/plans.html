@@ -12,12 +12,7 @@
 
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
     {% for plan in plans %}
-    <div class="flex flex-col bg-white rounded-3xl {% if plan.is_popular %}border-2 border-brand-500 shadow-card-hover{% else %}border border-surface-100 shadow-sm hover:shadow-card hover:border-brand-200{% endif %} transition-all relative overflow-hidden group">
-        {% if plan.is_popular %}
-        <div class="absolute top-0 right-0 bg-brand-500 text-white text-[10px] font-black uppercase tracking-widest px-4 py-1.5 rounded-bl-2xl">
-            Popular
-        </div>
-        {% endif %}
+    <div class="flex flex-col bg-white rounded-3xl {% if plan.code == 'pro' %}border-2 border-brand-500 shadow-card-hover{% else %}border border-surface-100 shadow-sm hover:shadow-card hover:border-brand-200{% endif %} transition-all relative overflow-hidden group">
 
         <div class="p-8 pb-6 border-b border-surface-50">
             <div class="flex justify-between items-start mb-4">

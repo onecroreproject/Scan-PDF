@@ -682,12 +682,12 @@
                                             <h3 class="text-[11px] font-black text-surface-400 uppercase tracking-[0.2em]">Link Tools</h3>
                                         </div>
                                         <div class="grid gap-0.5">
-                                            <a href="{% if request.user.is_authenticated and request.session.is_dqr_user %}{% url 'dynamic_qr:dashboard' %}{% else %}{% url 'services:pricing' %}{% endif %}"
+                                            <a href="{% if request.user.is_authenticated and request.session.is_dqr_user %}{% url 'dynamic_qr:dashboard' %}{% else %}{% url 'dynamic_qr:login' %}{% endif %}"
                                                 class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
                                                 <i data-lucide="qr-code" class="w-4 h-4 text-brand-600"></i>
                                                 <span class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Dynamic QR</span>
                                             </a>
-                                            <a href="{% if request.user.is_authenticated and request.session.is_dqr_user %}{% url 'dynamic_qr:short_url' %}{% else %}{% url 'services:pricing' %}{% endif %}"
+                                            <a href="{% if request.user.is_authenticated and request.session.is_dqr_user %}{% url 'dynamic_qr:short_url' %}{% else %}{% url 'dynamic_qr:login' %}{% endif %}"
                                                 class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
                                                 <i data-lucide="link" class="w-4 h-4 text-brand-600"></i>
                                                 <span class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Short URL</span>
@@ -847,12 +847,12 @@
                         <span class="text-[10px] font-bold text-surface-400 uppercase tracking-widest">Important
                             Tools</span>
                     </div>
-                    <a href="{% url 'services:pricing' %}"
+                    <a href="{% if request.user.is_authenticated and request.session.is_dqr_user %}{% url 'dynamic_qr:dashboard' %}{% else %}{% url 'dynamic_qr:login' %}{% endif %}"
                         class="flex items-center gap-3 px-4 py-3 rounded-2xl text-brand-700 bg-brand-50 border border-brand-100 hover:text-brand-800 hover:bg-brand-100 transition-all font-bold text-sm">
                         <i data-lucide="qr-code" class="w-5 h-5 text-brand-600"></i>
                         Dynamic QR
                     </a>
-                    <a href="{% if request.session.is_dqr_user %}{% url 'dynamic_qr:short_url' %}{% else %}{% url 'dynamic_qr:login' %}{% endif %}"
+                    <a href="{% if request.user.is_authenticated and request.session.is_dqr_user %}{% url 'dynamic_qr:short_url' %}{% else %}{% url 'dynamic_qr:login' %}{% endif %}"
                         class="flex items-center gap-3 px-4 py-3 rounded-2xl text-surface-700 hover:text-brand-600 hover:bg-brand-50/60 transition-all font-bold text-sm">
                         <i data-lucide="link" class="w-5 h-5 text-indigo-600"></i>
                         Short URL
@@ -937,72 +937,79 @@
     <!-- ═══════════════ FOOTER ═══════════════ -->
     {% block footer %}
     <style>
-        .footer-left {
-            display: flex;
-            align-items: center;
-            gap: 7px;
-            position: relative;
-        }
-
-        .footer-security-tooltip {
-            display: inline-flex;
-            align-items: center;
-        }
-
-        .footer-security-icon {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            padding: 2px;
-            border: 0;
-            background: transparent;
-            cursor: pointer;
-            color: #8b5cf6;
-        }
-
+        .footer-security-tooltip { position: relative; display: inline-flex; align-items: center; }
         .footer-security-message {
             position: absolute;
-            left: 0;
-            right: auto;
             bottom: calc(100% + 10px);
             width: max-content;
             max-width: min(320px, calc(100vw - 2rem));
-            padding: 9px 12px;
+            padding: 8px 12px;
             background: #ffffff;
-            border: 1px solid #e5e7eb;
+            border: 1px solid #f1f5f9;
             border-radius: 8px;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
-            font-size: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+            font-size: 11px;
             line-height: 1.5;
-            color: #475569;
+            color: #64748b;
             opacity: 0;
             visibility: hidden;
             pointer-events: none;
             transform: translateY(4px);
-            transition: opacity 0.18s ease, transform 0.18s ease, visibility 0.18s ease;
+            transition: all 0.2s ease;
             z-index: 9999;
         }
-
+        @media (min-width: 640px) {
+            .footer-security-message {
+                left: 50%;
+                transform: translateX(-50%) translateY(4px);
+            }
+            .footer-security-tooltip:hover .footer-security-message,
+            .footer-security-tooltip:focus-within .footer-security-message,
+            .footer-security-tooltip.is-open .footer-security-message {
+                transform: translateX(-50%) translateY(0);
+            }
+        }
+        @media (max-width: 639px) {
+            .footer-security-message {
+                right: 0;
+                transform: translateY(4px);
+            }
+            .footer-security-tooltip:hover .footer-security-message,
+            .footer-security-tooltip:focus-within .footer-security-message,
+            .footer-security-tooltip.is-open .footer-security-message {
+                transform: translateY(0);
+            }
+        }
         .footer-security-tooltip:hover .footer-security-message,
         .footer-security-tooltip:focus-within .footer-security-message,
         .footer-security-tooltip.is-open .footer-security-message {
             opacity: 1;
             visibility: visible;
-            transform: translateY(0);
         }
     </style>
-    <footer class="bg-surface-50 border-t border-surface-100 mt-auto overflow-visible">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 overflow-visible">
-            <div class="footer-left">
-                <span class="text-[10px] text-surface-400 font-bold uppercase tracking-widest">© DLK Groups</span>
+    
+    <footer class="relative z-50 w-full bg-[#F8F5FF] border-t border-purple-100 mt-auto">
 
-                <div class="footer-security-tooltip" id="ft-sec-tooltip">
-                    <button type="button" class="footer-security-icon" aria-label="Security and file deletion information" onclick="document.getElementById('ft-sec-tooltip').classList.toggle('is-open'); event.stopPropagation();">
-                        <i data-lucide="eye" class="w-4 h-4"></i>
-                    </button>
 
-                    <div class="footer-security-message" role="tooltip">
-                        Your files are processed securely and automatically deleted after conversion.
+        <!-- Bottom Footer -->
+        <div class="border-t border-purple-100/60">
+            <div class="max-w-7xl mx-auto px-6 lg:px-8 py-6">
+                <div class="flex flex-col sm:flex-row items-center justify-between gap-4">
+                    <div class="flex items-center gap-3">
+                        <span class="text-xs font-bold text-[#1e293b]">Scan PDF</span>
+                        <span class="text-purple-200 text-[10px]">•</span>
+                        <span class="text-[10px] text-[#64748b] font-bold uppercase tracking-widest">© DLK GROUPS</span>
+                    </div>
+                    
+                    <div class="footer-security-tooltip" id="ft-sec-tooltip">
+                        <button type="button" class="flex items-center gap-1.5 text-xs text-[#64748b] hover:text-purple-600 transition-colors" aria-label="Security and file deletion information" onclick="document.getElementById('ft-sec-tooltip').classList.toggle('is-open'); event.stopPropagation();">
+                            <i data-lucide="shield" class="w-4 h-4"></i>
+                            <span class="font-semibold">Privacy</span>
+                        </button>
+
+                        <div class="footer-security-message" role="tooltip">
+                            Your files are processed securely and automatically deleted after conversion.
+                        </div>
                     </div>
                 </div>
             </div>

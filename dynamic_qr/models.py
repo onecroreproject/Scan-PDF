@@ -99,8 +99,7 @@ class DynamicQRCode(models.Model):
 
     # Status & Advanced Short URL Features
     is_active = models.BooleanField(default=True)
-    header_enabled = models.BooleanField(default=False, help_text="Show a custom header banner on the redirect page")
-    header_data = models.JSONField(default=dict, blank=True, help_text="Custom header configuration (text, color, etc.)")
+    header = models.CharField(max_length=20, blank=True, null=True, help_text="Custom URL path segment before the short code")
     qr_enabled = models.BooleanField(default=False, help_text="Generate a QR code linking to this short URL")
     custom_alias = models.CharField(max_length=50, blank=True, null=True, unique=True, db_index=True, help_text="Custom URL alias")
     domain = models.CharField(max_length=100, default='default', help_text="Domain used for the short URL")
@@ -124,6 +123,18 @@ class DynamicQRCode(models.Model):
         self.scan_count += 1
         self.save(update_fields=['scan_count'])
 
+    RESERVED_PATHS = {
+        'admin', 'image', 'audio', 'videotools', 'qr', 'video-downloader', 
+        'services', 'custom-admin', 'media_tools', 'media', 'static', 'ads.txt', 'favicon.ico'
+    }
+
+    @property
+    def public_url_path(self):
+        """Returns the public short URL path without the /qr/r/ prefix."""
+        if self.header:
+            return f"/{self.header}/{self.short_code}/"
+        return f"/{self.short_code}/"
+
     def get_static_content(self, request=None):
         """
         Determines the content to be encoded in the QR code.
@@ -131,8 +142,8 @@ class DynamicQRCode(models.Model):
         continue to resolve the latest edited content.
         """
         if request:
-            return request.build_absolute_uri(f'/qr/r/{self.short_code}/')
-        return f"/qr/r/{self.short_code}/"
+            return request.build_absolute_uri(self.public_url_path)
+        return self.public_url_path
 
     def get_raw_payload(self):
         """
