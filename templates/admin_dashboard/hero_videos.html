@@ -1,0 +1,84 @@
+{% extends 'admin_dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Hero Videos - ScanPDF Admin{% endblock %}
+
+{% block content %}
+<div class="max-w-6xl mx-auto space-y-6">
+
+    <!-- Header -->
+    <div class="flex items-center justify-between">
+        <div>
+            <h1 class="text-3xl font-black tracking-tight text-surface-900">Hero Videos</h1>
+            <p class="text-surface-500 mt-1">Manage homepage promotional videos.</p>
+        </div>
+        <a href="{% url 'custom_admin:hero_video_add' %}" class="px-6 py-2.5 bg-brand-600 text-white font-bold rounded-xl shadow-glass hover:bg-brand-700 transition-all flex items-center gap-2">
+            <i data-lucide="plus" class="w-5 h-5"></i> Add Video
+        </a>
+    </div>
+
+    <!-- Video List -->
+    <div class="bg-white rounded-2xl shadow-card overflow-hidden">
+        {% if videos %}
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="bg-surface-50 border-b border-surface-200">
+                            <th class="p-4 text-xs font-black text-surface-500 uppercase tracking-widest">Preview</th>
+                            <th class="p-4 text-xs font-black text-surface-500 uppercase tracking-widest">Title</th>
+                            <th class="p-4 text-xs font-black text-surface-500 uppercase tracking-widest">Order</th>
+                            <th class="p-4 text-xs font-black text-surface-500 uppercase tracking-widest">Status</th>
+                            <th class="p-4 text-xs font-black text-surface-500 uppercase tracking-widest text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-surface-200">
+                        {% for video in videos %}
+                        <tr class="hover:bg-surface-50 transition-colors">
+                            <td class="p-4 w-32">
+                                {% if video.video %}
+                                <video src="{{ video.video.url }}" class="w-24 h-16 object-cover rounded shadow-sm bg-surface-100" muted preload="metadata"></video>
+                                {% else %}
+                                <div class="w-24 h-16 bg-surface-200 rounded flex items-center justify-center text-surface-400 text-xs font-bold">No Video</div>
+                                {% endif %}
+                            </td>
+                            <td class="p-4 font-bold text-surface-900">{{ video.title|default:"Untitled" }}</td>
+                            <td class="p-4 text-surface-600 font-medium">{{ video.order }}</td>
+                            <td class="p-4">
+                                {% if video.is_active %}
+                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-green-50 text-green-700 ring-1 ring-inset ring-green-600/20">
+                                        Active
+                                    </span>
+                                {% else %}
+                                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full text-xs font-bold bg-surface-100 text-surface-600 ring-1 ring-inset ring-surface-500/20">
+                                        Inactive
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td class="p-4 text-right">
+                                <a href="{% url 'custom_admin:hero_video_edit' video.id %}" class="inline-flex items-center justify-center w-8 h-8 rounded-lg text-brand-600 hover:bg-brand-50 transition-colors" title="Edit">
+                                    <i data-lucide="edit-2" class="w-4 h-4"></i>
+                                </a>
+                                <a href="{% url 'custom_admin:hero_video_delete' video.id %}" class="inline-flex items-center justify-center w-8 h-8 rounded-lg text-red-600 hover:bg-red-50 transition-colors ml-1" title="Delete">
+                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-16 px-4">
+                <div class="w-16 h-16 bg-brand-50 text-brand-600 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i data-lucide="video" class="w-8 h-8"></i>
+                </div>
+                <h3 class="text-lg font-bold text-surface-900">No hero videos yet.</h3>
+                <p class="text-surface-500 mt-2 max-w-sm mx-auto">Upload your first promotional video to display it on the homepage.</p>
+                <a href="{% url 'custom_admin:hero_video_add' %}" class="mt-6 inline-flex items-center gap-2 px-5 py-2 bg-brand-600 text-white font-bold rounded-xl hover:bg-brand-700 transition-all">
+                    <i data-lucide="plus" class="w-4 h-4"></i> Add Video
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,37 @@
+{% extends 'admin_dashboard/base.html' %}
+{% load static %}
+
+{% block title %}Delete Hero Video - ScanPDF Admin{% endblock %}
+
+{% block content %}
+<div class="max-w-xl mx-auto mt-12">
+    <div class="bg-white rounded-2xl shadow-card overflow-hidden">
+        
+        <div class="bg-red-50 border-b border-red-100 p-8 text-center">
+            <div class="w-16 h-16 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-4 ring-4 ring-white">
+                <i data-lucide="alert-triangle" class="w-8 h-8"></i>
+            </div>
+            <h1 class="text-2xl font-black text-red-700">Delete Hero Video?</h1>
+            <p class="text-red-600/80 font-medium mt-2">This action cannot be undone.</p>
+        </div>
+
+        <div class="p-8">
+            <p class="text-surface-700 text-center mb-6">
+                Are you sure you want to completely remove the video 
+                <strong class="text-surface-900">"{{ video.title|default:video.video.name }}"</strong>?
+            </p>
+
+            <form method="post" class="flex items-center justify-center gap-4">
+                {% csrf_token %}
+                <a href="{% url 'custom_admin:hero_videos' %}" class="px-6 py-2.5 text-surface-600 font-bold hover:bg-surface-50 rounded-xl transition-colors">
+                    Cancel
+                </a>
+                <button type="submit" class="px-6 py-2.5 bg-red-600 text-white font-bold rounded-xl shadow-glass hover:bg-red-700 transition-all flex items-center gap-2">
+                    <i data-lucide="trash-2" class="w-4 h-4"></i> Delete Video
+                </button>
+            </form>
+        </div>
+
+    </div>
+</div>
+{% endblock %}

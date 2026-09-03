@@ -4,124 +4,792 @@
 {% block content %}
 
 <!-- ═══════════════════════════════════════════════════════════
-     HERO SECTION
+     HERO — SHORT URL PLATFORM
+     Simple two-column: LEFT visual · RIGHT content
      ═══════════════════════════════════════════════════════════ -->
-<section id="hero" class="relative min-h-[calc(100vh-100px)] flex items-center justify-center overflow-hidden">
-    <!-- Precision background -->
-    <div class="absolute inset-0 bg-gradient-to-b from-white via-brand-50/30 to-white"></div>
+<style>
+/* ─── Hero outer wrapper ──────────────────────────────────── */
+#hero {
+    background: #ffffff;
+    padding-top: 100px; /* 70px navbar + 30px visual gap */
+    padding-bottom: 40px;
+    overflow: hidden;
+}
 
-    <!-- Geometric grid -->
-    <div class="absolute inset-0 opacity-[0.3]"
-        style="background-image: radial-gradient(circle at 1px 1px, #e2e8f0 1px, transparent 0); background-size: 40px 40px;">
-    </div>
+/* ─── Two-column grid ─────────────────────────────────────── */
+.hero-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 3.5rem;
+    align-items: center;
+    width: 100%;
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 0 2.5rem;
+}
 
-    <!-- Floating orbs -->
-    <div
-        class="absolute top-1/4 left-[10%] sm:left-1/5 w-[200px] sm:w-[500px] h-[200px] sm:h-[500px] bg-brand-200/20 rounded-full blur-[60px] sm:blur-[100px] animate-pulse-slow">
-    </div>
-    <div
-        class="absolute bottom-1/4 right-[10%] sm:right-1/5 w-[180px] sm:w-[400px] h-[180px] sm:h-[400px] bg-purple-200/20 rounded-full blur-[60px] sm:blur-[100px] animate-pulse-slow-delayed">
-    </div>
-    <div
-        class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[120px] sm:w-[300px] h-[120px] sm:h-[300px] bg-violet-100/15 rounded-full blur-[50px] sm:blur-[80px]">
-    </div>
+/* ─── LEFT — video column ─────────────────────────────────── */
+.hero-video-col {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* entrance animation */
+    opacity: 0;
+    transform: translateY(18px) scale(0.98);
+    animation: hero-fade-up 0.75s cubic-bezier(0.16,1,0.3,1) 0.05s forwards;
+}
 
-    <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center pt-16 sm:pt-0">
-        <!-- Badge -->
-        <div
-            class="inline-flex items-center gap-2 sm:gap-2.5 px-3.5 sm:px-5 py-1.5 sm:py-2 rounded-full bg-white border border-surface-200 mt-4 sm:mt-6 -translate-x-1 sm:-translate-x-2 mb-6 sm:mb-10 animate-fade-in-up shadow-sm">
-            <span class="relative flex h-2 w-2 sm:h-2.5 sm:w-2.5">
-                <span
-                    class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                <span class="relative inline-flex rounded-full h-2 w-2 sm:h-2.5 sm:w-2.5 bg-emerald-500"></span>
-            </span>
-            <span class="text-[11px] sm:text-sm font-medium text-surface-600">Free &amp; Secure • No Registration
-                Required</span>
-        </div>
+/* Ambient purple glow */
+.hero-video-col::before {
+    content: '';
+    position: absolute;
+    inset: -15% -10%;
+    background: radial-gradient(
+        ellipse 70% 70% at 50% 50%,
+        rgba(124,58,237,0.13) 0%,
+        rgba(167,139,250,0.06) 55%,
+        transparent 80%
+    );
+    border-radius: 50%;
+    pointer-events: none;
+    z-index: 0;
+}
 
-        <!-- Hero Logo - Large & Clear -->
-        <div class="mb-6 sm:mb-8 animate-fade-in-up animation-delay-100">
+/* The video/placeholder container */
+.hero-video-wrap {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    aspect-ratio: 4 / 3;
+    border-radius: 1.5rem;
+    overflow: hidden;
+    box-shadow:
+        0 0 0 1px rgba(124,58,237,0.10),
+        0 8px 24px -4px rgba(0,0,0,0.07),
+        0 32px 64px -12px rgba(124,58,237,0.17);
+}
 
-        </div>
+/* Real video (uncomment and set src to use) */
+.hero-video-wrap video {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
 
-        <!-- Heading -->
-        <h1
-            class="text-3xl xs:text-4xl sm:text-5xl lg:text-6xl font-black tracking-[-0.03em] leading-[1.1] mb-5 sm:mb-7 animate-fade-in-up animation-delay-200">
-            <span class="text-surface-900">Transform Your Files</span>
-            <br class="hidden xs:block">
-            <span class="bg-gradient-to-r from-brand-600 via-brand-500 to-purple-500 bg-clip-text text-transparent">
-                Effortlessly
-            </span>
-        </h1>
+/* ── Product mockup placeholder (fill entire wrap) ── */
+.hero-mockup-bg {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #f5f3ff 0%, #ede9fe 55%, #ddd6fe 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.75rem;
+    position: relative;
+    overflow: hidden;
+}
 
-        <!-- Subtitle -->
-        <p
-            class="text-sm sm:text-base md:text-lg lg:text-xl text-surface-500 max-w-2xl mx-auto mb-8 sm:mb-12 leading-relaxed animate-fade-in-up animation-delay-300 font-light px-2">
-            Convert, merge, split, and compress your documents with
-            <span class="text-surface-700 font-medium">precision</span>.
-            Enterprise-grade tools,
-            <span class="text-surface-700 font-medium">zero cost</span>.
-        </p>
+/* Decorative blobs inside the mockup bg */
+.hero-mockup-bg::before,
+.hero-mockup-bg::after {
+    content: '';
+    position: absolute;
+    border-radius: 50%;
+    background: rgba(124,58,237,0.07);
+    animation: hero-pulse 7s ease-in-out infinite;
+}
+.hero-mockup-bg::before {
+    width: 280px; height: 280px;
+    top: -80px; right: -80px;
+}
+.hero-mockup-bg::after {
+    width: 180px; height: 180px;
+    bottom: -50px; left: -50px;
+    animation-delay: 3.5s;
+}
 
-        <!-- CTA Buttons -->
-        <div
-            class="flex flex-col xs:flex-row items-center justify-center gap-3 sm:gap-4 animate-fade-in-up animation-delay-400 px-4 xs:px-0">
-            <a href="#tools"
-                class="group inline-flex items-center gap-2 sm:gap-3 px-6 sm:px-8 py-3 sm:py-4 rounded-2xl bg-gradient-to-r from-brand-600 to-brand-700 text-white font-semibold text-sm sm:text-base hover:from-brand-500 hover:to-brand-600 transition-all duration-300 shadow-xl shadow-brand-600/20 hover:shadow-brand-500/30 hover:-translate-y-0.5 active:translate-y-0 w-full xs:w-auto justify-center">
-                <i data-lucide="sparkles" class="w-4 h-4 sm:w-5 sm:h-5"></i>
-                Start Converting
-                <i data-lucide="chevron-down"
-                    class="w-3.5 h-3.5 sm:w-4 sm:h-4 group-hover:translate-y-0.5 transition-transform opacity-60"></i>
-            </a>
-            <a href="#how-it-works"
-                class="inline-flex items-center gap-2 sm:gap-3 px-6 sm:px-8 py-3 sm:py-4 rounded-2xl bg-white border border-surface-200 text-surface-700 font-semibold text-sm sm:text-base hover:border-surface-300 hover:bg-surface-50 transition-all duration-300 shadow-sm hover:shadow-md hover:-translate-y-0.5 active:translate-y-0 w-full xs:w-auto justify-center">
-                <i data-lucide="play-circle" class="w-4 h-4 sm:w-5 sm:h-5 text-brand-500"></i>
-                How It Works
-            </a>
-        </div>
+/* Browser-chrome card */
+.hero-browser {
+    position: relative;
+    z-index: 1;
+    width: 100%;
+    max-width: 360px;
+    background: #fff;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow:
+        0 0 0 1px rgba(124,58,237,0.11),
+        0 10px 40px rgba(124,58,237,0.13);
+}
 
-        <!-- Dynamic QR Feature Discovery -->
-        <div class="flex items-center justify-center mt-5 sm:mt-7 animate-fade-in-up animation-delay-400">
-            <a href="{% url 'services:pricing' %}"
-                id="hero-dynamic-qr"
-                class="group inline-flex items-center gap-2 px-4 py-2 rounded-xl border border-brand-200 bg-brand-50/70 text-brand-700 text-[12px] sm:text-[13px] font-semibold transition-all duration-200 hover:bg-brand-100 hover:border-brand-400 hover:text-brand-800 hover:shadow-sm hover:-translate-y-px active:translate-y-0">
-                <i data-lucide="qr-code" class="w-3.5 h-3.5 sm:w-4 sm:h-4 text-brand-600 group-hover:scale-110 transition-transform duration-200"></i>
-                <span>Dynamic QR</span>
-                <span class="hidden xs:inline text-brand-400 font-normal">—</span>
-                <span class="hidden xs:inline text-brand-500 font-medium">Smart, trackable QR codes</span>
-                <i data-lucide="arrow-right" class="w-3 h-3 sm:w-3.5 sm:h-3.5 text-brand-400 group-hover:translate-x-0.5 transition-transform duration-200"></i>
-            </a>
-        </div>
+.hero-browser-bar {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    padding: 11px 14px;
+    background: #f8fafc;
+    border-bottom: 1px solid #f1f5f9;
+}
 
-        <!-- Stats -->
-        <div
-            class="flex items-center justify-center gap-6 sm:gap-12 mt-10 sm:mt-20 animate-fade-in-up animation-delay-400">
-            <div class="text-center">
-                <p class="text-xl sm:text-2xl md:text-3xl font-extrabold text-surface-900">40+</p>
-                <p class="text-[10px] sm:text-xs font-medium text-surface-400 uppercase tracking-wider mt-1">Tools</p>
+.hero-browser-dot {
+    width: 9px; height: 9px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.hero-browser-addr {
+    flex: 1;
+    min-width: 0;
+    height: 22px;
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 5px;
+    display: flex;
+    align-items: center;
+    padding: 0 8px;
+    gap: 4px;
+    font-size: 10px;
+    color: #94a3b8;
+    font-family: 'Inter', monospace;
+    white-space: nowrap;
+    overflow: hidden;
+}
+
+.hero-browser-body {
+    padding: 1.125rem 1rem 0.875rem;
+}
+
+.hero-app-label {
+    font-size: 9px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #7c3aed;
+    margin-bottom: 0.625rem;
+}
+
+.hero-app-input-row {
+    display: flex;
+    gap: 0.35rem;
+    margin-bottom: 0.875rem;
+}
+
+.hero-app-input {
+    flex: 1;
+    min-width: 0;
+    height: 30px;
+    background: #f8fafc;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 7px;
+    padding: 0 9px;
+    font-size: 10px;
+    color: #64748b;
+    font-family: 'Inter', monospace;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.hero-app-btn {
+    height: 30px;
+    padding: 0 11px;
+    background: linear-gradient(135deg, #7c3aed, #6d28d9);
+    color: #fff;
+    border-radius: 7px;
+    font-size: 10px;
+    font-weight: 700;
+    font-family: 'Inter', sans-serif;
+    white-space: nowrap;
+    flex-shrink: 0;
+    box-shadow: 0 3px 10px rgba(124,58,237,0.28);
+    display: flex;
+    align-items: center;
+}
+
+.hero-app-result {
+    background: #f5f3ff;
+    border: 1px solid #ddd6fe;
+    border-radius: 10px;
+    padding: 0.75rem 0.875rem;
+    margin-bottom: 0.75rem;
+}
+
+.hero-app-long-url {
+    font-size: 9px;
+    color: #94a3b8;
+    font-family: 'Inter', monospace;
+    word-break: break-all;
+    line-height: 1.45;
+    padding-bottom: 0.5rem;
+    margin-bottom: 0.5rem;
+    border-bottom: 1px dashed #e2e8f0;
+}
+
+.hero-app-arrow {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 20px; height: 20px;
+    background: linear-gradient(135deg, #7c3aed, #a78bfa);
+    border-radius: 50%;
+    margin: 0.375rem auto;
+    animation: hero-bounce 2s ease-in-out infinite;
+}
+
+.hero-app-short-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+}
+
+.hero-app-short-link {
+    font-size: 13px;
+    font-weight: 800;
+    color: #7c3aed;
+    font-family: 'Inter', monospace;
+    letter-spacing: -0.01em;
+}
+
+.hero-app-copy {
+    font-size: 9px;
+    font-weight: 700;
+    color: #7c3aed;
+    background: #ede9fe;
+    border-radius: 5px;
+    padding: 3px 8px;
+    flex-shrink: 0;
+}
+
+.hero-app-stats {
+    display: flex;
+    gap: 0.375rem;
+}
+
+.hero-app-stat {
+    flex: 1;
+    background: #fff;
+    border: 1px solid #f1f5f9;
+    border-radius: 7px;
+    padding: 0.5rem 0.375rem;
+    text-align: center;
+}
+
+.hero-app-stat-n {
+    font-size: 12px;
+    font-weight: 900;
+    color: #1e293b;
+    line-height: 1;
+}
+
+.hero-app-stat-l {
+    font-size: 8px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: #94a3b8;
+    margin-top: 2px;
+}
+
+/* ─── RIGHT — content column ──────────────────────────────── */
+.hero-content-col {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.hero-eyebrow {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #7c3aed;
+    background: #f5f3ff;
+    border: 1px solid #ddd6fe;
+    border-radius: 100px;
+    padding: 0.3rem 0.875rem;
+    margin-bottom: 1.25rem;
+    width: fit-content;
+    opacity: 0;
+    animation: hero-fade-up 0.6s cubic-bezier(0.16,1,0.3,1) 0.12s forwards;
+}
+
+.hero-h1 {
+    font-size: clamp(2.25rem, 3.8vw, 3.25rem);
+    font-weight: 900;
+    line-height: 1.07;
+    letter-spacing: -0.03em;
+    color: #0f172a;
+    margin-bottom: 1.125rem;
+    opacity: 0;
+    animation: hero-fade-up 0.65s cubic-bezier(0.16,1,0.3,1) 0.2s forwards;
+}
+
+.hero-h1 .hero-gradient {
+    background: linear-gradient(135deg, #7c3aed 0%, #a78bfa 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.hero-p {
+    font-size: 1.0625rem;
+    line-height: 1.7;
+    color: #64748b;
+    max-width: 420px;
+    margin-bottom: 2rem;
+    font-weight: 400;
+    opacity: 0;
+    animation: hero-fade-up 0.65s cubic-bezier(0.16,1,0.3,1) 0.28s forwards;
+}
+
+.hero-ctas {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+    opacity: 0;
+    animation: hero-fade-up 0.65s cubic-bezier(0.16,1,0.3,1) 0.36s forwards;
+}
+
+.hero-btn-primary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.8125rem 1.625rem;
+    background: linear-gradient(135deg, #7c3aed, #6d28d9);
+    color: #fff;
+    border-radius: 13px;
+    font-size: 0.9375rem;
+    font-weight: 700;
+    text-decoration: none;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+    box-shadow: 0 6px 20px -4px rgba(124,58,237,0.38);
+    white-space: nowrap;
+}
+
+.hero-btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 28px -4px rgba(124,58,237,0.46);
+    background: linear-gradient(135deg, #6d28d9, #5b21b6);
+}
+
+.hero-btn-secondary {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    padding: 0.8125rem 1.625rem;
+    background: #fff;
+    color: #334155;
+    border: 1.5px solid #e2e8f0;
+    border-radius: 13px;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.2s ease;
+    white-space: nowrap;
+}
+
+.hero-btn-secondary:hover {
+    border-color: #c4b5fd;
+    color: #7c3aed;
+    background: #faf9ff;
+    transform: translateY(-1px);
+}
+
+.hero-trust {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    opacity: 0;
+    animation: hero-fade-up 0.65s cubic-bezier(0.16,1,0.3,1) 0.44s forwards;
+}
+
+.hero-trust span {
+    font-size: 12px;
+    font-weight: 600;
+    color: #94a3b8;
+}
+
+.hero-trust-dot {
+    width: 3px; height: 3px;
+    border-radius: 50%;
+    background: #cbd5e1;
+    flex-shrink: 0;
+}
+
+/* ─── Keyframes ───────────────────────────────────────────── */
+@keyframes hero-fade-up {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0);    }
+}
+
+@keyframes hero-bounce {
+    0%, 100% { transform: translateY(0);   }
+    50%       { transform: translateY(3px); }
+}
+
+@keyframes hero-pulse {
+    0%, 100% { transform: scale(1);    opacity: 0.5; }
+    50%       { transform: scale(1.08); opacity: 0.9; }
+}
+
+/* ─── Responsive ──────────────────────────────────────────── */
+
+/* Tablet / narrow desktop — stack */
+@media (max-width: 860px) {
+    .hero-grid {
+        grid-template-columns: 1fr;
+        gap: 2.5rem;
+        padding: 0 1.5rem 3rem;
+        text-align: center;
+    }
+
+    /* Content first, then video */
+    .hero-content-col { order: 0; }
+    .hero-video-col   { order: 1; }
+
+    .hero-eyebrow { margin-left: auto; margin-right: auto; }
+    .hero-p       { max-width: 500px; margin-left: auto; margin-right: auto; }
+    .hero-ctas    { justify-content: center; }
+    .hero-trust   { justify-content: center; }
+
+    .hero-video-wrap {
+        max-width: 500px;
+        margin: 0 auto;
+        aspect-ratio: 16 / 10;
+    }
+}
+
+/* Mobile */
+@media (max-width: 560px) {
+    #hero { padding-top: 84px; }
+
+    .hero-grid {
+        padding: 0 1.125rem 2.5rem;
+        gap: 2rem;
+    }
+
+    .hero-h1 { font-size: 2rem; }
+
+    .hero-ctas {
+        flex-direction: column;
+    }
+
+    .hero-btn-primary,
+    .hero-btn-secondary {
+        width: 100%;
+        justify-content: center;
+    }
+}
+
+/* ─── Reduced motion ──────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+    .hero-eyebrow, .hero-h1, .hero-p,
+    .hero-ctas, .hero-trust, .hero-video-col {
+        animation: none !important;
+        opacity: 1 !important;
+        transform: none !important;
+    }
+    .hero-app-arrow,
+    .hero-mockup-bg::before,
+    .hero-mockup-bg::after {
+        animation: none !important;
+    }
+}
+</style>
+
+<!-- ── Hero ──────────────────────────────────────────────────── -->
+<section id="hero" aria-label="Short URL Platform hero">
+    <div class="hero-grid">
+
+        <!-- ═══════════════════════════════
+             LEFT — VIDEO / PRODUCT VISUAL
+             ═══════════════════════════════ -->
+        <div class="hero-video-col">
+            <div class="hero-video-wrap">
+
+                {% if hero_videos %}
+                <!-- Dynamic Video Playlist -->
+                <video id="hero-video-player"
+                       autoplay muted playsinline preload="metadata"
+                       class="hero-video-element"
+                       tabindex="0"
+                       aria-label="Play next promotional video"
+                       title="Click to play next video"
+                       style="width: 100%; height: 100%; display: block; object-fit: cover; opacity: 1; visibility: visible; transition: opacity 0.2s ease; cursor: pointer;">
+                </video>
+                
+                <!-- JSON data for JS -->
+                {{ hero_videos|json_script:"hero-video-playlist" }}
+                
+                {% else %}
+                <!-- Animated mockup placeholder (Fallback) -->
+                <div id="hero-video-fallback" class="hero-mockup-bg" aria-hidden="true">
+                    <div class="hero-browser">
+
+                        <!-- Browser chrome -->
+                        <div class="hero-browser-bar">
+                            <div class="hero-browser-dot" style="background:#ff5f56;"></div>
+                            <div class="hero-browser-dot" style="background:#febc2e;"></div>
+                            <div class="hero-browser-dot" style="background:#27c93f;"></div>
+                            <div class="hero-browser-addr">
+                                <i data-lucide="lock" style="width:9px;height:9px;flex-shrink:0;"></i>
+                                scanpdf.com/short-url
+                            </div>
+                        </div>
+
+                        <!-- App UI -->
+                        <div class="hero-browser-body">
+                            <div class="hero-app-label">Short URL Creator</div>
+
+                            <div class="hero-app-input-row">
+                                <div class="hero-app-input">paste your long URL here…</div>
+                                <div class="hero-app-btn">Shorten →</div>
+                            </div>
+
+                            <div class="hero-app-result">
+                                <div class="hero-app-long-url">
+                                    https://example.com/products/category/very-long-product-page?ref=campaign
+                                </div>
+                                <div class="hero-app-arrow">
+                                    <i data-lucide="arrow-down" style="width:10px;height:10px;color:white;"></i>
+                                </div>
+                                <div class="hero-app-short-row">
+                                    <span class="hero-app-short-link">short.ly/offer</span>
+                                    <span class="hero-app-copy">Copy</span>
+                                </div>
+                            </div>
+
+                            <div class="hero-app-stats">
+                                <div class="hero-app-stat">
+                                    <div class="hero-app-stat-n">2.8k</div>
+                                    <div class="hero-app-stat-l">Clicks</div>
+                                </div>
+                                <div class="hero-app-stat">
+                                    <div class="hero-app-stat-n">38</div>
+                                    <div class="hero-app-stat-l">Countries</div>
+                                </div>
+                                <div class="hero-app-stat">
+                                    <div class="hero-app-stat-n">99%</div>
+                                    <div class="hero-app-stat-l">Uptime</div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div><!-- /.hero-browser -->
+                </div><!-- /.hero-mockup-bg -->
+                {% endif %}
+
+            </div><!-- /.hero-video-wrap -->
+        </div><!-- /.hero-video-col -->
+
+
+        <!-- ═══════════════════════════════
+             RIGHT — CONTENT
+             ═══════════════════════════════ -->
+        <div class="hero-content-col">
+
+            <div class="hero-eyebrow">
+                <i data-lucide="link-2" style="width:11px;height:11px;"></i>
+                Short URL Platform
             </div>
-            <div class="w-px h-8 sm:h-10 bg-surface-200"></div>
-            <div class="text-center">
-                <p class="text-xl sm:text-2xl md:text-3xl font-extrabold text-surface-900">100%</p>
-                <p class="text-[10px] sm:text-xs font-medium text-surface-400 uppercase tracking-wider mt-1">Free</p>
-            </div>
-            <div class="w-px h-8 sm:h-10 bg-surface-200"></div>
-            <div class="text-center">
-                <p class="text-xl sm:text-2xl md:text-3xl font-extrabold text-surface-900">50MB</p>
-                <p class="text-[10px] sm:text-xs font-medium text-surface-400 uppercase tracking-wider mt-1">Max Size
-                </p>
-            </div>
-        </div>
-    </div>
 
-    <!-- Scroll indicator -->
-    <div class="absolute bottom-6 sm:bottom-10 left-1/2 -translate-x-1/2 animate-bounce hidden sm:block">
-        <div class="w-7 h-11 rounded-full border-2 border-surface-300 flex items-start justify-center pt-2">
-            <div class="w-1 h-2.5 rounded-full bg-surface-400 animate-scroll-dot"></div>
+            <h1 class="hero-h1">
+                Turn Long Links Into<br>
+                <span class="hero-gradient">Short, Shareable URLs.</span>
+            </h1>
+
+            <p class="hero-p">
+                Create clean, memorable short links in seconds.
+                Share your links anywhere and make every click easier to remember.
+            </p>
+
+            <div class="hero-ctas">
+                <a href="{% if request.session.is_dqr_user %}{% url 'dynamic_qr:short_url' %}{% else %}{% url 'dynamic_qr:login' %}{% endif %}"
+                   class="hero-btn-primary"
+                   id="hero-cta-create-shorturl">
+                    <i data-lucide="zap" style="width:17px;height:17px;"></i>
+                    Create Short URL
+                </a>
+                <a href="{% url 'services:pricing' %}"
+                   class="hero-btn-secondary"
+                   id="hero-cta-learn-more">
+                    <i data-lucide="arrow-right" style="width:16px;height:16px;"></i>
+                    Learn More
+                </a>
+            </div>
+
+            <div class="hero-trust">
+                <span>Fast</span>
+                <div class="hero-trust-dot"></div>
+                <span>Simple</span>
+                <div class="hero-trust-dot"></div>
+                <span>Secure</span>
+                <div class="hero-trust-dot"></div>
+                <span>Free to start</span>
+            </div>
+
+        </div><!-- /.hero-content-col -->
+
+    </div><!-- /.hero-grid -->
+</section><!-- /#hero -->
+
+
+<!-- ═══════════════════════════════════════════════════════════
+     HERO — QR CODE PLATFORM
+     Simple two-column: LEFT content · RIGHT video
+     ═══════════════════════════════════════════════════════════ -->
+<section id="hero-qr" aria-label="QR Code Platform hero" style="background: #ffffff; padding-bottom: 40px; overflow: hidden; padding-top: 40px;">
+    <div class="hero-grid">
+
+        <!-- ═══════════════════════════════
+             LEFT — CONTENT (Order 0)
+             ═══════════════════════════════ -->
+        <div class="hero-content-col">
+            <div class="hero-eyebrow">
+                <i data-lucide="qr-code" style="width:11px;height:11px;"></i>
+                QR Code Platform
+            </div>
+
+            <h2 class="hero-h1">
+                Create Smart QR Codes<br>
+                <span class="hero-gradient">for Every Use.</span>
+            </h2>
+
+            <p class="hero-p">
+                Create customizable QR codes for websites, PDFs, menus, business cards and more. Manage, track and update your QR codes from one place.
+            </p>
+
+            <div class="hero-ctas">
+                <a href="{% if request.session.is_dqr_user %}{% url 'dynamic_qr:create' %}{% else %}{% url 'dynamic_qr:login' %}{% endif %}"
+                   class="hero-btn-primary"
+                   id="hero-cta-create-qr">
+                   <i data-lucide="zap" style="width:17px;height:17px;"></i>
+                   Create QR Code
+                </a>
+                <a href="{% url 'services:pricing' %}"
+                   class="hero-btn-secondary"
+                   id="hero-cta-qr-learn-more">
+                   <i data-lucide="arrow-right" style="width:16px;height:16px;"></i>
+                   Learn More
+                </a>
+            </div>
+
+            <div class="hero-trust">
+                <span>Dynamic</span>
+                <div class="hero-trust-dot"></div>
+                <span>Customizable</span>
+                <div class="hero-trust-dot"></div>
+                <span>Trackable</span>
+                <div class="hero-trust-dot"></div>
+                <span>Secure</span>
+            </div>
+        </div><!-- /.hero-content-col -->
+
+        <!-- ═══════════════════════════════
+             RIGHT — VIDEO / PRODUCT VISUAL (Order 1)
+             ═══════════════════════════════ -->
+        <div class="hero-video-col">
+            <div class="hero-video-wrap">
+
+                {% if qr_hero_videos %}
+                <!-- Dynamic Video Playlist for QR -->
+                <video id="hero-qr-video-player"
+                       autoplay muted playsinline preload="metadata"
+                       class="hero-video-element"
+                       tabindex="0"
+                       aria-label="Play next promotional video"
+                       title="Click to play next video"
+                       style="width: 100%; height: 100%; display: block; object-fit: cover; opacity: 1; visibility: visible; transition: opacity 0.2s ease; cursor: pointer;">
+                </video>
+                
+                <!-- JSON data for JS -->
+                {{ qr_hero_videos|json_script:"hero-qr-video-playlist" }}
+                
+                {% else %}
+                <!-- Animated mockup placeholder (Fallback) -->
+                <div id="hero-qr-video-fallback" class="hero-mockup-bg" aria-hidden="true">
+                    <div class="hero-browser">
+                        <!-- Browser chrome -->
+                        <div class="hero-browser-bar">
+                            <div class="hero-browser-dot" style="background:#ff5f56;"></div>
+                            <div class="hero-browser-dot" style="background:#febc2e;"></div>
+                            <div class="hero-browser-dot" style="background:#27c93f;"></div>
+                            <div class="hero-browser-addr">
+                                <i data-lucide="lock" style="width:9px;height:9px;flex-shrink:0;"></i>
+                                scanpdf.com/qr
+                            </div>
+                        </div>
+
+                        <!-- App UI -->
+                        <div class="hero-browser-body" style="text-align: center;">
+                            <div class="hero-app-label">QR Code Creator</div>
+                            <i data-lucide="qr-code" style="width:100px;height:100px;color:#7c3aed;margin:20px auto;"></i>
+                            <div class="hero-app-btn" style="width:fit-content;margin:0 auto;display:inline-flex;">Generate QR &rarr;</div>
+                        </div>
+                    </div><!-- /.hero-browser -->
+                </div><!-- /.hero-mockup-bg -->
+                {% endif %}
+
+            </div><!-- /.hero-video-wrap -->
+        </div><!-- /.hero-video-col -->
+
+    </div><!-- /.hero-grid -->
+</section><!-- /#hero-qr -->
+
+<!-- ═══════════════════════════════════════════════════════════
+     FEATURES SECTION
+     ═══════════════════════════════════════════════════════════ -->
+<section class="py-10 sm:py-16">
+    <div class="max-w-7xl mx-auto px-6 lg:px-8">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            <!-- Feature 1 -->
+            <div class="flex flex-col items-center text-center group cursor-default">
+                <div
+                    class="w-12 h-12 rounded-2xl bg-white border border-purple-100 flex items-center justify-center mb-4 text-purple-600 shadow-sm group-hover:shadow-md group-hover:-translate-y-1 group-hover:border-purple-200 group-hover:text-purple-700 transition-all duration-300">
+                    <i data-lucide="shield-check" class="w-5 h-5"></i>
+                </div>
+                <h4 class="text-sm font-bold text-[#1e293b] mb-1.5">Secure Processing</h4>
+                <p class="text-xs text-[#64748b] leading-relaxed max-w-[200px]">Files deleted after conversion</p>
+            </div>
+            <!-- Feature 2 -->
+            <div class="flex flex-col items-center text-center group cursor-default">
+                <div
+                    class="w-12 h-12 rounded-2xl bg-white border border-purple-100 flex items-center justify-center mb-4 text-purple-600 shadow-sm group-hover:shadow-md group-hover:-translate-y-1 group-hover:border-purple-200 group-hover:text-purple-700 transition-all duration-300">
+                    <i data-lucide="zap" class="w-5 h-5"></i>
+                </div>
+                <h4 class="text-sm font-bold text-[#1e293b] mb-1.5">Instant Results</h4>
+                <p class="text-xs text-[#64748b] leading-relaxed max-w-[200px]">Lightning-fast processing</p>
+            </div>
+            <!-- Feature 3 -->
+            <div class="flex flex-col items-center text-center group cursor-default">
+                <div
+                    class="w-12 h-12 rounded-2xl bg-white border border-purple-100 flex items-center justify-center mb-4 text-purple-600 shadow-sm group-hover:shadow-md group-hover:-translate-y-1 group-hover:border-purple-200 group-hover:text-purple-700 transition-all duration-300">
+                    <i data-lucide="monitor-smartphone" class="w-5 h-5"></i>
+                </div>
+                <h4 class="text-sm font-bold text-[#1e293b] mb-1.5">Any Device</h4>
+                <p class="text-xs text-[#64748b] leading-relaxed max-w-[200px]">Desktop, tablet, and mobile</p>
+            </div>
+            <!-- Feature 4 -->
+            <div class="flex flex-col items-center text-center group cursor-default">
+                <div
+                    class="w-12 h-12 rounded-2xl bg-white border border-purple-100 flex items-center justify-center mb-4 text-purple-600 shadow-sm group-hover:shadow-md group-hover:-translate-y-1 group-hover:border-purple-200 group-hover:text-purple-700 transition-all duration-300">
+                    <i data-lucide="user-check" class="w-5 h-5"></i>
+                </div>
+                <h4 class="text-sm font-bold text-[#1e293b] mb-1.5">No Signup</h4>
+                <p class="text-xs text-[#64748b] leading-relaxed max-w-[200px]">Just upload and convert</p>
+            </div>
         </div>
     </div>
 </section>
-
 
 <!-- ═══════════════════════════════════════════════════════════
      HOW IT WORKS SECTION
@@ -176,7 +844,7 @@
                         <i data-lucide="upload-cloud" class="w-5 h-5 sm:w-6 sm:h-6 text-purple-600"></i>
                     </div>
                     <h3 class="text-base sm:text-lg font-bold text-surface-900 mb-1.5 sm:mb-2">Upload Your File</h3>
-                    <p class="text-surface-500 text-xs sm:text-sm leading-relaxed">Drag & drop or browse. We accept
+                    <p class="text-surface-500 text-xs sm:text-sm leading-relaxed">Drag &amp; drop or browse. We accept
                         files up to 50MB.</p>
                 </div>
             </div>
@@ -220,14 +888,15 @@
                 Powerful Tools, Simple Interface
             </h2>
             <p class="text-surface-500 max-w-xl mx-auto text-sm sm:text-base md:text-lg font-light px-2">
-                Professional-grade file conversion & PDF tools. Choose your tool to begin.
+                Professional-grade file conversion &amp; PDF tools. Choose your tool to begin.
             </p>
         </div>
 
         <!-- Tool Cards Grid -->
         <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 md:gap-5">
             {% for slug, tool in tools.items %}
-            <a href="{% if slug in IMAGE_TOOLS_KEYS %}{% url 'image_processor:tool_page' slug %}{% else %}{% url 'converter:convert_page' slug %}{% endif %}" class="tool-card group block relative">
+            <a href="{% if slug in IMAGE_TOOLS_KEYS %}{% url 'image_processor:tool_page' slug %}{% else %}{% url 'converter:convert_page' slug %}{% endif %}"
+                class="tool-card group block relative">
                 <div
                     class="relative h-full p-4 sm:p-5 md:p-7 rounded-xl sm:rounded-2xl bg-white border border-surface-100 hover:border-surface-200 transition-all duration-400 overflow-hidden hover:-translate-y-1 shadow-card hover:shadow-card-hover">
                     <!-- Ambient glow -->
@@ -262,7 +931,9 @@
                         <span class="text-[10px] sm:text-xs font-medium text-surface-400">Coming Soon</span>
                         {% else %}
                         <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                        <span class="text-[10px] sm:text-xs font-medium text-surface-400 group-hover:text-brand-500 transition-colors">Ready to use</span>
+                        <span
+                            class="text-[10px] sm:text-xs font-medium text-surface-400 group-hover:text-brand-500 transition-colors">Ready
+                            to use</span>
                         {% endif %}
                     </div>
                 </div>
@@ -272,47 +943,59 @@
     </div>
 </section>
 
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    function initVideoPlaylist(dataId, videoId) {
+        const dataEl = document.getElementById(dataId);
+        const video = document.getElementById(videoId);
+        
+        if (dataEl && video) {
+            try {
+                const playlist = JSON.parse(dataEl.textContent);
+                if (playlist && playlist.length > 0) {
+                    let currentVideoIndex = 0;
+                    
+                    function playCurrentVideo() {
+                        if (!playlist.length) return;
+                        video.src = playlist[currentVideoIndex];
+                        video.muted = true;
+                        video.defaultMuted = true;
+                        video.load();
+                        const playPromise = video.play();
+                        if (playPromise !== undefined) {
+                            playPromise.catch(error => {
+                                console.error("Hero video play error:", error);
+                            });
+                        }
+                    }
+                    
+                    function playNextVideo() {
+                        if (!playlist.length) return;
+                        currentVideoIndex = (currentVideoIndex + 1) % playlist.length;
+                        playCurrentVideo();
+                    }
+                    
+                    video.addEventListener("ended", playNextVideo);
+                    video.addEventListener("click", playNextVideo);
+                    video.addEventListener('keydown', function(e) {
+                        if (e.key === 'Enter' || e.key === ' ') {
+                            e.preventDefault();
+                            playNextVideo();
+                        }
+                    });
+                    
+                    playCurrentVideo();
+                }
+            } catch (e) {
+                console.error("Failed to parse hero video playlist", e);
+            }
+        }
+    }
 
-<!-- ═══════════════════════════════════════════════════════════
-     TRUST BANNER / FEATURES
-     ═══════════════════════════════════════════════════════════ -->
-<section class="py-10 sm:py-20 bg-surface-50 border-t border-b border-surface-100">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="grid grid-cols-2 md:grid-cols-4 gap-5 sm:gap-8 md:gap-10">
-            <div class="text-center group">
-                <div
-                    class="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-white border border-surface-100 flex items-center justify-center mx-auto mb-2 sm:mb-3 group-hover:border-brand-200 group-hover:shadow-sm transition-all">
-                    <i data-lucide="shield-check" class="w-4 h-4 sm:w-5 sm:h-5 text-brand-500"></i>
-                </div>
-                <h4 class="text-xs sm:text-sm font-semibold text-surface-800 mb-0.5">Secure Processing</h4>
-                <p class="text-[10px] sm:text-xs text-surface-400 leading-relaxed">Files deleted after conversion</p>
-            </div>
-            <div class="text-center group">
-                <div
-                    class="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-white border border-surface-100 flex items-center justify-center mx-auto mb-2 sm:mb-3 group-hover:border-purple-200 group-hover:shadow-sm transition-all">
-                    <i data-lucide="zap" class="w-4 h-4 sm:w-5 sm:h-5 text-purple-500"></i>
-                </div>
-                <h4 class="text-xs sm:text-sm font-semibold text-surface-800 mb-0.5">Instant Results</h4>
-                <p class="text-[10px] sm:text-xs text-surface-400 leading-relaxed">Lightning-fast processing</p>
-            </div>
-            <div class="text-center group">
-                <div
-                    class="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-white border border-surface-100 flex items-center justify-center mx-auto mb-2 sm:mb-3 group-hover:border-emerald-200 group-hover:shadow-sm transition-all">
-                    <i data-lucide="monitor-smartphone" class="w-4 h-4 sm:w-5 sm:h-5 text-emerald-500"></i>
-                </div>
-                <h4 class="text-xs sm:text-sm font-semibold text-surface-800 mb-0.5">Any Device</h4>
-                <p class="text-[10px] sm:text-xs text-surface-400 leading-relaxed">Desktop, tablet, and mobile</p>
-            </div>
-            <div class="text-center group">
-                <div
-                    class="w-10 h-10 sm:w-11 sm:h-11 rounded-xl bg-white border border-surface-100 flex items-center justify-center mx-auto mb-2 sm:mb-3 group-hover:border-amber-200 group-hover:shadow-sm transition-all">
-                    <i data-lucide="credit-card" class="w-4 h-4 sm:w-5 sm:h-5 text-amber-500"></i>
-                </div>
-                <h4 class="text-xs sm:text-sm font-semibold text-surface-800 mb-0.5">No Signup</h4>
-                <p class="text-[10px] sm:text-xs text-surface-400 leading-relaxed">Just upload and convert</p>
-            </div>
-        </div>
-    </div>
-</section>
+    // Initialize both hero video playlists
+    initVideoPlaylist('hero-video-playlist', 'hero-video-player');
+    initVideoPlaylist('hero-qr-video-playlist', 'hero-qr-video-player');
+});
+</script>
 
 {% endblock %}

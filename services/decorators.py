@@ -12,7 +12,7 @@ def get_user_subscription(user):
     sub = Subscription.objects.filter(user=user, status='Active').first()
     if not sub:
         # Fallback to Free subscription
-        free_plan = Plan.objects.get(code='free')
+        free_plan, _ = Plan.objects.get_or_create(code='free', defaults={'name': 'Free', 'is_default': True})
         sub = Subscription.objects.create(
             user=user,
             plan=free_plan,

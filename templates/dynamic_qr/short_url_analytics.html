@@ -3,454 +3,682 @@
 
 {% block title %}Short URL Analytics: {{ qr.qr_name }} — ScanPDF{% endblock %}
 
+{% block extra_head %}
+{{ block.super }}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+{% endblock %}
+
 {% block dqr_style %}
-    .analytics-card {
-        background: white; border-radius: 20px; border: 1px solid #f1f5f9; padding: 24px;
-        box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); height: 100%;
-    }
-    .metric-pill {
-        background: white; border: 1px solid #f1f5f9; border-radius: 20px; padding: 20px;
-        display: flex; flex-direction: column; gap: 4px; box-shadow: 0 1px 3px rgba(0,0,0,0.05);
-    }
-    .metric-value { font-size: 24px; font-weight: 900; color: #0f172a; line-height: 1; }
-    .metric-label { font-size: 10px; font-weight: 800; color: #64748b; text-transform: uppercase; letter-spacing: 0.1em; }
+:root {
+    --p6:#4f46e5; --p5:#6366f1; --p4:#818cf8; --p3:#a5b4fc; --p1:#c7d2fe; --p01:#e0e7ff;
+    --s9:#0f172a; --s7:#334155; --s5:#64748b; --s2:#e2e8f0; --s1:#f1f5f9; --s0:#f8fafc;
+    --green:#10b981; --red:#ef4444; --blue:#3b82f6; --amber:#f59e0b;
+}
+*, *::before, *::after { box-sizing: border-box; }
+body { background:var(--s0); }
 
-    .filter-btn {
-        padding: 6px 14px; border-radius: 10px; font-size: 12px; font-weight: 800;
-        transition: all 0.2s; border: 1px solid transparent;
-    }
-    .filter-btn.active {
-        background: #4f46e5; color: white; box-shadow: 0 4px 10px rgba(79, 70, 229, 0.2);
-    }
-    .filter-btn:not(.active) {
-        background: #f8fafc; color: #64748b; border-color: #f1f5f9;
-    }
-    .filter-btn:not(.active):hover {
-        background: #f1f5f9; color: #0f172a;
-    }
+/* Cards */
+.an-card { background:#fff; border-radius:16px; border:1px solid var(--s2); padding:24px; box-shadow:0 1px 3px rgba(0,0,0,.04); width:100%; max-width:100%; min-width:0; }
+.an-title { font-size:11px; font-weight:800; color:var(--s5); text-transform:uppercase; letter-spacing:.07em; margin-bottom:16px; }
 
-    .scan-log-table { width: 100%; border-collapse: separate; border-spacing: 0; }
-    .scan-log-table th { text-align: left; padding: 12px 16px; font-size: 10px; font-weight: 800; color: #64748b; text-transform: uppercase; border-bottom: 2px solid #f8fafc; }
-    .scan-log-table td { padding: 14px 16px; font-size: 12px; color: #1e293b; border-bottom: 1px solid #f8fafc; }
-    
-    .chart-label-pill {
-        display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px;
-        background: #f8fafc; border-radius: 8px; font-size: 11px; font-weight: 700; color: #475569;
-    }
+/* Metrics */
+.kpi-grid { display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:12px; width:100%; min-width:0; }
+.kpi-pill { background:#fff; border:1px solid var(--s2); border-radius:14px; padding:18px 16px; display:flex; flex-direction:column; box-shadow:0 1px 3px rgba(0,0,0,.04); min-width:0; }
+.kpi-label { font-size:10px; font-weight:800; color:var(--s5); text-transform:uppercase; letter-spacing:.07em; margin-bottom:10px; display:flex; align-items:center; justify-content:space-between; }
+.kpi-val { font-size:30px; font-weight:900; color:var(--s9); line-height:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.kpi-trend { font-size:11px; font-weight:700; margin-top:6px; }
+.up { color:var(--green); } .dn { color:var(--red); }
 
-    @media print {
-        .dashboard-sidebar, .top-nav, .filter-btn, button, a[href^="?range="], .print-hide {
-            display: none !important;
-        }
-        .main-content { margin: 0 !important; padding: 0 !important; }
-        .analytics-card { box-shadow: none !important; border: 1px solid #ddd !important; break-inside: avoid; }
-    }
+/* URL chip */
+.url-chip { display:inline-flex; align-items:center; background:#fff; border:1px solid var(--s2); border-radius:999px; padding:5px 8px 5px 16px; font-family:ui-monospace,monospace; font-size:13px; font-weight:600; color:var(--s7); max-width:100%; min-width:0; }
+.url-chip button { width:28px; height:28px; border-radius:50%; color:var(--s5); display:inline-flex; align-items:center; justify-content:center; transition:all .15s; margin-left:4px; flex-shrink:0; }
+.url-chip:hover button { background:var(--s1); color:var(--p6); }
+
+/* Filter tabs */
+.ftabs { display:inline-flex; flex-wrap:wrap; background:var(--s1); padding:4px; border-radius:12px; gap:2px; max-width:100%; min-width:0; }
+.ftab { padding:6px 14px; border-radius:8px; font-size:12px; font-weight:700; color:var(--s5); text-decoration:none; transition:all .15s; white-space:nowrap; }
+.ftab:hover { background:var(--s2); color:var(--s9); }
+.ftab.active { background:var(--p6); color:#fff; box-shadow:0 2px 6px rgba(79,70,229,.3); }
+
+/* Export */
+.exp-wrap { position:relative; display:inline-block; }
+.exp-btn { display:inline-flex; align-items:center; gap:6px; padding:8px 16px; background:#fff; border:1px solid var(--p3); color:var(--p6); font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:.05em; border-radius:12px; cursor:pointer; transition:all .15s; }
+.exp-btn:hover { background:var(--p01); }
+.exp-menu { display:none; position:absolute; right:0; top:calc(100% + 8px); background:#fff; border:1px solid var(--s2); border-radius:12px; box-shadow:0 8px 20px rgba(0,0,0,.08); z-index:100; min-width:160px; overflow:hidden; }
+.exp-wrap:hover .exp-menu { display:block; }
+.exp-item { display:flex; align-items:center; gap:8px; padding:10px 16px; font-size:13px; font-weight:700; color:var(--s7); text-decoration:none; }
+.exp-item:hover { background:var(--s0); color:var(--p6); }
+
+/* Header Layout */
+.analytics-header-row { display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:24px; margin-bottom:16px; width:100%; min-width:0; }
+.analytics-header-left { flex:1 1 400px; min-width:0; }
+.analytics-header-actions { flex:0 1 auto; max-width:100%; display:flex; flex-direction:column; align-items:flex-end; gap:10px; }
+
+/* Grid Layouts */
+.an-grid-2 { display:grid; grid-template-columns:repeat(2, minmax(0,1fr)); gap:16px; margin-bottom:16px; width:100%; min-width:0; }
+.an-grid-4 { display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:16px; margin-bottom:16px; width:100%; min-width:0; }
+.perf-grid { display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:20px; width:100%; min-width:0; }
+.perf-grid-6 { display:grid; grid-template-columns:repeat(6, minmax(0,1fr)); gap:16px; width:100%; min-width:0; margin-bottom:16px; }
+
+/* Insights */
+.insight-box { margin-top:20px; padding-top:20px; border-top:1px solid var(--s2); display:flex; flex-direction:column; gap:10px; }
+.insight-title { font-size:11px; font-weight:800; color:var(--s5); text-transform:uppercase; letter-spacing:.07em; margin-bottom:4px; }
+.insight-row { display:flex; align-items:flex-start; gap:10px; font-size:13px; font-weight:600; color:var(--s7); }
+.insight-icon { color:var(--p6); flex-shrink:0; margin-top:1px; }
+
+/* Chart wrappers */
+.cw { position:relative; width:100%; overflow:hidden; min-width:0; }
+
+/* Legend */
+.ch-legend { display:flex; gap:16px; flex-wrap:wrap; margin-top:12px; }
+.ch-dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+.ch-leg-item { display:flex; align-items:center; gap:6px; font-size:12px; font-weight:700; color:var(--s5); }
+
+/* Progress */
+.prog-row { display:flex; align-items:center; gap:10px; margin-bottom:10px; }
+.prog-row:last-child { margin-bottom:0; }
+.prog-name { font-size:13px; font-weight:700; color:var(--s7); min-width:0; flex:1; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.prog-bg { width:100px; height:8px; background:var(--s1); border-radius:4px; overflow:hidden; flex-shrink:0; }
+.prog-fill { height:100%; border-radius:4px; background:var(--p6); }
+.prog-nums { font-size:12px; font-weight:700; color:var(--s5); min-width:60px; text-align:right; white-space:nowrap; flex-shrink:0; }
+
+/* Table */
+.an-tbl-wrap { width:100%; overflow-x:auto; min-width:0; }
+.an-tbl { width:100%; border-collapse:collapse; min-width:600px; }
+.an-tbl th { padding:10px 14px; text-align:left; font-size:10px; font-weight:800; color:var(--s5); text-transform:uppercase; letter-spacing:.05em; border-bottom:2px solid var(--s1); white-space:nowrap; }
+.an-tbl td { padding:12px 14px; font-size:13px; font-weight:600; color:var(--s7); border-bottom:1px solid var(--s1); }
+.an-tbl tbody tr:last-child td { border-bottom:none; }
+.an-tbl tbody tr:hover { background:var(--s0); }
+
+/* Badges */
+.bdg { display:inline-block; padding:2px 8px; border-radius:6px; font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.05em; }
+.bdg-h { background:#dcfce7; color:#166534; }
+.bdg-b { background:#fee2e2; color:#991b1b; }
+.bdg-q { background:var(--p01); color:#4338ca; }
+
+/* Empty */
+.empty { display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; padding:32px 20px; }
+.empty p { font-size:12px; font-weight:700; color:var(--s5); }
+
+/* Details grid */
+.det-grid { display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:10px; width:100%; min-width:0; }
+.det-cell { background:var(--s0); border-radius:10px; padding:12px; border:1px solid var(--s1); min-width:0; overflow:hidden; }
+.det-cell-dest { grid-column:span 2; }
+.det-lbl { font-size:10px; font-weight:800; color:var(--s5); text-transform:uppercase; letter-spacing:.06em; margin-bottom:4px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.det-val { font-size:13px; font-weight:800; color:var(--s9); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.det-val a { font-size:13px; font-weight:700; color:var(--p6); text-decoration:none; display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+/* Activity header */
+.act-hdr { display:flex; align-items:flex-start; flex-wrap:wrap; gap:24px; margin-bottom:20px; width:100%; min-width:0; }
+.act-hdr > div { min-width:0; }
+.act-stat-val { font-size:28px; font-weight:900; color:var(--s9); line-height:1; }
+.act-stat-lbl { font-size:11px; font-weight:700; color:var(--s5); margin-top:2px; }
+
+/* Donut rows */
+.donut-row { display:flex; align-items:center; justify-content:space-between; margin-bottom:6px; font-size:12px; font-weight:700; gap:8px; }
+.donut-row:last-child { margin-bottom:0; }
+.donut-row span:first-child { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; min-width:0; }
+.donut-row span:last-child { white-space:nowrap; flex-shrink:0; }
+
+/* Performance */
+.perf-icon { width:40px; height:40px; border-radius:12px; display:flex; align-items:center; justify-content:center; flex-shrink:0; }
+.perf-item { display:flex; align-items:flex-start; gap:12px; min-width:0; }
+.perf-item > div { min-width:0; overflow:hidden; }
+.perf-val { font-size:18px; font-weight:900; color:var(--s9); line-height:1.2; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+
+/* Overlay */
+.pdf-overlay { display:none; position:fixed; inset:0; background:rgba(255,255,255,.9); z-index:9999; align-items:center; justify-content:center; flex-direction:column; }
+.pdf-overlay.show { display:flex; }
+.pdf-spin { width:48px; height:48px; border:4px solid var(--s2); border-top-color:var(--p6); border-radius:50%; animation:spin 1s linear infinite; margin-bottom:16px; }
+@keyframes spin { to { transform:rotate(360deg); } }
+
+/* PDF mode */
+.pdf-mode .print-hide { display:none !important; }
+.pdf-mode body { background:#fff !important; }
+.pdf-mode .an-card { box-shadow:none !important; page-break-inside:avoid; }
+.pdf-mode .pdf-hdr { display:block !important; }
+.pdf-hdr { display:none; padding-bottom:20px; margin-bottom:20px; border-bottom:2px solid var(--s2); }
+.pdf-ftr { display:none; font-size:10px; font-weight:700; color:var(--s5); text-align:right; margin-top:16px; }
+.pdf-mode .pdf-ftr { display:block; }
+
+/* Breakpoints */
+@media (max-width:1400px) {
+    .perf-grid-6 { grid-template-columns:repeat(3, minmax(0,1fr)); }
+}
+@media (max-width:1200px) { 
+    .kpi-grid { grid-template-columns:repeat(3, minmax(0,1fr)); } 
+    .det-grid { grid-template-columns:repeat(3, minmax(0,1fr)); }
+    .an-grid-4, .perf-grid { grid-template-columns:repeat(2, minmax(0,1fr)); }
+}
+@media (max-width:1024px) { 
+    .kpi-grid { grid-template-columns:repeat(2, minmax(0,1fr)); } 
+    .det-grid { grid-template-columns:repeat(2, minmax(0,1fr)); }
+    .det-cell-dest { grid-column:span 2; }
+    .an-grid-2 { grid-template-columns:repeat(1, minmax(0,1fr)); }
+    .perf-grid-6 { grid-template-columns:repeat(2, minmax(0,1fr)); }
+}
+@media (max-width:640px) { 
+    .kpi-grid { grid-template-columns:repeat(1, minmax(0,1fr)); } 
+    .det-grid { grid-template-columns:repeat(1, minmax(0,1fr)); }
+    .det-cell-dest { grid-column:span 1; }
+    .an-grid-4, .perf-grid, .perf-grid-6 { grid-template-columns:repeat(1, minmax(0,1fr)); }
+}
+</style>
 {% endblock %}
 
 {% block dqr_content %}
-    <!-- Header with Back Button -->
-    <div class="mb-8">
-        <a href="{% url 'dynamic_qr:short_url' %}" class="inline-flex items-center gap-2 text-slate-400 font-black text-[10px] uppercase tracking-widest hover:text-indigo-600 transition-colors mb-4 print-hide">
-            <i data-lucide="arrow-left" class="w-3.5 h-3.5"></i> Back to Short URLs
+<div id="analytics-container" style="width:100%;max-width:1400px;margin:0 auto;padding:0 24px 64px;min-width:0;">
+
+    <!-- PDF header -->
+    <div class="pdf-hdr">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;">
+            <img src="{% static 'images/logo.png' %}" alt="ScanPDF" style="height:32px;">
+            <span style="font-size:18px;font-weight:900;color:var(--s9);">SHORT URL ANALYTICS REPORT</span>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:13px;font-weight:700;color:var(--s5);">
+            <div>Link: <span style="color:var(--s9);">{{ qr.qr_name }}</span></div>
+            <div style="text-align:right;">Generated: {% now "M d, Y H:i" %}</div>
+            <div>Period: <span style="color:var(--p6);text-transform:uppercase;">{{ selected_range }}</span></div>
+            <div style="text-align:right;">Status: {% if qr.is_active %}<span style="color:var(--green);">Active</span>{% else %}<span style="color:var(--red);">Inactive</span>{% endif %}</div>
+        </div>
+    </div>
+
+    <!-- Page header -->
+    <div class="print-hide" style="margin-bottom:28px;padding-top:4px;">
+        <a href="{% url 'dynamic_qr:short_url' %}" style="display:inline-flex;align-items:center;gap:4px;font-size:11px;font-weight:800;color:var(--s5);text-transform:uppercase;letter-spacing:.08em;text-decoration:none;margin-bottom:12px;" onmouseover="this.style.color='var(--p6)'" onmouseout="this.style.color='var(--s5)'">
+            <i data-lucide="arrow-left" style="width:14px;height:14px;"></i> Back to Short URLs
         </a>
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
-            <div>
-                <h1 class="text-2xl font-black text-slate-900 tracking-tight">Short URL Analytics</h1>
-                <p class="text-slate-500 font-bold text-xs mt-1">Analytics for <span class="text-indigo-600">"{{ qr.qr_name }}"</span></p>
-                <div class="mt-2 flex items-center gap-2">
-                    <div class="text-[10px] text-slate-400 font-mono truncate" id="short-url-text">
-                        {{ request.scheme }}://{{ request.get_host }}/qr/r/{{ qr.short_code }}
-                    </div>
-                    <button type="button" onclick="copyShortUrl()" class="w-8 h-8 flex items-center justify-center bg-white rounded-lg border border-slate-100 text-indigo-600 hover:bg-indigo-50 shadow-sm flex-shrink-0 print-hide" title="Copy short URL">
-                        <i data-lucide="copy" class="w-3.5 h-3.5"></i>
-                    </button>
+        <div class="analytics-header-row">
+            <div class="analytics-header-left">
+                <h1 style="font-size:28px;font-weight:900;color:var(--s9);line-height:1.15;margin-bottom:4px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Short URL Analytics</h1>
+                <p style="font-size:14px;font-weight:700;color:var(--s5);margin-bottom:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">Analytics for <span style="color:var(--p6);">"{{ qr.qr_name }}"</span></p>
+                <div class="url-chip">
+                    <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap;min-width:0;display:inline-block;vertical-align:bottom;">{{ request.scheme }}://{{ request.get_host }}{{ qr.public_url_path }}</span>
+                    <button onclick="navigator.clipboard.writeText('{{ request.scheme }}://{{ request.get_host }}{{ qr.public_url_path }}').then(function(){alert('Copied!');});" title="Copy"><i data-lucide="copy" style="width:14px;height:14px;"></i></button>
                 </div>
             </div>
-            
-            <!-- Filter Bar -->
-            <div class="flex flex-wrap items-center gap-2 bg-white p-1.5 rounded-2xl border border-slate-100 shadow-sm print-hide">
-                <a href="?range=today" class="filter-btn {% if selected_range == 'today' %}active{% endif %}">Today</a>
-                <a href="?range=7days" class="filter-btn {% if selected_range == '7days' %}active{% endif %}">7 Days</a>
-                <a href="?range=28days" class="filter-btn {% if selected_range == '28days' %}active{% endif %}">28 Days</a>
-                <a href="?range=1month" class="filter-btn {% if selected_range == '1month' or selected_range == '30days' %}active{% endif %}">1 Month</a>
-                <a href="?range=12months" class="filter-btn {% if selected_range == '12months' %}active{% endif %}">12 Months</a>
+            <div class="analytics-header-actions">
+                <div class="exp-wrap">
+                    <button class="exp-btn"><i data-lucide="download" style="width:14px;height:14px;"></i> Export <i data-lucide="chevron-down" style="width:12px;height:12px;"></i></button>
+                    <div class="exp-menu">
+                        <a href="javascript:void(0)" onclick="generatePDF()" class="exp-item" style="color:var(--p6);"><i data-lucide="file-text" style="width:15px;height:15px;"></i> PDF Report</a>
+                        <a href="?range={{ selected_range }}&export=csv" class="exp-item"><i data-lucide="sheet" style="width:15px;height:15px;"></i> CSV Data</a>
+                    </div>
+                </div>
+                <div class="ftabs">
+                    <a href="?range=today" class="ftab {% if selected_range == 'today' %}active{% endif %}">Today</a>
+                    <a href="?range=7days" class="ftab {% if selected_range == '7days' %}active{% endif %}">7 Days</a>
+                    <a href="?range=28days" class="ftab {% if selected_range == '28days' %}active{% endif %}">28 Days</a>
+                    <a href="?range=1month" class="ftab {% if selected_range == '1month' or selected_range == '30days' %}active{% endif %}">1 Month</a>
+                    <a href="?range=12months" class="ftab {% if selected_range == '12months' %}active{% endif %}">12 Months</a>
+                </div>
             </div>
         </div>
     </div>
 
-    <!-- View Details -->
-    <div class="analytics-card mb-8">
-        <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 border-b border-slate-50 pb-4">
-            <div>
-                <h3 class="text-sm font-black text-slate-900">Short URL Details</h3>
-            </div>
-            <span class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-wider {% if qr.is_active %}bg-emerald-50 text-emerald-600{% else %}bg-slate-100 text-slate-400{% endif %}">
-                <span class="w-1.5 h-1.5 rounded-full {% if qr.is_active %}bg-emerald-500{% else %}bg-slate-400{% endif %}"></span>
+    <!-- Short URL Details -->
+    <div class="an-card" style="margin-bottom:16px;">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid var(--s1);">
+            <span class="an-title" style="margin-bottom:0;">Short URL Details</span>
+            <span style="display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:999px;font-size:11px;font-weight:800;text-transform:uppercase;{% if qr.is_active %}background:#dcfce7;color:#166534;{% else %}background:var(--s1);color:var(--s5);{% endif %}">
+                <span style="width:7px;height:7px;border-radius:50%;background:{% if qr.is_active %}#16a34a{% else %}var(--s5){% endif %};"></span>
                 {{ qr.is_active|yesno:"Active,Inactive" }}
             </span>
         </div>
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
-            <div class="bg-slate-50 rounded-xl border border-slate-100 p-4">
-                <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Shortened URL</p>
-                <div class="flex items-center gap-2">
-                    <div class="font-mono text-[12px] font-black text-slate-700 truncate" id="short-url-text-2">
-                        {{ request.scheme }}://{{ request.get_host }}/qr/r/{{ qr.short_code }}
-                    </div>
-                    <button type="button" onclick="copyShortUrl2()" class="w-9 h-9 flex items-center justify-center bg-white rounded-lg border border-slate-200 text-indigo-600 hover:bg-indigo-50 shadow-sm flex-shrink-0 print-hide" title="Copy short URL">
-                        <i data-lucide="copy" class="w-4 h-4"></i>
-                    </button>
-                </div>
-            </div>
-
-            <div class="bg-slate-50 rounded-xl border border-slate-100 p-4">
-                <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-2">Destination URL</p>
-                <div class="flex items-center gap-2">
-                    <div class="text-[12px] font-bold text-slate-700 truncate" id="dest-url-text">{{ qr.destination_url }}</div>
-                    <a href="{{ qr.destination_url }}" target="_blank" rel="noopener noreferrer" class="w-9 h-9 flex items-center justify-center bg-white rounded-lg border border-slate-200 text-slate-600 hover:bg-slate-100 shadow-sm flex-shrink-0 print-hide" title="Open target">
-                        <i data-lucide="external-link" class="w-4 h-4"></i>
-                    </a>
-                </div>
-            </div>
-
-            <div class="bg-white rounded-xl border border-slate-100 p-4">
-                <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Short Code / Alias</p>
-                <div class="font-mono text-[12px] font-black text-indigo-600">{{ qr.custom_alias|default:qr.short_code }}</div>
-            </div>
-            
-            <div class="bg-white rounded-xl border border-slate-100 p-4">
-                <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Created</p>
-                <div class="text-[12px] font-black text-slate-800">{{ qr.created_at|date:"M d, Y H:i" }}</div>
-            </div>
-            
-            <div class="bg-white rounded-xl border border-slate-100 p-4">
-                <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Expiry Date</p>
-                <div class="text-[12px] font-black text-slate-800">
-                    {% if qr.expiry_date %}
-                        {{ qr.expiry_date|date:"M d, Y H:i" }}
-                    {% else %}
-                        <span class="text-slate-400">Never</span>
-                    {% endif %}
-                </div>
-            </div>
-            
-            <div class="bg-white rounded-xl border border-slate-100 p-4">
-                <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Protection</p>
-                <div class="text-[12px] font-black text-slate-800">
-                    {% if qr.password %}
-                        <span class="inline-flex items-center gap-1 text-amber-600"><i data-lucide="lock" class="w-3 h-3"></i> Password</span>
-                    {% else %}
-                        <span class="text-emerald-600">Public</span>
-                    {% endif %}
-                </div>
-            </div>
+        <div class="det-grid">
+            <div class="det-cell det-cell-dest"><p class="det-lbl">Destination</p><div class="det-val"><a href="{{ qr.destination_url }}" target="_blank" title="{{ qr.destination_url }}">{{ qr.destination_url }}</a></div></div>
+            <div class="det-cell"><p class="det-lbl">Header</p><p class="det-val" title="{{ qr.header|default:'—' }}">{{ qr.header|default:"—" }}</p></div>
+            <div class="det-cell"><p class="det-lbl">Short Code</p><p class="det-val" style="font-family:monospace;" title="{{ qr.short_code }}">{{ qr.short_code }}</p></div>
+            <div class="det-cell"><p class="det-lbl">Created</p><p class="det-val">{{ qr.created_at|date:"M d, Y" }}</p></div>
+            <div class="det-cell"><p class="det-lbl">Protection</p><p class="det-val">{% if qr.password %}Password{% else %}Public{% endif %}</p></div>
         </div>
     </div>
 
-    <!-- Overview Metrics -->
-    <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mb-8">
-        <div class="metric-pill">
-            <span class="metric-label">Total Clicks</span>
-            <span class="metric-value">{{ total_clicks }}</span>
+    <!-- KPI Cards -->
+    <div class="kpi-grid" style="margin-bottom:16px;">
+        <div class="kpi-pill"><div class="kpi-label">Total Clicks<i data-lucide="mouse-pointer-click" style="width:14px;height:14px;"></i></div><div class="kpi-val">{{ total_clicks }}</div>{% if trends.total %}<div class="kpi-trend {% if '+' in trends.total %}up{% else %}dn{% endif %}">{{ trends.total }} vs prev period</div>{% endif %}</div>
+        <div class="kpi-pill"><div class="kpi-label">Unique Clicks<i data-lucide="users" style="width:14px;height:14px;"></i></div><div class="kpi-val">{{ unique_clicks|default:"0" }}</div></div>
+        <div class="kpi-pill"><div class="kpi-label">QR Scans<i data-lucide="qr-code" style="width:14px;height:14px;"></i></div><div class="kpi-val" style="color:var(--p6);">{{ qr_scans|default:"0" }}</div></div>
+    </div>
+
+    <!-- Activity Chart -->
+    <div class="an-card" style="margin-bottom:16px;">
+        <div class="act-hdr">
+            <div><div class="an-title" style="margin-bottom:2px;">Activity</div><p style="font-size:11px;font-weight:700;color:var(--s5);text-transform:uppercase;letter-spacing:.06em;">{{ selected_range|capfirst }}</p></div>
+            <div><div class="act-stat-val">{{ total_clicks }}</div><div class="act-stat-lbl">Total Clicks</div></div>
+            <div><div class="act-stat-val">{{ unique_clicks|default:"0" }}</div><div class="act-stat-lbl">Unique Clicks</div></div>
         </div>
-        <div class="metric-pill">
-            <span class="metric-label">QR Scans</span>
-            <span class="metric-value text-indigo-600">{{ qr_scans }}</span>
+        {% if total_clicks > 0 %}
+        <div class="cw" style="height:300px;"><canvas id="activityChart" style="height:300px;"></canvas></div>
+        <div class="ch-legend" style="margin-top:16px;">
+            <div class="ch-leg-item"><span class="ch-dot" style="background:var(--p6);"></span>Total Clicks</div>
+            <div class="ch-leg-item"><span class="ch-dot" style="background:var(--p1);"></span>Unique Clicks</div>
         </div>
-        <div class="metric-pill">
-            <span class="metric-label">Unique Clicks</span>
-            <span class="metric-value">{{ unique_clicks }}</span>
+        {% else %}
+        <div class="empty" style="padding:48px;"><p>No click activity in this period. Share your short link to start collecting analytics.</p></div>
+        {% endif %}
+    </div>
+
+    <!-- Unique Click Ratio -->
+    <div class="an-card" style="margin-bottom:16px;">
+        <div style="display:flex;align-items:flex-start;gap:32px;margin-bottom:16px;">
+            <div><div class="an-title" style="margin-bottom:2px;">Unique Click Ratio</div><p style="font-size:12px;font-weight:700;color:var(--s5);">Unique ÷ Total × 100</p></div>
+            <div><div style="font-size:32px;font-weight:900;color:var(--p6);">{{ js_avg_ratio }}%</div><div style="font-size:11px;font-weight:700;color:var(--s5);margin-top:2px;">Period Average</div></div>
         </div>
-        <div class="metric-pill">
-            <span class="metric-label">Human Clicks</span>
-            <span class="metric-value text-emerald-600">{{ human_clicks }}</span>
+        {% if total_clicks > 0 %}
+        <div class="cw" style="height:240px;"><canvas id="ratioChart" style="height:240px;"></canvas></div>
+        {% else %}
+        <div class="empty"><p>No data for this period.</p></div>
+        {% endif %}
+    </div>
+
+    <!-- Hour / Day charts -->
+    <div class="an-grid-2">
+        <div class="an-card">
+            <div class="an-title">Clicks by Hour</div>
+            {% if total_clicks > 0 %}
+            <div class="cw" style="height:200px;"><canvas id="hourChart" style="height:200px;"></canvas></div>
+            {% else %}<div class="empty"><p>No hourly data</p></div>{% endif %}
         </div>
-        <div class="metric-pill">
-            <span class="metric-label">Bot Clicks</span>
-            <span class="metric-value text-rose-500">{{ bot_clicks }}</span>
+        <div class="an-card">
+            <div class="an-title">Clicks by Day of Week</div>
+            {% if total_clicks > 0 %}
+            <div class="cw" style="height:200px;"><canvas id="dayChart" style="height:200px;"></canvas></div>
+            {% else %}<div class="empty"><p>No daily data</p></div>{% endif %}
         </div>
     </div>
 
-    <!-- Charts Grid -->
-    <div class="grid grid-cols-1 gap-6 mb-8">
-        <div class="analytics-card">
-            <h3 class="text-sm font-black text-slate-900 mb-6">Engagement Over Time</h3>
-            <div class="h-[350px] w-full relative">
-                {% if total_clicks > 0 %}
-                <canvas id="trendsChart"></canvas>
-                {% else %}
-                <div class="absolute inset-0 flex items-center justify-center flex-col text-slate-400">
-                    <i data-lucide="bar-chart-2" class="w-8 h-8 mb-2 opacity-50"></i>
-                    <p class="text-xs font-bold uppercase tracking-widest">No click data yet.</p>
+    <!-- Geography -->
+    <div class="an-grid-2">
+        <div class="an-card">
+            <div class="an-title">Top Countries</div>
+            {% if country_stats %}{% for item in country_stats|slice:":7" %}
+            <div class="prog-row">
+                <div class="prog-name" title="{{ item.country }}">{{ item.country }}</div>
+                <div class="prog-bg"><div class="prog-fill" style="width:{% widthratio item.count total_clicks 100 %}%;"></div></div>
+                <div class="prog-nums">{{ item.count }} · {% widthratio item.count total_clicks 100 %}%</div>
+            </div>
+            {% endfor %}{% else %}<div class="empty"><p>No country data</p></div>{% endif %}
+        </div>
+        <div class="an-card">
+            <div class="an-title">Top Cities</div>
+            {% if city_stats %}{% for item in city_stats|slice:":7" %}
+            <div class="prog-row">
+                <div class="prog-name" title="{{ item.city }}">{{ item.city }}</div>
+                <div class="prog-bg"><div class="prog-fill" style="width:{% widthratio item.count total_clicks 100 %}%;"></div></div>
+                <div class="prog-nums">{{ item.count }} · {% widthratio item.count total_clicks 100 %}%</div>
+            </div>
+            {% endfor %}{% else %}<div class="empty"><p>No city data</p></div>{% endif %}
+        </div>
+    </div>
+
+    <!-- Referrers / Traffic Sources -->
+    <div class="an-grid-2">
+        <div class="an-card">
+            <div class="an-title" style="margin-bottom:4px;">Top Referrers</div>
+            <p style="font-size:12px;color:var(--s5);margin-bottom:16px;">Which websites sent visitors</p>
+            {% if referrer_stats %}{% for item in referrer_stats|slice:":7" %}
+            <div class="prog-row">
+                <div class="prog-name" title="{{ item.referrer|default:'Direct' }}">{{ item.display_name|default:"Direct / Unknown" }}</div>
+                <div class="prog-bg"><div class="prog-fill" style="width:{% widthratio item.count total_clicks 100 %}%;"></div></div>
+                <div class="prog-nums">{{ item.count }} · {% widthratio item.count total_clicks 100 %}%</div>
+            </div>
+            {% endfor %}{% else %}
+            <div class="empty">
+                <p>No referrer data yet</p>
+                <p style="font-size:11px;font-weight:400;margin-top:4px;">Share your short URL to start collecting analytics.</p>
+            </div>
+            {% endif %}
+        </div>
+        <div class="an-card">
+            <div class="an-title" style="margin-bottom:4px;">Traffic Sources</div>
+            <p style="font-size:12px;color:var(--s5);margin-bottom:16px;">Where your visitors came from</p>
+            {% if ts_stats %}{% for item in ts_stats %}
+            <div class="prog-row">
+                <div class="prog-name" title="{{ item.source }}">{{ item.source }}</div>
+                <div class="prog-bg"><div class="prog-fill" style="width:{% widthratio item.count total_clicks 100 %}%;"></div></div>
+                <div class="prog-nums">{{ item.count }} · {% widthratio item.count total_clicks 100 %}%</div>
+            </div>
+            {% endfor %}{% else %}
+            <div class="empty">
+                <p>No traffic source data yet</p>
+                <p style="font-size:11px;font-weight:400;margin-top:4px;">Share your short URL to start seeing traffic sources.</p>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Donuts: Devices / Browsers / OS / Quality -->
+    <div class="an-grid-4">
+        <div class="an-card" style="padding:20px;">
+            <div class="an-title" style="text-align:center;">Devices</div>
+            {% if device_stats %}
+            <div class="cw" style="height:160px;"><canvas id="deviceChart" style="height:160px;"></canvas></div>
+            <div style="margin-top:12px;">{% for item in device_stats %}
+            <div class="donut-row"><span style="color:var(--s7);" title="{{ item.label }}">{{ item.label }}</span><span style="color:var(--s9);">{{ item.count }} · {% widthratio item.count total_clicks 100 %}%</span></div>
+            {% endfor %}</div>
+            {% else %}<div class="empty"><p>No device data</p></div>{% endif %}
+        </div>
+        <div class="an-card" style="padding:20px;">
+            <div class="an-title" style="text-align:center;">Browsers</div>
+            {% if browser_stats %}
+            <div class="cw" style="height:160px;"><canvas id="browserChart" style="height:160px;"></canvas></div>
+            <div style="margin-top:12px;">{% for item in browser_stats %}
+            <div class="donut-row"><span style="color:var(--s7);" title="{{ item.label }}">{{ item.label }}</span><span style="color:var(--s9);">{{ item.count }} · {% widthratio item.count total_clicks 100 %}%</span></div>
+            {% endfor %}</div>
+            {% else %}<div class="empty"><p>No browser data</p></div>{% endif %}
+        </div>
+        <div class="an-card" style="padding:20px;">
+            <div class="an-title" style="text-align:center;">Operating Systems</div>
+            {% if os_stats %}
+            <div class="cw" style="height:160px;"><canvas id="osChart" style="height:160px;"></canvas></div>
+            <div style="margin-top:12px;">{% for item in os_stats %}
+            <div class="donut-row"><span style="color:var(--s7);" title="{{ item.label }}">{{ item.label }}</span><span style="color:var(--s9);">{{ item.count }} · {% widthratio item.count total_clicks 100 %}%</span></div>
+            {% endfor %}</div>
+            {% else %}<div class="empty"><p>No OS data</p></div>{% endif %}
+        </div>
+    </div>
+
+    <!-- Performance Summary -->
+    <div class="an-card" style="margin-bottom:16px;background:linear-gradient(135deg,var(--s0),#fff);">
+        <div class="an-title" style="margin-bottom:4px;">Performance Summary</div>
+        <p style="font-size:12px;color:var(--s5);margin-bottom:20px;">Your most important analytics at a glance</p>
+        
+        <div class="perf-grid-6">
+            <!-- Total Clicks -->
+            <div class="perf-item">
+                <div class="perf-icon" style="background:#eef2ff;color:var(--p6);"><i data-lucide="mouse-pointer-click" style="width:18px;height:18px;"></i></div>
+                <div>
+                    <p style="font-size:10px;font-weight:800;color:var(--s5);text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px;">Total Clicks</p>
+                    <p class="perf-val" title="{{ total_clicks|default:'—' }}">{{ total_clicks|default:"—" }}</p>
+                    <p style="font-size:11px;font-weight:700;color:var(--s5);"><span class="{% if '-' not in trends.total %}up{% else %}dn{% endif %}">{{ trends.total }}</span></p>
                 </div>
-                {% endif %}
             </div>
-        </div>
-    </div>
-    
-    <!-- Breakdown Donuts -->
-    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <!-- Source -->
-        <div class="analytics-card">
-            <h3 class="text-sm font-black text-slate-900 mb-6 text-center">Traffic Source</h3>
-            <div class="h-[200px] w-full relative">
-                {% if total_clicks > 0 %}
-                <canvas id="sourceChart"></canvas>
-                {% else %}
-                <div class="absolute inset-0 flex items-center justify-center flex-col text-slate-400"><p class="text-[10px] font-bold uppercase tracking-widest">No data</p></div>
-                {% endif %}
+            <!-- Unique Visitors -->
+            <div class="perf-item">
+                <div class="perf-icon" style="background:#f5f3ff;color:#9333ea;"><i data-lucide="users" style="width:18px;height:18px;"></i></div>
+                <div>
+                    <p style="font-size:10px;font-weight:800;color:var(--s5);text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px;">Unique Visitors</p>
+                    <p class="perf-val" title="{{ unique_clicks|default:'—' }}">{{ unique_clicks|default:"—" }}</p>
+                    <p style="font-size:11px;font-weight:700;color:var(--s5);"><span class="{% if '-' not in trends.unique %}up{% else %}dn{% endif %}">{{ trends.unique }}</span></p>
+                </div>
+            </div>
+            <!-- Best Day -->
+            <div class="perf-item">
+                <div class="perf-icon" style="background:#ecfdf5;color:var(--green);"><i data-lucide="calendar" style="width:18px;height:18px;"></i></div>
+                <div>
+                    <p style="font-size:10px;font-weight:800;color:var(--s5);text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px;">Best Day</p>
+                    <p class="perf-val" title="{{ perf_summary.best_day|default:'—' }}">{{ perf_summary.best_day|default:"—" }}</p>
+                    <p style="font-size:11px;font-weight:700;color:var(--s5);">{% if perf_summary.best_day_clicks %}{{ perf_summary.best_day_clicks }} clicks{% else %}—{% endif %}</p>
+                </div>
+            </div>
+            <!-- Peak Hour -->
+            <div class="perf-item">
+                <div class="perf-icon" style="background:#fffbeb;color:var(--amber);"><i data-lucide="clock" style="width:18px;height:18px;"></i></div>
+                <div>
+                    <p style="font-size:10px;font-weight:800;color:var(--s5);text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px;">Peak Hour</p>
+                    <p class="perf-val" title="{{ perf_summary.peak_hour|default:'—' }}" style="font-size:15px;margin-top:2px;">{{ perf_summary.peak_hour|default:"—" }}</p>
+                    <p style="font-size:11px;font-weight:700;color:var(--s5);">{% if perf_summary.peak_hour_clicks %}{{ perf_summary.peak_hour_clicks }} clicks{% else %}—{% endif %}</p>
+                </div>
+            </div>
+            <!-- Top Location -->
+            <div class="perf-item">
+                <div class="perf-icon" style="background:#f0fdf4;color:#16a34a;"><i data-lucide="map-pin" style="width:18px;height:18px;"></i></div>
+                <div>
+                    <p style="font-size:10px;font-weight:800;color:var(--s5);text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px;">Top Location</p>
+                    <p class="perf-val" title="{{ perf_summary.top_country|default:'—' }}">{{ perf_summary.top_country|default:"—" }}</p>
+                    <p style="font-size:11px;font-weight:700;color:var(--s5);">{% if perf_summary.top_country_clicks %}{{ perf_summary.top_country_clicks }} clicks{% else %}—{% endif %}</p>
+                </div>
+            </div>
+            <!-- Top Device -->
+            <div class="perf-item">
+                <div class="perf-icon" style="background:#eff6ff;color:var(--blue);"><i data-lucide="monitor-smartphone" style="width:18px;height:18px;"></i></div>
+                <div>
+                    <p style="font-size:10px;font-weight:800;color:var(--s5);text-transform:uppercase;letter-spacing:.06em;margin-bottom:2px;">Top Device</p>
+                    <p class="perf-val" title="{{ perf_summary.top_device|default:'—' }}">{{ perf_summary.top_device|default:"—" }}</p>
+                    <p style="font-size:11px;font-weight:700;color:var(--s5);">{% if perf_summary.top_device_pct %}{{ perf_summary.top_device_pct }}%{% else %}—{% endif %}</p>
+                </div>
             </div>
         </div>
         
-        <!-- OS -->
-        <div class="analytics-card">
-            <h3 class="text-sm font-black text-slate-900 mb-6 text-center">Operating System</h3>
-            <div class="h-[200px] w-full relative">
-                {% if total_clicks > 0 %}
-                <canvas id="osChart"></canvas>
-                {% else %}
-                <div class="absolute inset-0 flex items-center justify-center flex-col text-slate-400"><p class="text-[10px] font-bold uppercase tracking-widest">No data</p></div>
-                {% endif %}
+        {% if perf_summary.insights %}
+        <div class="insight-box">
+            <div class="insight-title">Key Insights</div>
+            {% for insight in perf_summary.insights %}
+            <div class="insight-row">
+                <i data-lucide="lightbulb" class="insight-icon" style="width:14px;height:14px;"></i>
+                <span>{{ insight }}</span>
             </div>
+            {% endfor %}
         </div>
-        
-        <!-- Browser -->
-        <div class="analytics-card">
-            <h3 class="text-sm font-black text-slate-900 mb-6 text-center">Browser</h3>
-            <div class="h-[200px] w-full relative">
-                {% if total_clicks > 0 %}
-                <canvas id="browserChart"></canvas>
-                {% else %}
-                <div class="absolute inset-0 flex items-center justify-center flex-col text-slate-400"><p class="text-[10px] font-bold uppercase tracking-widest">No data</p></div>
-                {% endif %}
-            </div>
-        </div>
-        
-        <!-- Device -->
-        <div class="analytics-card">
-            <h3 class="text-sm font-black text-slate-900 mb-6 text-center">Device</h3>
-            <div class="h-[200px] w-full relative">
-                {% if total_clicks > 0 %}
-                <canvas id="deviceChart"></canvas>
-                {% else %}
-                <div class="absolute inset-0 flex items-center justify-center flex-col text-slate-400"><p class="text-[10px] font-bold uppercase tracking-widest">No data</p></div>
-                {% endif %}
-            </div>
-        </div>
+        {% endif %}
     </div>
 
-    <!-- Detailed Click Log -->
-    <div class="analytics-card mb-10">
-        <div class="flex items-center justify-between mb-8">
-            <div>
-                <h3 class="text-sm font-black text-slate-900">Live Click Activity</h3>
-                <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest">Real-time interaction data</p>
-            </div>
-            <button onclick="window.print()" class="px-4 py-2 bg-slate-50 border border-slate-100 rounded-lg text-slate-500 font-black text-[10px] uppercase tracking-widest hover:bg-slate-100 transition-all flex items-center gap-2 print-hide">
-                <i data-lucide="printer" class="w-3.5 h-3.5"></i> Print Report
-            </button>
-        </div>
-        
-        <div class="overflow-x-auto">
-            <table class="scan-log-table">
+    <!-- Recent Activity -->
+    <div class="an-card print-hide">
+        <div class="an-title">Recent Activity</div>
+        <div class="an-tbl-wrap">
+            <table class="an-tbl">
                 <thead>
-                    <tr>
-                        <th>Date & Time</th>
-                        <th>Device</th>
-                        <th>Browser / OS</th>
-                        <th>Source</th>
-                        <th>Type</th>
-                        <th>IP Address</th>
-                        <th>Location</th>
-                    </tr>
+                    <tr><th>Time</th><th>Location</th><th>Device</th><th>Browser / OS</th><th>Source / Referrer</th><th>Type</th></tr>
                 </thead>
                 <tbody>
                     {% for scan in page_obj %}
-                    <tr class="hover:bg-slate-50/50 transition-colors">
-                        <td class="font-black text-slate-900 whitespace-nowrap">{{ scan.timestamp|date:"M d, Y H:i:s" }}</td>
-                        <td>
-                            <div class="flex items-center gap-2">
-                                {% if scan.device_type == 'Mobile' %}
-                                <i data-lucide="smartphone" class="w-4 h-4 text-indigo-500"></i>
-                                {% elif scan.device_type == 'Tablet' %}
-                                <i data-lucide="tablet" class="w-4 h-4 text-emerald-500"></i>
-                                {% else %}
-                                <i data-lucide="monitor" class="w-4 h-4 text-slate-400"></i>
-                                {% endif %}
-                                <span class="font-bold text-[11px]">{{ scan.device_type|default:"Desktop" }}</span>
-                            </div>
-                        </td>
-                        <td>
-                            <div class="flex flex-col gap-0.5">
-                                <span class="font-bold text-[11px] text-slate-700">{{ scan.browser|default:"Other" }}</span>
-                                <span class="text-[9px] text-slate-400 font-bold uppercase">{{ scan.os|default:"Unknown" }}</span>
-                            </div>
-                        </td>
-                        <td>
-                            <span class="inline-flex px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-widest {% if scan.is_qr_scan %}bg-indigo-50 text-indigo-600{% else %}bg-slate-100 text-slate-500{% endif %}">
-                                {{ scan.source|default:"Direct" }}
-                            </span>
-                        </td>
-                        <td>
-                            {% if scan.is_bot %}
-                                <span class="text-[10px] font-bold text-rose-500 flex items-center gap-1"><i data-lucide="bot" class="w-3 h-3"></i> Bot</span>
-                            {% else %}
-                                <span class="text-[10px] font-bold text-emerald-600 flex items-center gap-1"><i data-lucide="user" class="w-3 h-3"></i> Human</span>
-                            {% endif %}
-                        </td>
-                        <td class="font-mono text-[11px] text-slate-500">
-                            {% if scan.ip_address %}
-                                {{ scan.ip_address|truncatechars:15 }}
-                            {% else %}
-                                Unknown
-                            {% endif %}
-                        </td>
-                        <td class="text-slate-500 text-[11px] font-medium">
-                            <div class="flex items-center gap-1.5">
-                                {% if scan.country_code and scan.country_code != 'XX' %}
-                                    <span class="px-2 py-0.5 rounded bg-slate-100 text-slate-600 font-black text-[9px]">{{ scan.country_code }}</span>
-                                    <span class="truncate max-w-[120px]">{{ scan.city }}{% if scan.region != 'Unknown' %}, {{ scan.region }}{% endif %}</span>
-                                {% else %}
-                                    <span class="text-slate-400 italic">Location unavailable</span>
-                                {% endif %}
-                            </div>
-                        </td>
+                    <tr>
+                        <td style="white-space:nowrap;">{{ scan.timestamp|date:"M d, H:i" }}</td>
+                        <td>{% if scan.country_code == 'LCL' or scan.country == 'Internal' %}Internal / Local{% else %}{{ scan.city|default:"—" }}, {{ scan.country|default:"—" }}{% endif %}</td>
+                        <td>{{ scan.device_type|default:"Unknown" }}</td>
+                        <td>{{ scan.browser|default:"Other" }} / {{ scan.os|default:"Other" }}</td>
+                        <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{{ scan.referrer|default:'Direct' }}">{% if not scan.referrer or '127.0.0.1' in scan.referrer or 'localhost' in scan.referrer %}Internal / Direct{% else %}{{ scan.referrer|truncatechars:35 }}{% endif %}</td>
+                        <td>{% if scan.is_qr_scan %}<span class="bdg bdg-q">QR</span>{% else %}—{% endif %}</td>
                     </tr>
                     {% empty %}
-                    <tr>
-                        <td colspan="7" class="text-center py-20 text-slate-400 italic">No click activity yet.</td>
-                    </tr>
+                    <tr><td colspan="6" style="text-align:center;padding:32px;color:var(--s5);font-weight:700;">No recent activity in this period.</td></tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
-
         {% if page_obj.has_other_pages %}
-        <div class="mt-8 flex items-center justify-between border-t border-slate-50 pt-6 print-hide">
-            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</p>
-            <div class="flex gap-2">
-                {% if page_obj.has_previous %}<a href="?range={{ selected_range }}&page={{ page_obj.previous_page_number }}" class="px-4 py-2 border rounded-lg text-slate-600 font-bold text-xs hover:bg-slate-50">Previous</a>{% endif %}
-                {% if page_obj.has_next %}<a href="?range={{ selected_range }}&page={{ page_obj.next_page_number }}" class="px-4 py-2 bg-indigo-600 text-white rounded-lg font-bold text-xs hover:bg-indigo-700">Next</a>{% endif %}
-            </div>
+        <div style="display:flex;align-items:center;justify-content:center;gap:12px;padding-top:16px;margin-top:16px;border-top:1px solid var(--s1);">
+            {% if page_obj.has_previous %}<a href="?range={{ selected_range }}&page={{ page_obj.previous_page_number }}" style="font-size:12px;font-weight:700;color:var(--p6);text-decoration:none;">← Prev</a>{% endif %}
+            <span style="font-size:12px;font-weight:700;color:var(--s5);">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+            {% if page_obj.has_next %}<a href="?range={{ selected_range }}&page={{ page_obj.next_page_number }}" style="font-size:12px;font-weight:700;color:var(--p6);text-decoration:none;">Next →</a>{% endif %}
         </div>
         {% endif %}
     </div>
 
-    <!-- Toast Component -->
-    <div id="toast" class="fixed bottom-10 left-1/2 -translate-x-1/2 z-[3000] hidden print-hide">
-        <div class="bg-slate-900 text-white px-8 py-4 rounded-2xl shadow-2xl flex items-center gap-4 animate-bounce-in">
-            <div class="w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center">
-                <i data-lucide="check" class="w-3 h-3"></i>
-            </div>
-            <span class="font-black text-xs uppercase tracking-widest" id="toast-message">Copied!</span>
-        </div>
-    </div>
+    <div class="pdf-ftr">ScanPDF Analytics Report · {{ qr.qr_name }} · Generated {% now "M d, Y H:i" %}</div>
+</div>
 
-    <!-- Chart Scripts -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script>
-        Chart.defaults.font.family = "'Inter', sans-serif";
-        Chart.defaults.font.weight = 'bold';
-        Chart.defaults.color = '#64748b';
-        Chart.defaults.plugins.tooltip.padding = 12;
-        Chart.defaults.plugins.tooltip.cornerRadius = 8;
+<!-- PDF Loading Overlay -->
+<div class="pdf-overlay" id="pdf-overlay">
+    <div class="pdf-spin"></div>
+    <p style="font-size:14px;font-weight:800;color:var(--s9);">Generating PDF Report…</p>
+    <p style="font-size:12px;font-weight:700;color:var(--s5);margin-top:4px;">Capturing charts in full colour…</p>
+</div>
 
-        const donutOptions = {
-            responsive: true,
-            maintainAspectRatio: false,
-            plugins: {
-                legend: { position: 'bottom', labels: { boxWidth: 10, padding: 15, font: { size: 10 } } }
-            },
-            cutout: '70%',
-            borderWidth: 0
-        };
+<!-- JSON Data Islands — safe, non-XSS injection -->
+<script type="application/json" id="d-labels">{{ js_labels|safe }}</script>
+<script type="application/json" id="d-total">{{ js_data_total|safe }}</script>
+<script type="application/json" id="d-unique">{{ js_data_unique|safe }}</script>
+<script type="application/json" id="d-ratio">{{ js_data_ratio|safe }}</script>
+<script type="application/json" id="d-avg-ratio">{{ js_avg_ratio|safe }}</script>
+<script type="application/json" id="d-ts-labels">{{ js_ts_labels|safe }}</script>
+<script type="application/json" id="d-ts-data">{{ js_ts_data|safe }}</script>
+<script type="application/json" id="d-device-labels">{{ js_device_labels|safe }}</script>
+<script type="application/json" id="d-device-data">{{ js_device_data|safe }}</script>
+<script type="application/json" id="d-browser-labels">{{ js_browser_labels|safe }}</script>
+<script type="application/json" id="d-browser-data">{{ js_browser_data|safe }}</script>
+<script type="application/json" id="d-os-labels">{{ js_os_labels|safe }}</script>
+<script type="application/json" id="d-os-data">{{ js_os_data|safe }}</script>
+<script type="application/json" id="d-hours">{{ js_clicks_by_hour|safe }}</script>
+<script type="application/json" id="d-days">{{ js_clicks_by_day|safe }}</script>
+{% endblock %}
 
-        const colors = ['#4f46e5', '#38bdf8', '#fbbf24', '#f43f5e', '#10b981', '#8b5cf6'];
+{% block dqr_scripts %}
+(function() {
+    'use strict';
 
-        {% if total_clicks > 0 %}
-        // Trends
-        new Chart(document.getElementById('trendsChart').getContext('2d'), {
-            type: 'line',
-            data: {
-                labels: {{ js_labels|safe }},
-                datasets: [{
-                    label: 'Total Clicks',
-                    data: {{ js_data|safe }},
-                    borderColor: '#4f46e5',
-                    backgroundColor: 'rgba(79, 70, 229, 0.1)',
-                    fill: true,
-                    tension: 0.4,
-                    borderWidth: 2,
-                    pointRadius: 4,
-                    pointBackgroundColor: '#fff',
-                    pointBorderColor: '#4f46e5',
-                    pointBorderWidth: 2
-                }]
-            },
+    var jd = function(id) {
+        try { return JSON.parse(document.getElementById(id).textContent); }
+        catch(e) { console.warn('[Analytics] Failed to parse data island:', id, e); return null; }
+    };
+
+    var PURPLE = '#4f46e5', PURPLE2 = '#818cf8', PURPLE3 = '#c7d2fe';
+    var GREEN = '#10b981', RED = '#ef4444', GRAY = '#e2e8f0';
+    var DONUT_COLORS = [PURPLE, '#6366f1', PURPLE2, '#a5b4fc', '#c7d2fe', GRAY];
+    var TIP = { backgroundColor:'#0f172a', padding:14, titleFont:{size:13,weight:'800'}, bodyFont:{size:12,weight:'700'}, cornerRadius:12, boxPadding:4, displayColors:true };
+
+    if (typeof Chart === 'undefined') { console.error('[Analytics] Chart.js not loaded.'); return; }
+
+    Chart.defaults.font.family = "'Inter', 'Segoe UI', system-ui, sans-serif";
+    Chart.defaults.color = '#64748b';
+    Chart.defaults.animation = false;
+    Chart.defaults.scale.grid.color = '#f1f5f9';
+    Chart.defaults.scale.border = { display: false };
+
+    function makeBar(id, labels, datasets, yMax) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        new Chart(el, {
+            type: 'bar',
+            data: { labels: labels, datasets: datasets },
             options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                plugins: { legend: { display: false } },
+                responsive: true, maintainAspectRatio: false,
+                interaction: { mode: 'index', intersect: false },
+                plugins: { legend: { display: false }, tooltip: TIP },
                 scales: {
-                    y: { beginAtZero: true, ticks: { stepSize: 1, precision: 0 }, grid: { color: '#f1f5f9' } },
-                    x: { grid: { display: false } }
+                    x: { grid: { display: false }, ticks: { font: { size: 10, weight: '700' } } },
+                    y: { beginAtZero: true, max: yMax, ticks: { stepSize: 1, font: { size: 10, weight: '700' } } }
                 }
             }
         });
+    }
 
-        // Source
-        new Chart(document.getElementById('sourceChart').getContext('2d'), {
+    function makeDonut(id, labels, data, colors) {
+        var el = document.getElementById(id);
+        if (!el || !data || !data.length || data.every(function(v){ return v === 0; })) return;
+        new Chart(el, {
             type: 'doughnut',
-            data: { labels: {{ js_source_labels|safe }}, datasets: [{ data: {{ js_source_data|safe }}, backgroundColor: colors }] },
-            options: donutOptions
+            data: { labels: labels, datasets: [{ data: data, backgroundColor: colors || DONUT_COLORS, borderWidth: 0 }] },
+            options: {
+                responsive: true, maintainAspectRatio: false, cutout: '68%',
+                plugins: {
+                    legend: { display: false },
+                    tooltip: Object.assign({}, TIP, {
+                        callbacks: {
+                            label: function(ctx) {
+                                var tot = ctx.dataset.data.reduce(function(a,b){ return a+b; }, 0);
+                                return ' ' + ctx.label + ': ' + ctx.parsed + ' (' + Math.round(ctx.parsed / tot * 100) + '%)';
+                            }
+                        }
+                    })
+                }
+            }
         });
+    }
 
-        // OS
-        new Chart(document.getElementById('osChart').getContext('2d'), {
-            type: 'doughnut',
-            data: { labels: {{ js_os_labels|safe }}, datasets: [{ data: {{ js_os_data|safe }}, backgroundColor: colors }] },
-            options: donutOptions
-        });
+    document.addEventListener('DOMContentLoaded', function() {
+        var labels    = jd('d-labels')     || [];
+        var dTotal    = jd('d-total')      || [];
+        var dUnique   = jd('d-unique')     || [];
+        var dRatio    = jd('d-ratio')      || [];
+        var hours     = jd('d-hours')      || new Array(24).fill(0);
+        var days      = jd('d-days')       || new Array(7).fill(0);
 
-        // Browser
-        new Chart(document.getElementById('browserChart').getContext('2d'), {
-            type: 'doughnut',
-            data: { labels: {{ js_browser_labels|safe }}, datasets: [{ data: {{ js_browser_data|safe }}, backgroundColor: colors }] },
-            options: donutOptions
-        });
+        var maxTotal = Math.max.apply(null, dTotal.concat([1]));
+        var yMax = maxTotal <= 1 ? 2 : undefined;
 
-        // Device
-        new Chart(document.getElementById('deviceChart').getContext('2d'), {
-            type: 'doughnut',
-            data: { labels: {{ js_device_labels|safe }}, datasets: [{ data: {{ js_device_data|safe }}, backgroundColor: colors }] },
-            options: donutOptions
-        });
-        {% endif %}
-    </script>
-    
-    <!-- Copy Scripts -->
-    <script>
-        function showToast(message) {
-            const toast = document.getElementById('toast');
-            if (!toast) return;
-            const msg = document.getElementById('toast-message');
-            if (msg) msg.textContent = message;
-            toast.classList.remove('hidden');
-            setTimeout(() => toast.classList.add('hidden'), 3000);
+        // Activity grouped bar
+        makeBar('activityChart', labels, [
+            { label: 'Total Clicks',  data: dTotal,  backgroundColor: PURPLE,  borderRadius: 5, borderSkipped: false },
+            { label: 'Unique Clicks', data: dUnique, backgroundColor: PURPLE3, borderRadius: 5, borderSkipped: false }
+        ], yMax);
+
+        // Unique click ratio line
+        var ratioEl = document.getElementById('ratioChart');
+        if (ratioEl && dRatio.length) {
+            var avgRatio = jd('d-avg-ratio') || 0;
+            new Chart(ratioEl, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Unique Click Ratio (%)', data: dRatio,
+                        borderColor: PURPLE, backgroundColor: 'rgba(79,70,229,0.08)',
+                        borderWidth: 2.5, tension: 0.4, fill: true,
+                        pointRadius: dRatio.length <= 2 ? 6 : 3,
+                        pointBackgroundColor: '#fff', pointBorderColor: PURPLE, pointBorderWidth: 2
+                    }, {
+                        label: 'Average', data: new Array(labels.length).fill(avgRatio),
+                        borderColor: PURPLE2, borderDash: [6, 4], borderWidth: 1.5, pointRadius: 0, fill: false
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: Object.assign({}, TIP, {
+                            callbacks: { label: function(ctx) { return ' ' + ctx.dataset.label + ': ' + ctx.parsed.y + '%'; } }
+                        })
+                    },
+                    scales: {
+                        x: { grid: { display: false }, ticks: { font: { size: 10, weight: '700' } } },
+                        y: { beginAtZero: true, max: 100, ticks: { callback: function(v){ return v+'%'; }, font: { size: 10, weight: '700' } } }
+                    }
+                }
+            });
         }
 
-        function copyShortUrl() {
-            const el = document.getElementById('short-url-text');
-            if (!el) return;
-            const text = el.textContent.trim();
-            navigator.clipboard.writeText(text).then(() => showToast('Copied!'));
-        }
+        // Hour bar
+        var hourMax = Math.max.apply(null, hours.concat([1]));
+        makeBar('hourChart',
+            ['12A','1A','2A','3A','4A','5A','6A','7A','8A','9A','10A','11A','12P','1P','2P','3P','4P','5P','6P','7P','8P','9P','10P','11P'],
+            [{ data: hours, backgroundColor: PURPLE3, hoverBackgroundColor: PURPLE, borderRadius: 4 }],
+            hourMax <= 1 ? 2 : undefined
+        );
 
-        function copyShortUrl2() {
-            const el = document.getElementById('short-url-text-2');
-            if (!el) return;
-            const text = el.textContent.trim();
-            navigator.clipboard.writeText(text).then(() => showToast('Copied!'));
-        }
-    </script>
+        // Day bar
+        var dayMax = Math.max.apply(null, days.concat([1]));
+        makeBar('dayChart',
+            ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+            [{ data: days, backgroundColor: PURPLE3, hoverBackgroundColor: PURPLE, borderRadius: 4 }],
+            dayMax <= 1 ? 2 : undefined
+        );
+
+        // Donuts
+        makeDonut('deviceChart',  jd('d-device-labels'),  jd('d-device-data'),  DONUT_COLORS);
+        makeDonut('browserChart', jd('d-browser-labels'), jd('d-browser-data'), [PURPLE,'#6366f1',PURPLE2,'#a5b4fc',GRAY]);
+        makeDonut('osChart',      jd('d-os-labels'),      jd('d-os-data'),      ['#10b981','#3b82f6','#ec4899','#f59e0b',GRAY]);
+    });
+
+    window.generatePDF = function() {
+        var overlay = document.getElementById('pdf-overlay');
+        overlay.classList.add('show');
+        document.body.classList.add('pdf-mode');
+        var shortCode = '{{ qr.short_code|escapejs }}';
+        var range = '{{ selected_range|escapejs }}';
+        var today = new Date().toISOString().slice(0, 10);
+        var filename = 'scanpdf-analytics-' + shortCode + '-' + range + '-' + today + '.pdf';
+        var el = document.getElementById('analytics-container');
+        setTimeout(function() {
+            html2pdf().set({
+                margin: [8, 8, 8, 8], filename: filename,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2, useCORS: true, logging: false, allowTaint: true },
+                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
+            }).from(el).save().then(function() {
+                document.body.classList.remove('pdf-mode');
+                overlay.classList.remove('show');
+            }).catch(function(err) {
+                console.error('[PDF] Error:', err);
+                document.body.classList.remove('pdf-mode');
+                overlay.classList.remove('show');
+                alert('PDF generation failed. Check browser console for details.');
+            });
+        }, 600);
+    };
+})();
 {% endblock %}

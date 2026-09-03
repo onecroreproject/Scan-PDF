@@ -43,9 +43,6 @@
         .main-content.sidebar-hidden {
             margin-left: 0;
         }
-        footer.sidebar-hidden {
-            margin-left: 0 !important;
-        }
     }
 
     /* Custom Header */
@@ -139,10 +136,7 @@
     </aside>
 
     <style>
-        /* Fix footer being hidden by fixed sidebar on desktop */
-        @media (min-width: 768px) {
-            footer { margin-left: 210px; }
-        }
+        /* Allow footer to span full width, it will overlay the sidebar using z-index */
     </style>
 
     <!-- Main Content -->

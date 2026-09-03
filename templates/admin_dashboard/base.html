@@ -95,6 +95,10 @@
                 <i data-lucide="receipt" class="w-5 h-5"></i> Payments
             </a>
             
+            <a href="{% url 'custom_admin:hero_videos' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold transition-all {% if 'hero_video' in request.resolver_match.url_name %}bg-brand-600 text-white shadow-glass{% else %}text-surface-400 hover:text-white hover:bg-surface-800{% endif %}">
+                <i data-lucide="video" class="w-5 h-5"></i> Hero Videos
+            </a>
+            
             <div class="text-[10px] font-black text-surface-500 uppercase tracking-widest px-3 mb-2 mt-6">Insights</div>
             
             <a href="{% url 'custom_admin:reports' %}" class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-bold transition-all {% if request.resolver_match.url_name == 'reports' %}bg-brand-600 text-white shadow-glass{% else %}text-surface-400 hover:text-white hover:bg-surface-800{% endif %}">

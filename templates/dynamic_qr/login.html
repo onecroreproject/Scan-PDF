@@ -1,10 +1,15 @@
 {% extends 'dynamic_qr/auth_base.html' %}
 
-{% block title %}Login — Dynamic QR{% endblock %}
+{% block title %}Login — ScanPDF{% endblock %}
+
+{% block brand_heading %}
+<h1 style="font-size: 40px; font-weight: 800; color: #0f172a; line-height: 1.1; margin-bottom: 16px; letter-spacing: -0.03em;">Welcome<br>Back!</h1>
+<p style="font-size: 16px; color: #475569; line-height: 1.5; max-width: 400px;">Sign in to continue to your ScanPDF account.</p>
+{% endblock %}
 
 {% block auth_header %}
-<h1>Login</h1>
-<p>Sign in to manage your dynamic QR codes</p>
+<h1>Welcome back</h1>
+<p>Sign in to your account</p>
 {% endblock %}
 
 {% block auth_content %}
@@ -18,34 +23,48 @@
 <form id="login-form" method="POST" action="{% url 'dynamic_qr:login' %}{% if request.GET.next %}?next={{ request.GET.next|urlencode }}{% endif %}">
     {% csrf_token %}
     <div class="field-group">
-        <label class="field-label">Username or Email</label>
-        <input type="text" id="username" name="username" class="dqr-field" placeholder="Enter username or email"
-            autocomplete="username" required>
+        <label class="field-label" for="username">Username or Email</label>
+        <div class="input-wrapper">
+            <i data-lucide="user" class="input-icon" style="width: 18px; height: 18px;"></i>
+            <input type="text" id="username" name="username" class="dqr-field" placeholder="Enter your username or email" autocomplete="username" required>
+        </div>
         <div id="username-error" style="color:#ef4444; font-size:12px; margin-top:4px; display:none;"></div>
     </div>
+    
     <div class="field-group">
-        <label class="field-label">Password</label>
+        <label class="field-label" for="password">Password</label>
         <div class="password-wrap">
-            <input type="password" id="password" name="password" class="dqr-field" placeholder="••••••••"
-                autocomplete="current-password" required>
+            <i data-lucide="lock" class="input-icon" style="width: 18px; height: 18px;"></i>
+            <input type="password" id="password" name="password" class="dqr-field" placeholder="Enter your password" autocomplete="current-password" required>
             <button type="button" class="toggle-pass" id="toggle-pass-btn">
                 <i data-lucide="eye" id="toggle-pass-icon" style="width:18px;height:18px"></i>
             </button>
         </div>
         <div id="password-error" style="color:#ef4444; font-size:12px; margin-top:4px; display:none;"></div>
     </div>
-    <div style="text-align:right;margin-bottom:20px;">
-        <a href="{% url 'dynamic_qr:forgot_password' %}"
-            style="color:#818cf8;font-size:12px;font-weight:600;text-decoration:none;">Forgot Password?</a>
+
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 24px;">
+        <div class="checkbox-wrap">
+            <input type="checkbox" id="remember" name="remember">
+            <label for="remember">Remember me</label>
+        </div>
+        <a href="{% url 'dynamic_qr:forgot_password' %}" style="color:#8b5cf6; font-size:13px; font-weight:600; text-decoration:none;">Forgot Password?</a>
     </div>
+
     <button type="submit" class="btn-primary" id="login-submit-btn">
-        <span style="display:flex;align-items:center;justify-content:center;gap:8px" id="login-btn-text">
-            <i data-lucide="log-in" style="width:18px;height:18px" id="login-btn-icon"></i>
+        <span id="login-btn-text" style="display:flex; align-items:center; justify-content:center; gap:8px;">
             <span>Sign In</span>
         </span>
     </button>
 </form>
 
+<div class="auth-links">
+    Don't have an account? 
+    <a href="{% url 'dynamic_qr:register' %}{% if request.GET.next %}?next={{ request.GET.next|urlencode }}{% endif %}">Create one</a>
+</div>
+{% endblock %}
+
+{% block auth_scripts %}
 <script>
     document.addEventListener('DOMContentLoaded', function() {
         const form = document.getElementById('login-form');
@@ -55,25 +74,6 @@
         const passwordError = document.getElementById('password-error');
         const submitBtn = document.getElementById('login-submit-btn');
         const btnText = document.querySelector('#login-btn-text span');
-        const btnIcon = document.getElementById('login-btn-icon');
-        const togglePassBtn = document.getElementById('toggle-pass-btn');
-        const togglePassIcon = document.getElementById('toggle-pass-icon');
-
-        // Toggle password visibility
-        if (togglePassBtn) {
-            togglePassBtn.addEventListener('click', function() {
-                if (passwordInput.type === 'password') {
-                    passwordInput.type = 'text';
-                    togglePassIcon.setAttribute('data-lucide', 'eye-off');
-                } else {
-                    passwordInput.type = 'password';
-                    togglePassIcon.setAttribute('data-lucide', 'eye');
-                }
-                if (window.lucide) {
-                    lucide.createIcons();
-                }
-            });
-        }
 
         function validateUsername() {
             const val = usernameInput.value.trim();
@@ -118,8 +118,6 @@
             if (isUserValid && isPassValid) {
                 // Show loading state
                 submitBtn.disabled = true;
-                submitBtn.style.opacity = '0.7';
-                submitBtn.style.cursor = 'not-allowed';
                 btnText.textContent = 'Signing In...';
                 
                 // Allow form to submit conventionally
@@ -128,9 +126,4 @@
         });
     });
 </script>
-
-<div class="auth-links">
-    <span style="color:#64748b">Don't have an account?</span>
-    <a href="{% url 'dynamic_qr:register' %}{% if request.GET.next %}?next={{ request.GET.next|urlencode }}{% endif %}" style="color:#8b5cf6;font-weight:700;">Create Account</a>
-</div>
 {% endblock %}

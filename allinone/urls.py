@@ -30,7 +30,25 @@ urlpatterns = [
 
 handler404 = 'converter.views.custom_404_view'
 
+from django.urls import re_path
+from django.views.static import serve
+
+# Explicitly serve media files to prevent 404s for Hero Video uploads
+urlpatterns += [
+    re_path(r'^media/(?P<path>.*)$', serve, {'document_root': settings.MEDIA_ROOT}),
+]
+
 if settings.DEBUG:
     from django.contrib.staticfiles.urls import staticfiles_urlpatterns
     urlpatterns += staticfiles_urlpatterns()
-    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+    # static() is already covered by the explicit re_path above for media
+    # urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+# IMPORT SHORT LINK VIEWS
+from dynamic_qr.views import dqr_redirect_view, dqr_redirect_with_header_view
+
+# SHORT URL PUBLIC ROUTES MUST BE LAST TO ACT AS CATCH-ALL
+urlpatterns += [
+    path('<str:header>/<str:short_code>/', dqr_redirect_with_header_view, name='root_redirect_header'),
+    path('<str:short_code>/', dqr_redirect_view, name='root_redirect'),
+]
