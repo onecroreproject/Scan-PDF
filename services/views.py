@@ -7,155 +7,97 @@ from .models import Plan, Subscription, Payment
 import random
 import datetime
 
-def get_or_create_plans():
-    """Initializes standard subscription plans and seeds default section/feature content."""
-    from .models import PlanSection, PlanSectionFeature
 
-    # Deactivate old BUSINESS ₹999 plan
-    Plan.objects.filter(code='business').update(is_active=False)
+def _build_plan_features_for_display(plans):
+    """
+    Builds a display-ready features dict keyed by plan id for the pricing template.
+    Returns: { plan_id: [{'name': ..., 'monthly_display': ..., 'yearly_display': ...}, ...] }
 
-    plans_data = [
-        {
-            'name': 'FREE', 'code': 'free', 'monthly_price': 0, 'yearly_price': 0,
-            'pricing_type': 'fixed', 'description': 'Perfect to get started', 'display_order': 1,
-            'is_active': True,
-        },
-        {
-            'name': 'PRO', 'code': 'pro', 'monthly_price': 499, 'yearly_price': 4999,
-            'pricing_type': 'fixed', 'description': 'For serious creators', 'is_popular': True,
-            'display_order': 2, 'is_active': True,
-        },
-        {
-            'name': 'BUSINESS+', 'code': 'business_plus', 'monthly_price': 0, 'yearly_price': 0,
-            'pricing_type': 'contact', 'description': 'Enterprise scale', 'display_order': 3,
-            'is_active': True,
-        },
-    ]
-    for data in plans_data:
-        Plan.objects.update_or_create(code=data['code'], defaults=data)
+    Only shows the 9 active PlanFeature entries that are enabled.
+    Display format: unlimited = 'Unlimited Feature', limit = 'N uses/mo', analytics = 'N days history'
+    """
+    from .models import PlanFeature, FEATURE_CODES
 
-    # Seed default content only if plan has no sections yet
-    _seed_default_sections()
+    plan_ids = [p.id for p in plans]
+    pf_qs = PlanFeature.objects.filter(
+        plan_id__in=plan_ids,
+        enabled=True,
+        feature__key__in=FEATURE_CODES,
+        feature__is_active=True,
+    ).select_related('feature').order_by('feature__display_order')
 
+    result = {}
+    for pf in pf_qs:
+        pid = pf.plan_id
+        if pid not in result:
+            result[pid] = []
 
-def _seed_default_sections():
-    """Seeds default PlanSection and PlanSectionFeature records for each plan if not yet configured."""
-    from .models import PlanSection, PlanSectionFeature
+        feat = pf.feature
 
-    default_content = {
-        'free': {
-            'name': 'FREE', 'sections': [
-                {
-                    'name': 'SHORT URL', 'order': 0, 'features': [
-                        {'name': 'Short URLs', 'type': 'LIMIT', 'mv': 100, 'yv': 1200, 'ml': 'Short URLs / month', 'yl': 'Short URLs / year'},
-                        {'name': 'Link Redirection', 'type': 'UNLIMITED'},
-                        {'name': 'Link Expiry', 'type': 'BOOLEAN'},
-                        {'name': 'Edit Short Links', 'type': 'BOOLEAN'},
-                        {'name': 'Custom Alias', 'type': 'BOOLEAN'},
-                        {'name': 'UTM Builder & Tracking', 'type': 'BOOLEAN'},
-                        {'name': 'Basic Link Analytics', 'type': 'BOOLEAN'},
-                        {'name': 'Analytics History', 'type': 'TEXT', 'mt': '30 Days', 'yt': '365 Days', 'ml': 'Analytics History', 'yl': 'Analytics History'},
-                        {'name': 'Password Protection', 'type': 'BOOLEAN'},
-                        {'name': 'Collections', 'type': 'LIMIT', 'mv': 5, 'yv': 5, 'ml': 'Collections', 'yl': 'Collections'},
-                    ]
-                }
-            ]
-        },
-        'pro': {
-            'name': 'PRO', 'sections': [
-                {
-                    'name': 'SHORT URL', 'order': 0, 'features': [
-                        {'name': 'Short URLs', 'type': 'LIMIT', 'mv': 1500, 'yv': 15000, 'ml': 'Short URLs / month', 'yl': 'Short URLs / year'},
-                        {'name': 'Link Redirection', 'type': 'UNLIMITED'},
-                        {'name': 'Link Expiry', 'type': 'UNLIMITED'},
-                        {'name': 'Short Link Editing', 'type': 'UNLIMITED'},
-                        {'name': 'Custom Aliases', 'type': 'BOOLEAN'},
-                        {'name': 'Custom Domains', 'type': 'TEXT', 'mt': 'Up to 5', 'yt': 'Up to 5', 'ml': 'Custom Domains', 'yl': 'Custom Domains'},
-                        {'name': 'Bulk URL Import', 'type': 'TEXT', 'mt': 'Up to 500 links', 'yt': 'Up to 500 links', 'ml': 'Bulk URL Import', 'yl': 'Bulk URL Import'},
-                        {'name': 'Advanced Link Analytics', 'type': 'BOOLEAN'},
-                        {'name': 'GPS Tracking', 'type': 'BOOLEAN'},
-                        {'name': 'AI Insights', 'type': 'BOOLEAN'},
-                        {'name': 'UTM Builder & Tracking', 'type': 'BOOLEAN'},
-                        {'name': 'Collections', 'type': 'LIMIT', 'mv': 100, 'yv': 1000, 'ml': 'Collections', 'yl': 'Collections'},
-                    ]
-                }
-            ]
-        },
-        'business_plus': {
-            'name': 'BUSINESS+', 'sections': [
-                {
-                    'name': 'SHORT URL', 'order': 0, 'features': [
-                        {'name': 'Short URLs', 'type': 'UNLIMITED'},
-                        {'name': 'Link Redirection', 'type': 'UNLIMITED'},
-                        {'name': 'Link Expiry', 'type': 'UNLIMITED'},
-                        {'name': 'Short Link Editing', 'type': 'UNLIMITED'},
-                        {'name': 'Custom Aliases', 'type': 'UNLIMITED'},
-                        {'name': 'Custom Domains', 'type': 'UNLIMITED'},
-                        {'name': 'Bulk URL Import', 'type': 'UNLIMITED'},
-                        {'name': 'Custom Branded Short URLs', 'type': 'BOOLEAN'},
-                        {'name': 'Advanced Analytics', 'type': 'BOOLEAN'},
-                        {'name': 'AI Insights', 'type': 'BOOLEAN'},
-                        {'name': 'Collections', 'type': 'UNLIMITED'},
-                        {'name': 'Custom Analytics Reports', 'type': 'BOOLEAN'},
-                    ]
-                }
-            ]
-        },
-    }
+        if pf.is_unlimited:
+            monthly_display = f"Unlimited {feat.name}"
+            yearly_display = monthly_display
+        elif feat.key == 'analytics':
+            days = pf.history_days or 0
+            monthly_display = f"{days} Days Analytics History"
+            yearly_display = monthly_display
+        elif pf.monthly_limit is not None or pf.yearly_limit is not None:
+            m = pf.monthly_limit if pf.monthly_limit is not None else 0
+            y = pf.yearly_limit if pf.yearly_limit is not None else 0
+            monthly_display = f"{m} {feat.name} / month"
+            yearly_display = f"{y} {feat.name} / year"
+        else:
+            monthly_display = feat.name
+            yearly_display = feat.name
 
-    for plan_code, plan_data in default_content.items():
-        try:
-            plan = Plan.objects.get(code=plan_code)
-        except Plan.DoesNotExist:
-            continue
+        result[pid].append({
+            'name': feat.name,
+            'monthly_display': monthly_display,
+            'yearly_display': yearly_display,
+        })
 
-        # Only seed if this plan has zero sections
-        if plan.sections.exists():
-            continue
-
-        for sec_data in plan_data['sections']:
-            section = PlanSection.objects.create(
-                plan=plan,
-                name=sec_data['name'],
-                display_order=sec_data['order'],
-                is_enabled=True,
-            )
-            for order_idx, feat in enumerate(sec_data['features']):
-                ftype = feat['type']
-                PlanSectionFeature.objects.create(
-                    section=section,
-                    name=feat['name'],
-                    feature_type=ftype,
-                    is_unlimited=(ftype == 'UNLIMITED'),
-                    monthly_value=feat.get('mv'),
-                    yearly_value=feat.get('yv'),
-                    monthly_label=feat.get('ml', ''),
-                    yearly_label=feat.get('yl', ''),
-                    monthly_text=feat.get('mt', ''),
-                    yearly_text=feat.get('yt', ''),
-                    display_order=order_idx,
-                    is_enabled=True,
-                )
+    return result
 
 
 def pricing_view(request):
     """Renders the premium SaaS pricing page with active subscription info."""
-    get_or_create_plans()
     is_logged_in = request.user.is_authenticated and request.session.get('is_dqr_user')
 
     current_subscription = None
     if is_logged_in:
-        from .limit_service import PlanLimitService
-        current_subscription = PlanLimitService.get_active_subscription(request.user)
+        from .plan_features import _get_active_subscription
+        current_subscription = _get_active_subscription(request.user)
 
-    plans = Plan.objects.filter(is_active=True).prefetch_related(
-        'sections__features'
-    ).order_by('display_order', 'id')
+    plans = Plan.objects.filter(is_active=True).order_by('display_order', 'id')
+
+    # Calculate max saving percentage for the badge
+    max_saving = 0
+    for plan in plans:
+        if plan.pricing_type == 'fixed' and plan.monthly_price > 0:
+            annualized = plan.monthly_price * 12
+            if plan.yearly_price < annualized:
+                saving = ((annualized - plan.yearly_price) / annualized) * 100
+                if saving > max_saving:
+                    max_saving = saving
+    max_saving_percent = round(max_saving)
+
+    # Build live feature display data from PlanFeature (not PlanSectionFeature)
+    plan_features_display = _build_plan_features_for_display(plans)
+
+    # Attach features list to each plan for template iteration
+    plans_with_features = []
+    for plan in plans:
+        plans_with_features.append({
+            'plan': plan,
+            'features': plan_features_display.get(plan.id, []),
+        })
 
     return render(request, 'services/pricing.html', {
         'is_logged_in': is_logged_in,
         'current_subscription': current_subscription,
         'plans': plans,
+        'plans_with_features': plans_with_features,
+        'max_saving_percent': max_saving_percent,
         'page_title': 'Pricing Plans — ScanPDF Services'
     })
 
@@ -165,7 +107,6 @@ def payment_confirm_view(request, plan_code, cycle):
     if not request.session.get('is_dqr_user'):
         return redirect('dynamic_qr:login')
         
-    get_or_create_plans()
     plan = get_object_or_404(Plan, code=plan_code)
     
     if plan.code == 'free':

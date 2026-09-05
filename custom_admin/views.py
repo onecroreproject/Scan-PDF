@@ -10,7 +10,7 @@ from django.views.decorators.csrf import csrf_exempt
 from datetime import timedelta
 from services.models import (
     Subscription, Payment, Plan, ActivityLog,
-    PlanSection, PlanSectionFeature
+    PlanSection, PlanSectionFeature, PlanFeature, Feature, FEATURE_CODES
 )
 from dynamic_qr.models import DynamicQRCode
 from .decorators import superuser_required
@@ -122,18 +122,185 @@ def plan_edit_view(request, plan_id):
         ActivityLog.objects.create(user=request.user, action=f"Updated Plan: {plan.name}")
         return redirect(f"{request.path}?saved=1")
 
-    sections = plan.sections.prefetch_related('features').order_by('display_order', 'id')
-    saved = request.GET.get('saved') == '1'
+    # Load current PlanFeature rows for all 9 features
+    features = Feature.objects.filter(key__in=FEATURE_CODES, is_active=True).order_by('display_order')
+    plan_features_map = {}
+    for pf in PlanFeature.objects.filter(plan=plan, feature__key__in=FEATURE_CODES).select_related('feature'):
+        plan_features_map[pf.feature.key] = pf
 
-    # Build a fully JSON-safe data structure for the JavaScript Plan Builder.
-    # No ORM objects, no QuerySets, no Decimals, no datetimes — only primitives.
-    sections_json_data = _serialize_sections(sections)
+    # Build list of (feature, plan_feature_or_None) in display order
+    feature_rows = []
+    for feat in features:
+        pf = plan_features_map.get(feat.key)
+        feature_rows.append({
+            'feature': feat,
+            'pf': pf,
+            'enabled': pf.enabled if pf else False,
+            'monthly_limit': pf.monthly_limit if pf else None,
+            'yearly_limit': pf.yearly_limit if pf else None,
+            'is_unlimited': pf.is_unlimited if pf else False,
+            'history_days': pf.history_days if pf else None,
+        })
+
+    saved = request.GET.get('saved') == '1'
 
     return render(request, 'admin_dashboard/plan_edit.html', {
         'plan': plan,
-        'sections': sections,           # ORM queryset used for server-side HTML rendering
-        'sections_json_data': sections_json_data,  # plain dicts used by JavaScript
+        'feature_rows': feature_rows,
         'saved': saved,
+        'is_contact_plan': plan.pricing_type == 'contact',
+    })
+
+
+@superuser_required
+@require_POST
+def plan_save_features_view(request, plan_id):
+    """
+    AJAX endpoint: atomically save a plan's prices + all 9 feature configurations.
+    Changes take effect immediately — no restart required.
+    Returns structured JSON responses for frontend error handling.
+    """
+    from django.db import transaction
+
+    plan = get_object_or_404(Plan, id=plan_id)
+
+    try:
+        data = json.loads(request.body)
+    except (json.JSONDecodeError, ValueError):
+        return JsonResponse({'success': False, 'error': 'Invalid JSON payload.'}, status=400)
+
+    # ── Validate pricing ────────────────────────────────────────────────────
+    pricing_type = data.get('pricing_type', plan.pricing_type)
+    if pricing_type == 'fixed':
+        try:
+            monthly_price = int(data.get('monthly_price', plan.monthly_price))
+            yearly_price = int(data.get('yearly_price', plan.yearly_price))
+        except (ValueError, TypeError):
+            return JsonResponse({'success': False, 'error': 'Price must be a valid integer.'}, status=400)
+        if monthly_price < 0 or yearly_price < 0:
+            return JsonResponse({'success': False, 'error': 'Prices cannot be negative.'}, status=400)
+    else:
+        monthly_price = 0
+        yearly_price = 0
+
+    # ── Validate feature rows ────────────────────────────────────────────────
+    features_payload = data.get('features', {})
+    validated_features = []
+
+    all_features = {f.key: f for f in Feature.objects.filter(key__in=FEATURE_CODES, is_active=True)}
+
+    for code in FEATURE_CODES:
+        feat = all_features.get(code)
+        if not feat:
+            continue
+
+        row = features_payload.get(code, {})
+        enabled = bool(row.get('enabled', False))
+        is_unlimited = bool(row.get('is_unlimited', False)) if enabled else False
+
+        if code == 'analytics':
+            # Analytics uses history_days instead of limit
+            history_days = None
+            if enabled and not is_unlimited:
+                try:
+                    history_days = int(row.get('history_days', 7))
+                    if history_days < 1:
+                        return JsonResponse({'success': False, 'error': f'Analytics history days must be >= 1.'}, status=400)
+                except (ValueError, TypeError):
+                    return JsonResponse({'success': False, 'error': f'Analytics history days must be a valid integer.'}, status=400)
+            monthly_limit = None
+            yearly_limit = None
+        else:
+            history_days = None
+            monthly_limit = None
+            yearly_limit = None
+            if enabled and not is_unlimited:
+                try:
+                    monthly_limit = int(row.get('monthly_limit', 0))
+                    yearly_limit = int(row.get('yearly_limit', 0))
+                    if monthly_limit < 0 or yearly_limit < 0:
+                        return JsonResponse({'success': False, 'error': f'Limits for {feat.name} cannot be negative.'}, status=400)
+                except (ValueError, TypeError):
+                    return JsonResponse({'success': False, 'error': f'Limits for {feat.name} must be valid integers.'}, status=400)
+
+        validated_features.append({
+            'feature': feat,
+            'enabled': enabled,
+            'monthly_limit': monthly_limit,
+            'yearly_limit': yearly_limit,
+            'is_unlimited': is_unlimited,
+            'history_days': history_days,
+        })
+
+    # ── Atomic save ──────────────────────────────────────────────────────────
+    changes = []
+    with transaction.atomic():
+        # Save pricing
+        old_monthly = plan.monthly_price
+        old_yearly = plan.yearly_price
+        old_pricing_type = plan.pricing_type
+        plan.monthly_price = monthly_price
+        plan.yearly_price = yearly_price
+        plan.pricing_type = pricing_type
+        plan.save(update_fields=['monthly_price', 'yearly_price', 'pricing_type', 'updated_at'])
+
+        if old_monthly != monthly_price:
+            changes.append(f"monthly_price: {old_monthly} → {monthly_price}")
+        if old_yearly != yearly_price:
+            changes.append(f"yearly_price: {old_yearly} → {yearly_price}")
+
+        # Save each feature
+        for fdata in validated_features:
+            feat = fdata['feature']
+            pf, _ = PlanFeature.objects.get_or_create(
+                plan=plan,
+                feature=feat
+            )
+
+            old_enabled = pf.enabled
+            old_monthly_limit = pf.monthly_limit
+            old_yearly_limit = pf.yearly_limit
+            old_unlimited = pf.is_unlimited
+            old_history = pf.history_days
+
+            pf.enabled = fdata['enabled']
+            pf.monthly_limit = fdata['monthly_limit']
+            pf.yearly_limit = fdata['yearly_limit']
+            pf.is_unlimited = fdata['is_unlimited']
+            pf.history_days = fdata['history_days']
+            
+            # Keep legacy fields in sync
+            pf.value_boolean = pf.enabled
+            pf.value_numeric = pf.monthly_limit
+            pf.save()
+
+            # Build audit trail
+            if old_enabled != pf.enabled:
+                changes.append(f"{plan.name} {feat.name}: enabled {old_enabled} → {pf.enabled}")
+            if old_unlimited != pf.is_unlimited:
+                changes.append(f"{plan.name} {feat.name}: unlimited {old_unlimited} → {pf.is_unlimited}")
+            if old_monthly_limit != pf.monthly_limit:
+                changes.append(f"{plan.name} {feat.name}: monthly_limit {old_monthly_limit} → {pf.monthly_limit}")
+            if old_yearly_limit != pf.yearly_limit:
+                changes.append(f"{plan.name} {feat.name}: yearly_limit {old_yearly_limit} → {pf.yearly_limit}")
+            if old_history != pf.history_days:
+                changes.append(f"{plan.name} {feat.name}: history_days {old_history} → {pf.history_days}")
+
+    # Log all changes
+    if changes:
+        action_str = f"Plan '{plan.name}' updated: " + "; ".join(changes[:5])
+        if len(changes) > 5:
+            action_str += f" (+{len(changes)-5} more)"
+        ActivityLog.objects.create(user=request.user, action=action_str)
+
+    # Return live feature counts for the plans page
+    enabled_count = PlanFeature.objects.filter(plan=plan, enabled=True, feature__key__in=FEATURE_CODES).count()
+
+    return JsonResponse({
+        'success': True,
+        'message': f"Plan '{plan.name}' saved successfully.",
+        'enabled_feature_count': enabled_count,
+        'changes_count': len(changes),
     })
 
 

@@ -18,6 +18,7 @@ urlpatterns = [
     # Plans & Pricing
     path('plans/', views.plans_view, name='plans'),
     path('plans/<int:plan_id>/edit/', views.plan_edit_view, name='plan_edit'),
+    path('plans/<int:plan_id>/save-features/', views.plan_save_features_view, name='plan_save_features'),
 
     # Section AJAX endpoints
     path('plans/<int:plan_id>/sections/create/', views.section_create, name='section_create'),

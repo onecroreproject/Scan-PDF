@@ -50,24 +50,42 @@
         </div>
 
         <div class="p-8 pt-6 flex-1 bg-surface-50/30">
-            <!-- Sections summary -->
-            {% with sections=plan.sections.all %}
+            <!-- Live feature count from PlanFeature -->
+            {% with enabled_features=plan.plan_features.all %}
+            {% with short_url_features=plan.plan_features.filter %}
             <div class="flex justify-between items-center mb-4">
-                <h4 class="text-xs font-black text-surface-500 uppercase tracking-widest">Sections</h4>
-                <span class="text-xs font-bold text-surface-900 bg-white px-2 py-1 rounded-md border border-surface-200">{{ sections.count }}</span>
+                <h4 class="text-xs font-black text-surface-500 uppercase tracking-widest">SHORT URL</h4>
+                <span class="text-xs font-bold text-surface-900 bg-white px-2 py-1 rounded-md border border-surface-200" data-plan-feature-count="{{ plan.id }}">
+                    {% with count=plan.plan_features.count %}{{ count }}{% endwith %} features
+                </span>
             </div>
 
-            <ul class="space-y-3 mb-4">
-                {% for section in sections %}
-                <li class="text-xs font-bold text-surface-700 uppercase tracking-wider">
-                    <span class="inline-block w-1.5 h-1.5 rounded-full bg-brand-500 mr-2"></span>
-                    {{ section.name }}
-                    <span class="text-surface-400 font-normal normal-case tracking-normal ml-1">({{ section.features.count }} features)</span>
+            <ul class="space-y-2 mb-4">
+                {% for pf in plan.plan_features.all %}
+                {% if pf.enabled and pf.feature.is_active %}
+                <li class="flex items-center justify-between text-xs">
+                    <span class="font-bold text-surface-700">
+                        <span class="inline-block w-1.5 h-1.5 rounded-full bg-brand-500 mr-2"></span>
+                        {{ pf.feature.name }}
+                    </span>
+                    <span class="text-surface-400 font-medium">
+                        {% if pf.is_unlimited %}
+                            <span class="text-emerald-600 font-bold">∞ Unlimited</span>
+                        {% elif pf.feature.key == 'analytics' %}
+                            {{ pf.history_days|default:"?" }} days
+                        {% elif pf.monthly_limit is not None or pf.yearly_limit is not None %}
+                            {{ pf.get_display_value }}
+                        {% else %}
+                            ON
+                        {% endif %}
+                    </span>
                 </li>
+                {% endif %}
                 {% empty %}
-                <li class="text-xs text-surface-400 font-medium italic">No sections configured yet.</li>
+                <li class="text-xs text-surface-400 font-medium italic">No features configured yet.</li>
                 {% endfor %}
             </ul>
+            {% endwith %}
             {% endwith %}
         </div>
 

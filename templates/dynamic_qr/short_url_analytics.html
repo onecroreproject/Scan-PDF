@@ -232,6 +232,8 @@ body { background:var(--s0); }
             <div class="det-cell"><p class="det-lbl">Short Code</p><p class="det-val" style="font-family:monospace;" title="{{ qr.short_code }}">{{ qr.short_code }}</p></div>
             <div class="det-cell"><p class="det-lbl">Created</p><p class="det-val">{{ qr.created_at|date:"M d, Y" }}</p></div>
             <div class="det-cell"><p class="det-lbl">Protection</p><p class="det-val">{% if qr.password %}Password{% else %}Public{% endif %}</p></div>
+            <div class="det-cell"><p class="det-lbl">GPS Tracking</p><p class="det-val">{% if qr.require_gps %}Enabled{% else %}Disabled{% endif %}</p></div>
+            {% if qr.require_gps %}<div class="det-cell"><p class="det-lbl">GPS Permission Required</p><p class="det-val">Yes</p></div>{% endif %}
         </div>
     </div>
 
@@ -289,6 +291,24 @@ body { background:var(--s0); }
         </div>
     </div>
 
+    <div class="an-card" style="margin-bottom:16px;">
+        <div class="an-title">Local / Private Traffic</div>
+        <p style="font-size:12px;color:var(--s5);margin-bottom:8px;">Local addresses are not geographic countries or cities.</p>
+        <strong style="font-size:22px;color:var(--s9);">{{ local_traffic }}</strong> <span style="color:var(--s6);">visits · Local Network</span>
+    </div>
+    {% if qr.require_gps or perf_summary.gps_requests %}
+    <div class="an-card" style="margin-bottom:16px;">
+        <div class="an-title">GPS Analytics</div>
+        <div style="display:flex;gap:28px;flex-wrap:wrap;color:var(--s7);font-size:12px;">
+            <span>GPS Requests <strong>{{ perf_summary.gps_requests }}</strong></span>
+            <span>Permission Granted <strong>{{ perf_summary.gps_granted }}</strong></span>
+            <span>Permission Denied <strong>{{ perf_summary.gps_denied }}</strong></span>
+            <span>Unavailable / Timeout <strong>{{ perf_summary.gps_unavailable }}</strong></span>
+            <span>Capture Rate <strong>{% widthratio perf_summary.gps_granted perf_summary.gps_requests 100 %}%</strong></span>
+        </div>
+    </div>
+    {% endif %}
+
     <!-- Geography -->
     <div class="an-grid-2">
         <div class="an-card">
@@ -320,7 +340,7 @@ body { background:var(--s0); }
             <p style="font-size:12px;color:var(--s5);margin-bottom:16px;">Which websites sent visitors</p>
             {% if referrer_stats %}{% for item in referrer_stats|slice:":7" %}
             <div class="prog-row">
-                <div class="prog-name" title="{{ item.referrer|default:'Direct' }}">{{ item.display_name|default:"Direct / Unknown" }}</div>
+                <div class="prog-name" title="{{ item.display_name }}">{{ item.display_name|default:"Unknown" }}</div>
                 <div class="prog-bg"><div class="prog-fill" style="width:{% widthratio item.count total_clicks 100 %}%;"></div></div>
                 <div class="prog-nums">{{ item.count }} · {% widthratio item.count total_clicks 100 %}%</div>
             </div>
@@ -461,20 +481,22 @@ body { background:var(--s0); }
         <div class="an-tbl-wrap">
             <table class="an-tbl">
                 <thead>
-                    <tr><th>Time</th><th>Location</th><th>Device</th><th>Browser / OS</th><th>Source / Referrer</th><th>Type</th></tr>
+                    <tr><th>Time</th><th>Location</th><th>Location Source</th><th>Device</th><th>Browser / OS</th><th>Traffic Source</th><th>Referrer</th><th>Type</th></tr>
                 </thead>
                 <tbody>
                     {% for scan in page_obj %}
                     <tr>
                         <td style="white-space:nowrap;">{{ scan.timestamp|date:"M d, H:i" }}</td>
-                        <td>{% if scan.country_code == 'LCL' or scan.country == 'Internal' %}Internal / Local{% else %}{{ scan.city|default:"—" }}, {{ scan.country|default:"—" }}{% endif %}</td>
+                        <td>{% if scan.location_source == 'gps' and scan.gps_latitude %}{{ scan.gps_latitude|floatformat:4 }}, {{ scan.gps_longitude|floatformat:4 }}{% elif scan.location_source == 'local' or scan.country_code == 'LCL' or scan.country == 'Internal' %}Local Network{% elif scan.city != 'Unknown' and scan.country != 'Unknown' %}{{ scan.city }}, {{ scan.country }}{% else %}Unknown{% endif %}</td>
+                        <td>{% if scan.location_source == 'gps' %}GPS{% elif scan.location_source == 'ip' %}IP Approximate{% elif scan.location_source == 'local' or scan.country_code == 'LCL' or scan.country == 'Internal' %}Local{% else %}Unknown{% endif %}</td>
                         <td>{{ scan.device_type|default:"Unknown" }}</td>
                         <td>{{ scan.browser|default:"Other" }} / {{ scan.os|default:"Other" }}</td>
-                        <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{{ scan.referrer|default:'Direct' }}">{% if not scan.referrer or '127.0.0.1' in scan.referrer or 'localhost' in scan.referrer %}Internal / Direct{% else %}{{ scan.referrer|truncatechars:35 }}{% endif %}</td>
-                        <td>{% if scan.is_qr_scan %}<span class="bdg bdg-q">QR</span>{% else %}—{% endif %}</td>
+                        <td>{{ scan.display_source }}</td>
+                        <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{% if scan.referrer %}{{ scan.referrer|truncatechars:35 }}{% else %}None{% endif %}</td>
+                        <td>{% if scan.display_type == 'QR' %}<span class="bdg bdg-q">QR</span>{% else %}{{ scan.display_type }}{% endif %}</td>
                     </tr>
                     {% empty %}
-                    <tr><td colspan="6" style="text-align:center;padding:32px;color:var(--s5);font-weight:700;">No recent activity in this period.</td></tr>
+                    <tr><td colspan="8" style="text-align:center;padding:32px;color:var(--s5);font-weight:700;">No recent activity in this period.</td></tr>
                     {% endfor %}
                 </tbody>
             </table>

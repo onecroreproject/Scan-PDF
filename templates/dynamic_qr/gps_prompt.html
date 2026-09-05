@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="min-h-screen bg-slate-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div class="sm:mx-auto sm:w-full sm:max-w-md">
+        <div class="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10 text-center">
+            
+            <div class="mb-6 flex justify-center text-indigo-500">
+                <i data-lucide="map-pin" class="w-12 h-12"></i>
+            </div>
+            
+            <h2 class="mt-2 text-2xl font-black text-gray-900 mb-2">Location Required</h2>
+            <p class="text-sm text-gray-500 mb-8">
+                This link requests your location before redirecting. Your browser will ask for permission.
+            </p>
+
+            <button id="allow-btn" onclick="requestLocation()" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+                Allow Location Access
+            </button>
+            
+            <p id="error-msg" class="text-red-500 text-xs font-bold mt-4 hidden"></p>
+            
+            <!-- Hidden form to post the location data back -->
+            <form id="gps-form" method="POST" action="" class="hidden">
+                {% csrf_token %}
+                <input type="hidden" name="gps_lat" id="gps_lat">
+                <input type="hidden" name="gps_lon" id="gps_lon">
+                <input type="hidden" name="gps_accuracy" id="gps_accuracy">
+                <input type="hidden" name="gps_error" id="gps_error">
+                <!-- if denied, we submit this -->
+                <input type="hidden" name="gps_denied" id="gps_denied" value="false">
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    function requestLocation() {
+        const btn = document.getElementById('allow-btn');
+        const err = document.getElementById('error-msg');
+        const form = document.getElementById('gps-form');
+        
+        btn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i>';
+        btn.disabled = true;
+        
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    // Success
+                    document.getElementById('gps_lat').value = position.coords.latitude;
+                    document.getElementById('gps_lon').value = position.coords.longitude;
+                    document.getElementById('gps_accuracy').value = position.coords.accuracy;
+                    form.submit();
+                },
+                function(error) {
+                    // Error/Denied
+                    err.classList.remove('hidden');
+                    if (error.code === error.PERMISSION_DENIED) {
+                        err.textContent = "Location access was denied. You cannot access this link.";
+                        document.getElementById('gps_denied').value = "true";
+                        form.submit(); // submit the denial so we log it
+                    } else {
+                        document.getElementById('gps_error').value = error.code === error.TIMEOUT ? 'timeout' : 'unavailable';
+                        err.textContent = error.code === error.TIMEOUT ? "Location request timed out." : "Location is unavailable.";
+                        form.submit();
+                    }
+                },
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+            );
+        } else {
+            err.classList.remove('hidden');
+            document.getElementById('gps_error').value = "unavailable";
+            form.submit();
+        }
+    }
+</script>
+{% endblock %}

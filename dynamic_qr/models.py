@@ -135,15 +135,18 @@ class DynamicQRCode(models.Model):
             return f"/{self.header}/{self.short_code}/"
         return f"/{self.short_code}/"
 
-    def get_static_content(self, request=None):
+    def get_static_content(self, request=None, source=None):
         """
         Determines the content to be encoded in the QR code.
         Always return the stable dynamic redirect URL so old downloaded QR images
         continue to resolve the latest edited content.
         """
+        path = self.public_url_path
+        if source:
+            path = f'{path}?source={source}'
         if request:
-            return request.build_absolute_uri(self.public_url_path)
-        return self.public_url_path
+            return request.build_absolute_uri(path)
+        return path
 
     def get_raw_payload(self):
         """
@@ -205,11 +208,32 @@ class QRAnalytics(models.Model):
     city = models.CharField(max_length=100, default='Unknown')
     latitude = models.FloatField(null=True, blank=True)
     longitude = models.FloatField(null=True, blank=True)
+    location_source = models.CharField(max_length=20, default='unknown')
+    gps_permission = models.CharField(max_length=20, default='not_required')
+    gps_latitude = models.FloatField(null=True, blank=True)
+    gps_longitude = models.FloatField(null=True, blank=True)
+    gps_accuracy = models.FloatField(null=True, blank=True)
+    gps_captured_at = models.DateTimeField(null=True, blank=True)
     referrer = models.CharField(max_length=500, null=True, blank=True, help_text="HTTP Referrer")
     is_bot = models.BooleanField(default=False, help_text="Whether this scan/click was made by a bot")
     is_qr_scan = models.BooleanField(default=False, help_text="True if originated from a QR code scan")
     source = models.CharField(max_length=50, default='Direct', help_text="Traffic source (QR, Direct, Referral, etc.)")
     visitor_id = models.CharField(max_length=64, blank=True, null=True, help_text="Hashed IP+UA for unique visitor tracking")
+    
+    # New Access Outcome Analytics
+    RESULT_CHOICES = [
+        ('redirect_success', 'Successful Redirect'),
+        ('password_required', 'Password Challenge'),
+        ('password_failed', 'Password Failure'),
+        ('expired', 'Expired Link Attempt'),
+        ('disabled', 'Disabled Link Attempt'),
+        ('gps_required', 'GPS Permission Required'),
+        ('gps_denied', 'GPS Permission Denied'),
+        ('invalid_link', 'Invalid Link Request'),
+        ('bot_request', 'Bot Request Ignored'),
+    ]
+    redirect_result = models.CharField(max_length=30, choices=RESULT_CHOICES, default='redirect_success', db_index=True)
+    http_status = models.IntegerField(default=200)
 
     class Meta:
         ordering = ['-timestamp']

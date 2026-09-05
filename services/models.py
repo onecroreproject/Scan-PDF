@@ -4,38 +4,60 @@ from django.utils import timezone
 import datetime
 
 class Plan(models.Model):
-    name = models.CharField(max_length=50, unique=True) # FREE, PRO, BUSINESS, BUSINESS+
-    code = models.CharField(max_length=20, unique=True) # free, pro, business, business_plus
+    name = models.CharField(max_length=50, unique=True) # FREE, PRO, BUSINESS+
+    code = models.CharField(max_length=20, unique=True) # free, pro, business_plus
     monthly_price = models.IntegerField(default=0) # INR
     yearly_price = models.IntegerField(default=0) # INR
-    
-    pricing_type = models.CharField(max_length=20, choices=[('fixed', 'Fixed Price'), ('contact', 'Contact Us')], default='fixed')
-    
+
+    pricing_type = models.CharField(
+        max_length=20,
+        choices=[('fixed', 'Fixed Price'), ('contact', 'Contact Us')],
+        default='fixed'
+    )
+
     description = models.TextField(blank=True, help_text="Plan description")
     is_active = models.BooleanField(default=True)
     is_popular = models.BooleanField(default=False)
     display_order = models.IntegerField(default=0)
     setup_fee = models.IntegerField(default=0, help_text="Optional setup fee in INR")
     is_default = models.BooleanField(default=False, help_text="Is this the default plan for new users?")
-    
-    # Legacy Limits (Kept for backward compatibility but plan to migrate to Feature system)
+
+    # Legacy Limits (kept for backward compat — runtime checks use PlanFeature)
     max_dynamic_qrs = models.IntegerField(default=5)
     max_short_urls = models.IntegerField(default=10)
     max_team_members = models.IntegerField(default=0)
     max_domains = models.IntegerField(default=0)
     max_api_requests = models.IntegerField(default=0)
-    
+
+    # Legacy boolean plan flags (deprecated — use PlanFeature)
     analytics_access = models.BooleanField(default=False)
     csv_export = models.BooleanField(default=False)
     gps_tracking = models.BooleanField(default=False)
     bulk_qr = models.BooleanField(default=False)
     webhooks = models.BooleanField(default=False)
-    
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.name
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Feature Master — the canonical list of all Short URL features
+# ─────────────────────────────────────────────────────────────────────────────
+
+FEATURE_CODES = [
+    'header',
+    'qr_code',
+    'password_protection',
+    'link_expiry',
+    'gps_tracking',
+    'analytics',
+    'custom_alias',
+    'csv_export',
+    'pdf_report',
+]
 
 class Feature(models.Model):
     FEATURE_TYPES = [
@@ -45,13 +67,22 @@ class Feature(models.Model):
         ('SELECT', 'Select (Text/Choice)'),
         ('DURATION', 'Duration (Text)'),
     ]
-    key = models.CharField(max_length=50, unique=True, help_text="e.g. short_urls, gps_tracking")
+    # 'key' kept for backward compat; 'code' is the canonical field used by the new service
+    key = models.CharField(max_length=50, unique=True, help_text="e.g. header, qr_code, analytics")
     name = models.CharField(max_length=100)
     type = models.CharField(max_length=20, choices=FEATURE_TYPES, default='BOOLEAN')
     description = models.TextField(blank=True)
+    section = models.CharField(max_length=100, default='SHORT URL', help_text="Section this feature belongs to")
     is_public = models.BooleanField(default=True, help_text="Show on public pricing page")
+    is_active = models.BooleanField(default=True)
     display_order = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    # 'code' property alias for 'key' (new code should use feature.code)
+    @property
+    def code(self):
+        return self.key
 
     class Meta:
         ordering = ['display_order', 'name']
@@ -59,28 +90,57 @@ class Feature(models.Model):
     def __str__(self):
         return f"{self.name} ({self.key})"
 
+
+# ─────────────────────────────────────────────────────────────────────────────
+# PlanFeature — the SINGLE SOURCE OF TRUTH for runtime entitlement
+# ─────────────────────────────────────────────────────────────────────────────
+
 class PlanFeature(models.Model):
-    plan = models.ForeignKey(Plan, on_delete=models.CASCADE, related_name='features')
+    """
+    Links a Plan to a Feature with its specific limit configuration.
+    This is the SINGLE SOURCE OF TRUTH for runtime feature entitlement.
+    Admin changes here take effect immediately — no restart required.
+    """
+    plan = models.ForeignKey(Plan, on_delete=models.CASCADE, related_name='plan_features')
     feature = models.ForeignKey(Feature, on_delete=models.CASCADE, related_name='plan_features')
-    
+
+    # Entitlement fields
+    enabled = models.BooleanField(default=False, help_text="Whether this feature is enabled for this plan")
+    monthly_limit = models.IntegerField(null=True, blank=True, help_text="Monthly usage limit")
+    yearly_limit = models.IntegerField(null=True, blank=True, help_text="Yearly usage limit")
+    is_unlimited = models.BooleanField(default=False, help_text="If True, ignore limit entirely for all billing cycles")
+    # Analytics-specific: how many days of history the user can access
+    history_days = models.IntegerField(
+        null=True, blank=True,
+        help_text="For analytics feature: how many days of history are accessible"
+    )
+
+    # Legacy value fields (kept for backward compat with old code)
     value_boolean = models.BooleanField(default=False)
     value_numeric = models.IntegerField(null=True, blank=True)
     value_text = models.CharField(max_length=255, null=True, blank=True)
-    
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
     class Meta:
         unique_together = ('plan', 'feature')
 
     def __str__(self):
-        return f"{self.plan.name} - {self.feature.name}"
+        return f"{self.plan.name} — {self.feature.name}"
 
     def get_display_value(self):
-        if self.feature.type == 'BOOLEAN':
-            return "ON" if self.value_boolean else "OFF"
-        elif self.feature.type == 'UNLIMITED':
+        if not self.enabled:
+            return "OFF"
+        if self.is_unlimited:
             return "Unlimited"
-        elif self.feature.type == 'NUMERIC':
-            return str(self.value_numeric)
-        return self.value_text or ""
+        if self.feature.key == 'analytics':
+            return f"{self.history_days or 0} days"
+        
+        m_limit = self.monthly_limit if self.monthly_limit is not None else 0
+        y_limit = self.yearly_limit if self.yearly_limit is not None else 0
+        return f"{m_limit}/mo · {y_limit}/yr"
+
 
 class Subscription(models.Model):
     STATUS_CHOICES = [
@@ -89,7 +149,7 @@ class Subscription(models.Model):
         ('Cancelled', 'Cancelled'),
         ('Pending', 'Pending'),
     ]
-    
+
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='subscriptions')
     plan = models.ForeignKey(Plan, on_delete=models.CASCADE, related_name='subscriptions')
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='Pending')
@@ -97,19 +157,20 @@ class Subscription(models.Model):
     end_date = models.DateTimeField(null=True, blank=True) # Null for FREE
     billing_cycle = models.CharField(max_length=20, choices=[('monthly', 'Monthly'), ('yearly', 'Yearly')], default='monthly')
     payment_status = models.CharField(max_length=20, default='Pending')
-    
+
     # Grandfathering & Billing Details
     price_at_purchase = models.IntegerField(default=0, help_text="Price stored at time of purchase")
     currency = models.CharField(max_length=10, default='INR')
     auto_renew = models.BooleanField(default=True)
     renewal_date = models.DateTimeField(null=True, blank=True)
     cancelled_at = models.DateTimeField(null=True, blank=True)
-    
+
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return f"{self.user.username} - {self.plan.name} ({self.status})"
+
 
 class Payment(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='payments')
@@ -130,8 +191,9 @@ class Payment(models.Model):
 
 class SubscriptionSnapshot(models.Model):
     """
-    Immutable snapshot of the plan entitlements at the exact time of purchase, renewal, or upgrade.
-    All limit and feature checks must run against this model, NOT the live PlanSectionFeature.
+    Immutable snapshot of plan entitlements at subscription time.
+    DEPRECATED for runtime checks — use PlanFeatureService (services/plan_features.py) instead.
+    Kept for historical audit purposes only.
     """
     subscription = models.OneToOneField(Subscription, on_delete=models.CASCADE, related_name='snapshot')
     plan_name = models.CharField(max_length=100)
@@ -140,7 +202,7 @@ class SubscriptionSnapshot(models.Model):
     billing_cycle = models.CharField(max_length=20)
     features_data = models.JSONField(
         default=dict,
-        help_text="Serialized dict of feature configurations: { 'short_urls': {'enabled': True, 'limit': 1500, 'is_unlimited': False}, ... }"
+        help_text="Serialized dict of feature configurations at subscription time (audit only)."
     )
     snapshot_date = models.DateTimeField(auto_now_add=True)
 
@@ -158,7 +220,9 @@ class ActivityLog(models.Model):
     def __str__(self):
         return f"{self.user.username if self.user else 'System'} - {self.action} ({self.created_at})"
 
+
 class UsageRecord(models.Model):
+    """Tracks per-user, per-feature, per-billing-period usage counts."""
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='usage_records')
     feature_key = models.CharField(max_length=50, db_index=True)
     period_start = models.DateTimeField()
@@ -172,7 +236,9 @@ class UsageRecord(models.Model):
     def __str__(self):
         return f"{self.user.username} - {self.feature_key}: {self.current_usage}"
 
+
 class UsageOverride(models.Model):
+    """Per-user limit override set by admin (e.g. bonus allowance)."""
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='usage_overrides')
     feature_key = models.CharField(max_length=50)
     additional_allowance = models.IntegerField(default=0)
@@ -186,13 +252,14 @@ class UsageOverride(models.Model):
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# Dynamic Plan Builder — Plan-local Sections & Features
+# Dynamic Plan Builder — Plan-local Sections & Features (VISUAL DISPLAY ONLY)
+# These are for the pricing page display. Runtime checks use PlanFeature above.
 # ─────────────────────────────────────────────────────────────────────────────
 
 class PlanSection(models.Model):
-    """A section header inside a pricing plan (e.g. "SHORT URL", "ANALYTICS")."""
+    """A section header inside a pricing plan (e.g. 'SHORT URL'). Display only."""
     plan = models.ForeignKey(Plan, on_delete=models.CASCADE, related_name='sections')
-    name = models.CharField(max_length=100, help_text='Section header shown on pricing card, e.g. SHORT URL')
+    name = models.CharField(max_length=100, help_text='Section header shown on pricing card')
     is_enabled = models.BooleanField(default=True)
     display_order = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -206,7 +273,7 @@ class PlanSection(models.Model):
 
 
 class PlanSectionFeature(models.Model):
-    """A single feature row inside a PlanSection, with separate monthly/yearly values."""
+    """A single feature row inside a PlanSection for visual display on pricing page."""
 
     FEATURE_TYPE_CHOICES = [
         ('BOOLEAN', 'Boolean (ON/OFF — shown as ✓ Feature Name)'),
@@ -220,27 +287,13 @@ class PlanSectionFeature(models.Model):
     description = models.TextField(blank=True, help_text='Optional internal note')
     feature_type = models.CharField(max_length=20, choices=FEATURE_TYPE_CHOICES, default='BOOLEAN')
 
-    # LIMIT type: separate monthly and yearly numeric values
     monthly_value = models.IntegerField(null=True, blank=True, help_text='Numeric value for monthly billing')
     yearly_value = models.IntegerField(null=True, blank=True, help_text='Numeric value for yearly billing')
-
-    # LIMIT / TEXT type: human-readable labels shown on pricing card
-    monthly_label = models.CharField(
-        max_length=255, blank=True,
-        help_text='Full label for monthly display, e.g. Short URLs / month'
-    )
-    yearly_label = models.CharField(
-        max_length=255, blank=True,
-        help_text='Full label for yearly display, e.g. Short URLs / year'
-    )
-
-    # TEXT type: free-form text values (e.g. "30 Days", "365 Days")
-    monthly_text = models.CharField(max_length=255, blank=True, help_text='Text value for monthly (TEXT type)')
-    yearly_text = models.CharField(max_length=255, blank=True, help_text='Text value for yearly (TEXT type)')
-
-    # UNLIMITED type
-    is_unlimited = models.BooleanField(default=False, help_text='If True, displays as Unlimited regardless of values')
-
+    monthly_label = models.CharField(max_length=255, blank=True)
+    yearly_label = models.CharField(max_length=255, blank=True)
+    monthly_text = models.CharField(max_length=255, blank=True)
+    yearly_text = models.CharField(max_length=255, blank=True)
+    is_unlimited = models.BooleanField(default=False)
     is_enabled = models.BooleanField(default=True)
     display_order = models.IntegerField(default=0)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -253,7 +306,6 @@ class PlanSectionFeature(models.Model):
         return f"{self.section.plan.name} / {self.section.name} → {self.name}"
 
     def get_monthly_display(self):
-        """Returns the string shown on the monthly pricing card."""
         if self.feature_type == 'UNLIMITED' or self.is_unlimited:
             return f"Unlimited {self.name}"
         if self.feature_type == 'BOOLEAN':
@@ -270,7 +322,6 @@ class PlanSectionFeature(models.Model):
         return self.name
 
     def get_yearly_display(self):
-        """Returns the string shown on the yearly pricing card."""
         if self.feature_type == 'UNLIMITED' or self.is_unlimited:
             return f"Unlimited {self.name}"
         if self.feature_type == 'BOOLEAN':

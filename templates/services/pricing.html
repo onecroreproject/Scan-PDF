@@ -27,7 +27,9 @@
                 </button>
                 <span id="billing-yearly-label" class="text-sm font-bold text-surface-400 transition-colors">
                     Yearly Billing
-                    <span class="ml-1.5 inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-bold text-emerald-700 uppercase tracking-wider">Save 20%</span>
+                    {% if max_saving_percent > 0 %}
+                    <span class="ml-1.5 inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-bold text-emerald-700 uppercase tracking-wider">Save {{ max_saving_percent }}%</span>
+                    {% endif %}
                 </span>
             </div>
         </div>
@@ -35,7 +37,8 @@
         <!-- Pricing Cards Grid -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 items-stretch max-w-6xl mx-auto">
 
-            {% for plan in plans %}
+            {% for pw in plans_with_features %}
+            {% with plan=pw.plan features=pw.features %}
             <div class="relative bg-white rounded-[2rem] p-8 flex flex-col h-full transition-all duration-300 {% if plan.code == 'pro' %}border-2 border-brand-500 shadow-elevated{% else %}border border-surface-100 shadow-card hover:shadow-card-hover hover:border-brand-200{% endif %}">
 
                 <div class="space-y-4 flex-1">
@@ -48,7 +51,10 @@
                     <!-- Price display -->
                     <div class="py-4">
                         {% if plan.pricing_type == 'contact' %}
-                        <span class="text-3xl font-black text-surface-900 uppercase tracking-wider">Contact Us</span>
+                        <div>
+                            <span class="text-3xl font-black text-surface-900 uppercase tracking-wider">Contact Us</span>
+                            <p class="text-sm font-bold text-brand-600 mt-1 uppercase tracking-widest">Custom Pricing</p>
+                        </div>
                         {% else %}
                         <span id="price-{{ plan.code }}"
                             class="text-5xl font-black text-surface-900 price-animate"
@@ -60,40 +66,23 @@
                         {% endif %}
                     </div>
 
-                    <!-- ── Dynamic Sections & Features ── -->
+                    <!-- Live PlanFeature-based features list -->
                     <div class="pt-4 border-t border-surface-50 space-y-5">
-                        {% with sections=plan.sections.all %}
-                        {% if sections %}
-                            {% for section in sections %}
-                            {% if section.is_enabled %}
-                            <div>
-                                <!-- Section header -->
-                                <h4 class="text-[10px] font-black text-surface-400 uppercase tracking-widest mb-3">{{ section.name }}</h4>
-
-                                <ul class="space-y-2.5 max-h-72 overflow-y-auto pr-1
-                                    [&::-webkit-scrollbar]:w-1.5
-                                    [&::-webkit-scrollbar-thumb]:bg-surface-200
-                                    [&::-webkit-scrollbar-thumb]:rounded-full">
-
-                                    {% for feat in section.features.all %}
-                                    {% if feat.is_enabled %}
-                                    <li class="flex items-start gap-3 text-sm text-surface-600 font-medium"
-                                        data-monthly-display="{{ feat.get_monthly_display|escapejs }}"
-                                        data-yearly-display="{{ feat.get_yearly_display|escapejs }}">
-                                        <i data-lucide="check" class="w-5 h-5 text-emerald-500 shrink-0 mt-0.5"></i>
-                                        <span class="feat-label">{{ feat.get_monthly_display }}</span>
-                                    </li>
-                                    {% endif %}
-                                    {% endfor %}
-
-                                </ul>
-                            </div>
-                            {% endif %}
+                        <h4 class="text-[10px] font-black text-surface-400 uppercase tracking-widest">SHORT URL</h4>
+                        {% if features %}
+                        <ul class="space-y-2.5">
+                            {% for feat in features %}
+                            <li class="flex items-start gap-3 text-sm text-surface-600 font-medium"
+                                data-monthly-display="{{ feat.monthly_display|escapejs }}"
+                                data-yearly-display="{{ feat.yearly_display|escapejs }}">
+                                <i data-lucide="check" class="w-5 h-5 text-emerald-500 shrink-0 mt-0.5"></i>
+                                <span class="feat-label">{{ feat.monthly_display }}</span>
+                            </li>
                             {% endfor %}
+                        </ul>
                         {% else %}
-                            <p class="text-xs text-surface-400 italic">No features configured yet.</p>
+                        <p class="text-xs text-surface-400 italic">Features coming soon.</p>
                         {% endif %}
-                        {% endwith %}
                     </div>
                 </div>
 
@@ -121,6 +110,11 @@
                     </a>
                     {% endif %}
                 </div>
+            </div>
+            {% endwith %}
+            {% empty %}
+            <div class="col-span-3 text-center py-12 text-surface-400">
+                <p class="font-semibold">No active plans configured.</p>
             </div>
             {% endfor %}
 
