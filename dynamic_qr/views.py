@@ -1558,20 +1558,53 @@ def dqr_redirect_view(request, short_code):
     # 3. GPS Tracking Flow
     if qr.require_gps and not request.session.get(f'qr_gps_auth_{qr.id}'):
         if request.method == 'POST':
-            permission = 'denied' if request.POST.get('gps_denied') == 'true' else request.POST.get('gps_error', 'granted')
+            is_json_request = request.content_type.split(';', 1)[0].lower() == 'application/json'
+            if is_json_request:
+                try:
+                    gps_payload = json.loads(request.body.decode('utf-8'))
+                except (json.JSONDecodeError, UnicodeDecodeError):
+                    return JsonResponse({'success': False, 'error': 'Invalid GPS request.'}, status=400)
+            else:
+                gps_payload = request.POST
+
+            permission = gps_payload.get('permission')
+            if not permission:
+                permission = 'denied' if gps_payload.get('gps_denied') == 'true' else gps_payload.get('gps_error', 'granted')
             if permission not in ('granted', 'denied', 'unavailable', 'timeout'):
                 permission = 'unavailable'
             try:
-                update_pending_gps_event(
+                latitude = float(gps_payload.get('latitude', gps_payload.get('gps_lat'))) if permission == 'granted' else None
+                longitude = float(gps_payload.get('longitude', gps_payload.get('gps_lon'))) if permission == 'granted' else None
+                accuracy_value = gps_payload.get('accuracy', gps_payload.get('gps_accuracy'))
+                accuracy = float(accuracy_value) if permission == 'granted' and accuracy_value is not None else None
+                event = update_pending_gps_event(
                     request, qr, permission,
-                    latitude=float(request.POST.get('gps_lat')) if permission == 'granted' else None,
-                    longitude=float(request.POST.get('gps_lon')) if permission == 'granted' else None,
-                    accuracy=float(request.POST.get('gps_accuracy')) if permission == 'granted' else None,
+                    latitude=latitude,
+                    longitude=longitude,
+                    accuracy=accuracy,
                 )
             except (TypeError, ValueError):
+                if is_json_request:
+                    return JsonResponse({'success': False, 'error': 'Invalid GPS coordinates.'}, status=400)
                 return render(request, 'dynamic_qr/gps_prompt.html', {'qr': qr, 'error': 'The location data was invalid. Please try again.'})
+            if not event:
+                if is_json_request:
+                    return JsonResponse({'success': False, 'error': 'GPS session expired. Please reopen the short link.'}, status=409)
+                return render(request, 'dynamic_qr/gps_prompt.html', {'qr': qr, 'error': 'Your GPS session expired. Please try again.'})
             if permission != 'granted':
-                return render(request, 'dynamic_qr/qr_disabled.html', {'qr': qr, 'error': 'Location permission is required to access this link.'})
+                messages = {
+                    'denied': 'Location permission was denied. Allow access to continue to this link.',
+                    'unavailable': 'Your location is currently unavailable. Check your browser or device settings and try again.',
+                    'timeout': 'The location request timed out. Please try again.',
+                }
+                if is_json_request:
+                    return JsonResponse({'success': False, 'error': messages[permission]}, status=403)
+                return render(request, 'dynamic_qr/gps_prompt.html', {'qr': qr, 'error': messages[permission]})
+            # The pending event already represents this visit. Prevent the
+            # redirecting GET from recording a second successful event.
+            request.session[f'qr_last_hit_{qr.id}'] = timezone.now().timestamp()
+            if is_json_request:
+                return JsonResponse({'success': True, 'redirect_url': qr.destination_url})
             return redirect(request.path)
         if not request.session.get(f'qr_pending_event_{qr.id}'):
             record_short_url_event(qr, request, result='gps_required', status=401)

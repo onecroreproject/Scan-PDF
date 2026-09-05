@@ -5,7 +5,7 @@ from django.utils import timezone
 from django.db.models import Sum, Q
 from django.contrib.auth.models import User
 from django.contrib.auth.admin import UserAdmin
-from .models import Plan, Subscription, Payment, ActivityLog
+from .models import Plan, Subscription, Payment, ActivityLog, ContactEnquiry
 from dynamic_qr.models import DynamicQRCode
 import csv
 import datetime
@@ -156,6 +156,19 @@ class PaymentAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None):
         return request.user.is_superuser
+
+@admin.register(ContactEnquiry)
+class ContactEnquiryAdmin(admin.ModelAdmin):
+    list_display = ('ticket_id', 'name', 'email', 'source', 'category', 'subject', 'status', 'created_at')
+    list_filter = ('status', 'source', 'category', 'created_at')
+    search_fields = ('ticket_id', 'name', 'email', 'subject', 'message')
+    list_per_page = 25
+    readonly_fields = ('ticket_id', 'created_at', 'updated_at', 'source', 'ip_address', 'user_agent')
+    actions = [export_as_csv]
+
+    def has_delete_permission(self, request, obj=None):
+        return request.user.is_superuser
+
 
 # ═══════════════════════════════════════════════════════════════
 # 6. SYSTEM EVENT LOGGER

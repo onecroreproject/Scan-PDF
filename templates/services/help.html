@@ -1,0 +1,761 @@
+{% extends 'converter/base.html' %}
+
+{% block content %}
+<style>
+  .help-page-shell {
+    min-height: 100vh;
+    background: linear-gradient(180deg, #f9faff 0%, #f5f7fc 100%);
+    padding-top: 18px;
+  }
+
+  .scan-container {
+    width: min(1120px, calc(100% - 40px));
+    margin-inline: auto;
+  }
+
+  .help-hero {
+    padding: 70px 0 24px;
+  }
+
+  .help-hero-inner {
+    text-align: center;
+  }
+
+  .help-badge,
+  .faq-badge,
+  .help-form-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 8px 14px;
+    border-radius: 999px;
+    background: #f3ebff;
+    border: 1px solid rgba(124, 58, 237, 0.12);
+    color: #6d3de2;
+    font-size: 11px;
+    font-weight: 800;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+  }
+
+  .help-hero h1 {
+    margin-top: 22px;
+    font-size: clamp(2.4rem, 4vw, 4rem);
+    line-height: 1.08;
+    letter-spacing: -0.06em;
+    font-weight: 900;
+    color: #07142d;
+  }
+
+  .help-hero p {
+    margin: 14px auto 0;
+    max-width: 740px;
+    color: #5d6a82;
+    font-size: 1.12rem;
+    line-height: 1.7;
+    font-weight: 500;
+  }
+
+  .help-search {
+    width: min(100%, 720px);
+    margin: 28px auto 0;
+  }
+
+  .help-search input {
+    width: 100%;
+    min-height: 54px;
+    padding: 0 18px 0 50px;
+    border: 1px solid rgba(124, 58, 237, 0.14);
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.82);
+    box-shadow: 0 12px 28px rgba(31, 25, 61, 0.06);
+    color: #17213c;
+    font-size: 1rem;
+    font-weight: 600;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .help-search input:focus,
+  .help-form-card input:focus,
+  .help-form-card select:focus,
+  .help-form-card textarea:focus {
+    border-color: #7c3aed;
+    box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.10);
+  }
+
+  .help-categories {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 18px;
+    margin-top: 24px;
+  }
+
+  .help-card {
+    width: 100%;
+    min-height: 170px;
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid rgba(15, 23, 42, 0.06);
+    border-radius: 22px;
+    box-shadow: 0 10px 26px rgba(16, 24, 40, 0.05);
+    text-align: left;
+    padding: 20px 18px;
+    cursor: pointer;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  }
+
+  .help-card:hover {
+    transform: translateY(-2px);
+    border-color: rgba(124, 58, 237, 0.22);
+    box-shadow: 0 18px 30px rgba(124, 58, 237, 0.08);
+  }
+
+  .help-card-icon {
+    display: flex;
+    width: 46px;
+    height: 46px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 14px;
+    background: #f5f1ff;
+    color: #7c3aed;
+  }
+
+  .help-card h3 {
+    margin-top: 18px;
+    color: #0d1730;
+    font-size: 1.05rem;
+    font-weight: 800;
+  }
+
+  .help-card p {
+    margin-top: 10px;
+    color: #5a6881;
+    font-size: 0.83rem;
+    line-height: 1.65;
+    font-weight: 500;
+  }
+
+  .faq-section,
+  .help-form-section {
+    padding: 70px 0;
+  }
+
+  .faq-header {
+    text-align: center;
+    margin-bottom: 26px;
+  }
+
+  .faq-header h2 {
+    margin-top: 18px;
+    font-size: clamp(2rem, 4vw, 2.9rem);
+    font-weight: 800;
+    line-height: 1.12;
+    color: #07142d;
+  }
+
+  .faq-header p {
+    max-width: 650px;
+    margin: 12px auto 0;
+    color: #61708c;
+    font-size: 1.02rem;
+    line-height: 1.7;
+  }
+
+  .faq-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px 24px;
+    max-width: 1100px;
+    margin: 0 auto;
+  }
+
+  .faq-column {
+    display: grid;
+    gap: 16px;
+    align-content: start;
+  }
+
+  .faq-item {
+    background: #ffffff;
+    border: 1px solid #e7e9f2;
+    border-radius: 14px;
+    box-shadow: 0 4px 14px rgba(20, 30, 55, 0.04);
+    overflow: hidden;
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+  }
+
+  .faq-item.is-open {
+    border-color: rgba(124, 58, 237, 0.18);
+    box-shadow: 0 8px 20px rgba(124, 58, 237, 0.08);
+  }
+
+  .faq-toggle {
+    width: 100%;
+    min-height: 58px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    background: #ffffff;
+    border: none;
+    padding: 16px 18px;
+    text-align: left;
+    cursor: pointer;
+  }
+
+  .faq-toggle span {
+    color: #08152f;
+    font-size: 0.98rem;
+    font-weight: 700;
+    line-height: 1.5;
+  }
+
+  .faq-icon-wrap {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: #f5f1ff;
+    color: #7b35f4;
+    flex-shrink: 0;
+    transition: transform 0.2s ease, background 0.2s ease;
+  }
+
+  .faq-item.is-open .faq-icon-wrap {
+    transform: rotate(45deg);
+  }
+
+  .faq-answer {
+    max-height: 0;
+    opacity: 0;
+    overflow: hidden;
+    padding: 0 18px;
+    border-top: 1px solid transparent;
+    color: #60708c;
+    font-size: 0.92rem;
+    line-height: 1.7;
+    transition: max-height 0.28s ease, opacity 0.22s ease, padding 0.24s ease, border-color 0.2s ease;
+  }
+
+  .faq-item.is-open .faq-answer {
+    max-height: 220px;
+    opacity: 1;
+    border-top-color: #f0f1f6;
+    padding: 16px 18px 18px;
+  }
+
+  .help-form-wrap {
+    max-width: 900px;
+    margin: 0 auto;
+  }
+
+  .help-form-header {
+    text-align: center;
+    margin-bottom: 24px;
+  }
+
+  .help-form-header h2 {
+    margin-top: 18px;
+    font-size: clamp(2.1rem, 3vw, 3rem);
+    font-weight: 800;
+    color: #07142d;
+  }
+
+  .help-form-header p {
+    margin-top: 12px;
+    color: #61708c;
+    font-size: 1.04rem;
+    line-height: 1.7;
+  }
+
+  .help-form-card {
+    background: #ffffff;
+    border: 1px solid #e7e9f2;
+    border-radius: 24px;
+    padding: 36px;
+    box-shadow: 0 18px 50px rgba(30, 25, 70, 0.08);
+  }
+
+  .help-form-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 22px;
+  }
+
+  .full-width {
+    grid-column: 1 / -1;
+  }
+
+  .field-group {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .field-group label {
+    margin-bottom: 8px;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: #29334e;
+  }
+
+  .required-mark {
+    color: #7c3aed;
+  }
+
+  .help-form-card input,
+  .help-form-card select,
+  .help-form-card textarea {
+    width: 100%;
+    border: 1px solid #dde2eb;
+    background: #ffffff;
+    border-radius: 12px;
+    min-height: 48px;
+    padding: 12px 14px;
+    color: #17213c;
+    font-size: 0.98rem;
+    font-weight: 500;
+    outline: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+  }
+
+  .help-form-card textarea {
+    min-height: 150px;
+    resize: vertical;
+  }
+
+  .help-form-card select {
+    appearance: none;
+    background-image: linear-gradient(45deg, transparent 50%, #7c3aed 50%), linear-gradient(135deg, #7c3aed 50%, transparent 50%);
+    background-position: calc(100% - 18px) calc(50% - 2px), calc(100% - 13px) calc(50% - 2px);
+    background-size: 5px 5px, 5px 5px;
+    background-repeat: no-repeat;
+    padding-right: 38px;
+  }
+
+  .field-error {
+    margin-top: 10px;
+    color: #dc2626;
+    font-size: 12px;
+    font-weight: 700;
+    display: block;
+  }
+
+  .help-submit-row {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    margin-top: 18px;
+  }
+
+  .help-submit {
+    min-width: 190px;
+    height: 50px;
+    border: none;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #6f2cff, #8b3df5);
+    color: #ffffff;
+    font-size: 0.95rem;
+    font-weight: 800;
+    letter-spacing: 0.02em;
+    box-shadow: 0 10px 20px rgba(124, 58, 237, 0.22);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .help-submit:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 16px 26px rgba(124, 58, 237, 0.22);
+  }
+
+  .help-cta-link {
+    margin-top: 18px;
+    text-align: center;
+    color: #5d6a82;
+    font-size: 0.96rem;
+    line-height: 1.7;
+  }
+
+  .help-cta-link a {
+    color: #7c3aed;
+    font-weight: 700;
+    text-decoration: none;
+  }
+
+  .help-cta-link a:hover {
+    text-decoration: underline;
+  }
+
+  .success-card {
+    background: linear-gradient(135deg, #f6f3ff 0%, #f8f9ff 100%);
+    border: 1px solid rgba(134, 96, 207, 0.2);
+    border-radius: 24px;
+    box-shadow: 0 16px 36px rgba(59, 36, 104, 0.08);
+    margin: 0 auto 26px;
+    max-width: 900px;
+    padding: 32px 20px;
+    text-align: center;
+  }
+
+  @media (max-width: 900px) {
+    .help-categories {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .faq-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 768px) {
+    .help-page-shell {
+      padding-top: 10px;
+    }
+
+    .help-hero {
+      padding-top: 54px;
+    }
+
+    .help-categories,
+    .faq-grid,
+    .help-form-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .help-form-card {
+      padding: 22px 18px;
+    }
+
+    .help-submit {
+      width: 100%;
+      min-width: 0;
+    }
+
+    .help-submit-row {
+      justify-content: stretch;
+    }
+
+    .faq-section,
+    .help-form-section {
+      padding: 60px 0;
+    }
+  }
+</style>
+
+<div class="help-page-shell">
+  <div class="help-hero">
+    <div class="scan-container help-hero-inner">
+      <span class="help-badge">
+        <i data-lucide="life-buoy" class="w-3.5 h-3.5"></i>
+        Help Center
+      </span>
+      <h1>{{ title }}</h1>
+      <p>{{ subtitle }}</p>
+
+      <div class="help-search">
+        <div style="position: relative;">
+          <i data-lucide="search" style="position:absolute; left:18px; top:50%; transform:translateY(-50%); width:18px; height:18px; color:#7b859a;"></i>
+          <input id="help-search" type="text" placeholder="Search for help..." aria-label="Search for help" />
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="scan-container" style="padding-bottom: 18px;">
+    <div class="help-categories" id="help-cards-grid">
+      {% for card in help_cards %}
+      <button type="button" class="help-card js-help-topic" data-search="{{ card.title }} {{ card.description }}">
+        <div class="help-card-icon">
+          <i data-lucide="{{ card.icon }}" class="w-5 h-5"></i>
+        </div>
+        <h3>{{ card.title }}</h3>
+        <p>{{ card.description }}</p>
+      </button>
+      {% endfor %}
+    </div>
+  </div>
+
+  <div class="faq-section">
+    <div class="scan-container">
+      <div class="faq-header">
+        <span class="faq-badge">Common Questions</span>
+        <h2>Frequently Asked Questions</h2>
+        <p>Find quick answers to the most common questions about ScanPDF.</p>
+      </div>
+
+      {% with faq_left=faq_items|slice:':7' faq_right=faq_items|slice:'7:' %}
+      <div class="faq-grid" id="faq-list">
+        <div class="faq-column">
+          {% for item in faq_left %}
+          <div class="faq-item {% if forloop.first %}is-open{% endif %} js-faq-item">
+            <button type="button" class="faq-toggle">
+              <span>{{ item.question }}</span>
+              <span class="faq-icon-wrap"><i data-lucide="plus" class="w-4 h-4 faq-icon"></i></span>
+            </button>
+            <div class="faq-answer">{{ item.answer }}</div>
+          </div>
+          {% endfor %}
+        </div>
+
+        <div class="faq-column">
+          {% for item in faq_right %}
+          <div class="faq-item js-faq-item">
+            <button type="button" class="faq-toggle">
+              <span>{{ item.question }}</span>
+              <span class="faq-icon-wrap"><i data-lucide="plus" class="w-4 h-4 faq-icon"></i></span>
+            </button>
+            <div class="faq-answer">{{ item.answer }}</div>
+          </div>
+          {% endfor %}
+        </div>
+      </div>
+      {% endwith %}
+    </div>
+  </div>
+
+  <div class="help-form-section">
+    <div class="scan-container">
+      <div class="help-form-wrap">
+        <div class="help-form-header">
+          <span class="help-form-badge">Need More Help?</span>
+          <h2>Still Need Help?</h2>
+          <p>Send us your question and our team will get back to you.</p>
+        </div>
+
+        {% if success %}
+        <div class="success-card">
+          <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-brand-100 text-brand-600" style="margin:0 auto;">
+            <i data-lucide="check-circle" class="w-8 h-8"></i>
+          </div>
+          <h3 style="margin-top:20px; font-size:2rem; font-weight:900; color:#07142d;">Message Sent Successfully</h3>
+          <p style="margin-top:14px; color:#5d6a82; font-size:1rem;">Thank you for contacting ScanPDF. Your reference number is <strong>{{ ticket_id }}</strong>.</p>
+          <div style="margin-top:24px; display:flex; justify-content:center; gap:12px; flex-wrap:wrap;">
+            <a href="{% url 'converter:home' %}" class="inline-flex items-center justify-center rounded-2xl bg-brand-600 px-6 py-3 text-sm font-black text-white shadow-lg shadow-brand-200 transition hover:bg-brand-700">Back to Home</a>
+            <button type="button" onclick="window.location.reload()" class="inline-flex items-center justify-center rounded-2xl border border-surface-200 bg-white px-6 py-3 text-sm font-black text-surface-700 transition hover:bg-surface-50">Send Another Message</button>
+          </div>
+        </div>
+        {% endif %}
+
+        <div class="help-form-card">
+          <form id="help-form" method="post" novalidate action="{% url 'services:help' %}">
+            {% csrf_token %}
+            {{ form.source }}
+            {{ form.website }}
+
+            <div class="help-form-grid">
+              <div class="field-group">
+                <label for="id_name">Full Name <span class="required-mark">*</span></label>
+                {{ form.name }}
+                {% if form.name.errors %}<span class="field-error">{{ form.name.errors|join:', ' }}</span>{% endif %}
+              </div>
+
+              <div class="field-group">
+                <label for="id_email">Email Address <span class="required-mark">*</span></label>
+                {{ form.email }}
+                {% if form.email.errors %}<span class="field-error">{{ form.email.errors|join:', ' }}</span>{% endif %}
+              </div>
+
+              <div class="field-group">
+                <label for="id_category">Help Category <span class="required-mark">*</span></label>
+                {{ form.category }}
+                {% if form.category.errors %}<span class="field-error">{{ form.category.errors|join:', ' }}</span>{% endif %}
+              </div>
+
+              <div class="field-group">
+                <label for="id_subject">Subject <span class="required-mark">*</span></label>
+                {{ form.subject }}
+                {% if form.subject.errors %}<span class="field-error">{{ form.subject.errors|join:', ' }}</span>{% endif %}
+              </div>
+
+              <div class="field-group full-width">
+                <label for="id_message">Message <span class="required-mark">*</span></label>
+                {{ form.message }}
+                {% if form.message.errors %}<span class="field-error">{{ form.message.errors|join:', ' }}</span>{% endif %}
+              </div>
+            </div>
+
+            {% if form.non_field_errors %}
+            <div class="field-error" style="margin-top:18px; color:#b91c1c; background:#fef2f2; border:1px solid #fecaca; padding:12px 14px; border-radius:10px;">{{ form.non_field_errors|join:', ' }}</div>
+            {% endif %}
+
+            <div class="help-submit-row">
+              <button type="submit" class="help-submit" data-submit-label="Send Help Request" data-sending-label="Sending...">Send Help Request</button>
+            </div>
+          </form>
+
+          <p class="help-cta-link">Prefer to contact us directly? <a href="{% url 'services:contact' %}">Contact Us</a></p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function () {
+    const searchInput = document.getElementById('help-search');
+    const topicCards = document.querySelectorAll('.js-help-topic');
+
+    if (searchInput) {
+      searchInput.addEventListener('input', function () {
+        const query = this.value.trim().toLowerCase();
+        topicCards.forEach((card) => {
+          const haystack = (card.dataset.search || '').toLowerCase();
+          const shouldShow = !query || haystack.includes(query);
+          card.style.display = shouldShow ? '' : 'none';
+        });
+      });
+    }
+
+    const faqItems = document.querySelectorAll('.js-faq-item');
+    faqItems.forEach((item) => {
+      const button = item.querySelector('.faq-toggle');
+      if (!button) return;
+
+      button.addEventListener('click', () => {
+        const isOpen = item.classList.contains('is-open');
+
+        faqItems.forEach((faq) => {
+          faq.classList.remove('is-open');
+        });
+
+        if (!isOpen) {
+          item.classList.add('is-open');
+        }
+
+        if (window.lucide) {
+          window.lucide.createIcons();
+        }
+      });
+    });
+
+    function setButtonLoading(button, isLoading) {
+      if (!button) return;
+      const submitLabel = button.dataset.submitLabel || 'Send';
+      const sendingLabel = button.dataset.sendingLabel || 'Sending...';
+      button.disabled = isLoading;
+      button.textContent = isLoading ? sendingLabel : submitLabel;
+    }
+
+    function clearFieldErrors(form) {
+      form.querySelectorAll('.field-error').forEach((element) => {
+        element.remove();
+      });
+      form.querySelectorAll('.has-error').forEach((group) => {
+        group.classList.remove('has-error');
+      });
+      form.querySelectorAll('input, select, textarea').forEach((field) => {
+        field.setAttribute('aria-invalid', 'false');
+      });
+    }
+
+    function renderFieldErrors(form, errors) {
+      clearFieldErrors(form);
+      Object.entries(errors).forEach(([key, value]) => {
+        const field = form.querySelector('[name="' + key + '"]');
+        if (field) {
+          const wrapper = field.closest('.field-group');
+          if (wrapper) wrapper.classList.add('has-error');
+          field.setAttribute('aria-invalid', 'true');
+          const message = document.createElement('span');
+          message.className = 'field-error';
+          message.textContent = Array.isArray(value) ? value.join(', ') : value;
+          field.insertAdjacentElement('afterend', message);
+        }
+      });
+    }
+
+    function openModal(type, title, message, ticketId) {
+      const modal = document.getElementById('scan-feedback-modal');
+      if (!modal) return;
+      const titleNode = document.getElementById('scan-modal-title');
+      const messageNode = document.getElementById('scan-modal-message');
+      const ticketBox = document.getElementById('scan-modal-ticket');
+      const ticketValue = document.getElementById('scan-modal-ticket-value');
+      const icon = modal.querySelector('.scan-modal-icon');
+      const primaryButton = modal.querySelector('.scan-btn-primary');
+
+      modal.dataset.type = type;
+      titleNode.textContent = title;
+      messageNode.textContent = message;
+      icon.textContent = type === 'success' ? '✓' : '!';
+      if (ticketId) {
+        ticketBox.hidden = false;
+        ticketValue.textContent = ticketId;
+      } else {
+        ticketBox.hidden = true;
+      }
+      primaryButton.textContent = type === 'error' ? 'Try Again' : 'Back to Home';
+      modal.classList.add('is-open');
+      modal.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+    }
+
+    function closeModal() {
+      const modal = document.getElementById('scan-feedback-modal');
+      if (!modal) return;
+      modal.classList.remove('is-open');
+      modal.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+    }
+
+    const modal = document.getElementById('scan-feedback-modal');
+    if (modal) {
+      modal.addEventListener('click', (event) => {
+        if (event.target.matches('[data-modal-close="true"]')) {
+          closeModal();
+        }
+      });
+      modal.querySelector('.scan-modal-close')?.addEventListener('click', closeModal);
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && modal.classList.contains('is-open')) {
+          closeModal();
+        }
+      });
+    }
+
+    const helpForm = document.getElementById('help-form');
+    if (helpForm) {
+      helpForm.addEventListener('submit', async function (event) {
+        event.preventDefault();
+        clearFieldErrors(helpForm);
+        const button = helpForm.querySelector('button[type="submit"]');
+        setButtonLoading(button, true);
+
+        try {
+          const formData = new FormData(helpForm);
+          const response = await fetch(helpForm.action, {
+            method: 'POST',
+            body: formData,
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+          });
+          const data = await response.json();
+
+          if (response.ok && data.success) {
+            if (data.status === 'saved_email_failed') {
+              openModal('warning', 'Request Received', 'Your request was saved successfully. Confirmation email delivery may be delayed.', data.ticket_id || null);
+            } else {
+              openModal('success', 'Help Request Sent', 'Your help request has been received. Our team will review it and get back to you.', data.ticket_id || null);
+            }
+            helpForm.reset();
+          } else if (data.status === 'validation_error') {
+            renderFieldErrors(helpForm, data.errors || {});
+            openModal('error', 'Please Check Your Details', 'Some fields need your attention. Please correct the highlighted fields and try again.');
+            const firstInvalid = helpForm.querySelector('[aria-invalid="true"]');
+            if (firstInvalid) firstInvalid.focus();
+          } else {
+            openModal('error', 'Something Went Wrong', 'We could not submit your request right now. Please try again.');
+          }
+        } catch (error) {
+          console.error('Help form submission error:', error);
+          openModal('error', 'Something Went Wrong', 'We could not submit your request right now. Please try again.');
+        } finally {
+          setButtonLoading(helpForm.querySelector('button[type="submit"]'), false);
+        }
+      });
+    }
+  })();
+</script>
+{% endblock %}

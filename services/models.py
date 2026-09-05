@@ -210,6 +210,46 @@ class SubscriptionSnapshot(models.Model):
         return f"Snapshot for {self.subscription}"
 
 
+class ContactEnquiry(models.Model):
+    SOURCE_CONTACT = 'CONTACT'
+    SOURCE_HELP = 'HELP'
+    SOURCE_CHOICES = [
+        (SOURCE_CONTACT, 'Contact'),
+        (SOURCE_HELP, 'Help'),
+    ]
+
+    STATUS_NEW = 'NEW'
+    STATUS_IN_PROGRESS = 'IN_PROGRESS'
+    STATUS_RESOLVED = 'RESOLVED'
+    STATUS_CLOSED = 'CLOSED'
+    STATUS_CHOICES = [
+        (STATUS_NEW, 'New'),
+        (STATUS_IN_PROGRESS, 'In Progress'),
+        (STATUS_RESOLVED, 'Resolved'),
+        (STATUS_CLOSED, 'Closed'),
+    ]
+
+    ticket_id = models.CharField(max_length=30, unique=True, db_index=True)
+    source = models.CharField(max_length=20, choices=SOURCE_CHOICES, default=SOURCE_CONTACT)
+    name = models.CharField(max_length=120)
+    email = models.EmailField(max_length=255)
+    phone = models.CharField(max_length=30, blank=True, default='')
+    category = models.CharField(max_length=80)
+    subject = models.CharField(max_length=200)
+    message = models.TextField()
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default=STATUS_NEW)
+    ip_address = models.GenericIPAddressField(null=True, blank=True)
+    user_agent = models.TextField(blank=True, default='')
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        ordering = ['-created_at']
+
+    def __str__(self):
+        return f"{self.ticket_id} - {self.name}"
+
+
 class ActivityLog(models.Model):
     user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='activity_logs')
     action = models.CharField(max_length=255)

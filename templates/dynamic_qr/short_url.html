@@ -22,14 +22,87 @@
         display: flex; align-items: center; gap: 8px; box-shadow: 0 10px 15px -3px rgba(79,70,229,0.3);
     }
     
-    /* Modal */
-    .modal {
+    /* Create Short URL modal only */
+    #url-modal.create-short-url-modal {
         display: none; position: fixed; inset: 0; background: rgba(15, 23, 42, 0.6);
         backdrop-filter: blur(8px); z-index: 100; align-items: center; justify-content: center; padding: 20px;
+        overflow: hidden;
     }
-    .modal-content {
-        background: white; width: 100%; max-width: 500px; border-radius: 28px; padding: 36px;
-        box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+    #url-modal.create-short-url-modal > .create-short-url-dialog {
+        background: white; width: min(1180px, calc(100vw - 80px)); max-width: 1180px;
+        max-height: calc(100vh - 40px); border-radius: 22px; padding: 0;
+        box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); overflow: hidden;
+        display: flex; flex-direction: column;
+    }
+    .create-short-url-modal .create-short-url-header {
+        flex: 0 0 auto; padding: 24px 28px 20px; margin: 0;
+        border-bottom: 1px solid #eef2f7; align-items: flex-start;
+    }
+    .create-short-url-modal .create-short-url-header h3 { font-size: 28px; line-height: 1.1; }
+    .create-short-url-modal .create-short-url-header p { margin-top: 7px; color: #94a3b8; font-size: 13px; font-weight: 600; }
+    .create-short-url-modal .create-short-url-close { padding: 6px; border-radius: 10px; }
+    .create-short-url-modal .create-short-url-close:hover { background: #f8fafc; }
+    .create-short-url-modal #shortener-form { display: flex; flex-direction: column; min-height: 0; overflow: hidden; }
+    .create-short-url-modal .create-short-url-main {
+        display: grid; grid-template-columns: minmax(0, 1.65fr) minmax(300px, .75fr);
+        gap: 24px; padding: 20px 28px; align-items: start; min-height: 0; overflow: auto;
+    }
+    .create-short-url-modal .create-short-url-left { min-width: 0; display: grid; gap: 14px; }
+    .create-short-url-modal .create-short-url-right { min-width: 0; }
+    .create-short-url-modal .create-short-url-field { min-width: 0; }
+    .create-short-url-modal .create-short-url-toggle { padding: 14px 16px; min-height: 66px; }
+    .create-short-url-modal .create-short-url-toggle p:first-child { font-size: 14px; }
+    .create-short-url-modal .create-short-url-toggle p:last-child { margin-top: 3px; }
+    .create-short-url-modal #qr-config-panel {
+        display: grid; grid-template-columns: 1fr; gap: 16px;
+        margin-top: 12px; padding-top: 14px; align-items: start;
+    }
+    .create-short-url-modal #qr-config-panel.hidden { display: none; }
+    .create-short-url-modal #qr-config-panel > div:first-child { min-width: 0; display: grid; gap: 12px; }
+    .create-short-url-modal #qr-config-panel > div:first-child > div { min-width: 0; }
+    .create-short-url-modal #body-patterns,
+    .create-short-url-modal #eye-patterns,
+    .create-short-url-modal #ball-patterns,
+    .create-short-url-modal #preset-logos { gap: 6px; overflow: hidden; padding-bottom: 0; }
+    .create-short-url-modal #body-patterns > div,
+    .create-short-url-modal #eye-patterns > div,
+    .create-short-url-modal #ball-patterns > div,
+    .create-short-url-modal #preset-logos > div { width: 36px; height: 36px; border-radius: 9px; }
+    .create-short-url-modal #body-patterns svg,
+    .create-short-url-modal #eye-patterns svg,
+    .create-short-url-modal #ball-patterns svg { width: 21px; height: 21px; }
+    .create-short-url-modal #qr-config-panel .space-y-6 { gap: 12px; }
+    .create-short-url-modal #qr-config-panel .space-y-6 > div { margin: 0; }
+    .create-short-url-modal #qr-config-panel .grid.grid-cols-2 { gap: 10px; }
+    .create-short-url-modal #qr-preview-img { width: 190px; height: 190px; }
+    .create-short-url-modal .qr-preview-canvas canvas,
+    .create-short-url-modal .qr-preview-canvas svg,
+    .create-short-url-modal .qr-preview-canvas img { width: 100%; height: 100%; max-width: 220px; max-height: 220px; object-fit: contain; }
+    .create-short-url-modal #qr-preview-column { display: none; }
+    .create-short-url-modal #qr-preview-column.is-visible { display: block; }
+    .create-short-url-modal .create-short-url-footer {
+        flex: 0 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
+        padding: 18px 28px 24px; border-top: 1px solid #eef2f7; background: white;
+    }
+    .create-short-url-modal .create-short-url-footer button { min-height: 56px; padding: 14px 18px; }
+    .create-short-url-modal .form-input-custom { height: 50px; padding: 12px 16px; border-radius: 12px; }
+    .create-short-url-modal .form-input-custom:focus { box-shadow: 0 0 0 4px rgba(99,102,241,.1); }
+    @media (max-width: 1023px) {
+        #url-modal.create-short-url-modal > .create-short-url-dialog { width: calc(100vw - 32px); }
+        .create-short-url-modal .create-short-url-main { grid-template-columns: minmax(0, 1fr) minmax(260px, .75fr); padding: 18px 22px; }
+        .create-short-url-modal #qr-config-panel { grid-template-columns: 1fr; }
+        .create-short-url-modal #qr-config-panel > div:last-child { position: static; min-height: 220px; }
+    }
+    @media (max-width: 767px) {
+        #url-modal.create-short-url-modal { padding: 10px; }
+        #url-modal.create-short-url-modal > .create-short-url-dialog { width: calc(100vw - 20px); max-height: calc(100vh - 20px); border-radius: 18px; }
+        .create-short-url-modal .create-short-url-header { padding: 20px; }
+        .create-short-url-modal .create-short-url-header h3 { font-size: 23px; }
+        .create-short-url-modal .create-short-url-main { display: block; padding: 16px 20px; overflow-y: auto; }
+        .create-short-url-modal .create-short-url-left { display: grid; gap: 12px; }
+        .create-short-url-modal .create-short-url-right { margin-top: 14px; }
+        .create-short-url-modal #qr-config-panel { grid-template-columns: 1fr; }
+        .create-short-url-modal .create-short-url-footer { grid-template-columns: 1fr; padding: 14px 20px 18px; gap: 10px; }
     }
     .form-input-custom {
         width: 100%; padding: 14px 18px; border: 2px solid #f1f5f9; border-radius: 14px;
@@ -267,12 +340,15 @@
     {% endif %}
 
     <!-- Create/Edit Modal -->
-    <div id="url-modal" class="modal overflow-y-auto pt-10 pb-10">
-        <div class="modal-content my-auto">
-            <div class="flex justify-between items-center mb-8 sticky top-0 bg-white z-10 pb-4 border-b border-slate-50">
-                <h3 class="text-2xl font-black text-slate-900" id="modal-title">Create Short URL</h3>
+    <div id="url-modal" class="modal create-short-url-modal">
+        <div class="modal-content create-short-url-dialog">
+            <div class="create-short-url-header flex justify-between">
+                <div>
+                    <h3 class="text-2xl font-black text-slate-900" id="modal-title">Create Short URL</h3>
+                    <p>Turn your long link into a short, easy to share URL with QR code.</p>
+                </div>
                 <div class="flex items-center gap-4">
-                    <button type="button" onclick="closeModal()" class="text-slate-400 hover:text-slate-600"><i data-lucide="x"></i></button>
+                    <button type="button" onclick="closeModal()" class="create-short-url-close text-slate-400 hover:text-slate-600" aria-label="Close modal"><i data-lucide="x"></i></button>
                 </div>
             </div>
             
@@ -280,12 +356,14 @@
                 {% csrf_token %}
                 <input type="hidden" name="qr_id" id="form-qr-id">
                 
-                <div>
+                <div class="create-short-url-main">
+                <div class="create-short-url-left">
+                <div class="create-short-url-field">
                     <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest block px-1">Link Title (optional)</label>
                     <input type="text" name="qr_name" id="form-qr-name" class="form-input-custom" placeholder="e.g. Personal Portfolio">
                 </div>
                 
-                <div>
+                <div class="create-short-url-field">
                     <label class="text-[11px] font-black text-slate-400 uppercase tracking-widest block px-1">Destination URL *</label>
                     <input type="url" name="destination_url" id="form-dest-url" class="form-input-custom" placeholder="https://example.com/my-long-url" required>
                 </div>
@@ -294,7 +372,7 @@
                 <input type="hidden" name="custom_alias" id="form-custom-alias" value="">
 
                 <!-- Header Toggle -->
-                <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                <div class="create-short-url-toggle bg-slate-50 rounded-xl border border-slate-100">
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="font-black text-slate-900 text-sm flex items-center gap-2">Header {% if not has_header %}<a href="{% url 'services:pricing' %}" class="text-[9px] uppercase tracking-widest bg-amber-100 text-amber-600 px-2 py-0.5 rounded-md font-bold">Upgrade</a>{% endif %}</p>
@@ -329,14 +407,14 @@
                 </div>
                 
                 <!-- QR Toggle & Panel -->
-                <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                <div class="create-short-url-toggle bg-slate-50 rounded-xl border border-slate-100">
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="font-black text-slate-900 text-sm flex items-center gap-2">QR Code {% if not has_qr %}<a href="{% url 'services:pricing' %}" class="text-[9px] uppercase tracking-widest bg-amber-100 text-amber-600 px-2 py-0.5 rounded-md font-bold">Upgrade</a>{% endif %}</p>
                             <p class="text-[10px] font-bold text-slate-400">Generate a custom QR Code for this short link.</p>
                         </div>
                         <label class="switch">
-                            <input type="checkbox" name="qr_enabled" id="form-qr-enabled" onchange="togglePanel('qr-config-panel', this.checked); updatePreview();" {% if not has_qr %}disabled{% endif %}>
+                            <input type="checkbox" name="qr_enabled" id="form-qr-enabled" onchange="togglePanel('qr-config-panel', this.checked); updateQRPreview();" {% if not has_qr %}disabled{% endif %}>
                             <span class="slider"></span>
                         </label>
                     </div>
@@ -385,23 +463,11 @@
                             </div>
                         </div>
                         
-                        <!-- Preview Window -->
-                        <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-6 flex flex-col items-center justify-center relative">
-                            <h4 class="text-[10px] font-black uppercase tracking-[0.2em] mb-6 text-indigo-400">Live Preview</h4>
-                            <div class="w-48 h-48 bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-center p-3 relative overflow-hidden">
-                                <img id="qr-preview-img" src="" alt="QR Preview" class="w-full h-full object-contain hidden">
-                                <div id="qr-preview-placeholder" class="text-slate-300 flex flex-col items-center">
-                                    <i data-lucide="qr-code" class="w-12 h-12 mb-2"></i>
-                                    <span class="text-[10px] font-bold uppercase tracking-widest">Loading...</span>
-                                </div>
-                            </div>
-                        </div>
-                        
                     </div>
                 </div>
 
                 <!-- GPS Toggle -->
-                <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                <div class="create-short-url-toggle bg-slate-50 rounded-xl border border-slate-100">
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="font-black text-slate-900 text-sm flex items-center gap-2">GPS Enabled {% if not has_gps %}<a href="{% url 'services:pricing' %}" class="text-[9px] uppercase tracking-widest bg-amber-100 text-amber-600 px-2 py-0.5 rounded-md font-bold">Upgrade</a>{% endif %}</p>
@@ -415,7 +481,7 @@
                 </div>
 
                 <!-- Password Toggle -->
-                <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                <div class="create-short-url-toggle bg-slate-50 rounded-xl border border-slate-100">
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="font-black text-slate-900 text-sm flex items-center gap-2">Password Protected {% if not has_password %}<a href="{% url 'services:pricing' %}" class="text-[9px] uppercase tracking-widest bg-amber-100 text-amber-600 px-2 py-0.5 rounded-md font-bold">Upgrade</a>{% endif %}</p>
@@ -433,7 +499,7 @@
                 </div>
 
                 <!-- Expiry Toggle -->
-                <div class="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                <div class="create-short-url-toggle bg-slate-50 rounded-xl border border-slate-100">
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="font-black text-slate-900 text-sm flex items-center gap-2">Link Expiry {% if not has_expiry %}<a href="{% url 'services:pricing' %}" class="text-[9px] uppercase tracking-widest bg-amber-100 text-amber-600 px-2 py-0.5 rounded-md font-bold">Upgrade</a>{% endif %}</p>
@@ -460,7 +526,28 @@
                     </label>
                 </div>
                 
-                <div class="pt-4 flex gap-4 sticky bottom-0 bg-white py-4 border-t border-slate-50 z-10">
+                </div>
+                <div id="qr-preview-column" class="create-short-url-right hidden lg:block">
+                    <div class="bg-white rounded-2xl border border-slate-100 shadow-sm p-5 flex flex-col items-center justify-center relative">
+                        <h4 class="text-[10px] font-black uppercase tracking-[0.2em] mb-2 text-indigo-400">QR Code Preview</h4>
+                        <p class="text-xs text-slate-400 font-medium text-center mb-4">Scan this QR code to open your short link</p>
+                        <div class="qr-preview-canvas w-[220px] h-[220px] bg-slate-50 rounded-2xl border border-slate-100 flex items-center justify-center p-3 relative overflow-hidden">
+                            <img id="qr-preview-img" src="" alt="QR Preview" class="w-full h-full object-contain hidden">
+                            <div id="qr-preview-placeholder" class="text-slate-300 flex flex-col items-center">
+                                <i data-lucide="qr-code" class="w-12 h-12 mb-2"></i>
+                                <span class="text-[10px] font-bold uppercase tracking-widest">Loading...</span>
+                            </div>
+                            <button type="button" id="qr-preview-retry" class="hidden absolute bottom-3 text-[10px] font-black text-indigo-600 hover:text-indigo-800" onclick="updateQRPreview()">Retry</button>
+                        </div>
+                        <div class="w-full mt-4 flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+                            <span class="text-xs font-bold text-indigo-600 truncate flex-1" id="modal-short-url-preview">{{ request.scheme }}://{{ request.get_host }}/short-code</span>
+                            <button type="button" onclick="copyModalShortUrl()" class="text-slate-500 hover:text-indigo-600 shrink-0" aria-label="Copy short URL"><i data-lucide="copy" class="w-4 h-4"></i></button>
+                        </div>
+                        <button type="button" onclick="downloadModalQr()" class="w-full mt-3 h-11 rounded-xl bg-slate-900 text-white text-xs font-black flex items-center justify-center gap-2 hover:bg-indigo-700 transition-colors"><i data-lucide="download" class="w-4 h-4"></i> Download QR Code</button>
+                    </div>
+                </div>
+                </div>
+                <div class="create-short-url-footer">
                     <button type="button" onclick="closeModal()" class="flex-1 py-4 text-lg bg-slate-100 text-slate-600 rounded-xl font-black hover:bg-slate-200 transition-colors">
                         Cancel
                     </button>
@@ -518,6 +605,8 @@
     const form = document.getElementById('shortener-form');
     let isEdit = false;
     let openModalCount = 0;
+    let updateTimeout = null;
+    let generatedShortUrl = '';
     
     function updateBodyScroll() {
         document.body.style.overflow = openModalCount > 0 ? 'hidden' : '';
@@ -600,7 +689,7 @@
             item.onclick = () => {
                 document.getElementById('body_style').value = s;
                 renderPatterns();
-                updatePreview();
+                updateQRPreview();
             };
             bodyGrid.appendChild(item);
         });
@@ -619,7 +708,7 @@
                 item.onclick = () => {
                     valInput.value = s;
                     renderPatterns();
-                    updatePreview();
+                    updateQRPreview();
                 };
                 grid.appendChild(item);
             });
@@ -655,12 +744,12 @@
         opts.logo_preset = presetId;
         document.getElementById('design-options-input').value = JSON.stringify(opts);
         renderPresetLogos();
-        updatePreview();
+        updateQRPreview();
     }
 
     // Color Pickers logic
-    document.getElementById('fg-picker-inline')?.addEventListener('input', () => { renderPatterns(); updatePreview(); });
-    document.getElementById('bg-picker-inline')?.addEventListener('input', () => { updatePreview(); });
+    document.getElementById('fg-picker-inline')?.addEventListener('input', () => { renderPatterns(); updateQRPreview(); });
+    document.getElementById('bg-picker-inline')?.addEventListener('input', updateQRPreview);
 
     // Logo Upload Logic
     document.getElementById('logo-upload')?.addEventListener('change', (e) => {
@@ -705,51 +794,102 @@
         document.getElementById('design-options-input').value = JSON.stringify(opts);
         
         renderPresetLogos();
-        updatePreview();
+        updateQRPreview();
         closeCropper();
     }
 
-    function updatePreview() {
+    function setQRPreviewState(state, message) {
+        const img = document.getElementById('qr-preview-img');
+        const placeholder = document.getElementById('qr-preview-placeholder');
+        const retry = document.getElementById('qr-preview-retry');
+        if (!img || !placeholder) return;
+        if (state === 'ready') {
+            img.classList.remove('hidden');
+            placeholder.classList.add('hidden');
+            retry?.classList.add('hidden');
+            return;
+        }
+        img.classList.add('hidden');
+        placeholder.classList.remove('hidden');
+        placeholder.querySelector('span').textContent = message || (state === 'error' ? 'Unable to generate QR preview' : 'Loading...');
+        retry?.classList.toggle('hidden', state !== 'error');
+    }
+
+    function validHex(value, fallback) {
+        return /^#[0-9a-f]{6}$/i.test(value || '') ? value : fallback;
+    }
+
+    async function requestQRImage(value, options) {
+        const payload = new FormData();
+        payload.append('text', value);
+        payload.append('fg_color', validHex(options.fg_color, '#000000'));
+        payload.append('bg_color', validHex(options.bg_color, '#ffffff'));
+        payload.append('style', options.style || 'square');
+        payload.append('eye_style', options.eye_style || 'square');
+        payload.append('ball_style', options.ball_style || 'square');
+        payload.append('design_options', options.design_options || '{}');
+        payload.append('output_format', 'png');
+        if (options.logo_cropped) payload.append('logo_cropped', options.logo_cropped);
+        const response = await fetch("{% url 'dynamic_qr:generate_image' %}", {
+            method: 'POST',
+            headers: { 'X-CSRFToken': '{{ csrf_token }}' },
+            body: payload
+        });
+        if (!response.ok) throw new Error(`QR preview request failed (${response.status})`);
+        const blob = await response.blob();
+        if (!blob.type.startsWith('image/')) throw new Error('QR preview returned a non-image response');
+        return URL.createObjectURL(blob);
+    }
+
+    function updateQRPreview() {
         clearTimeout(updateTimeout);
-        updateTimeout = setTimeout(() => {
+        updateTimeout = setTimeout(async () => {
             const qrEnabled = document.getElementById('form-qr-enabled')?.checked;
-            if (!qrEnabled) return;
-            
-            const img = document.getElementById('qr-preview-img');
-            const placeholder = document.getElementById('qr-preview-placeholder');
-            
+            const previewColumn = document.getElementById('qr-preview-column');
+            if (!qrEnabled) {
+                previewColumn?.classList.remove('is-visible');
+                setQRPreviewState('idle');
+                return;
+            }
+            previewColumn?.classList.add('is-visible');
+            setQRPreviewState('loading');
             const formData = new FormData(document.getElementById('shortener-form'));
-            
-            const params = new URLSearchParams();
-            params.append('text', formData.get('destination_url') || 'https://scanpdf.com');
-            params.append('fg_color', formData.get('fg_color') || '#000000');
-            params.append('bg_color', formData.get('bg_color') || '#ffffff');
-            params.append('style', formData.get('body_style') || 'square');
-            params.append('eye_style', formData.get('eye_style') || 'square');
-            params.append('ball_style', formData.get('ball_style') || 'square');
-            params.append('design_options', formData.get('design_options') || '{}');
-            
-            const logoData = formData.get('logo_cropped');
-            
-            fetch("{% url 'dynamic_qr:generate_image' %}?" + params.toString(), {
-                method: 'POST',
-                headers: { 'X-CSRFToken': '{{ csrf_token }}' },
-                body: (() => {
-                    const fd = new FormData();
-                    if(logoData) fd.append('logo_cropped', logoData);
-                    return fd;
-                })()
-            })
-            .then(r => r.blob())
-            .then(blob => {
-                if (blob.type.includes('image')) {
-                    img.src = URL.createObjectURL(blob);
-                    img.classList.remove('hidden');
-                    placeholder.classList.add('hidden');
+            const destination = (formData.get('destination_url') || '').trim();
+            const value = generatedShortUrl || destination || 'https://scanpdf.co.in/';
+            const options = {
+                fg_color: formData.get('fg_color'),
+                bg_color: formData.get('bg_color'),
+                style: formData.get('body_style'),
+                eye_style: formData.get('eye_style'),
+                ball_style: formData.get('ball_style'),
+                design_options: formData.get('design_options'),
+                logo_cropped: formData.get('logo_cropped')
+            };
+            try {
+                const imageUrl = await requestQRImage(value, options);
+                const img = document.getElementById('qr-preview-img');
+                if (img) {
+                    if (img.dataset.objectUrl) URL.revokeObjectURL(img.dataset.objectUrl);
+                    img.dataset.objectUrl = imageUrl;
+                    img.src = imageUrl;
                 }
-            })
-            .catch(err => console.error("Preview failed:", err));
-        }, 500);
+                setQRPreviewState('ready');
+            } catch (error) {
+                console.error('QR Preview Error:', error);
+                try {
+                    const fallbackUrl = await requestQRImage(value, {
+                        fg_color: '#000000', bg_color: '#ffffff', style: 'square',
+                        eye_style: 'square', ball_style: 'square', design_options: '{}'
+                    });
+                    const img = document.getElementById('qr-preview-img');
+                    if (img) { img.src = fallbackUrl; img.dataset.objectUrl = fallbackUrl; }
+                    setQRPreviewState('ready');
+                } catch (fallbackError) {
+                    console.error('QR Preview Fallback Error:', fallbackError);
+                    setQRPreviewState('error');
+                }
+            }
+        }, 250);
     }
 
     window.addEventListener('DOMContentLoaded', () => {
@@ -762,13 +902,16 @@
 
         renderPatterns();
         renderPresetLogos();
-        document.getElementById('form-dest-url').addEventListener('input', updatePreview);
+        document.getElementById('form-dest-url').addEventListener('input', updateQRPreview);
     });
 
     function togglePanel(panelId, isChecked) {
         const panel = document.getElementById(panelId);
         if (panel) {
             panel.style.display = isChecked ? 'grid' : 'none';
+        }
+        if (panelId === 'qr-config-panel') {
+            document.getElementById('qr-preview-column')?.classList.toggle('is-visible', isChecked);
         }
     }
 
@@ -780,16 +923,20 @@
         document.getElementById('modal-title').innerText = 'Create Short URL';
         document.getElementById('form-qr-id').value = '';
         form.reset();
+        generatedShortUrl = '';
+        document.getElementById('modal-short-url-preview').textContent = '{{ request.scheme }}://{{ request.get_host }}/short-code';
         document.getElementById('regenerate-option').style.display = 'none';
         
         // Hide dynamic panels
         togglePanel('header-panel', false);
+        togglePanel('qr-config-panel', false);
         togglePanel('password-panel', false);
         togglePanel('expiry-panel', false);
         
         modal.style.display = 'flex';
         openModalCount++;
         updateBodyScroll();
+        requestAnimationFrame(updateQRPreview);
     }
 
     function openEditModal(id, name, url, alias, reqGps, hasHeader, hasQr, hasPassword, hasExpiry) {
@@ -798,12 +945,15 @@
         document.getElementById('form-qr-id').value = id;
         document.getElementById('form-qr-name').value = name;
         document.getElementById('form-dest-url').value = url;
+        generatedShortUrl = '';
+        document.getElementById('modal-short-url-preview').textContent = url || '{{ request.scheme }}://{{ request.get_host }}/short-code';
         document.getElementById('form-custom-alias').value = alias || '';
         
         document.getElementById('form-header-enabled').checked = hasHeader === 'True';
         togglePanel('header-panel', hasHeader === 'True');
         
         document.getElementById('form-qr-enabled').checked = hasQr === 'True';
+        togglePanel('qr-config-panel', hasQr === 'True');
         
         document.getElementById('form-require-gps').checked = reqGps === 'True';
         
@@ -821,12 +971,27 @@
         modal.style.display = 'flex';
         openModalCount++;
         updateBodyScroll();
+        requestAnimationFrame(updateQRPreview);
     }
 
     function closeModal() {
         modal.style.display = 'none';
         if (openModalCount > 0) openModalCount--;
         updateBodyScroll();
+    }
+
+    function copyModalShortUrl() {
+        const text = document.getElementById('modal-short-url-preview')?.innerText.trim();
+        if (text) navigator.clipboard.writeText(text).then(() => showToast('Copied!'));
+    }
+
+    function downloadModalQr() {
+        const qrId = document.getElementById('form-qr-id')?.value;
+        if (!qrId) {
+            showToast('Create the link before downloading its QR code.', true);
+            return;
+        }
+        window.open(`/qr/download/${qrId}/?format=png`, '_blank');
     }
 
     window.onclick = function(event) {
@@ -941,6 +1106,10 @@
             });
             const data = await response.json();
             if (data.success) {
+                generatedShortUrl = data.short_url || '';
+                const shortUrlPreview = document.getElementById('modal-short-url-preview');
+                if (shortUrlPreview && generatedShortUrl) shortUrlPreview.textContent = generatedShortUrl;
+                updateQRPreview();
                 if (isEditing) {
                     const qrId = data.id; // from backend response
                     const titleEl = document.getElementById(`title-${qrId}`);
@@ -956,7 +1125,7 @@
                     showToast('Short URL updated successfully.', false);
                     closeModal();
                 } else {
-                    location.reload();
+                    setTimeout(() => location.reload(), 900);
                 }
             } else {
                 showToast(data.error || 'Error saving link', true);

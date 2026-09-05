@@ -1,0 +1,651 @@
+{% extends 'converter/base.html' %}
+
+{% block content %}
+<style>
+  .contact-page-main {
+    padding-top: 48px;
+  }
+
+  .contact-shell {
+    background: linear-gradient(180deg, #f8f9fd 0%, #f4f6fb 100%);
+  }
+
+  .contact-hero {
+    padding: 24px 20px 18px;
+  }
+
+  .contact-hero-inner {
+    max-width: 1200px;
+    margin: 0 auto;
+  }
+
+  .contact-grid {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 20px 100px;
+  }
+
+  .contact-info-card {
+    background: #ffffff;
+    border: 1px solid #e4e8f0;
+    border-radius: 16px;
+    padding: 20px;
+    box-shadow: 0 8px 24px rgba(20, 30, 55, 0.04);
+  }
+
+  .contact-form-card {
+    background: #ffffff;
+    border: 1px solid #e4e8f0;
+    border-radius: 22px;
+    padding: 32px;
+    box-shadow: 0 18px 50px rgba(29, 35, 60, 0.07);
+  }
+
+  .scan-contact-form {
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+  }
+
+  .scan-contact-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 22px;
+  }
+
+  .scan-contact-grid .full-width {
+    grid-column: 1 / -1;
+  }
+
+  .scan-contact-form .form-group,
+  .scan-contact-form__group {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .scan-contact-form label,
+  .scan-contact-form .form-group label,
+  .scan-contact-form__group label {
+    display: block;
+    margin: 0;
+    font-size: 12px;
+    font-weight: 800;
+    letter-spacing: 1.1px;
+    text-transform: uppercase;
+    color: #34405a;
+  }
+
+  .scan-contact-form .required,
+  .scan-contact-form .required-mark {
+    color: #7c3aed;
+  }
+
+  .scan-contact-form input:not([type="hidden"]),
+  .scan-contact-form select,
+  .scan-contact-form textarea {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+    background: #ffffff;
+    border: 1px solid #dfe4ee;
+    border-radius: 12px;
+    color: #17213c;
+    font-size: 14px;
+    font-family: inherit;
+    padding: 12px 14px;
+    outline: none;
+    box-shadow: none;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+  }
+
+  .scan-contact-form input:not([type="hidden"]),
+  .scan-contact-form select {
+    min-height: 48px;
+  }
+
+  .scan-contact-form textarea {
+    min-height: 150px;
+    resize: vertical;
+    line-height: 1.6;
+  }
+
+  .scan-contact-form input::placeholder,
+  .scan-contact-form textarea::placeholder {
+    color: #a0a9bb;
+    opacity: 1;
+  }
+
+  .scan-contact-form input:focus,
+  .scan-contact-form select:focus,
+  .scan-contact-form textarea:focus {
+    border-color: #7c3aed;
+    box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.10);
+  }
+
+  .scan-contact-form select {
+    appearance: auto;
+    cursor: pointer;
+    background-color: #ffffff;
+  }
+
+  .scan-contact-form .field-error,
+  .scan-contact-form__group .field-error {
+    color: #dc2626;
+    font-size: 12px;
+    margin-top: 5px;
+    display: block;
+    font-weight: 600;
+  }
+
+  .scan-contact-form__group.has-error input,
+  .scan-contact-form__group.has-error select,
+  .scan-contact-form__group.has-error textarea,
+  .scan-contact-form .field-error + .scan-contact-form-control {
+    border-color: #dc2626;
+  }
+
+  .scan-contact-submit {
+    width: 100%;
+    min-height: 48px;
+    border: none;
+    border-radius: 12px;
+    background: linear-gradient(135deg, #7131f4, #893af7);
+    color: #ffffff;
+    font-weight: 700;
+    cursor: pointer;
+    box-shadow: 0 10px 24px rgba(124, 58, 237, 0.20);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .scan-contact-submit:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 14px 28px rgba(124, 58, 237, 0.22);
+  }
+
+  .success-card { background: linear-gradient(135deg, #f6f3ff 0%, #f8f9ff 100%); border: 1px solid rgba(134, 96, 207, 0.2); }
+
+  .scan-modal {
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+  }
+
+  .scan-modal.is-open {
+    display: flex;
+  }
+
+  .scan-modal-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(8, 16, 35, 0.48);
+    backdrop-filter: blur(4px);
+  }
+
+  .scan-modal-dialog {
+    position: relative;
+    z-index: 1;
+    width: min(460px, 100%);
+    background: #ffffff;
+    border-radius: 24px;
+    padding: 32px;
+    box-shadow: 0 30px 80px rgba(10, 15, 35, 0.25);
+    text-align: center;
+    opacity: 0;
+    transform: translateY(15px) scale(0.97);
+    transition: opacity 0.22s ease, transform 0.22s ease;
+  }
+
+  .scan-modal.is-open .scan-modal-dialog {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+
+  .scan-modal-close {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 50%;
+    background: #f3f4f8;
+    color: #202b42;
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
+  }
+
+  .scan-modal-icon {
+    width: 64px;
+    height: 64px;
+    margin: 0 auto 18px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.8rem;
+    font-weight: 800;
+  }
+
+  .scan-modal[data-type="success"] .scan-modal-icon {
+    background: #eafaf1;
+    color: #15803d;
+  }
+
+  .scan-modal[data-type="warning"] .scan-modal-icon {
+    background: #fff5db;
+    color: #b7791f;
+  }
+
+  .scan-modal[data-type="error"] .scan-modal-icon {
+    background: #fef2f2;
+    color: #b91c1c;
+  }
+
+  .scan-modal h2 {
+    margin: 0;
+    color: #101a2d;
+    font-size: clamp(1.5rem, 2vw, 2rem);
+    font-weight: 800;
+  }
+
+  .scan-modal-message {
+    margin-top: 12px;
+    color: #58657f;
+    font-size: 0.98rem;
+    line-height: 1.7;
+  }
+
+  .scan-ticket-box {
+    margin-top: 18px;
+    background: #f6f2ff;
+    border: 1px solid #e8dcff;
+    border-radius: 12px;
+    padding: 14px 16px;
+    text-align: left;
+  }
+
+  .scan-ticket-box-label {
+    display: block;
+    color: #5c6478;
+    font-size: 10px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    font-weight: 800;
+  }
+
+  .scan-ticket-box-value {
+    margin-top: 8px;
+    color: #6f2cff;
+    font-size: 0.96rem;
+    font-weight: 800;
+    word-break: break-all;
+  }
+
+  .scan-modal-actions {
+    margin-top: 24px;
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .scan-btn-secondary,
+  .scan-btn-primary {
+    min-width: 120px;
+    border-radius: 12px;
+    padding: 12px 18px;
+    font-weight: 700;
+    text-decoration: none;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+  }
+
+  .scan-btn-secondary {
+    border: 1px solid #dde2eb;
+    background: #ffffff;
+    color: #1d2a42;
+  }
+
+  .scan-btn-primary {
+    border: none;
+    background: linear-gradient(135deg, #7131f4, #893af7);
+    color: #ffffff;
+    box-shadow: 0 10px 24px rgba(124, 58, 237, 0.20);
+  }
+
+  .scan-btn-secondary:hover,
+  .scan-btn-primary:hover {
+    transform: translateY(-1px);
+  }
+
+  @media (max-width: 768px) {
+    .contact-page-main {
+      padding-top: 40px;
+    }
+
+    .contact-hero {
+      padding-top: 18px;
+    }
+
+    .scan-contact-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .contact-form-card {
+      padding: 20px;
+    }
+
+    .scan-modal-dialog {
+      padding: 24px 18px 20px;
+    }
+  }
+</style>
+
+<div class="contact-shell min-h-screen contact-page-main">
+  <div class="contact-hero text-center">
+    <div class="contact-hero-inner">
+      <span class="inline-flex items-center gap-2 rounded-full border border-brand-200 bg-white/80 px-4 py-2 text-[11px] font-black uppercase tracking-[0.24em] text-brand-700 shadow-sm">
+        <i data-lucide="mail" class="w-3.5 h-3.5"></i> Contact Us
+      </span>
+      <h1 class="mt-6 text-4xl sm:text-5xl lg:text-6xl font-black text-surface-900 tracking-[-0.06em]">{{ title }}</h1>
+      <p class="mt-5 mx-auto max-w-3xl text-lg text-surface-600 font-medium">{{ subtitle }}</p>
+    </div>
+  </div>
+
+  <div class="contact-grid">
+    {% if success %}
+    <div class="success-card max-w-4xl mx-auto rounded-[28px] p-8 text-center mb-8">
+      <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-brand-100 text-brand-600">
+        <i data-lucide="check-circle" class="w-8 h-8"></i>
+      </div>
+      <h3 class="mt-5 text-3xl font-black text-surface-900">Message Sent Successfully</h3>
+      <p class="mt-3 text-base text-surface-600 font-medium">Thank you for contacting ScanPDF. Your reference number is <strong>{{ ticket_id }}</strong>.</p>
+      <div class="mt-6 flex flex-col sm:flex-row justify-center gap-3">
+        <a href="{% url 'converter:home' %}" class="inline-flex items-center justify-center rounded-2xl bg-brand-600 px-6 py-3 text-sm font-black text-white shadow-lg shadow-brand-200 transition hover:bg-brand-700">Back to Home</a>
+        <button type="button" onclick="window.location.reload()" class="inline-flex items-center justify-center rounded-2xl border border-surface-200 bg-white px-6 py-3 text-sm font-black text-surface-700 transition hover:bg-surface-50">Send Another Message</button>
+      </div>
+    </div>
+    {% endif %}
+
+    <div class="grid grid-cols-1 lg:grid-cols-[40%_60%] gap-8">
+      <aside class="space-y-5">
+        {% if contact_email %}
+        <div class="contact-info-card p-5">
+          <div class="flex items-center gap-3">
+            <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-50 text-brand-600">
+              <i data-lucide="mail" class="w-5 h-5"></i>
+            </div>
+            <h3 class="text-base font-black text-surface-900 uppercase tracking-[0.14em]">Email Us</h3>
+          </div>
+          <p class="mt-4 text-lg font-semibold text-surface-700 break-all">{{ contact_email }}</p>
+        </div>
+        {% endif %}
+
+        <div class="contact-info-card p-5">
+          <div class="flex items-center gap-3">
+            <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-50 text-brand-600">
+              <i data-lucide="headset" class="w-5 h-5"></i>
+            </div>
+            <h3 class="text-base font-black text-surface-900 uppercase tracking-[0.14em]">Help &amp; Support</h3>
+          </div>
+          <p class="mt-4 text-sm leading-7 text-surface-600 font-medium">Need help using ScanPDF? Send us a support request.</p>
+        </div>
+
+        {% if business_email %}
+        <div class="contact-info-card p-5">
+          <div class="flex items-center gap-3">
+            <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-50 text-brand-600">
+              <i data-lucide="briefcase" class="w-5 h-5"></i>
+            </div>
+            <h3 class="text-base font-black text-surface-900 uppercase tracking-[0.14em]">Business Enquiries</h3>
+          </div>
+          <p class="mt-4 text-sm leading-7 text-surface-600 font-medium">For partnerships, integrations, advertising, or business enquiries, contact our team.</p>
+          <p class="mt-3 text-sm font-bold text-brand-700 break-all">{{ business_email }}</p>
+        </div>
+        {% endif %}
+
+        {% if response_time %}
+        <div class="contact-info-card p-5">
+          <div class="flex items-center gap-3">
+            <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-brand-50 text-brand-600">
+              <i data-lucide="clock-3" class="w-5 h-5"></i>
+            </div>
+            <h3 class="text-base font-black text-surface-900 uppercase tracking-[0.14em]">Response Time</h3>
+          </div>
+          <p class="mt-4 text-sm leading-7 text-surface-600 font-medium">{{ response_time }}</p>
+        </div>
+        {% endif %}
+      </aside>
+
+      <div class="contact-form-card">
+        <form id="contact-form" method="post" novalidate class="scan-contact-form" action="{% url 'services:contact' %}">
+          {% csrf_token %}
+          {{ form.source }}
+          {{ form.website }}
+
+          <div class="scan-contact-grid">
+            <div class="scan-contact-form__group{% if form.name.errors %} has-error{% endif %}">
+              <label for="id_name">Full Name <span class="required">*</span></label>
+              {{ form.name }}
+              {% if form.name.errors %}<span class="field-error">{{ form.name.errors|join:', ' }}</span>{% endif %}
+            </div>
+            <div class="scan-contact-form__group{% if form.email.errors %} has-error{% endif %}">
+              <label for="id_email">Email Address <span class="required">*</span></label>
+              {{ form.email }}
+              {% if form.email.errors %}<span class="field-error">{{ form.email.errors|join:', ' }}</span>{% endif %}
+            </div>
+            <div class="scan-contact-form__group{% if form.phone.errors %} has-error{% endif %}">
+              <label for="id_phone">Phone Number</label>
+              {{ form.phone }}
+              {% if form.phone.errors %}<span class="field-error">{{ form.phone.errors|join:', ' }}</span>{% endif %}
+            </div>
+            <div class="scan-contact-form__group{% if form.subject.errors %} has-error{% endif %}">
+              <label for="id_subject">Subject <span class="required">*</span></label>
+              {{ form.subject }}
+              {% if form.subject.errors %}<span class="field-error">{{ form.subject.errors|join:', ' }}</span>{% endif %}
+            </div>
+
+            <div class="scan-contact-form__group full-width{% if form.category.errors %} has-error{% endif %}">
+              <label for="id_category">Enquiry Type <span class="required">*</span></label>
+              {{ form.category }}
+              {% if form.category.errors %}<span class="field-error">{{ form.category.errors|join:', ' }}</span>{% endif %}
+            </div>
+
+            <div class="scan-contact-form__group full-width{% if form.message.errors %} has-error{% endif %}">
+              <label for="id_message">Message <span class="required">*</span></label>
+              {{ form.message }}
+              {% if form.message.errors %}<span class="field-error">{{ form.message.errors|join:', ' }}</span>{% endif %}
+            </div>
+          </div>
+
+          {% if form.non_field_errors %}
+          <div class="mt-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-semibold text-red-700">
+            {{ form.non_field_errors|join:', ' }}
+          </div>
+          {% endif %}
+
+          <div class="mt-6">
+            <button type="submit" class="scan-contact-submit" data-submit-label="Send Message" data-sending-label="Sending...">
+              Send Message
+            </button>
+            <p class="mt-4 text-center text-sm text-surface-500 font-medium">We respect your privacy. Your information will only be used to respond to your enquiry.</p>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="scan-feedback-modal" class="scan-modal" aria-hidden="true">
+  <div class="scan-modal-backdrop" data-modal-close="true"></div>
+  <div class="scan-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="scan-modal-title">
+    <button type="button" class="scan-modal-close" aria-label="Close dialog">&times;</button>
+    <div class="scan-modal-icon" aria-hidden="true">✓</div>
+    <h2 id="scan-modal-title">Message Sent Successfully</h2>
+    <p id="scan-modal-message" class="scan-modal-message"></p>
+    <div id="scan-modal-ticket" class="scan-ticket-box" hidden>
+      <span class="scan-ticket-box-label">Reference ID</span>
+      <div id="scan-modal-ticket-value" class="scan-ticket-box-value"></div>
+    </div>
+    <div class="scan-modal-actions">
+      <button type="button" class="scan-btn-secondary" data-modal-close="true">Close</button>
+      <a href="{% url 'converter:home' %}" class="scan-btn-primary">Back to Home</a>
+    </div>
+  </div>
+</div>
+
+<script>
+  (function () {
+    function setButtonLoading(button, isLoading) {
+      if (!button) return;
+      const submitLabel = button.dataset.submitLabel || 'Send';
+      const sendingLabel = button.dataset.sendingLabel || 'Sending...';
+      button.disabled = isLoading;
+      button.textContent = isLoading ? sendingLabel : submitLabel;
+    }
+
+    function clearFieldErrors(form) {
+      form.querySelectorAll('.field-error').forEach((element) => {
+        element.remove();
+      });
+      form.querySelectorAll('.has-error').forEach((group) => {
+        group.classList.remove('has-error');
+      });
+      form.querySelectorAll('.scan-contact-form-control').forEach((field) => {
+        field.setAttribute('aria-invalid', 'false');
+      });
+    }
+
+    function renderFormErrors(form, errors) {
+      clearFieldErrors(form);
+      Object.entries(errors).forEach(([key, value]) => {
+        const field = form.querySelector('[name="' + key + '"]');
+        if (field) {
+          const wrapper = field.closest('.scan-contact-form__group');
+          if (wrapper) {
+            wrapper.classList.add('has-error');
+          }
+          field.setAttribute('aria-invalid', 'true');
+          const message = document.createElement('span');
+          message.className = 'field-error';
+          message.textContent = Array.isArray(value) ? value.join(', ') : value;
+          field.insertAdjacentElement('afterend', message);
+        }
+      });
+    }
+
+    function openModal(type, title, message, ticketId) {
+      const modal = document.getElementById('scan-feedback-modal');
+      if (!modal) return;
+
+      const titleNode = document.getElementById('scan-modal-title');
+      const messageNode = document.getElementById('scan-modal-message');
+      const ticketBox = document.getElementById('scan-modal-ticket');
+      const ticketValue = document.getElementById('scan-modal-ticket-value');
+      const icon = modal.querySelector('.scan-modal-icon');
+      const primaryButton = modal.querySelector('.scan-btn-primary');
+
+      modal.dataset.type = type;
+      titleNode.textContent = title;
+      messageNode.textContent = message;
+
+      if (type === 'success' || type === 'warning') {
+        icon.textContent = type === 'success' ? '✓' : '!';
+      } else {
+        icon.textContent = '!';
+      }
+
+      if (ticketId) {
+        ticketBox.hidden = false;
+        ticketValue.textContent = ticketId;
+      } else {
+        ticketBox.hidden = true;
+      }
+
+      if (type === 'error') {
+        primaryButton.textContent = 'Try Again';
+      } else {
+        primaryButton.textContent = 'Back to Home';
+      }
+
+      modal.classList.add('is-open');
+      modal.setAttribute('aria-hidden', 'false');
+      document.body.style.overflow = 'hidden';
+      setTimeout(() => {
+        const closeButton = modal.querySelector('.scan-modal-close');
+        if (closeButton) closeButton.focus();
+      }, 50);
+    }
+
+    function closeModal() {
+      const modal = document.getElementById('scan-feedback-modal');
+      if (!modal) return;
+      modal.classList.remove('is-open');
+      modal.setAttribute('aria-hidden', 'true');
+      document.body.style.overflow = '';
+    }
+
+    const modal = document.getElementById('scan-feedback-modal');
+    if (modal) {
+      modal.addEventListener('click', (event) => {
+        if (event.target.matches('[data-modal-close="true"]')) {
+          closeModal();
+        }
+      });
+      modal.querySelector('.scan-modal-close')?.addEventListener('click', closeModal);
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && modal.classList.contains('is-open')) {
+          closeModal();
+        }
+      });
+    }
+
+    const contactForm = document.getElementById('contact-form');
+    if (contactForm) {
+      contactForm.addEventListener('submit', async function (event) {
+        event.preventDefault();
+        clearFieldErrors(contactForm);
+        const button = contactForm.querySelector('button[type="submit"]');
+        setButtonLoading(button, true);
+
+        try {
+          const formData = new FormData(contactForm);
+          const response = await fetch(contactForm.action, {
+            method: 'POST',
+            body: formData,
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+          });
+          const data = await response.json();
+
+          if (response.ok && data.success) {
+            if (data.status === 'saved_email_failed') {
+              openModal('warning', 'Request Received', 'Your request was saved successfully. Confirmation email delivery may be delayed.', data.ticket_id || null);
+            } else {
+              openModal('success', 'Message Sent Successfully', 'Thank you for contacting ScanPDF. We have received your enquiry and our team will get back to you.', data.ticket_id || null);
+            }
+            contactForm.reset();
+          } else if (data.status === 'validation_error') {
+            renderFormErrors(contactForm, data.errors || {});
+            openModal('error', 'Please Check Your Details', 'Some fields need your attention. Please correct the highlighted fields and try again.');
+            const firstInvalid = contactForm.querySelector('[aria-invalid="true"]');
+            if (firstInvalid) firstInvalid.focus();
+          } else {
+            openModal('error', 'Something Went Wrong', 'We could not submit your request right now. Please try again.');
+          }
+        } catch (error) {
+          console.error('Contact form submission error:', error);
+          openModal('error', 'Something Went Wrong', 'We could not submit your request right now. Please try again.');
+        } finally {
+          setButtonLoading(contactForm.querySelector('button[type="submit"]'), false);
+        }
+      });
+    }
+  })();
+</script>
+{% endblock %}

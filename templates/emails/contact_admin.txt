@@ -1,0 +1,28 @@
+New ScanPDF enquiry received.
+
+Name:
+{{ name }}
+
+Email:
+{{ email }}
+
+Phone:
+{{ phone }}
+
+Type:
+{{ category }}
+
+Subject:
+{{ subject }}
+
+Message:
+{{ message }}
+
+Reference ID:
+{{ ticket_id }}
+
+Submitted At:
+{{ created_at }}
+
+Source:
+{{ source }} Page
