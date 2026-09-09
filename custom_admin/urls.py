@@ -39,6 +39,7 @@ urlpatterns = [
     path('hero-videos/', views.hero_videos_view, name='hero_videos'),
     path('hero-videos/add/', views.hero_video_add_view, name='hero_video_add'),
     path('hero-videos/<int:video_id>/edit/', views.hero_video_edit_view, name='hero_video_edit'),
+    path('hero-videos/<int:video_id>/toggle/', views.hero_video_toggle_view, name='hero_video_toggle'),
     path('hero-videos/<int:video_id>/delete/', views.hero_video_delete_view, name='hero_video_delete'),
 
     # Other

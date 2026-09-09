@@ -580,7 +580,14 @@ from django.contrib import messages
 @superuser_required
 def hero_videos_view(request):
     videos = HeroVideo.objects.all()
-    return render(request, 'admin_dashboard/hero_videos.html', {'videos': videos})
+    return render(request, 'admin_dashboard/hero_videos.html', {
+        'videos': videos,
+        'total_videos': videos.count(),
+        'short_url_videos': videos.filter(section='short_url').count(),
+        'qr_code_videos': videos.filter(section='qr_code').count(),
+        'active_videos': videos.filter(is_active=True).count(),
+        'inactive_videos': videos.filter(is_active=False).count(),
+    })
 
 @superuser_required
 def hero_video_add_view(request):
@@ -606,6 +613,15 @@ def hero_video_edit_view(request, video_id):
     else:
         form = HeroVideoForm(instance=video)
     return render(request, 'admin_dashboard/hero_video_form.html', {'form': form, 'title': 'Edit Hero Video', 'video': video})
+
+@superuser_required
+@require_POST
+def hero_video_toggle_view(request, video_id):
+    video = get_object_or_404(HeroVideo, id=video_id)
+    video.is_active = not video.is_active
+    video.save(update_fields=['is_active', 'updated_at'])
+    messages.success(request, f"Hero video {'enabled' if video.is_active else 'disabled'} successfully.")
+    return redirect('custom_admin:hero_videos')
 
 @superuser_required
 def hero_video_delete_view(request, video_id):
