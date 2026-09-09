@@ -387,7 +387,7 @@
                         <div class="flex justify-between items-center mb-1">
                             <label class="text-xs font-bold text-slate-600">Header Text</label>
                             {% if has_header %}
-                            <span class="text-[10px] font-black {% if header_limit != '-1' and used_headers_count >= header_limit|add:0 %}text-red-500{% else %}text-indigo-600{% endif %}">
+                                <span id="feature-usage-header" data-feature-usage="header" class="text-[10px] font-black {% if header_limit != '-1' and used_headers_count >= header_limit|add:0 %}text-red-500{% else %}text-indigo-600{% endif %}">
                                 Usage: {{ used_headers_count }} / {% if header_limit == '-1' %}Unlimited{% else %}{{ header_limit }}{% endif %}
                             </span>
                             {% endif %}
@@ -414,7 +414,7 @@
                             {% if not has_qr %}
                                 <a href="{% url 'services:pricing' %}" class="text-[9px] uppercase tracking-widest bg-amber-100 text-amber-600 px-2 py-0.5 rounded-md font-bold">Upgrade</a>
                             {% elif not feature_statuses.qr_code.unlimited %}
-                                <span class="text-[10px] font-black {% if feature_statuses.qr_code.limit_reached %}text-red-500{% else %}text-indigo-600{% endif %}">
+                                <span id="feature-usage-qr-code" data-feature-usage="qr_code" class="text-[10px] font-black {% if feature_statuses.qr_code.limit_reached %}text-red-500{% else %}text-indigo-600{% endif %}">
                                     Usage: {{ feature_statuses.qr_code.used }} / {{ feature_statuses.qr_code.limit }}
                                 </span>
                             {% endif %}
@@ -485,7 +485,7 @@
                             {% if not has_gps %}
                                 <a href="{% url 'services:pricing' %}" class="text-[9px] uppercase tracking-widest bg-amber-100 text-amber-600 px-2 py-0.5 rounded-md font-bold">Upgrade</a>
                             {% elif not feature_statuses.gps_tracking.unlimited %}
-                                <span class="text-[10px] font-black {% if feature_statuses.gps_tracking.limit_reached %}text-red-500{% else %}text-indigo-600{% endif %}">
+                                <span id="feature-usage-gps-tracking" data-feature-usage="gps_tracking" class="text-[10px] font-black {% if feature_statuses.gps_tracking.limit_reached %}text-red-500{% else %}text-indigo-600{% endif %}">
                                     Usage: {{ feature_statuses.gps_tracking.used }} / {{ feature_statuses.gps_tracking.limit }}
                                 </span>
                             {% endif %}
@@ -510,7 +510,7 @@
                             {% if not has_password %}
                                 <a href="{% url 'services:pricing' %}" class="text-[9px] uppercase tracking-widest bg-amber-100 text-amber-600 px-2 py-0.5 rounded-md font-bold">Upgrade</a>
                             {% elif not feature_statuses.password_protection.unlimited %}
-                                <span class="text-[10px] font-black {% if feature_statuses.password_protection.limit_reached %}text-red-500{% else %}text-indigo-600{% endif %}">
+                                <span id="feature-usage-password-protection" data-feature-usage="password_protection" class="text-[10px] font-black {% if feature_statuses.password_protection.limit_reached %}text-red-500{% else %}text-indigo-600{% endif %}">
                                     Usage: {{ feature_statuses.password_protection.used }} / {{ feature_statuses.password_protection.limit }}
                                 </span>
                             {% endif %}
@@ -539,7 +539,7 @@
                             {% if not has_expiry %}
                                 <a href="{% url 'services:pricing' %}" class="text-[9px] uppercase tracking-widest bg-amber-100 text-amber-600 px-2 py-0.5 rounded-md font-bold">Upgrade</a>
                             {% elif not feature_statuses.link_expiry.unlimited %}
-                                <span class="text-[10px] font-black {% if feature_statuses.link_expiry.limit_reached %}text-red-500{% else %}text-indigo-600{% endif %}">
+                                <span id="feature-usage-link-expiry" data-feature-usage="link_expiry" class="text-[10px] font-black {% if feature_statuses.link_expiry.limit_reached %}text-red-500{% else %}text-indigo-600{% endif %}">
                                     Usage: {{ feature_statuses.link_expiry.used }} / {{ feature_statuses.link_expiry.limit }}
                                 </span>
                             {% endif %}
@@ -959,6 +959,17 @@
         }
     }
 
+    function updateFeatureUsage(statuses) {
+        if (!statuses) return;
+        document.querySelectorAll('[data-feature-usage]').forEach((element) => {
+            const status = statuses[element.dataset.featureUsage];
+            if (!status || status.unlimited) return;
+            element.textContent = `Usage: ${status.used} / ${status.limit}`;
+            element.classList.toggle('text-red-500', status.limit_reached);
+            element.classList.toggle('text-indigo-600', !status.limit_reached);
+        });
+    }
+
     function openCreateModal() {
         {% if not can_create_more %}
         return; // UI already handles this with the upgrade button, but safety first
@@ -1034,6 +1045,11 @@
             document.getElementById('form-expiry-enabled').checked = data.expiry_enabled;
             togglePanel('expiry-panel', data.expiry_enabled);
             document.getElementById('form-expiry-date').value = data.expiry_date || '';
+
+            // Existing activations remain editable even when no new credit is
+            // available; the backend still enforces all new activations.
+            ['form-header-enabled', 'form-qr-enabled', 'form-require-gps', 'form-password-enabled', 'form-expiry-enabled']
+                .forEach((id) => { document.getElementById(id).disabled = false; });
             
             document.getElementById('regenerate-option').style.display = 'flex';
             modal.style.display = 'flex';
@@ -1180,6 +1196,7 @@
             const data = await response.json();
             if (data.success) {
                 generatedShortUrl = data.short_url || '';
+                updateFeatureUsage(data.feature_statuses);
                 const shortUrlPreview = document.getElementById('modal-short-url-preview');
                 if (shortUrlPreview && generatedShortUrl) shortUrlPreview.textContent = generatedShortUrl;
                 updateQRPreview();
@@ -1203,7 +1220,8 @@
                     showToast('Short URL updated successfully.', false);
                     closeModal();
                 } else {
-                    setTimeout(() => location.reload(), 900);
+                    showToast('Short URL created successfully.', false);
+                    closeModal();
                 }
             } else {
                 showToast(data.error || 'Error saving link', true);

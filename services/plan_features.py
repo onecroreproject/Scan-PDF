@@ -408,64 +408,59 @@ def check_and_increment_short_url_features(user, new_state, existing_qr=None):
         (ok: bool, error_code: str|None, error_message: str|None)
         error_code: 'feature_not_available' | 'feature_limit_reached'
     """
-    # Build delta: which features are being newly activated?
-    features_to_increment = []
+    subscription = _get_active_subscription(user)
+    if not subscription:
+        return (False, 'feature_not_available', 'No active subscription was found.')
 
-    feature_check_map = {
-        'header': lambda qr: bool(qr and qr.header),
-        'qr_code': lambda qr: bool(qr and qr.qr_enabled),
-        'password_protection': lambda qr: bool(qr and qr.password),
-        'link_expiry': lambda qr: bool(qr and qr.expiry_date),
-        'gps_tracking': lambda qr: bool(qr and qr.require_gps),
-        'custom_alias': lambda qr: bool(qr and qr.custom_alias),
-    }
+    # Serialize all feature activations for this user so concurrent requests
+    # cannot both consume the final credit.
+    with transaction.atomic():
+        Subscription.objects.select_for_update().get(pk=subscription.pk)
+        features_to_increment = []
+        feature_check_map = {
+            'header': lambda qr: bool(qr and qr.header),
+            'qr_code': lambda qr: bool(qr and qr.qr_enabled),
+            'password_protection': lambda qr: bool(qr and qr.password),
+            'link_expiry': lambda qr: bool(qr and qr.expiry_date),
+            'gps_tracking': lambda qr: bool(qr and qr.require_gps),
+            'custom_alias': lambda qr: bool(qr and qr.custom_alias),
+        }
+        feature_display_names = {
+            'header': 'Custom Header',
+            'qr_code': 'QR Code',
+            'password_protection': 'Password Protection',
+            'link_expiry': 'Link Expiry',
+            'gps_tracking': 'GPS Tracking',
+            'custom_alias': 'Custom Alias',
+        }
 
-    feature_display_names = {
-        'header': 'Custom Header',
-        'qr_code': 'QR Code',
-        'password_protection': 'Password Protection',
-        'link_expiry': 'Link Expiry',
-        'gps_tracking': 'GPS Tracking',
-        'custom_alias': 'Custom Alias',
-    }
+        for code, is_active_now in new_state.items():
+            if code not in feature_check_map:
+                continue
+            if is_active_now and not feature_check_map[code](existing_qr):
+                if not has_feature(user, code):
+                    return (
+                        False,
+                        'feature_not_available',
+                        f"{feature_display_names.get(code, code)} is not available in your current plan."
+                    )
+                if not can_use_feature(user, code):
+                    status = get_feature_status(user, code)
+                    remaining_msg = '' if status['unlimited'] else f" ({status['used']}/{status['limit']} used)"
+                    return (
+                        False,
+                        'feature_limit_reached',
+                        f"You have reached your {feature_display_names.get(code, code)} limit for this billing period{remaining_msg}."
+                    )
+                features_to_increment.append(code)
 
-    for code, is_active_now in new_state.items():
-        if code not in feature_check_map:
-            continue
-
-        was_active = feature_check_map[code](existing_qr)
-
-        # Only charge if the feature is being newly turned ON
-        if is_active_now and not was_active:
-            # Check if the feature is available at all
-            if not has_feature(user, code):
-                return (
-                    False,
-                    'feature_not_available',
-                    f"{feature_display_names.get(code, code)} is not available in your current plan."
-                )
-            # Check if can use (not at limit)
-            if not can_use_feature(user, code):
-                remaining_msg = ""
-                status = get_feature_status(user, code)
-                if not status['unlimited']:
-                    remaining_msg = f" ({status['used']}/{status['limit']} used)"
+        for code in features_to_increment:
+            result = increment_feature_usage(user, code)
+            if result == -1:
                 return (
                     False,
                     'feature_limit_reached',
-                    f"You have reached your {feature_display_names.get(code, code)} limit for this billing period{remaining_msg}."
+                    f"You have reached your {feature_display_names.get(code, code)} limit. Please try again."
                 )
-            features_to_increment.append(code)
-
-    # All checks passed — now atomically increment all
-    for code in features_to_increment:
-        result = increment_feature_usage(user, code)
-        if result == -1:
-            # Race condition: another request just used the last slot
-            return (
-                False,
-                'feature_limit_reached',
-                f"You have reached your {feature_display_names.get(code, code)} limit. Please try again."
-            )
 
     return (True, None, None)
