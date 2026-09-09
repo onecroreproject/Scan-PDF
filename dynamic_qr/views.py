@@ -695,10 +695,11 @@ def dqr_short_url_view(request):
             'used_headers_count': feature_statuses.get('header', {}).get('used', 0),
             'header_limit': feature_statuses.get('header', {}).get('limit'),
             'header_unlimited': feature_statuses.get('header', {}).get('unlimited', False),
-            # Short URL usage (using QR code usage as the proxy for creation limit if applicable, or we just show the QR quota)
+            # Short URL creation itself has no optional-feature quota. QR usage is
+            # reported separately and is consumed only when QR is enabled.
             'usage_current': short_url_status.get('used', 0),
             'usage_limit': short_url_status.get('limit'),
-            'can_create_more': not short_url_status.get('limit_reached', True),
+            'can_create_more': True,
         })
     
     try:
@@ -796,7 +797,7 @@ def dqr_short_url_view(request):
 
         # Hash password
         hashed_password = None
-        if password:
+        if password_enabled and password:
             if not has_feature(request.user, 'password_protection'):
                 return JsonResponse({'error': 'Password Protection is not available in your plan.'}, status=403)
                 
@@ -829,11 +830,14 @@ def dqr_short_url_view(request):
                 # Create new
                 qr = DynamicQRCode(user=request.user, qr_type='custom-url')
                 existing_qr = None
+
+            if password_enabled and not password and not (existing_qr and existing_qr.password):
+                return JsonResponse({'error': 'A password is required when protection is enabled.'}, status=400)
                 
             new_state = {
                 'header': header_enabled and bool(header_value),
                 'qr_code': qr_enabled,
-                'password_protection': bool(password),
+                'password_protection': password_enabled and bool(password),
                 'link_expiry': bool(expiry_date),
                 'gps_tracking': require_gps,
                 'custom_alias': bool(custom_alias),
@@ -898,13 +902,22 @@ def dqr_short_url_view(request):
                             qr.save()
                     except: pass
                     
+        from services.plan_features import get_all_feature_statuses
+        feature_statuses = get_all_feature_statuses(request.user)
         return JsonResponse({
             'success': True, 
             'id': str(qr.id), 
             'short_url': request.build_absolute_uri(qr.public_url_path),
             'qr_name': qr.qr_name,
             'header': qr.header,
+            'header_enabled': bool(qr.header),
             'short_code': qr.short_code,
+            'qr_enabled': qr.qr_enabled,
+            'require_gps': qr.require_gps,
+            'password_enabled': bool(qr.password),
+            'expiry_enabled': bool(qr.expiry_date),
+            'expiry_date': qr.expiry_date.strftime('%Y-%m-%dT%H:%M') if qr.expiry_date else '',
+            'feature_statuses': feature_statuses,
             'created_at': qr.created_at.strftime('%Y-%m-%d %H:%M'),
             'scan_count': qr.scan_count
         })
@@ -1666,7 +1679,7 @@ def dqr_redirect_view(request, short_code):
                 return redirect(request.path)
             else:
                 record_short_url_event(qr, request, result='password_failed', status=401)
-                return render(request, 'dynamic_qr/qr_password.html', {'qr': qr, 'error': 'Incorrect password'})
+                return render(request, 'dynamic_qr/qr_password.html', {'qr': qr, 'error': 'Incorrect password. Please try again.'})
         record_short_url_event(qr, request, result='password_required', status=401)
         return render(request, 'dynamic_qr/qr_password.html', {'qr': qr})
 
