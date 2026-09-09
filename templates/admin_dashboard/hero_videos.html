@@ -26,8 +26,10 @@
                         <tr class="bg-surface-50 border-b border-surface-200">
                             <th class="p-4 text-xs font-black text-surface-500 uppercase tracking-widest">Preview</th>
                             <th class="p-4 text-xs font-black text-surface-500 uppercase tracking-widest">Title</th>
+                            <th class="p-4 text-xs font-black text-surface-500 uppercase tracking-widest">Video Type</th>
                             <th class="p-4 text-xs font-black text-surface-500 uppercase tracking-widest">Order</th>
                             <th class="p-4 text-xs font-black text-surface-500 uppercase tracking-widest">Status</th>
+                            <th class="p-4 text-xs font-black text-surface-500 uppercase tracking-widest">Created Date</th>
                             <th class="p-4 text-xs font-black text-surface-500 uppercase tracking-widest text-right">Actions</th>
                         </tr>
                     </thead>
@@ -42,6 +44,7 @@
                                 {% endif %}
                             </td>
                             <td class="p-4 font-bold text-surface-900">{{ video.title|default:"Untitled" }}</td>
+                            <td class="p-4 text-surface-600 font-medium">{{ video.get_section_display }}</td>
                             <td class="p-4 text-surface-600 font-medium">{{ video.order }}</td>
                             <td class="p-4">
                                 {% if video.is_active %}
@@ -54,10 +57,17 @@
                                     </span>
                                 {% endif %}
                             </td>
+                            <td class="p-4 text-surface-600 font-medium">{{ video.created_at|date:"Y-m-d" }}</td>
                             <td class="p-4 text-right">
                                 <a href="{% url 'custom_admin:hero_video_edit' video.id %}" class="inline-flex items-center justify-center w-8 h-8 rounded-lg text-brand-600 hover:bg-brand-50 transition-colors" title="Edit">
-                                    <i data-lucide="edit-2" class="w-4 h-4"></i>
+                                    <i data-lucide="pencil" class="w-4 h-4"></i>
                                 </a>
+                                <form method="post" action="{% url 'custom_admin:hero_video_toggle' video.id %}" class="inline">
+                                    {% csrf_token %}
+                                    <button type="submit" class="inline-flex items-center justify-center w-8 h-8 rounded-lg text-surface-600 hover:bg-surface-100 transition-colors ml-1" title="{% if video.is_active %}Disable{% else %}Enable{% endif %}">
+                                        <i data-lucide="{% if video.is_active %}eye-off{% else %}eye{% endif %}" class="w-4 h-4"></i>
+                                    </button>
+                                </form>
                                 <a href="{% url 'custom_admin:hero_video_delete' video.id %}" class="inline-flex items-center justify-center w-8 h-8 rounded-lg text-red-600 hover:bg-red-50 transition-colors ml-1" title="Delete">
                                     <i data-lucide="trash-2" class="w-4 h-4"></i>
                                 </a>
