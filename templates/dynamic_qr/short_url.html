@@ -128,7 +128,7 @@
         
         <div class="flex items-center gap-4">
             <div class="bg-slate-50 px-4 py-2 rounded-xl border border-slate-100 flex flex-col items-end">
-                <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">Usage</span>
+                <span class="text-[10px] font-black text-slate-400 uppercase tracking-widest">QR Code Usage</span>
                 <span class="text-sm font-bold {% if not can_create_more %}text-red-500{% else %}text-slate-700{% endif %}">{{ usage_current }} / {{ usage_limit }}</span>
             </div>
             {% if can_create_more %}
@@ -247,10 +247,10 @@
                     <button onclick="copyUrlText('url-{{ item.id }}')" class="h-8 px-3 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors" title="Copy Short URL">
                         <i data-lucide="copy" class="w-3.5 h-3.5"></i> Copy
                     </button>
-                    <button onclick="shareUrl('{{ request.scheme }}://{{ request.get_host }}{{ item.public_url_path }}')" class="h-8 px-3 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors" title="Share Short URL">
+                    <button onclick="shareUrl(document.getElementById('url-{{ item.id }}').innerText.trim())" class="h-8 px-3 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors" title="Share Short URL">
                         <i data-lucide="share-2" class="w-3.5 h-3.5"></i> Share
                     </button>
-                    <button onclick="openEditModal('{{ item.id }}', '{{ item.qr_name|escapejs }}', '{{ item.destination_url|escapejs }}', '{{ item.custom_alias|default_if_none:''|escapejs }}', '{{ item.require_gps }}', '{{ item.header_enabled }}', '{{ item.qr_enabled }}', '{% if item.password %}True{% else %}False{% endif %}', '{% if item.expiry_date %}True{% else %}False{% endif %}')" class="h-8 px-3 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors" title="Edit Short URL">
+                    <button onclick="openEditModal('{{ item.id }}')" class="h-8 px-3 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors" title="Edit Short URL">
                         <i data-lucide="pencil" class="w-3.5 h-3.5"></i> Edit
                     </button>
                     <button onclick="deleteQR('{{ item.id }}')" class="h-8 px-3 bg-slate-50 hover:bg-red-50 text-slate-400 hover:text-red-600 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-colors" title="Delete Short URL">
@@ -410,11 +410,22 @@
                 <div class="create-short-url-toggle bg-slate-50 rounded-xl border border-slate-100">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="font-black text-slate-900 text-sm flex items-center gap-2">QR Code {% if not has_qr %}<a href="{% url 'services:pricing' %}" class="text-[9px] uppercase tracking-widest bg-amber-100 text-amber-600 px-2 py-0.5 rounded-md font-bold">Upgrade</a>{% endif %}</p>
+                            <p class="font-black text-slate-900 text-sm flex items-center gap-2">QR Code 
+                            {% if not has_qr %}
+                                <a href="{% url 'services:pricing' %}" class="text-[9px] uppercase tracking-widest bg-amber-100 text-amber-600 px-2 py-0.5 rounded-md font-bold">Upgrade</a>
+                            {% elif not feature_statuses.qr_code.unlimited %}
+                                <span class="text-[10px] font-black {% if feature_statuses.qr_code.limit_reached %}text-red-500{% else %}text-indigo-600{% endif %}">
+                                    Usage: {{ feature_statuses.qr_code.used }} / {{ feature_statuses.qr_code.limit }}
+                                </span>
+                            {% endif %}
+                            </p>
                             <p class="text-[10px] font-bold text-slate-400">Generate a custom QR Code for this short link.</p>
+                            {% if feature_statuses.qr_code.limit_reached %}
+                            <p class="text-[10px] text-red-500 font-bold mt-1">Limit reached.</p>
+                            {% endif %}
                         </div>
                         <label class="switch">
-                            <input type="checkbox" name="qr_enabled" id="form-qr-enabled" onchange="togglePanel('qr-config-panel', this.checked); updateQRPreview();" {% if not has_qr %}disabled{% endif %}>
+                            <input type="checkbox" name="qr_enabled" id="form-qr-enabled" onchange="togglePanel('qr-config-panel', this.checked); updateQRPreview();" {% if not has_qr or feature_statuses.qr_code.limit_reached %}disabled{% endif %}>
                             <span class="slider"></span>
                         </label>
                     </div>
@@ -470,11 +481,22 @@
                 <div class="create-short-url-toggle bg-slate-50 rounded-xl border border-slate-100">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="font-black text-slate-900 text-sm flex items-center gap-2">GPS Enabled {% if not has_gps %}<a href="{% url 'services:pricing' %}" class="text-[9px] uppercase tracking-widest bg-amber-100 text-amber-600 px-2 py-0.5 rounded-md font-bold">Upgrade</a>{% endif %}</p>
+                            <p class="font-black text-slate-900 text-sm flex items-center gap-2">GPS Enabled 
+                            {% if not has_gps %}
+                                <a href="{% url 'services:pricing' %}" class="text-[9px] uppercase tracking-widest bg-amber-100 text-amber-600 px-2 py-0.5 rounded-md font-bold">Upgrade</a>
+                            {% elif not feature_statuses.gps_tracking.unlimited %}
+                                <span class="text-[10px] font-black {% if feature_statuses.gps_tracking.limit_reached %}text-red-500{% else %}text-indigo-600{% endif %}">
+                                    Usage: {{ feature_statuses.gps_tracking.used }} / {{ feature_statuses.gps_tracking.limit }}
+                                </span>
+                            {% endif %}
+                            </p>
                             <p class="text-[10px] font-bold text-slate-400">Enable location tracking where available.</p>
+                            {% if feature_statuses.gps_tracking.limit_reached %}
+                            <p class="text-[10px] text-red-500 font-bold mt-1">Limit reached.</p>
+                            {% endif %}
                         </div>
                         <label class="switch">
-                            <input type="checkbox" name="require_gps" id="form-require-gps" {% if not has_gps %}disabled{% endif %}>
+                            <input type="checkbox" name="require_gps" id="form-require-gps" {% if not has_gps or feature_statuses.gps_tracking.limit_reached %}disabled{% endif %}>
                             <span class="slider"></span>
                         </label>
                     </div>
@@ -484,11 +506,22 @@
                 <div class="create-short-url-toggle bg-slate-50 rounded-xl border border-slate-100">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="font-black text-slate-900 text-sm flex items-center gap-2">Password Protected {% if not has_password %}<a href="{% url 'services:pricing' %}" class="text-[9px] uppercase tracking-widest bg-amber-100 text-amber-600 px-2 py-0.5 rounded-md font-bold">Upgrade</a>{% endif %}</p>
+                            <p class="font-black text-slate-900 text-sm flex items-center gap-2">Password Protected 
+                            {% if not has_password %}
+                                <a href="{% url 'services:pricing' %}" class="text-[9px] uppercase tracking-widest bg-amber-100 text-amber-600 px-2 py-0.5 rounded-md font-bold">Upgrade</a>
+                            {% elif not feature_statuses.password_protection.unlimited %}
+                                <span class="text-[10px] font-black {% if feature_statuses.password_protection.limit_reached %}text-red-500{% else %}text-indigo-600{% endif %}">
+                                    Usage: {{ feature_statuses.password_protection.used }} / {{ feature_statuses.password_protection.limit }}
+                                </span>
+                            {% endif %}
+                            </p>
                             <p class="text-[10px] font-bold text-slate-400">Restrict access with a password.</p>
+                            {% if feature_statuses.password_protection.limit_reached %}
+                            <p class="text-[10px] text-red-500 font-bold mt-1">Limit reached.</p>
+                            {% endif %}
                         </div>
                         <label class="switch">
-                            <input type="checkbox" name="password_enabled" id="form-password-enabled" onchange="togglePanel('password-panel', this.checked)" {% if not has_password %}disabled{% endif %}>
+                            <input type="checkbox" name="password_enabled" id="form-password-enabled" onchange="togglePanel('password-panel', this.checked)" {% if not has_password or feature_statuses.password_protection.limit_reached %}disabled{% endif %}>
                             <span class="slider"></span>
                         </label>
                     </div>
@@ -502,11 +535,22 @@
                 <div class="create-short-url-toggle bg-slate-50 rounded-xl border border-slate-100">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="font-black text-slate-900 text-sm flex items-center gap-2">Link Expiry {% if not has_expiry %}<a href="{% url 'services:pricing' %}" class="text-[9px] uppercase tracking-widest bg-amber-100 text-amber-600 px-2 py-0.5 rounded-md font-bold">Upgrade</a>{% endif %}</p>
+                            <p class="font-black text-slate-900 text-sm flex items-center gap-2">Link Expiry 
+                            {% if not has_expiry %}
+                                <a href="{% url 'services:pricing' %}" class="text-[9px] uppercase tracking-widest bg-amber-100 text-amber-600 px-2 py-0.5 rounded-md font-bold">Upgrade</a>
+                            {% elif not feature_statuses.link_expiry.unlimited %}
+                                <span class="text-[10px] font-black {% if feature_statuses.link_expiry.limit_reached %}text-red-500{% else %}text-indigo-600{% endif %}">
+                                    Usage: {{ feature_statuses.link_expiry.used }} / {{ feature_statuses.link_expiry.limit }}
+                                </span>
+                            {% endif %}
+                            </p>
                             <p class="text-[10px] font-bold text-slate-400">Set an expiration date/time.</p>
+                            {% if feature_statuses.link_expiry.limit_reached %}
+                            <p class="text-[10px] text-red-500 font-bold mt-1">Limit reached.</p>
+                            {% endif %}
                         </div>
                         <label class="switch">
-                            <input type="checkbox" name="expiry_enabled" id="form-expiry-enabled" onchange="togglePanel('expiry-panel', this.checked)" {% if not has_expiry %}disabled{% endif %}>
+                            <input type="checkbox" name="expiry_enabled" id="form-expiry-enabled" onchange="togglePanel('expiry-panel', this.checked)" {% if not has_expiry or feature_statuses.link_expiry.limit_reached %}disabled{% endif %}>
                             <span class="slider"></span>
                         </label>
                     </div>
@@ -939,39 +983,68 @@
         requestAnimationFrame(updateQRPreview);
     }
 
-    function openEditModal(id, name, url, alias, reqGps, hasHeader, hasQr, hasPassword, hasExpiry) {
+    async function openEditModal(id) {
+        // Show loading state or at least indicate it's editing
         isEdit = true;
-        document.getElementById('modal-title').innerText = 'Edit Link';
+        document.getElementById('modal-title').innerText = 'Edit Link...';
         document.getElementById('form-qr-id').value = id;
-        document.getElementById('form-qr-name').value = name;
-        document.getElementById('form-dest-url').value = url;
-        generatedShortUrl = '';
-        document.getElementById('modal-short-url-preview').textContent = url || '{{ request.scheme }}://{{ request.get_host }}/short-code';
-        document.getElementById('form-custom-alias').value = alias || '';
         
-        document.getElementById('form-header-enabled').checked = hasHeader === 'True';
-        togglePanel('header-panel', hasHeader === 'True');
-        
-        document.getElementById('form-qr-enabled').checked = hasQr === 'True';
-        togglePanel('qr-config-panel', hasQr === 'True');
-        
-        document.getElementById('form-require-gps').checked = reqGps === 'True';
-        
-        document.getElementById('form-password-enabled').checked = hasPassword === 'True';
-        togglePanel('password-panel', hasPassword === 'True');
-        document.getElementById('form-password').value = '';
-        document.getElementById('form-password-confirm').value = '';
-        
-        document.getElementById('form-expiry-enabled').checked = hasExpiry === 'True';
-        togglePanel('expiry-panel', hasExpiry === 'True');
-        // Expiry date loading needs custom formatting if we pass it, leaving empty for now
-        document.getElementById('form-expiry-date').value = '';
-        
-        document.getElementById('regenerate-option').style.display = 'flex';
-        modal.style.display = 'flex';
-        openModalCount++;
-        updateBodyScroll();
-        requestAnimationFrame(updateQRPreview);
+        try {
+            const response = await fetch(`/qr/short-url/get/${id}/`);
+            if (!response.ok) throw new Error('Failed to fetch data');
+            const data = await response.json();
+            
+            if (!data.success) throw new Error(data.error || 'Failed');
+            
+            document.getElementById('modal-title').innerText = 'Edit Link';
+            document.getElementById('form-qr-name').value = data.qr_name || '';
+            document.getElementById('form-dest-url').value = data.destination_url || '';
+            generatedShortUrl = '';
+            document.getElementById('modal-short-url-preview').textContent = data.short_url || '{{ request.scheme }}://{{ request.get_host }}/short-code';
+            document.getElementById('form-custom-alias').value = data.custom_alias || '';
+            
+            // Header
+            document.getElementById('form-header-enabled').checked = data.header_enabled;
+            togglePanel('header-panel', data.header_enabled);
+            document.getElementById('form-header-text').value = data.header || '';
+            
+            // QR Code
+            document.getElementById('form-qr-enabled').checked = data.qr_enabled;
+            togglePanel('qr-config-panel', data.qr_enabled);
+            if(data.qr_enabled) {
+                if(data.fg_color) document.getElementById('fg-picker-inline').value = data.fg_color;
+                if(data.bg_color) document.getElementById('bg-picker-inline').value = data.bg_color;
+                document.getElementById('body_style').value = data.body_style || 'square';
+                document.getElementById('eye_style').value = data.eye_style || 'square';
+                document.getElementById('ball_style').value = data.ball_style || 'square';
+                document.getElementById('design-options-input').value = data.design_options || '{}';
+                renderPatterns();
+            }
+            
+            // GPS
+            document.getElementById('form-require-gps').checked = data.require_gps;
+            
+            // Password
+            document.getElementById('form-password-enabled').checked = data.password_enabled;
+            togglePanel('password-panel', data.password_enabled);
+            document.getElementById('form-password').value = '';
+            document.getElementById('form-password-confirm').value = '';
+            
+            // Expiry
+            document.getElementById('form-expiry-enabled').checked = data.expiry_enabled;
+            togglePanel('expiry-panel', data.expiry_enabled);
+            document.getElementById('form-expiry-date').value = data.expiry_date || '';
+            
+            document.getElementById('regenerate-option').style.display = 'flex';
+            modal.style.display = 'flex';
+            openModalCount++;
+            updateBodyScroll();
+            requestAnimationFrame(updateQRPreview);
+            
+        } catch (err) {
+            console.error(err);
+            showToast('Unable to load link details for editing.', true);
+        }
     }
 
     function closeModal() {
@@ -1114,12 +1187,17 @@
                     const qrId = data.id; // from backend response
                     const titleEl = document.getElementById(`title-${qrId}`);
                     const destEl = document.getElementById(`dest-url-${qrId}`);
+                    const urlEl = document.getElementById(`url-${qrId}`);
                     
                     if (titleEl) titleEl.innerText = data.qr_name || 'Untitled Link';
                     if (destEl) {
                         destEl.href = formData.get('destination_url');
                         destEl.innerText = formData.get('destination_url');
                         destEl.title = formData.get('destination_url');
+                    }
+                    if (urlEl) {
+                        urlEl.href = data.short_url;
+                        urlEl.innerText = data.short_url;
                     }
                     
                     showToast('Short URL updated successfully.', false);

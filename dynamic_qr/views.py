@@ -578,6 +578,37 @@ def dqr_create_view(request):
 
 
 @dqr_login_required
+def dqr_get_short_url_details(request, qr_id):
+    """Returns the full JSON representation of a Short URL for the edit modal."""
+    if request.method != 'GET':
+        return JsonResponse({'error': 'GET required.'}, status=405)
+        
+    qr = get_object_or_404(DynamicQRCode, id=qr_id, user=request.user)
+    
+    return JsonResponse({
+        'success': True,
+        'id': str(qr.id),
+        'qr_name': qr.qr_name,
+        'short_code': qr.short_code,
+        'short_url': qr.public_url_path,
+        'destination_url': qr.destination_url,
+        'custom_alias': qr.custom_alias or '',
+        'header': qr.header or '',
+        'header_enabled': bool(qr.header),
+        'qr_enabled': qr.qr_enabled,
+        'fg_color': qr.fg_color,
+        'bg_color': qr.bg_color,
+        'body_style': qr.body_style,
+        'eye_style': qr.eye_style,
+        'ball_style': qr.ball_style,
+        'design_options': json.dumps(qr.design_options) if qr.design_options else '{}',
+        'require_gps': qr.require_gps,
+        'password_enabled': bool(qr.password),
+        'expiry_enabled': bool(qr.expiry_date),
+        'expiry_date': qr.expiry_date.strftime('%Y-%m-%dT%H:%M') if qr.expiry_date else '',
+    })
+
+@dqr_login_required
 def dqr_short_url_view(request):
     """Specialized tool for Short URLs: List and Create."""
     if request.method == 'GET':
@@ -660,11 +691,12 @@ def dqr_short_url_view(request):
             'has_csv_export': feature_statuses.get('csv_export', {}).get('enabled', False),
             'has_pdf_report': feature_statuses.get('pdf_report', {}).get('enabled', False),
             # Header stats
-            'used_headers_count': DynamicQRCode.objects.filter(user=request.user).exclude(header__isnull=True).exclude(header='').count(),
+            # Header stats (from usage record, not active records)
+            'used_headers_count': feature_statuses.get('header', {}).get('used', 0),
             'header_limit': feature_statuses.get('header', {}).get('limit'),
             'header_unlimited': feature_statuses.get('header', {}).get('unlimited', False),
-            # Short URL usage
-            'usage_current': total_short_urls,
+            # Short URL usage (using QR code usage as the proxy for creation limit if applicable, or we just show the QR quota)
+            'usage_current': short_url_status.get('used', 0),
             'usage_limit': short_url_status.get('limit'),
             'can_create_more': not short_url_status.get('limit_reached', True),
         })
@@ -697,6 +729,8 @@ def dqr_short_url_view(request):
         # Feature toggles & QR styles
         qr_enabled = request.POST.get('qr_enabled') == 'on'
         header_enabled = request.POST.get('header_enabled') == 'on'
+        password_enabled = request.POST.get('password_enabled') == 'on'
+        expiry_enabled = request.POST.get('expiry_enabled') == 'on'
         header_value = None
         
         if header_enabled:
@@ -784,86 +818,93 @@ def dqr_short_url_view(request):
         if header_enabled and not header_value:
             return JsonResponse({'error': 'Header value is required when enabled.'}, status=400)
 
-        if qr_id:
-            # Update existing
-            qr = get_object_or_404(DynamicQRCode, id=qr_id, user=request.user)
+        from django.db import transaction
+        
+        with transaction.atomic():
+            if qr_id:
+                # Update existing
+                qr = get_object_or_404(DynamicQRCode, id=qr_id, user=request.user)
+                existing_qr = qr
+            else:
+                # Create new
+                qr = DynamicQRCode(user=request.user, qr_type='custom-url')
+                existing_qr = None
+                
+            new_state = {
+                'header': header_enabled and bool(header_value),
+                'qr_code': qr_enabled,
+                'password_protection': bool(password),
+                'link_expiry': bool(expiry_date),
+                'gps_tracking': require_gps,
+                'custom_alias': bool(custom_alias),
+            }
+            
+            ok, err_code, err_msg = check_and_increment_short_url_features(request.user, new_state, existing_qr)
+            if not ok:
+                return JsonResponse({'error': err_msg}, status=403)
+                
             qr.qr_name = qr_name
             qr.destination_url = destination_url
             qr.qr_data = qr_data
             qr.custom_alias = custom_alias or None
             qr.domain = domain
-            if password: # only update if new password provided
+            
+            if not password_enabled:
+                qr.password = None
+            elif password: # only update if new password provided
                 qr.password = hashed_password
-            qr.expiry_date = expiry_date
+                
+            if not expiry_enabled:
+                qr.expiry_date = None
+            elif expiry_date:
+                qr.expiry_date = expiry_date
+                
             qr.require_gps = require_gps
-            qr.header = header_value if header_enabled else None
-            qr.qr_enabled = qr_enabled
-            qr.fg_color = fg_color
-            qr.bg_color = bg_color
-            qr.body_style = body_style
-            qr.eye_style = eye_style
-            qr.ball_style = ball_style
-            qr.design_options = design_options
-            if logo:
-                qr.logo = logo
+            
+            if not header_enabled:
+                qr.header = None
+            elif header_value:
+                qr.header = header_value
+                
+            if not qr_enabled:
+                qr.qr_enabled = False
+            else:
+                qr.qr_enabled = True
+                qr.fg_color = fg_color
+                qr.bg_color = bg_color
+                qr.body_style = body_style
+                qr.eye_style = eye_style
+                qr.ball_style = ball_style
+                qr.design_options = design_options
+                if logo:
+                    qr.logo = logo
 
             if regenerate:
                 from .models import generate_short_code
                 qr.short_code = generate_short_code()
+                
             qr.save()
-        else:
-            # Create new
-            qr = DynamicQRCode(
-                user=request.user,
-                qr_name=qr_name,
-                qr_type='custom-url',
-                destination_url=destination_url,
-                qr_data=qr_data,
-                design_options=design_options,
-                custom_alias=custom_alias or None,
-                domain=domain,
-                password=hashed_password,
-                expiry_date=expiry_date,
-                require_gps=require_gps,
-                header=header_value if header_enabled else None,
-                qr_enabled=qr_enabled,
-                fg_color=fg_color,
-                bg_color=bg_color,
-                body_style=body_style,
-                eye_style=eye_style,
-                ball_style=ball_style,
-                logo=logo
-            )
-            qr.save()
-            # Atomically increment usage for all newly-activated features (delta-based)
-            new_state = {
-                'header': bool(header_value),
-                'qr_code': qr_enabled,
-                'password_protection': bool(hashed_password),
-                'link_expiry': bool(expiry_date),
-                'gps_tracking': require_gps,
-                'custom_alias': bool(custom_alias),
-            }
-            check_and_increment_short_url_features(request.user, new_state, existing_qr=None)
             
-        # --- Permanent Logo Persistence (Preset caching) ---
-        if not qr.logo and qr.design_options and qr.design_options.get('logo_preset'):
-            preset = qr.design_options.get('logo_preset')
-            if preset and preset != 'none':
-                try:
-                    target_icon = os.path.join(settings.MEDIA_ROOT, 'brand_icons', f"{preset}.png")
-                    if os.path.exists(target_icon) and os.path.getsize(target_icon) > 0:
-                        from django.core.files import File
-                        with open(target_icon, 'rb') as f:
-                            qr.logo.save(f"{preset}_preset.png", File(f), save=False)
-                        qr.save()
-                except: pass
-        
+            # --- Permanent Logo Persistence (Preset caching) ---
+            if not qr.logo and qr.design_options and qr.design_options.get('logo_preset'):
+                preset = qr.design_options.get('logo_preset')
+                if preset and preset != 'none':
+                    try:
+                        target_icon = os.path.join(settings.MEDIA_ROOT, 'brand_icons', f"{preset}.png")
+                        if os.path.exists(target_icon) and os.path.getsize(target_icon) > 0:
+                            from django.core.files import File
+                            with open(target_icon, 'rb') as f:
+                                qr.logo.save(f"{preset}_preset.png", File(f), save=False)
+                            qr.save()
+                    except: pass
+                    
         return JsonResponse({
             'success': True, 
             'id': str(qr.id), 
-            'short_url': request.build_absolute_uri(f"/qr/r/{qr.short_code}/"),
+            'short_url': request.build_absolute_uri(qr.public_url_path),
             'qr_name': qr.qr_name,
+            'header': qr.header,
+            'short_code': qr.short_code,
             'created_at': qr.created_at.strftime('%Y-%m-%d %H:%M'),
             'scan_count': qr.scan_count
         })
