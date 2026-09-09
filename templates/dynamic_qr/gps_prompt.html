@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+{% extends "converter/base.html" %}
 {% load static %}
 
 {% block content %}
@@ -15,11 +15,11 @@
                 This link requests your location before redirecting. Your browser will ask for permission.
             </p>
 
-            <button id="allow-btn" onclick="requestLocation()" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
+            <button id="allow-btn" type="button" onclick="requestLocation()" class="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl text-sm font-bold text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-colors">
                 Allow Location Access
             </button>
             
-            <p id="error-msg" class="text-red-500 text-xs font-bold mt-4 hidden"></p>
+            <p id="error-msg" class="text-red-500 text-xs font-bold mt-4 {% if not error %}hidden{% endif %}">{{ error }}</p>
             
             <!-- Hidden form to post the location data back -->
             <form id="gps-form" method="POST" action="" class="hidden">
@@ -36,42 +36,105 @@
 </div>
 
 <script>
+    function resetLocationButton() {
+        const btn = document.getElementById('allow-btn');
+        if (btn) {
+            btn.textContent = 'Allow Location Access';
+            btn.disabled = false;
+        }
+    }
+
+    async function submitLocation(payload) {
+        const err = document.getElementById('error-msg');
+        try {
+            console.log('Sending GPS to backend');
+            const response = await fetch(window.location.pathname, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': document.querySelector('#gps-form input[name="csrfmiddlewaretoken"]').value
+                },
+                credentials: 'same-origin',
+                body: JSON.stringify(payload)
+            });
+            const data = await response.json();
+            console.log('Backend response:', data);
+            if (response.ok && data.success && data.redirect_url) {
+                window.location.assign(data.redirect_url);
+                return true;
+            }
+            throw new Error(data.error || `GPS submission failed (${response.status})`);
+        } catch (error) {
+            console.error('Location submit failed:', error);
+            err.classList.remove('hidden');
+            err.textContent = error.message || 'Unable to save your location. Please try again.';
+            resetLocationButton();
+            return false;
+        }
+    }
+
     function requestLocation() {
         const btn = document.getElementById('allow-btn');
         const err = document.getElementById('error-msg');
         const form = document.getElementById('gps-form');
+
+        console.log('Secure context:', window.isSecureContext);
+        console.log('Protocol:', window.location.protocol);
+        console.log('Host:', window.location.hostname);
+
+        // Browsers only expose geolocation on HTTPS or localhost. Do not
+        // submit a false "unavailable" event when using the LAN dev server.
+        if (!window.isSecureContext && !['localhost', '127.0.0.1', '[::1]'].includes(window.location.hostname)) {
+            err.classList.remove('hidden');
+            err.textContent = 'GPS requires HTTPS on a network address. For local testing, open this link with localhost or enable HTTPS.';
+            btn.innerHTML = 'Use a Secure Connection';
+            btn.disabled = false;
+            return;
+        }
         
-        btn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i>';
+        btn.textContent = 'Getting your location...';
         btn.disabled = true;
+
+        if (navigator.permissions) {
+            navigator.permissions.query({ name: 'geolocation' })
+                .then(status => {
+                    console.log('Geolocation permission:', status.state);
+                    status.onchange = () => console.log('Geolocation permission changed:', status.state);
+                })
+                .catch(error => console.warn('Unable to query geolocation permission', error));
+        }
         
         if (navigator.geolocation) {
             navigator.geolocation.getCurrentPosition(
                 function(position) {
-                    // Success
-                    document.getElementById('gps_lat').value = position.coords.latitude;
-                    document.getElementById('gps_lon').value = position.coords.longitude;
-                    document.getElementById('gps_accuracy').value = position.coords.accuracy;
-                    form.submit();
+                    const latitude = position.coords.latitude;
+                    const longitude = position.coords.longitude;
+                    const accuracy = position.coords.accuracy;
+                    console.log('GPS:', latitude, longitude, accuracy);
+                    submitLocation({ latitude, longitude, accuracy, permission: 'granted' });
                 },
                 function(error) {
                     // Error/Denied
+                    console.error('Geolocation error:', error.code, error.message);
                     err.classList.remove('hidden');
                     if (error.code === error.PERMISSION_DENIED) {
                         err.textContent = "Location access was denied. You cannot access this link.";
-                        document.getElementById('gps_denied').value = "true";
-                        form.submit(); // submit the denial so we log it
+                        submitLocation({ permission: 'denied' });
                     } else {
-                        document.getElementById('gps_error').value = error.code === error.TIMEOUT ? 'timeout' : 'unavailable';
-                        err.textContent = error.code === error.TIMEOUT ? "Location request timed out." : "Location is unavailable.";
-                        form.submit();
+                        err.textContent = error.code === error.TIMEOUT
+                            ? "The location request timed out. Check Location Services and try again."
+                            : "Your browser could not determine your location. Check Location Services and try again.";
+                        btn.innerHTML = 'Try Again';
+                        btn.disabled = false;
                     }
                 },
-                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+                { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
             );
         } else {
             err.classList.remove('hidden');
-            document.getElementById('gps_error').value = "unavailable";
-            form.submit();
+            err.textContent = "Geolocation is not supported by this browser. Use a browser with Location Services enabled.";
+            btn.innerHTML = 'Try Again';
+            btn.disabled = false;
         }
     }
 </script>

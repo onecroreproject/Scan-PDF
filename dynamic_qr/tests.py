@@ -1,4 +1,5 @@
 from unittest.mock import patch
+import json
 
 from django.contrib.auth import get_user_model
 from django.http import HttpResponse
@@ -73,6 +74,8 @@ class ShortURLAnalyticsTests(TestCase):
             {'gps_lat': '13.0827', 'gps_lon': '80.2707', 'gps_accuracy': '12.5'},
         )
         self.assertEqual(response.status_code, 302)
+        follow_up = self.client.get(response['Location'])
+        self.assertEqual(follow_up.status_code, 302)
         self.qr.refresh_from_db()
         pending.refresh_from_db()
         self.assertEqual(QRAnalytics.objects.filter(qr_code=self.qr).count(), 1)
@@ -80,6 +83,30 @@ class ShortURLAnalyticsTests(TestCase):
         self.assertEqual(pending.gps_permission, 'granted')
         self.assertEqual(pending.location_source, 'gps')
         self.assertEqual(pending.gps_accuracy, 12.5)
+
+    def test_gps_json_post_returns_destination_json(self):
+        self.qr.require_gps = True
+        self.qr.save(update_fields=['require_gps'])
+        with patch('dynamic_qr.views.render', return_value=HttpResponse('')):
+            self.client.get(f'/qr/r/{self.qr.short_code}/')
+
+        response = self.client.post(
+            f'/qr/r/{self.qr.short_code}/',
+            data=json.dumps({
+                'latitude': 13.0827,
+                'longitude': 80.2707,
+                'accuracy': 12.5,
+                'permission': 'granted',
+            }),
+            content_type='application/json',
+        )
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json(), {
+            'success': True,
+            'redirect_url': 'https://example.com/destination',
+        })
+        self.assertEqual(QRAnalytics.objects.filter(qr_code=self.qr).count(), 1)
 
     def test_gps_denial_does_not_create_second_event(self):
         self.qr.require_gps = True

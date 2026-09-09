@@ -1,11 +1,21 @@
+import logging
+import random
+import datetime
+import re
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.conf import settings
 from django.utils import timezone
-from django.http import HttpResponseForbidden, Http404
-from .models import Plan, Subscription, Payment
-import random
-import datetime
+from django.http import HttpResponseForbidden, Http404, JsonResponse
+from django.core.cache import cache
+from django.views.decorators.http import require_http_methods
+
+from .models import Plan, Subscription, Payment, ContactEnquiry
+from .forms import ContactEnquiryForm
+from .email_service import send_admin_enquiry_email, send_user_acknowledgement_email
+
+logger = logging.getLogger(__name__)
 
 
 def _build_plan_features_for_display(plans):
@@ -222,18 +232,174 @@ def payment_history_view(request):
         'page_title': 'Billing History — ScanPDF'
     })
 
-def support_view(request):
-    """Placeholder view for customer support."""
-    return render(request, 'services/placeholder_page.html', {
-        'title': 'Premium Support',
-        'subtitle': 'Dedicated support and service level agreements for enterprise accounts.',
-        'page_title': 'Support — ScanPDF Services'
+def support_legacy_redirect(request):
+    return redirect('services:help', permanent=False)
+
+
+def _get_client_ip(request):
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        return x_forwarded_for.split(',')[0].strip()
+    return request.META.get('REMOTE_ADDR') or ''
+
+
+def _make_ticket_id(source):
+    prefix = 'SCN-HLP' if source == ContactEnquiry.SOURCE_HELP else 'SCN-CON'
+    date_part = timezone.now().strftime('%Y%m%d')
+    random_part = ''.join(random.choices('ABCDEFGHJKLMNPQRSTUVWXYZ23456789', k=5))
+    return f'{prefix}-{date_part}-{random_part}'
+
+
+def _rate_limited(request):
+    ip_address = _get_client_ip(request)
+    if not ip_address:
+        return False
+    cache_key = f'enquiry_rate_limit:{ip_address}'
+    count = cache.get(cache_key, 0)
+    if count >= 5:
+        return True
+    cache.set(cache_key, count + 1, timeout=600)
+    return False
+
+
+def _render_enquiry_form(request, template_name, form_class, source, title, subtitle, extra_context=None):
+    form = form_class(request.POST or None, source=source)
+    success = False
+    ticket_id = None
+    ajax_requested = request.headers.get('X-Requested-With') == 'XMLHttpRequest'
+
+    if request.method == 'POST' and not _rate_limited(request):
+        try:
+            if form.is_valid():
+                enquiry = form.save(commit=False)
+                enquiry.source = source
+                enquiry.ip_address = _get_client_ip(request)
+                enquiry.user_agent = request.META.get('HTTP_USER_AGENT', '')[:500]
+                enquiry.ticket_id = _make_ticket_id(source)
+                while ContactEnquiry.objects.filter(ticket_id=enquiry.ticket_id).exists():
+                    enquiry.ticket_id = _make_ticket_id(source)
+                enquiry.save()
+
+                admin_sent = send_admin_enquiry_email(enquiry)
+                user_sent = send_user_acknowledgement_email(enquiry)
+                if not admin_sent:
+                    logger.warning('Admin enquiry email failed for ticket %s', enquiry.ticket_id)
+                if not user_sent:
+                    logger.warning('User acknowledgement email failed for ticket %s', enquiry.ticket_id)
+
+                success = True
+                ticket_id = enquiry.ticket_id
+                form = form_class(source=source)
+
+                if ajax_requested:
+                    if not admin_sent or not user_sent:
+                        return JsonResponse({
+                            'success': True,
+                            'status': 'saved_email_failed',
+                            'message': 'Request received. Confirmation email may be delayed.',
+                            'ticket_id': ticket_id,
+                            'source': source,
+                            'submitted_email': enquiry.email,
+                        })
+                    return JsonResponse({
+                        'success': True,
+                        'status': 'sent',
+                        'message': 'Message sent successfully.',
+                        'ticket_id': ticket_id,
+                        'source': source,
+                        'submitted_email': enquiry.email,
+                    })
+            else:
+                if ajax_requested:
+                    errors = {}
+                    for field, field_errors in form.errors.items():
+                        if field == '__all__':
+                            errors['non_field_errors'] = list(field_errors)
+                        else:
+                            errors[field] = list(field_errors)
+                    return JsonResponse({
+                        'success': False,
+                        'status': 'validation_error',
+                        'errors': errors,
+                        'message': 'Please check your details and try again.',
+                    }, status=400)
+        except Exception:
+            logger.exception('Unexpected error while processing enquiry for source %s', source)
+            if ajax_requested:
+                return JsonResponse({
+                    'success': False,
+                    'status': 'server_error',
+                    'message': 'Something went wrong. Please try again.',
+                }, status=500)
+            raise
+    elif request.method == 'POST' and _rate_limited(request):
+        if ajax_requested:
+            return JsonResponse({
+                'success': False,
+                'status': 'rate_limited',
+                'message': 'Too many attempts. Please wait a moment and try again.',
+            }, status=429)
+
+    context = {
+        'title': title,
+        'subtitle': subtitle,
+        'page_title': f'{title} — ScanPDF Services',
+        'form': form,
+        'success': success,
+        'ticket_id': ticket_id,
+        'contact_email': getattr(settings, 'CONTACT_RECEIVER_EMAIL', None) or getattr(settings, 'DEFAULT_FROM_EMAIL', None) or settings.EMAIL_HOST_USER,
+        'business_email': getattr(settings, 'BUSINESS_EMAIL', None) or getattr(settings, 'CONTACT_RECEIVER_EMAIL', None) or getattr(settings, 'DEFAULT_FROM_EMAIL', None) or '',
+        'response_time': getattr(settings, 'SUPPORT_RESPONSE_TIME', 'We usually respond within 1–2 business days.'),
+    }
+    if extra_context:
+        context.update(extra_context)
+    return render(request, template_name, context)
+
+
+def help_view(request):
+    faq_items = [
+        {'question': 'How do I use ScanPDF tools?', 'answer': 'Open any tool from the main navigation, upload your file, configure the settings, and click the action button to process it. Most tools work in a few guided steps.'},
+        {'question': 'Do I need an account?', 'answer': 'Many quick tools can be used without an account, but premium features, saved settings, and analytics are available for registered users.'},
+        {'question': 'Why is my file not uploading?', 'answer': 'Check the file size, format, and browser permissions. Most ScanPDF tools accept common PDF, image, and video formats. If the issue continues, use the Help form below.'},
+        {'question': 'What file formats are supported?', 'answer': 'ScanPDF supports common PDF, JPG, PNG, WEBP, MP4, MOV, and other standard formats depending on the selected tool. The tool page usually lists supported formats.'},
+        {'question': 'Is my uploaded file secure?', 'answer': 'We process files securely and do not keep them longer than needed for the task. Uploaded content is handled according to our privacy and security practices.'},
+        {'question': 'How long are uploaded files stored?', 'answer': 'File retention depends on the tool and active user policy. Temporary files are typically cleaned shortly after processing, while premium account data may be retained longer.'},
+        {'question': 'How do I create a short URL?', 'answer': 'Open the Short URL tool, paste your destination link, choose optional settings like expiry or password protection, and generate a shareable short link.'},
+        {'question': 'How do I generate a QR code?', 'answer': 'Go to the Dynamic QR tool, select the QR type, fill in the fields, and export or share the generated code.'},
+        {'question': 'What is included in the Free plan?', 'answer': 'The Free plan includes basic access to public tools with limited usage and feature availability. You can review the current plan details in the pricing section.'},
+        {'question': 'What is included in the Pro plan?', 'answer': 'The Pro plan adds higher limits, premium features, and a better processing experience for individuals and teams. See the pricing section for the latest details.'},
+        {'question': 'How do I upgrade my account?', 'answer': 'Visit the pricing page and choose a plan that fits your needs. If you are already logged in, you can move through the checkout and billing flow directly.'},
+        {'question': 'I paid but my account is not upgraded. What should I do?', 'answer': 'Please check the payment status and then contact the support team with your transaction details. Include the email used for the account and the reference number if available.'},
+        {'question': 'How can I report a bug?', 'answer': 'Use the Help form below and select Bug Report as the category, or contact the support team with a clear description of the problem and the tool affected.'},
+        {'question': 'How can I contact ScanPDF?', 'answer': 'You can use the Help form on this page or visit the Contact Us page for general inquiries, business requests, and support follow-ups.'},
+    ]
+
+    help_cards = [
+        {'icon': 'file-text', 'title': 'PDF Tools', 'description': 'Convert, compress, merge, split, and edit PDF documents.'},
+        {'icon': 'image', 'title': 'Image Tools', 'description': 'Resize, compress, convert, watermark, and optimize images.'},
+        {'icon': 'video', 'title': 'Video Tools', 'description': 'Trim, merge, edit, and optimize video files with ease.'},
+        {'icon': 'qr-code', 'title': 'QR Code', 'description': 'Create dynamic QR codes for links, contact details, and more.'},
+        {'icon': 'link-2', 'title': 'Short URL', 'description': 'Generate short, branded, and trackable URLs for sharing.'},
+        {'icon': 'user-circle', 'title': 'Account & Login', 'description': 'Manage your account, sign in, and access your profile settings.'},
+        {'icon': 'badge-dollar-sign', 'title': 'Pricing & Plans', 'description': 'Compare plan features, upgrades, and usage limits.'},
+        {'icon': 'receipt', 'title': 'Billing', 'description': 'Learn about payment status, invoices, and renewals.'},
+        {'icon': 'shield-check', 'title': 'Privacy & Security', 'description': 'Review file handling, retention, and account protections.'},
+        {'icon': 'wrench', 'title': 'Technical Issues', 'description': 'Troubleshoot browser, upload, and processing-related errors.'},
+    ]
+
+    form = ContactEnquiryForm(source=ContactEnquiry.SOURCE_HELP)
+    return _render_enquiry_form(request, 'services/help.html', ContactEnquiryForm, ContactEnquiry.SOURCE_HELP, 'How Can We Help?', 'Find answers, troubleshoot issues, or contact our support team.', {
+        'help_cards': help_cards,
+        'faq_items': faq_items,
+        'form': form,
     })
 
+
 def contact_view(request):
-    """Placeholder view for contacting sales/support."""
-    return render(request, 'services/placeholder_page.html', {
-        'title': 'Contact Us',
-        'subtitle': 'Get in touch with our solutions architects and support staff.',
-        'page_title': 'Contact Us — ScanPDF Services'
+    form = ContactEnquiryForm(source=ContactEnquiry.SOURCE_CONTACT)
+    return _render_enquiry_form(request, 'services/contact.html', ContactEnquiryForm, ContactEnquiry.SOURCE_CONTACT, "Let's Talk", 'Have a question, feedback, business enquiry, or need technical assistance? Send us a message and our team will get back to you.', {
+        'form': form,
+        'contact_email': getattr(settings, 'CONTACT_RECEIVER_EMAIL', None) or getattr(settings, 'DEFAULT_FROM_EMAIL', None) or settings.EMAIL_HOST_USER,
+        'business_email': getattr(settings, 'BUSINESS_EMAIL', None) or getattr(settings, 'CONTACT_RECEIVER_EMAIL', None) or getattr(settings, 'DEFAULT_FROM_EMAIL', None) or '',
+        'response_time': getattr(settings, 'SUPPORT_RESPONSE_TIME', 'We usually respond within 1–2 business days.'),
     })

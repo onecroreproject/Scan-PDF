@@ -1,0 +1,17 @@
+Hi {{ name }},
+
+Thank you for contacting ScanPDF.
+
+We have received your message regarding:
+
+{{ subject }}
+
+Our team will review your request and respond as soon as possible.
+
+Reference ID:
+{{ ticket_id }}
+
+Please keep this reference ID for future communication.
+
+Regards,
+ScanPDF Team

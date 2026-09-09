@@ -10,6 +10,7 @@ urlpatterns = [
     path('payment/success/', views.payment_success_view, name='payment_success_view'),
     path('payment/failed/', views.payment_failed_view, name='payment_failed_view'),
     path('payment/history/', views.payment_history_view, name='payment_history'),
-    path('support/', views.support_view, name='support'),
+    path('help/', views.help_view, name='help'),
+    path('support/', views.support_legacy_redirect, name='support'),
     path('contact/', views.contact_view, name='contact'),
 ]
