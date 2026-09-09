@@ -9,7 +9,7 @@ This module handles:
 import random
 import json
 import os
-from datetime import timedelta
+from datetime import datetime, timedelta
 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse, HttpResponseRedirect, HttpResponse
@@ -411,20 +411,26 @@ def dqr_reset_password_view(request):
 # ═══════════════════════════════════════════════════════════════
 @dqr_login_required
 def dqr_dashboard_view(request):
-    """Overview dashboard with stats and top 6 recent QRs."""
+    """Common overview dashboard for Dynamic QR and Short URL assets."""
     try:
-        # Exclude Short URL items (custom-url) from QR dashboard.
-        all_qrs = DynamicQRCode.objects.filter(user=request.user).exclude(qr_type='custom-url').order_by('-created_at')
-        recent_qrs = all_qrs[:6]
+        all_assets = list(
+            DynamicQRCode.objects.filter(user=request.user).order_by('-created_at')
+        )
+        recent_qrs = all_assets[:6]
         
-        total_active = all_qrs.filter(is_active=True).count()
-        total_deactivated = all_qrs.filter(is_active=False).count()
+        total_assets = len(all_assets)
+        total_active = sum(1 for asset in all_assets if asset.is_active)
+        total_deactivated = total_assets - total_active
         
         from django.db.models import Sum
-        total_scans = all_qrs.aggregate(Sum('scan_count'))['scan_count__sum'] or 0
+        total_scans = DynamicQRCode.objects.filter(user=request.user).aggregate(
+            Sum('scan_count')
+        )['scan_count__sum'] or 0
 
         for qr in recent_qrs:
-            qr.qr_content = qr.get_static_content(request)
+            qr.is_short_url = qr.qr_type == 'custom-url'
+            if not qr.is_short_url:
+                qr.qr_content = qr.get_static_content(request)
 
         # Retrieve active subscription details
         from services.models import Subscription, Plan
@@ -443,10 +449,11 @@ def dqr_dashboard_view(request):
 
         return render(request, 'dynamic_qr/dashboard.html', {
             'qr_codes': recent_qrs,
+            'total_assets': total_assets,
             'total_active': total_active,
             'total_deactivated': total_deactivated,
             'total_scans': total_scans,
-            'has_more': all_qrs.count() > 6,
+            'has_more': total_assets > 6,
             'subscription': subscription
         })
     except Exception as e:
@@ -456,12 +463,74 @@ def dqr_dashboard_view(request):
 
 
 @dqr_login_required
+def dqr_plan_view(request):
+    """Show the authenticated user's subscription and live feature entitlements."""
+    from services.models import Feature, Subscription, Plan
+    from services.plan_features import FEATURE_CODES, get_all_feature_statuses
+
+    subscription = Subscription.objects.filter(
+        user=request.user, status='Active'
+    ).select_related('plan').first()
+    if not subscription:
+        from services.views import get_or_create_plans
+        get_or_create_plans()
+        free_plan = Plan.objects.get(code='free')
+        subscription = Subscription.objects.create(
+            user=request.user,
+            plan=free_plan,
+            status='Active',
+            billing_cycle='monthly',
+            payment_status='Paid'
+        )
+
+    statuses = get_all_feature_statuses(request.user)
+    feature_names = {
+        feature.key: feature.name
+        for feature in Feature.objects.filter(key__in=FEATURE_CODES)
+    }
+    feature_rows = [
+        {
+            'code': code,
+            'name': feature_names.get(code, code.replace('_', ' ').title()),
+            **statuses.get(code, {}),
+        }
+        for code in FEATURE_CODES
+    ]
+    return render(request, 'dynamic_qr/plan.html', {
+        'subscription': subscription,
+        'feature_rows': feature_rows,
+    })
+
+
+@dqr_login_required
 def dqr_all_qrs_view(request):
-    """Full list of all QR codes with pagination."""
+    """Full list of the authenticated user's Dynamic QR codes."""
     try:
         from django.core.paginator import Paginator
-        # Exclude Short URL items (custom-url) from QR library.
-        all_qrs = DynamicQRCode.objects.filter(user=request.user).exclude(qr_type='custom-url').order_by('-created_at')
+        from django.db.models import Max, Q
+
+        search_query = request.GET.get('q', '').strip()
+        status_filter = request.GET.get('status', '').strip()
+        date_from = request.GET.get('date_from', '').strip()
+        date_to = request.GET.get('date_to', '').strip()
+        all_qrs = DynamicQRCode.objects.filter(
+            user=request.user
+        ).exclude(qr_type='custom-url').annotate(
+            last_scanned_at=Max('analytics__timestamp')
+        )
+        if search_query:
+            all_qrs = all_qrs.filter(
+                Q(qr_name__icontains=search_query) |
+                Q(short_code__icontains=search_query) |
+                Q(destination_url__icontains=search_query)
+            )
+        if status_filter in ('active', 'paused'):
+            all_qrs = all_qrs.filter(is_active=status_filter == 'active')
+        if date_from:
+            all_qrs = all_qrs.filter(created_at__date__gte=date_from)
+        if date_to:
+            all_qrs = all_qrs.filter(created_at__date__lte=date_to)
+        all_qrs = all_qrs.order_by('-created_at')
         
         paginator = Paginator(all_qrs, 12) # 12 per page
         page_number = request.GET.get('page')
@@ -472,7 +541,11 @@ def dqr_all_qrs_view(request):
             
         return render(request, 'dynamic_qr/all_qrs.html', {
             'page_obj': page_obj,
-            'total_count': all_qrs.count()
+            'total_count': all_qrs.count(),
+            'search_query': search_query,
+            'status_filter': status_filter,
+            'date_from': date_from,
+            'date_to': date_to,
         })
     except Exception as e:
         if 'no such column' in str(e).lower():
@@ -935,7 +1008,7 @@ def dqr_short_url_analytics_view(request, qr_id):
     from django.db import connection, OperationalError
     from django.core.paginator import Paginator
     from django.utils import timezone
-    from datetime import timedelta
+    from datetime import datetime, timedelta
     from django.http import HttpResponse
     import json
     import csv
@@ -953,14 +1026,17 @@ def dqr_short_url_analytics_view(request, qr_id):
             
     selected_range = request.GET.get('range', '7days')
     now = timezone.now()
+    today = timezone.localdate()
     history_clamped = False
     
     range_map = {
         'today': 1,
+        '7d': 7,
         '7days': 7,
         '28days': 28,
         '1month': 30,
         '30days': 30,
+        '30d': 30,
         '12months': 365
     }
     
@@ -969,14 +1045,12 @@ def dqr_short_url_analytics_view(request, qr_id):
         history_clamped = True
         req_days = max_history_days
         
-    if selected_range == 'today':
-        start_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
-        prev_start = start_date - timedelta(days=1)
-        prev_end = start_date
-    else:
-        start_date = now - timedelta(days=req_days)
-        prev_start = start_date - timedelta(days=req_days)
-        prev_end = start_date
+    start_day = today - timedelta(days=req_days - 1)
+    start_date = timezone.make_aware(datetime.combine(start_day, datetime.min.time()))
+    end_date = timezone.make_aware(datetime.combine(today + timedelta(days=1), datetime.min.time()))
+    prev_start = start_date - timedelta(days=req_days)
+    prev_end = start_date
+    visit_results = ('redirect_success', 'gps_required', 'gps_denied')
         
     # 2. CSV Export
     if request.GET.get('export') == 'csv':
@@ -995,7 +1069,11 @@ def dqr_short_url_analytics_view(request, qr_id):
         writer = csv.writer(response)
         writer.writerow(['Timestamp', 'Short Code', 'Header', 'Result', 'Status', 'Country', 'City', 'Device', 'Browser', 'OS', 'Referrer', 'Type', 'Is Bot'])
         
-        for record in qr.analytics.filter(timestamp__gte=start_date).order_by('-timestamp'):
+        for record in qr.analytics.filter(
+            timestamp__gte=start_date,
+            timestamp__lt=end_date,
+            redirect_result__in=visit_results,
+        ).order_by('-timestamp'):
             writer.writerow([
                 record.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
                 qr.short_code,
@@ -1014,27 +1092,33 @@ def dqr_short_url_analytics_view(request, qr_id):
         return response
 
     # 3. Base Queries
-    base_query = qr.analytics.filter(timestamp__gte=start_date)
-    prev_query = qr.analytics.filter(timestamp__gte=prev_start, timestamp__lt=prev_end)
+    base_query = qr.analytics.filter(
+        timestamp__gte=start_date,
+        timestamp__lt=end_date,
+        redirect_result__in=visit_results,
+    )
+    prev_query = qr.analytics.filter(
+        timestamp__gte=prev_start,
+        timestamp__lt=prev_end,
+        redirect_result__in=visit_results,
+    )
     
     def get_data():
-        total_requests = base_query.count()
-        successful_redirects = base_query.filter(redirect_result='redirect_success').count()
-        total_clicks = successful_redirects
-        blocked_requests = base_query.exclude(redirect_result='redirect_success').count()
-        qr_scans = base_query.filter(is_qr_scan=True).count()
+        total_clicks = base_query.values('id').distinct().count()
+        total_requests = total_clicks
+        qr_scans = base_query.filter(is_qr_scan=True).values('id').distinct().count()
         
-        # Unique clicks should only be Human + Successful redirects
-        unique_clicks = base_query.filter(is_bot=False, redirect_result='redirect_success').exclude(visitor_id__isnull=True).exclude(visitor_id='').values('visitor_id').distinct().count()
+        # Unique visitors are derived from the same canonical visit rows.
+        unique_clicks = base_query.filter(is_bot=False).exclude(visitor_id__isnull=True).exclude(visitor_id='').values('visitor_id').distinct().count()
         
-        human_clicks = base_query.filter(is_bot=False).count()
-        bot_clicks = base_query.filter(is_bot=True).count()
+        human_clicks = base_query.filter(is_bot=False).values('id').distinct().count()
+        bot_clicks = base_query.filter(is_bot=True).values('id').distinct().count()
         
-        prev_total = prev_query.count()
-        prev_qr = prev_query.filter(is_qr_scan=True).count()
-        prev_unique = prev_query.filter(is_bot=False, redirect_result='redirect_success').exclude(visitor_id__isnull=True).exclude(visitor_id='').values('visitor_id').distinct().count()
-        prev_human = prev_query.filter(is_bot=False).count()
-        prev_bot = prev_query.filter(is_bot=True).count()
+        prev_total = prev_query.values('id').distinct().count()
+        prev_qr = prev_query.filter(is_qr_scan=True).values('id').distinct().count()
+        prev_unique = prev_query.filter(is_bot=False).exclude(visitor_id__isnull=True).exclude(visitor_id='').values('visitor_id').distinct().count()
+        prev_human = prev_query.filter(is_bot=False).values('id').distinct().count()
+        prev_bot = prev_query.filter(is_bot=True).values('id').distinct().count()
         
         def pct_change(curr, prev):
             if prev == 0: return "+100%" if curr > 0 else "0%"
@@ -1050,7 +1134,7 @@ def dqr_short_url_analytics_view(request, qr_id):
         }
         
         # Aggregate device/browser/os — replace None with 'Unknown'
-        source_stats_raw = list(base_query.values('source').annotate(count=Count('id')).order_by('-count'))
+        source_stats_raw = list(base_query.values('source').annotate(count=Count('id', distinct=True)).order_by('-count'))
         source_counts = {}
         source_labels = {
             'direct': 'Direct Visit', 'internal': 'Internal Navigation', 'qr': 'QR Scan',
@@ -1063,9 +1147,9 @@ def dqr_short_url_analytics_view(request, qr_id):
             source_counts[label] = source_counts.get(label, 0) + row['count']
         source_stats = [{'source': label, 'count': count} for label, count in source_counts.items()]
         source_stats.sort(key=lambda row: -row['count'])
-        os_stats_raw = list(base_query.values('os').annotate(count=Count('id')).order_by('-count')[:6])
-        browser_stats_raw = list(base_query.values('browser').annotate(count=Count('id')).order_by('-count')[:6])
-        device_stats_raw = list(base_query.values('device_type').annotate(count=Count('id')).order_by('-count'))
+        os_stats_raw = list(base_query.values('os').annotate(count=Count('id', distinct=True)).order_by('-count')[:6])
+        browser_stats_raw = list(base_query.values('browser').annotate(count=Count('id', distinct=True)).order_by('-count')[:6])
+        device_stats_raw = list(base_query.values('device_type').annotate(count=Count('id', distinct=True)).order_by('-count'))
         
         # Normalize None -> 'Unknown' and merge duplicates
         def normalize_stat(stat_list, key):
@@ -1079,11 +1163,11 @@ def dqr_short_url_analytics_view(request, qr_id):
         browser_stats = normalize_stat(browser_stats_raw, 'browser')
         device_stats = normalize_stat(device_stats_raw, 'device_type')
         
-        country_stats = list(base_query.exclude(location_source='local').exclude(country__in=['Unknown', 'Internal', '']).values('country', 'country_code').annotate(count=Count('id')).order_by('-count')[:10])
-        city_stats = list(base_query.exclude(location_source='local').exclude(city__in=['Unknown', 'Private IP', '']).values('city', 'country').annotate(count=Count('id')).order_by('-count')[:10])
+        country_stats = list(base_query.exclude(location_source='local').exclude(country__in=['Unknown', 'Internal', '']).values('country', 'country_code').annotate(count=Count('id', distinct=True)).order_by('-count')[:10])
+        city_stats = list(base_query.exclude(location_source='local').exclude(city__in=['Unknown', 'Private IP', '']).values('city', 'country').annotate(count=Count('id', distinct=True)).order_by('-count')[:10])
         local_traffic = base_query.filter(
             Q(location_source='local') | Q(country__in=['Internal', 'Local Network']) | Q(country_code='LCL')
-        ).count()
+        ).values('id').distinct().count()
         referrer_counts = {}
         for row in base_query.values('referrer'):
             referrer = row['referrer'] or ''
@@ -1096,7 +1180,21 @@ def dqr_short_url_analytics_view(request, qr_id):
         referrer_stats = [{'display_name': label, 'count': count} for label, count in referrer_counts.items()]
         referrer_stats.sort(key=lambda row: -row['count'])
         
-        # Traffic Sources — classify by referrer URL pattern
+        # Traffic Sources — each canonical visit has one stored primary source.
+        ts_stats = source_stats
+
+        def add_percentages(rows):
+            for row in rows:
+                row['percentage'] = round((row['count'] / total_clicks) * 100, 2) if total_clicks else 0
+            return rows
+
+        source_stats = add_percentages(source_stats)
+        os_stats = add_percentages(os_stats)
+        browser_stats = add_percentages(browser_stats)
+        device_stats = add_percentages(device_stats)
+        country_stats = add_percentages(country_stats)
+        city_stats = add_percentages(city_stats)
+        referrer_stats = add_percentages(referrer_stats)
         ts_stats = source_stats
         
         # Clicks by Hour / Day (using local timezone)
@@ -1108,7 +1206,6 @@ def dqr_short_url_analytics_view(request, qr_id):
             clicks_by_hour[local_ts.hour] += 1
             clicks_by_day[local_ts.weekday()] += 1
         
-        from datetime import datetime
         def safe_dt(ts_val):
             """Safely coerce SQLite date strings back to datetime objects."""
             if isinstance(ts_val, str):
@@ -1165,7 +1262,7 @@ def dqr_short_url_analytics_view(request, qr_id):
                     try: ts_dict[safe_dt(r['ts']).strftime('%b %d')] = r
                     except: pass
             for i in range(req_days):
-                d_label = (start_date + timedelta(days=i)).strftime('%b %d')
+                d_label = (start_day + timedelta(days=i)).strftime('%b %d')
                 r = ts_dict.get(d_label, {'count': 0, 'unique': 0, 'qr': 0, 'human': 0, 'bot': 0})
                 time_series.append({'label': d_label, 'count': r['count'], 'unique': r['unique'],
                                     'qr': r['qr'], 'human': r.get('human', 0), 'bot': r.get('bot', 0)})
@@ -1222,11 +1319,18 @@ def dqr_short_url_analytics_view(request, qr_id):
             'peak_hour_clicks': peak_hour_clicks,
             'insights': insights,
             'local_traffic': local_traffic,
-            'gps_requests': base_query.exclude(gps_permission='not_required').count(),
-            'gps_granted': base_query.filter(gps_permission='granted').count(),
-            'gps_denied': base_query.filter(gps_permission='denied').count(),
-            'gps_unavailable': base_query.filter(gps_permission__in=['unavailable', 'timeout']).count(),
+            'gps_requests': base_query.filter(
+                gps_permission__in=['pending', 'granted', 'denied', 'unavailable', 'timeout', 'error']
+            ).values('id').distinct().count(),
+            'gps_granted': base_query.filter(gps_permission='granted').values('id').distinct().count(),
+            'gps_denied': base_query.filter(gps_permission='denied').values('id').distinct().count(),
+            'gps_unavailable': base_query.filter(
+                gps_permission__in=['unavailable', 'timeout', 'error']
+            ).values('id').distinct().count(),
         }
+        summary['capture_rate'] = round(
+            (summary['gps_granted'] / summary['gps_requests']) * 100, 2
+        ) if summary['gps_requests'] else 0
         
         return total_clicks, qr_scans, unique_clicks, human_clicks, bot_clicks, trends, source_stats, os_stats, browser_stats, device_stats, country_stats, city_stats, referrer_stats, time_series, recent_scans_qs, summary, ts_stats, clicks_by_hour, clicks_by_day
 
@@ -1280,7 +1384,7 @@ def dqr_short_url_analytics_view(request, qr_id):
             chart_data_ratio.append(round(d['unique'] / d['count'] * 100, 1))
         else:
             chart_data_ratio.append(0)
-    avg_ratio = round(sum(chart_data_ratio) / len([r for r in chart_data_ratio if r > 0]), 1) if any(r > 0 for r in chart_data_ratio) else 0
+    avg_ratio = round((unique_clicks / total_clicks) * 100, 2) if total_clicks else 0
 
     return render(request, 'dynamic_qr/short_url_analytics.html', {
         'qr': qr,
@@ -1507,32 +1611,47 @@ def dqr_analytics_view(request, qr_id):
     qr = get_object_or_404(DynamicQRCode, id=qr_id, user=request.user)
     
     from django.db.models import Count
-    from django.db.models.functions import TruncDate
+    from django.db.models.functions import TruncDate, TruncHour
     from django.db import connection, OperationalError
     
     from django.core.paginator import Paginator
     
     selected_range = request.GET.get('range', '7days')
     now = timezone.now()
+    today = timezone.localdate()
     
     if selected_range == 'today':
-        start_date = now.replace(hour=0, minute=0, second=0, microsecond=0)
-    elif selected_range == '7days':
-        start_date = now - timedelta(days=7)
+        range_days = 1
+    elif selected_range in ('7days', '7d'):
+        range_days = 7
     elif selected_range == '1month' or selected_range == '30days':
-        start_date = now - timedelta(days=30)
+        range_days = 30
+    elif selected_range == '30d':
+        range_days = 30
     elif selected_range == '28days':
-        start_date = now - timedelta(days=28)
+        range_days = 28
     elif selected_range == '6months':
-        start_date = now - timedelta(days=180)
+        range_days = 180
     elif selected_range == '12months':
-        start_date = now - timedelta(days=365)
+        range_days = 365
     else:
-        start_date = now - timedelta(days=7)
+        range_days = 7
+
+    start_day = today - timedelta(days=range_days - 1)
+    start_date = timezone.make_aware(datetime.combine(start_day, datetime.min.time()))
+    end_date = timezone.make_aware(datetime.combine(today + timedelta(days=1), datetime.min.time()))
         
     def get_data():
-        base_query = qr.analytics.filter(timestamp__gte=start_date)
-        daily_scans = list(base_query.annotate(date=TruncDate('timestamp')).values('date').annotate(count=Count('id')).order_by('date'))
+        base_query = qr.analytics.filter(timestamp__gte=start_date, timestamp__lt=end_date)
+        if selected_range == 'today':
+            daily_scans = list(base_query.annotate(date=TruncHour('timestamp')).values('date').annotate(count=Count('id')).order_by('date'))
+        else:
+            daily_scans = list(base_query.annotate(date=TruncDate('timestamp')).values('date').annotate(count=Count('id')).order_by('date'))
+            counts_by_day = {row['date']: row['count'] for row in daily_scans}
+            daily_scans = [
+                {'date': start_day + timedelta(days=offset), 'count': counts_by_day.get(start_day + timedelta(days=offset), 0)}
+                for offset in range(range_days)
+            ]
         browser_stats = list(base_query.values('browser').annotate(count=Count('id')).order_by('-count')[:5])
         device_stats = list(base_query.values('device_type').annotate(count=Count('id')).order_by('-count'))
         os_stats = list(base_query.values('os').annotate(count=Count('id')).order_by('-count')[:5])
@@ -1550,7 +1669,7 @@ def dqr_analytics_view(request, qr_id):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
 
-    chart_labels = [d['date'].strftime('%b %d') for d in daily_scans]
+    chart_labels = [d['date'].strftime('%I %p' if selected_range == 'today' else '%b %d') for d in daily_scans]
     chart_data = [d['count'] for d in daily_scans]
     device_labels = [d['device_type'] if d['device_type'] else 'Unknown' for d in device_stats]
     device_data = [d['count'] for d in device_stats]
@@ -1640,20 +1759,15 @@ def dqr_redirect_view(request, short_code):
             except (TypeError, ValueError):
                 if is_json_request:
                     return JsonResponse({'success': False, 'error': 'Invalid GPS coordinates.'}, status=400)
-                return render(request, 'dynamic_qr/gps_prompt.html', {'qr': qr, 'error': 'The location data was invalid. Please try again.'})
+                return JsonResponse({'success': True, 'redirect_url': qr.destination_url}, status=200)
             if not event:
                 if is_json_request:
                     return JsonResponse({'success': False, 'error': 'GPS session expired. Please reopen the short link.'}, status=409)
-                return render(request, 'dynamic_qr/gps_prompt.html', {'qr': qr, 'error': 'Your GPS session expired. Please try again.'})
+                return JsonResponse({'success': True, 'redirect_url': qr.destination_url}, status=200)
             if permission != 'granted':
-                messages = {
-                    'denied': 'Location permission was denied. Allow access to continue to this link.',
-                    'unavailable': 'Your location is currently unavailable. Check your browser or device settings and try again.',
-                    'timeout': 'The location request timed out. Please try again.',
-                }
                 if is_json_request:
-                    return JsonResponse({'success': False, 'error': messages[permission]}, status=403)
-                return render(request, 'dynamic_qr/gps_prompt.html', {'qr': qr, 'error': messages[permission]})
+                    return JsonResponse({'success': True, 'redirect_url': qr.destination_url})
+                return JsonResponse({'success': True, 'redirect_url': qr.destination_url})
             # The pending event already represents this visit. Prevent the
             # redirecting GET from recording a second successful event.
             request.session[f'qr_last_hit_{qr.id}'] = timezone.now().timestamp()
@@ -1668,7 +1782,10 @@ def dqr_redirect_view(request, short_code):
                 pending.gps_permission = 'pending'
                 pending.save(update_fields=['gps_permission'])
                 request.session[f'qr_pending_event_{qr.id}'] = pending.pk
-        return render(request, 'dynamic_qr/gps_prompt.html', {'qr': qr})
+        return render(request, 'dynamic_qr/gps_capture_redirect.html', {
+            'qr': qr,
+            'destination_url': qr.destination_url,
+        })
 
     # 4. Password Protection Check
     if qr.password and not request.session.get(f'qr_auth_{qr.id}'):

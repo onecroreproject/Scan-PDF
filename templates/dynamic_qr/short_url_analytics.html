@@ -291,11 +291,6 @@ body { background:var(--s0); }
         </div>
     </div>
 
-    <div class="an-card" style="margin-bottom:16px;">
-        <div class="an-title">Local / Private Traffic</div>
-        <p style="font-size:12px;color:var(--s5);margin-bottom:8px;">Local addresses are not geographic countries or cities.</p>
-        <strong style="font-size:22px;color:var(--s9);">{{ local_traffic }}</strong> <span style="color:var(--s6);">visits · Local Network</span>
-    </div>
     {% if qr.require_gps or perf_summary.gps_requests %}
     <div class="an-card" style="margin-bottom:16px;">
         <div class="an-title">GPS Analytics</div>
@@ -304,7 +299,7 @@ body { background:var(--s0); }
             <span>Permission Granted <strong>{{ perf_summary.gps_granted }}</strong></span>
             <span>Permission Denied <strong>{{ perf_summary.gps_denied }}</strong></span>
             <span>Unavailable / Timeout <strong>{{ perf_summary.gps_unavailable }}</strong></span>
-            <span>Capture Rate <strong>{% widthratio perf_summary.gps_granted perf_summary.gps_requests 100 %}%</strong></span>
+            <span>Capture Rate <strong>{{ perf_summary.capture_rate|floatformat:2 }}%</strong></span>
         </div>
     </div>
     {% endif %}
@@ -316,8 +311,8 @@ body { background:var(--s0); }
             {% if country_stats %}{% for item in country_stats|slice:":7" %}
             <div class="prog-row">
                 <div class="prog-name" title="{{ item.country }}">{{ item.country }}</div>
-                <div class="prog-bg"><div class="prog-fill" style="width:{% widthratio item.count total_clicks 100 %}%;"></div></div>
-                <div class="prog-nums">{{ item.count }} · {% widthratio item.count total_clicks 100 %}%</div>
+                <div class="prog-bg"><div class="prog-fill" style="width:{{ item.percentage }}%;"></div></div>
+                <div class="prog-nums">{{ item.count }} · {{ item.percentage|floatformat:2 }}%</div>
             </div>
             {% endfor %}{% else %}<div class="empty"><p>No country data</p></div>{% endif %}
         </div>
@@ -326,8 +321,8 @@ body { background:var(--s0); }
             {% if city_stats %}{% for item in city_stats|slice:":7" %}
             <div class="prog-row">
                 <div class="prog-name" title="{{ item.city }}">{{ item.city }}</div>
-                <div class="prog-bg"><div class="prog-fill" style="width:{% widthratio item.count total_clicks 100 %}%;"></div></div>
-                <div class="prog-nums">{{ item.count }} · {% widthratio item.count total_clicks 100 %}%</div>
+                <div class="prog-bg"><div class="prog-fill" style="width:{{ item.percentage }}%;"></div></div>
+                <div class="prog-nums">{{ item.count }} · {{ item.percentage|floatformat:2 }}%</div>
             </div>
             {% endfor %}{% else %}<div class="empty"><p>No city data</p></div>{% endif %}
         </div>
@@ -341,8 +336,8 @@ body { background:var(--s0); }
             {% if referrer_stats %}{% for item in referrer_stats|slice:":7" %}
             <div class="prog-row">
                 <div class="prog-name" title="{{ item.display_name }}">{{ item.display_name|default:"Unknown" }}</div>
-                <div class="prog-bg"><div class="prog-fill" style="width:{% widthratio item.count total_clicks 100 %}%;"></div></div>
-                <div class="prog-nums">{{ item.count }} · {% widthratio item.count total_clicks 100 %}%</div>
+                <div class="prog-bg"><div class="prog-fill" style="width:{{ item.percentage }}%;"></div></div>
+                <div class="prog-nums">{{ item.count }} · {{ item.percentage|floatformat:2 }}%</div>
             </div>
             {% endfor %}{% else %}
             <div class="empty">
@@ -357,8 +352,8 @@ body { background:var(--s0); }
             {% if ts_stats %}{% for item in ts_stats %}
             <div class="prog-row">
                 <div class="prog-name" title="{{ item.source }}">{{ item.source }}</div>
-                <div class="prog-bg"><div class="prog-fill" style="width:{% widthratio item.count total_clicks 100 %}%;"></div></div>
-                <div class="prog-nums">{{ item.count }} · {% widthratio item.count total_clicks 100 %}%</div>
+                <div class="prog-bg"><div class="prog-fill" style="width:{{ item.percentage }}%;"></div></div>
+                <div class="prog-nums">{{ item.count }} · {{ item.percentage|floatformat:2 }}%</div>
             </div>
             {% endfor %}{% else %}
             <div class="empty">
@@ -376,7 +371,7 @@ body { background:var(--s0); }
             {% if device_stats %}
             <div class="cw" style="height:160px;"><canvas id="deviceChart" style="height:160px;"></canvas></div>
             <div style="margin-top:12px;">{% for item in device_stats %}
-            <div class="donut-row"><span style="color:var(--s7);" title="{{ item.label }}">{{ item.label }}</span><span style="color:var(--s9);">{{ item.count }} · {% widthratio item.count total_clicks 100 %}%</span></div>
+            <div class="donut-row"><span style="color:var(--s7);" title="{{ item.label }}">{{ item.label }}</span><span style="color:var(--s9);">{{ item.count }} · {{ item.percentage|floatformat:2 }}%</span></div>
             {% endfor %}</div>
             {% else %}<div class="empty"><p>No device data</p></div>{% endif %}
         </div>
@@ -385,7 +380,7 @@ body { background:var(--s0); }
             {% if browser_stats %}
             <div class="cw" style="height:160px;"><canvas id="browserChart" style="height:160px;"></canvas></div>
             <div style="margin-top:12px;">{% for item in browser_stats %}
-            <div class="donut-row"><span style="color:var(--s7);" title="{{ item.label }}">{{ item.label }}</span><span style="color:var(--s9);">{{ item.count }} · {% widthratio item.count total_clicks 100 %}%</span></div>
+            <div class="donut-row"><span style="color:var(--s7);" title="{{ item.label }}">{{ item.label }}</span><span style="color:var(--s9);">{{ item.count }} · {{ item.percentage|floatformat:2 }}%</span></div>
             {% endfor %}</div>
             {% else %}<div class="empty"><p>No browser data</p></div>{% endif %}
         </div>
@@ -394,7 +389,7 @@ body { background:var(--s0); }
             {% if os_stats %}
             <div class="cw" style="height:160px;"><canvas id="osChart" style="height:160px;"></canvas></div>
             <div style="margin-top:12px;">{% for item in os_stats %}
-            <div class="donut-row"><span style="color:var(--s7);" title="{{ item.label }}">{{ item.label }}</span><span style="color:var(--s9);">{{ item.count }} · {% widthratio item.count total_clicks 100 %}%</span></div>
+            <div class="donut-row"><span style="color:var(--s7);" title="{{ item.label }}">{{ item.label }}</span><span style="color:var(--s9);">{{ item.count }} · {{ item.percentage|floatformat:2 }}%</span></div>
             {% endfor %}</div>
             {% else %}<div class="empty"><p>No OS data</p></div>{% endif %}
         </div>
