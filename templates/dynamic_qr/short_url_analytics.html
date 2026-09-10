@@ -7,6 +7,9 @@
 {{ block.super }}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jsvectormap/dist/css/jsvectormap.min.css" />
+<script src="https://cdn.jsdelivr.net/npm/jsvectormap"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsvectormap/dist/maps/world.js"></script>
 {% endblock %}
 
 {% block dqr_style %}
@@ -91,6 +94,42 @@ body { background:var(--s0); }
 .an-tbl tbody tr:last-child td { border-bottom:none; }
 .an-tbl tbody tr:hover { background:var(--s0); }
 
+.unique-marker {
+    display:inline-block;
+    margin-left:4px;
+    font-weight:800;
+    color:currentColor;
+    line-height:1;
+    vertical-align:middle;
+}
+.city-map-tooltip {
+    min-width:140px;
+    text-align:left;
+    line-height:1.5;
+    font-size:12px;
+}
+.jvm-tooltip {
+    white-space:pre-line;
+}
+.jvm-marker-label {
+    font-weight:600;
+    font-size:12px;
+    fill:#1f2937;
+    paint-order:stroke;
+    stroke:#fff;
+    stroke-width:3px;
+    stroke-linejoin:round;
+}
+.unique-help {
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    margin-top:4px;
+    font-size:11px;
+    font-weight:700;
+    color:var(--s5);
+}
+
 /* Badges */
 .bdg { display:inline-block; padding:2px 8px; border-radius:6px; font-size:10px; font-weight:800; text-transform:uppercase; letter-spacing:.05em; }
 .bdg-h { background:#dcfce7; color:#166534; }
@@ -163,6 +202,85 @@ body { background:var(--s0); }
     .det-grid { grid-template-columns:repeat(1, minmax(0,1fr)); }
     .det-cell-dest { grid-column:span 1; }
     .an-grid-4, .perf-grid, .perf-grid-6 { grid-template-columns:repeat(1, minmax(0,1fr)); }
+}
+
+/* ─── PDF Report Styles ────────────────────────────────────────────────── */
+#pdf-report {
+    display: none;
+    width: 740px;
+    font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
+    background: #fff;
+    color: #0f172a;
+    padding: 0;
+    box-sizing: border-box;
+}
+#pdf-report *, #pdf-report *::before, #pdf-report *::after { box-sizing: border-box; }
+.pdf-card {
+    background: #fff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 10px;
+    break-inside: avoid;
+    page-break-inside: avoid;
+}
+.pdf-lbl {
+    font-size: 9px; font-weight: 800; color: #64748b;
+    text-transform: uppercase; letter-spacing: .07em;
+    margin-bottom: 3px;
+}
+.pdf-val {
+    font-size: 11px; font-weight: 700; color: #0f172a;
+    overflow-wrap: anywhere; word-break: break-word;
+}
+.pdf-section-title {
+    font-size: 10px; font-weight: 800; color: #64748b;
+    text-transform: uppercase; letter-spacing: .07em; margin-bottom: 12px;
+}
+.pdf-prog-row {
+    display: flex; align-items: center; gap: 8px;
+    margin-bottom: 7px;
+}
+.pdf-prog-row:last-child { margin-bottom: 0; }
+.pdf-prog-name {
+    font-size: 11px; font-weight: 700; color: #334155;
+    flex: 1; min-width: 0; overflow-wrap: anywhere; word-break: break-word;
+}
+.pdf-prog-bg {
+    width: 72px; height: 6px; background: #f1f5f9;
+    border-radius: 3px; flex-shrink: 0;
+}
+.pdf-prog-fill { height: 100%; background: #4f46e5; border-radius: 3px; }
+.pdf-prog-nums {
+    font-size: 10px; font-weight: 700; color: #64748b;
+    white-space: nowrap; flex-shrink: 0;
+}
+.pdf-donut-row {
+    display: flex; justify-content: space-between; align-items: center;
+    font-size: 10px; font-weight: 700; margin-bottom: 4px;
+}
+.pdf-donut-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 55%; color: #334155; }
+.pdf-donut-count { white-space: nowrap; color: #0f172a; }
+.pdf-perf-item { display: flex; gap: 10px; align-items: flex-start; min-width: 0; }
+.pdf-perf-icon {
+    width: 34px; height: 34px; border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; flex-shrink: 0;
+}
+.pdf-perf-val {
+    font-size: 15px; font-weight: 900; color: #0f172a;
+    overflow-wrap: anywhere; word-break: break-word; line-height: 1.2;
+}
+.pdf-act-tbl { width: 100%; border-collapse: collapse; font-size: 8px; }
+.pdf-act-tbl th {
+    padding: 5px 4px; text-align: left;
+    font-size: 8px; font-weight: 800; color: #64748b;
+    text-transform: uppercase; border-bottom: 2px solid #f1f5f9;
+    white-space: nowrap;
+}
+.pdf-act-tbl td {
+    padding: 5px 4px; font-size: 8px; font-weight: 600; color: #334155;
+    border-bottom: 1px solid #f8fafc; vertical-align: top;
 }
 </style>
 {% endblock %}
@@ -242,6 +360,7 @@ body { background:var(--s0); }
         <div class="kpi-pill"><div class="kpi-label">Total Clicks<i data-lucide="mouse-pointer-click" style="width:14px;height:14px;"></i></div><div class="kpi-val">{{ total_clicks }}</div>{% if trends.total %}<div class="kpi-trend {% if '+' in trends.total %}up{% else %}dn{% endif %}">{{ trends.total }} vs prev period</div>{% endif %}</div>
         <div class="kpi-pill"><div class="kpi-label">Unique Clicks<i data-lucide="users" style="width:14px;height:14px;"></i></div><div class="kpi-val">{{ unique_clicks|default:"0" }}</div></div>
         <div class="kpi-pill"><div class="kpi-label">QR Scans<i data-lucide="qr-code" style="width:14px;height:14px;"></i></div><div class="kpi-val" style="color:var(--p6);">{{ qr_scans|default:"0" }}</div></div>
+        <div class="kpi-pill"><div class="kpi-label">Cloaked Visits<i data-lucide="shield" style="width:14px;height:14px;"></i></div><div class="kpi-val">{{ perf_summary.cloaked_clicks|default:"0" }}</div><div class="kpi-trend">{{ perf_summary.cloaked_pct }}% of total traffic</div></div>
     </div>
 
     <!-- Activity Chart -->
@@ -264,11 +383,30 @@ body { background:var(--s0); }
 
     <!-- Unique Click Ratio -->
     <div class="an-card" style="margin-bottom:16px;">
-        <div style="display:flex;align-items:flex-start;gap:32px;margin-bottom:16px;">
-            <div><div class="an-title" style="margin-bottom:2px;">Unique Click Ratio</div><p style="font-size:12px;font-weight:700;color:var(--s5);">Unique ÷ Total × 100</p></div>
-            <div><div style="font-size:32px;font-weight:900;color:var(--p6);">{{ js_avg_ratio }}%</div><div style="font-size:11px;font-weight:700;color:var(--s5);margin-top:2px;">Period Average</div></div>
+        <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:24px;flex-wrap:wrap;margin-bottom:16px;">
+            <div>
+                <div class="an-title" style="margin-bottom:2px;">Unique Click Ratio</div>
+                <p style="font-size:12px;font-weight:700;color:var(--s5);">Unique Visitors ÷ Total Clicks × 100</p>
+            </div>
+            <div style="display:flex;align-items:flex-end;gap:16px;flex-wrap:wrap;">
+                <div>
+                    <div style="font-size:32px;font-weight:900;color:var(--p6);">{{ unique_ratio|floatformat:1 }}%</div>
+                    <div style="font-size:11px;font-weight:700;color:var(--s5);margin-top:2px;">Unique Click Ratio</div>
+                </div>
+                <div style="text-align:right;">
+                    <div style="font-size:12px;font-weight:800;color:var(--s5);text-transform:uppercase;letter-spacing:.05em;">Average Clicks / Visitor</div>
+                    <div style="font-size:18px;font-weight:900;color:var(--s9);">{{ average_clicks_per_visitor|floatformat:1 }}</div>
+                </div>
+            </div>
         </div>
         {% if total_clicks > 0 %}
+        <div style="display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;margin-bottom:18px;">
+            <div class="det-cell"><p class="det-lbl">Total Clicks</p><p class="det-val">{{ total_clicks }}</p></div>
+            <div class="det-cell"><p class="det-lbl">Unique Visitors</p><p class="det-val">{{ unique_clicks|default:0 }}</p></div>
+            <div class="det-cell"><p class="det-lbl">Repeat Clicks</p><p class="det-val">{{ repeat_clicks }}</p></div>
+            <div class="det-cell"><p class="det-lbl">Unique Ratio</p><p class="det-val">{{ unique_ratio|floatformat:2 }}%</p></div>
+            <div class="det-cell"><p class="det-lbl">Repeat Ratio</p><p class="det-val">{{ repeat_ratio|floatformat:2 }}%</p></div>
+        </div>
         <div class="cw" style="height:240px;"><canvas id="ratioChart" style="height:240px;"></canvas></div>
         {% else %}
         <div class="empty"><p>No data for this period.</p></div>
@@ -304,63 +442,218 @@ body { background:var(--s0); }
     </div>
     {% endif %}
 
+    <!-- World Map -->
+    <div class="an-card" style="margin-bottom:16px;">
+        <div class="an-title">Geographic Activity Map</div>
+        {% if country_stats %}
+        <div id="world-map" style="width: 100%; height: 420px;"></div>
+        <div style="margin-top:12px;display:flex;align-items:center;gap:8px;font-size:11px;font-weight:700;color:var(--s5);"><span>Traffic intensity</span><span style="display:inline-flex;align-items:center;gap:4px;"><span style="width:18px;height:10px;border-radius:999px;background:#c7d2fe;display:inline-block;"></span>Low</span><span style="display:inline-flex;align-items:center;gap:4px;"><span style="width:18px;height:10px;border-radius:999px;background:#4f46e5;display:inline-block;"></span>High</span><span style="display:inline-flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:50%;background:#f97316;border:2px solid #fff;display:inline-block;"></span>City</span></div>
+        <script>
+            document.addEventListener('DOMContentLoaded', function() {
+                var mapData = {};
+                {% for item in country_stats %}
+                var code = '{{ item.country_code|default:"Unknown" }}';
+                if (code && code !== 'Unknown' && code !== 'XX') {
+                    mapData[code.toUpperCase()] = {{ item.count }};
+                }
+                {% endfor %}
+
+                var cityMapData = {{ city_map_data|safe }} || [];
+                var cityMarkerLayer = [];
+                function getCityRadius(clicks) {
+                    var count = Number(clicks) || 0;
+                    return Math.max(6, Math.min(16, 5 + Math.sqrt(count) * 2));
+                }
+                cityMapData.forEach(function(city) {
+                    if (typeof city.latitude === 'number' && typeof city.longitude === 'number' && isFinite(city.latitude) && isFinite(city.longitude)) {
+                        var validLat = Math.abs(city.latitude) <= 90;
+                        var validLon = Math.abs(city.longitude) <= 180;
+                        if (validLat && validLon) {
+                            cityMarkerLayer.push({
+                                coords: [city.latitude, city.longitude],
+                                name: city.city + ', ' + city.country,
+                                city: city.city,
+                                country: city.country,
+                                clicks: city.clicks,
+                                percentage: city.percentage,
+                                style: { r: getCityRadius(city.clicks) }
+                            });
+                        }
+                    }
+                });
+
+                var map = new jsVectorMap({
+                    selector: '#world-map',
+                    map: 'world',
+                    backgroundColor: 'transparent',
+                    zoomOnScroll: false,
+                    regionStyle: {
+                        initial: { fill: '#e2e8f0', stroke: '#ffffff', 'stroke-width': 0.7 },
+                        hover: { fill: '#818cf8' }
+                    },
+                    visualizeData: {
+                        scale: ['#c7d2fe', '#4f46e5'],
+                        values: mapData
+                    },
+                    markers: cityMarkerLayer,
+                    markerStyle: {
+                        initial: {
+                            fill: '#f97316',
+                            stroke: '#ffffff',
+                            'stroke-width': 2,
+                            r: 7
+                        },
+                        hover: {
+                            fill: '#fb923c',
+                            stroke: '#ffffff',
+                            'stroke-width': 2,
+                            r: 9
+                        }
+                    },
+                    markerLabelStyle: {
+                        initial: {
+                            class: 'jvm-marker-label',
+                            fill: '#1f2937',
+                            'font-size': 12,
+                            'font-weight': 600
+                        },
+                        hover: {
+                            fill: '#111827'
+                        }
+                    },
+                    labels: {
+                        markers: {
+                            render: function(marker) {
+                                return marker.name || '';
+                            }
+                        }
+                    },
+                    onRegionTooltipShow: function(tooltip, code) {
+                        var count = mapData[code];
+                        if (count) {
+                            var total = {{ total_clicks|default:0 }} || 1;
+                            var share = ((count / total) * 100).toFixed(2);
+                            tooltip.text(tooltip.text() + ' - ' + count + ' clicks (' + share + '%)');
+                        }
+                    },
+                    onMarkerTooltipShow: function(tooltip, index) {
+                        var city = cityMarkerLayer[index];
+                        if (city) {
+                            var share = Number(city.percentage);
+                            var shareLine = isFinite(share) ? '\nShare: ' + share.toFixed(2) + '%' : '';
+                            tooltip.text(city.city + ', ' + city.country + '\nClicks: ' + city.clicks + shareLine);
+                        }
+                    }
+                });
+            });
+        </script>
+        {% else %}
+        <div class="empty" style="padding:48px;"><p>No geographic data available for this period.</p></div>
+        {% endif %}
+    </div>
+
     <!-- Geography -->
-    <div class="an-grid-2">
-        <div class="an-card">
+    <div class="an-grid-2" style="margin-bottom:16px;">
+        <div class="an-card" style="min-height:420px;">
             <div class="an-title">Top Countries</div>
-            {% if country_stats %}{% for item in country_stats|slice:":7" %}
-            <div class="prog-row">
-                <div class="prog-name" title="{{ item.country }}">{{ item.country }}</div>
-                <div class="prog-bg"><div class="prog-fill" style="width:{{ item.percentage }}%;"></div></div>
-                <div class="prog-nums">{{ item.count }} · {{ item.percentage|floatformat:2 }}%</div>
+            {% if country_stats %}
+            <div style="height:280px;display:flex;align-items:center;justify-content:center;">
+                <canvas id="topCountriesPie" height="180" width="180"></canvas>
             </div>
-            {% endfor %}{% else %}<div class="empty"><p>No country data</p></div>{% endif %}
+            <div style="margin-top:14px;display:flex;flex-direction:column;gap:10px;">
+                {% for item in country_stats|slice:":7" %}
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:13px;font-weight:700;color:var(--s7);">
+                    <span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ item.country }}</span>
+                    <span style="color:var(--s5);white-space:nowrap;">{{ item.count }} · {{ item.percentage|floatformat:2 }}%</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}<div class="empty"><p>No country data</p></div>{% endif %}
         </div>
-        <div class="an-card">
+        <div class="an-card" style="min-height:420px;">
             <div class="an-title">Top Cities</div>
-            {% if city_stats %}{% for item in city_stats|slice:":7" %}
-            <div class="prog-row">
-                <div class="prog-name" title="{{ item.city }}">{{ item.city }}</div>
-                <div class="prog-bg"><div class="prog-fill" style="width:{{ item.percentage }}%;"></div></div>
-                <div class="prog-nums">{{ item.count }} · {{ item.percentage|floatformat:2 }}%</div>
+            {% if city_stats %}
+            <div style="height:280px;display:flex;align-items:center;justify-content:center;">
+                <canvas id="topCitiesPie" height="180" width="180"></canvas>
             </div>
-            {% endfor %}{% else %}<div class="empty"><p>No city data</p></div>{% endif %}
+            <div style="margin-top:14px;display:flex;flex-direction:column;gap:10px;">
+                {% for item in city_stats|slice:":7" %}
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:13px;font-weight:700;color:var(--s7);">
+                    <span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ item.city }}</span>
+                    <span style="color:var(--s5);white-space:nowrap;">{{ item.count }} · {{ item.percentage|floatformat:2 }}%</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}<div class="empty"><p>No city data</p></div>{% endif %}
         </div>
     </div>
 
-    <!-- Referrers / Traffic Sources -->
-    <div class="an-grid-2">
-        <div class="an-card">
-            <div class="an-title" style="margin-bottom:4px;">Top Referrers</div>
-            <p style="font-size:12px;color:var(--s5);margin-bottom:16px;">Which websites sent visitors</p>
-            {% if referrer_stats %}{% for item in referrer_stats|slice:":7" %}
-            <div class="prog-row">
-                <div class="prog-name" title="{{ item.display_name }}">{{ item.display_name|default:"Unknown" }}</div>
-                <div class="prog-bg"><div class="prog-fill" style="width:{{ item.percentage }}%;"></div></div>
-                <div class="prog-nums">{{ item.count }} · {{ item.percentage|floatformat:2 }}%</div>
+    <!-- UTM attribution -->
+    <div class="an-card" style="margin-bottom:16px;">
+        <div class="an-title">UTM Campaign Analytics</div>
+        {% if utm_sources or utm_mediums or utm_campaigns or utm_terms or utm_contents %}
+        <div class="an-grid-2" style="margin-bottom:0;">
+            <div>
+                <p style="font-size:12px;font-weight:800;color:var(--s5);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">UTM Sources</p>
+                {% if utm_sources %}<div style="height:200px;"><canvas id="utmSourcesChart"></canvas></div>{% else %}<div class="empty"><p>No UTM source data</p></div>{% endif %}
+                <p style="font-size:12px;font-weight:800;color:var(--s5);text-transform:uppercase;letter-spacing:.05em;margin:18px 0 10px;">UTM Mediums</p>
+                {% if utm_mediums %}<div style="height:200px;"><canvas id="utmMediumsChart"></canvas></div>{% else %}<div class="empty"><p>No UTM medium data</p></div>{% endif %}
             </div>
-            {% endfor %}{% else %}
-            <div class="empty">
-                <p>No referrer data yet</p>
-                <p style="font-size:11px;font-weight:400;margin-top:4px;">Share your short URL to start collecting analytics.</p>
+            <div>
+                <p style="font-size:12px;font-weight:800;color:var(--s5);text-transform:uppercase;letter-spacing:.05em;margin-bottom:10px;">UTM Campaigns</p>
+                {% if utm_campaigns %}<div style="height:220px;"><canvas id="utmCampaignsChart"></canvas></div>{% else %}<div class="empty"><p>No UTM campaign data</p></div>{% endif %}
+                {% if utm_terms or utm_contents %}
+                <div style="margin-top:18px;display:grid;grid-template-columns:1fr 1fr;gap:14px;">
+                    <div>
+                        <p style="font-size:12px;font-weight:800;color:var(--s5);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Top Terms</p>
+                        {% if utm_terms %}{% for item in utm_terms %}<div style="display:flex;justify-content:space-between;gap:8px;font-size:12px;font-weight:700;color:var(--s7);margin-bottom:8px;"><span>{{ item.label }}</span><span style="color:var(--s5);">{{ item.count }}</span></div>{% endfor %}{% else %}<div class="empty" style="padding:12px 0;"><p>No UTM term data</p></div>{% endif %}
+                    </div>
+                    <div>
+                        <p style="font-size:12px;font-weight:800;color:var(--s5);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;">Top Content</p>
+                        {% if utm_contents %}{% for item in utm_contents %}<div style="display:flex;justify-content:space-between;gap:8px;font-size:12px;font-weight:700;color:var(--s7);margin-bottom:8px;"><span>{{ item.label }}</span><span style="color:var(--s5);">{{ item.count }}</span></div>{% endfor %}{% else %}<div class="empty" style="padding:12px 0;"><p>No UTM content data</p></div>{% endif %}
+                    </div>
+                </div>
+                {% endif %}
             </div>
-            {% endif %}
         </div>
-        <div class="an-card">
-            <div class="an-title" style="margin-bottom:4px;">Traffic Sources</div>
-            <p style="font-size:12px;color:var(--s5);margin-bottom:16px;">Where your visitors came from</p>
-            {% if ts_stats %}{% for item in ts_stats %}
-            <div class="prog-row">
-                <div class="prog-name" title="{{ item.source }}">{{ item.source }}</div>
-                <div class="prog-bg"><div class="prog-fill" style="width:{{ item.percentage }}%;"></div></div>
-                <div class="prog-nums">{{ item.count }} · {{ item.percentage|floatformat:2 }}%</div>
+        {% else %}
+        <div class="empty"><p>No UTM campaign data for this period.</p></div>
+        {% endif %}
+    </div>
+
+    <!-- Referrers / Traffic Sources -->
+    <div class="an-grid-2" style="margin-bottom:16px;">
+        <div class="an-card" style="min-height:420px;">
+            <div class="an-title">Top Referrers</div>
+            {% if referrer_stats %}
+            <div style="height:280px;display:flex;align-items:center;justify-content:center;">
+                <canvas id="topReferrersPie" height="180" width="180"></canvas>
             </div>
-            {% endfor %}{% else %}
-            <div class="empty">
-                <p>No traffic source data yet</p>
-                <p style="font-size:11px;font-weight:400;margin-top:4px;">Share your short URL to start seeing traffic sources.</p>
+            <div style="margin-top:14px;display:flex;flex-direction:column;gap:10px;">
+                {% for item in referrer_stats|slice:":7" %}
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:13px;font-weight:700;color:var(--s7);">
+                    <span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:normal;display:block;max-width:70%;">{{ item.display_name|default:"Unknown" }}</span>
+                    <span style="color:var(--s5);white-space:nowrap;">{{ item.count }} · {{ item.percentage|floatformat:2 }}%</span>
+                </div>
+                {% endfor %}
             </div>
-            {% endif %}
+            {% else %}<div class="empty"><p>No referrer data</p></div>{% endif %}
+        </div>
+        <div class="an-card" style="min-height:420px;">
+            <div class="an-title">Traffic Sources</div>
+            {% if ts_stats %}
+            <div style="height:280px;display:flex;align-items:center;justify-content:center;">
+                <canvas id="trafficSourcesPie" height="180" width="180"></canvas>
+            </div>
+            <div style="margin-top:14px;display:flex;flex-direction:column;gap:10px;">
+                {% for item in ts_stats %}
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:13px;font-weight:700;color:var(--s7);">
+                    <span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ item.source }}</span>
+                    <span style="color:var(--s5);white-space:nowrap;">{{ item.count }} · {{ item.percentage|floatformat:2 }}%</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}<div class="empty"><p>No traffic source data</p></div>{% endif %}
         </div>
     </div>
 
@@ -473,6 +766,7 @@ body { background:var(--s0); }
     <!-- Recent Activity -->
     <div class="an-card print-hide">
         <div class="an-title">Recent Activity</div>
+        <div class="unique-help"><span>*</span> <span>Unique visitor</span></div>
         <div class="an-tbl-wrap">
             <table class="an-tbl">
                 <thead>
@@ -481,7 +775,7 @@ body { background:var(--s0); }
                 <tbody>
                     {% for scan in page_obj %}
                     <tr>
-                        <td style="white-space:nowrap;">{{ scan.timestamp|date:"M d, H:i" }}</td>
+                        <td style="white-space:nowrap;">{{ scan.timestamp|date:"M d, H:i" }}{% if scan.is_unique_visit %}<span class="unique-marker" title="Unique visitor">*</span>{% endif %}</td>
                         <td>{% if scan.location_source == 'gps' and scan.gps_latitude %}{{ scan.gps_latitude|floatformat:4 }}, {{ scan.gps_longitude|floatformat:4 }}{% elif scan.location_source == 'local' or scan.country_code == 'LCL' or scan.country == 'Internal' %}Local Network{% elif scan.city != 'Unknown' and scan.country != 'Unknown' %}{{ scan.city }}, {{ scan.country }}{% else %}Unknown{% endif %}</td>
                         <td>{% if scan.location_source == 'gps' %}GPS{% elif scan.location_source == 'ip' %}IP Approximate{% elif scan.location_source == 'local' or scan.country_code == 'LCL' or scan.country == 'Internal' %}Local{% else %}Unknown{% endif %}</td>
                         <td>{{ scan.device_type|default:"Unknown" }}</td>
@@ -508,6 +802,322 @@ body { background:var(--s0); }
     <div class="pdf-ftr">ScanPDF Analytics Report · {{ qr.qr_name }} · Generated {% now "M d, Y H:i" %}</div>
 </div>
 
+<!-- ════════════════════════════════════════════════════════════════════════
+     PDF REPORT — dedicated 740px layout. All charts are <img> tags filled
+     by generatePDF() via canvas.toDataURL(). Never modify #analytics-container.
+     ════════════════════════════════════════════════════════════════════════ -->
+<div id="pdf-report">
+
+  <!-- ── Report Header ─────────────────────────────────────────────────── -->
+  <div style="border-bottom:2px solid #4f46e5;padding-bottom:14px;margin-bottom:12px;break-inside:avoid;page-break-inside:avoid;">
+    <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+      <img src="{% static 'images/logo.png' %}" alt="ScanPDF" style="height:26px;">
+      <span style="font-size:15px;font-weight:900;color:#0f172a;letter-spacing:-.01em;">SHORT URL ANALYTICS REPORT</span>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:11px;font-weight:700;color:#64748b;">
+      <div>Link: <span style="color:#0f172a;">{{ qr.qr_name }}</span></div>
+      <div style="text-align:right;">Generated: {% now "M d, Y H:i" %}</div>
+      <div>Period: <span style="color:#4f46e5;text-transform:uppercase;font-weight:900;">{{ selected_range }}</span></div>
+      <div style="text-align:right;">Status: {% if qr.is_active %}<span style="color:#10b981;font-weight:900;">● Active</span>{% else %}<span style="color:#64748b;font-weight:900;">● Inactive</span>{% endif %}</div>
+    </div>
+  </div>
+
+  <!-- ── Short URL Details ─────────────────────────────────────────────── -->
+  <div class="pdf-card">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding-bottom:10px;border-bottom:1px solid #f1f5f9;">
+      <span class="pdf-section-title" style="margin-bottom:0;">Short URL Details</span>
+      <span style="font-size:10px;font-weight:800;{% if qr.is_active %}color:#166534;background:#dcfce7;{% else %}color:#64748b;background:#f1f5f9;{% endif %}padding:3px 10px;border-radius:999px;">{% if qr.is_active %}● Active{% else %}Inactive{% endif %}</span>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;">
+      <div style="grid-column:span 2;background:#f8fafc;border-radius:8px;padding:10px;border:1px solid #f1f5f9;">
+        <div class="pdf-lbl">Destination</div>
+        <div style="font-size:11px;font-weight:700;color:#4f46e5;overflow-wrap:anywhere;word-break:break-all;">{{ qr.destination_url }}</div>
+      </div>
+      <div style="background:#f8fafc;border-radius:8px;padding:10px;border:1px solid #f1f5f9;">
+        <div class="pdf-lbl">Header</div>
+        <div class="pdf-val">{{ qr.header|default:"—" }}</div>
+      </div>
+      <div style="background:#f8fafc;border-radius:8px;padding:10px;border:1px solid #f1f5f9;">
+        <div class="pdf-lbl">Short Code</div>
+        <div class="pdf-val" style="font-family:monospace;">{{ qr.short_code }}</div>
+      </div>
+      <div style="background:#f8fafc;border-radius:8px;padding:10px;border:1px solid #f1f5f9;">
+        <div class="pdf-lbl">Created</div>
+        <div class="pdf-val">{{ qr.created_at|date:"M d, Y" }}</div>
+      </div>
+      <div style="background:#f8fafc;border-radius:8px;padding:10px;border:1px solid #f1f5f9;">
+        <div class="pdf-lbl">Protection</div>
+        <div class="pdf-val">{% if qr.password %}Password{% else %}Public{% endif %}</div>
+      </div>
+      <div style="background:#f8fafc;border-radius:8px;padding:10px;border:1px solid #f1f5f9;">
+        <div class="pdf-lbl">GPS Tracking</div>
+        <div class="pdf-val">{% if qr.require_gps %}Enabled{% else %}Disabled{% endif %}</div>
+      </div>
+      {% if qr.require_gps %}
+      <div style="background:#f8fafc;border-radius:8px;padding:10px;border:1px solid #f1f5f9;">
+        <div class="pdf-lbl">GPS Required</div>
+        <div class="pdf-val">Yes</div>
+      </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- ── KPI Row ────────────────────────────────────────────────────────── -->
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px;break-inside:avoid;page-break-inside:avoid;">
+    <div class="pdf-card" style="margin:0;">
+      <div class="pdf-lbl">Total Clicks</div>
+      <div style="font-size:28px;font-weight:900;color:#0f172a;line-height:1.1;">{{ total_clicks }}</div>
+      {% if trends.total %}<div style="font-size:10px;font-weight:700;margin-top:4px;{% if '+' in trends.total %}color:#10b981;{% else %}color:#ef4444;{% endif %}">{{ trends.total }} vs prev</div>{% endif %}
+    </div>
+    <div class="pdf-card" style="margin:0;">
+      <div class="pdf-lbl">Unique Clicks</div>
+      <div style="font-size:28px;font-weight:900;color:#0f172a;line-height:1.1;">{{ unique_clicks|default:"0" }}</div>
+    </div>
+    <div class="pdf-card" style="margin:0;">
+      <div class="pdf-lbl">QR Scans</div>
+      <div style="font-size:28px;font-weight:900;color:#4f46e5;line-height:1.1;">{{ qr_scans|default:"0" }}</div>
+    </div>
+  </div>
+
+  <!-- ── Activity Chart ─────────────────────────────────────────────────── -->
+  {% if total_clicks > 0 %}
+  <div class="pdf-card">
+    <div class="pdf-section-title" style="margin-bottom:8px;">Activity — {{ selected_range|capfirst }}</div>
+    <div style="display:flex;gap:24px;margin-bottom:10px;">
+      <div><div style="font-size:20px;font-weight:900;color:#0f172a;">{{ total_clicks }}</div><div style="font-size:9px;font-weight:700;color:#64748b;text-transform:uppercase;">Total Clicks</div></div>
+      <div><div style="font-size:20px;font-weight:900;color:#0f172a;">{{ unique_clicks|default:"0" }}</div><div style="font-size:9px;font-weight:700;color:#64748b;text-transform:uppercase;">Unique Clicks</div></div>
+    </div>
+    <!-- Image injected by generatePDF() from activityChart canvas.toDataURL() -->
+    <img id="pdf-img-activityChart" src="" alt="Activity Chart" style="display:none;width:100%;height:auto;border-radius:6px;">
+    <div style="display:flex;gap:14px;margin-top:8px;">
+      <div style="display:flex;align-items:center;gap:5px;font-size:10px;font-weight:700;color:#64748b;"><span style="width:9px;height:9px;border-radius:50%;background:#4f46e5;display:inline-block;flex-shrink:0;"></span>Total Clicks</div>
+      <div style="display:flex;align-items:center;gap:5px;font-size:10px;font-weight:700;color:#64748b;"><span style="width:9px;height:9px;border-radius:50%;background:#c7d2fe;display:inline-block;flex-shrink:0;"></span>Unique Clicks</div>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- ── Unique Click Ratio Chart ───────────────────────────────────────── -->
+  {% if total_clicks > 0 %}
+  <div class="pdf-card">
+    <div style="display:flex;align-items:center;gap:20px;flex-wrap:wrap;margin-bottom:10px;">
+      <div>
+        <div class="pdf-section-title" style="margin-bottom:2px;">Unique Click Ratio</div>
+        <div style="font-size:10px;font-weight:700;color:#64748b;">Unique ÷ Total × 100</div>
+      </div>
+      <div style="font-size:26px;font-weight:900;color:#4f46e5;">{{ js_avg_ratio }}%</div>
+      <div style="font-size:10px;font-weight:700;color:#64748b;">Period Average</div>
+    </div>
+    <img id="pdf-img-ratioChart" src="" alt="Unique Click Ratio" style="display:none;width:100%;height:auto;border-radius:6px;">
+  </div>
+  {% endif %}
+
+  <!-- ── Hour + Day Charts side-by-side ────────────────────────────────── -->
+  {% if total_clicks > 0 %}
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+    <div class="pdf-card" style="margin:0;">
+      <div class="pdf-section-title">Clicks by Hour</div>
+      <img id="pdf-img-hourChart" src="" alt="Clicks by Hour" style="display:none;width:100%;height:auto;border-radius:6px;">
+    </div>
+    <div class="pdf-card" style="margin:0;">
+      <div class="pdf-section-title">Clicks by Day of Week</div>
+      <img id="pdf-img-dayChart" src="" alt="Clicks by Day of Week" style="display:none;width:100%;height:auto;border-radius:6px;">
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- ── GPS Analytics ──────────────────────────────────────────────────── -->
+  {% if qr.require_gps or perf_summary.gps_requests %}
+  <div class="pdf-card">
+    <div class="pdf-section-title">GPS Analytics</div>
+    <div style="display:flex;gap:20px;flex-wrap:wrap;font-size:12px;font-weight:700;color:#334155;">
+      <span>GPS Requests <strong style="color:#0f172a;">{{ perf_summary.gps_requests }}</strong></span>
+      <span>Permission Granted <strong style="color:#10b981;">{{ perf_summary.gps_granted }}</strong></span>
+      <span>Permission Denied <strong style="color:#ef4444;">{{ perf_summary.gps_denied }}</strong></span>
+      <span>Unavailable / Timeout <strong style="color:#0f172a;">{{ perf_summary.gps_unavailable }}</strong></span>
+      <span>Capture Rate <strong style="color:#4f46e5;">{{ perf_summary.capture_rate|floatformat:2 }}%</strong></span>
+    </div>
+  </div>
+  {% endif %}
+
+  <!-- ── Top Countries + Top Cities ───────────────────────────────────── -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+    <div class="pdf-card" style="margin:0;">
+      <div class="pdf-section-title">Top Countries</div>
+      {% if country_stats %}{% for item in country_stats|slice:":7" %}
+      <div class="pdf-prog-row">
+        <div class="pdf-prog-name">{{ item.country }}</div>
+        <div class="pdf-prog-bg"><div class="pdf-prog-fill" style="width:{{ item.percentage }}%;"></div></div>
+        <div class="pdf-prog-nums">{{ item.count }} · {{ item.percentage|floatformat:1 }}%</div>
+      </div>
+      {% endfor %}{% else %}<div style="font-size:11px;color:#64748b;text-align:center;padding:12px;">No country data</div>{% endif %}
+    </div>
+    <div class="pdf-card" style="margin:0;">
+      <div class="pdf-section-title">Top Cities</div>
+      {% if city_stats %}{% for item in city_stats|slice:":7" %}
+      <div class="pdf-prog-row">
+        <div class="pdf-prog-name">{{ item.city }}</div>
+        <div class="pdf-prog-bg"><div class="pdf-prog-fill" style="width:{{ item.percentage }}%;"></div></div>
+        <div class="pdf-prog-nums">{{ item.count }} · {{ item.percentage|floatformat:1 }}%</div>
+      </div>
+      {% endfor %}{% else %}<div style="font-size:11px;color:#64748b;text-align:center;padding:12px;">No city data</div>{% endif %}
+    </div>
+  </div>
+
+  <!-- ── Top Referrers + Traffic Sources ───────────────────────────────── -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
+    <div class="pdf-card" style="margin:0;">
+      <div class="pdf-section-title" style="margin-bottom:4px;">Top Referrers</div>
+      <div style="font-size:9px;color:#64748b;margin-bottom:10px;">Which websites sent visitors</div>
+      {% if referrer_stats %}{% for item in referrer_stats|slice:":7" %}
+      <div class="pdf-prog-row">
+        <div class="pdf-prog-name">{{ item.display_name|default:"Unknown" }}</div>
+        <div class="pdf-prog-bg"><div class="pdf-prog-fill" style="width:{{ item.percentage }}%;"></div></div>
+        <div class="pdf-prog-nums">{{ item.count }} · {{ item.percentage|floatformat:1 }}%</div>
+      </div>
+      {% endfor %}{% else %}<div style="font-size:11px;color:#64748b;text-align:center;padding:12px;">No referrer data</div>{% endif %}
+    </div>
+    <div class="pdf-card" style="margin:0;">
+      <div class="pdf-section-title" style="margin-bottom:4px;">Traffic Sources</div>
+      <div style="font-size:9px;color:#64748b;margin-bottom:10px;">Where your visitors came from</div>
+      {% if ts_stats %}{% for item in ts_stats %}
+      <div class="pdf-prog-row">
+        <div class="pdf-prog-name">{{ item.source }}</div>
+        <div class="pdf-prog-bg"><div class="pdf-prog-fill" style="width:{{ item.percentage }}%;"></div></div>
+        <div class="pdf-prog-nums">{{ item.count }} · {{ item.percentage|floatformat:1 }}%</div>
+      </div>
+      {% endfor %}{% else %}<div style="font-size:11px;color:#64748b;text-align:center;padding:12px;">No traffic data</div>{% endif %}
+    </div>
+  </div>
+
+  <!-- ── Devices + Browsers + OS ──────────────────────────────────────── -->
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:10px;">
+    <div class="pdf-card" style="margin:0;">
+      <div class="pdf-section-title" style="text-align:center;">Devices</div>
+      {% if device_stats %}
+      <!-- Captured from deviceChart canvas; object-fit:contain preserves full circle -->
+      <img id="pdf-img-deviceChart" src="" alt="Devices Donut" style="display:none;width:140px;height:140px;object-fit:contain;margin:0 auto 8px;border-radius:4px;">
+      {% for item in device_stats %}
+      <div class="pdf-donut-row"><span class="pdf-donut-label">{{ item.label }}</span><span class="pdf-donut-count">{{ item.count }} · {{ item.percentage|floatformat:1 }}%</span></div>
+      {% endfor %}
+      {% else %}<div style="font-size:11px;color:#64748b;text-align:center;padding:12px;">No device data</div>{% endif %}
+    </div>
+    <div class="pdf-card" style="margin:0;">
+      <div class="pdf-section-title" style="text-align:center;">Browsers</div>
+      {% if browser_stats %}
+      <img id="pdf-img-browserChart" src="" alt="Browsers Donut" style="display:none;width:140px;height:140px;object-fit:contain;margin:0 auto 8px;border-radius:4px;">
+      {% for item in browser_stats %}
+      <div class="pdf-donut-row"><span class="pdf-donut-label">{{ item.label }}</span><span class="pdf-donut-count">{{ item.count }} · {{ item.percentage|floatformat:1 }}%</span></div>
+      {% endfor %}
+      {% else %}<div style="font-size:11px;color:#64748b;text-align:center;padding:12px;">No browser data</div>{% endif %}
+    </div>
+    <div class="pdf-card" style="margin:0;">
+      <div class="pdf-section-title" style="text-align:center;">Operating Systems</div>
+      {% if os_stats %}
+      <img id="pdf-img-osChart" src="" alt="OS Donut" style="display:none;width:140px;height:140px;object-fit:contain;margin:0 auto 8px;border-radius:4px;">
+      {% for item in os_stats %}
+      <div class="pdf-donut-row"><span class="pdf-donut-label">{{ item.label }}</span><span class="pdf-donut-count">{{ item.count }} · {{ item.percentage|floatformat:1 }}%</span></div>
+      {% endfor %}
+      {% else %}<div style="font-size:11px;color:#64748b;text-align:center;padding:12px;">No OS data</div>{% endif %}
+    </div>
+  </div>
+
+  <!-- ── Performance Summary (3×2 grid — fits A4 without text clipping) ── -->
+  <div class="pdf-card" style="background:linear-gradient(135deg,#f8fafc,#fff);">
+    <div class="pdf-section-title" style="margin-bottom:4px;">Performance Summary</div>
+    <div style="font-size:9px;color:#64748b;margin-bottom:14px;">Your most important analytics at a glance</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px;">
+      <div class="pdf-perf-item">
+        <div class="pdf-perf-icon" style="background:#eef2ff;">📊</div>
+        <div style="min-width:0;">
+          <div class="pdf-lbl">Total Clicks</div>
+          <div class="pdf-perf-val">{{ total_clicks|default:"—" }}</div>
+          <div style="font-size:9px;font-weight:700;{% if '+' in trends.total %}color:#10b981;{% else %}color:#ef4444;{% endif %}">{{ trends.total }}</div>
+        </div>
+      </div>
+      <div class="pdf-perf-item">
+        <div class="pdf-perf-icon" style="background:#f5f3ff;">👥</div>
+        <div style="min-width:0;">
+          <div class="pdf-lbl">Unique Visitors</div>
+          <div class="pdf-perf-val">{{ unique_clicks|default:"—" }}</div>
+          <div style="font-size:9px;font-weight:700;{% if '+' in trends.unique %}color:#10b981;{% else %}color:#ef4444;{% endif %}">{{ trends.unique }}</div>
+        </div>
+      </div>
+      <div class="pdf-perf-item">
+        <div class="pdf-perf-icon" style="background:#ecfdf5;">📅</div>
+        <div style="min-width:0;">
+          <div class="pdf-lbl">Best Day</div>
+          <div class="pdf-perf-val">{{ perf_summary.best_day|default:"—" }}</div>
+          <div style="font-size:9px;font-weight:700;color:#64748b;">{% if perf_summary.best_day_clicks %}{{ perf_summary.best_day_clicks }} clicks{% else %}—{% endif %}</div>
+        </div>
+      </div>
+      <div class="pdf-perf-item">
+        <div class="pdf-perf-icon" style="background:#fffbeb;">⏰</div>
+        <div style="min-width:0;">
+          <div class="pdf-lbl">Peak Hour</div>
+          <div class="pdf-perf-val" style="font-size:12px;">{{ perf_summary.peak_hour|default:"—" }}</div>
+          <div style="font-size:9px;font-weight:700;color:#64748b;">{% if perf_summary.peak_hour_clicks %}{{ perf_summary.peak_hour_clicks }} clicks{% else %}—{% endif %}</div>
+        </div>
+      </div>
+      <div class="pdf-perf-item">
+        <div class="pdf-perf-icon" style="background:#f0fdf4;">📍</div>
+        <div style="min-width:0;">
+          <div class="pdf-lbl">Top Location</div>
+          <div class="pdf-perf-val">{{ perf_summary.top_country|default:"—" }}</div>
+          <div style="font-size:9px;font-weight:700;color:#64748b;">{% if perf_summary.top_country_clicks %}{{ perf_summary.top_country_clicks }} clicks{% else %}—{% endif %}</div>
+        </div>
+      </div>
+      <div class="pdf-perf-item">
+        <div class="pdf-perf-icon" style="background:#eff6ff;">💻</div>
+        <div style="min-width:0;">
+          <div class="pdf-lbl">Top Device</div>
+          <div class="pdf-perf-val">{{ perf_summary.top_device|default:"—" }}</div>
+          <div style="font-size:9px;font-weight:700;color:#64748b;">{% if perf_summary.top_device_pct %}{{ perf_summary.top_device_pct }}%{% else %}—{% endif %}</div>
+        </div>
+      </div>
+    </div>
+    {% if perf_summary.insights %}
+    <div style="margin-top:14px;padding-top:14px;border-top:1px solid #e2e8f0;">
+      <div class="pdf-section-title">Key Insights</div>
+      {% for insight in perf_summary.insights %}
+      <div style="display:flex;gap:8px;font-size:11px;font-weight:600;color:#334155;margin-bottom:6px;align-items:flex-start;">
+        <span style="color:#4f46e5;flex-shrink:0;margin-top:1px;">💡</span>
+        <span>{{ insight }}</span>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- ── Recent Activity (ALL records in range, max 200) ───────────────── -->
+  <div class="pdf-card" style="break-before:auto;">
+    <div class="pdf-section-title">Recent Activity</div>
+    <table class="pdf-act-tbl">
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Location</th>
+          <th>Src</th>
+          <th>Device</th>
+          <th>Browser / OS</th>
+          <th>Traffic</th>
+          <th>Referrer</th>
+          <th>Type</th>
+        </tr>
+      </thead>
+      <tbody id="pdf-activity-tbody">
+        <tr><td colspan="8" style="text-align:center;padding:12px;color:#64748b;">Loading…</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- ── PDF Footer ────────────────────────────────────────────────────── -->
+  <div style="margin-top:14px;padding-top:10px;border-top:1px solid #e2e8f0;display:flex;justify-content:space-between;font-size:9px;font-weight:700;color:#94a3b8;break-inside:avoid;page-break-inside:avoid;">
+    <span>ScanPDF Analytics Report · {{ qr.qr_name }}</span>
+    <span>Generated {% now "M d, Y H:i" %}</span>
+  </div>
+</div>
+<!-- ════════════════════ END #pdf-report ════════════════════════════════ -->
+
 <!-- PDF Loading Overlay -->
 <div class="pdf-overlay" id="pdf-overlay">
     <div class="pdf-spin"></div>
@@ -531,6 +1141,7 @@ body { background:var(--s0); }
 <script type="application/json" id="d-os-data">{{ js_os_data|safe }}</script>
 <script type="application/json" id="d-hours">{{ js_clicks_by_hour|safe }}</script>
 <script type="application/json" id="d-days">{{ js_clicks_by_day|safe }}</script>
+<script type="application/json" id="d-recent-activity">{{ js_recent_activity|safe }}</script>
 {% endblock %}
 
 {% block dqr_scripts %}
@@ -588,6 +1199,40 @@ body { background:var(--s0); }
                             label: function(ctx) {
                                 var tot = ctx.dataset.data.reduce(function(a,b){ return a+b; }, 0);
                                 return ' ' + ctx.label + ': ' + ctx.parsed + ' (' + Math.round(ctx.parsed / tot * 100) + '%)';
+                            }
+                        }
+                    })
+                }
+            }
+        });
+    }
+
+    function makePieChart(id, labels, data, colors) {
+        var el = document.getElementById(id);
+        if (!el || !labels || !labels.length || !data || !data.length || data.every(function(v) { return Number(v) === 0; })) {
+            return;
+        }
+        if (window.__pieChartInstances && window.__pieChartInstances[id]) {
+            window.__pieChartInstances[id].destroy();
+        }
+        window.__pieChartInstances = window.__pieChartInstances || {};
+        window.__pieChartInstances[id] = new Chart(el, {
+            type: 'pie',
+            data: {
+                labels: labels,
+                datasets: [{ data: data, backgroundColor: colors || ['#4f46e5','#818cf8','#a5b4fc','#c7d2fe','#38bdf8','#10b981','#f59e0b','#f87171'], borderWidth: 0 }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: Object.assign({}, TIP, {
+                        callbacks: {
+                            label: function(ctx) {
+                                var total = ctx.dataset.data.reduce(function(a, b) { return a + b; }, 0) || 1;
+                                var pct = ((ctx.parsed / total) * 100).toFixed(2);
+                                return ' ' + ctx.label + ': ' + ctx.parsed + ' clicks (' + pct + '%)';
                             }
                         }
                     })
@@ -665,6 +1310,29 @@ body { background:var(--s0); }
             dayMax <= 1 ? 2 : undefined
         );
 
+        // Pie chips for top geography/referrer/source distributions
+        var countryLabels = [{% for item in country_stats %}'{{ item.country|escapejs }}',{% endfor %}];
+        var countryData = [{% for item in country_stats %}{{ item.count }},{% endfor %}];
+        var cityLabels = [{% for item in city_stats %}'{{ item.city|escapejs }}',{% endfor %}];
+        var cityData = [{% for item in city_stats %}{{ item.count }},{% endfor %}];
+        var referrerLabels = [{% for item in referrer_stats %}'{{ item.display_name|escapejs }}',{% endfor %}];
+        var referrerData = [{% for item in referrer_stats %}{{ item.count }},{% endfor %}];
+        var sourceLabels = [{% for item in ts_stats %}'{{ item.source|escapejs }}',{% endfor %}];
+        var sourceData = [{% for item in ts_stats %}{{ item.count }},{% endfor %}];
+        makePieChart('topCountriesPie', countryLabels, countryData, ['#4f46e5','#818cf8','#a5b4fc','#c7d2fe','#38bdf8','#10b981','#f59e0b']);
+        makePieChart('topCitiesPie', cityLabels, cityData, ['#4f46e5','#818cf8','#a5b4fc','#c7d2fe','#38bdf8','#10b981','#f59e0b']);
+        makePieChart('topReferrersPie', referrerLabels, referrerData, ['#4f46e5','#818cf8','#a5b4fc','#c7d2fe','#38bdf8','#10b981','#f59e0b']);
+        makePieChart('trafficSourcesPie', sourceLabels, sourceData, ['#4f46e5','#818cf8','#a5b4fc','#c7d2fe','#38bdf8','#10b981','#f59e0b']);
+        var utmSourceLabels = [{% for item in utm_sources %}'{{ item.label|escapejs }}',{% endfor %}];
+        var utmSourceData = [{% for item in utm_sources %}{{ item.count }},{% endfor %}];
+        var utmMediumLabels = [{% for item in utm_mediums %}'{{ item.label|escapejs }}',{% endfor %}];
+        var utmMediumData = [{% for item in utm_mediums %}{{ item.count }},{% endfor %}];
+        var utmCampaignLabels = [{% for item in utm_campaigns %}'{{ item.label|escapejs }}',{% endfor %}];
+        var utmCampaignData = [{% for item in utm_campaigns %}{{ item.count }},{% endfor %}];
+        if (utmSourceLabels.length) makePieChart('utmSourcesChart', utmSourceLabels, utmSourceData, ['#4f46e5','#818cf8','#a5b4fc','#c7d2fe','#38bdf8']);
+        if (utmMediumLabels.length) makePieChart('utmMediumsChart', utmMediumLabels, utmMediumData, ['#4f46e5','#818cf8','#a5b4fc','#c7d2fe','#38bdf8']);
+        if (utmCampaignLabels.length) makeBar('utmCampaignsChart', utmCampaignLabels, [{ data: utmCampaignData, backgroundColor: PURPLE3, hoverBackgroundColor: PURPLE, borderRadius: 6 }], Math.max.apply(null, utmCampaignData.concat([1])) || 1);
+
         // Donuts
         makeDonut('deviceChart',  jd('d-device-labels'),  jd('d-device-data'),  DONUT_COLORS);
         makeDonut('browserChart', jd('d-browser-labels'), jd('d-browser-data'), [PURPLE,'#6366f1',PURPLE2,'#a5b4fc',GRAY]);
@@ -674,28 +1342,98 @@ body { background:var(--s0); }
     window.generatePDF = function() {
         var overlay = document.getElementById('pdf-overlay');
         overlay.classList.add('show');
-        document.body.classList.add('pdf-mode');
+
+        // Step 1: Capture every Chart.js canvas to a PNG data URL.
+        // canvas.toDataURL() always returns the FULL canvas bitmap,
+        // regardless of CSS overflow, viewport clipping, or scroll position.
+        // This eliminates ALL chart-clipping bugs at their root.
+        function captureChart(id) {
+            var canvas = document.getElementById(id);
+            if (!canvas) return '';
+            try { return canvas.toDataURL('image/png', 1.0); } catch(e) { return ''; }
+        }
+        var imgs = {
+            activityChart: captureChart('activityChart'),
+            ratioChart:    captureChart('ratioChart'),
+            hourChart:     captureChart('hourChart'),
+            dayChart:      captureChart('dayChart'),
+            deviceChart:   captureChart('deviceChart'),
+            browserChart:  captureChart('browserChart'),
+            osChart:       captureChart('osChart'),
+        };
+
+        // Step 2: Inject captured images into #pdf-report <img> placeholders.
+        Object.keys(imgs).forEach(function(id) {
+            var img = document.getElementById('pdf-img-' + id);
+            if (img && imgs[id]) {
+                img.src = imgs[id];
+                img.style.display = 'block';
+            } else if (img) {
+                img.style.display = 'none';
+            }
+        });
+
+        // Step 3: Build Recent Activity table rows from JSON data island
+        // (all records in range, not just the paginated page_obj).
+        var activityData = jd('d-recent-activity') || [];
+        var tbody = document.getElementById('pdf-activity-tbody');
+        if (tbody) {
+            if (activityData.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align:center;padding:12px;color:#64748b;">No activity in this period.</td></tr>';
+            } else {
+                var rows = '';
+                activityData.forEach(function(row, i) {
+                    var bg = (i % 2 !== 0) ? 'background:#f8fafc;' : '';
+                    rows += '<tr style="' + bg + 'border-bottom:1px solid #f1f5f9;">' +
+                        '<td style="padding:5px 4px;white-space:nowrap;">' + row.time + '</td>' +
+                        '<td style="padding:5px 4px;word-break:break-all;">' + row.location + '</td>' +
+                        '<td style="padding:5px 4px;white-space:nowrap;">' + row.location_source + '</td>' +
+                        '<td style="padding:5px 4px;">' + row.device + '</td>' +
+                        '<td style="padding:5px 4px;word-break:break-word;">' + row.browser_os + '</td>' +
+                        '<td style="padding:5px 4px;word-break:break-word;">' + row.source + '</td>' +
+                        '<td style="padding:5px 4px;word-break:break-all;">' + row.referrer + '</td>' +
+                        '<td style="padding:5px 4px;white-space:nowrap;">' + row.type + '</td>' +
+                        '</tr>';
+                });
+                tbody.innerHTML = rows;
+            }
+        }
+
+        // Step 4: Show #pdf-report (fixed at 740px) and run html2pdf on it.
+        // We target this narrow element, NOT the wide #analytics-container,
+        // so no desktop-width content is ever scaled/clipped.
+        var pdfEl = document.getElementById('pdf-report');
+        pdfEl.style.display = 'block';
+
         var shortCode = '{{ qr.short_code|escapejs }}';
         var range = '{{ selected_range|escapejs }}';
         var today = new Date().toISOString().slice(0, 10);
         var filename = 'scanpdf-analytics-' + shortCode + '-' + range + '-' + today + '.pdf';
-        var el = document.getElementById('analytics-container');
+
         setTimeout(function() {
             html2pdf().set({
-                margin: [8, 8, 8, 8], filename: filename,
+                margin: [8, 8, 8, 8],
+                filename: filename,
                 image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2, useCORS: true, logging: false, allowTaint: true },
+                html2canvas: {
+                    scale: 2,
+                    useCORS: true,
+                    logging: false,
+                    allowTaint: true,
+                    width: 740,
+                    windowWidth: 740
+                },
                 jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-            }).from(el).save().then(function() {
-                document.body.classList.remove('pdf-mode');
+            }).from(pdfEl).save().then(function() {
+                pdfEl.style.display = 'none';
                 overlay.classList.remove('show');
             }).catch(function(err) {
                 console.error('[PDF] Error:', err);
-                document.body.classList.remove('pdf-mode');
+                pdfEl.style.display = 'none';
                 overlay.classList.remove('show');
                 alert('PDF generation failed. Check browser console for details.');
             });
-        }, 600);
+        }, 400);
     };
 })();
 {% endblock %}

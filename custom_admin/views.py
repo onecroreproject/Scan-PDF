@@ -2,7 +2,7 @@ import json
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib.auth import logout
 from django.contrib.auth.models import User
-from django.db.models import Sum, Count
+from django.db.models import Sum, Count, Q
 from django.utils import timezone
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
@@ -93,8 +93,19 @@ def payments_view(request):
 def plans_view(request):
     # Ensure old BUSINESS plan stays deactivated
     Plan.objects.filter(code='business').update(is_active=False)
-    plans = Plan.objects.filter(is_active=True).prefetch_related(
-        'sections__features'
+    plans = Plan.objects.filter(is_active=True).annotate(
+        enabled_feature_count=Count(
+            'plan_features',
+            filter=Q(
+                plan_features__enabled=True,
+                plan_features__feature__is_active=True,
+                plan_features__feature__key__in=FEATURE_CODES,
+            ),
+            distinct=True,
+        )
+    ).prefetch_related(
+        'plan_features__feature',
+        'sections__features',
     ).order_by('display_order', 'id')
     return render(request, 'admin_dashboard/plans.html', {'plans': plans})
 

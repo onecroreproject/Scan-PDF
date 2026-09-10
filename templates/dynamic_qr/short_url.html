@@ -502,6 +502,136 @@
                     </div>
                 </div>
 
+                <!-- UTM Toggle -->
+                <div class="create-short-url-toggle bg-slate-50 rounded-xl border border-slate-100">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="font-black text-slate-900 text-sm flex items-center gap-2">UTM Parameters 
+                            {% if not feature_statuses.shorturl_utm.enabled %}
+                                <a href="{% url 'services:pricing' %}" class="text-[9px] uppercase tracking-widest bg-amber-100 text-amber-600 px-2 py-0.5 rounded-md font-bold">Upgrade</a>
+                            {% elif not feature_statuses.shorturl_utm.unlimited %}
+                                <span class="text-[10px] font-black {% if feature_statuses.shorturl_utm.limit_reached %}text-red-500{% else %}text-indigo-600{% endif %}">
+                                    Usage: {{ feature_statuses.shorturl_utm.used }} / {{ feature_statuses.shorturl_utm.limit }}
+                                </span>
+                            {% endif %}
+                            </p>
+                            <p class="text-[10px] font-bold text-slate-400">Append UTM tags to your destination URL.</p>
+                            {% if feature_statuses.shorturl_utm.limit_reached %}
+                            <p class="text-[10px] text-red-500 font-bold mt-1">Limit reached.</p>
+                            {% endif %}
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" name="utm_enabled" id="form-utm-enabled" onchange="togglePanel('utm-panel', this.checked)" {% if not feature_statuses.shorturl_utm.enabled or feature_statuses.shorturl_utm.limit_reached %}disabled{% endif %}>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div id="utm-panel" class="hidden mt-4 pt-4 border-t border-slate-200 grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="text-[10px] font-bold text-slate-500 mb-1 block">Source</label>
+                            <select name="utm_source" id="form-utm-source" class="form-input-custom !bg-white !py-2 !text-sm">
+                                <option value="">Select</option>
+                                <optgroup label="Search Engines">
+                                    <option value="google">Google</option><option value="bing">Bing</option><option value="yahoo">Yahoo</option><option value="duckduckgo">DuckDuckGo</option><option value="baidu">Baidu</option><option value="yandex">Yandex</option><option value="ecosia">Ecosia</option>
+                                </optgroup>
+                                <optgroup label="Social">
+                                    <option value="facebook">Facebook</option><option value="instagram">Instagram</option><option value="twitter">X (Twitter)</option><option value="linkedin">LinkedIn</option><option value="youtube">YouTube</option><option value="tiktok">TikTok</option><option value="reddit">Reddit</option><option value="pinterest">Pinterest</option><option value="snapchat">Snapchat</option><option value="threads">Threads</option><option value="discord">Discord</option><option value="tumblr">Tumblr</option><option value="quora">Quora</option>
+                                </optgroup>
+                                <optgroup label="Messaging">
+                                    <option value="whatsapp">WhatsApp</option><option value="telegram">Telegram</option><option value="messenger">Facebook Messenger</option><option value="wechat">WeChat</option><option value="line">LINE</option><option value="signal">Signal</option><option value="viber">Viber</option><option value="slack">Slack</option>
+                                </optgroup>
+                                <optgroup label="Email">
+                                    <option value="email">Email</option><option value="newsletter">Newsletter</option><option value="gmail">Gmail</option><option value="outlook">Outlook</option>
+                                </optgroup>
+                                <optgroup label="Advertising">
+                                    <option value="google_ads">Google Ads</option><option value="facebook_ads">Facebook Ads</option><option value="instagram_ads">Instagram Ads</option><option value="linkedin_ads">LinkedIn Ads</option><option value="youtube_ads">YouTube Ads</option><option value="tiktok_ads">TikTok Ads</option><option value="microsoft_ads">Microsoft Ads</option><option value="amazon">Amazon</option><option value="flipkart">Flipkart</option><option value="ebay">eBay</option><option value="etsy">Etsy</option>
+                                </optgroup>
+                                <optgroup label="AI / Referral">
+                                    <option value="chatgpt">ChatGPT</option><option value="gemini">Gemini</option><option value="claude">Claude</option><option value="perplexity">Perplexity</option><option value="microsoft_copilot">Microsoft Copilot</option>
+                                </optgroup>
+                                <optgroup label="Other">
+                                    <option value="qr_code">QR Code</option><option value="sms">SMS</option><option value="affiliate">Affiliate</option><option value="referral">Referral</option><option value="podcast">Podcast</option><option value="webinar">Webinar</option><option value="direct">Direct</option><option value="other">Other</option>
+                                </optgroup>
+                            </select>
+                            <input type="text" name="utm_source_custom" id="form-utm-source-custom" class="form-input-custom !bg-white !py-2 !text-sm hidden mt-2" placeholder="Custom Source" maxlength="100">
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-bold text-slate-500 mb-1 block">Medium</label>
+                            <select name="utm_medium" id="form-utm-medium" class="form-input-custom !bg-white !py-2 !text-sm">
+                                <option value="">Select</option><option value="cpc">CPC</option><option value="paid_search">Paid Search</option><option value="paid_social">Paid Social</option><option value="organic">Organic</option><option value="social">Social</option><option value="email">Email</option><option value="referral">Referral</option><option value="affiliate">Affiliate</option><option value="display">Display</option><option value="banner">Banner</option><option value="sms">SMS</option><option value="qr">QR</option><option value="push">Push</option><option value="video">Video</option><option value="podcast">Podcast</option><option value="webinar">Webinar</option><option value="influencer">Influencer</option><option value="direct">Direct</option><option value="other">Other</option>
+                            </select>
+                            <input type="text" name="utm_medium_custom" id="form-utm-medium-custom" class="form-input-custom !bg-white !py-2 !text-sm hidden mt-2" placeholder="Custom Medium" maxlength="100">
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-bold text-slate-500 mb-1 block">Campaign</label>
+                            <input type="text" name="utm_campaign" id="form-utm-campaign" class="form-input-custom !bg-white !py-2 !text-sm" placeholder="e.g. summer_sale_2026" maxlength="150">
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-bold text-slate-500 mb-1 block">Term (Optional)</label>
+                            <input type="text" name="utm_term" id="form-utm-term" class="form-input-custom !bg-white !py-2 !text-sm" placeholder="e.g. buy+shoes+online" maxlength="150">
+                        </div>
+                        <div>
+                            <label class="text-[10px] font-bold text-slate-500 mb-1 block">Content (Optional)</label>
+                            <input type="text" name="utm_content" id="form-utm-content" class="form-input-custom !bg-white !py-2 !text-sm" placeholder="e.g. banner_ad_footer" maxlength="150">
+                        </div>
+                        <div class="sm:col-span-2 rounded-lg bg-white border border-slate-200 p-3">
+                            <p class="text-[10px] font-black text-slate-500 uppercase tracking-wider">UTM Preview</p>
+                            <code id="utm-preview" class="block mt-1 text-xs text-indigo-600 break-all">None</code>
+                            <p class="text-[10px] font-bold text-slate-400 mt-2">This query parameter will be appended to your destination URL.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Cloaking Toggle -->
+                <div class="create-short-url-toggle bg-slate-50 rounded-xl border border-slate-100">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="font-black text-slate-900 text-sm flex items-center gap-2">URL Cloaking 
+                            {% if not feature_statuses.shorturl_cloaking.enabled %}
+                                <a href="{% url 'services:pricing' %}" class="text-[9px] uppercase tracking-widest bg-amber-100 text-amber-600 px-2 py-0.5 rounded-md font-bold">Upgrade</a>
+                            {% elif not feature_statuses.shorturl_cloaking.unlimited %}
+                                <span class="text-[10px] font-black {% if feature_statuses.shorturl_cloaking.limit_reached %}text-red-500{% else %}text-indigo-600{% endif %}">
+                                    Usage: {{ feature_statuses.shorturl_cloaking.used }} / {{ feature_statuses.shorturl_cloaking.limit }}
+                                </span>
+                            {% endif %}
+                            </p>
+                            <p class="text-[10px] font-bold text-slate-400">Hide the destination URL behind your branding.</p>
+                            {% if feature_statuses.shorturl_cloaking.limit_reached %}
+                            <p class="text-[10px] text-red-500 font-bold mt-1">Limit reached.</p>
+                            {% endif %}
+                        </div>
+                        <label class="switch">
+                            <input type="checkbox" name="cloaking_enabled" id="form-cloaking-enabled" onchange="togglePanel('cloaking-panel', this.checked)" {% if not feature_statuses.shorturl_cloaking.enabled or feature_statuses.shorturl_cloaking.limit_reached %}disabled{% endif %}>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div id="cloaking-panel" class="hidden mt-4 pt-4 border-t border-slate-200 grid gap-3">
+                        <input type="text" name="cloaked_title" id="form-cloaked-title" class="form-input-custom !bg-white !py-2 !text-sm" placeholder="Page Title">
+                        <textarea name="cloaked_meta_description" id="form-cloaked-desc" class="form-input-custom !bg-white !py-2 !text-sm" placeholder="Meta Description"></textarea>
+                        
+                        <div class="grid grid-cols-2 gap-4 mt-2">
+                            <div>
+                                <label class="text-[10px] font-bold text-slate-500 mb-1 block">Favicon (optional)</label>
+                                <input type="file" name="cloaked_favicon" id="form-cloaked-favicon" accept="image/png,image/x-icon,image/svg+xml" class="text-xs">
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-bold text-slate-500 mb-1 block">OG Image (optional)</label>
+                                <input type="file" name="cloaked_og_image" id="form-cloaked-og-image" accept="image/png,image/jpeg" class="text-xs">
+                            </div>
+                        </div>
+
+                        {% if request.user.subscriptions.first.plan.code in "pro,business_plus" or request.user.is_superuser %}
+                        <div class="mt-2">
+                            <label class="text-[10px] font-bold text-slate-500 mb-1 block">Custom JavaScript (e.g. Analytics pixel)</label>
+                            <textarea name="cloaked_custom_js" id="form-cloaked-js" class="form-input-custom !bg-white !py-2 !text-sm font-mono text-xs" rows="3" placeholder="console.log('Tracked!');"></textarea>
+                        </div>
+                        {% else %}
+                        <div class="mt-2 p-2 bg-slate-100 rounded text-xs text-slate-500">
+                            Custom JS injection requires Pro or Business plan.
+                        </div>
+                        {% endif %}
+                    </div>
+                </div>
+
                 <!-- Password Toggle -->
                 <div class="create-short-url-toggle bg-slate-50 rounded-xl border border-slate-100">
                     <div class="flex items-center justify-between">
@@ -957,7 +1087,51 @@
         if (panelId === 'qr-config-panel') {
             document.getElementById('qr-preview-column')?.classList.toggle('is-visible', isChecked);
         }
+        if (panelId === 'utm-panel') updateUTMFields();
     }
+
+    function updateUTMFields() {
+        const source = document.getElementById('form-utm-source');
+        const medium = document.getElementById('form-utm-medium');
+        const sourceCustom = document.getElementById('form-utm-source-custom');
+        const mediumCustom = document.getElementById('form-utm-medium-custom');
+        const campaign = document.getElementById('form-utm-campaign');
+        const enabled = document.getElementById('form-utm-enabled')?.checked;
+        if (!source || !medium) return;
+        sourceCustom?.classList.toggle('hidden', source.value !== 'other');
+        mediumCustom?.classList.toggle('hidden', medium.value !== 'other');
+        if (campaign) campaign.required = Boolean(enabled);
+        const values = [
+            ['utm_source', source.value === 'other' ? sourceCustom?.value : source.value],
+            ['utm_medium', medium.value === 'other' ? mediumCustom?.value : medium.value],
+            ['utm_campaign', campaign?.value],
+            ['utm_term', document.getElementById('form-utm-term')?.value],
+            ['utm_content', document.getElementById('form-utm-content')?.value],
+        ].filter(([, value]) => value);
+        const preview = document.getElementById('utm-preview');
+        if (preview) preview.textContent = values.length ? '?' + new URLSearchParams(values).toString() : 'None';
+    }
+
+    function preloadUTMValue(selectId, customId, value) {
+        const select = document.getElementById(selectId);
+        const custom = document.getElementById(customId);
+        if (!select) return;
+        const optionExists = Array.from(select.options).some(option => option.value === value);
+        if (value && optionExists) select.value = value;
+        else if (value) {
+            select.value = 'other';
+            if (custom) custom.value = value;
+        } else {
+            select.value = '';
+            if (custom) custom.value = '';
+        }
+    }
+
+    ['form-utm-source', 'form-utm-medium', 'form-utm-source-custom', 'form-utm-medium-custom',
+     'form-utm-campaign', 'form-utm-term', 'form-utm-content'].forEach((id) => {
+        document.getElementById(id)?.addEventListener('input', updateUTMFields);
+        document.getElementById(id)?.addEventListener('change', updateUTMFields);
+    });
 
     function updateFeatureUsage(statuses) {
         if (!statuses) return;
@@ -987,6 +1161,8 @@
         togglePanel('qr-config-panel', false);
         togglePanel('password-panel', false);
         togglePanel('expiry-panel', false);
+        togglePanel('utm-panel', false);
+        togglePanel('cloaking-panel', false);
         
         modal.style.display = 'flex';
         openModalCount++;
@@ -1046,9 +1222,28 @@
             togglePanel('expiry-panel', data.expiry_enabled);
             document.getElementById('form-expiry-date').value = data.expiry_date || '';
 
+            // UTM
+            document.getElementById('form-utm-enabled').checked = data.utm_enabled;
+            togglePanel('utm-panel', data.utm_enabled);
+            preloadUTMValue('form-utm-source', 'form-utm-source-custom', data.utm_source || '');
+            preloadUTMValue('form-utm-medium', 'form-utm-medium-custom', data.utm_medium || '');
+            document.getElementById('form-utm-campaign').value = data.utm_campaign || '';
+            document.getElementById('form-utm-term').value = data.utm_term || '';
+            document.getElementById('form-utm-content').value = data.utm_content || '';
+            updateUTMFields();
+
+            // Cloaking
+            document.getElementById('form-cloaking-enabled').checked = data.cloaking_enabled;
+            togglePanel('cloaking-panel', data.cloaking_enabled);
+            document.getElementById('form-cloaked-title').value = data.cloaked_title || '';
+            document.getElementById('form-cloaked-desc').value = data.cloaked_meta_description || '';
+            
+            const cloakedJsField = document.getElementById('form-cloaked-js');
+            if(cloakedJsField) cloakedJsField.value = data.cloaked_custom_js || '';
+
             // Existing activations remain editable even when no new credit is
             // available; the backend still enforces all new activations.
-            ['form-header-enabled', 'form-qr-enabled', 'form-require-gps', 'form-password-enabled', 'form-expiry-enabled']
+            ['form-header-enabled', 'form-qr-enabled', 'form-require-gps', 'form-password-enabled', 'form-expiry-enabled', 'form-utm-enabled', 'form-cloaking-enabled']
                 .forEach((id) => { document.getElementById(id).disabled = false; });
             
             document.getElementById('regenerate-option').style.display = 'flex';

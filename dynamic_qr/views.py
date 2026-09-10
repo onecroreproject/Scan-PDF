@@ -9,7 +9,9 @@ This module handles:
 import random
 import json
 import os
+import logging
 from datetime import datetime, timedelta
+from urllib.parse import urlsplit
 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import JsonResponse, HttpResponseRedirect, HttpResponse
@@ -34,6 +36,98 @@ from .forms import (
 import requests
 import uuid
 import base64
+
+
+logger = logging.getLogger(__name__)
+
+
+def _normalize_utm_value(value):
+    """Normalize source and medium values for stable UTM keys."""
+    import re
+    return re.sub(r'[^a-z0-9._-]+', '_', (value or '').strip().lower()).strip('_')
+
+
+def _build_short_url_target(qr, target_url=None):
+    """Merge configured UTM values without duplicating existing query keys."""
+    from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
+
+    target_url = target_url or qr.destination_url or ''
+    if not qr.utm_enabled or not target_url:
+        return target_url
+
+    parsed_url = urlsplit(target_url)
+    utm_keys = ('utm_source', 'utm_medium', 'utm_campaign', 'utm_term', 'utm_content')
+    query_params = [pair for pair in parse_qsl(parsed_url.query) if pair[0] not in utm_keys]
+    configured_values = (
+        ('utm_source', qr.utm_source),
+        ('utm_medium', qr.utm_medium),
+        ('utm_campaign', qr.utm_campaign),
+        ('utm_term', qr.utm_term),
+        ('utm_content', qr.utm_content),
+    )
+    query_params.extend((key, value) for key, value in configured_values if value)
+    return urlunsplit((
+        parsed_url.scheme,
+        parsed_url.netloc,
+        parsed_url.path,
+        urlencode(query_params),
+        parsed_url.fragment,
+    ))
+
+
+def _is_recursive_cloak_target(request, qr, target_url):
+    """Return True when cloaking would load this short-link route again."""
+    if not target_url:
+        return False
+
+    target = urlsplit(target_url)
+    target_path = target.path.rstrip('/') or '/'
+    short_paths = {
+        request.path.rstrip('/') or '/',
+        qr.public_url_path.rstrip('/') or '/',
+        f'/qr/r/{qr.short_code}',
+    }
+    if qr.header:
+        short_paths.add(f'/qr/r/{qr.header}/{qr.short_code}')
+
+    current_host = urlsplit(request.build_absolute_uri('/')).netloc.lower()
+    target_host = target.netloc.lower()
+    return target_path in short_paths and target_host == current_host
+
+
+def _frame_block_reason(request, target_url):
+    """Inspect destination framing headers without proxying or altering them."""
+    if not target_url or urlsplit(target_url).scheme not in ('http', 'https'):
+        return None
+
+    try:
+        probe = requests.head(target_url, allow_redirects=True, timeout=2)
+    except requests.RequestException:
+        return None
+
+    final_url = probe.url or target_url
+    final_parts = urlsplit(final_url)
+    wrapper_parts = urlsplit(request.build_absolute_uri('/'))
+    same_origin = (
+        final_parts.scheme.lower(), final_parts.netloc.lower()
+    ) == (
+        wrapper_parts.scheme.lower(), wrapper_parts.netloc.lower()
+    )
+
+    x_frame_options = (probe.headers.get('X-Frame-Options') or '').strip().lower()
+    if x_frame_options == 'deny' or (x_frame_options == 'sameorigin' and not same_origin):
+        return 'This destination does not support cloaked viewing.'
+
+    content_security_policy = (probe.headers.get('Content-Security-Policy') or '').lower()
+    for directive in content_security_policy.split(';'):
+        directive = directive.strip()
+        if not directive.startswith('frame-ancestors'):
+            continue
+        sources = directive.split()[1:]
+        if "'none'" in sources or ("'self'" in sources and not same_origin):
+            return 'This destination does not support cloaked viewing.'
+
+    return None
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -82,6 +176,35 @@ def dqr_repair_db(request):
         call_command('makemigrations', 'services', interactive=False)
         call_command('migrate', 'services', interactive=False)
         results.append("✅ Successfully programmatically ran makemigrations & migrate for 'services' app.")
+        
+        call_command('makemigrations', 'dynamic_qr', interactive=False)
+        call_command('migrate', 'dynamic_qr', interactive=False)
+        results.append("✅ Successfully programmatically ran makemigrations & migrate for 'dynamic_qr' app.")
+        
+        # Seed UTM and Cloaking features
+        from services.models import Feature, Plan, PlanFeature
+        f_utm, _ = Feature.objects.get_or_create(key='shorturl_utm', defaults={'name': 'UTM Parameters', 'type': 'NUMERIC', 'section': 'SHORT URL'})
+        f_cloak, _ = Feature.objects.get_or_create(key='shorturl_cloaking', defaults={'name': 'URL Cloaking', 'type': 'NUMERIC', 'section': 'SHORT URL'})
+        
+        # Default Free Plan
+        free_plan = Plan.objects.filter(code='free').first()
+        if free_plan:
+            PlanFeature.objects.get_or_create(plan=free_plan, feature=f_utm, defaults={'enabled': True, 'monthly_limit': 5})
+            PlanFeature.objects.get_or_create(plan=free_plan, feature=f_cloak, defaults={'enabled': True, 'monthly_limit': 5})
+        
+        # Default Pro Plan
+        pro_plan = Plan.objects.filter(code='pro').first()
+        if pro_plan:
+            PlanFeature.objects.get_or_create(plan=pro_plan, feature=f_utm, defaults={'enabled': True, 'monthly_limit': 500})
+            PlanFeature.objects.get_or_create(plan=pro_plan, feature=f_cloak, defaults={'enabled': True, 'monthly_limit': 500})
+            
+        # Default Business Plan
+        biz_plan = Plan.objects.filter(code='business_plus').first()
+        if biz_plan:
+            PlanFeature.objects.get_or_create(plan=biz_plan, feature=f_utm, defaults={'enabled': True, 'is_unlimited': True})
+            PlanFeature.objects.get_or_create(plan=biz_plan, feature=f_cloak, defaults={'enabled': True, 'is_unlimited': True})
+            
+        results.append("✅ Seeded new features into PlanFeature limits.")
     except Exception as e:
         results.append(f"❌ Error during database migration run: {str(e)}")
 
@@ -679,6 +802,18 @@ def dqr_get_short_url_details(request, qr_id):
         'password_enabled': bool(qr.password),
         'expiry_enabled': bool(qr.expiry_date),
         'expiry_date': qr.expiry_date.strftime('%Y-%m-%dT%H:%M') if qr.expiry_date else '',
+        'utm_enabled': qr.utm_enabled,
+        'utm_source': qr.utm_source or '',
+        'utm_medium': qr.utm_medium or '',
+        'utm_campaign': qr.utm_campaign or '',
+            'utm_term': qr.utm_term or '',
+            'utm_content': qr.utm_content or '',
+        'cloaking_enabled': qr.cloaking_enabled,
+        'cloaked_title': qr.cloaked_title or '',
+        'cloaked_meta_description': qr.cloaked_meta_description or '',
+        'cloaked_custom_js': qr.cloaked_custom_js or '',
+        'has_cloaked_favicon': bool(qr.cloaked_favicon),
+        'has_cloaked_og_image': bool(qr.cloaked_og_image),
     })
 
 @dqr_login_required
@@ -805,6 +940,60 @@ def dqr_short_url_view(request):
         header_enabled = request.POST.get('header_enabled') == 'on'
         password_enabled = request.POST.get('password_enabled') == 'on'
         expiry_enabled = request.POST.get('expiry_enabled') == 'on'
+        utm_enabled = request.POST.get('utm_enabled') == 'on'
+        cloaking_enabled = request.POST.get('cloaking_enabled') == 'on'
+        
+        utm_source = request.POST.get('utm_source', '').strip()
+        utm_medium = request.POST.get('utm_medium', '').strip()
+        utm_campaign = request.POST.get('utm_campaign', '').strip()
+        utm_term = request.POST.get('utm_term', '').strip()
+        utm_content = request.POST.get('utm_content', '').strip()
+        if utm_source == 'other':
+            utm_source = request.POST.get('utm_source_custom', '').strip()
+        if utm_medium == 'other':
+            utm_medium = request.POST.get('utm_medium_custom', '').strip()
+        if utm_enabled:
+            utm_source = _normalize_utm_value(utm_source)
+            utm_medium = _normalize_utm_value(utm_medium)
+        else:
+            utm_source = utm_medium = utm_campaign = utm_term = utm_content = ''
+
+        utm_lengths = {
+            'utm_source': (utm_source, 100),
+            'utm_medium': (utm_medium, 100),
+            'utm_campaign': (utm_campaign, 150),
+            'utm_term': (utm_term, 150),
+            'utm_content': (utm_content, 150),
+        }
+        for field_name, (value, max_length) in utm_lengths.items():
+            if len(value) > max_length:
+                return JsonResponse({'error': f'{field_name} must be {max_length} characters or fewer.'}, status=400)
+        
+        cloaked_title = request.POST.get('cloaked_title', '').strip()
+        cloaked_meta_description = request.POST.get('cloaked_meta_description', '').strip()
+        cloaked_custom_js = request.POST.get('cloaked_custom_js', '').strip()
+        cloaked_favicon = request.FILES.get('cloaked_favicon')
+        cloaked_og_image = request.FILES.get('cloaked_og_image')
+
+        for upload_name, upload in (
+            ('Favicon', cloaked_favicon),
+            ('Open Graph image', cloaked_og_image),
+        ):
+            if not upload:
+                continue
+            if upload.size > 2 * 1024 * 1024:
+                return JsonResponse({'error': f'{upload_name} must be 2 MB or smaller.'}, status=400)
+            try:
+                from PIL import Image
+                upload.seek(0)
+                image = Image.open(upload)
+                if image.format not in {'PNG', 'JPEG', 'ICO'}:
+                    raise ValueError
+                image.verify()
+                upload.seek(0)
+            except Exception:
+                return JsonResponse({'error': f'{upload_name} must be a valid PNG, JPEG, or ICO image.'}, status=400)
+        
         header_value = None
         
         if header_enabled:
@@ -891,6 +1080,21 @@ def dqr_short_url_view(request):
 
         if header_enabled and not header_value:
             return JsonResponse({'error': 'Header value is required when enabled.'}, status=400)
+            
+        if utm_enabled:
+            if not has_feature(request.user, 'shorturl_utm'):
+                return JsonResponse({'error': 'UTM Parameters are not available in your plan.'}, status=403)
+            if not utm_campaign:
+                return JsonResponse({'error': 'Campaign is required when UTM is enabled.'}, status=400)
+                
+        if cloaking_enabled:
+            if not has_feature(request.user, 'shorturl_cloaking'):
+                return JsonResponse({'error': 'URL Cloaking is not available in your plan.'}, status=403)
+            # Custom JS Security Check
+            if cloaked_custom_js:
+                plan = request.user.subscriptions.filter(status='Active').first().plan.code if request.user.subscriptions.filter(status='Active').exists() else 'free'
+                if plan not in ['pro', 'business_plus']:
+                    return JsonResponse({'error': 'Custom JavaScript is only allowed on Pro and Business plans for security reasons.'}, status=403)
 
         from django.db import transaction
         
@@ -914,6 +1118,8 @@ def dqr_short_url_view(request):
                 'link_expiry': bool(expiry_date),
                 'gps_tracking': require_gps,
                 'custom_alias': bool(custom_alias),
+                'shorturl_utm': utm_enabled,
+                'shorturl_cloaking': cloaking_enabled,
             }
             
             ok, err_code, err_msg = check_and_increment_short_url_features(request.user, new_state, existing_qr)
@@ -937,6 +1143,42 @@ def dqr_short_url_view(request):
                 qr.expiry_date = expiry_date
                 
             qr.require_gps = require_gps
+            
+            # --- UTM Parameters ---
+            if utm_enabled:
+                qr.utm_enabled = True
+                qr.utm_source = utm_source
+                qr.utm_medium = utm_medium
+                qr.utm_campaign = utm_campaign
+                qr.utm_term = utm_term
+                qr.utm_content = utm_content
+            else:
+                qr.utm_enabled = False
+                qr.utm_source = None
+                qr.utm_medium = None
+                qr.utm_campaign = None
+                qr.utm_term = None
+                qr.utm_content = None
+                
+            # --- URL Cloaking ---
+            if cloaking_enabled:
+                qr.cloaking_enabled = True
+                qr.cloaked_title = cloaked_title
+                qr.cloaked_meta_description = cloaked_meta_description
+                if cloaked_custom_js and request.user.subscriptions.filter(status='Active', plan__code__in=['pro', 'business_plus']).exists():
+                    qr.cloaked_custom_js = cloaked_custom_js
+                else:
+                    qr.cloaked_custom_js = ''
+                if cloaked_favicon:
+                    qr.cloaked_favicon = cloaked_favicon
+                if cloaked_og_image:
+                    qr.cloaked_og_image = cloaked_og_image
+            else:
+                qr.cloaking_enabled = False
+                qr.cloaked_title = None
+                qr.cloaked_meta_description = None
+                qr.cloaked_custom_js = None
+            
             
             if not header_enabled:
                 qr.header = None
@@ -990,6 +1232,8 @@ def dqr_short_url_view(request):
             'password_enabled': bool(qr.password),
             'expiry_enabled': bool(qr.expiry_date),
             'expiry_date': qr.expiry_date.strftime('%Y-%m-%dT%H:%M') if qr.expiry_date else '',
+            'utm_enabled': qr.utm_enabled,
+            'cloaking_enabled': qr.cloaking_enabled,
             'feature_statuses': feature_statuses,
             'created_at': qr.created_at.strftime('%Y-%m-%d %H:%M'),
             'scan_count': qr.scan_count
@@ -1164,7 +1408,69 @@ def dqr_short_url_analytics_view(request, qr_id):
         device_stats = normalize_stat(device_stats_raw, 'device_type')
         
         country_stats = list(base_query.exclude(location_source='local').exclude(country__in=['Unknown', 'Internal', '']).values('country', 'country_code').annotate(count=Count('id', distinct=True)).order_by('-count')[:10])
-        city_stats = list(base_query.exclude(location_source='local').exclude(city__in=['Unknown', 'Private IP', '']).values('city', 'country').annotate(count=Count('id', distinct=True)).order_by('-count')[:10])
+
+        city_buckets = {}
+        for record in base_query.exclude(location_source='local').exclude(city__in=['Unknown', 'Private IP', '', None]).order_by('city', 'country', 'country_code'):
+            city_name = (record.city or '').strip()
+            country_name = (record.country or '').strip()
+            country_code = (record.country_code or '').strip().upper() or 'XX'
+            if not city_name or city_name.lower() in {'local network'}:
+                continue
+
+            def valid_coord(lat, lon):
+                try:
+                    return lat is not None and lon is not None and -90 <= float(lat) <= 90 and -180 <= float(lon) <= 180
+                except (TypeError, ValueError):
+                    return False
+
+            lat_lon = None
+            for candidate_lat, candidate_lon in ((record.gps_latitude, record.gps_longitude), (record.latitude, record.longitude)):
+                if valid_coord(candidate_lat, candidate_lon):
+                    lat_lon = (float(candidate_lat), float(candidate_lon))
+                    break
+            if not lat_lon:
+                continue
+
+            key = (city_name, country_name, country_code)
+            bucket = city_buckets.setdefault(key, {
+                'city': city_name,
+                'country': country_name,
+                'country_code': country_code,
+                'count': 0,
+                'lat_total': 0.0,
+                'lon_total': 0.0,
+                'coord_points': 0,
+            })
+            bucket['count'] += 1
+            bucket['lat_total'] += lat_lon[0]
+            bucket['lon_total'] += lat_lon[1]
+            bucket['coord_points'] += 1
+
+        city_map_data = []
+        for (city_name, country_name, country_code), bucket in city_buckets.items():
+            if bucket['coord_points'] <= 0:
+                continue
+            lat = bucket['lat_total'] / bucket['coord_points']
+            lon = bucket['lon_total'] / bucket['coord_points']
+            city_map_data.append({
+                'city': city_name,
+                'country': country_name,
+                'country_code': country_code,
+                'clicks': bucket['count'],
+                'latitude': round(lat, 5),
+                'longitude': round(lon, 5),
+                'percentage': round((bucket['count'] / total_clicks) * 100, 2) if total_clicks else 0,
+            })
+        city_map_data = sorted(city_map_data, key=lambda item: (-item['clicks'], item['city']))
+        city_stats = [{
+            'city': item['city'],
+            'country': item['country'],
+            'country_code': item['country_code'],
+            'count': item['clicks'],
+            'percentage': item['percentage'],
+            'latitude': item['latitude'],
+            'longitude': item['longitude'],
+        } for item in city_map_data[:10]]
         local_traffic = base_query.filter(
             Q(location_source='local') | Q(country__in=['Internal', 'Local Network']) | Q(country_code='LCL')
         ).values('id').distinct().count()
@@ -1196,6 +1502,29 @@ def dqr_short_url_analytics_view(request, qr_id):
         city_stats = add_percentages(city_stats)
         referrer_stats = add_percentages(referrer_stats)
         ts_stats = source_stats
+
+        city_map_data = []
+        for city in city_stats:
+            lat = city.get('latitude')
+            lng = city.get('longitude')
+            if lat is None or lng is None:
+                continue
+            try:
+                lat = float(lat)
+                lng = float(lng)
+            except (TypeError, ValueError):
+                continue
+            if not (-90 <= lat <= 90 and -180 <= lng <= 180):
+                continue
+            city_map_data.append({
+                'city': city.get('city') or city.get('display_name') or 'Unknown',
+                'country': city.get('country') or '',
+                'country_code': city.get('country_code') or '',
+                'clicks': city.get('count', 0),
+                'percentage': city.get('percentage', 0),
+                'latitude': lat,
+                'longitude': lng,
+            })
         
         # Clicks by Hour / Day (using local timezone)
         clicks_by_hour = [0] * 24
@@ -1267,7 +1596,18 @@ def dqr_short_url_analytics_view(request, qr_id):
                 time_series.append({'label': d_label, 'count': r['count'], 'unique': r['unique'],
                                     'qr': r['qr'], 'human': r.get('human', 0), 'bot': r.get('bot', 0)})
                 
-        recent_scans_qs = base_query.order_by('-timestamp')
+            first_unique_visit_ids = {}
+        for scan in base_query.filter(is_bot=False).exclude(visitor_id__isnull=True).exclude(visitor_id='').order_by('timestamp', 'id'):
+            visitor_key = (scan.visitor_id or '').strip()
+            if visitor_key and visitor_key not in first_unique_visit_ids:
+                first_unique_visit_ids[visitor_key] = scan.pk
+
+        recent_scans_qs = list(base_query.order_by('-timestamp'))
+        for scan in recent_scans_qs:
+            visitor_key = (scan.visitor_id or '').strip()
+            scan.is_unique_visit = bool(
+                not scan.is_bot and visitor_key and first_unique_visit_ids.get(visitor_key) == scan.pk
+            )
         
         # Best day from buckets that had actual clicks
         best_day = None
@@ -1306,6 +1646,28 @@ def dqr_short_url_analytics_view(request, qr_id):
             top_ts = ts_stats[0]['source']
             insights.append(f"{top_ts} traffic is currently your largest traffic source.")
             
+        cloaked_clicks = base_query.filter(was_cloaked=True).values('id').distinct().count()
+        utm_sources_raw = list(base_query.exclude(utm_source__isnull=True).exclude(utm_source='').values('utm_source').annotate(count=Count('id', distinct=True)).order_by('-count')[:8])
+        utm_mediums_raw = list(base_query.exclude(utm_medium__isnull=True).exclude(utm_medium='').values('utm_medium').annotate(count=Count('id', distinct=True)).order_by('-count')[:8])
+        utm_campaigns_raw = list(base_query.exclude(utm_campaign__isnull=True).exclude(utm_campaign='').values('utm_campaign').annotate(count=Count('id', distinct=True)).order_by('-count')[:8])
+        utm_terms_raw = list(base_query.exclude(utm_term__isnull=True).exclude(utm_term='').values('utm_term').annotate(count=Count('id', distinct=True)).order_by('-count')[:8])
+        utm_contents_raw = list(base_query.exclude(utm_content__isnull=True).exclude(utm_content='').values('utm_content').annotate(count=Count('id', distinct=True)).order_by('-count')[:8])
+        
+        def enrich_distribution(rows, key_name='label'):
+            out = []
+            for row in rows:
+                label = row.get(key_name) or 'Unknown'
+                count = row.get('count', 0) or 0
+                percentage = round((count / total_clicks) * 100, 2) if total_clicks else 0
+                out.append({'label': label, 'count': count, 'percentage': percentage})
+            return out
+
+        utm_sources = enrich_distribution(utm_sources_raw, 'utm_source')
+        utm_mediums = enrich_distribution(utm_mediums_raw, 'utm_medium')
+        utm_campaigns = enrich_distribution(utm_campaigns_raw, 'utm_campaign')
+        utm_terms = enrich_distribution(utm_terms_raw, 'utm_term')
+        utm_contents = enrich_distribution(utm_contents_raw, 'utm_content')
+
         summary = {
             'best_day': best_day,
             'best_day_clicks': best_day_clicks,
@@ -1327,15 +1689,22 @@ def dqr_short_url_analytics_view(request, qr_id):
             'gps_unavailable': base_query.filter(
                 gps_permission__in=['unavailable', 'timeout', 'error']
             ).values('id').distinct().count(),
+            'cloaked_clicks': cloaked_clicks,
+            'cloaked_pct': round((cloaked_clicks / total_clicks * 100), 2) if total_clicks > 0 else 0,
+            'utm_sources': utm_sources,
+            'utm_mediums': utm_mediums,
+            'utm_campaigns': utm_campaigns,
         }
         summary['capture_rate'] = round(
             (summary['gps_granted'] / summary['gps_requests']) * 100, 2
         ) if summary['gps_requests'] else 0
         
-        return total_clicks, qr_scans, unique_clicks, human_clicks, bot_clicks, trends, source_stats, os_stats, browser_stats, device_stats, country_stats, city_stats, referrer_stats, time_series, recent_scans_qs, summary, ts_stats, clicks_by_hour, clicks_by_day
+        return total_clicks, qr_scans, unique_clicks, human_clicks, bot_clicks, trends, source_stats, os_stats, browser_stats, device_stats, country_stats, city_stats, referrer_stats, time_series, recent_scans_qs, summary, ts_stats, clicks_by_hour, clicks_by_day, utm_sources, utm_mediums, utm_campaigns
+        
+    city_map_data = []
 
     try:
-        total_clicks, qr_scans, unique_clicks, human_clicks, bot_clicks, trends, source_stats, os_stats, browser_stats, device_stats, country_stats, city_stats, referrer_stats, time_series, recent_scans_qs, perf_summary, ts_stats, clicks_by_hour, clicks_by_day = get_data()
+        total_clicks, qr_scans, unique_clicks, human_clicks, bot_clicks, trends, source_stats, os_stats, browser_stats, device_stats, country_stats, city_stats, referrer_stats, time_series, recent_scans_qs, perf_summary, ts_stats, clicks_by_hour, clicks_by_day, utm_sources, utm_mediums, utm_campaigns = get_data()
     except Exception as e:
         print(f"[Analytics Error]: {e}")
         total_clicks, qr_scans, unique_clicks, human_clicks, bot_clicks = 0, 0, 0, 0, 0
@@ -1343,6 +1712,12 @@ def dqr_short_url_analytics_view(request, qr_id):
         source_stats, os_stats, browser_stats, device_stats, country_stats, city_stats, referrer_stats, time_series, recent_scans_qs = [], [], [], [], [], [], [], [], []
         perf_summary = {}
         ts_stats, clicks_by_hour, clicks_by_day = [], [0]*24, [0]*7
+        utm_sources, utm_mediums, utm_campaigns = [], [], []
+
+    utm_terms_raw = list(base_query.exclude(utm_term__isnull=True).exclude(utm_term='').values('utm_term').annotate(count=Count('id', distinct=True)).order_by('-count')[:5])
+    utm_contents_raw = list(base_query.exclude(utm_content__isnull=True).exclude(utm_content='').values('utm_content').annotate(count=Count('id', distinct=True)).order_by('-count')[:5])
+    utm_terms = [{'label': row['utm_term'], 'count': row['count'], 'percentage': round((row['count'] / total_clicks) * 100, 2) if total_clicks else 0} for row in utm_terms_raw]
+    utm_contents = [{'label': row['utm_content'], 'count': row['count'], 'percentage': round((row['count'] / total_clicks) * 100, 2) if total_clicks else 0} for row in utm_contents_raw]
 
     paginator = Paginator(recent_scans_qs, 10)
     page_number = request.GET.get('page')
@@ -1373,6 +1748,33 @@ def dqr_short_url_analytics_view(request, qr_id):
     for l in city_stats:
         l['display_name'] = l.get('city') or 'Unknown'
 
+    city_map_data = []
+    for city in city_stats:
+        lat = city.get('latitude')
+        lng = city.get('longitude')
+
+        if lat is None or lng is None:
+            continue
+
+        try:
+            lat = float(lat)
+            lng = float(lng)
+        except (TypeError, ValueError):
+            continue
+
+        if not (-90 <= lat <= 90 and -180 <= lng <= 180):
+            continue
+
+        city_map_data.append({
+            'city': city.get('city') or city.get('display_name') or 'Unknown',
+            'country': city.get('country') or '',
+            'country_code': city.get('country_code') or '',
+            'clicks': city.get('count', 0),
+            'percentage': city.get('percentage', 0),
+            'latitude': lat,
+            'longitude': lng,
+        })
+
     # Build full time-series JSON with all metric streams
     chart_data_human = [d.get('human', 0) for d in time_series]
     chart_data_bot = [d.get('bot', 0) for d in time_series]
@@ -1384,7 +1786,64 @@ def dqr_short_url_analytics_view(request, qr_id):
             chart_data_ratio.append(round(d['unique'] / d['count'] * 100, 1))
         else:
             chart_data_ratio.append(0)
-    avg_ratio = round((unique_clicks / total_clicks) * 100, 2) if total_clicks else 0
+    repeat_clicks = max(total_clicks - unique_clicks, 0)
+    unique_ratio = round((unique_clicks / total_clicks) * 100, 2) if total_clicks else 0
+    repeat_ratio = round((repeat_clicks / total_clicks) * 100, 2) if total_clicks else 0
+    average_clicks_per_visitor = round((total_clicks / unique_clicks), 2) if unique_clicks else 0
+    active_days = sum(1 for d in time_series if d['count'] > 0)
+    average_unique_visitors_per_active_day = round((unique_clicks / active_days), 2) if active_days else 0
+    avg_ratio = unique_ratio
+
+    # ── Serialize all recent activity records for PDF export (capped 200 rows) ──
+    _sdmap = {
+        'direct': 'Direct Visit', 'Direct': 'Direct Visit',
+        'internal': 'Internal Navigation', 'Internal': 'Internal Navigation',
+        'qr': 'QR Scan', 'QR': 'QR Scan',
+        'search': 'Search Engine', 'Search': 'Search Engine',
+        'social': 'Social Media', 'Social': 'Social Media',
+        'referral': 'Referral Website', 'Referral': 'Referral Website',
+    }
+    _pdf_records = []
+    for _scan in recent_scans_qs[:200]:
+        _src = _sdmap.get(_scan.source, 'Unknown')
+        _typ = 'Bot' if _scan.is_bot else ('QR' if _scan.is_qr_scan else {
+            'search': 'Search', 'social': 'Social',
+            'referral': 'Referral', 'internal': 'Internal',
+        }.get(_scan.source, 'Direct'))
+        if _scan.location_source == 'gps' and _scan.gps_latitude:
+            _loc = f"{_scan.gps_latitude:.4f}, {_scan.gps_longitude:.4f}"
+        elif (_scan.location_source == 'local'
+              or _scan.country_code == 'LCL'
+              or _scan.country == 'Internal'):
+            _loc = 'Local Network'
+        elif (_scan.city and _scan.city not in ('Unknown', '')
+              and _scan.country and _scan.country not in ('Unknown', '')):
+            _loc = f"{_scan.city}, {_scan.country}"
+        else:
+            _loc = 'Unknown'
+        if _scan.location_source == 'gps':
+            _loc_src = 'GPS'
+        elif _scan.location_source == 'ip':
+            _loc_src = 'IP Approx.'
+        elif _scan.location_source == 'local':
+            _loc_src = 'Local'
+        else:
+            _loc_src = '\u2014'
+        _ref = _scan.referrer or ''
+        if len(_ref) > 35:
+            _ref = _ref[:35] + '\u2026'
+        _pdf_records.append({
+            'time': timezone.localtime(_scan.timestamp).strftime('%b %d, %H:%M'),
+            'location': _loc,
+            'location_source': _loc_src,
+            'device': _scan.device_type or 'Unknown',
+            'browser_os': f"{_scan.browser or 'Other'} / {_scan.os or 'Other'}",
+            'source': _src,
+            'referrer': _ref or 'None',
+            'type': _typ,
+        })
+    js_recent_activity = json.dumps(_pdf_records)
+    # ─────────────────────────────────────────────────────────────────────────
 
     return render(request, 'dynamic_qr/short_url_analytics.html', {
         'qr': qr,
@@ -1400,12 +1859,24 @@ def dqr_short_url_analytics_view(request, qr_id):
         'perf_summary': perf_summary,
         'country_stats': country_stats,
         'city_stats': city_stats,
+        'city_map_data': json.dumps(city_map_data),
         'referrer_stats': referrer_stats,
         'local_traffic': perf_summary.get('local_traffic', 0),
         'ts_stats': ts_stats,
         'device_stats': device_stats,
         'browser_stats': browser_stats,
         'os_stats': os_stats,
+        'utm_sources': utm_sources,
+        'utm_mediums': utm_mediums,
+        'utm_campaigns': utm_campaigns,
+        'utm_terms': utm_terms,
+        'utm_contents': utm_contents,
+        'repeat_clicks': repeat_clicks,
+        'repeat_ratio': repeat_ratio,
+        'unique_ratio': unique_ratio,
+        'average_clicks_per_visitor': average_clicks_per_visitor,
+        'average_unique_visitors_per_active_day': average_unique_visitors_per_active_day,
+        'period_average_unique_ratio': avg_ratio,
         # JSON payloads for charts
         'js_labels': json.dumps(chart_labels),
         'js_data_total': json.dumps(chart_data_total),
@@ -1425,6 +1896,7 @@ def dqr_short_url_analytics_view(request, qr_id):
         'js_device_data': json.dumps([d['count'] for d in device_stats]),
         'js_clicks_by_hour': json.dumps(clicks_by_hour),
         'js_clicks_by_day': json.dumps(clicks_by_day),
+        'js_recent_activity': js_recent_activity,
         'page_obj': page_obj,
     })
 
@@ -1718,14 +2190,22 @@ def dqr_redirect_view(request, short_code):
 
     qr = get_object_or_404(DynamicQRCode, Q(short_code=short_code) | Q(custom_alias=short_code))
 
+    utm_data = {
+        'utm_source': request.GET.get('utm_source'),
+        'utm_medium': request.GET.get('utm_medium'),
+        'utm_campaign': request.GET.get('utm_campaign'),
+        'utm_term': request.GET.get('utm_term'),
+        'utm_content': request.GET.get('utm_content'),
+    }
+
     # 1. Disabled Check
     if not qr.is_active:
-        record_short_url_event(qr, request, result='disabled', status=403)
+        record_short_url_event(qr, request, result='disabled', status=403, utm_data=utm_data)
         return render(request, 'dynamic_qr/qr_disabled.html', {'qr': qr})
         
     # 2. Expiry Check
     if qr.expiry_date and timezone.now() > qr.expiry_date:
-        record_short_url_event(qr, request, result='expired', status=403)
+        record_short_url_event(qr, request, result='expired', status=403, utm_data=utm_data)
         return render(request, 'dynamic_qr/qr_disabled.html', {'qr': qr, 'expired': True})
         
     # 3. GPS Tracking Flow
@@ -1759,23 +2239,23 @@ def dqr_redirect_view(request, short_code):
             except (TypeError, ValueError):
                 if is_json_request:
                     return JsonResponse({'success': False, 'error': 'Invalid GPS coordinates.'}, status=400)
-                return JsonResponse({'success': True, 'redirect_url': qr.destination_url}, status=200)
+                return JsonResponse({'success': True, 'redirect_url': _build_short_url_target(qr)}, status=200)
             if not event:
                 if is_json_request:
                     return JsonResponse({'success': False, 'error': 'GPS session expired. Please reopen the short link.'}, status=409)
-                return JsonResponse({'success': True, 'redirect_url': qr.destination_url}, status=200)
+                return JsonResponse({'success': True, 'redirect_url': _build_short_url_target(qr)}, status=200)
             if permission != 'granted':
                 if is_json_request:
-                    return JsonResponse({'success': True, 'redirect_url': qr.destination_url})
-                return JsonResponse({'success': True, 'redirect_url': qr.destination_url})
+                    return JsonResponse({'success': True, 'redirect_url': _build_short_url_target(qr)})
+                return JsonResponse({'success': True, 'redirect_url': _build_short_url_target(qr)})
             # The pending event already represents this visit. Prevent the
             # redirecting GET from recording a second successful event.
             request.session[f'qr_last_hit_{qr.id}'] = timezone.now().timestamp()
             if is_json_request:
-                return JsonResponse({'success': True, 'redirect_url': qr.destination_url})
+                return JsonResponse({'success': True, 'redirect_url': _build_short_url_target(qr)})
             return redirect(request.path)
         if not request.session.get(f'qr_pending_event_{qr.id}'):
-            record_short_url_event(qr, request, result='gps_required', status=401)
+            record_short_url_event(qr, request, result='gps_required', status=401, utm_data=utm_data)
             from .models import QRAnalytics
             pending = QRAnalytics.objects.filter(qr_code=qr, redirect_result='gps_required').first()
             if pending:
@@ -1784,7 +2264,7 @@ def dqr_redirect_view(request, short_code):
                 request.session[f'qr_pending_event_{qr.id}'] = pending.pk
         return render(request, 'dynamic_qr/gps_capture_redirect.html', {
             'qr': qr,
-            'destination_url': qr.destination_url,
+            'destination_url': _build_short_url_target(qr),
         })
 
     # 4. Password Protection Check
@@ -1795,9 +2275,9 @@ def dqr_redirect_view(request, short_code):
                 request.session[f'qr_auth_{qr.id}'] = True
                 return redirect(request.path)
             else:
-                record_short_url_event(qr, request, result='password_failed', status=401)
+                record_short_url_event(qr, request, result='password_failed', status=401, utm_data=utm_data)
                 return render(request, 'dynamic_qr/qr_password.html', {'qr': qr, 'error': 'Incorrect password. Please try again.'})
-        record_short_url_event(qr, request, result='password_required', status=401)
+        record_short_url_event(qr, request, result='password_required', status=401, utm_data=utm_data)
         return render(request, 'dynamic_qr/qr_password.html', {'qr': qr})
 
     # 5. Success Logic & Logging
@@ -1807,7 +2287,7 @@ def dqr_redirect_view(request, short_code):
     # De-duplicate hits within 5 seconds for the same session
     if (now_ts - last_ts) >= 5:
         request.session[f'qr_last_hit_{qr.id}'] = now_ts
-        record_short_url_event(qr, request, result='redirect_success', status=302)
+        record_short_url_event(qr, request, result='redirect_success', status=302, utm_data=utm_data, was_cloaked=qr.cloaking_enabled)
 
     def _no_cache(response):
         # Prevent stale scan results after edits on the same short code.
@@ -1841,6 +2321,27 @@ def dqr_redirect_view(request, short_code):
         target_url = qr.destination_url
 
     if target_url and qr.qr_type in redirect_types:
+        target_url = _build_short_url_target(qr, target_url)
+
+        if qr.cloaking_enabled:
+            if _is_recursive_cloak_target(request, qr, target_url):
+                logger.error('Blocked recursive cloaking target for QR %s: %s', qr.pk, target_url)
+                return _no_cache(render(request, 'dynamic_qr/cloaked_redirect.html', {
+                    'qr': qr,
+                    'target_url': '',
+                    'cloaking_blocked': True,
+                    'fallback_reason': 'The cloaked destination points back to this short URL.',
+                }))
+
+            frame_block_reason = _frame_block_reason(request, target_url)
+            response = render(request, 'dynamic_qr/cloaked_redirect.html', {
+                'qr': qr,
+                'target_url': target_url,
+                'cloaking_blocked': bool(frame_block_reason),
+                'fallback_reason': frame_block_reason,
+            })
+            return _no_cache(response)
+        
         return _no_cache(HttpResponseRedirect(target_url))
     
     # 3. Protocol payload handling (tel:, sms:, mailto:, geo:, etc.)

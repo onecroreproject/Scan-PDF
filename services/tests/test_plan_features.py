@@ -110,3 +110,56 @@ class PlanFeatureTests(TestCase):
         pro_plan = next(p for p in plans if p.code == 'pro')
         self.assertEqual(pro_plan.monthly_price, 150)
         self.assertEqual(pro_plan.yearly_price, 1500)
+
+
+class ShortURLFeatureQuotaTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(username='short-url-quota', password='pw')
+        self.plan = Plan.objects.create(
+            code='quota-test-plan',
+            name='Quota Test Plan',
+            is_active=True,
+        )
+        self.utm, _ = Feature.objects.get_or_create(
+            key='shorturl_utm',
+            defaults={'name': 'UTM Parameters', 'is_active': True},
+        )
+        self.cloaking, _ = Feature.objects.get_or_create(
+            key='shorturl_cloaking',
+            defaults={'name': 'URL Cloaking', 'is_active': True},
+        )
+        PlanFeature.objects.update_or_create(
+            plan=self.plan,
+            feature=self.utm,
+            defaults={'enabled': True, 'monthly_limit': 1},
+        )
+        PlanFeature.objects.update_or_create(
+            plan=self.plan,
+            feature=self.cloaking,
+            defaults={'enabled': True, 'monthly_limit': 1},
+        )
+        Subscription.objects.create(user=self.user, plan=self.plan, status='Active')
+
+    def test_utm_and_cloaking_consume_only_new_activations(self):
+        from services.plan_features import check_and_increment_short_url_features
+
+        ok, _, _ = check_and_increment_short_url_features(
+            self.user,
+            {'shorturl_utm': True, 'shorturl_cloaking': True},
+        )
+        self.assertTrue(ok)
+        self.assertEqual(
+            UsageRecord.objects.get(user=self.user, feature_key='shorturl_utm').current_usage,
+            1,
+        )
+        self.assertEqual(
+            UsageRecord.objects.get(user=self.user, feature_key='shorturl_cloaking').current_usage,
+            1,
+        )
+
+        ok, error_code, _ = check_and_increment_short_url_features(
+            self.user,
+            {'shorturl_utm': True, 'shorturl_cloaking': True},
+        )
+        self.assertFalse(ok)
+        self.assertEqual(error_code, 'feature_limit_reached')

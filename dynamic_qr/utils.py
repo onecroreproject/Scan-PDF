@@ -10,6 +10,129 @@ from .models import QRAnalytics
 
 logger = logging.getLogger(__name__)
 
+
+# ---------------------------------------------------------------------------
+# Reverse geocoding — GPS coordinates → country / city / region
+# ---------------------------------------------------------------------------
+
+def _nominatim_reverse_http(latitude, longitude, timeout=5):
+    """
+    Pure-HTTP Nominatim reverse geocode (no geopy dependency required).
+    Returns a dict with any subset of: country, country_code, city, region.
+    Returns None on any failure.
+    """
+    url = (
+        f'https://nominatim.openstreetmap.org/reverse'
+        f'?lat={latitude}&lon={longitude}&format=json&addressdetails=1&accept-language=en'
+    )
+    headers = {
+        'User-Agent': 'ScanPDF-ShortURL-Analytics/1.0 (contact@scanpdf.io)',
+        'Accept-Language': 'en',
+    }
+    try:
+        req = Request(url, headers=headers)
+        with urlopen(req, timeout=timeout) as resp:
+            data = json.loads(resp.read().decode('utf-8'))
+        address = data.get('address', {})
+        if not address:
+            return None
+
+        country = (address.get('country') or '').strip()
+        country_code = (address.get('country_code') or '').strip().upper()
+        region = (address.get('state') or address.get('region') or '').strip()
+        city = (
+            address.get('city')
+            or address.get('town')
+            or address.get('village')
+            or address.get('municipality')
+            or address.get('suburb')
+            or address.get('county')
+            or address.get('state_district')
+            or ''
+        ).strip()
+
+        result = {}
+        if country:
+            result['country'] = country
+        if country_code:
+            result['country_code'] = country_code
+        if region:
+            result['region'] = region
+        if city:
+            result['city'] = city
+        return result if result else None
+    except Exception:
+        return None
+
+
+def reverse_geocode_coords(latitude, longitude):
+    """
+    Reverse-geocode GPS coordinates to country/city/region.
+
+    Strategy:
+      1. Try geopy Nominatim (if installed).
+      2. Fall back to direct HTTP call to Nominatim via urllib.
+
+    Returns a dict with any subset of:
+        { 'country', 'country_code', 'city', 'region' }
+    Returns None on failure — caller must handle gracefully.
+    """
+    if not (-90 <= latitude <= 90 and -180 <= longitude <= 180):
+        return None
+
+    # Attempt 1: geopy Nominatim (preferred)
+    try:
+        from geopy.geocoders import Nominatim
+
+        geolocator = Nominatim(
+            user_agent='ScanPDF-ShortURL-Analytics/1.0',
+        )
+        location = geolocator.reverse(
+            (latitude, longitude),
+            language='en',
+            exactly_one=True,
+            timeout=5,
+        )
+        if location and location.raw:
+            address = location.raw.get('address', {})
+            country = (address.get('country') or '').strip()
+            country_code = (address.get('country_code') or '').strip().upper()
+            region = (address.get('state') or address.get('region') or '').strip()
+            city = (
+                address.get('city')
+                or address.get('town')
+                or address.get('village')
+                or address.get('municipality')
+                or address.get('suburb')
+                or address.get('county')
+                or address.get('state_district')
+                or ''
+            ).strip()
+
+            result = {}
+            if country:
+                result['country'] = country
+            if country_code:
+                result['country_code'] = country_code
+            if region:
+                result['region'] = region
+            if city:
+                result['city'] = city
+            return result if result else None
+
+    except ImportError:
+        # geopy not installed — fall through to HTTP fallback
+        pass
+    except Exception:
+        # Timeout / service error — fall through to HTTP fallback
+        pass
+
+    # Attempt 2: Pure urllib HTTP fallback
+    return _nominatim_reverse_http(latitude, longitude, timeout=5)
+
+
+# ---------------------------------------------------------------------------
+
 SOURCE_LABELS = {
     'direct': 'Direct Visit',
     'internal': 'Internal Navigation',
@@ -45,11 +168,25 @@ def is_private_address(value):
     except ValueError:
         return False
 
-def record_short_url_event(qr, request, result, status, visitor_id=None):
+def record_short_url_event(qr, request, result, status, visitor_id=None, utm_data=None, was_cloaked=False):
     """
     Centralized analytics recording pipeline.
     Must be called for every short URL hit, regardless of outcome.
     """
+    incoming_utm = {
+        'utm_source': (utm_data or {}).get('utm_source') if utm_data else None,
+        'utm_medium': (utm_data or {}).get('utm_medium') if utm_data else None,
+        'utm_campaign': (utm_data or {}).get('utm_campaign') if utm_data else None,
+        'utm_term': (utm_data or {}).get('utm_term') if utm_data else None,
+        'utm_content': (utm_data or {}).get('utm_content') if utm_data else None,
+    }
+    configured_utm = {
+        'utm_source': qr.utm_source,
+        'utm_medium': qr.utm_medium,
+        'utm_campaign': qr.utm_campaign,
+        'utm_term': qr.utm_term,
+        'utm_content': qr.utm_content,
+    }
     # 1. Parse User Agent & Bot detection
     ua = request.META.get('HTTP_USER_AGENT', '').lower()
     bot_keywords = ['bot', 'crawl', 'spider', 'slurp', 'mediapartners', 'preview', 'slack', 'discord', 'whatsapp', 'skype']
@@ -159,7 +296,18 @@ def record_short_url_event(qr, request, result, status, visitor_id=None):
                 location_source=location_source,
                 gps_permission='not_required',
                 redirect_result=result,
-                http_status=status
+                http_status=status,
+                utm_source=configured_utm['utm_source'],
+                utm_medium=configured_utm['utm_medium'],
+                utm_campaign=configured_utm['utm_campaign'],
+                utm_term=configured_utm['utm_term'],
+                utm_content=configured_utm['utm_content'],
+                incoming_utm_source=incoming_utm['utm_source'],
+                incoming_utm_medium=incoming_utm['utm_medium'],
+                incoming_utm_campaign=incoming_utm['utm_campaign'],
+                incoming_utm_term=incoming_utm['utm_term'],
+                incoming_utm_content=incoming_utm['utm_content'],
+                was_cloaked=was_cloaked
             )
             if result == 'redirect_success':
                 type(qr).objects.filter(pk=qr.pk).update(scan_count=F('scan_count') + 1)
@@ -185,9 +333,38 @@ def update_pending_gps_event(request, qr, permission, latitude=None, longitude=N
         'gps_captured_at': timezone.now() if permission == 'granted' else None,
     }
     if permission == 'granted':
-        updates.update(redirect_result='redirect_success', http_status=302, location_source='gps')
+        updates.update(
+            redirect_result='redirect_success',
+            http_status=302,
+            location_source='gps',
+            latitude=latitude,
+            longitude=longitude,
+        )
+
+        # ── Reverse-geocode GPS coordinates to country/city ──────────────────
+        # Enriches the SAME click record — no new row is created.
+        # Any failure is silently swallowed; coordinates are always saved.
+        try:
+            geo = reverse_geocode_coords(latitude, longitude)
+            if geo:
+                if geo.get('country', '').strip():
+                    updates['country'] = geo['country'].strip()
+                if geo.get('city', '').strip():
+                    updates['city'] = geo['city'].strip()
+                if geo.get('region', '').strip():
+                    updates['region'] = geo['region'].strip()
+                if geo.get('country_code', '').strip():
+                    updates['country_code'] = geo['country_code'].strip().upper()
+        except Exception:
+            logger.warning(
+                "GPS reverse geocode failed for qr=%s lat=%s lon=%s",
+                qr.pk, latitude, longitude,
+            )
+        # ────────────────────────────────────────────────────────────────────
+
     elif permission in ('denied', 'unavailable', 'timeout'):
         updates.update(redirect_result='gps_denied', http_status=403)
+
     with transaction.atomic():
         event = QRAnalytics.objects.select_for_update().filter(
             pk=event_id, qr_code=qr, redirect_result='gps_required'

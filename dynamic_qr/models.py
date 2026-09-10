@@ -106,6 +106,22 @@ class DynamicQRCode(models.Model):
     password = models.CharField(max_length=128, blank=True, null=True, help_text="Hashed password for protected links")
     expiry_date = models.DateTimeField(null=True, blank=True, help_text="When the link expires")
     require_gps = models.BooleanField(default=False, help_text="Require GPS location to access")
+    
+    # ── UTM Parameters ──
+    utm_enabled = models.BooleanField(default=False)
+    utm_source = models.CharField(max_length=100, blank=True, null=True)
+    utm_medium = models.CharField(max_length=100, blank=True, null=True)
+    utm_campaign = models.CharField(max_length=150, blank=True, null=True)
+    utm_term = models.CharField(max_length=150, blank=True, null=True)
+    utm_content = models.CharField(max_length=150, blank=True, null=True)
+    
+    # ── URL Cloaking ──
+    cloaking_enabled = models.BooleanField(default=False)
+    cloaked_title = models.CharField(max_length=200, blank=True, null=True)
+    cloaked_meta_description = models.TextField(blank=True, null=True)
+    cloaked_favicon = models.ImageField(upload_to='dynamic_qr_favicons/', blank=True, null=True)
+    cloaked_og_image = models.ImageField(upload_to='dynamic_qr_og_images/', blank=True, null=True)
+    cloaked_custom_js = models.TextField(blank=True, null=True, help_text="Restricted to Pro/Business. Executed in iframe wrapper context.")
 
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
@@ -219,6 +235,19 @@ class QRAnalytics(models.Model):
     is_qr_scan = models.BooleanField(default=False, help_text="True if originated from a QR code scan")
     source = models.CharField(max_length=50, default='Direct', help_text="Traffic source (QR, Direct, Referral, etc.)")
     visitor_id = models.CharField(max_length=64, blank=True, null=True, help_text="Hashed IP+UA for unique visitor tracking")
+    
+    # New Analytics fields for incoming UTMs & Cloaking
+    utm_source = models.CharField(max_length=100, blank=True, null=True)
+    utm_medium = models.CharField(max_length=100, blank=True, null=True)
+    utm_campaign = models.CharField(max_length=150, blank=True, null=True)
+    utm_term = models.CharField(max_length=150, blank=True, null=True)
+    utm_content = models.CharField(max_length=150, blank=True, null=True)
+    incoming_utm_source = models.CharField(max_length=100, blank=True, null=True)
+    incoming_utm_medium = models.CharField(max_length=100, blank=True, null=True)
+    incoming_utm_campaign = models.CharField(max_length=150, blank=True, null=True)
+    incoming_utm_term = models.CharField(max_length=150, blank=True, null=True)
+    incoming_utm_content = models.CharField(max_length=150, blank=True, null=True)
+    was_cloaked = models.BooleanField(default=False)
     
     # New Access Outcome Analytics
     RESULT_CHOICES = [
