@@ -57,6 +57,8 @@ FEATURE_CODES = [
     'custom_alias',
     'csv_export',
     'pdf_report',
+    'shorturl_utm',
+    'shorturl_cloaking',
 ]
 
 class Feature(models.Model):

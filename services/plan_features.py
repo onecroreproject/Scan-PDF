@@ -400,6 +400,8 @@ def check_and_increment_short_url_features(user, new_state, existing_qr=None):
             'link_expiry': bool,
             'gps_tracking': bool,
             'custom_alias': bool,
+            'shorturl_utm': bool,
+            'shorturl_cloaking': bool,
         }
 
     existing_qr: DynamicQRCode instance (None for new creation)
@@ -424,6 +426,8 @@ def check_and_increment_short_url_features(user, new_state, existing_qr=None):
             'link_expiry': lambda qr: bool(qr and qr.expiry_date),
             'gps_tracking': lambda qr: bool(qr and qr.require_gps),
             'custom_alias': lambda qr: bool(qr and qr.custom_alias),
+            'shorturl_utm': lambda qr: bool(qr and qr.utm_enabled),
+            'shorturl_cloaking': lambda qr: bool(qr and qr.cloaking_enabled),
         }
         feature_display_names = {
             'header': 'Custom Header',
@@ -432,6 +436,8 @@ def check_and_increment_short_url_features(user, new_state, existing_qr=None):
             'link_expiry': 'Link Expiry',
             'gps_tracking': 'GPS Tracking',
             'custom_alias': 'Custom Alias',
+            'shorturl_utm': 'UTM Parameters',
+            'shorturl_cloaking': 'URL Cloaking',
         }
 
         for code, is_active_now in new_state.items():

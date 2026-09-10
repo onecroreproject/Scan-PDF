@@ -51,12 +51,10 @@
 
         <div class="p-8 pt-6 flex-1 bg-surface-50/30">
             <!-- Live feature count from PlanFeature -->
-            {% with enabled_features=plan.plan_features.all %}
-            {% with short_url_features=plan.plan_features.filter %}
             <div class="flex justify-between items-center mb-4">
                 <h4 class="text-xs font-black text-surface-500 uppercase tracking-widest">SHORT URL</h4>
                 <span class="text-xs font-bold text-surface-900 bg-white px-2 py-1 rounded-md border border-surface-200" data-plan-feature-count="{{ plan.id }}">
-                    {% with count=plan.plan_features.count %}{{ count }}{% endwith %} features
+                    {{ plan.enabled_feature_count }} features
                 </span>
             </div>
 
@@ -85,8 +83,6 @@
                 <li class="text-xs text-surface-400 font-medium italic">No features configured yet.</li>
                 {% endfor %}
             </ul>
-            {% endwith %}
-            {% endwith %}
         </div>
 
         <div class="p-4 bg-white border-t border-surface-100 flex gap-2">

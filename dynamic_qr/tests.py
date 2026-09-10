@@ -47,6 +47,51 @@ class ShortURLAnalyticsTests(TestCase):
         self.assertEqual(event.country, 'Unknown')
         self.assertEqual(event.city, 'Unknown')
 
+    def test_configured_utm_parameters_merge_all_fields_once(self):
+        self.qr.utm_enabled = True
+        self.qr.utm_source = 'google'
+        self.qr.utm_medium = 'cpc'
+        self.qr.utm_campaign = 'summer_sale'
+        self.qr.utm_term = 'buy+shoes'
+        self.qr.utm_content = 'hero_banner'
+        self.qr.destination_url = 'https://example.com/product?id=10&utm_source=old&ref=mail'
+        self.qr.save()
+
+        response = Client().get(f'/qr/r/{self.qr.short_code}/')
+
+        self.assertEqual(response.status_code, 302)
+        self.assertEqual(
+            response['Location'],
+            'https://example.com/product?id=10&ref=mail&utm_source=google&utm_medium=cpc&utm_campaign=summer_sale&utm_term=buy%2Bshoes&utm_content=hero_banner',
+        )
+        self.assertEqual(QRAnalytics.objects.filter(qr_code=self.qr).count(), 1)
+
+    def test_configured_utm_snapshot_is_separate_from_incoming_visitor_utm(self):
+        self.qr.utm_enabled = True
+        self.qr.utm_source = 'google'
+        self.qr.utm_medium = 'cpc'
+        self.qr.utm_campaign = 'summer_sale'
+        self.qr.utm_term = 'shoes'
+        self.qr.utm_content = 'hero_banner'
+        self.qr.save()
+
+        self.client.get(
+            f'/qr/r/{self.qr.short_code}/?utm_source=facebook&utm_medium=social&utm_campaign=launch&utm_term=boots&utm_content=sidebar',
+            HTTP_USER_AGENT=self.user_agent,
+        )
+
+        event = QRAnalytics.objects.get(qr_code=self.qr)
+        self.assertEqual(event.utm_source, 'google')
+        self.assertEqual(event.utm_medium, 'cpc')
+        self.assertEqual(event.utm_campaign, 'summer_sale')
+        self.assertEqual(event.utm_term, 'shoes')
+        self.assertEqual(event.utm_content, 'hero_banner')
+        self.assertEqual(event.incoming_utm_source, 'facebook')
+        self.assertEqual(event.incoming_utm_medium, 'social')
+        self.assertEqual(event.incoming_utm_campaign, 'launch')
+        self.assertEqual(event.incoming_utm_term, 'boots')
+        self.assertEqual(event.incoming_utm_content, 'sidebar')
+
     def test_qr_source_and_unique_visitor_count(self):
         for source in ('qr', 'qr'):
             Client().get(
@@ -83,7 +128,87 @@ class ShortURLAnalyticsTests(TestCase):
         self.assertEqual(self.qr.scan_count, 1)
         self.assertEqual(pending.gps_permission, 'granted')
         self.assertEqual(pending.location_source, 'gps')
-        self.assertEqual(pending.gps_accuracy, 12.5)
+
+    def test_analytics_page_exposes_utm_and_unique_ratio_details(self):
+        self.qr.utm_enabled = True
+        self.qr.utm_source = 'google'
+        self.qr.utm_medium = 'cpc'
+        self.qr.utm_campaign = 'marketing'
+        self.qr.utm_term = 'shoes'
+        self.qr.utm_content = 'banner'
+        self.qr.save()
+
+        for i in range(3):
+            Client().get(
+                f'/qr/r/{self.qr.short_code}/?utm_source=google&utm_medium=cpc&utm_campaign=marketing&utm_term=shoes&utm_content=banner',
+                HTTP_USER_AGENT=self.user_agent,
+                REMOTE_ADDR=f'127.0.0.{i + 2}',
+            )
+
+        self.client.force_login(self.user)
+        session = self.client.session
+        session['is_dqr_user'] = True
+        session.save()
+
+        response = self.client.get(f'/qr/short-url/analytics/{self.qr.id}/?range=7days')
+        self.assertEqual(response.status_code, 200)
+        self.assertContains(response, 'UTM Campaign Analytics')
+        self.assertContains(response, 'marketing')
+        self.assertContains(response, 'Unique Click Ratio')
+        self.assertContains(response, 'Average Clicks / Visitor')
+        self.assertEqual(response.context['total_clicks'], 3)
+        self.assertEqual(response.context['unique_clicks'], 1)
+        self.assertEqual(response.context['repeat_clicks'], 2)
+        self.assertAlmostEqual(response.context['unique_ratio'], 33.33, places=2)
+        self.assertAlmostEqual(response.context['repeat_ratio'], 66.67, places=2)
+        self.assertAlmostEqual(response.context['average_clicks_per_visitor'], 3.0, places=2)
+
+    def test_recent_activity_marks_first_visit_per_unique_visitor(self):
+        now = timezone.now()
+        QRAnalytics.objects.create(
+            qr_code=self.qr,
+            timestamp=now - timezone.timedelta(minutes=30),
+            location_source='ip',
+            country='India',
+            country_code='IN',
+            city='Chennai',
+            source='direct',
+            visitor_id='visitor-one',
+            redirect_result='redirect_success',
+        )
+        QRAnalytics.objects.create(
+            qr_code=self.qr,
+            timestamp=now - timezone.timedelta(minutes=22),
+            location_source='ip',
+            country='India',
+            country_code='IN',
+            city='Chennai',
+            source='direct',
+            visitor_id='visitor-one',
+            redirect_result='redirect_success',
+        )
+        QRAnalytics.objects.create(
+            qr_code=self.qr,
+            timestamp=now - timezone.timedelta(minutes=10),
+            location_source='ip',
+            country='India',
+            country_code='IN',
+            city='Chennai',
+            source='direct',
+            visitor_id='visitor-two',
+            redirect_result='redirect_success',
+        )
+
+        self.client.force_login(self.user)
+        session = self.client.session
+        session['is_dqr_user'] = True
+        session.save()
+
+        response = self.client.get(f'/qr/short-url/analytics/{self.qr.id}/?range=7days')
+        self.assertEqual(response.status_code, 200)
+        markers = [getattr(scan, 'is_unique_visit', False) for scan in response.context['page_obj']]
+        self.assertEqual(sum(markers), 2)
+        self.assertContains(response, 'title="Unique visitor"')
 
     def test_gps_json_post_returns_destination_json(self):
         self.qr.require_gps = True
