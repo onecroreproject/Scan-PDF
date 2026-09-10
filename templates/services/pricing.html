@@ -98,15 +98,15 @@
                         Contact Us
                     </a>
                     {% else %}
-                    <a href="{% if is_logged_in %}{% url 'services:payment_confirm' plan.code 'monthly' %}{% else %}{% url 'dynamic_qr:login' %}?next={% url 'services:pricing' %}{% endif %}"
+                    <a href="{% if plan.code == 'pro' %}{% url 'services:contact' %}{% elif is_logged_in %}{% url 'services:payment_confirm' plan.code 'monthly' %}{% else %}{% url 'dynamic_qr:login' %}?next={% url 'services:pricing' %}{% endif %}"
                         id="plan-btn-{{ plan.code }}"
                         data-plan="{{ plan.code }}"
-                        data-monthly-url="{% if is_logged_in %}{% url 'services:payment_confirm' plan.code 'monthly' %}{% else %}{% url 'dynamic_qr:login' %}?next={% url 'services:pricing' %}{% endif %}"
-                        data-yearly-url="{% if is_logged_in %}{% url 'services:payment_confirm' plan.code 'yearly' %}{% else %}{% url 'dynamic_qr:login' %}?next={% url 'services:pricing' %}{% endif %}"
+                        data-monthly-url="{% if plan.code == 'pro' %}{% url 'services:contact' %}{% elif is_logged_in %}{% url 'services:payment_confirm' plan.code 'monthly' %}{% else %}{% url 'dynamic_qr:login' %}?next={% url 'services:pricing' %}{% endif %}"
+                        data-yearly-url="{% if plan.code == 'pro' %}{% url 'services:contact' %}{% elif is_logged_in %}{% url 'services:payment_confirm' plan.code 'yearly' %}{% else %}{% url 'dynamic_qr:login' %}?next={% url 'services:pricing' %}{% endif %}"
                         class="plan-btn block w-full py-4 px-6 rounded-2xl
                             bg-surface-900 hover:bg-surface-800 text-white
                             text-center text-sm font-black transition-all uppercase tracking-wider">
-                        {% if plan.code == 'pro' %}Pay Now{% else %}Get Started{% endif %}
+                        {% if plan.code == 'pro' %}PAY NOW{% else %}Get Started{% endif %}
                     </a>
                     {% endif %}
                 </div>

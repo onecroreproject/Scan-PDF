@@ -1,7 +1,7 @@
 {% extends 'dynamic_qr/dashboard_base.html' %}
 {% load static %}
 
-{% block title %}Dynamic QR Dashboard — ScanPDF{% endblock %}
+{% block title %}Dashboard — ScanPDF{% endblock %}
 
 {% block dqr_style %}
     /* Custom styles that aren't easily done with Tailwind */
@@ -33,13 +33,9 @@
     <!-- Header -->
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
         <div>
-            <h1 class="text-2xl font-black text-slate-900 tracking-tight">QR Dashboard</h1>
-            <p class="text-slate-500 font-bold text-xs mt-1">Manage and track your high-end dynamic QR assets.</p>
+            <h1 class="text-2xl font-black text-slate-900 tracking-tight">Dashboard</h1>
+            <p class="text-slate-500 font-bold text-xs mt-1">Manage and track your Dynamic QR and Short URL assets.</p>
         </div>
-        <a href="{% url 'dynamic_qr:create' %}" class="inline-flex items-center justify-center gap-2 px-6 h-12 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-black text-sm transition-all shadow-lg hover:-translate-y-1 group">
-            <i data-lucide="plus-circle" class="w-4 h-4 group-hover:rotate-90 transition-transform"></i>
-            New QR Asset
-        </a>
     </div>
 
     <!-- Stats Row -->
@@ -47,10 +43,10 @@
         <!-- Total Assets -->
         <div class="bg-white stat-card border border-slate-100 shadow-sm">
             <div class="stat-icon bg-indigo-50 text-indigo-600 rounded-lg flex items-center justify-center">
-                <i data-lucide="qr-code"></i>
+                <i data-lucide="layers"></i>
             </div>
-            <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Total</p>
-            <h3 class="stat-value font-black text-slate-900">{{ qr_codes|length }}</h3>
+            <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Assets</p>
+            <h3 class="stat-value font-black text-slate-900">{{ total_assets }}</h3>
         </div>
 
         <!-- Active Codes -->
@@ -67,7 +63,7 @@
             <div class="stat-icon bg-slate-50 text-slate-500 rounded-lg flex items-center justify-center">
                 <i data-lucide="power-off"></i>
             </div>
-            <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Paused</p>
+            <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Paused / Inactive</p>
             <h3 class="stat-value font-black text-slate-900">{{ total_deactivated }}</h3>
         </div>
 
@@ -76,7 +72,7 @@
             <div class="stat-icon bg-amber-50 text-amber-600 rounded-lg flex items-center justify-center">
                 <i data-lucide="activity"></i>
             </div>
-            <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Scans</p>
+            <p class="text-[9px] font-black text-slate-400 uppercase tracking-widest mb-1">Total Scans / Clicks</p>
             <h3 class="stat-value font-black text-slate-900">{{ total_scans }}</h3>
         </div>
     </div>
@@ -161,6 +157,40 @@
     {% if qr_codes %}
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
         {% for qr in qr_codes %}
+        {% if qr.is_short_url %}
+        <div class="qr-card bg-white border border-slate-100 p-5 flex flex-col relative" id="qr-card-{{ qr.id }}">
+            <div class="absolute top-5 right-5">
+                {% if qr.is_active %}
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-[10px] font-black uppercase tracking-wider">Active</span>
+                {% else %}
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-100 text-slate-400 rounded-full text-[10px] font-black uppercase tracking-wider">Inactive</span>
+                {% endif %}
+            </div>
+            <div class="flex items-start gap-4 mb-4">
+                <div class="w-16 h-16 bg-indigo-50 rounded-xl p-2 border border-indigo-100 overflow-hidden flex-shrink-0 flex items-center justify-center">
+                    <i data-lucide="link" class="w-8 h-8 text-indigo-600"></i>
+                </div>
+                <div class="flex-1 min-width-0">
+                    <h3 class="text-sm font-black text-slate-900 truncate mb-1">{{ qr.qr_name }}</h3>
+                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-indigo-50 text-indigo-600 rounded-lg text-[10px] font-black uppercase tracking-wider">Short URL</span>
+                </div>
+            </div>
+            <div class="bg-slate-50 rounded-xl p-3 flex items-center justify-around gap-2 mb-4">
+                <div class="text-center">
+                    <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest">Clicks</p>
+                    <p class="text-sm font-black text-slate-900">{{ qr.scan_count }}</p>
+                </div>
+                <div class="w-px h-6 bg-slate-200"></div>
+                <div class="text-center">
+                    <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest">Type</p>
+                    <p class="text-sm font-black text-slate-900">Short URL</p>
+                </div>
+            </div>
+            <a href="{% url 'dynamic_qr:short_url_analytics' qr.id %}" class="w-full h-10 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg flex items-center justify-center gap-2 font-black text-[10px] uppercase tracking-widest transition-all shadow-md">
+                <i data-lucide="bar-chart" class="w-3.5 h-3.5"></i> View Analytics
+            </a>
+        </div>
+        {% else %}
         {% with redirect_url=qr.qr_content %}
         <div class="qr-card bg-white border border-slate-100 p-5 flex flex-col relative" id="qr-card-{{ qr.id }}">
             <!-- Status Flag -->
@@ -291,6 +321,7 @@
             </div>
         </div>
         {% endwith %}
+        {% endif %}
         {% endfor %}
     </div>
     {% else %}
@@ -298,11 +329,8 @@
         <div class="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-8">
             <i data-lucide="qr-code" class="w-10 h-10 text-slate-300"></i>
         </div>
-        <h3 class="text-2xl font-black text-slate-900 mb-2">No Dynamic QR Codes Yet</h3>
-        <p class="text-slate-500 font-medium mb-10 max-w-sm mx-auto">Start creating trackable, customizable QR codes in seconds and see engagement live.</p>
-        <a href="{% url 'dynamic_qr:create' %}" class="inline-flex items-center gap-2 px-8 py-4 bg-indigo-600 text-white rounded-2xl font-black transition-transform hover:scale-105">
-            <i data-lucide="zap"></i> Create Your First QR
-        </a>
+        <h3 class="text-2xl font-black text-slate-900 mb-2">No assets created yet</h3>
+        <p class="text-slate-500 font-medium max-w-sm mx-auto">Your Dynamic QR and Short URL assets will appear here.</p>
     </div>
     {% endif %}
 

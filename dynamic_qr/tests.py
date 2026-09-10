@@ -4,6 +4,7 @@ import json
 from django.contrib.auth import get_user_model
 from django.http import HttpResponse
 from django.test import Client, TestCase
+from django.utils import timezone
 
 from .models import DynamicQRCode, QRAnalytics
 from . import utils
@@ -152,3 +153,110 @@ class ShortURLAnalyticsTests(TestCase):
         self.qr.refresh_from_db()
         self.assertEqual(self.qr.scan_count, 0)
         self.assertEqual(QRAnalytics.objects.filter(qr_code=self.qr).count(), 0)
+
+    def test_gps_save_twice_updates_one_visit(self):
+        self.qr.require_gps = True
+        self.qr.save(update_fields=['require_gps'])
+
+        with patch('dynamic_qr.views.render', return_value=HttpResponse('')):
+            self.client.get(f'/qr/r/{self.qr.short_code}/')
+
+        response = self.client.post(
+            f'/qr/r/{self.qr.short_code}/',
+            data=json.dumps({
+                'latitude': 13.0827,
+                'longitude': 80.2707,
+                'accuracy': 8,
+                'permission': 'granted',
+            }),
+            content_type='application/json',
+        )
+        self.assertEqual(response.status_code, 200)
+        duplicate_response = self.client.post(
+            f'/qr/r/{self.qr.short_code}/',
+            data=json.dumps({
+                'latitude': 13.0827,
+                'longitude': 80.2707,
+                'accuracy': 8,
+                'permission': 'granted',
+            }),
+            content_type='application/json',
+        )
+        self.assertEqual(duplicate_response.status_code, 302)
+        self.assertEqual(QRAnalytics.objects.filter(qr_code=self.qr).count(), 1)
+        self.qr.refresh_from_db()
+        self.assertEqual(self.qr.scan_count, 1)
+
+    def test_analytics_counts_canonical_visits_and_gps_states(self):
+        now = timezone.now()
+        QRAnalytics.objects.create(
+            qr_code=self.qr,
+            timestamp=now,
+            country='India',
+            country_code='IN',
+            city='Chennai',
+            location_source='gps',
+            gps_permission='granted',
+            gps_latitude=13.08,
+            gps_longitude=80.27,
+            source='direct',
+            visitor_id='visitor-one',
+            redirect_result='redirect_success',
+        )
+        QRAnalytics.objects.create(
+            qr_code=self.qr,
+            timestamp=now,
+            country='India',
+            country_code='IN',
+            city='Chennai',
+            location_source='ip',
+            gps_permission='denied',
+            source='direct',
+            visitor_id='visitor-two',
+            redirect_result='gps_denied',
+        )
+
+        self.client.force_login(self.user)
+        session = self.client.session
+        session['is_dqr_user'] = True
+        session.save()
+        response = self.client.get(f'/qr/short-url/analytics/{self.qr.id}/?range=7days')
+
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['total_clicks'], 2)
+        self.assertEqual(response.context['unique_clicks'], 2)
+        summary = response.context['perf_summary']
+        self.assertEqual(summary['gps_requests'], 2)
+        self.assertEqual(summary['gps_granted'], 1)
+        self.assertEqual(summary['gps_denied'], 1)
+        self.assertEqual(summary['capture_rate'], 50)
+        self.assertEqual(sum(row['count'] for row in response.context['ts_stats']), 2)
+        self.assertEqual(response.context['country_stats'][0]['count'], 2)
+        self.assertEqual(response.context['country_stats'][0]['percentage'], 100)
+
+    def test_six_canonical_visits_stay_six_across_analytics(self):
+        for index in range(6):
+            QRAnalytics.objects.create(
+                qr_code=self.qr,
+                country='India',
+                country_code='IN',
+                city='Chennai',
+                location_source='ip',
+                gps_permission='not_required',
+                source='qr' if index < 2 else 'direct',
+                is_qr_scan=index < 2,
+                visitor_id=f'visitor-{index}',
+                redirect_result='redirect_success',
+            )
+
+        self.client.force_login(self.user)
+        session = self.client.session
+        session['is_dqr_user'] = True
+        session.save()
+        response = self.client.get(f'/qr/short-url/analytics/{self.qr.id}/?range=7days')
+
+        self.assertEqual(response.context['total_clicks'], 6)
+        self.assertEqual(response.context['page_obj'].paginator.count, 6)
+        self.assertEqual(sum(row['count'] for row in response.context['ts_stats']), 6)
+        self.assertEqual(response.context['country_stats'][0]['percentage'], 100)
+        self.assertEqual(response.context['perf_summary']['top_country_pct'], 100)
