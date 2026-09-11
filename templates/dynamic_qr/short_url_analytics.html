@@ -7,9 +7,8 @@
 {{ block.super }}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jsvectormap/dist/css/jsvectormap.min.css" />
-<script src="https://cdn.jsdelivr.net/npm/jsvectormap"></script>
-<script src="https://cdn.jsdelivr.net/npm/jsvectormap/dist/maps/world.js"></script>
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 {% endblock %}
 
 {% block dqr_style %}
@@ -442,145 +441,228 @@ body { background:var(--s0); }
     </div>
     {% endif %}
 
-    <!-- World Map -->
+    <!-- World Map — Leaflet with state polygons + city markers -->
     <div class="an-card" style="margin-bottom:16px;">
         <div class="an-title">Geographic Activity Map</div>
-        {% if country_stats %}
-        <div id="world-map" style="width: 100%; height: 420px;"></div>
-        <div style="margin-top:12px;display:flex;align-items:center;gap:8px;font-size:11px;font-weight:700;color:var(--s5);"><span>Traffic intensity</span><span style="display:inline-flex;align-items:center;gap:4px;"><span style="width:18px;height:10px;border-radius:999px;background:#c7d2fe;display:inline-block;"></span>Low</span><span style="display:inline-flex;align-items:center;gap:4px;"><span style="width:18px;height:10px;border-radius:999px;background:#4f46e5;display:inline-block;"></span>High</span><span style="display:inline-flex;align-items:center;gap:4px;"><span style="width:10px;height:10px;border-radius:50%;background:#f97316;border:2px solid #fff;display:inline-block;"></span>City</span></div>
+        {% if country_stats or state_stats or city_map_data %}
+        <div id="leaflet-map" style="width:100%;height:460px;border-radius:12px;overflow:hidden;"></div>
+        <div style="margin-top:12px;display:flex;flex-wrap:wrap;align-items:center;gap:16px;font-size:11px;font-weight:700;color:var(--s5);">
+            <span style="display:inline-flex;align-items:center;gap:5px;">
+                <span style="width:20px;height:10px;border-radius:3px;background:linear-gradient(to right,#c7d2fe,#4f46e5);display:inline-block;"></span>
+                State Traffic Intensity (Low → High)
+            </span>
+            <span style="display:inline-flex;align-items:center;gap:5px;">
+                <span style="width:11px;height:11px;border-radius:50%;background:#f97316;border:2px solid #fff;box-shadow:0 0 0 1px #f97316;display:inline-block;"></span>
+                City Marker
+            </span>
+        </div>
+        <style>
+            #leaflet-map { z-index: 0; }
+            .leaflet-tooltip.geo-tooltip {
+                background: rgba(15,23,42,.92);
+                color: #fff;
+                border: none;
+                border-radius: 8px;
+                padding: 8px 12px;
+                font-size: 12px;
+                font-weight: 700;
+                box-shadow: 0 4px 12px rgba(0,0,0,.2);
+                pointer-events: none;
+                white-space: nowrap;
+            }
+            .leaflet-tooltip.geo-tooltip::before { display: none; }
+        </style>
         <script>
-            document.addEventListener('DOMContentLoaded', function() {
-                var mapData = {};
-                {% for item in country_stats %}
-                var code = '{{ item.country_code|default:"Unknown" }}';
-                if (code && code !== 'Unknown' && code !== 'XX') {
-                    mapData[code.toUpperCase()] = {{ item.count }};
-                }
-                {% endfor %}
+        document.addEventListener('DOMContentLoaded', function() {
+            var stateMapData  = {{ state_map_data|safe }}  || [];
+            var cityMapData   = {{ city_map_data|safe }}   || [];
+            var totalClicks   = {{ total_clicks|default:0 }} || 1;
 
-                var cityMapData = {{ city_map_data|safe }} || [];
-                var cityMarkerLayer = [];
-                function getCityRadius(clicks) {
-                    var count = Number(clicks) || 0;
-                    return Math.max(6, Math.min(16, 5 + Math.sqrt(count) * 2));
-                }
-                cityMapData.forEach(function(city) {
-                    if (typeof city.latitude === 'number' && typeof city.longitude === 'number' && isFinite(city.latitude) && isFinite(city.longitude)) {
-                        var validLat = Math.abs(city.latitude) <= 90;
-                        var validLon = Math.abs(city.longitude) <= 180;
-                        if (validLat && validLon) {
-                            cityMarkerLayer.push({
-                                coords: [city.latitude, city.longitude],
-                                name: city.city + ', ' + city.country,
-                                city: city.city,
-                                country: city.country,
-                                clicks: city.clicks,
-                                percentage: city.percentage,
-                                style: { r: getCityRadius(city.clicks) }
+            // ── Build lookup tables ──────────────────────────────────────────
+            function normName(n) {
+                return (n || '').toLowerCase()
+                    .replace(/^state of /,'').replace(/^province of /,'')
+                    .replace(/\s+/g,' ').trim();
+            }
+            var stateLookup = {};   // normName → {count, percentage, state, country}
+            stateMapData.forEach(function(s) {
+                stateLookup[normName(s.state)] = s;
+            });
+
+            // ── Color scale ──────────────────────────────────────────────────
+            var maxCount = 0;
+            stateMapData.forEach(function(s){ if(s.count > maxCount) maxCount = s.count; });
+            function stateColor(count) {
+                if (!count || maxCount === 0) return null;
+                var t = Math.pow(count / maxCount, 0.5);
+                // interpolate #e0e7ff → #4f46e5
+                var r = Math.round(224 + (79 - 224)*t);
+                var g = Math.round(231 + (70 - 231)*t);
+                var b = Math.round(255 + (229 - 255)*t);
+                return 'rgb('+r+','+g+','+b+')';
+            }
+
+            // ── Init Leaflet map ─────────────────────────────────────────────
+            var lmap = L.map('leaflet-map', {
+                zoomControl: true,
+                scrollWheelZoom: false,
+                attributionControl: true,
+            }).setView([20, 0], 2);
+
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(lmap);
+
+            // ── State polygon layer (Natural Earth admin-1) ──────────────────
+            var geojsonUrl = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json';
+            // Use admin-1 (states/provinces) GeoJSON from a reliable CDN
+            var statesGeojsonUrl = 'https://raw.githubusercontent.com/datasets/geo-boundaries-world-110m/master/countries.geojson';
+
+            // We use ne_10m_admin_1 hosted at datahub CDN
+            var admin1Url = 'https://pkgstore.datahub.io/core/geo-admin1-us/admin1/archive/admin1.geojson';
+            // Better: use naturalearth states hosted by martinjc
+            var neStatesUrl = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json';
+
+            // Best option: GeoJSON of world state/province boundaries
+            fetch('https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_10m_admin_1_states_provinces.geojson')
+                .catch(function() {
+                    // Fallback to a smaller dataset
+                    return fetch('https://raw.githubusercontent.com/datasets/geo-admin1-us/master/data/admin1.geojson');
+                })
+                .then(function(r){ return r.ok ? r.json() : null; })
+                .then(function(geojson) {
+                    if (!geojson || !geojson.features) return;
+                    var stateLayer = L.geoJSON(geojson, {
+                        style: function(feature) {
+                            var props = feature.properties || {};
+                            // Try multiple name fields from NE admin-1
+                            var names = [
+                                props.name, props.NAME, props.NAME_1,
+                                props.admin, props.name_en, props.gn_name,
+                            ].filter(Boolean);
+                            var matched = null;
+                            for (var i=0; i<names.length; i++) {
+                                var key = normName(names[i]);
+                                if (stateLookup[key]) { matched = stateLookup[key]; break; }
+                            }
+                            var fill = matched ? stateColor(matched.count) : null;
+                            if (!fill) return { fillColor: 'transparent', fillOpacity: 0, color: '#cdd5e0', weight: 0.4, opacity: 0.5 };
+                            return { fillColor: fill, fillOpacity: 0.75, color: '#ffffff', weight: 1, opacity: 0.9 };
+                        },
+                        onEachFeature: function(feature, layer) {
+                            var props = feature.properties || {};
+                            var names = [props.name, props.NAME, props.NAME_1, props.admin, props.name_en, props.gn_name].filter(Boolean);
+                            var matched = null;
+                            var displayName = names[0] || 'Region';
+                            for (var i=0; i<names.length; i++) {
+                                var key = normName(names[i]);
+                                if (stateLookup[key]) { matched = stateLookup[key]; displayName = matched.state; break; }
+                            }
+                            if (!matched) return;
+                            var pct = matched.percentage ? matched.percentage.toFixed(2) : '0.00';
+                            var label = '<strong>' + displayName + ', ' + (matched.country||'') + '</strong><br>'
+                                      + matched.count + ' Click' + (matched.count===1?'':'s')
+                                      + ' &nbsp;·&nbsp; ' + pct + '% of traffic';
+                            layer.bindTooltip(label, { className: 'geo-tooltip', sticky: true, direction: 'top', offset: [0,-4] });
+                            layer.on({
+                                mouseover: function(e){ e.target.setStyle({ fillOpacity: 0.95, weight: 2 }); },
+                                mouseout:  function(e){ stateLayer.resetStyle(e.target); }
                             });
                         }
-                    }
-                });
+                    }).addTo(lmap);
+                })
+                .catch(function(err){ console.warn('State GeoJSON failed:', err); });
 
-                var map = new jsVectorMap({
-                    selector: '#world-map',
-                    map: 'world',
-                    backgroundColor: 'transparent',
-                    zoomOnScroll: false,
-                    regionStyle: {
-                        initial: { fill: '#e2e8f0', stroke: '#ffffff', 'stroke-width': 0.7 },
-                        hover: { fill: '#818cf8' }
-                    },
-                    visualizeData: {
-                        scale: ['#c7d2fe', '#4f46e5'],
-                        values: mapData
-                    },
-                    markers: cityMarkerLayer,
-                    markerStyle: {
-                        initial: {
-                            fill: '#f97316',
-                            stroke: '#ffffff',
-                            'stroke-width': 2,
-                            r: 7
-                        },
-                        hover: {
-                            fill: '#fb923c',
-                            stroke: '#ffffff',
-                            'stroke-width': 2,
-                            r: 9
-                        }
-                    },
-                    markerLabelStyle: {
-                        initial: {
-                            class: 'jvm-marker-label',
-                            fill: '#1f2937',
-                            'font-size': 12,
-                            'font-weight': 600
-                        },
-                        hover: {
-                            fill: '#111827'
-                        }
-                    },
-                    labels: {
-                        markers: {
-                            render: function(marker) {
-                                return marker.name || '';
-                            }
-                        }
-                    },
-                    onRegionTooltipShow: function(tooltip, code) {
-                        var count = mapData[code];
-                        if (count) {
-                            var total = {{ total_clicks|default:0 }} || 1;
-                            var share = ((count / total) * 100).toFixed(2);
-                            tooltip.text(tooltip.text() + ' - ' + count + ' clicks (' + share + '%)');
-                        }
-                    },
-                    onMarkerTooltipShow: function(tooltip, index) {
-                        var city = cityMarkerLayer[index];
-                        if (city) {
-                            var share = Number(city.percentage);
-                            var shareLine = isFinite(share) ? '\nShare: ' + share.toFixed(2) + '%' : '';
-                            tooltip.text(city.city + ', ' + city.country + '\nClicks: ' + city.clicks + shareLine);
-                        }
-                    }
-                });
+            // ── City circle markers ──────────────────────────────────────────
+            function cityRadius(clicks) {
+                var n = Number(clicks) || 0;
+                return Math.max(7, Math.min(20, 6 + Math.sqrt(n) * 2.2));
+            }
+            cityMapData.forEach(function(city) {
+                var lat = city.latitude, lng = city.longitude;
+                if (typeof lat !== 'number' || typeof lng !== 'number') return;
+                if (!isFinite(lat) || !isFinite(lng)) return;
+                var r = cityRadius(city.clicks);
+                var pct = city.percentage ? Number(city.percentage).toFixed(2) : '0.00';
+                var statePart = city.state ? ', ' + city.state : '';
+                var label = '<strong>' + (city.city||'Unknown') + statePart + '</strong><br>'
+                          + city.clicks + ' Click' + (city.clicks===1?'':'s')
+                          + ' &nbsp;·&nbsp; ' + pct + '% of traffic';
+                var marker = L.circleMarker([lat, lng], {
+                    radius: r,
+                    fillColor: '#f97316',
+                    color: '#ffffff',
+                    weight: 2,
+                    opacity: 1,
+                    fillOpacity: 0.88
+                }).addTo(lmap);
+                marker.bindTooltip(label, { className: 'geo-tooltip', sticky: true, direction: 'top', offset: [0,-4] });
             });
+
+            // ── Auto-fit bounds if we have city data ─────────────────────────
+            if (cityMapData.length > 0) {
+                var validCoords = cityMapData.filter(function(c){ return typeof c.latitude==='number' && isFinite(c.latitude); });
+                if (validCoords.length > 0) {
+                    var latLngs = validCoords.map(function(c){ return [c.latitude, c.longitude]; });
+                    try { lmap.fitBounds(L.latLngBounds(latLngs).pad(0.4)); } catch(e){}
+                }
+            }
+        });
         </script>
         {% else %}
         <div class="empty" style="padding:48px;"><p>No geographic data available for this period.</p></div>
         {% endif %}
     </div>
 
-    <!-- Geography -->
-    <div class="an-grid-2" style="margin-bottom:16px;">
-        <div class="an-card" style="min-height:420px;">
+    <!-- Geography — Countries / States / Cities -->
+    <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px;margin-bottom:16px;">
+        <!-- Top Countries -->
+        <div class="an-card" style="min-height:380px;">
             <div class="an-title">Top Countries</div>
             {% if country_stats %}
-            <div style="height:280px;display:flex;align-items:center;justify-content:center;">
-                <canvas id="topCountriesPie" height="180" width="180"></canvas>
+            <div style="height:220px;display:flex;align-items:center;justify-content:center;">
+                <canvas id="topCountriesPie" height="160" width="160"></canvas>
             </div>
-            <div style="margin-top:14px;display:flex;flex-direction:column;gap:10px;">
+            <div style="margin-top:14px;display:flex;flex-direction:column;gap:9px;">
                 {% for item in country_stats|slice:":7" %}
-                <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:13px;font-weight:700;color:var(--s7);">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12px;font-weight:700;color:var(--s7);">
                     <span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ item.country }}</span>
-                    <span style="color:var(--s5);white-space:nowrap;">{{ item.count }} · {{ item.percentage|floatformat:2 }}%</span>
+                    <span style="color:var(--s5);white-space:nowrap;font-size:11px;">{{ item.count }} · {{ item.percentage|floatformat:1 }}%</span>
                 </div>
                 {% endfor %}
             </div>
             {% else %}<div class="empty"><p>No country data</p></div>{% endif %}
         </div>
-        <div class="an-card" style="min-height:420px;">
+        <!-- Top States / Regions -->
+        <div class="an-card" style="min-height:380px;">
+            <div class="an-title">Top States / Regions</div>
+            {% if state_stats %}
+            <div style="height:220px;display:flex;align-items:center;justify-content:center;">
+                <canvas id="topStatesPie" height="160" width="160"></canvas>
+            </div>
+            <div style="margin-top:14px;display:flex;flex-direction:column;gap:9px;">
+                {% for item in state_stats|slice:":7" %}
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12px;font-weight:700;color:var(--s7);">
+                    <span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;" title="{{ item.country }}">{{ item.state }}</span>
+                    <span style="color:var(--s5);white-space:nowrap;font-size:11px;">{{ item.count }} · {{ item.percentage|floatformat:1 }}%</span>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}<div class="empty"><p>No state / region data.<br><small style="font-weight:600;color:var(--s5);">Requires GPS or IP with state resolution.</small></p></div>{% endif %}
+        </div>
+        <!-- Top Cities -->
+        <div class="an-card" style="min-height:380px;">
             <div class="an-title">Top Cities</div>
             {% if city_stats %}
-            <div style="height:280px;display:flex;align-items:center;justify-content:center;">
-                <canvas id="topCitiesPie" height="180" width="180"></canvas>
+            <div style="height:220px;display:flex;align-items:center;justify-content:center;">
+                <canvas id="topCitiesPie" height="160" width="160"></canvas>
             </div>
-            <div style="margin-top:14px;display:flex;flex-direction:column;gap:10px;">
+            <div style="margin-top:14px;display:flex;flex-direction:column;gap:9px;">
                 {% for item in city_stats|slice:":7" %}
-                <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;font-size:13px;font-weight:700;color:var(--s7);">
+                <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:12px;font-weight:700;color:var(--s7);">
                     <span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{{ item.city }}</span>
-                    <span style="color:var(--s5);white-space:nowrap;">{{ item.count }} · {{ item.percentage|floatformat:2 }}%</span>
+                    <span style="color:var(--s5);white-space:nowrap;font-size:11px;">{{ item.count }} · {{ item.percentage|floatformat:1 }}%</span>
                 </div>
                 {% endfor %}
             </div>
@@ -776,7 +858,7 @@ body { background:var(--s0); }
                     {% for scan in page_obj %}
                     <tr>
                         <td style="white-space:nowrap;">{{ scan.timestamp|date:"M d, H:i" }}{% if scan.is_unique_visit %}<span class="unique-marker" title="Unique visitor">*</span>{% endif %}</td>
-                        <td>{% if scan.location_source == 'gps' and scan.gps_latitude %}{{ scan.gps_latitude|floatformat:4 }}, {{ scan.gps_longitude|floatformat:4 }}{% elif scan.location_source == 'local' or scan.country_code == 'LCL' or scan.country == 'Internal' %}Local Network{% elif scan.city != 'Unknown' and scan.country != 'Unknown' %}{{ scan.city }}, {{ scan.country }}{% else %}Unknown{% endif %}</td>
+                        <td>{% if scan.location_source == 'local' or scan.country_code == 'LCL' or scan.country == 'Internal' %}Local Network{% elif scan.location_source == 'gps' %}{% if scan.city and scan.city not in 'Unknown,' and scan.country and scan.country not in 'Unknown,' %}{% if scan.region and scan.region not in 'Unknown,' %}<span title="Lat: {{ scan.gps_latitude|floatformat:4 }} Lng: {{ scan.gps_longitude|floatformat:4 }}">{{ scan.city }}, {{ scan.region }}, {{ scan.country }}</span>{% else %}<span title="Lat: {{ scan.gps_latitude|floatformat:4 }} Lng: {{ scan.gps_longitude|floatformat:4 }}">{{ scan.city }}, {{ scan.country }}</span>{% endif %}{% elif scan.gps_latitude %}<span title="GPS coordinates (area resolving)">{{ scan.gps_latitude|floatformat:4 }}, {{ scan.gps_longitude|floatformat:4 }}</span>{% else %}Unknown{% endif %}{% elif scan.city and scan.city != 'Unknown' and scan.country and scan.country != 'Unknown' %}{% if scan.region and scan.region != 'Unknown' %}{{ scan.city }}, {{ scan.region }}, {{ scan.country }}{% else %}{{ scan.city }}, {{ scan.country }}{% endif %}{% else %}Unknown{% endif %}</td>
                         <td>{% if scan.location_source == 'gps' %}GPS{% elif scan.location_source == 'ip' %}IP Approximate{% elif scan.location_source == 'local' or scan.country_code == 'LCL' or scan.country == 'Internal' %}Local{% else %}Unknown{% endif %}</td>
                         <td>{{ scan.device_type|default:"Unknown" }}</td>
                         <td>{{ scan.browser|default:"Other" }} / {{ scan.os|default:"Other" }}</td>
@@ -1313,16 +1395,20 @@ body { background:var(--s0); }
         // Pie chips for top geography/referrer/source distributions
         var countryLabels = [{% for item in country_stats %}'{{ item.country|escapejs }}',{% endfor %}];
         var countryData = [{% for item in country_stats %}{{ item.count }},{% endfor %}];
+        var stateLabels = [{% for item in state_stats %}'{{ item.state|escapejs }}',{% endfor %}];
+        var stateData = [{% for item in state_stats %}{{ item.count }},{% endfor %}];
         var cityLabels = [{% for item in city_stats %}'{{ item.city|escapejs }}',{% endfor %}];
         var cityData = [{% for item in city_stats %}{{ item.count }},{% endfor %}];
         var referrerLabels = [{% for item in referrer_stats %}'{{ item.display_name|escapejs }}',{% endfor %}];
         var referrerData = [{% for item in referrer_stats %}{{ item.count }},{% endfor %}];
         var sourceLabels = [{% for item in ts_stats %}'{{ item.source|escapejs }}',{% endfor %}];
         var sourceData = [{% for item in ts_stats %}{{ item.count }},{% endfor %}];
-        makePieChart('topCountriesPie', countryLabels, countryData, ['#4f46e5','#818cf8','#a5b4fc','#c7d2fe','#38bdf8','#10b981','#f59e0b']);
-        makePieChart('topCitiesPie', cityLabels, cityData, ['#4f46e5','#818cf8','#a5b4fc','#c7d2fe','#38bdf8','#10b981','#f59e0b']);
-        makePieChart('topReferrersPie', referrerLabels, referrerData, ['#4f46e5','#818cf8','#a5b4fc','#c7d2fe','#38bdf8','#10b981','#f59e0b']);
-        makePieChart('trafficSourcesPie', sourceLabels, sourceData, ['#4f46e5','#818cf8','#a5b4fc','#c7d2fe','#38bdf8','#10b981','#f59e0b']);
+        var GEO_COLORS = ['#4f46e5','#818cf8','#a5b4fc','#c7d2fe','#38bdf8','#10b981','#f59e0b'];
+        makePieChart('topCountriesPie', countryLabels, countryData, GEO_COLORS);
+        makePieChart('topStatesPie', stateLabels, stateData, ['#6366f1','#8b5cf6','#a78bfa','#c4b5fd','#34d399','#60a5fa','#f59e0b']);
+        makePieChart('topCitiesPie', cityLabels, cityData, GEO_COLORS);
+        makePieChart('topReferrersPie', referrerLabels, referrerData, GEO_COLORS);
+        makePieChart('trafficSourcesPie', sourceLabels, sourceData, GEO_COLORS);
         var utmSourceLabels = [{% for item in utm_sources %}'{{ item.label|escapejs }}',{% endfor %}];
         var utmSourceData = [{% for item in utm_sources %}{{ item.count }},{% endfor %}];
         var utmMediumLabels = [{% for item in utm_mediums %}'{{ item.label|escapejs }}',{% endfor %}];

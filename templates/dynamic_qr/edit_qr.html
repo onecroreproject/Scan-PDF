@@ -29,8 +29,9 @@
     .design-tab { flex: 1; min-width: 100px; padding: 10px; text-align: center; font-size: 11px; font-weight: 800; border-radius: 10px; cursor: pointer; transition: 0.3s; color: #64748b; }
     .design-tab.active { background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: white; box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.3); }
 
-    .pattern-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 10px; }
-    .pattern-item { aspect-ratio: 1; border: 2px solid #f1f5f9; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; background: white; position: relative; }
+    .pattern-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(56px, 1fr)); gap: 10px; max-width: 720px; }
+    .pattern-item { aspect-ratio: 1; min-width: 0; border: 2px solid #f1f5f9; border-radius: 12px; cursor: pointer; display: flex; align-items: center; justify-content: center; background: white; position: relative; padding: 8px; }
+    .pattern-item svg { width: 30px; height: 30px; display: block; }
     .pattern-item.active { border-color: #6366f1; background: #f5f3ff; }
     .pattern-item.active::after { content: '\2713'; position: absolute; top: 4px; right: 4px; width: 12px; height: 12px; background: #6366f1; color: white; border-radius: 50%; font-size: 7px; display: flex; align-items: center; justify-content: center; }
 
@@ -39,6 +40,24 @@
     .frame-item { aspect-ratio: 0.8; border: 2px solid #f1f5f9; border-radius: 14px; cursor: pointer; background: #f8fafc; transition: 0.3s; overflow: hidden; position: relative; }
     .frame-item.active { border-color: #6366f1; background: #fff; }
     .frame-thumb { width: 100%; height: 100%; object-fit: contain; padding: 10px; }
+    .frame-library { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 14px; max-width: 720px; }
+    .frame-option { min-width: 100px; min-height: 112px; border: 2px solid #f1f5f9; border-radius: 12px; cursor: pointer; background: #f8fafc; padding: 12px 10px; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; }
+    .frame-option.active { border-color: #6366f1; background: #f5f3ff; }
+    .frame-option.active::after { content: ''; position: absolute; top: 7px; right: 7px; width: 20px; height: 20px; border-radius: 50%; background: #6366f1; }
+    .frame-check { position: absolute; top: 7px; right: 7px; z-index: 1; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: #6366f1; color: white; font-size: 12px; font-weight: 700; line-height: 1; }
+    .frame-option svg { width: 64px; height: 64px; flex: 0 0 64px; }
+    .frame-option span { font-size: 12px; font-weight: 600; color: #475569; text-align: center; line-height: 1.25; }
+    .frame-fonts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+    .frame-font-option { min-height: 42px; border: 1px solid #e2e8f0; background: white; border-radius: 8px; padding: 8px 10px; font-size: 14px; cursor: pointer; color: #475569; }
+    #tab-frames label { font-size: 13px; font-weight: 700; letter-spacing: .04em; }
+    #frame-editor-text { min-height: 50px; height: 50px; font-size: 16px; padding: 0 16px; }
+    #frame-text-size { width: 100%; height: 6px; }
+    #frame-text-size-value { font-size: 14px; font-weight: 700; color: #6366f1; }
+    #frame-color-controls .color-picker { width: 100%; height: 48px; }
+    @media (max-width: 1199px) { .frame-library { grid-template-columns: repeat(5, minmax(100px, 1fr)); } }
+    @media (max-width: 768px) { .frame-library { grid-template-columns: repeat(3, minmax(90px, 1fr)); } .frame-fonts { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+    @media (max-width: 480px) { .frame-library { grid-template-columns: repeat(2, minmax(0, 1fr)); } .frame-fonts { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    .frame-font-option.active { border-color: #6366f1; background: #f5f3ff; color: #4338ca; }
 
     .color-row { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
     .color-picker { width: 52px; height: 52px; border: none; border-radius: 14px; cursor: pointer; padding: 0; background: none; }
@@ -86,6 +105,9 @@
 
 {% block dqr_content %}
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+    <script src="{% static 'js/qr_style_registry.js' %}"></script>
+    <script src="{% static 'js/qr_frame_registry.js' %}"></script>
+    <script src="{% static 'js/qr_style_registry.js' %}"></script>
 
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
         <div>
@@ -137,6 +159,7 @@
                     <div class="design-tab active" data-tab="content">Content</div>
                     <div class="design-tab" data-tab="colors">Colors</div>
                     <div class="design-tab" data-tab="patterns">Patterns</div>
+                        <div class="design-tab" data-tab="frames">Frames</div>
                     <div class="design-tab" data-tab="branding">Logo</div>
                 </div>
 
@@ -179,6 +202,14 @@
                             <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-2">Background</label>
                             <input type="color" id="bg-color-picker" class="color-picker" value="{{ qr.bg_color }}">
                         </div>
+                        <div>
+                            <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-2">Outer Eye</label>
+                            <input type="color" id="outer-eye-color-picker" class="color-picker" value="{{ qr.design_options.style_config.colors.outer_eye|default:qr.fg_color }}">
+                        </div>
+                        <div>
+                            <label class="text-[9px] font-black text-slate-400 uppercase tracking-widest block mb-2">Inner Eye</label>
+                            <input type="color" id="inner-eye-color-picker" class="color-picker" value="{{ qr.design_options.style_config.colors.inner_eye|default:qr.fg_color }}">
+                        </div>
                     </div>
                 </div>
 
@@ -193,28 +224,26 @@
                         </div>
                     </div>
                     
-                    <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-4">Body Style</label>
-                    <div class="pattern-grid mb-8" id="body-patterns">
-                        <div class="pattern-item {% if qr.body_style == 'square' %}active{% endif %}" data-style="square">Square</div>
-                        <div class="pattern-item {% if qr.body_style == 'circle' %}active{% endif %}" data-style="circle">Circle</div>
-                        <div class="pattern-item {% if qr.body_style == 'rounded' %}active{% endif %}" data-style="rounded">Rounded</div>
-                        <div class="pattern-item {% if qr.body_style == 'dot' %}active{% endif %}" data-style="dot">Dots</div>
-                        <div class="pattern-item {% if qr.body_style == 'diamond' %}active{% endif %}" data-style="diamond">Diamond</div>
-                        <div class="pattern-item {% if qr.body_style == 'leaf' %}active{% endif %}" data-style="leaf">Leaf</div>
-                    </div>
+                    <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-4">Body Pattern</label>
+                    <div class="pattern-grid mb-8" id="body-patterns"></div>
 
-                    <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-4">Eye Style</label>
-                    <div class="pattern-grid mb-8" id="eye-patterns">
-                        <div class="pattern-item {% if qr.eye_style == 'square' %}active{% endif %}" data-style="square">Square</div>
-                        <div class="pattern-item {% if qr.eye_style == 'circle' %}active{% endif %}" data-style="circle">Circle</div>
-                        <div class="pattern-item {% if qr.eye_style == 'rounded' %}active{% endif %}" data-style="rounded">Rounded</div>
-                        <div class="pattern-item {% if qr.eye_style == 'leaf' %}active{% endif %}" data-style="leaf">Leaf</div>
-                    </div>
+                    <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-4">Outer Eye</label>
+                    <div class="pattern-grid mb-8" id="eye-patterns"></div>
 
-                    <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-4">Inner Ball Style</label>
-                    <div class="pattern-grid" id="ball-patterns">
-                        <div class="pattern-item {% if qr.ball_style == 'square' %}active{% endif %}" data-style="square">Square</div>
-                        <div class="pattern-item {% if qr.ball_style == 'circle' %}active{% endif %}" data-style="circle">Circle</div>
+                    <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-4">Inner Eye</label>
+                    <div class="pattern-grid" id="ball-patterns"></div>
+                </div>
+
+                    <div class="form-card tab-content hidden" id="tab-frames">
+                    <label class="block text-[9px] font-black text-slate-400 uppercase tracking-widest mb-4">Frames</label>
+                    <div class="frame-library mb-8" id="frames-container"></div>
+                    <div class="form-group mb-6"><label>Frame Text</label><input type="text" id="frame-editor-text" class="form-input" maxlength="40" placeholder="SCAN ME"></div>
+                    <div class="form-group mb-6"><label class="flex items-center justify-between">Frame Text Size <output id="frame-text-size-value">18px</output></label><input type="range" id="frame-text-size" min="10" max="40" value="18" class="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-indigo-600"></div>
+                    <div class="form-group mb-6"><label>Frame Text Font</label><div class="frame-fonts" id="frame-fonts"></div></div>
+                    <div class="switch-group mb-6"><label class="switch"><input type="checkbox" id="frame-custom-colors"><span class="slider"></span></label><span class="text-[11px] font-bold text-slate-500">Apply custom colors</span></div>
+                    <div id="frame-color-controls" class="grid grid-cols-1 md:grid-cols-2 gap-6 hidden">
+                        <div class="form-group"><label>Frame Color</label><input type="color" id="frame-color" class="color-picker"></div>
+                        <div class="form-group"><label>Frame Text Color</label><input type="color" id="frame-text-color" class="color-picker"></div>
                     </div>
                 </div>
 
@@ -228,13 +257,47 @@
                             <p class="text-[10px] text-slate-400 font-bold">Select brand or upload.</p>
                         </div>
                     </div>
-                    <div class="logo-grid">
+                    <div class="logo-grid mb-8">
                         <div class="logo-item {% if not qr.design_options.logo_preset or qr.design_options.logo_preset == 'none' %}active{% endif %}" data-brand="none">None</div>
                         <div class="logo-item {% if qr.design_options.logo_preset == 'facebook' %}active{% endif %}" data-brand="facebook"><img src="https://www.google.com/s2/favicons?sz=64&domain=facebook.com"></div>
                         <div class="logo-item {% if qr.design_options.logo_preset == 'instagram' %}active{% endif %}" data-brand="instagram"><img src="https://www.google.com/s2/favicons?sz=64&domain=instagram.com"></div>
                         <div class="logo-item {% if qr.design_options.logo_preset == 'youtube' %}active{% endif %}" data-brand="youtube"><img src="https://www.google.com/s2/favicons?sz=64&domain=youtube.com"></div>
                         <div class="logo-item {% if qr.design_options.logo_preset == 'whatsapp' %}active{% endif %}" data-brand="whatsapp"><img src="https://www.google.com/s2/favicons?sz=64&domain=whatsapp.com"></div>
                         <div class="logo-item {% if qr.design_options.logo_preset == 'linkedin' %}active{% endif %}" data-brand="linkedin"><img src="https://www.google.com/s2/favicons?sz=64&domain=linkedin.com"></div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                        <div class="p-6 bg-slate-50 rounded-2xl border border-slate-100">
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-4">Background Image</label>
+                            <button type="button" class="btn-upload text-xs font-bold text-indigo-600 bg-indigo-50 px-4 py-2 rounded-lg" onclick="document.getElementById('bg-image-upload').click()">
+                                <i data-lucide="image" class="w-4 h-4 inline-block mr-1"></i> Select Image
+                            </button>
+                            <input type="file" name="branding_background_image" id="bg-image-upload" class="hidden" accept="image/*">
+                            <div class="mt-4 flex items-center gap-4 {% if not qr.branding_background_image %}hidden{% endif %}" id="bg-preview-container">
+                                <img id="bg-preview-img" src="{% if qr.branding_background_image %}{{ qr.branding_background_image.url }}{% endif %}" class="w-12 h-12 object-cover rounded-md border border-slate-200">
+                                <button type="button" class="text-xs font-bold text-red-500 hover:text-red-700" onclick="clearBrandingImage('bg')">Remove</button>
+                            </div>
+                            <div class="mt-6">
+                                <label class="text-xs text-slate-600 font-bold block mb-2">Transparency: <span id="bg-transparency-val">{{ qr.design_options.branding_background_transparency|default:"1"|floatformat:2|stringformat:"f" }}</span></label>
+                                <input type="range" id="bg-transparency-range" min="0.1" max="1" step="0.05" value="{{ qr.design_options.branding_background_transparency|default:'1' }}" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600">
+                            </div>
+                        </div>
+
+                        <div class="p-6 bg-slate-50 rounded-2xl border border-slate-100">
+                            <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-4">Foreground Image</label>
+                            <button type="button" class="btn-upload text-xs font-bold text-indigo-600 bg-indigo-50 px-4 py-2 rounded-lg" onclick="document.getElementById('fg-image-upload').click()">
+                                <i data-lucide="layers" class="w-4 h-4 inline-block mr-1"></i> Select Overlay
+                            </button>
+                            <input type="file" name="branding_foreground_image" id="fg-image-upload" class="hidden" accept="image/*">
+                            <div class="mt-4 flex items-center gap-4 {% if not qr.branding_foreground_image %}hidden{% endif %}" id="fg-preview-container">
+                                <img id="fg-preview-img" src="{% if qr.branding_foreground_image %}{{ qr.branding_foreground_image.url }}{% endif %}" class="w-12 h-12 object-cover rounded-md border border-slate-200">
+                                <button type="button" class="text-xs font-bold text-red-500 hover:text-red-700" onclick="clearBrandingImage('fg')">Remove</button>
+                            </div>
+                            <div class="mt-6">
+                                <label class="text-xs text-slate-600 font-bold block mb-2">Transparency: <span id="fg-transparency-val">{{ qr.design_options.branding_foreground_transparency|default:"0.5"|floatformat:2|stringformat:"f" }}</span></label>
+                                <input type="range" id="fg-transparency-range" min="0.1" max="1" step="0.05" value="{{ qr.design_options.branding_foreground_transparency|default:'0.5' }}" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600">
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -291,18 +354,116 @@
     ];
     
     const EXISTING_DATA = {{ content_data|safe }};
-    const QR_DESIGN = {
-        fg: '{{ qr.fg_color|escapejs }}',
-        bg: '{{ qr.bg_color|escapejs }}',
-        style: '{{ qr.body_style|escapejs }}',
-        eye: '{{ qr.eye_style|escapejs }}',
-        ball: '{{ qr.ball_style|escapejs }}',
-        design_options: {{ design_options_json|safe }}
+    const savedDesignOptions = {{ design_options_json|safe }} || {};
+    const savedStyle = savedDesignOptions.style_config || {};
+    const savedPatterns = savedStyle.patterns || {};
+    const savedColors = savedStyle.colors || {};
+    const savedFrame = savedStyle.frame || {};
+    const qrEditorState = {
+        pattern: {
+            body: savedPatterns.body || '{{ qr.body_style|escapejs }}',
+            outerEye: savedPatterns.outer_eye || '{{ qr.eye_style|escapejs }}',
+            innerEye: savedPatterns.inner_eye || '{{ qr.ball_style|escapejs }}'
+        },
+        colors: {
+            body: savedColors.body || '{{ qr.fg_color|escapejs }}',
+            outerEye: savedColors.outer_eye || savedDesignOptions.eye_color_outer || '{{ qr.fg_color|escapejs }}',
+            innerEye: savedColors.inner_eye || savedDesignOptions.eye_color_inner || '{{ qr.fg_color|escapejs }}',
+            background: savedColors.background || '{{ qr.bg_color|escapejs }}'
+        },
+        frame: {
+            type: savedFrame.type || savedDesignOptions.frame_style || 'none',
+            text: savedFrame.text || savedDesignOptions.frame_text || '',
+            textSize: Number(savedFrame.text_size || 18),
+            font: savedFrame.font || savedDesignOptions.frame_font || 'Arial',
+            useCustomColors: Boolean(savedFrame.use_custom_colors),
+            frameColor: savedFrame.frame_color || '#000000',
+            textColor: savedFrame.text_color || savedDesignOptions.frame_text_color || '#FFFFFF'
+        }
     };
+    const QR_DESIGN = {
+        fg: qrEditorState.colors.body,
+        bg: qrEditorState.colors.background,
+        style: qrEditorState.pattern.body,
+        eye: qrEditorState.pattern.outerEye,
+        ball: qrEditorState.pattern.innerEye,
+        design_options: savedDesignOptions
+    };
+
+    function renderPatternOptions() {
+        [['body-patterns', 'body', 'body'], ['eye-patterns', 'outer_eye', 'outerEye'], ['ball-patterns', 'inner_eye', 'innerEye']].forEach(([id, category, stateKey]) => {
+            const grid = document.getElementById(id);
+            grid.innerHTML = '';
+            QR_STYLE_REGISTRY[category].forEach(([style, label]) => {
+                const item = document.createElement('div');
+                item.className = `pattern-item ${qrEditorState.pattern[stateKey] === style ? 'active' : ''}`;
+                item.dataset.category = category;
+                item.dataset.style = style;
+                item.title = label;
+                item.innerHTML = `<svg viewBox="0 0 24 24" aria-label="${label}">${qrStyleIcon(style, qrEditorState.colors[stateKey === 'body' ? 'body' : stateKey], category !== 'body')}</svg>`;
+                item.onclick = () => {
+                    qrEditorState.pattern[stateKey] = style;
+                    QR_DESIGN.style = qrEditorState.pattern.body;
+                    QR_DESIGN.eye = qrEditorState.pattern.outerEye;
+                    QR_DESIGN.ball = qrEditorState.pattern.innerEye;
+                    renderPatternOptions();
+                    updatePreview();
+                };
+                grid.appendChild(item);
+            });
+        });
+    }
+
+    function renderFrames() {
+        const container = document.getElementById('frames-container');
+        container.innerHTML = '';
+        Object.entries(QR_FRAME_REGISTRY).forEach(([id, frame]) => {
+            const item = document.createElement('button');
+            item.type = 'button'; item.className = `frame-option ${qrEditorState.frame.type === id ? 'active' : ''}`;
+            item.dataset.frame = id;
+            item.innerHTML = `<svg viewBox="0 0 24 24">${qrFrameIcon(id)}</svg><span>${frame.label}</span>${qrEditorState.frame.type === id ? '<span class="frame-check" aria-hidden="true">&#10003;</span>' : ''}`;
+            item.onclick = () => { qrEditorState.frame.type = id; renderFrames(); updatePreview(); };
+            container.appendChild(item);
+        });
+    }
+
+    function renderFrameFonts() {
+        const fonts = ['Times New Roman', 'Georgia', 'Arial', 'Helvetica', 'Verdana', 'Tahoma', 'Trebuchet MS', 'Courier New', 'Monaco', 'Comic Sans MS', 'Impact', 'Baskerville', 'Papyrus', 'Lucida Sans', 'Gill Sans'];
+        const container = document.getElementById('frame-fonts');
+        container.innerHTML = '';
+        fonts.forEach(font => {
+            const button = document.createElement('button');
+            button.type = 'button'; button.className = `frame-font-option ${qrEditorState.frame.font === font ? 'active' : ''}`;
+            button.style.fontFamily = font; button.textContent = font;
+            button.onclick = () => { qrEditorState.frame.font = font; renderFrameFonts(); updatePreview(); };
+            container.appendChild(button);
+        });
+    }
+
+    function bindFrameControls() {
+        const text = document.getElementById('frame-editor-text');
+        const size = document.getElementById('frame-text-size');
+        const custom = document.getElementById('frame-custom-colors');
+        text.value = qrEditorState.frame.text; size.value = qrEditorState.frame.textSize;
+        document.getElementById('frame-text-size-value').textContent = `${size.value}px`;
+        custom.checked = qrEditorState.frame.useCustomColors;
+        document.getElementById('frame-color').value = qrEditorState.frame.frameColor;
+        document.getElementById('frame-text-color').value = qrEditorState.frame.textColor;
+        document.getElementById('frame-color-controls').classList.toggle('hidden', !custom.checked);
+        text.oninput = e => { qrEditorState.frame.text = e.target.value.slice(0, 40); updatePreview(); };
+        size.oninput = e => { qrEditorState.frame.textSize = Number(e.target.value); document.getElementById('frame-text-size-value').textContent = `${e.target.value}px`; updatePreview(); };
+        custom.onchange = e => { qrEditorState.frame.useCustomColors = e.target.checked; document.getElementById('frame-color-controls').classList.toggle('hidden', !e.target.checked); updatePreview(); };
+        document.getElementById('frame-color').oninput = e => { qrEditorState.frame.frameColor = e.target.value.toUpperCase(); updatePreview(); };
+        document.getElementById('frame-text-color').oninput = e => { qrEditorState.frame.textColor = e.target.value.toUpperCase(); updatePreview(); };
+    }
 
     function init() {
         renderTypes();
+        renderPatternOptions();
+        renderFrames();
+        renderFrameFonts();
         selectType('{{ qr.qr_type|escapejs }}');
+        bindFrameControls();
         
         // Design Tab Handling
         document.querySelectorAll('.design-tab').forEach(tab => {
@@ -315,36 +476,17 @@
         });
 
         // Style Pickers
-        document.getElementById('fg-color-picker').oninput = (e) => { QR_DESIGN.fg = e.target.value; updatePreview(); };
-        document.getElementById('bg-color-picker').oninput = (e) => { QR_DESIGN.bg = e.target.value; updatePreview(); };
+        document.getElementById('fg-color-picker').oninput = (e) => { qrEditorState.colors.body = e.target.value.toUpperCase(); QR_DESIGN.fg = qrEditorState.colors.body; renderPatternOptions(); updatePreview(); };
+        document.getElementById('bg-color-picker').oninput = (e) => { qrEditorState.colors.background = e.target.value.toUpperCase(); QR_DESIGN.bg = qrEditorState.colors.background; updatePreview(); };
+        document.getElementById('outer-eye-color-picker').oninput = (e) => { qrEditorState.colors.outerEye = e.target.value.toUpperCase(); renderPatternOptions(); updatePreview(); };
+        document.getElementById('inner-eye-color-picker').oninput = (e) => { qrEditorState.colors.innerEye = e.target.value.toUpperCase(); renderPatternOptions(); updatePreview(); };
         
-        document.querySelectorAll('#body-patterns .pattern-item').forEach(item => {
-            item.onclick = () => {
-                document.querySelectorAll('#body-patterns .pattern-item').forEach(p => p.classList.remove('active'));
-                item.classList.add('active');
-                QR_DESIGN.style = item.dataset.style;
-                updatePreview();
-            };
-        });
-
-        document.querySelectorAll('#eye-patterns .pattern-item').forEach(item => {
-            item.onclick = () => {
-                document.querySelectorAll('#eye-patterns .pattern-item').forEach(p => p.classList.remove('active'));
-                item.classList.add('active');
-                QR_DESIGN.eye = item.dataset.style;
-                updatePreview();
-            };
-        });
-
-        document.querySelectorAll('#ball-patterns .pattern-item').forEach(item => {
-            item.onclick = () => {
-                document.querySelectorAll('#ball-patterns .pattern-item').forEach(p => p.classList.remove('active'));
-                item.classList.add('active');
-                QR_DESIGN.ball = item.dataset.style;
-                updatePreview();
-            };
-        });
-
+        const bgTrans = document.getElementById('bg-transparency-range');
+        if (bgTrans) bgTrans.oninput = (e) => { document.getElementById('bg-transparency-val').textContent = (e.target.value * 100).toFixed(0) + '%'; updatePreview(); };
+        const fgTrans = document.getElementById('fg-transparency-range');
+        if (fgTrans) fgTrans.oninput = (e) => { document.getElementById('fg-transparency-val').textContent = (e.target.value * 100).toFixed(0) + '%'; updatePreview(); };
+        
+        
         document.querySelectorAll('.logo-item').forEach(item => {
             item.onclick = () => {
                 document.querySelectorAll('.logo-item').forEach(l => l.classList.remove('active'));
@@ -455,6 +597,23 @@
         updatePreview();
     }
 
+    function previewBrandingImage(event, imgId) {
+        const file = event.target.files[0];
+        if (file) {
+            const url = URL.createObjectURL(file);
+            document.getElementById(imgId).src = url;
+            document.getElementById(imgId).parentElement.classList.remove('hidden');
+            updatePreview();
+        }
+    }
+
+    function clearBrandingImage(type) {
+        document.getElementById(`${type}-image-upload`).value = '';
+        document.getElementById(`${type}-preview-container`).classList.add('hidden');
+        document.getElementById(`${type}-preview-img`).src = '';
+        updatePreview();
+    }
+
     let previewTimer = null;
     function updatePreview() {
         if (previewTimer) clearTimeout(previewTimer);
@@ -467,8 +626,38 @@
             formData.append('style', QR_DESIGN.style);
             formData.append('eye_style', QR_DESIGN.eye);
             formData.append('ball_style', QR_DESIGN.ball);
+            QR_DESIGN.design_options.frame = {
+                type: qrEditorState.frame.type,
+                text: qrEditorState.frame.text,
+                text_size: qrEditorState.frame.textSize,
+                font: qrEditorState.frame.font,
+                use_custom_colors: qrEditorState.frame.useCustomColors,
+                frame_color: qrEditorState.frame.frameColor,
+                text_color: qrEditorState.frame.textColor
+            };
+            QR_DESIGN.design_options.frame_style = qrEditorState.frame.type;
+            QR_DESIGN.design_options.frame_text = qrEditorState.frame.text;
+            QR_DESIGN.design_options.frame_font = qrEditorState.frame.font;
+            QR_DESIGN.design_options.style_config = {
+                version: 1,
+                patterns: { body: qrEditorState.pattern.body, outer_eye: qrEditorState.pattern.outerEye, inner_eye: qrEditorState.pattern.innerEye },
+                colors: { body: qrEditorState.colors.body, outer_eye: qrEditorState.colors.outerEye, inner_eye: qrEditorState.colors.innerEye, background: qrEditorState.colors.background },
+                frame: QR_DESIGN.design_options.frame
+            };
+            QR_DESIGN.design_options.eye_color_outer = qrEditorState.colors.outerEye;
+            QR_DESIGN.design_options.eye_color_inner = qrEditorState.colors.innerEye;
+            formData.append('eye_color_outer', qrEditorState.colors.outerEye);
+            formData.append('eye_color_inner', qrEditorState.colors.innerEye);
+            QR_DESIGN.design_options.branding_background_transparency = document.getElementById('bg-transparency-range') ? document.getElementById('bg-transparency-range').value : 1.0;
+            QR_DESIGN.design_options.branding_foreground_transparency = document.getElementById('fg-transparency-range') ? document.getElementById('fg-transparency-range').value : 0.5;
             formData.append('design_options', JSON.stringify(QR_DESIGN.design_options));
             formData.append('qr_id', '{{ qr.id }}');
+            
+            const bgFile = document.getElementById('bg-image-upload')?.files[0];
+            if (bgFile) formData.append('branding_background_image', bgFile);
+            
+            const fgFile = document.getElementById('fg-image-upload')?.files[0];
+            if (fgFile) formData.append('branding_foreground_image', fgFile);
 
             try {
                 const response = await fetch('{% url "dynamic_qr:generate_image" %}', {
@@ -507,6 +696,26 @@
         formData.append('body_style', QR_DESIGN.style);
         formData.append('eye_style', QR_DESIGN.eye);
         formData.append('ball_style', QR_DESIGN.ball);
+        formData.append('body_style', qrEditorState.pattern.body);
+        formData.append('eye_style', qrEditorState.pattern.outerEye);
+        formData.append('ball_style', qrEditorState.pattern.innerEye);
+        QR_DESIGN.design_options.frame = {
+            type: qrEditorState.frame.type,
+            text: qrEditorState.frame.text,
+            text_size: qrEditorState.frame.textSize,
+            font: qrEditorState.frame.font,
+            use_custom_colors: qrEditorState.frame.useCustomColors,
+            frame_color: qrEditorState.frame.frameColor,
+            text_color: qrEditorState.frame.textColor
+        };
+        QR_DESIGN.design_options.style_config = {
+            version: 1,
+            patterns: { body: qrEditorState.pattern.body, outer_eye: qrEditorState.pattern.outerEye, inner_eye: qrEditorState.pattern.innerEye },
+            colors: { body: qrEditorState.colors.body, outer_eye: qrEditorState.colors.outerEye, inner_eye: qrEditorState.colors.innerEye, background: qrEditorState.colors.background },
+            frame: QR_DESIGN.design_options.frame
+        };
+        formData.append('eye_color_outer', qrEditorState.colors.outerEye);
+        formData.append('eye_color_inner', qrEditorState.colors.innerEye);
         formData.append('design_options', JSON.stringify(QR_DESIGN.design_options));
 
         const btn = document.getElementById('submit-btn');
