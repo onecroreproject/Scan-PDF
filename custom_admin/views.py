@@ -85,6 +85,82 @@ def payments_view(request):
     return render(request, 'admin_dashboard/payments.html', {'payments': payments})
 
 
+@superuser_required
+@require_POST
+def user_delete_view(request, user_id):
+    target_user = get_object_or_404(User, id=user_id)
+    from django.contrib import messages
+    if target_user.id == request.user.id:
+        messages.error(request, "You cannot delete your own admin account.")
+        return redirect('custom_admin:users')
+    if target_user.is_staff or target_user.is_superuser:
+        messages.error(request, "Admin accounts cannot be deleted from User Management.")
+        return redirect('custom_admin:users')
+    
+    # Audit log
+    ActivityLog.objects.create(
+        user=request.user,
+        action=f"Admin {request.user.username} deleted user {target_user.username}",
+        ip_address=request.META.get('REMOTE_ADDR')
+    )
+    
+    target_user.delete()
+    messages.success(request, "User deleted successfully.")
+    return redirect('custom_admin:users')
+
+
+@superuser_required
+@require_POST
+def subscription_delete_view(request, sub_id):
+    sub = get_object_or_404(Subscription, id=sub_id)
+    user = sub.user
+    from django.contrib import messages
+    
+    # Audit log
+    ActivityLog.objects.create(
+        user=request.user,
+        action=f"Admin {request.user.username} deleted subscription {sub.id}",
+        ip_address=request.META.get('REMOTE_ADDR')
+    )
+    
+    sub.delete()
+    messages.success(request, "Subscription deleted successfully.")
+    
+    # Fallback to Free if user has no active subscriptions
+    if not Subscription.objects.filter(user=user, status='Active').exists():
+        free_plan = Plan.objects.filter(code='free').first()
+        if free_plan:
+            Subscription.objects.create(
+                user=user,
+                plan=free_plan,
+                status='Active',
+                billing_cycle='monthly',
+                payment_status='Paid'
+            )
+            
+    return redirect('custom_admin:subscriptions')
+
+
+@superuser_required
+@require_POST
+def payment_delete_view(request, payment_id):
+    payment = get_object_or_404(Payment, id=payment_id)
+    from django.contrib import messages
+    if not request.user.is_superuser:
+        messages.error(request, "Only superusers can delete payment records.")
+        return redirect('custom_admin:payments')
+        
+    ActivityLog.objects.create(
+        user=request.user,
+        action=f"Admin {request.user.username} deleted payment {payment.transaction_id}",
+        ip_address=request.META.get('REMOTE_ADDR')
+    )
+    
+    payment.delete()
+    messages.success(request, "Payment record deleted successfully.")
+    return redirect('custom_admin:payments')
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Plans & Pricing
 # ─────────────────────────────────────────────────────────────────────────────

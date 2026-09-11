@@ -134,7 +134,9 @@ def _frame_block_reason(request, target_url):
 # HELPER: Check if user is logged in for Dynamic QR
 # ═══════════════════════════════════════════════════════════════
 def dqr_login_required(view_func):
-    """Decorator: redirect to pricing if not authenticated or not a QR user."""
+    """Decorator: redirect to login if not authenticated or not a QR user."""
+    from functools import wraps
+    @wraps(view_func)
     def wrapper(request, *args, **kwargs):
         # Isolation: Check if authenticated AND has the dqr flag
         if not request.user.is_authenticated or not request.session.get('is_dqr_user'):
@@ -142,159 +144,13 @@ def dqr_login_required(view_func):
             login_url = reverse('dynamic_qr:login')
             next_url = request.get_full_path()
             return redirect(f"{login_url}?next={next_url}")
+            
+        if request.user.is_staff or request.user.is_superuser:
+            return redirect('custom_admin:dashboard')
+            
         return view_func(request, *args, **kwargs)
     return wrapper
 
-
-from django.db import connection
-
-def dqr_repair_db(request):
-    """Utility view to manually add missing columns/tables to SQLite via browser."""
-    # Allow superusers OR regular authenticated users for this specific repair
-    if not request.user.is_authenticated:
-        from django.http import HttpResponse
-        return HttpResponse("Unauthorized.", status=403)
-    
-    from django.core.management import call_command
-    results = []
-    
-    # Auto-create superuser for admin dashboard verification
-    from django.contrib.auth.models import User
-    if not User.objects.filter(username='admin').exists():
-        User.objects.create_superuser('admin', 'admin@example.com', 'adminpassword123')
-        results.append("✅ Created superuser 'admin' with password 'adminpassword123'.")
-    else:
-        # Reset password to ensure we can log in
-        admin_user = User.objects.get(username='admin')
-        admin_user.set_password('adminpassword123')
-        admin_user.is_superuser = True
-        admin_user.is_staff = True
-        admin_user.save()
-        results.append("✅ Reset superuser 'admin' password to 'adminpassword123'.")
-        
-    try:
-        call_command('makemigrations', 'services', interactive=False)
-        call_command('migrate', 'services', interactive=False)
-        results.append("✅ Successfully programmatically ran makemigrations & migrate for 'services' app.")
-        
-        call_command('makemigrations', 'dynamic_qr', interactive=False)
-        call_command('migrate', 'dynamic_qr', interactive=False)
-        results.append("✅ Successfully programmatically ran makemigrations & migrate for 'dynamic_qr' app.")
-        
-        # Seed UTM and Cloaking features
-        from services.models import Feature, Plan, PlanFeature
-        f_utm, _ = Feature.objects.get_or_create(key='shorturl_utm', defaults={'name': 'UTM Parameters', 'type': 'NUMERIC', 'section': 'SHORT URL'})
-        f_cloak, _ = Feature.objects.get_or_create(key='shorturl_cloaking', defaults={'name': 'URL Cloaking', 'type': 'NUMERIC', 'section': 'SHORT URL'})
-        
-        # Default Free Plan
-        free_plan = Plan.objects.filter(code='free').first()
-        if free_plan:
-            PlanFeature.objects.get_or_create(plan=free_plan, feature=f_utm, defaults={'enabled': True, 'monthly_limit': 5})
-            PlanFeature.objects.get_or_create(plan=free_plan, feature=f_cloak, defaults={'enabled': True, 'monthly_limit': 5})
-        
-        # Default Pro Plan
-        pro_plan = Plan.objects.filter(code='pro').first()
-        if pro_plan:
-            PlanFeature.objects.get_or_create(plan=pro_plan, feature=f_utm, defaults={'enabled': True, 'monthly_limit': 500})
-            PlanFeature.objects.get_or_create(plan=pro_plan, feature=f_cloak, defaults={'enabled': True, 'monthly_limit': 500})
-            
-        # Default Business Plan
-        biz_plan = Plan.objects.filter(code='business_plus').first()
-        if biz_plan:
-            PlanFeature.objects.get_or_create(plan=biz_plan, feature=f_utm, defaults={'enabled': True, 'is_unlimited': True})
-            PlanFeature.objects.get_or_create(plan=biz_plan, feature=f_cloak, defaults={'enabled': True, 'is_unlimited': True})
-            
-        results.append("✅ Seeded new features into PlanFeature limits.")
-    except Exception as e:
-        results.append(f"❌ Error during database migration run: {str(e)}")
-
-    from django.http import HttpResponse
-    with connection.cursor() as cursor:
-        
-        # 0. Ensure Main DynamicQRCode Table exists
-        try:
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS "dynamic_qr_dynamicqrcode" (
-                    "id" uuid NOT NULL PRIMARY KEY,
-                    "short_code" varchar(20) NOT NULL UNIQUE,
-                    "qr_name" varchar(200) NOT NULL,
-                    "destination_url" varchar(2000) NULL,
-                    "qr_data" json NOT NULL,
-                    "qr_type" varchar(40) NOT NULL DEFAULT 'url',
-                    "fg_color" varchar(10) NOT NULL DEFAULT '#000000',
-                    "bg_color" varchar(10) NOT NULL DEFAULT '#ffffff',
-                    "body_style" varchar(20) NOT NULL DEFAULT 'square',
-                    "eye_style" varchar(20) NOT NULL DEFAULT 'square',
-                    "ball_style" varchar(20) NOT NULL DEFAULT 'square',
-                    "logo" varchar(100) NULL,
-                    "scan_count" integer unsigned NOT NULL DEFAULT 0,
-                    "is_active" bool NOT NULL DEFAULT 1,
-                    "created_at" datetime NOT NULL,
-                    "updated_at" datetime NOT NULL,
-                    "user_id" integer NOT NULL REFERENCES "auth_user" ("id") DEFERRABLE INITIALLY DEFERRED
-                );
-            """)
-            results.append("✅ Main table 'dynamic_qr_dynamicqrcode' is ready.")
-        except Exception as e:
-            results.append(f"❌ Error with main table: {str(e)}")
-
-        # 1. Add missing columns to DynamicQRCode (for existing users)
-        cols = [
-            ("qr_data", "JSON"),
-            ("qr_type", "VARCHAR(40) DEFAULT 'url'"),
-            ("logo", "VARCHAR(100) NULL"),
-            ("body_style", "VARCHAR(20) DEFAULT 'square'"),
-            ("is_active", "BOOLEAN DEFAULT 1"),
-            ("file_content", "VARCHAR(100) NULL"),
-            ("eye_style", "VARCHAR(20) DEFAULT 'square'"),
-            ("ball_style", "VARCHAR(20) DEFAULT 'square'"),
-            ("design_options", "JSON NULL")
-        ]
-        for col_name, col_type in cols:
-            try:
-                cursor.execute(f"ALTER TABLE dynamic_qr_dynamicqrcode ADD COLUMN {col_name} {col_type};")
-                results.append(f"✅ Added column: {col_name}")
-            except Exception as e:
-                results.append(f"ℹ️ Column '{col_name}' already exists.")
-
-        # 2. Create the Analytics Table
-        try:
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS "dynamic_qr_qranalytics" (
-                    "id" integer NOT NULL PRIMARY KEY AUTOINCREMENT,
-                    "timestamp" datetime NOT NULL,
-                    "ip_address" char(39) NULL,
-                    "user_agent" text NULL,
-                    "browser" varchar(50) NULL,
-                    "os" varchar(50) NULL,
-                    "device_type" varchar(50) NULL,
-                    "country" varchar(100) NOT NULL DEFAULT 'Unknown',
-                    "city" varchar(100) NOT NULL DEFAULT 'Unknown',
-                    "qr_code_id" uuid NOT NULL REFERENCES "dynamic_qr_dynamicqrcode" ("id") DEFERRABLE INITIALLY DEFERRED
-                );
-            """)
-            cursor.execute('CREATE INDEX IF NOT EXISTS "dynamic_qr_analytics_qr_id" ON "dynamic_qr_qranalytics" ("qr_code_id");')
-            results.append("✅ Table 'dynamic_qr_qranalytics' is ready.")
-        except Exception as e:
-            results.append(f"❌ Error with analytics table: {str(e)}")
-
-        # 3. Create OTP Table
-        try:
-            cursor.execute("""
-                CREATE TABLE IF NOT EXISTS "dynamic_qr_otpverification" (
-                    "id" integer NOT NULL PRIMARY KEY AUTOINCREMENT,
-                    "email" varchar(254) NOT NULL,
-                    "otp_code" varchar(6) NOT NULL,
-                    "created_at" datetime NOT NULL,
-                    "is_used" bool NOT NULL DEFAULT 0,
-                    "attempts" integer unsigned NOT NULL DEFAULT 0
-                );
-            """)
-            results.append("✅ Table 'dynamic_qr_otpverification' is ready.")
-        except Exception as e:
-            results.append(f"❌ Error with OTP table: {str(e)}")
-    
-    return HttpResponse("<h3>Database Repair Results</h3>" + "<br>".join(results) + "<br><br><b>All fixed.</b> <a href='/qr/dashboard/'>Return to Dashboard</a>")
 
 # ═══════════════════════════════════════════════════════════════
 # AUTH: LOGIN
@@ -302,15 +158,13 @@ def dqr_repair_db(request):
 def dqr_login_view(request):
     """Login page for dynamic QR feature only."""
     if request.user.is_authenticated and request.session.get('is_dqr_user'):
-        if request.user.is_superuser:
+        if request.user.is_staff or request.user.is_superuser:
             return redirect('custom_admin:dashboard')
 
         next_url = request.GET.get('next', '')
         if next_url:
             return redirect(next_url)
             
-        elif request.user.is_staff:
-            return redirect('admin:index')
         return redirect('dynamic_qr:dashboard')
 
     error = None
@@ -330,24 +184,22 @@ def dqr_login_view(request):
             user = authenticate(request, username=username, password=password)
 
         if user is not None:
-            login(request, user)
-            # Mark this session as a Dynamic QR session for isolation
-            request.session['is_dqr_user'] = True
-            
-            # Redirect superusers to custom admin unconditionally
-            if user.is_superuser:
-                return redirect('custom_admin:dashboard')
-
-            next_url = request.GET.get('next', '')
-            if next_url:
-                return redirect(next_url)
-            
-            elif user.is_staff:
-                return redirect('admin:index')
+            if not user.is_active:
+                error = "This account is inactive."
+            elif user.is_staff or user.is_superuser:
+                error = "Admin accounts must sign in through the Admin Login page."
+            else:
+                login(request, user)
+                # Mark this session as a Dynamic QR session for isolation
+                request.session['is_dqr_user'] = True
                 
-            return redirect('dynamic_qr:dashboard')
+                next_url = request.GET.get('next', '')
+                if next_url:
+                    return redirect(next_url)
+                
+                return redirect('dynamic_qr:dashboard')
         else:
-            error = "Invalid username or password"
+            error = "Invalid username or password."
 
     return render(request, 'dynamic_qr/login.html', {'error': error})
 

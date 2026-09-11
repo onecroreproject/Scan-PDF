@@ -36,5 +36,4 @@ urlpatterns = [
     path('api/generate-image/', views.dqr_generate_image, name='generate_image'),
     path('api/check-username/', views.dqr_check_username_view, name='check_username'),
     path('api/check-email/', views.dqr_check_email_view, name='check_email'),
-    path('repair-db/', views.dqr_repair_db, name='repair_db'),
 ]
