@@ -91,6 +91,8 @@ class DynamicQRCode(models.Model):
     eye_style = models.CharField(max_length=20, default='square')
     ball_style = models.CharField(max_length=20, default='square')
     logo = models.ImageField(upload_to='dynamic_qr_logos/', null=True, blank=True)
+    branding_background_image = models.ImageField(upload_to='dynamic_qr_branding/backgrounds/', blank=True, null=True)
+    branding_foreground_image = models.ImageField(upload_to='dynamic_qr_branding/foregrounds/', blank=True, null=True)
     design_options = models.JSONField(default=dict, blank=True, help_text="Advanced design options like frames, text, error correction, etc.")
 
 

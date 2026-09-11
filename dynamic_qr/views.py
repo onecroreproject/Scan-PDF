@@ -25,6 +25,7 @@ from django.core.mail import send_mail
 from django.conf import settings
 
 from .models import DynamicQRCode, OTPVerification
+from .qr_styles import normalize_style_config
 from .forms import (
     DynamicQRLoginForm,
     DynamicQRRegisterForm,
@@ -39,6 +40,36 @@ import base64
 
 
 logger = logging.getLogger(__name__)
+
+
+def _prepare_design_options(raw, *, body_style='square', eye_style='square',
+                            ball_style='square', fg_color='#000000',
+                            bg_color='#ffffff', eye_color_outer=None,
+                            eye_color_inner=None):
+    """Preserve existing design options while storing a validated style config."""
+    try:
+        options = json.loads(raw) if isinstance(raw, str) else (raw or {})
+    except (TypeError, ValueError):
+        options = {}
+    if not isinstance(options, dict):
+        options = {}
+    config = normalize_style_config(
+        options,
+        body_style=body_style,
+        eye_style=eye_style,
+        ball_style=ball_style,
+        fg_color=fg_color,
+        bg_color=bg_color,
+        eye_color_outer=eye_color_outer,
+        eye_color_inner=eye_color_inner,
+    )
+    options['style_config'] = config
+    options['body_pattern'] = config['patterns']['body']
+    options['outer_eye_style'] = config['patterns']['outer_eye']
+    options['inner_eye_style'] = config['patterns']['inner_eye']
+    options['eye_color_outer'] = config['colors']['outer_eye']
+    options['eye_color_inner'] = config['colors']['inner_eye']
+    return options, config
 
 
 def _normalize_utm_value(value):
@@ -157,7 +188,7 @@ def dqr_login_required(view_func):
 # ═══════════════════════════════════════════════════════════════
 def dqr_login_view(request):
     """Login page for dynamic QR feature only."""
-    if request.user.is_authenticated and request.session.get('is_dqr_user'):
+    if request.user.is_authenticated:
         if request.user.is_staff or request.user.is_superuser:
             return redirect('custom_admin:dashboard')
 
@@ -186,12 +217,13 @@ def dqr_login_view(request):
         if user is not None:
             if not user.is_active:
                 error = "This account is inactive."
-            elif user.is_staff or user.is_superuser:
-                error = "Admin accounts must sign in through the Admin Login page."
             else:
                 login(request, user)
                 # Mark this session as a Dynamic QR session for isolation
                 request.session['is_dqr_user'] = True
+                
+                if user.is_staff or user.is_superuser:
+                    return redirect('custom_admin:dashboard')
                 
                 next_url = request.GET.get('next', '')
                 if next_url:
@@ -554,6 +586,8 @@ def dqr_create_view(request):
     logo = request.FILES.get('logo')
     logo_cropped = request.POST.get('logo_cropped')
     file_content = request.FILES.get('file_content')
+    branding_background_image = request.FILES.get('branding_background_image')
+    branding_foreground_image = request.FILES.get('branding_foreground_image')
 
     if logo_cropped and logo_cropped.startswith('data:image'):
         from django.core.files.base import ContentFile
@@ -576,10 +610,21 @@ def dqr_create_view(request):
     except:
         qr_data = {}
 
-    try:
-        design_options = json.loads(design_data_json)
-    except:
-        design_options = {}
+    design_options, style_config = _prepare_design_options(
+        design_data_json,
+        body_style=body_style,
+        eye_style=eye_style,
+        ball_style=ball_style,
+        fg_color=fg_color,
+        bg_color=bg_color,
+        eye_color_outer=request.POST.get('eye_color_outer'),
+        eye_color_inner=request.POST.get('eye_color_inner'),
+    )
+    fg_color = style_config['colors']['body']
+    bg_color = style_config['colors']['background']
+    body_style = style_config['patterns']['body']
+    eye_style = style_config['patterns']['outer_eye']
+    ball_style = style_config['patterns']['inner_eye']
 
     qr = DynamicQRCode.objects.create(
         user=request.user,
@@ -593,6 +638,8 @@ def dqr_create_view(request):
         eye_style=eye_style,
         ball_style=ball_style,
         logo=logo,
+        branding_background_image=branding_background_image,
+        branding_foreground_image=branding_foreground_image,
         file_content=file_content,
         design_options=design_options
     )
@@ -885,10 +932,21 @@ def dqr_short_url_view(request):
             except:
                 pass
                 
-        try:
-            design_options = json.loads(design_data_json)
-        except:
-            design_options = {}
+        design_options, style_config = _prepare_design_options(
+            design_data_json,
+            body_style=body_style,
+            eye_style=eye_style,
+            ball_style=ball_style,
+            fg_color=fg_color,
+            bg_color=bg_color,
+            eye_color_outer=request.POST.get('eye_color_outer'),
+            eye_color_inner=request.POST.get('eye_color_inner'),
+        )
+        fg_color = style_config['colors']['body']
+        bg_color = style_config['colors']['background']
+        body_style = style_config['patterns']['body']
+        eye_style = style_config['patterns']['outer_eye']
+        ball_style = style_config['patterns']['inner_eye']
 
         # Validate unique alias
         if custom_alias:
@@ -1071,9 +1129,14 @@ def dqr_short_url_view(request):
                     
         from services.plan_features import get_all_feature_statuses
         feature_statuses = get_all_feature_statuses(request.user)
+        
+        from django.template.loader import render_to_string
+        html = render_to_string('dynamic_qr/_short_url_card.html', {'item': qr, 'request': request})
+        
         return JsonResponse({
             'success': True, 
             'id': str(qr.id), 
+            'html': html,
             'short_url': request.build_absolute_uri(qr.public_url_path),
             'qr_name': qr.qr_name,
             'header': qr.header,
@@ -1261,6 +1324,30 @@ def dqr_short_url_analytics_view(request, qr_id):
         
         country_stats = list(base_query.exclude(location_source='local').exclude(country__in=['Unknown', 'Internal', '']).values('country', 'country_code').annotate(count=Count('id', distinct=True)).order_by('-count')[:10])
 
+        # ── State / Region stats — uses QRAnalytics.region field ──────────────
+        state_stats_raw = list(
+            base_query
+            .exclude(location_source='local')
+            .exclude(region__in=['Unknown', 'Internal', '', None])
+            .values('region', 'country', 'country_code')
+            .annotate(count=Count('id', distinct=True))
+            .order_by('-count')[:15]
+        )
+        # Normalize: merge case/whitespace duplicates
+        _state_merged = {}
+        for row in state_stats_raw:
+            _key = (
+                (row['region'] or '').strip(),
+                (row['country'] or '').strip(),
+                (row['country_code'] or '').strip().upper(),
+            )
+            _state_merged[_key] = _state_merged.get(_key, 0) + (row['count'] or 0)
+        state_stats = [
+            {'state': k[0], 'country': k[1], 'country_code': k[2], 'count': v}
+            for k, v in sorted(_state_merged.items(), key=lambda x: -x[1])
+        ][:15]
+        # ─────────────────────────────────────────────────────────────────────
+
         city_buckets = {}
         for record in base_query.exclude(location_source='local').exclude(city__in=['Unknown', 'Private IP', '', None]).order_by('city', 'country', 'country_code'):
             city_name = (record.city or '').strip()
@@ -1352,8 +1439,21 @@ def dqr_short_url_analytics_view(request, qr_id):
         device_stats = add_percentages(device_stats)
         country_stats = add_percentages(country_stats)
         city_stats = add_percentages(city_stats)
+        state_stats = add_percentages(state_stats)
         referrer_stats = add_percentages(referrer_stats)
         ts_stats = source_stats
+
+        # Build state_map_data for Leaflet frontend
+        state_map_data = [
+            {
+                'state': s['state'],
+                'country': s['country'],
+                'country_code': s['country_code'],
+                'count': s['count'],
+                'percentage': s.get('percentage', 0),
+            }
+            for s in state_stats
+        ]
 
         city_map_data = []
         for city in city_stats:
@@ -1370,6 +1470,7 @@ def dqr_short_url_analytics_view(request, qr_id):
                 continue
             city_map_data.append({
                 'city': city.get('city') or city.get('display_name') or 'Unknown',
+                'state': city.get('region') or '',
                 'country': city.get('country') or '',
                 'country_code': city.get('country_code') or '',
                 'clicks': city.get('count', 0),
@@ -1551,17 +1652,21 @@ def dqr_short_url_analytics_view(request, qr_id):
             (summary['gps_granted'] / summary['gps_requests']) * 100, 2
         ) if summary['gps_requests'] else 0
         
-        return total_clicks, qr_scans, unique_clicks, human_clicks, bot_clicks, trends, source_stats, os_stats, browser_stats, device_stats, country_stats, city_stats, referrer_stats, time_series, recent_scans_qs, summary, ts_stats, clicks_by_hour, clicks_by_day, utm_sources, utm_mediums, utm_campaigns
+        return total_clicks, qr_scans, unique_clicks, human_clicks, bot_clicks, trends, source_stats, os_stats, browser_stats, device_stats, country_stats, state_stats, state_map_data, city_stats, referrer_stats, time_series, recent_scans_qs, summary, ts_stats, clicks_by_hour, clicks_by_day, utm_sources, utm_mediums, utm_campaigns
         
     city_map_data = []
+    state_stats = []
+    state_map_data = []
 
     try:
-        total_clicks, qr_scans, unique_clicks, human_clicks, bot_clicks, trends, source_stats, os_stats, browser_stats, device_stats, country_stats, city_stats, referrer_stats, time_series, recent_scans_qs, perf_summary, ts_stats, clicks_by_hour, clicks_by_day, utm_sources, utm_mediums, utm_campaigns = get_data()
+        total_clicks, qr_scans, unique_clicks, human_clicks, bot_clicks, trends, source_stats, os_stats, browser_stats, device_stats, country_stats, state_stats, state_map_data, city_stats, referrer_stats, time_series, recent_scans_qs, perf_summary, ts_stats, clicks_by_hour, clicks_by_day, utm_sources, utm_mediums, utm_campaigns = get_data()
     except Exception as e:
         print(f"[Analytics Error]: {e}")
+        import traceback; traceback.print_exc()
         total_clicks, qr_scans, unique_clicks, human_clicks, bot_clicks = 0, 0, 0, 0, 0
         trends = {'total': '0%', 'qr': '0%', 'unique': '0%', 'human': '0%', 'bot': '0%'}
-        source_stats, os_stats, browser_stats, device_stats, country_stats, city_stats, referrer_stats, time_series, recent_scans_qs = [], [], [], [], [], [], [], [], []
+        source_stats, os_stats, browser_stats, device_stats, country_stats, state_stats, city_stats, referrer_stats, time_series, recent_scans_qs = [], [], [], [], [], [], [], [], [], []
+        state_map_data = []
         perf_summary = {}
         ts_stats, clicks_by_hour, clicks_by_day = [], [0]*24, [0]*7
         utm_sources, utm_mediums, utm_campaigns = [], [], []
@@ -1662,15 +1767,30 @@ def dqr_short_url_analytics_view(request, qr_id):
             'search': 'Search', 'social': 'Social',
             'referral': 'Referral', 'internal': 'Internal',
         }.get(_scan.source, 'Direct'))
-        if _scan.location_source == 'gps' and _scan.gps_latitude:
-            _loc = f"{_scan.gps_latitude:.4f}, {_scan.gps_longitude:.4f}"
-        elif (_scan.location_source == 'local'
+        if (_scan.location_source == 'local'
               or _scan.country_code == 'LCL'
               or _scan.country == 'Internal'):
             _loc = 'Local Network'
+        elif _scan.location_source == 'gps':
+            _city = (_scan.city or '').strip()
+            _region = (_scan.region or '').strip()
+            _country = (_scan.country or '').strip()
+            if _city and _city not in ('Unknown', '') and _country and _country not in ('Unknown', ''):
+                if _region and _region not in ('Unknown', ''):
+                    _loc = f"{_city}, {_region}, {_country}"
+                else:
+                    _loc = f"{_city}, {_country}"
+            elif _scan.gps_latitude:
+                _loc = f"{_scan.gps_latitude:.4f}, {_scan.gps_longitude:.4f}"
+            else:
+                _loc = 'Unknown'
         elif (_scan.city and _scan.city not in ('Unknown', '')
               and _scan.country and _scan.country not in ('Unknown', '')):
-            _loc = f"{_scan.city}, {_scan.country}"
+            _region = (_scan.region or '').strip()
+            if _region and _region not in ('Unknown', ''):
+                _loc = f"{_scan.city}, {_region}, {_scan.country}"
+            else:
+                _loc = f"{_scan.city}, {_scan.country}"
         else:
             _loc = 'Unknown'
         if _scan.location_source == 'gps':
@@ -1710,8 +1830,10 @@ def dqr_short_url_analytics_view(request, qr_id):
         'trends': trends,
         'perf_summary': perf_summary,
         'country_stats': country_stats,
+        'state_stats': state_stats,
         'city_stats': city_stats,
         'city_map_data': json.dumps(city_map_data),
+        'state_map_data': json.dumps(state_map_data),
         'referrer_stats': referrer_stats,
         'local_traffic': perf_summary.get('local_traffic', 0),
         'ts_stats': ts_stats,
@@ -1777,6 +1899,8 @@ def dqr_edit_view(request, qr_id):
         logo = request.FILES.get('logo')
         logo_cropped = request.POST.get('logo_cropped')
         file_content = request.FILES.get('file_content')
+        branding_background_image = request.FILES.get('branding_background_image')
+        branding_foreground_image = request.FILES.get('branding_foreground_image')
 
         if logo_cropped and logo_cropped.startswith('data:image'):
             from django.core.files.base import ContentFile
@@ -1851,16 +1975,22 @@ def dqr_edit_view(request, qr_id):
 
         qr.qr_data = incoming_data
             
-        try:
-            qr.design_options = json.loads(design_data_json)
-        except:
-            pass
-
-        qr.fg_color = fg_color
-        qr.bg_color = bg_color
-        qr.body_style = body_style
-        qr.eye_style = eye_style
-        qr.ball_style = ball_style
+        design_options, style_config = _prepare_design_options(
+            design_data_json,
+            body_style=body_style,
+            eye_style=eye_style,
+            ball_style=ball_style,
+            fg_color=fg_color,
+            bg_color=bg_color,
+            eye_color_outer=request.POST.get('eye_color_outer'),
+            eye_color_inner=request.POST.get('eye_color_inner'),
+        )
+        qr.design_options = design_options
+        qr.fg_color = style_config['colors']['body']
+        qr.bg_color = style_config['colors']['background']
+        qr.body_style = style_config['patterns']['body']
+        qr.eye_style = style_config['patterns']['outer_eye']
+        qr.ball_style = style_config['patterns']['inner_eye']
         qr.is_active = is_active
         # --- Permanent Logo Persistence ---
         if logo:
@@ -1877,6 +2007,11 @@ def dqr_edit_view(request, qr_id):
                             qr.logo.save(f"{preset}_preset.png", File(f), save=False)
                 except: pass
         
+        if branding_background_image:
+            qr.branding_background_image = branding_background_image
+        if branding_foreground_image:
+            qr.branding_foreground_image = branding_foreground_image
+            
         qr.save()
 
         # If AJAX request, return JSON
@@ -2363,17 +2498,41 @@ def dqr_generate_image(request):
         if not logo_path and 'logo' in request.FILES:
             logo_path = save_uploaded_file(request.FILES['logo'])
 
+        # --- Branding Images (Background & Foreground) ---
+        bg_img_path = None
+        fg_img_path = None
+        
+        if 'branding_background_image' in request.FILES:
+            bg_img_path = save_uploaded_file(request.FILES['branding_background_image'])
+        elif qr_obj and qr_obj.branding_background_image:
+            if os.path.exists(qr_obj.branding_background_image.path):
+                bg_img_path = qr_obj.branding_background_image.path
+
+        if 'branding_foreground_image' in request.FILES:
+            fg_img_path = save_uploaded_file(request.FILES['branding_foreground_image'])
+        elif qr_obj and qr_obj.branding_foreground_image:
+            if os.path.exists(qr_obj.branding_foreground_image.path):
+                fg_img_path = qr_obj.branding_foreground_image.path
+
         output_path = generate_qr_code(
             text, fg_color=fg_color, bg_color=bg_color,
             style=style, eye_style=eye_style, ball_style=ball_style,
             logo_path=logo_path, output_format=output_format,
             design_options=design_options,
             eye_color_outer=data.get('eye_color_outer'),
-            eye_color_inner=data.get('eye_color_inner')
+            eye_color_inner=data.get('eye_color_inner'),
+            bg_img_path=bg_img_path,
+            fg_img_path=fg_img_path
         )
 
         if logo_path and os.path.exists(logo_path) and 'temp' in logo_path:
             try: os.remove(logo_path)
+            except: pass
+        if bg_img_path and os.path.exists(bg_img_path) and 'temp' in bg_img_path:
+            try: os.remove(bg_img_path)
+            except: pass
+        if fg_img_path and os.path.exists(fg_img_path) and 'temp' in fg_img_path:
+            try: os.remove(fg_img_path)
             except: pass
 
         ct = 'image/png'
@@ -2438,6 +2597,10 @@ def dqr_download_view(request, qr_id):
     eye_color_outer = qr.design_options.get('eye_color_outer') if qr.design_options else None
     eye_color_inner = qr.design_options.get('eye_color_inner') if qr.design_options else None
 
+    # Branding Images
+    bg_img_path = qr.branding_background_image.path if qr.branding_background_image and os.path.exists(qr.branding_background_image.path) else None
+    fg_img_path = qr.branding_foreground_image.path if qr.branding_foreground_image and os.path.exists(qr.branding_foreground_image.path) else None
+
     # Use the helper from converter.utils
     output_path = generate_qr_code(
         qr_content,
@@ -2450,7 +2613,9 @@ def dqr_download_view(request, qr_id):
         output_format=fmt,
         design_options=qr.design_options,
         eye_color_outer=eye_color_outer,
-        eye_color_inner=eye_color_inner
+        eye_color_inner=eye_color_inner,
+        bg_img_path=bg_img_path,
+        fg_img_path=fg_img_path
     )
     
     ct = 'image/png'

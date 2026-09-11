@@ -5,13 +5,18 @@
 
 {% block dqr_style %}
     /* Layout */
-    .create-grid { display: grid; grid-template-columns: 1fr 340px; gap: 24px; align-items: start; max-height: calc(100vh - 180px); }
-    @media (max-width: 1200px) { .create-grid { grid-template-columns: 1fr; max-height: none; } }
+    .create-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(300px, 340px);
+        gap: 24px;
+        align-items: start;
+    }
 
     .content-scroll-area {
-        height: 100%;
-        overflow-y: auto;
-        padding-right: 8px;
+        min-width: 0;
+        height: auto;
+        overflow: visible;
+        padding-right: 0;
         scrollbar-width: thin;
     }
     .content-scroll-area::-webkit-scrollbar { width: 4px; }
@@ -31,13 +36,14 @@
 
     /* Category Navigation */
     .cat-nav {
-        display: flex; gap: 8px; margin-bottom: 24px; padding-bottom: 8px;
-        overflow-x: auto; white-space: nowrap; scrollbar-width: none;
+        display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 24px; padding-bottom: 0;
+        overflow-x: visible; white-space: normal; scrollbar-width: none;
         -ms-overflow-style: none;
     }
     .cat-nav::-webkit-scrollbar { display: none; }
     .cat-btn {
-        padding: 10px 20px; background: white; border: 1px solid #f1f5f9;
+        min-height: 40px; padding: 10px 20px; background: white; border: 1px solid #f1f5f9;
+        display: inline-flex; align-items: center; justify-content: center; box-sizing: border-box;
         border-radius: 99px; font-size: 11px; font-weight: 800; color: #64748b;
         transition: 0.3s; cursor: pointer;
     }
@@ -46,24 +52,26 @@
 
     /* Type Tiles */
     .types-grid {
-        display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-        gap: 12px; margin-bottom: 32px;
+        display: grid; grid-template-columns: repeat(6, minmax(0, 1fr));
+        gap: 12px; margin-bottom: 32px; min-width: 0;
     }
     .type-tile {
         background: white; border: 2px solid #f1f5f9; border-radius: 20px;
-        padding: 16px 10px; text-align: center; transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        cursor: pointer; position: relative;
+        box-sizing: border-box; min-width: 0; min-height: 112px; padding: 14px 8px;
+        text-align: center; transition: border-color 0.3s, box-shadow 0.3s, background 0.3s;
+        cursor: pointer; position: relative; display: flex; flex-direction: column;
+        align-items: center; justify-content: center;
     }
-    .type-tile:hover { transform: translateY(-4px); border-color: #6366f1; box-shadow: 0 10px 20px -10px rgba(0,0,0,0.05); }
+    .type-tile:hover { border-color: #6366f1; box-shadow: 0 10px 20px -10px rgba(0,0,0,0.05); }
     .type-tile.active { border-color: #6366f1; background: #fcfdfe; }
     .type-tile.active::after {
         content: '\2713'; position: absolute; top: 10px; right: 10px;
         width: 18px; height: 18px; background: #6366f1; color: white;
         border-radius: 50%; font-size: 9px; display: flex; align-items: center; justify-content: center;
     }
-    .tile-icon { width: 44px; height: 44px; margin: 0 auto 12px; display: flex; align-items: center; justify-content: center; border-radius: 14px; }
+    .tile-icon { width: 42px; height: 42px; flex: 0 0 42px; margin: 0 auto 10px; display: flex; align-items: center; justify-content: center; border-radius: 14px; }
     .type-tile.active .tile-icon { background: #6366f1 !important; color: white !important; }
-    .tile-label { font-size: 11px; font-weight: 800; color: #1e293b; line-height: 1.2; }
+    .tile-label { width: 100%; font-size: 11px; font-weight: 800; color: #1e293b; line-height: 1.2; overflow-wrap: anywhere; }
 
     /* Cards */
     .form-card {
@@ -88,12 +96,13 @@
     .design-tab.active { background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: white; box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.3); }
 
     /* Pattern Grids */
-    .pattern-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(60px, 1fr)); gap: 10px; }
+    .pattern-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(56px, 1fr)); gap: 10px; max-width: 720px; }
     .pattern-item {
-        aspect-ratio: 1; border: 2px solid #f1f5f9; border-radius: 12px; cursor: pointer;
+        aspect-ratio: 1; min-width: 0; border: 2px solid #f1f5f9; border-radius: 12px; cursor: pointer;
         display: flex; align-items: center; justify-content: center; background: white; transition: 0.3s;
         padding: 8px; position: relative;
     }
+    .pattern-item svg { width: 30px; height: 30px; display: block; }
     .pattern-item:hover { border-color: #6366f1; background: #f8fafc; }
     .pattern-item.active { border-color: #6366f1; background: #f5f3ff; }
     .pattern-item.active::after {
@@ -115,6 +124,26 @@
     .frame-item:hover { border-color: #6366f1; transform: scale(1.05); }
     .frame-item.active { border-color: #6366f1; background: #fff; }
     .frame-thumb { width: 100%; height: 100%; object-fit: contain; padding: 10px; }
+    .frame-library { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 14px; max-width: 720px; }
+    .frame-option { min-width: 100px; min-height: 112px; border: 2px solid #f1f5f9; border-radius: 12px; cursor: pointer; background: #f8fafc; padding: 12px 10px; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; transition: .2s; }
+    .frame-option:hover { border-color: #a5b4fc; background: #eef2ff; }
+    .frame-option.active { border-color: #6366f1; background: #f5f3ff; }
+    .frame-option.active::after { content: ''; position: absolute; top: 7px; right: 7px; width: 20px; height: 20px; border-radius: 50%; background: #6366f1; }
+    .frame-check { position: absolute; top: 7px; right: 7px; z-index: 1; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: #6366f1; color: white; font-size: 12px; font-weight: 700; line-height: 1; }
+    .frame-option svg { width: 64px; height: 64px; flex: 0 0 64px; }
+    .frame-option span { font-size: 12px; font-weight: 600; color: #475569; text-align: center; line-height: 1.25; }
+    .frame-fonts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+    .frame-font-option { min-height: 42px; border: 1px solid #e2e8f0; background: white; border-radius: 8px; padding: 8px 10px; font-size: 14px; cursor: pointer; color: #475569; }
+    #view-frames > .space-y-6 { gap: 28px; }
+    #view-frames label { font-size: 13px; font-weight: 700; letter-spacing: .04em; }
+    #frame-editor-text { min-height: 50px; height: 50px; font-size: 16px; padding: 0 16px; }
+    #frame-text-size { width: 100%; height: 6px; }
+    #frame-text-size-value { font-size: 14px; font-weight: 700; color: #6366f1; }
+    #frame-color-controls .color-picker { width: 100%; height: 48px; }
+    @media (max-width: 1199px) { .frame-library { grid-template-columns: repeat(5, minmax(100px, 1fr)); } }
+    @media (max-width: 768px) { .frame-library { grid-template-columns: repeat(3, minmax(90px, 1fr)); } .frame-fonts { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+    @media (max-width: 480px) { .frame-library { grid-template-columns: repeat(2, minmax(0, 1fr)); } .frame-fonts { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+    .frame-font-option.active { border-color: #6366f1; background: #f5f3ff; color: #4338ca; }
 
     /* Color Pickers */
     .color-row { display: flex; align-items: center; gap: 16px; margin-bottom: 20px; }
@@ -141,11 +170,13 @@
 
     /* Preview Sidebar */
     .preview-card {
-        position: sticky; top: 100px; background: #0f172a; border-radius: 36px;
-        padding: 40px; text-align: center; color: white; box-shadow: 0 40px 100px -20px rgba(15, 23, 42, 0.4);
+        position: sticky; top: 88px; width: 100%; box-sizing: border-box;
+        background: #0f172a; border-radius: 32px; padding: 32px;
+        text-align: center; color: white; box-shadow: 0 40px 100px -20px rgba(15, 23, 42, 0.4);
     }
+    .create-grid > .space-y-6 { align-self: stretch; min-height: 100%; }
     .qr-vessel {
-        width: 100%; aspect-ratio: 1; background: white; border-radius: 28px;
+        width: 100%; aspect-ratio: 1; box-sizing: border-box; background: white; border-radius: 24px;
         margin-bottom: 32px; display: flex; align-items: center; justify-content: center;
         padding: 24px; position: relative; overflow: hidden;
     }
@@ -192,16 +223,34 @@
     .compact-active #selection-header { display: flex !important; }
     .compact-active .mb-10 { display: none !important; }
     
-    .preview-card {
-        position: sticky; top: 0; background: #0f172a; border-radius: 32px;
-        padding: 32px; text-align: center; color: white; box-shadow: 0 40px 100px -20px rgba(15, 23, 42, 0.4);
-    }
-    .qr-vessel { margin-bottom: 24px; padding: 20px; border-radius: 24px; }
+    .qr-vessel { margin-bottom: 24px; padding: 20px; }
     .btn-create { height: 56px; border-radius: 16px; font-size: 13px; }
+
+    @media (min-width: 1450px) {
+        .types-grid { grid-template-columns: repeat(7, minmax(0, 1fr)); }
+    }
+    @media (max-width: 1199px) {
+        .create-grid { grid-template-columns: minmax(0, 1fr) minmax(280px, 320px); }
+        .types-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+    }
+    @media (max-width: 1023px) {
+        .create-grid { grid-template-columns: 1fr; }
+        .create-grid > .space-y-6 { align-self: auto; min-height: 0; }
+        .preview-card { position: static; top: auto; max-width: 420px; margin: 0 auto; }
+        .types-grid { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+    }
+    @media (max-width: 639px) {
+        .cat-nav { flex-wrap: nowrap; overflow-x: auto; padding-bottom: 4px; }
+        .cat-btn { flex: 0 0 auto; }
+        .types-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+        .type-tile { min-height: 108px; }
+    }
 {% endblock %}
 
 {% block dqr_content %}
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
+    <script src="{% static 'js/qr_style_registry.js' %}"></script>
+    <script src="{% static 'js/qr_frame_registry.js' %}"></script>
     
     <div class="mb-10" id="main-header">
         <h1 class="text-3xl font-black text-slate-900 tracking-tight">Generate Dynamic Content</h1>
@@ -314,7 +363,32 @@
 
                     <!-- Frames View -->
                     <div class="design-view hidden" id="view-frames">
-                        <div id="frames-container"></div>
+                        <div class="space-y-6">
+                            <div>
+                                <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-4">Frames</label>
+                                <div class="frame-library" id="frames-container"></div>
+                            </div>
+                            <div class="form-group">
+                                <label>Frame Text</label>
+                                <input type="text" id="frame-editor-text" class="form-input" maxlength="40" placeholder="SCAN ME">
+                            </div>
+                            <div class="form-group">
+                                <label class="flex items-center justify-between">Frame Text Size <output id="frame-text-size-value">18px</output></label>
+                                <input type="range" id="frame-text-size" min="10" max="40" value="18" class="w-full h-2 bg-slate-100 rounded-lg appearance-none cursor-pointer accent-indigo-600">
+                            </div>
+                            <div class="form-group">
+                                <label>Frame Text Font</label>
+                                <div class="frame-fonts" id="frame-fonts"></div>
+                            </div>
+                            <div class="switch-group">
+                                <label class="switch"><input type="checkbox" id="frame-custom-colors"><span class="slider"></span></label>
+                                <span class="text-[11px] font-bold text-slate-500">Apply custom colors</span>
+                            </div>
+                            <div id="frame-color-controls" class="grid grid-cols-1 md:grid-cols-2 gap-6 hidden">
+                                <div class="form-group"><label>Frame Color</label><input type="color" id="frame-color" value="#000000" class="color-picker"></div>
+                                <div class="form-group"><label>Frame Text Color</label><input type="color" id="frame-text-color" value="#FFFFFF" class="color-picker"></div>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Colors View -->
@@ -400,6 +474,42 @@
                                             <span class="slider"></span>
                                         </label>
                                         <span class="text-[11px] font-bold text-slate-500">Circular Shape (Recommended)</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                                <div class="p-6 bg-slate-50 rounded-2xl border border-slate-100">
+                                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-4">Background Image</label>
+                                    <button type="button" class="btn-upload" onclick="document.getElementById('bg-image-upload').click()">
+                                        <i data-lucide="image" class="w-5 h-5"></i>
+                                        Select Image
+                                    </button>
+                                    <input type="file" name="branding_background_image" id="bg-image-upload" class="hidden" accept="image/*">
+                                    <div class="mt-4 flex items-center gap-4 hidden" id="bg-preview-container">
+                                        <img id="bg-preview-img" src="" class="w-12 h-12 object-cover rounded-md border border-slate-200">
+                                        <button type="button" class="text-xs font-bold text-red-500 hover:text-red-700" onclick="clearBrandingImage('bg')">Remove</button>
+                                    </div>
+                                    <div class="mt-6">
+                                        <label class="text-xs text-slate-600 font-bold block mb-2">Transparency: <span id="bg-transparency-val">100%</span></label>
+                                        <input type="range" id="bg-transparency-range" min="0.1" max="1" step="0.05" value="1" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600">
+                                    </div>
+                                </div>
+
+                                <div class="p-6 bg-slate-50 rounded-2xl border border-slate-100">
+                                    <label class="text-[10px] font-black text-slate-400 uppercase tracking-widest block mb-4">Foreground Image</label>
+                                    <button type="button" class="btn-upload" onclick="document.getElementById('fg-image-upload').click()">
+                                        <i data-lucide="layers" class="w-5 h-5"></i>
+                                        Select Overlay
+                                    </button>
+                                    <input type="file" name="branding_foreground_image" id="fg-image-upload" class="hidden" accept="image/*">
+                                    <div class="mt-4 flex items-center gap-4 hidden" id="fg-preview-container">
+                                        <img id="fg-preview-img" src="" class="w-12 h-12 object-cover rounded-md border border-slate-200">
+                                        <button type="button" class="text-xs font-bold text-red-500 hover:text-red-700" onclick="clearBrandingImage('fg')">Remove</button>
+                                    </div>
+                                    <div class="mt-6">
+                                        <label class="text-xs text-slate-600 font-bold block mb-2">Transparency: <span id="fg-transparency-val">50%</span></label>
+                                        <input type="range" id="fg-transparency-range" min="0.1" max="1" step="0.05" value="0.5" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer accent-indigo-600">
                                     </div>
                                 </div>
                             </div>
@@ -511,8 +621,11 @@
         { id: 'custom-url', label: 'Custom URL', icon: 'external-link', cat: 'comm', color: '#64748b', bg: '#f1f5f9' },
     ];
 
-    const BODY_STYLES = ['square', 'rounded', 'circle', 'diamond', 'dot', 'small-square', 'hline', 'vline', 'star', 'cross', 'leaf', 'clover', 'hexagon', 'octagon'];
-    const EYE_STYLES = ['square', 'circle', 'rounded', 'diamond', 'leaf', 'dot', 'star', 'small-square', 'hexagon', 'octagon'];
+    const qrEditorState = {
+        pattern: { body: 'square', outerEye: 'square', innerEye: 'square' },
+        colors: { body: '#000000', outerEye: '#000000', innerEye: '#000000', background: '#FFFFFF' },
+        frame: { type: 'none', text: '', textSize: 18, font: 'Arial', useCustomColors: false, frameColor: '#000000', textColor: '#FFFFFF' }
+    };
     const BRAND_LOGOS = [
         { id: 'facebook', domain: 'facebook.com' },
         { id: 'instagram', domain: 'instagram.com' },
@@ -535,12 +648,6 @@
         { id: 'github', domain: 'github.com' },
         { id: 'microsoft', domain: 'microsoft.com' }
     ];
-    const FRAME_CATEGORIES = {
-        'Standard / Clean': ['std-1', 'std-2', 'std-3', 'std-4', 'std-5'],
-        'Festivals & Events': ['holi', 'brazil', 'thanksgiving', 'harvest'],
-        'Devices & Tech': ['mobile', 'tablet', 'monitor'],
-    };
-
     let cropper = null;
     let selectedLogoUrl = null;
 
@@ -548,6 +655,8 @@
         renderTypes();
         renderPatterns();
         renderFrames();
+        renderFrameFonts();
+        bindFrameControls();
         renderPresetLogos();
         lucide.createIcons();
         // selectType('url'); // Don't auto-select as per new requirement to hide sections initially
@@ -572,6 +681,8 @@
                 if(p) p.value = val;
                 if(t) t.value = val;
                 if(i) i.value = val;
+                const stateKey = { 'fg-picker': 'body', 'eye-outer-picker': 'outerEye', 'eye-inner-picker': 'innerEye', 'bg-picker': 'background' }[pickerId];
+                if (stateKey) qrEditorState.colors[stateKey] = val.toUpperCase();
                 renderPatterns(); // Refresh icons with new color
                 updatePreview();
             };
@@ -586,9 +697,13 @@
         syncColor('eye-inner-picker', 'eye-inner-text', 'eye-inner-picker-inline');
 
         // Other design updates
-        ['bg-transparent-toggle', 'logo-size-range', 'logo-background-toggle', 'logo-circular-toggle', 'frame-text-input', 'text-font', 'text-color', 'text-size'].forEach(id => {
+        ['bg-transparent-toggle', 'logo-size-range', 'logo-background-toggle', 'logo-circular-toggle', 'frame-text-input', 'text-font', 'text-color', 'text-size', 'bg-transparency-range', 'fg-transparency-range'].forEach(id => {
             const el = document.getElementById(id);
-            if (el) el.oninput = updatePreview;
+            if (el) el.oninput = (e) => {
+                if (id === 'bg-transparency-range') document.getElementById('bg-transparency-val').textContent = Math.round(e.target.value * 100) + '%';
+                if (id === 'fg-transparency-range') document.getElementById('fg-transparency-val').textContent = Math.round(e.target.value * 100) + '%';
+                updatePreview();
+            };
         });
 
         // Logo Upload
@@ -681,71 +796,39 @@
     }
 
     function getPatternIcon(style, type) {
-        let color = '#6366f1'; 
-        if (type === 'body') color = document.getElementById('fg-picker-inline').value;
-        if (type === 'eye') color = document.getElementById('eye-outer-picker-inline').value;
-        if (type === 'ball') color = document.getElementById('eye-inner-picker-inline').value;
-
-        if (type === 'body') {
-            if (style === 'square') return `<rect x="5" y="5" width="14" height="14" fill="${color}" rx="1"/>`;
-            if (style === 'rounded') return `<rect x="5" y="5" width="14" height="14" fill="${color}" rx="4"/>`;
-            if (style === 'circle') return `<circle cx="12" cy="12" r="7" fill="${color}"/>`;
-            if (style === 'diamond') return `<path d="M12 4 L20 12 L12 20 L4 12 Z" fill="${color}"/>`;
-            if (style === 'dot') return `<circle cx="12" cy="12" r="4" fill="${color}"/>`;
-            if (style === 'small-square') return `<rect x="8" y="8" width="8" height="8" fill="${color}"/>`;
-            if (style === 'hline') return `<rect x="4" y="10" width="16" height="4" fill="${color}" rx="1"/>`;
-            if (style === 'vline') return `<rect x="10" y="4" width="4" height="16" fill="${color}" rx="1"/>`;
-            if (style === 'star') return `<path d="M12 4 L14 10 L20 10 L15 14 L17 20 L12 16 L7 20 L9 14 L4 10 L10 10 Z" fill="${color}"/>`;
-            if (style === 'cross') return `<path d="M9 4 H15 V9 H20 V15 H15 V20 H9 V15 H4 V9 H9 Z" fill="${color}"/>`;
-            if (style === 'leaf') return `<path d="M12 4 Q20 4 20 12 Q20 20 12 20 Q4 20 4 12 Q4 4 12 4" fill="${color}"/>`;
-            if (style === 'clover') return `<path d="M12 12 Q12 4 8 4 Q4 4 4 8 Q4 12 12 12 Q20 12 20 16 Q20 20 16 20 Q12 20 12 12 Z" fill="${color}"/>`;
-            if (style === 'hexagon') return `<path d="M12 4 L19 8 V16 L12 20 L5 16 V8 Z" fill="${color}"/>`;
-            if (style === 'octagon') return `<path d="M8 4 H16 L20 8 V16 L16 20 H8 L4 16 V8 Z" fill="${color}"/>`;
-        } else {
-            if (style === 'square') return `<rect x="4" y="4" width="16" height="16" stroke="${color}" stroke-width="2" fill="none" rx="1"/>`;
-            if (style === 'circle') return `<circle cx="12" cy="12" r="8" stroke="${color}" stroke-width="2" fill="none"/>`;
-            if (style === 'rounded') return `<rect x="4" y="4" width="16" height="16" stroke="${color}" stroke-width="2" fill="none" rx="5"/>`;
-            if (style === 'diamond') return `<path d="M12 4 L20 12 L12 20 L4 12 Z" stroke="${color}" stroke-width="2" fill="none"/>`;
-            if (style === 'leaf') return `<path d="M12 4 Q20 4 20 12 Q20 20 12 20 Q4 20 4 12 Q4 4 12 4" stroke="${color}" stroke-width="2" fill="none"/>`;
-            if (style === 'hexagon') return `<path d="M12 4 L19 8 V16 L12 20 L5 16 V8 Z" stroke="${color}" stroke-width="2" fill="none"/>`;
-            if (style === 'octagon') return `<path d="M8 4 H16 L20 8 V16 L16 20 H8 L4 16 V8 Z" stroke="${color}" stroke-width="2" fill="none"/>`;
-            if (style === 'star') return `<path d="M12 4 L14 10 L20 10 L15 14 L17 20 L12 16 L7 20 L9 14 L4 10 L10 10 Z" stroke="${color}" stroke-width="2" fill="none"/>`;
-            if (style === 'dot') return `<circle cx="12" cy="12" r="5" stroke="${color}" stroke-width="2" fill="none"/>`;
-            if (style === 'small-square') return `<rect x="7" y="7" width="10" height="10" stroke="${color}" stroke-width="2" fill="none"/>`;
-            if (style === 'clover') return `<path d="M12 12 Q12 4 8 4 Q4 4 4 8 Q4 12 12 12 Q20 12 20 16 Q20 20 16 20 Q12 20 12 12 Z" stroke="${color}" stroke-width="2" fill="none"/>`;
-        }
-        return `<rect x="4" y="4" width="16" height="16" fill="${color}" opacity="0.2"/>`;
+        const color = type === 'body' ? qrEditorState.colors.body : (type === 'eye' ? qrEditorState.colors.outerEye : qrEditorState.colors.innerEye);
+        return window.qrStyleIcon(style, color, type !== 'body');
     }
 
     function renderPatterns() {
         const bodyGrid = document.getElementById('body-patterns');
         bodyGrid.innerHTML = '';
-        BODY_STYLES.forEach(s => {
+        QR_STYLE_REGISTRY.body.forEach(([s, label]) => {
             const item = document.createElement('div');
-            item.className = 'pattern-item ' + (document.querySelector('#body-patterns .pattern-item.active')?.dataset.val === s ? 'active' : (s === 'square' && !document.querySelector('#body-patterns .pattern-item.active') ? 'active' : ''));
-            item.dataset.val = s;
+            item.className = 'pattern-item ' + (qrEditorState.pattern.body === s ? 'active' : '');
+            item.dataset.val = s; item.dataset.category = 'body'; item.title = label;
             item.innerHTML = `<svg viewBox="0 0 24 24" class="w-8 h-8">${getPatternIcon(s, 'body')}</svg>`;
             item.onclick = () => {
                 document.querySelectorAll('#body-patterns .pattern-item').forEach(i => i.classList.remove('active'));
                 item.classList.add('active');
+                qrEditorState.pattern.body = s;
                 updatePreview();
             };
             bodyGrid.appendChild(item);
         });
 
-        ['eye-patterns', 'ball-patterns'].forEach(gridId => {
+        [['eye-patterns', 'outer_eye', 'eye'], ['ball-patterns', 'inner_eye', 'ball']].forEach(([gridId, category, type]) => {
             const grid = document.getElementById(gridId);
-            const type = gridId.includes('eye') ? 'eye' : 'ball';
-            const currentActive = document.querySelector(`#${gridId} .pattern-item.active`)?.dataset.val;
             grid.innerHTML = '';
-            EYE_STYLES.forEach(s => {
+            QR_STYLE_REGISTRY[category].forEach(([s, label]) => {
                 const item = document.createElement('div');
-                item.className = 'pattern-item ' + (currentActive === s ? 'active' : (!currentActive && s === 'square' ? 'active' : ''));
-                item.dataset.val = s;
+                item.className = 'pattern-item ' + (qrEditorState.pattern[type === 'eye' ? 'outerEye' : 'innerEye'] === s ? 'active' : '');
+                item.dataset.val = s; item.dataset.category = category; item.title = label;
                 item.innerHTML = `<svg viewBox="0 0 24 24" class="w-8 h-8">${getPatternIcon(s, type)}</svg>`;
                 item.onclick = () => {
                     document.querySelectorAll(`#${gridId} .pattern-item`).forEach(i => i.classList.remove('active'));
                     item.classList.add('active');
+                    qrEditorState.pattern[type === 'eye' ? 'outerEye' : 'innerEye'] = s;
                     updatePreview();
                 };
                 grid.appendChild(item);
@@ -756,49 +839,40 @@
     function renderFrames() {
         const container = document.getElementById('frames-container');
         container.innerHTML = '';
-        
-        Object.keys(FRAME_CATEGORIES).forEach((cat, idx) => {
-            const section = document.createElement('div');
-            section.innerHTML = `<div class="frame-cat-title">${cat}</div>`;
-            const grid = document.createElement('div');
-            grid.className = 'frame-grid';
-            
-            if (idx === 0) {
-                const noFrame = document.createElement('div');
-                noFrame.className = 'frame-item active';
-                noFrame.dataset.val = 'none';
-                noFrame.innerHTML = `<div class="frame-thumb bg-slate-50 flex items-center justify-center text-[10px] font-black text-slate-400">NONE</div>`;
-                noFrame.onclick = () => {
-                    document.querySelectorAll('.frame-item').forEach(i => i.classList.remove('active'));
-                    noFrame.classList.add('active');
-                    updatePreview();
-                };
-                grid.appendChild(noFrame);
-            }
-
-            FRAME_CATEGORIES[cat].forEach(f => {
-                const item = document.createElement('div');
-                item.className = 'frame-item';
-                item.dataset.val = f;
-                item.innerHTML = `
-                    <div class="frame-thumb bg-indigo-50/30 flex flex-col items-center justify-center p-2">
-                        <div class="w-full h-12 border-4 border-indigo-200 rounded-lg flex items-center justify-center bg-white">
-                            <i data-lucide="qr-code" class="w-4 h-4 text-indigo-400"></i>
-                        </div>
-                        <span class="text-[8px] font-black text-indigo-900/40 mt-2 uppercase">${f}</span>
-                    </div>
-                `;
-                item.onclick = () => {
-                    document.querySelectorAll('.frame-item').forEach(i => i.classList.remove('active'));
-                    item.classList.add('active');
-                    updatePreview();
-                };
-                grid.appendChild(item);
-            });
-            section.appendChild(grid);
-            container.appendChild(section);
+        Object.entries(QR_FRAME_REGISTRY).forEach(([id, frame]) => {
+            const item = document.createElement('button');
+            item.type = 'button'; item.className = `frame-option ${qrEditorState.frame.type === id ? 'active' : ''}`;
+            item.dataset.val = id; item.dataset.frame = id; item.title = frame.label;
+            item.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true">${qrFrameIcon(id)}</svg><span>${frame.label}</span>${qrEditorState.frame.type === id ? '<span class="frame-check" aria-hidden="true">&#10003;</span>' : ''}`;
+            item.onclick = () => { qrEditorState.frame.type = id; renderFrames(); updatePreview(); };
+            container.appendChild(item);
         });
-        lucide.createIcons();
+    }
+
+    function renderFrameFonts() {
+        const fonts = ['Times New Roman', 'Georgia', 'Arial', 'Helvetica', 'Verdana', 'Tahoma', 'Trebuchet MS', 'Courier New', 'Monaco', 'Comic Sans MS', 'Impact', 'Baskerville', 'Papyrus', 'Lucida Sans', 'Gill Sans'];
+        const container = document.getElementById('frame-fonts');
+        container.innerHTML = '';
+        fonts.forEach(font => {
+            const button = document.createElement('button');
+            button.type = 'button'; button.className = `frame-font-option ${qrEditorState.frame.font === font ? 'active' : ''}`;
+            button.style.fontFamily = font; button.textContent = font;
+            button.onclick = () => { qrEditorState.frame.font = font; renderFrameFonts(); updatePreview(); };
+            container.appendChild(button);
+        });
+    }
+
+    function bindFrameControls() {
+        const text = document.getElementById('frame-editor-text');
+        const size = document.getElementById('frame-text-size');
+        const custom = document.getElementById('frame-custom-colors');
+        const frameColor = document.getElementById('frame-color');
+        const textColor = document.getElementById('frame-text-color');
+        text.oninput = e => { qrEditorState.frame.text = e.target.value.slice(0, 40); updatePreview(); };
+        size.oninput = e => { qrEditorState.frame.textSize = Number(e.target.value); document.getElementById('frame-text-size-value').textContent = `${e.target.value}px`; updatePreview(); };
+        custom.onchange = e => { qrEditorState.frame.useCustomColors = e.target.checked; document.getElementById('frame-color-controls').classList.toggle('hidden', !e.target.checked); updatePreview(); };
+        frameColor.oninput = e => { qrEditorState.frame.frameColor = e.target.value.toUpperCase(); updatePreview(); };
+        textColor.oninput = e => { qrEditorState.frame.textColor = e.target.value.toUpperCase(); updatePreview(); };
     }
 
     function renderPresetLogos() {
@@ -920,6 +994,23 @@
         updatePreview();
     }
 
+    function previewBrandingImage(event, imgId) {
+        const file = event.target.files[0];
+        if (file) {
+            const url = URL.createObjectURL(file);
+            document.getElementById(imgId).src = url;
+            document.getElementById(imgId).parentElement.classList.remove('hidden');
+            updatePreview();
+        }
+    }
+
+    function clearBrandingImage(type) {
+        document.getElementById(`${type}-image-upload`).value = '';
+        document.getElementById(`${type}-preview-container`).classList.add('hidden');
+        document.getElementById(`${type}-preview-img`).src = '';
+        updatePreview();
+    }
+
     let previewTimeout = null;
     async function updatePreview() {
         if (previewTimeout) clearTimeout(previewTimeout);
@@ -929,13 +1020,43 @@
                 logo_circular: document.getElementById('logo-circular-toggle').checked,
                 logo_size: document.getElementById('logo-size-range').value,
                 logo_background: document.getElementById('logo-background-toggle').checked,
-                frame_style: document.querySelector('.frame-item.active').dataset.val,
-                frame_text: document.getElementById('frame-text-input').value,
-                frame_font: document.getElementById('text-font').value,
-                frame_text_color: document.getElementById('text-color').value,
+                frame_style: qrEditorState.frame.type,
+                frame_text: qrEditorState.frame.text,
+                frame_font: qrEditorState.frame.font,
+                frame_text_color: qrEditorState.frame.textColor,
+                frame: {
+                    type: qrEditorState.frame.type,
+                    text: qrEditorState.frame.text,
+                    text_size: qrEditorState.frame.textSize,
+                    font: qrEditorState.frame.font,
+                    use_custom_colors: qrEditorState.frame.useCustomColors,
+                    frame_color: qrEditorState.frame.frameColor,
+                    text_color: qrEditorState.frame.textColor
+                },
                 bg_transparent: document.getElementById('bg-transparent-toggle').checked,
                 eye_color_outer: document.getElementById('eye-outer-text').value,
-                eye_color_inner: document.getElementById('eye-inner-text').value
+                eye_color_inner: document.getElementById('eye-inner-text').value,
+                style_config: {
+                    version: 1,
+                    patterns: { body: qrEditorState.pattern.body, outer_eye: qrEditorState.pattern.outerEye, inner_eye: qrEditorState.pattern.innerEye },
+                    colors: {
+                        body: qrEditorState.colors.body,
+                        outer_eye: qrEditorState.colors.outerEye,
+                        inner_eye: qrEditorState.colors.innerEye,
+                        background: qrEditorState.colors.background
+                    },
+                    frame: {
+                        type: qrEditorState.frame.type,
+                        text: qrEditorState.frame.text,
+                        text_size: qrEditorState.frame.textSize,
+                        font: qrEditorState.frame.font,
+                        use_custom_colors: qrEditorState.frame.useCustomColors,
+                        frame_color: qrEditorState.frame.frameColor,
+                        text_color: qrEditorState.frame.textColor
+                    }
+                },
+                branding_background_transparency: document.getElementById('bg-transparency-range') ? document.getElementById('bg-transparency-range').value : 1.0,
+                branding_foreground_transparency: document.getElementById('fg-transparency-range') ? document.getElementById('fg-transparency-range').value : 0.5
             };
 
             const activeLogoItem = document.querySelector('.logo-item.active');
@@ -949,9 +1070,9 @@
 
             const fg = document.getElementById('fg-text')?.value || '#000000';
             const bg = document.getElementById('bg-text')?.value || '#ffffff';
-            const style = document.querySelector('#body-patterns .pattern-item.active')?.dataset.val || 'square';
-            const eye_style = document.querySelector('#eye-patterns .pattern-item.active')?.dataset.val || 'square';
-            const ball_style = document.querySelector('#ball-patterns .pattern-item.active')?.dataset.val || 'square';
+            const style = qrEditorState.pattern.body;
+            const eye_style = qrEditorState.pattern.outerEye;
+            const ball_style = qrEditorState.pattern.innerEye;
 
             let content = "https://scanpdf.com/preview";
             const destInput = document.querySelector('input[name="destination_url"]');
@@ -982,6 +1103,12 @@
                     formData.append('logo', logoItem.dataset.val);
                 }
             }
+
+            const bgFile = document.getElementById('bg-image-upload')?.files[0];
+            if (bgFile) formData.append('branding_background_image', bgFile);
+            
+            const fgFile = document.getElementById('fg-image-upload')?.files[0];
+            if (fgFile) formData.append('branding_foreground_image', fgFile);
 
             try {
                 const response = await fetch('{% url "dynamic_qr:generate_image" %}', {
@@ -1028,9 +1155,9 @@
         }
 
         formData.set('qr_data', JSON.stringify(dataObj));
-        formData.set('body_style', document.querySelector('#body-patterns .pattern-item.active').dataset.val);
-        formData.set('eye_style', document.querySelector('#eye-patterns .pattern-item.active').dataset.val);
-        formData.set('ball_style', document.querySelector('#ball-patterns .pattern-item.active').dataset.val);
+        formData.set('body_style', qrEditorState.pattern.body);
+        formData.set('eye_style', qrEditorState.pattern.outerEye);
+        formData.set('ball_style', qrEditorState.pattern.innerEye);
         formData.set('eye_color_outer', document.getElementById('eye-outer-text').value);
         formData.set('eye_color_inner', document.getElementById('eye-inner-text').value);
         
