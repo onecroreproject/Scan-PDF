@@ -10,10 +10,13 @@ urlpatterns = [
     # Users
     path('users/', views.users_view, name='users'),
     path('users/<int:user_id>/', views.user_detail_view, name='user_detail'),
+    path('users/<int:user_id>/delete/', views.user_delete_view, name='user_delete'),
 
     # Subscriptions & Payments
     path('subscriptions/', views.subscriptions_view, name='subscriptions'),
+    path('subscriptions/<int:sub_id>/delete/', views.subscription_delete_view, name='subscription_delete'),
     path('payments/', views.payments_view, name='payments'),
+    path('payments/<int:payment_id>/delete/', views.payment_delete_view, name='payment_delete'),
 
     # Plans & Pricing
     path('plans/', views.plans_view, name='plans'),

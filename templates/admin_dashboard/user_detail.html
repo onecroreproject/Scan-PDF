@@ -8,9 +8,17 @@
         <h1 class="text-2xl font-black text-surface-900">User Profile</h1>
         <p class="text-surface-500 font-medium">Detailed view of user activity and subscription.</p>
     </div>
-    <a href="{% url 'custom_admin:users' %}" class="px-4 py-2 bg-white rounded-xl shadow-sm border border-surface-200 text-sm font-bold text-surface-700 hover:bg-surface-50 flex items-center gap-2 transition-colors">
-        <i data-lucide="arrow-left" class="w-4 h-4"></i> Back to Users
-    </a>
+    <div class="flex items-center gap-3">
+        <form method="POST" action="{% url 'custom_admin:user_delete' target_user.id %}" onsubmit="return confirm('Delete User?\n\nThis will permanently delete this user and related owned data. This action cannot be undone.');">
+            {% csrf_token %}
+            <button type="submit" class="px-4 py-2 bg-red-50 text-red-600 rounded-xl shadow-sm border border-red-100 text-sm font-bold hover:bg-red-100 flex items-center gap-2 transition-colors">
+                <i data-lucide="trash-2" class="w-4 h-4"></i> Delete User
+            </button>
+        </form>
+        <a href="{% url 'custom_admin:users' %}" class="px-4 py-2 bg-white rounded-xl shadow-sm border border-surface-200 text-sm font-bold text-surface-700 hover:bg-surface-50 flex items-center gap-2 transition-colors">
+            <i data-lucide="arrow-left" class="w-4 h-4"></i> Back to Users
+        </a>
+    </div>
 </div>
 
 <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">

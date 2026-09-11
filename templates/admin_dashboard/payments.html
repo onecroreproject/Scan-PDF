@@ -34,6 +34,7 @@
                     <th class="px-6 py-4 text-xs font-black text-surface-500 uppercase tracking-widest">Method</th>
                     <th class="px-6 py-4 text-xs font-black text-surface-500 uppercase tracking-widest">Status</th>
                     <th class="px-6 py-4 text-xs font-black text-surface-500 uppercase tracking-widest">Date</th>
+                    <th class="px-6 py-4 text-xs font-black text-surface-500 uppercase tracking-widest text-right">Actions</th>
                 </tr>
             </thead>
             <tbody class="divide-y divide-surface-100">
@@ -77,10 +78,20 @@
                     <td class="px-6 py-4">
                         <span class="text-sm font-medium text-surface-500">{{ p.created_at|date:"M d, Y, h:i A" }}</span>
                     </td>
+                    <td class="px-6 py-4 text-right">
+                        {% if request.user.is_superuser %}
+                        <form method="POST" action="{% url 'custom_admin:payment_delete' p.id %}" onsubmit="return confirm('Delete Payment Record?\n\nTransaction ID: {{ p.transaction_id }}\nUser: {{ p.user.username }}\nAmount: ₹{{ p.amount }}\nStatus: {{ p.payment_status }}\n\nThis will remove this payment record from the system.');" class="inline">
+                            {% csrf_token %}
+                            <button type="submit" class="text-xs font-bold text-red-500 hover:text-red-700" title="Delete Payment">Delete</button>
+                        </form>
+                        {% else %}
+                        <span class="text-xs font-medium text-surface-300" title="Only superusers can delete payments">Delete</span>
+                        {% endif %}
+                    </td>
                 </tr>
                 {% empty %}
                 <tr>
-                    <td colspan="6" class="px-6 py-12 text-center text-surface-500 font-medium">
+                    <td colspan="7" class="px-6 py-12 text-center text-surface-500 font-medium">
                         No transactions found.
                     </td>
                 </tr>
