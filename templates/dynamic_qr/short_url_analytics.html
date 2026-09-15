@@ -441,7 +441,7 @@ body { background:var(--s0); }
     </div>
     {% endif %}
 
-    <!-- World Map — Leaflet with state polygons + city markers -->
+    <!-- World Map — Leaflet GeoJSON-only map (NO raster tiles, NO external tile server) -->
     <div class="an-card" style="margin-bottom:16px;">
         <div class="an-title">Geographic Activity Map</div>
         {% if country_stats or state_stats or city_map_data %}
@@ -457,7 +457,11 @@ body { background:var(--s0); }
             </span>
         </div>
         <style>
-            #leaflet-map { z-index: 0; }
+            /* ── Tile-free map: light analytics background, no raster tiles ── */
+            #leaflet-map {
+                z-index: 0;
+                background: #f0f4f9;
+            }
             .leaflet-tooltip.geo-tooltip {
                 background: rgba(15,23,42,.92);
                 color: #fff;
@@ -473,142 +477,211 @@ body { background:var(--s0); }
             .leaflet-tooltip.geo-tooltip::before { display: none; }
         </style>
         <script>
-        document.addEventListener('DOMContentLoaded', function() {
-            var stateMapData  = {{ state_map_data|safe }}  || [];
-            var cityMapData   = {{ city_map_data|safe }}   || [];
-            var totalClicks   = {{ total_clicks|default:0 }} || 1;
+        (function() {
+            // Guard: only initialize once
+            if (window._geoMapInitialized) return;
+            window._geoMapInitialized = true;
 
-            // ── Build lookup tables ──────────────────────────────────────────
-            function normName(n) {
-                return (n || '').toLowerCase()
-                    .replace(/^state of /,'').replace(/^province of /,'')
-                    .replace(/\s+/g,' ').trim();
-            }
-            var stateLookup = {};   // normName → {count, percentage, state, country}
-            stateMapData.forEach(function(s) {
-                stateLookup[normName(s.state)] = s;
-            });
+            function initGeographicActivityMap() {
+                var stateMapData  = {{ state_map_data|safe }}  || [];
+                var cityMapData   = {{ city_map_data|safe }}   || [];
 
-            // ── Color scale ──────────────────────────────────────────────────
-            var maxCount = 0;
-            stateMapData.forEach(function(s){ if(s.count > maxCount) maxCount = s.count; });
-            function stateColor(count) {
-                if (!count || maxCount === 0) return null;
-                var t = Math.pow(count / maxCount, 0.5);
-                // interpolate #e0e7ff → #4f46e5
-                var r = Math.round(224 + (79 - 224)*t);
-                var g = Math.round(231 + (70 - 231)*t);
-                var b = Math.round(255 + (229 - 255)*t);
-                return 'rgb('+r+','+g+','+b+')';
-            }
+                // ── Build lookup tables ──────────────────────────────────────
+                function normName(n) {
+                    return (n || '').toLowerCase()
+                        .replace(/^state of /,'').replace(/^province of /,'')
+                        .replace(/\s+/g,' ').trim();
+                }
+                var stateLookup = {};   // normName → {count, percentage, state, country}
+                stateMapData.forEach(function(s) {
+                    stateLookup[normName(s.state)] = s;
+                });
 
-            // ── Init Leaflet map ─────────────────────────────────────────────
-            var lmap = L.map('leaflet-map', {
-                zoomControl: true,
-                scrollWheelZoom: false,
-                attributionControl: true,
-            }).setView([20, 0], 2);
+                // ── Color scale ──────────────────────────────────────────────
+                var maxCount = 0;
+                stateMapData.forEach(function(s){ if(s.count > maxCount) maxCount = s.count; });
+                function stateColor(count) {
+                    if (!count || maxCount === 0) return null;
+                    var t = Math.pow(count / maxCount, 0.5);
+                    // interpolate #e0e7ff → #4f46e5
+                    var r = Math.round(224 + (79 - 224)*t);
+                    var g = Math.round(231 + (70 - 231)*t);
+                    var b = Math.round(255 + (229 - 255)*t);
+                    return 'rgb('+r+','+g+','+b+')';
+                }
 
-            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-                maxZoom: 19,
-                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-            }).addTo(lmap);
+                // ── Destroy existing map instance if any (safe re-init) ──────
+                if (window._analyticsMap) {
+                    window._analyticsMap.remove();
+                    window._analyticsMap = null;
+                }
 
-            // ── State polygon layer (Natural Earth admin-1) ──────────────────
-            var geojsonUrl = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json';
-            // Use admin-1 (states/provinces) GeoJSON from a reliable CDN
-            var statesGeojsonUrl = 'https://raw.githubusercontent.com/datasets/geo-boundaries-world-110m/master/countries.geojson';
+                // ── Init Leaflet map ─────────────────────────────────────────
+                // CRITICAL: L.tileLayer is intentionally NOT called.
+                // All geometry is rendered from local GeoJSON files only.
+                // There is NO external tile server, NO raster tiles, NO API key.
+                var lmap = L.map('leaflet-map', {
+                    zoomControl: true,
+                    scrollWheelZoom: false,
+                    attributionControl: false,
+                    minZoom: 1,
+                    maxZoom: 12
+                });
+                window._analyticsMap = lmap;
 
-            // We use ne_10m_admin_1 hosted at datahub CDN
-            var admin1Url = 'https://pkgstore.datahub.io/core/geo-admin1-us/admin1/archive/admin1.geojson';
-            // Better: use naturalearth states hosted by martinjc
-            var neStatesUrl = 'https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json';
+                // ── Local GeoJSON URLs via Django static files ───────────────
+                var worldGeoJsonUrl = "{% static 'maps/world-countries.geojson' %}";
+                var indiaGeoJsonUrl = "{% static 'maps/india-states.geojson' %}";
 
-            // Best option: GeoJSON of world state/province boundaries
-            fetch('https://raw.githubusercontent.com/nvkelso/natural-earth-vector/master/geojson/ne_10m_admin_1_states_provinces.geojson')
-                .catch(function() {
-                    // Fallback to a smaller dataset
-                    return fetch('https://raw.githubusercontent.com/datasets/geo-admin1-us/master/data/admin1.geojson');
-                })
-                .then(function(r){ return r.ok ? r.json() : null; })
-                .then(function(geojson) {
-                    if (!geojson || !geojson.features) return;
-                    var stateLayer = L.geoJSON(geojson, {
-                        style: function(feature) {
-                            var props = feature.properties || {};
-                            // Try multiple name fields from NE admin-1
-                            var names = [
-                                props.name, props.NAME, props.NAME_1,
-                                props.admin, props.name_en, props.gn_name,
-                            ].filter(Boolean);
-                            var matched = null;
-                            for (var i=0; i<names.length; i++) {
-                                var key = normName(names[i]);
-                                if (stateLookup[key]) { matched = stateLookup[key]; break; }
-                            }
-                            var fill = matched ? stateColor(matched.count) : null;
-                            if (!fill) return { fillColor: 'transparent', fillOpacity: 0, color: '#cdd5e0', weight: 0.4, opacity: 0.5 };
-                            return { fillColor: fill, fillOpacity: 0.75, color: '#ffffff', weight: 1, opacity: 0.9 };
-                        },
-                        onEachFeature: function(feature, layer) {
-                            var props = feature.properties || {};
-                            var names = [props.name, props.NAME, props.NAME_1, props.admin, props.name_en, props.gn_name].filter(Boolean);
-                            var matched = null;
-                            var displayName = names[0] || 'Region';
-                            for (var i=0; i<names.length; i++) {
-                                var key = normName(names[i]);
-                                if (stateLookup[key]) { matched = stateLookup[key]; displayName = matched.state; break; }
-                            }
-                            if (!matched) return;
-                            var pct = matched.percentage ? matched.percentage.toFixed(2) : '0.00';
-                            var label = '<strong>' + displayName + ', ' + (matched.country||'') + '</strong><br>'
-                                      + matched.count + ' Click' + (matched.count===1?'':'s')
-                                      + ' &nbsp;·&nbsp; ' + pct + '% of traffic';
-                            layer.bindTooltip(label, { className: 'geo-tooltip', sticky: true, direction: 'top', offset: [0,-4] });
-                            layer.on({
-                                mouseover: function(e){ e.target.setStyle({ fillOpacity: 0.95, weight: 2 }); },
-                                mouseout:  function(e){ stateLayer.resetStyle(e.target); }
-                            });
+                // ── Helper: India state style ────────────────────────────────
+                function getStateStyle(feature, highlight) {
+                    var props = feature.properties || {};
+                    var names = [
+                        props.NAME_1, props.name, props.NAME, props.admin, props.name_en
+                    ].filter(Boolean);
+                    var matched = null;
+                    for (var i = 0; i < names.length; i++) {
+                        var key = normName(names[i]);
+                        if (stateLookup[key]) { matched = stateLookup[key]; break; }
+                    }
+                    var fill = matched ? stateColor(matched.count) : null;
+                    if (!fill) {
+                        return { fillColor: '#dde3ed', fillOpacity: 0.85, color: '#b8c4d4', weight: 0.5, opacity: 0.8 };
+                    }
+                    return {
+                        fillColor: fill,
+                        fillOpacity: highlight ? 0.97 : 0.80,
+                        color: '#ffffff',
+                        weight: highlight ? 2 : 1,
+                        opacity: 1
+                    };
+                }
+
+                // ── Step 1: Load world country boundaries (background) ───────
+                fetch(worldGeoJsonUrl)
+                    .then(function(r) {
+                        return r.ok ? r.json() : Promise.reject('world GeoJSON error: ' + r.status);
+                    })
+                    .then(function(worldGeojson) {
+                        if (!worldGeojson || !worldGeojson.features) return;
+                        L.geoJSON(worldGeojson, {
+                            style: {
+                                color: '#c8d4e3',
+                                weight: 0.8,
+                                fillColor: '#e8eef6',
+                                fillOpacity: 1
+                            },
+                            interactive: false
+                        }).addTo(lmap);
+
+                        // ── Step 2: Load India state polygons ────────────────
+                        return fetch(indiaGeoJsonUrl);
+                    })
+                    .then(function(r) {
+                        if (!r || !r.ok) {
+                            console.warn('India GeoJSON unavailable, skipping India state layer');
+                            return null;
                         }
+                        return r.json();
+                    })
+                    .then(function(indiaGeojson) {
+                        if (!indiaGeojson || !indiaGeojson.features) return;
+
+                        var indiaStateLayer = L.geoJSON(indiaGeojson, {
+                            style: function(feature) {
+                                return getStateStyle(feature, false);
+                            },
+                            onEachFeature: function(feature, layer) {
+                                var props = feature.properties || {};
+                                var names = [
+                                    props.NAME_1, props.name, props.NAME, props.admin, props.name_en
+                                ].filter(Boolean);
+                                var matched = null;
+                                var displayName = names[0] || 'State';
+                                for (var i = 0; i < names.length; i++) {
+                                    var key = normName(names[i]);
+                                    if (stateLookup[key]) {
+                                        matched = stateLookup[key];
+                                        displayName = matched.state;
+                                        break;
+                                    }
+                                }
+                                if (!matched) return;
+                                var pct = matched.percentage ? Number(matched.percentage).toFixed(2) : '0.00';
+                                var label = '<strong>' + displayName + ', ' + (matched.country || 'India') + '</strong><br>'
+                                          + matched.count + ' Click' + (matched.count === 1 ? '' : 's')
+                                          + ' &nbsp;·&nbsp; ' + pct + '% of traffic';
+                                layer.bindTooltip(label, { className: 'geo-tooltip', sticky: true, direction: 'top', offset: [0,-4] });
+                                layer.on({
+                                    mouseover: function(e) {
+                                        e.target.setStyle(getStateStyle(feature, true));
+                                        e.target.bringToFront();
+                                    },
+                                    mouseout: function(e) {
+                                        indiaStateLayer.resetStyle(e.target);
+                                    }
+                                });
+                            }
+                        }).addTo(lmap);
+                    })
+                    .catch(function(err) {
+                        console.warn('Geographic Activity Map GeoJSON error:', err);
+                    });
+
+                // ── City circle markers (rendered above GeoJSON layers) ───────
+                function cityRadius(clicks) {
+                    var n = Number(clicks) || 0;
+                    return Math.max(7, Math.min(20, 6 + Math.sqrt(n) * 2.2));
+                }
+                cityMapData.forEach(function(city) {
+                    var lat = city.latitude, lng = city.longitude;
+                    if (typeof lat !== 'number' || typeof lng !== 'number') return;
+                    if (!isFinite(lat) || !isFinite(lng)) return;
+                    var r = cityRadius(city.clicks);
+                    var pct = city.percentage ? Number(city.percentage).toFixed(2) : '0.00';
+                    var statePart = city.state ? ', ' + city.state : '';
+                    var label = '<strong>' + (city.city || 'Unknown') + statePart + '</strong><br>'
+                              + city.clicks + ' Click' + (city.clicks === 1 ? '' : 's')
+                              + ' &nbsp;·&nbsp; ' + pct + '% of traffic';
+                    var marker = L.circleMarker([lat, lng], {
+                        radius: r,
+                        fillColor: '#f97316',
+                        color: '#ffffff',
+                        weight: 2,
+                        opacity: 1,
+                        fillOpacity: 0.88
                     }).addTo(lmap);
-                })
-                .catch(function(err){ console.warn('State GeoJSON failed:', err); });
+                    marker.bindTooltip(label, { className: 'geo-tooltip', sticky: true, direction: 'top', offset: [0,-4] });
+                });
 
-            // ── City circle markers ──────────────────────────────────────────
-            function cityRadius(clicks) {
-                var n = Number(clicks) || 0;
-                return Math.max(7, Math.min(20, 6 + Math.sqrt(n) * 2.2));
-            }
-            cityMapData.forEach(function(city) {
-                var lat = city.latitude, lng = city.longitude;
-                if (typeof lat !== 'number' || typeof lng !== 'number') return;
-                if (!isFinite(lat) || !isFinite(lng)) return;
-                var r = cityRadius(city.clicks);
-                var pct = city.percentage ? Number(city.percentage).toFixed(2) : '0.00';
-                var statePart = city.state ? ', ' + city.state : '';
-                var label = '<strong>' + (city.city||'Unknown') + statePart + '</strong><br>'
-                          + city.clicks + ' Click' + (city.clicks===1?'':'s')
-                          + ' &nbsp;·&nbsp; ' + pct + '% of traffic';
-                var marker = L.circleMarker([lat, lng], {
-                    radius: r,
-                    fillColor: '#f97316',
-                    color: '#ffffff',
-                    weight: 2,
-                    opacity: 1,
-                    fillOpacity: 0.88
-                }).addTo(lmap);
-                marker.bindTooltip(label, { className: 'geo-tooltip', sticky: true, direction: 'top', offset: [0,-4] });
-            });
-
-            // ── Auto-fit bounds if we have city data ─────────────────────────
-            if (cityMapData.length > 0) {
-                var validCoords = cityMapData.filter(function(c){ return typeof c.latitude==='number' && isFinite(c.latitude); });
-                if (validCoords.length > 0) {
-                    var latLngs = validCoords.map(function(c){ return [c.latitude, c.longitude]; });
-                    try { lmap.fitBounds(L.latLngBounds(latLngs).pad(0.4)); } catch(e){}
+                // ── Auto-fit: zoom to active data ────────────────────────────
+                if (cityMapData.length > 0) {
+                    var validCoords = cityMapData.filter(function(c) {
+                        return typeof c.latitude === 'number' && isFinite(c.latitude) && isFinite(c.longitude);
+                    });
+                    if (validCoords.length > 0) {
+                        var latLngs = validCoords.map(function(c) { return [c.latitude, c.longitude]; });
+                        try {
+                            lmap.fitBounds(L.latLngBounds(latLngs).pad(0.4));
+                        } catch(e) {
+                            lmap.setView([20, 78], 4);
+                        }
+                    } else {
+                        lmap.setView([20, 0], 2);
+                    }
+                } else if (stateMapData.length > 0) {
+                    lmap.setView([22, 80], 4);
+                } else {
+                    lmap.setView([20, 0], 2);
                 }
             }
-        });
+
+            if (document.readyState === 'loading') {
+                document.addEventListener('DOMContentLoaded', initGeographicActivityMap);
+            } else {
+                initGeographicActivityMap();
+            }
+        })();
         </script>
         {% else %}
         <div class="empty" style="padding:48px;"><p>No geographic data available for this period.</p></div>

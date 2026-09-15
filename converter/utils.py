@@ -3585,6 +3585,622 @@ def generate_qr_code(text, box_size=12, border=4, fg_color="#000000", bg_color="
     matrix = qr.get_matrix()
     modules = len(matrix)
 
+    # ── NEW DIMENSIONS & FRAME LOGIC ──
+    cell = 12
+    img_px = modules * cell
+    quiet_zone = 24
+    base_qr_w = img_px + quiet_zone * 2
+    
+    frame_type = frame_config['type']
+    frame_text = frame_config['text']
+    try:
+        frame_text_size = float(frame_config['text_size'])
+    except Exception:
+        frame_text_size = 18.0
+    frame_text_size = max(12.0, min(frame_text_size, 48.0))
+    
+    frame_is_active = frame_type != 'none'
+    top_extra = 0
+    bottom_extra = 0
+    left_extra = 0
+    right_extra = 0
+    frame_padding = 16
+
+    if frame_is_active:
+        if frame_type == 'top_bar':
+            top_extra = 60
+        elif frame_type == 'bottom_bar':
+            bottom_extra = 60
+        elif frame_type == 'top_bottom_bar':
+            top_extra = 55; bottom_extra = 55
+        elif frame_type == 'label_top':
+            top_extra = 70
+        elif frame_type == 'label_bottom':
+            bottom_extra = 70
+        elif frame_type == 'speech_top':
+            top_extra = 85
+        elif frame_type == 'speech_bottom':
+            bottom_extra = 85
+        elif frame_type == 'ribbon_top':
+            top_extra = 80; left_extra = 12; right_extra = 12
+        elif frame_type == 'ribbon_bottom':
+            bottom_extra = 80; left_extra = 12; right_extra = 12
+        elif frame_type == 'scan_me_top' or frame_type == 'banner_top':
+            top_extra = 70
+        elif frame_type == 'scan_me_bottom' or frame_type == 'banner_bottom':
+            bottom_extra = 70
+        elif frame_type == 'ticket' or frame_type == 'receipt':
+            left_extra = 18; right_extra = 18; bottom_extra = 70
+        elif frame_type == 'device_phone':
+            top_extra = 60; bottom_extra = 80; left_extra = 16; right_extra = 16
+        elif frame_type == 'device_tablet':
+            top_extra = 45; bottom_extra = 60; left_extra = 30; right_extra = 30
+        elif frame_type == 'badge':
+            bottom_extra = 70; left_extra = 16; right_extra = 16
+        elif frame_type == 'card':
+            bottom_extra = 70
+        elif frame_type == 'poster':
+            bottom_extra = 90; top_extra = 30
+        elif frame_type == 'simple_circle':
+            frame_padding = int(base_qr_w * 0.15)
+            
+    if not frame_is_active:
+        frame_padding = 0
+
+    frame_w = base_qr_w + (frame_padding * 2)
+    
+    output_w = frame_w + left_extra + right_extra
+    output_h = base_qr_w + (frame_padding * 2) + top_extra + bottom_extra
+    
+    qr_offset_x = left_extra + frame_padding + quiet_zone
+    qr_offset_y = top_extra + frame_padding + quiet_zone
+
+    fmt = output_format.lower().strip()
+    if fmt not in ("png", "jpg", "jpeg", "svg"): fmt = "png"
+    is_svg = (fmt == "svg")
+    ext = "svg" if is_svg else ("jpg" if fmt in ("jpg", "jpeg") else "png")
+    output_path = get_output_path("qr_code", ext)
+
+    if is_svg:
+        svg_elements = []
+        svg_header = f'<?xml version="1.0" encoding="UTF-8" standalone="no"?>\\n'
+        svg_header += f'<svg width="{output_w}" height="{output_h}" viewBox="0 0 {output_w} {output_h}" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">\\n'
+        if not bg_transparent: svg_elements.append(f'  <rect width="100%" height="100%" fill="{bg_color}" />')
+        if bg_img_path and os.path.exists(bg_img_path):
+            try:
+                import base64
+                with open(bg_img_path, "rb") as bf:
+                    b64 = base64.b64encode(bf.read()).decode()
+                bg_alpha = float(design_options.get('branding_background_transparency', 1.0))
+                svg_elements.append(f'  <image x="{qr_offset_x}" y="{qr_offset_y}" width="{img_px}" height="{img_px}" opacity="{bg_alpha}" preserveAspectRatio="xMidYMid slice" xlink:href="data:image/png;base64,{b64}" />')
+            except: pass
+    else:
+        bg_rgb, fg_rgb = ImageColor.getcolor(bg_color, "RGB"), ImageColor.getcolor(fg_color, "RGB")
+        canvas = Image.new("RGBA", (int(img_px), int(img_px)), (0, 0, 0, 0) if bg_transparent else (*bg_rgb, 255))
+        
+        if bg_img_path and os.path.exists(bg_img_path):
+            try:
+                bg_alpha = float(design_options.get('branding_background_transparency', 1.0))
+                bg_img = Image.open(bg_img_path).convert("RGBA")
+                bg_img = ImageOps.fit(bg_img, (int(img_px), int(img_px)), Image.Resampling.LANCZOS)
+                if bg_alpha < 1.0:
+                    alpha = bg_img.split()[3]
+                    alpha = alpha.point(lambda p: p * bg_alpha)
+                    bg_img.putalpha(alpha)
+                canvas.alpha_composite(bg_img)
+            except Exception:
+                pass
+                
+        draw = ImageDraw.Draw(canvas)
+
+    # ── Drawing helpers ──
+
+    def _rect(x1, y1, x2, y2, color, radius=0):
+        if is_svg:
+            r_attr = f' rx="{radius}" ry="{radius}"' if radius > 0 else ''
+            svg_elements.append(f'  <rect x="{x1}" y="{y1}" width="{x2-x1}" height="{y2-y1}" fill="{color}"{r_attr} />')
+        else:
+            if radius > 0: draw.rounded_rectangle([x1, y1, x2, y2], radius=radius, fill=color)
+            else: draw.rectangle([x1, y1, x2, y2], fill=color)
+
+    def _ellip(x1, y1, x2, y2, color):
+        if is_svg:
+            rx = (x2-x1)/2
+            ry = (y2-y1)/2
+            svg_elements.append(f'  <ellipse cx="{x1+rx}" cy="{y1+ry}" rx="{rx}" ry="{ry}" fill="{color}" />')
+        else:
+            draw.ellipse([x1, y1, x2, y2], fill=color)
+
+    def _poly(pts, color):
+        if is_svg:
+            ps = " ".join([f"{p[0]},{p[1]}" for p in pts])
+            svg_elements.append(f'  <polygon points="{ps}" fill="{color}" />')
+        else:
+            draw.polygon(pts, fill=color)
+
+    def _square(x1, y1, x2, y2, color): _rect(x1, y1, x2, y2, color)
+    def _circle(x1, y1, x2, y2, color): _ellip(x1+1, y1+1, x2-1, y2-1, color)
+    def _rounded(x1, y1, x2, y2, color): _rect(x1, y1, x2, y2, color, radius=max((x2-x1)//3, 2))
+    def _diamond(x1, y1, x2, y2, color):
+        cx, cy = (x1+x2)//2, (y1+y2)//2
+        _poly([(cx, y1), (x2, cy), (cx, y2), (x1, cy)], color)
+
+    def _dot(x1, y1, x2, y2, color):
+        m = (x2-x1)//5
+        _ellip(x1+m, y1+m, x2-m, y2-m, color)
+
+    def _small_sq(x1, y1, x2, y2, color):
+        m = (x2-x1)//5
+        _rect(x1+m, y1+m, x2-m, y2-m, color)
+
+    def _hline(x1, y1, x2, y2, color):
+        m = (x2-x1)//4
+        _rect(x1, y1+m, x2, y2-m, color)
+
+    def _vline(x1, y1, x2, y2, color):
+        m = (x2-x1)//4
+        _rect(x1+m, y1, x2-m, y2, color)
+
+    def _star(x1, y1, x2, y2, color):
+        cx, cy = (x1+x2)//2, (y1+y2)//2
+        s = (x2-x1)//2; q = s//3
+        _poly([(cx, y1), (cx+q, cy-q), (x2, cy), (cx+q, cy+q), (cx, y2), (cx-q, cy+q), (x1, cy), (cx-q, cy-q)], color)
+
+    def _cross(x1, y1, x2, y2, color):
+        t = (x2-x1)//3
+        _rect(x1+t, y1, x2-t, y2, color)
+        _rect(x1, y1+t, x2, y2-t, color)
+
+    def _leaf(x1, y1, x2, y2, color):
+        _rect(x1, y1, x2, y2, color, radius=(x2-x1)//2)
+
+    def _clover(x1, y1, x2, y2, color):
+        cx, cy = (x1+x2)//2, (y1+y2)//2
+        r = (x2-x1)//4
+        for dx, dy in [(-1,-1),(1,-1),(-1,1),(1,1)]:
+            ox, oy = cx + dx*r, cy + dy*r
+            _ellip(ox-r, oy-r, ox+r, oy+r, color)
+
+    def _hexagon(x1, y1, x2, y2, color):
+        cx, cy = (x1+x2)//2, (y1+y2)//2
+        w, h = (x2-x1)//2, (y2-y1)//2
+        _poly([(cx, y1), (x2, cy-h//2), (x2, cy+h//2), (cx, y2), (x1, cy+h//2), (x1, cy-h//2)], color)
+
+    def _octagon(x1, y1, x2, y2, color):
+        cx, cy = (x1+x2)//2, (y1+y2)//2
+        w, h = (x2-x1)//2, (y2-y1)//2
+        o = w // 3
+        _poly([(cx-o, y1), (cx+o, y1), (x2, cy-o), (x2, cy+o), (cx+o, y2), (cx-o, y2), (x1, cy+o), (x1, cy-o)], color)
+
+    def _flower(x1, y1, x2, y2, color):
+        cx, cy = (x1+x2)//2, (y1+y2)//2
+        r = max((x2-x1)//4, 2)
+        for dx, dy in [(-1, 0), (1, 0), (0, -1), (0, 1)]:
+            _ellip(cx + dx*r-r, cy + dy*r-r, cx + dx*r+r, cy + dy*r+r, color)
+        _ellip(cx-r, cy-r, cx+r, cy+r, color)
+
+    def _sparkle(x1, y1, x2, y2, color):
+        cx, cy = (x1+x2)//2, (y1+y2)//2
+        q = max((x2-x1)//6, 2)
+        _poly([(cx, y1), (cx+q, cy-q), (x2, cy), (cx+q, cy+q),
+               (cx, y2), (cx-q, cy+q), (x1, cy), (cx-q, cy-q)], color)
+
+    def _soft_diamond(x1, y1, x2, y2, color):
+        _diamond(x1, y1, x2, y2, color)
+
+    def _burst(x1, y1, x2, y2, color):
+        _star(x1, y1, x2, y2, color)
+
+    def _droplet(x1, y1, x2, y2, color):
+        cx = (x1+x2)//2
+        _poly([(cx, y1), (x2, (y1+y2)//2), (x2-2, y2-4),
+               (x1+2, y2-4), (x1, (y1+y2)//2)], color)
+
+    def _angled_square(x1, y1, x2, y2, color):
+        inset = max((x2-x1)//4, 2)
+        _poly([(x1+inset, y1), (x2, y1), (x2, y2-inset),
+               (x2-inset, y2), (x1, y2), (x1, y1+inset)], color)
+
+    def _tilted_square(x1, y1, x2, y2, color):
+        inset = max((x2-x1)//6, 2)
+        _poly([(x1+inset, y1+inset), (x2-inset, y1),
+               (x2-inset, y2-inset), (x1, y2)], color)
+
+    def _four_dots(x1, y1, x2, y2, color):
+        cx, cy = (x1+x2)//2, (y1+y2)//2
+        r = max((x2-x1)//6, 2)
+        for dx, dy in [(-1, -1), (1, -1), (-1, 1), (1, 1)]:
+            _ellip(cx + dx*r-r, cy + dy*r-r, cx + dx*r+r, cy + dy*r+r, color)
+
+    def _soft_cross(x1, y1, x2, y2, color):
+        _cross(x1, y1, x2, y2, color)
+
+    def _blob(x1, y1, x2, y2, color):
+        _rect(x1, y1, x2, y2, color, radius=max((x2-x1)//3, 2))
+
+    body_map = {
+        'square': _square, 'rounded': _rounded, 'circle': _circle,
+        'diamond': _diamond, 'dot': _dot, 'small-square': _small_sq,
+        'hline': _hline, 'vline': _vline, 'star': _star,
+        'cross': _cross, 'leaf': _leaf, 'clover': _clover,
+        'hexagon': _hexagon, 'octagon': _octagon,
+        'rounded_square': _rounded, 'small_circle': _dot,
+        'small_square': _small_sq, 'horizontal': _hline, 'vertical': _vline,
+        'plus': _cross, 'connected': _cross, 'flower': _flower,
+        'sparkle': _sparkle, 'soft_diamond': _soft_diamond, 'burst': _burst,
+        'droplet': _droplet, 'angled_square': _angled_square,
+        'tilted_square': _tilted_square, 'four_dots': _four_dots,
+        'pixel_plus': _cross, 'soft_cross': _soft_cross,
+        'corner_round': _rounded, 'blob': _blob, 'soft_square': _rounded,
+        'cut_corner': _angled_square, 'squircle': _rounded,
+    }
+    fn_body = body_map.get(style, _square)
+
+    def _eye_shape(x1, y1, x2, y2, s, color):
+        if s == 'circle': _ellip(x1, y1, x2, y2, color)
+        elif s == 'rounded': _rect(x1, y1, x2, y2, color, radius=max((x2-x1)//5, 4))
+        elif s == 'diamond':
+            cx, cy = (x1+x2)//2, (y1+y2)//2
+            _poly([(cx, y1), (x2, cy), (cx, y2), (x1, cy)], color)
+        elif s == 'leaf': _rect(x1, y1, x2, y2, color, radius=(x2-x1)//2)
+        elif s == 'hexagon':
+            cx, cy = (x1+x2)//2, (y1+y2)//2
+            w, h = (x2-x1)//2, (y2-y1)//2
+            _poly([(cx, y1), (x2, cy-h//2), (x2, cy+h//2), (cx, y2), (x1, cy+h//2), (x1, cy-h//2)], color)
+        elif s == 'octagon':
+            cx, cy = (x1+x2)//2, (y1+y2)//2
+            w, h = (x2-x1)//2, (y2-y1)//2
+            o = w // 3
+            _poly([(cx-o, y1), (cx+o, y1), (x2, cy-o), (x2, cy+o), (cx+o, y2), (cx-o, y2), (x1, cy+o), (x1, cy-o)], color)
+        elif s == 'dot':
+            m = (x2-x1)//4
+            _ellip(x1+m, y1+m, x2-m, y2-m, color)
+        elif s == 'star':
+            cx, cy = (x1+x2)//2, (y1+y2)//2
+            s_val = (x2-x1)//2; q = s_val//3
+            _poly([(cx, y1), (cx+q, cy-q), (x2, cy), (cx+q, cy+q), (cx, y2), (cx-q, cy+q), (x1, cy), (cx-q, cy-q)], color)
+        elif s == 'small-square':
+            m = (x2-x1)//4
+            _rect(x1+m, y1+m, x2-m, y2-m, color)
+        elif s in body_map:
+            body_map[s](x1, y1, x2, y2, color)
+        else: _rect(x1, y1, x2, y2, color)
+
+    eye_corners = [(0, 0), (0, modules - 7), (modules - 7, 0)]
+    def in_eye(r, c):
+        for (er, ec) in eye_corners:
+            if er <= r < er + 7 and ec <= c < ec + 7: return True
+        return False
+
+    c_fg = fg_color if is_svg else fg_rgb
+    c_bg = bg_color if is_svg else bg_rgb
+    
+    c_eye_outer = eye_color_outer or design_options.get('eye_color_outer') or fg_color
+    c_eye_inner = eye_color_inner or design_options.get('eye_color_inner') or fg_color
+    
+    if not is_svg:
+        c_eye_outer_rgb = ImageColor.getcolor(c_eye_outer, "RGB")
+        c_eye_inner_rgb = ImageColor.getcolor(c_eye_inner, "RGB")
+    else:
+        c_eye_outer_rgb = c_eye_outer
+        c_eye_inner_rgb = c_eye_inner
+
+    def is_timing(r, c):
+        return r == 6 or c == 6
+
+    for r_idx, row in enumerate(matrix):
+        for c_idx, val in enumerate(row):
+            if not val or in_eye(r_idx, c_idx): continue
+            
+            px, py = c_idx * cell, r_idx * cell
+            
+            if is_timing(r_idx, c_idx):
+                _square(px, py, px + cell, py + cell, c_fg)
+            else:
+                fn_body(px, py, px + cell, py + cell, c_fg)
+
+    for (er, ec) in eye_corners:
+        ox, oy = ec * cell, er * cell
+        s7, s5, s3 = 7 * cell, 5 * cell, 3 * cell
+        
+        resolved_eye_style = eye_style if eye_style in body_map else 'square'
+        resolved_ball_style = ball_style if ball_style in body_map else 'square'
+
+        _eye_shape(ox, oy, ox + s7, oy + s7, resolved_eye_style, c_eye_outer_rgb)
+        _eye_shape(ox + cell, oy + cell, ox + cell + s5, oy + cell + s5, resolved_eye_style, c_bg)
+        _eye_shape(ox + 2*cell, oy + 2*cell, ox + 2*cell + s3, oy + 2*cell + s3, resolved_ball_style, c_eye_inner_rgb)
+
+    if is_svg:
+        if fg_img_path and os.path.exists(fg_img_path):
+            try:
+                import base64
+                with open(fg_img_path, "rb") as ff:
+                    b64 = base64.b64encode(ff.read()).decode()
+                fg_alpha = float(design_options.get('branding_foreground_transparency', 0.5))
+                svg_elements.append(f'  <image x="{qr_offset_x}" y="{qr_offset_y}" width="{img_px}" height="{img_px}" opacity="{fg_alpha}" preserveAspectRatio="xMidYMid slice" xlink:href="data:image/png;base64,{b64}" />')
+            except: pass
+    else:
+        if fg_img_path and os.path.exists(fg_img_path):
+            try:
+                fg_alpha = float(design_options.get('branding_foreground_transparency', 0.5))
+                fg_img = Image.open(fg_img_path).convert("RGBA")
+                fg_img = ImageOps.fit(fg_img, (img_px, img_px), Image.Resampling.LANCZOS)
+                if fg_alpha < 1.0:
+                    alpha = fg_img.split()[3]
+                    alpha = alpha.point(lambda p: p * fg_alpha)
+                    fg_img.putalpha(alpha)
+                canvas.alpha_composite(fg_img)
+            except Exception:
+                pass
+
+    if logo_path and os.path.exists(logo_path):
+        try:
+            logo = Image.open(logo_path).convert("RGBA")
+            logo_box_size = int(img_px * logo_size_factor)
+            logo.thumbnail((logo_box_size, logo_box_size), Image.Resampling.LANCZOS)
+            
+            if circular_logo:
+                size = logo.size
+                mask = Image.new('L', size, 0)
+                ImageDraw.Draw(mask).ellipse((0, 0) + size, fill=255)
+                logo = ImageOps.fit(logo, size, centering=(0.5, 0.5))
+                logo.putalpha(mask)
+
+            logo_box = Image.new('RGBA', (logo_box_size, logo_box_size), (0, 0, 0, 0))
+            logo_box.alpha_composite(logo, ((logo_box_size - logo.width) // 2, (logo_box_size - logo.height) // 2))
+            lx, ly = (img_px - logo_box_size) // 2, (img_px - logo_box_size) // 2
+            
+            if logo_background:
+                p_px = 6
+                if is_svg:
+                    if circular_logo:
+                        rx = (logo_box_size + p_px*2)/2
+                        svg_elements.append(f'  <circle cx="{lx+logo_box_size/2}" cy="{ly+logo_box_size/2}" r="{rx}" fill="{bg_color}" />')
+                    else:
+                        svg_elements.append(f'  <rect x="{lx-p_px}" y="{ly-p_px}" width="{logo_box_size+p_px*2}" height="{logo_box_size+p_px*2}" fill="{bg_color}" />')
+                else:
+                    bg_box = Image.new("RGBA", (logo_box_size + p_px * 2, logo_box_size + p_px * 2), (*bg_rgb, 255))
+                    if circular_logo:
+                        m = Image.new('L', bg_box.size, 0)
+                        ImageDraw.Draw(m).ellipse((0, 0) + bg_box.size, fill=255)
+                        bg_box.putalpha(m)
+                    canvas.alpha_composite(bg_box, (lx - p_px, ly - p_px))
+
+            if is_svg:
+                import base64
+                buffer = io.BytesIO()
+                logo_box.save(buffer, format="PNG")
+                b64 = base64.b64encode(buffer.getvalue()).decode()
+                svg_elements.append(f'  <image x="{lx}" y="{ly}" width="{logo_box_size}" height="{logo_box_size}" preserveAspectRatio="xMidYMid meet" xlink:href="data:image/png;base64,{b64}" />')
+            else:
+                canvas.alpha_composite(logo_box, (lx, ly))
+        except Exception:
+            pass
+
+    # ── 6. Frame & Additional Text ──
+    if frame_is_active:
+        frame_color = frame_config['frame_color'] if frame_config['use_custom_colors'] else '#000000'
+        text_color = frame_config['text_color'] if frame_config['use_custom_colors'] else '#FFFFFF'
+        text_size = frame_text_size
+        text_font = frame_config['font']
+        radius = 24 if frame_type in {'rounded_square', 'rounded_corners', 'card'} else 0
+
+        if is_svg:
+            import html as html_module
+            qr_elements = list(svg_elements)
+            if qr_elements and qr_elements[0].lstrip().startswith('<rect width="100%"'):
+                qr_elements = qr_elements[1:]
+            
+            frame_elements = []
+            if not bg_transparent:
+                frame_elements = [f'  <rect width="100%" height="100%" fill="{bg_color}" />']
+                
+            fx = left_extra
+            fy = top_extra
+            fw = frame_w
+            fh = base_qr_w + frame_padding * 2
+
+            if frame_type == 'simple_circle':
+                frame_elements.append(f'  <circle cx="{output_w/2}" cy="{output_h/2}" r="{frame_w/2}" fill="none" stroke="{frame_color}" stroke-width="8" />')
+            elif frame_type in {'simple_square', 'rounded_square'}:
+                frame_elements.append(f'  <rect x="{fx}" y="{fy}" width="{fw}" height="{fh}" rx="{radius}" fill="none" stroke="{frame_color}" stroke-width="8" />')
+            elif frame_type == 'card':
+                frame_elements.append(f'  <rect x="{fx}" y="{fy}" width="{fw}" height="{fh + bottom_extra}" rx="28" fill="{frame_color}" />')
+                frame_elements.append(f'  <rect x="{fx+8}" y="{fy+8}" width="{fw-16}" height="{fh-16}" rx="20" fill="{bg_color}" />')
+            elif frame_type == 'poster':
+                frame_elements.append(f'  <rect x="{fx}" y="{fy}" width="{fw}" height="{fh + bottom_extra + top_extra}" fill="none" stroke="{frame_color}" stroke-width="8" />')
+                frame_elements.append(f'  <rect x="{fx}" y="{fy}" width="{fw}" height="{top_extra + 10}" fill="{frame_color}" />')
+            elif frame_type == 'badge':
+                frame_elements.append(f'  <path d="M{fx} {fy} H{fx+fw} V{fy+fh} L{output_w/2} {output_h} L{fx} {fy+fh} Z" fill="none" stroke="{frame_color}" stroke-width="8" stroke-linejoin="round" />')
+                frame_elements.append(f'  <path d="M{fx+12} {fy+12} H{fx+fw-12} V{fy+fh-8} L{output_w/2} {output_h-18} L{fx+12} {fy+fh-8} Z" fill="{frame_color}" opacity="0.1" />')
+            elif frame_type in {'corners', 'rounded_corners'}:
+                c_len = 40
+                p1 = f"M{fx} {fy+c_len} V{fy} H{fx+c_len}"
+                p2 = f"M{fx+fw-c_len} {fy} H{fx+fw} V{fy+c_len}"
+                p3 = f"M{fx+fw} {fy+fh-c_len} V{fy+fh} H{fx+fw-c_len}"
+                p4 = f"M{fx+c_len} {fy+fh} H{fx} V{fy+fh-c_len}"
+                frame_elements.append(f'  <path d="{p1} {p2} {p3} {p4}" fill="none" stroke="{frame_color}" stroke-width="8" stroke-linecap="round" />')
+            elif frame_type == 'ticket' or frame_type == 'receipt':
+                frame_elements.append(f'  <rect x="{fx}" y="{fy}" width="{fw}" height="{fh + bottom_extra}" fill="none" stroke="{frame_color}" stroke-width="6" rx="8" />')
+                if frame_type == 'ticket':
+                    frame_elements.append(f'  <circle cx="{fx}" cy="{output_h/2}" r="12" fill="{bg_color}" stroke="{frame_color}" stroke-width="6" />')
+                    frame_elements.append(f'  <circle cx="{fx+fw}" cy="{output_h/2}" r="12" fill="{bg_color}" stroke="{frame_color}" stroke-width="6" />')
+                    frame_elements.append(f'  <circle cx="{fx}" cy="{output_h/2}" r="10" fill="{bg_color}" />')
+                    frame_elements.append(f'  <circle cx="{fx+fw}" cy="{output_h/2}" r="10" fill="{bg_color}" />')
+                frame_elements.append(f'  <line x1="{fx+16}" y1="{fy+fh}" x2="{fx+fw-16}" y2="{fy+fh}" stroke="{frame_color}" stroke-width="4" stroke-dasharray="8 8" />')
+            elif frame_type == 'device_phone':
+                frame_elements.append(f'  <rect x="{fx}" y="{fy}" width="{fw}" height="{fh + bottom_extra + top_extra}" rx="32" fill="none" stroke="{frame_color}" stroke-width="8" />')
+                frame_elements.append(f'  <rect x="{output_w/2-30}" y="{fy+20}" width="60" height="6" rx="3" fill="{frame_color}" />')
+            elif frame_type == 'device_tablet':
+                frame_elements.append(f'  <rect x="{fx}" y="{fy}" width="{fw}" height="{fh + bottom_extra + top_extra}" rx="18" fill="none" stroke="{frame_color}" stroke-width="8" />')
+                frame_elements.append(f'  <circle cx="{output_w/2}" cy="{fy+22}" r="6" fill="{frame_color}" />')
+            elif frame_type in {'speech_top', 'speech_bottom'}:
+                frame_elements.append(f'  <rect x="{fx}" y="{fy}" width="{fw}" height="{fh}" rx="16" fill="none" stroke="{frame_color}" stroke-width="6" />')
+                if frame_type == 'speech_top':
+                    pw, ph = 24, 14
+                    lbl_w = max(110, text_size * len(frame_text) * 0.6 + 40)
+                    lbl_w = min(lbl_w, fw * 0.85)
+                    lx = output_w/2 - lbl_w/2
+                    ly = fy - top_extra + 10
+                    lh = top_extra - 25
+                    frame_elements.append(f'  <rect x="{lx}" y="{ly}" width="{lbl_w}" height="{lh}" rx="{lh/2}" fill="{frame_color}" />')
+                    frame_elements.append(f'  <polygon points="{output_w/2-pw/2},{ly+lh-2} {output_w/2+pw/2},{ly+lh-2} {output_w/2},{ly+lh+ph}" fill="{frame_color}" />')
+                else:
+                    pw, ph = 24, 14
+                    lbl_w = max(110, text_size * len(frame_text) * 0.6 + 40)
+                    lbl_w = min(lbl_w, fw * 0.85)
+                    lx = output_w/2 - lbl_w/2
+                    ly = fy + fh + 15
+                    lh = bottom_extra - 25
+                    frame_elements.append(f'  <rect x="{lx}" y="{ly}" width="{lbl_w}" height="{lh}" rx="{lh/2}" fill="{frame_color}" />')
+                    frame_elements.append(f'  <polygon points="{output_w/2-pw/2},{ly+2} {output_w/2+pw/2},{ly+2} {output_w/2},{ly-ph}" fill="{frame_color}" />')
+            elif frame_type in {'ribbon_top', 'ribbon_bottom'}:
+                frame_elements.append(f'  <rect x="{fx}" y="{fy}" width="{fw}" height="{fh}" fill="none" stroke="{frame_color}" stroke-width="6" />')
+                rw = fw * 0.9
+                rh = 48
+                fold = 14
+                ry = fy - rh/2 if frame_type == 'ribbon_top' else fy + fh - rh/2
+                rx = output_w/2 - rw/2
+                frame_elements.append(f'  <polygon points="{rx-left_extra},{ry+fold} {rx},{ry} {rx},{ry+rh} {rx-left_extra},{ry+rh-fold}" fill="{frame_color}" opacity="0.8" />')
+                frame_elements.append(f'  <polygon points="{rx+rw+right_extra},{ry+fold} {rx+rw},{ry} {rx+rw},{ry+rh} {rx+rw+right_extra},{ry+rh-fold}" fill="{frame_color}" opacity="0.8" />')
+                frame_elements.append(f'  <rect x="{rx}" y="{ry}" width="{rw}" height="{rh}" fill="{frame_color}" />')
+            elif frame_type in {'label_top', 'label_bottom'}:
+                frame_elements.append(f'  <rect x="{fx}" y="{fy}" width="{fw}" height="{fh}" rx="16" fill="none" stroke="{frame_color}" stroke-width="6" />')
+                lbl_w = max(110, text_size * len(frame_text) * 0.6 + 40)
+                lbl_w = min(lbl_w, fw * 0.85)
+                lx = output_w/2 - lbl_w/2
+                lh = 42
+                if frame_type == 'label_top':
+                    frame_elements.append(f'  <rect x="{lx}" y="{fy - lh - 12}" width="{lbl_w}" height="{lh}" rx="{lh/2}" fill="{frame_color}" />')
+                else:
+                    frame_elements.append(f'  <rect x="{lx}" y="{fy + fh + 12}" width="{lbl_w}" height="{lh}" rx="{lh/2}" fill="{frame_color}" />')
+            elif frame_type in {'top_bar', 'bottom_bar', 'top_bottom_bar', 'scan_me_top', 'scan_me_bottom', 'banner_top', 'banner_bottom'}:
+                frame_elements.append(f'  <rect x="{fx}" y="{fy}" width="{fw}" height="{fh}" rx="8" fill="none" stroke="{frame_color}" stroke-width="6" />')
+                if top_extra > 0:
+                    frame_elements.append(f'  <path d="M{fx} {fy+top_extra} V{fy+8} A8 8 0 0 1 {fx+8} {fy} H{fx+fw-8} A8 8 0 0 1 {fx+fw} {fy} V{fy+top_extra} Z" fill="{frame_color}" />')
+                if bottom_extra > 0:
+                    frame_elements.append(f'  <path d="M{fx} {fy+fh-bottom_extra} V{fy+fh-8} A8 8 0 0 0 {fx+8} {fy+fh} H{fx+fw-8} A8 8 0 0 0 {fx+fw} {fy+fh-8} V{fy+fh-bottom_extra} Z" fill="{frame_color}" />')
+
+            if frame_text:
+                ty = 0
+                if frame_type in {'top_bar', 'scan_me_top', 'banner_top', 'top_bottom_bar'}: ty = fy + top_extra/2
+                elif frame_type in {'bottom_bar', 'scan_me_bottom', 'banner_bottom', 'top_bottom_bar'}: ty = fy + fh - bottom_extra/2
+                elif frame_type == 'label_top': ty = fy - 42/2 - 12
+                elif frame_type == 'label_bottom': ty = fy + fh + 42/2 + 12
+                elif frame_type == 'speech_top': ty = fy - top_extra + 10 + (top_extra-25)/2
+                elif frame_type == 'speech_bottom': ty = fy + fh + 15 + (bottom_extra-25)/2
+                elif frame_type == 'ribbon_top': ty = fy
+                elif frame_type == 'ribbon_bottom': ty = fy + fh
+                elif frame_type == 'ticket' or frame_type == 'receipt': ty = fy + fh + bottom_extra/2
+                elif frame_type == 'card': ty = fy + fh + bottom_extra/2
+                elif frame_type == 'poster': ty = fy + top_extra/2
+                elif frame_type == 'badge': ty = fy + fh + bottom_extra/2 - 10
+                
+                if ty > 0:
+                    frame_elements.append(f'  <text x="{output_w/2}" y="{ty}" text-anchor="middle" dominant-baseline="central" font-family="{html_module.escape(text_font)}" font-size="{text_size}" font-weight="bold" fill="{text_color}">{html_module.escape(frame_text)}</text>')
+
+            svg_elements = frame_elements + [f'  <g transform="translate({qr_offset_x},{qr_offset_y})">'] + qr_elements + ['  </g>']
+        else:
+            new_canvas = Image.new("RGBA", (int(output_w), int(output_h)), (0, 0, 0, 0) if bg_transparent else (*bg_rgb, 255))
+            new_canvas.paste(canvas, (int(qr_offset_x), int(qr_offset_y)), canvas)
+            f_draw = ImageDraw.Draw(new_canvas)
+            fx, fy, fw, fh = left_extra, top_extra, frame_w, base_qr_w + frame_padding * 2
+            
+            if frame_type == 'simple_circle':
+                f_draw.ellipse((fx, fy, fx+fw, fy+fw), outline=frame_color, width=8)
+            elif frame_type in {'simple_square', 'rounded_square', 'poster'}:
+                if radius: f_draw.rounded_rectangle((fx, fy, fx+fw, fy+fh), radius=radius, outline=frame_color, width=8)
+                else: f_draw.rectangle((fx, fy, fx+fw, fy+fh), outline=frame_color, width=8)
+            elif frame_type in {'top_bar', 'bottom_bar', 'top_bottom_bar', 'scan_me_top', 'scan_me_bottom', 'banner_top', 'banner_bottom'}:
+                f_draw.rounded_rectangle((fx, fy, fx+fw, fy+fh), radius=8, outline=frame_color, width=6)
+                if top_extra > 0: f_draw.rectangle((fx, fy, fx+fw, fy+top_extra), fill=frame_color)
+                if bottom_extra > 0: f_draw.rectangle((fx, fy+fh-bottom_extra, fx+fw, fy+fh), fill=frame_color)
+            elif frame_type in {'label_top', 'label_bottom'}:
+                f_draw.rounded_rectangle((fx, fy, fx+fw, fy+fh), radius=16, outline=frame_color, width=6)
+                lbl_w = min(fw * 0.85, max(110, text_size * len(frame_text) * 0.6 + 40))
+                lx, lh = output_w/2 - lbl_w/2, 42
+                if frame_type == 'label_top': f_draw.rounded_rectangle((lx, fy-lh-12, lx+lbl_w, fy-12), radius=lh/2, fill=frame_color)
+                else: f_draw.rounded_rectangle((lx, fy+fh+12, lx+lbl_w, fy+fh+12+lh), radius=lh/2, fill=frame_color)
+            elif frame_type in {'speech_top', 'speech_bottom'}:
+                f_draw.rounded_rectangle((fx, fy, fx+fw, fy+fh), radius=16, outline=frame_color, width=6)
+                lbl_w = min(fw * 0.85, max(110, text_size * len(frame_text) * 0.6 + 40))
+                lx = output_w/2 - lbl_w/2
+                if frame_type == 'speech_top':
+                    lh = top_extra - 25; ly = fy - top_extra + 10
+                    f_draw.rounded_rectangle((lx, ly, lx+lbl_w, ly+lh), radius=lh/2, fill=frame_color)
+                    f_draw.polygon([(output_w/2-12, ly+lh-2), (output_w/2+12, ly+lh-2), (output_w/2, ly+lh+14)], fill=frame_color)
+                else:
+                    lh = bottom_extra - 25; ly = fy + fh + 15
+                    f_draw.rounded_rectangle((lx, ly, lx+lbl_w, ly+lh), radius=lh/2, fill=frame_color)
+                    f_draw.polygon([(output_w/2-12, ly+2), (output_w/2+12, ly+2), (output_w/2, ly-14)], fill=frame_color)
+            elif frame_type in {'ribbon_top', 'ribbon_bottom'}:
+                f_draw.rectangle((fx, fy, fx+fw, fy+fh), outline=frame_color, width=6)
+                rw, rh, fold = fw * 0.9, 48, 14
+                ry = fy - rh/2 if frame_type == 'ribbon_top' else fy + fh - rh/2
+                rx = output_w/2 - rw/2
+                f_draw.polygon([(rx-left_extra, ry+fold), (rx, ry), (rx, ry+rh), (rx-left_extra, ry+rh-fold)], fill=frame_color)
+                f_draw.polygon([(rx+rw+right_extra, ry+fold), (rx+rw, ry), (rx+rw, ry+rh), (rx+rw+right_extra, ry+rh-fold)], fill=frame_color)
+                f_draw.rectangle((rx, ry, rx+rw, ry+rh), fill=frame_color)
+            elif frame_type == 'ticket' or frame_type == 'receipt':
+                f_draw.rounded_rectangle((fx, fy, fx+fw, fy+fh+bottom_extra), radius=8, outline=frame_color, width=6)
+                if frame_type == 'ticket':
+                    f_draw.ellipse((fx-12, output_h/2-12, fx+12, output_h/2+12), fill=bg_rgb, outline=frame_color, width=6)
+                    f_draw.ellipse((fx+fw-12, output_h/2-12, fx+fw+12, output_h/2+12), fill=bg_rgb, outline=frame_color, width=6)
+            elif frame_type == 'card':
+                f_draw.rounded_rectangle((fx, fy, fx+fw, fy+fh+bottom_extra), radius=28, fill=frame_color)
+                f_draw.rounded_rectangle((fx+8, fy+8, fx+fw-8, fy+fh-8), radius=20, fill=bg_rgb)
+            elif frame_type == 'badge':
+                f_draw.line([(fx, fy), (fx+fw, fy), (fx+fw, fy+fh), (output_w/2, output_h), (fx, fy+fh), (fx, fy)], fill=frame_color, width=8, joint='curve')
+            elif frame_type in {'corners', 'rounded_corners'}:
+                c_len = 40
+                for pts in [((fx, fy+c_len), (fx, fy), (fx+c_len, fy)), ((fx+fw-c_len, fy), (fx+fw, fy), (fx+fw, fy+c_len)), ((fx+fw, fy+fh-c_len), (fx+fw, fy+fh), (fx+fw-c_len, fy+fh)), ((fx+c_len, fy+fh), (fx, fy+fh), (fx, fy+fh-c_len))]:
+                    f_draw.line(pts, fill=frame_color, width=8, joint='curve')
+            elif frame_type == 'device_phone':
+                f_draw.rounded_rectangle((fx, fy, fx+fw, fy+fh+top_extra+bottom_extra), radius=32, outline=frame_color, width=8)
+                f_draw.rounded_rectangle((output_w/2-30, fy+20, output_w/2+30, fy+26), radius=3, fill=frame_color)
+            elif frame_type == 'device_tablet':
+                f_draw.rounded_rectangle((fx, fy, fx+fw, fy+fh+top_extra+bottom_extra), radius=18, outline=frame_color, width=8)
+                f_draw.ellipse((output_w/2-3, fy+19, output_w/2+3, fy+25), fill=frame_color)
+            
+            if frame_text:
+                ty = 0
+                if frame_type in {'top_bar', 'scan_me_top', 'banner_top', 'top_bottom_bar', 'poster'}: ty = fy + top_extra/2
+                elif frame_type in {'bottom_bar', 'scan_me_bottom', 'banner_bottom', 'top_bottom_bar'}: ty = fy + fh - bottom_extra/2
+                elif frame_type == 'label_top': ty = fy - 42/2 - 12
+                elif frame_type == 'label_bottom': ty = fy + fh + 42/2 + 12
+                elif frame_type == 'speech_top': ty = fy - top_extra + 10 + (top_extra-25)/2
+                elif frame_type == 'speech_bottom': ty = fy + fh + 15 + (bottom_extra-25)/2
+                elif frame_type == 'ribbon_top': ty = fy
+                elif frame_type == 'ribbon_bottom': ty = fy + fh
+                elif frame_type in {'ticket', 'receipt', 'card'}: ty = fy + fh + bottom_extra/2
+                elif frame_type == 'badge': ty = fy + fh + bottom_extra/2 - 10
+
+                if ty > 0:
+                    try:
+                        font_files = {'Arial': 'arial.ttf', 'Roboto': 'roboto.ttf', 'Outfit': 'outfit.ttf'}
+                        font_name = font_files.get(text_font, 'arial.ttf')
+                        f_font = ImageFont.truetype(font_name, int(text_size))
+                    except:
+                        f_font = ImageFont.load_default()
+                    bbox = f_draw.textbbox((0, 0), frame_text, font=f_font)
+                    tx = output_w/2 - (bbox[2] - bbox[0])/2
+                    ty_center = ty - (bbox[3] - bbox[1])/2
+                    f_draw.text((tx, ty_center), frame_text, font=f_font, fill=text_color)
+            canvas = new_canvas
+
+    # Finalize
+    if is_svg:
+        with open(output_path, 'w', encoding='utf-8') as f:
+            f.write(svg_header + "\\n".join(svg_elements) + "\\n</svg>")
+    else:
+        if fmt in ("jpg", "jpeg"):
+            canvas.convert("RGB").save(output_path, "JPEG", quality=95)
+        else:
+            canvas.save(output_path, "PNG")
+    
+    return output_path
+
+    '''
     # 2. Dimensions
     pad = 4 
     cell = 18 
@@ -4140,6 +4756,7 @@ def generate_qr_code(text, box_size=12, border=4, fg_color="#000000", bg_color="
             canvas.save(output_path, "PNG")
     
     return output_path
+    '''
 
     # [Unreachable duplicate block removed]
 

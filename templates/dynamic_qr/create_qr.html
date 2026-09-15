@@ -7,8 +7,8 @@
     /* Layout */
     .create-grid {
         display: grid;
-        grid-template-columns: minmax(0, 1fr) minmax(300px, 340px);
-        gap: 24px;
+        grid-template-columns: minmax(0, 1fr) 300px;
+        gap: 28px;
         align-items: start;
     }
 
@@ -88,12 +88,13 @@
     .form-input:focus { background: white; border-color: #6366f1; outline: none; box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1); }
 
     /* Customization Tabs */
-    .design-tabs { display: flex; gap: 4px; background: #f1f5f9; padding: 4px; border-radius: 14px; margin-bottom: 24px; overflow-x: auto; }
+    .design-tabs { display: flex; gap: 4px; background: #f1f5f9; padding: 4px; border-radius: 16px; margin-bottom: 28px; overflow-x: auto; }
     .design-tab {
-        flex: 1; min-width: 100px; padding: 10px; text-align: center; font-size: 11px; font-weight: 800;
-        border-radius: 10px; cursor: pointer; transition: 0.3s; color: #64748b;
+        flex: 1; min-width: 100px; padding: 12px; text-align: center; font-size: 11px; font-weight: 800;
+        border-radius: 12px; cursor: pointer; transition: 0.3s; color: #64748b;
     }
-    .design-tab.active { background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%); color: white; box-shadow: 0 10px 15px -3px rgba(99, 102, 241, 0.3); }
+    .design-tab:hover { color: #1e293b; }
+    .design-tab.active { background: white; color: #1e293b; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
 
     /* Pattern Grids */
     .pattern-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(56px, 1fr)); gap: 10px; max-width: 720px; }
@@ -124,14 +125,13 @@
     .frame-item:hover { border-color: #6366f1; transform: scale(1.05); }
     .frame-item.active { border-color: #6366f1; background: #fff; }
     .frame-thumb { width: 100%; height: 100%; object-fit: contain; padding: 10px; }
-    .frame-library { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 14px; max-width: 720px; }
-    .frame-option { min-width: 100px; min-height: 112px; border: 2px solid #f1f5f9; border-radius: 12px; cursor: pointer; background: #f8fafc; padding: 12px 10px; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 8px; transition: .2s; }
-    .frame-option:hover { border-color: #a5b4fc; background: #eef2ff; }
-    .frame-option.active { border-color: #6366f1; background: #f5f3ff; }
-    .frame-option.active::after { content: ''; position: absolute; top: 7px; right: 7px; width: 20px; height: 20px; border-radius: 50%; background: #6366f1; }
-    .frame-check { position: absolute; top: 7px; right: 7px; z-index: 1; width: 20px; height: 20px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: #6366f1; color: white; font-size: 12px; font-weight: 700; line-height: 1; }
-    .frame-option svg { width: 64px; height: 64px; flex: 0 0 64px; }
-    .frame-option span { font-size: 12px; font-weight: 600; color: #475569; text-align: center; line-height: 1.25; }
+    .frame-library { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 16px; }
+    .frame-option { min-height: 112px; border: 2px solid #f1f5f9; border-radius: 16px; cursor: pointer; background: white; padding: 16px; position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; transition: .2s; }
+    .frame-option:hover { border-color: #6366f1; box-shadow: 0 10px 20px -10px rgba(99, 102, 241, 0.2); }
+    .frame-option.active { border-color: #6366f1; background: #fcfdfe; }
+    .frame-option.active::after { content: '\2713'; position: absolute; top: 10px; right: 10px; width: 18px; height: 18px; background: #6366f1; color: white; border-radius: 50%; font-size: 9px; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+    .frame-option svg { width: 60px; height: 60px; flex: 0 0 60px; }
+    .frame-option span { font-size: 11px; font-weight: 800; color: #1e293b; text-align: center; line-height: 1.25; }
     .frame-fonts { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
     .frame-font-option { min-height: 42px; border: 1px solid #e2e8f0; background: white; border-radius: 8px; padding: 8px 10px; font-size: 14px; cursor: pointer; color: #475569; }
     #view-frames > .space-y-6 { gap: 28px; }
@@ -170,17 +170,17 @@
 
     /* Preview Sidebar */
     .preview-card {
-        position: sticky; top: 88px; width: 100%; box-sizing: border-box;
-        background: #0f172a; border-radius: 32px; padding: 32px;
-        text-align: center; color: white; box-shadow: 0 40px 100px -20px rgba(15, 23, 42, 0.4);
+        position: sticky; top: 24px; width: 100%; box-sizing: border-box;
+        background: #0f172a; border-radius: 32px; padding: 24px;
+        text-align: center; color: white; box-shadow: 0 20px 40px -10px rgba(15, 23, 42, 0.4);
     }
     .create-grid > .space-y-6 { align-self: stretch; min-height: 100%; }
     .qr-vessel {
         width: 100%; aspect-ratio: 1; box-sizing: border-box; background: white; border-radius: 24px;
         margin-bottom: 32px; display: flex; align-items: center; justify-content: center;
-        padding: 24px; position: relative; overflow: hidden;
+        padding: 24px; position: relative; overflow: visible;
     }
-    .qr-vessel img { width: 100%; height: 100%; object-fit: contain; }
+    .qr-vessel img, .qr-vessel svg { width: 100%; height: auto; max-height: 380px; object-fit: contain; }
 
     .btn-create {
         width: 100%; height: 64px; background: #6366f1; color: white; border-radius: 18px;
@@ -252,7 +252,7 @@
     <script src="{% static 'js/qr_style_registry.js' %}"></script>
     <script src="{% static 'js/qr_frame_registry.js' %}"></script>
     
-    <div class="mb-10" id="main-header">
+    <div class="mb-10" id="main-header" style="padding-top: 80px;">
         <h1 class="text-3xl font-black text-slate-900 tracking-tight">Generate Dynamic Content</h1>
         <p class="text-slate-500 font-bold mt-1 text-sm">Pick your engine, then customize your high-end dynamic QR asset.</p>
     </div>
@@ -839,11 +839,19 @@
     function renderFrames() {
         const container = document.getElementById('frames-container');
         container.innerHTML = '';
-        Object.entries(QR_FRAME_REGISTRY).forEach(([id, frame]) => {
+        Object.entries(window.QR_FRAME_REGISTRY).forEach(([id, frame]) => {
             const item = document.createElement('button');
             item.type = 'button'; item.className = `frame-option ${qrEditorState.frame.type === id ? 'active' : ''}`;
             item.dataset.val = id; item.dataset.frame = id; item.title = frame.label;
-            item.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true">${qrFrameIcon(id)}</svg><span>${frame.label}</span>${qrEditorState.frame.type === id ? '<span class="frame-check" aria-hidden="true">&#10003;</span>' : ''}`;
+            
+            const svgContent = window.renderQRFrameSVG({
+                type: id,
+                text: qrEditorState.frame.text || 'SCAN ME',
+                color: qrEditorState.frame.useCustomColors ? qrEditorState.frame.frameColor : qrEditorState.fgColor,
+                textColor: qrEditorState.frame.useCustomColors ? qrEditorState.frame.textColor : '#ffffff'
+            });
+            
+            item.innerHTML = `${svgContent}<span>${frame.label}</span>${qrEditorState.frame.type === id ? '<span class="frame-check" aria-hidden="true">&#10003;</span>' : ''}`;
             item.onclick = () => { qrEditorState.frame.type = id; renderFrames(); updatePreview(); };
             container.appendChild(item);
         });
@@ -868,11 +876,39 @@
         const custom = document.getElementById('frame-custom-colors');
         const frameColor = document.getElementById('frame-color');
         const textColor = document.getElementById('frame-text-color');
-        text.oninput = e => { qrEditorState.frame.text = e.target.value.slice(0, 40); updatePreview(); };
-        size.oninput = e => { qrEditorState.frame.textSize = Number(e.target.value); document.getElementById('frame-text-size-value').textContent = `${e.target.value}px`; updatePreview(); };
-        custom.onchange = e => { qrEditorState.frame.useCustomColors = e.target.checked; document.getElementById('frame-color-controls').classList.toggle('hidden', !e.target.checked); updatePreview(); };
-        frameColor.oninput = e => { qrEditorState.frame.frameColor = e.target.value.toUpperCase(); updatePreview(); };
-        textColor.oninput = e => { qrEditorState.frame.textColor = e.target.value.toUpperCase(); updatePreview(); };
+        
+        let debounceTimer;
+        const debouncedUpdate = () => {
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => updatePreview(), 300);
+        };
+        
+        text.oninput = e => { 
+            qrEditorState.frame.text = e.target.value.slice(0, 40); 
+            renderFrames(); // Instant client-side UI update for thumbnails
+            debouncedUpdate(); // Debounced server backend update for right preview
+        };
+        size.oninput = e => { 
+            qrEditorState.frame.textSize = Number(e.target.value); 
+            document.getElementById('frame-text-size-value').textContent = `${e.target.value}px`; 
+            debouncedUpdate(); 
+        };
+        custom.onchange = e => { 
+            qrEditorState.frame.useCustomColors = e.target.checked; 
+            document.getElementById('frame-color-controls').classList.toggle('hidden', !e.target.checked); 
+            renderFrames();
+            updatePreview(); 
+        };
+        frameColor.oninput = e => { 
+            qrEditorState.frame.frameColor = e.target.value.toUpperCase(); 
+            renderFrames();
+            debouncedUpdate(); 
+        };
+        textColor.oninput = e => { 
+            qrEditorState.frame.textColor = e.target.value.toUpperCase(); 
+            renderFrames();
+            debouncedUpdate(); 
+        };
     }
 
     function renderPresetLogos() {
