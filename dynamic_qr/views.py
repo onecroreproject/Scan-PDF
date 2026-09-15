@@ -420,10 +420,15 @@ def dqr_reset_password_view(request):
 def dqr_dashboard_view(request):
     """Common overview dashboard for Dynamic QR and Short URL assets."""
     try:
+        from django.core.paginator import Paginator
+
         all_assets = list(
             DynamicQRCode.objects.filter(user=request.user).order_by('-created_at')
         )
-        recent_qrs = all_assets[:6]
+        
+        paginator = Paginator(all_assets, 10)
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
         
         total_assets = len(all_assets)
         total_active = sum(1 for asset in all_assets if asset.is_active)
@@ -434,7 +439,7 @@ def dqr_dashboard_view(request):
             Sum('scan_count')
         )['scan_count__sum'] or 0
 
-        for qr in recent_qrs:
+        for qr in page_obj:
             qr.is_short_url = qr.qr_type == 'custom-url'
             if not qr.is_short_url:
                 qr.qr_content = qr.get_static_content(request)
@@ -455,12 +460,12 @@ def dqr_dashboard_view(request):
             )
 
         return render(request, 'dynamic_qr/dashboard.html', {
-            'qr_codes': recent_qrs,
+            'page_obj': page_obj,
+            'qr_codes': page_obj, # pass for backward compatibility or replace in template
             'total_assets': total_assets,
             'total_active': total_active,
             'total_deactivated': total_deactivated,
             'total_scans': total_scans,
-            'has_more': total_assets > 6,
             'subscription': subscription
         })
     except Exception as e:

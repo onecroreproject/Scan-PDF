@@ -82,38 +82,52 @@
         <div>
             <h2 class="text-xl font-black text-slate-900 tracking-tight">Recent Assets</h2>
         </div>
-        <div class="flex items-center gap-4">
-             {% if has_more %}
-             <a href="{% url 'dynamic_qr:all_qrs' %}" class="px-4 py-2 bg-indigo-50 text-indigo-600 rounded-xl border border-indigo-100 font-black text-[10px] uppercase tracking-widest hover:bg-indigo-600 hover:text-white transition-all">
-                View All Assets
-             </a>
-             {% endif %}
-             <div class="hidden sm:flex items-center gap-2 px-4 py-2 bg-slate-50 rounded-xl border border-slate-100 text-slate-500 font-bold text-xs">
-                <i data-lucide="calendar" class="w-4 h-4"></i>
-                Latest 6
-            </div>
+        <div class="flex items-center gap-3">
+             <!-- View Switcher -->
+             <div class="flex items-center bg-white border border-slate-200 rounded-lg overflow-hidden h-[36px]" role="group" aria-label="View switcher">
+                 <button type="button" id="btn-grid-view" class="h-full w-[38px] flex items-center justify-center transition-all bg-blue-50 text-blue-600" aria-label="Grid view" title="Grid view" aria-pressed="true">
+                     <i data-lucide="layout-grid" class="w-4 h-4"></i>
+                 </button>
+                 <div class="w-px h-5 bg-slate-200"></div>
+                 <button type="button" id="btn-list-view" class="h-full w-[38px] flex items-center justify-center transition-all hover:bg-slate-50 text-slate-400" aria-label="List view" title="List view" aria-pressed="false">
+                     <i data-lucide="list" class="w-4 h-4"></i>
+                 </button>
+             </div>
         </div>
     </div>
 
-    {% if qr_codes %}
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {% for qr in qr_codes %}
+    {% if page_obj %}
+    <div id="recent-assets-grid-view" class="block">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {% for qr in page_obj %}
         {% if qr.is_short_url %}
-        <div class="qr-card bg-white border border-slate-100 p-5 flex flex-col relative" id="qr-card-{{ qr.id }}">
+        <div class="qr-card bg-white border border-slate-100 p-5 flex flex-col relative h-full" id="qr-card-{{ qr.id }}">
             <div class="absolute top-5 right-5">
                 {% if qr.is_active %}
-                    <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-[10px] font-black uppercase tracking-wider">Active</span>
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-[10px] font-black uppercase tracking-wider">
+                        <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full status-active-pulse"></span>
+                        Active
+                    </span>
                 {% else %}
-                    <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-100 text-slate-400 rounded-full text-[10px] font-black uppercase tracking-wider">Inactive</span>
+                    <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-100 text-slate-400 rounded-full text-[10px] font-black uppercase tracking-wider">
+                        Paused
+                    </span>
                 {% endif %}
             </div>
             <div class="flex items-start gap-4 mb-4">
-                <div class="w-16 h-16 bg-indigo-50 rounded-xl p-2 border border-indigo-100 overflow-hidden flex-shrink-0 flex items-center justify-center">
+                <div class="w-16 h-16 bg-slate-50 rounded-xl p-2 border border-slate-100 overflow-hidden flex-shrink-0 flex items-center justify-center">
                     <i data-lucide="link" class="w-8 h-8 text-indigo-600"></i>
                 </div>
                 <div class="flex-1 min-width-0">
                     <h3 class="text-sm font-black text-slate-900 truncate mb-1">{{ qr.qr_name }}</h3>
-                    <span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-indigo-50 text-indigo-600 rounded-lg text-[10px] font-black uppercase tracking-wider">Short URL</span>
+                    <div class="flex flex-wrap gap-2">
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-indigo-50 text-indigo-600 rounded-lg text-[10px] font-black uppercase tracking-wider">
+                            SHORT URL
+                        </span>
+                        <span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-indigo-50 text-indigo-600 rounded-lg text-[10px] font-black uppercase tracking-wider font-mono">
+                            {{ qr.short_code }}
+                        </span>
+                    </div>
                 </div>
             </div>
             <div class="bg-slate-50 rounded-xl p-3 flex items-center justify-around gap-2 mb-4">
@@ -123,18 +137,52 @@
                 </div>
                 <div class="w-px h-6 bg-slate-200"></div>
                 <div class="text-center">
-                    <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest">Type</p>
-                    <p class="text-sm font-black text-slate-900">Short URL</p>
+                    <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest">ID / TYPE</p>
+                    <p class="text-sm font-black text-slate-900 font-mono">{{ qr.short_code }}</p>
                 </div>
             </div>
-            <a href="{% url 'dynamic_qr:short_url_analytics' qr.id %}" class="w-full h-10 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg flex items-center justify-center gap-2 font-black text-[10px] uppercase tracking-widest transition-all shadow-md">
-                <i data-lucide="bar-chart" class="w-3.5 h-3.5"></i> View Analytics
-            </a>
+
+            <!-- Action Hub -->
+            <div class="space-y-3 mt-auto">
+                <div class="grid grid-cols-4 gap-1.5">
+                    <a href="{% url 'dynamic_qr:details' qr.id %}" class="h-8 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg flex items-center justify-center border border-slate-100" title="View">
+                        <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+                    </a>
+                    <a href="{% url 'dynamic_qr:edit' qr.id %}" class="h-8 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg flex items-center justify-center border border-slate-100" title="Edit Asset">
+                        <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+                    </a>
+                    <a href="{% url 'dynamic_qr:short_url_analytics' qr.id %}" class="h-8 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg flex items-center justify-center border border-slate-100" title="Analytics">
+                        <i data-lucide="bar-chart" class="w-3.5 h-3.5"></i>
+                    </a>
+                    <button onclick="copyLink('{{ request.scheme }}://{{ request.get_host }}{{ qr.public_url_path }}')" 
+                            class="h-8 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg flex items-center justify-center border border-slate-100" title="Copy">
+                        <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                    </button>
+                    <button onclick="shareLink('{{ request.scheme }}://{{ request.get_host }}{{ qr.public_url_path }}', '{{ qr.qr_name|escapejs }}')" 
+                            class="h-8 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg flex items-center justify-center border border-slate-100" title="Share">
+                        <i data-lucide="share-2" class="w-3.5 h-3.5"></i>
+                    </button>
+                    <button onclick="toggleStatus('{{ qr.id }}')" 
+                            class="h-8 bg-slate-50 hover:bg-slate-100 {% if qr.is_active %}text-emerald-600{% else %}text-slate-400{% endif %} rounded-lg flex items-center justify-center border border-slate-100" title="Status">
+                        <i data-lucide="power" class="w-3.5 h-3.5"></i>
+                    </button>
+                    <button type="button" disabled class="h-8 bg-slate-50 text-slate-300 rounded-lg flex items-center justify-center border border-slate-100 cursor-not-allowed" title="Download not available">
+                        <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                    </button>
+                    <button onclick="deleteQR('{{ qr.id }}')" 
+                            class="h-8 bg-slate-50 hover:bg-red-50 text-slate-400 hover:text-red-600 rounded-lg flex items-center justify-center border border-slate-100 group" title="Delete">
+                        <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                    </button>
+                </div>
+                
+                <a href="{% url 'dynamic_qr:short_url_analytics' qr.id %}" class="w-full h-10 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg flex items-center justify-center gap-2 font-black text-[10px] uppercase tracking-widest transition-all shadow-md">
+                    <i data-lucide="bar-chart" class="w-3.5 h-3.5"></i> View Analytics
+                </a>
+            </div>
         </div>
         {% else %}
         {% with redirect_url=qr.qr_content %}
-        <div class="qr-card bg-white border border-slate-100 p-5 flex flex-col relative" id="qr-card-{{ qr.id }}">
-            <!-- Status Flag -->
+        <div class="qr-card bg-white border border-slate-100 p-5 flex flex-col relative h-full" id="qr-card-{{ qr.id }}">
             <div class="absolute top-5 right-5">
                 {% if qr.is_active %}
                     <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-[10px] font-black uppercase tracking-wider">
@@ -149,7 +197,6 @@
             </div>
 
             <div class="flex items-start gap-4 mb-4">
-                <!-- QR Visual -->
                 <div class="w-16 h-16 bg-slate-50 rounded-xl p-2 border border-slate-100 overflow-hidden flex-shrink-0">
                     <img src="{% url 'dynamic_qr:generate_image' %}?qr_id={{ qr.id }}&v={{ qr.updated_at.timestamp }}" 
                          id="qr-img-{{ qr.id }}"
@@ -183,7 +230,6 @@
                 </div>
             </div>
 
-            <!-- Meta Stats -->
             <div class="bg-slate-50 rounded-xl p-3 flex items-center justify-around gap-2 mb-4">
                 <div class="text-center">
                     <p class="text-[8px] font-black text-slate-400 uppercase tracking-widest">Scans</p>
@@ -197,8 +243,7 @@
             </div>
 
             <!-- Action Hub -->
-            <div class="space-y-3">
-                <!-- Secondary Action Grid -->
+            <div class="space-y-3 mt-auto">
                 <div class="grid grid-cols-4 gap-1.5">
                     <a href="{% url 'dynamic_qr:details' qr.id %}" class="h-8 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg flex items-center justify-center border border-slate-100" title="View">
                         <i data-lucide="eye" class="w-3.5 h-3.5"></i>
@@ -209,11 +254,11 @@
                     <a href="{% url 'dynamic_qr:analytics' qr.id %}" class="h-8 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg flex items-center justify-center border border-slate-100" title="Stats">
                         <i data-lucide="bar-chart" class="w-3.5 h-3.5"></i>
                     </a>
-                    <button onclick="copyQRImage('{% url 'dynamic_qr:generate_image' %}?qr_id={{ qr.id }}&output_format=png&v={{ qr.updated_at.timestamp }}')" 
+                    <button onclick="copyLink('{{ request.scheme }}://{{ request.get_host }}{{ qr.public_url_path }}')" 
                             class="h-8 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg flex items-center justify-center border border-slate-100" title="Copy">
                         <i data-lucide="copy" class="w-3.5 h-3.5"></i>
                     </button>
-                    <button onclick="shareQRImage('{% url 'dynamic_qr:generate_image' %}?qr_id={{ qr.id }}&output_format=png&v={{ qr.updated_at.timestamp }}', '{{ qr.qr_name|escapejs }}')" 
+                    <button onclick="shareLink('{{ request.scheme }}://{{ request.get_host }}{{ qr.public_url_path }}', '{{ qr.qr_name|escapejs }}')" 
                             class="h-8 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg flex items-center justify-center border border-slate-100" title="Share">
                         <i data-lucide="share-2" class="w-3.5 h-3.5"></i>
                     </button>
@@ -221,50 +266,217 @@
                             class="h-8 bg-slate-50 hover:bg-slate-100 {% if qr.is_active %}text-emerald-600{% else %}text-slate-400{% endif %} rounded-lg flex items-center justify-center border border-slate-100" title="Status">
                         <i data-lucide="power" class="w-3.5 h-3.5"></i>
                     </button>
+                    <div class="download-action relative inline-flex w-full">
+                        <button type="button" class="download-btn w-full h-8 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg flex items-center justify-center border border-slate-100" title="Download Options">
+                            <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                        </button>
+                        <div class="download-menu hidden absolute z-[9999] min-w-[120px] bg-slate-900 border border-slate-800 rounded-xl shadow-2xl py-1.5 overflow-hidden">
+                            <a href="{% url 'dynamic_qr:download' qr.id %}?format=png" class="flex items-center gap-2 px-3 py-2 hover:bg-slate-800 text-slate-300 hover:text-white transition-all font-bold text-[10px]">
+                                <span class="text-blue-400 uppercase">PNG</span> 
+                            </a>
+                            <a href="{% url 'dynamic_qr:download' qr.id %}?format=jpg" class="flex items-center gap-2 px-3 py-2 hover:bg-slate-800 text-slate-300 hover:text-white transition-all font-bold text-[10px]">
+                                <span class="text-orange-400 uppercase">JPG</span> 
+                            </a>
+                            <a href="{% url 'dynamic_qr:download' qr.id %}?format=svg" class="flex items-center gap-2 px-3 py-2 hover:bg-slate-800 text-slate-300 hover:text-white transition-all font-bold text-[10px]">
+                                <span class="text-emerald-400 uppercase">SVG</span> 
+                            </a>
+                        </div>
+                    </div>
                     <button onclick="deleteQR('{{ qr.id }}')" 
-                            class="h-8 bg-slate-50 hover:bg-red-50 text-slate-400 hover:text-red-600 rounded-lg flex items-center justify-center border border-slate-100 col-span-2 group" title="Delete">
+                            class="h-8 bg-slate-50 hover:bg-red-50 text-slate-400 hover:text-red-600 rounded-lg flex items-center justify-center border border-slate-100 group" title="Delete">
                         <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
-                        <span class="text-[8px] font-black uppercase ml-1">Del</span>
                     </button>
                 </div>
-
-                <!-- Primary Download with Hover Menu -->
-                <div class="relative group">
-                    <a href="{% url 'dynamic_qr:download' qr.id %}?format=png" class="w-full h-10 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg flex items-center justify-center gap-2 font-black text-[10px] uppercase tracking-widest transition-all shadow-md z-10">
-                        <i data-lucide="download" class="w-3.5 h-3.5"></i>
-                        <span>Download Asset</span>
-                        <div class="w-px h-3 bg-white/20 mx-1"></div>
-                        <i data-lucide="chevron-up" class="w-3 h-3 opacity-70"></i>
-                    </a>
-                    
-                    <!-- Bridge to keep menu open while moving mouse -->
-                    <div class="absolute bottom-full left-0 w-full h-4 bg-transparent group-hover:block hidden translate-y-1"></div>
-                    
-                    <!-- Hover Menu (Opens Upwards) -->
-                    <div class="absolute bottom-full left-0 w-full bg-slate-900 border border-slate-800 rounded-xl shadow-2xl opacity-0 group-hover:opacity-100 transition-all z-[100] overflow-hidden py-1.5 mb-2 translate-y-2 group-hover:translate-y-0 pointer-events-none group-hover:pointer-events-auto">
-                        <div class="px-3 py-1.5 border-b border-slate-800 mb-1">
-                            <span class="text-[8px] font-black text-slate-500 uppercase tracking-[0.2em]">Select Format</span>
-                        </div>
-                        <a href="{% url 'dynamic_qr:download' qr.id %}?format=png" class="flex items-center gap-3 px-3 py-2.5 hover:bg-slate-800 text-slate-300 hover:text-white transition-all font-bold text-[10px]">
-                            <span class="w-8 h-6 rounded bg-blue-500/10 text-blue-400 flex items-center justify-center text-[8px] font-black border border-blue-500/20 uppercase">PNG</span> 
-                            <span>Portable Image</span>
-                        </a>
-                        <a href="{% url 'dynamic_qr:download' qr.id %}?format=jpg" class="flex items-center gap-3 px-3 py-2.5 hover:bg-slate-800 text-slate-300 hover:text-white transition-all font-bold text-[10px]">
-                            <span class="w-8 h-6 rounded bg-orange-500/10 text-orange-400 flex items-center justify-center text-[8px] font-black border border-orange-500/20 uppercase">JPG</span> 
-                            <span>High Quality</span>
-                        </a>
-                        <a href="{% url 'dynamic_qr:download' qr.id %}?format=svg" class="flex items-center gap-3 px-3 py-2.5 hover:bg-slate-800 text-slate-300 hover:text-white transition-all font-bold text-[10px]">
-                            <span class="w-8 h-6 rounded bg-emerald-500/10 text-emerald-400 flex items-center justify-center text-[8px] font-black border border-emerald-500/20 uppercase">SVG</span> 
-                            <span>Vector Asset</span>
-                        </a>
-                    </div>
-                </div>
+                
+                <a href="{% url 'dynamic_qr:analytics' qr.id %}" class="w-full h-10 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg flex items-center justify-center gap-2 font-black text-[10px] uppercase tracking-widest transition-all shadow-md">
+                    <i data-lucide="bar-chart" class="w-3.5 h-3.5"></i> View Analytics
+                </a>
             </div>
         </div>
         {% endwith %}
         {% endif %}
         {% endfor %}
     </div>
+    </div>
+
+    <!-- List View -->
+    <div id="recent-assets-list-view" class="hidden">
+        <div class="bg-white rounded-xl border border-slate-200 overflow-x-auto shadow-sm">
+            <table class="w-full text-left border-collapse min-w-[800px]">
+                <thead>
+                    <tr class="bg-slate-50 border-b border-slate-200 text-[10px] uppercase tracking-widest font-black text-slate-400">
+                        <th class="p-4 font-black w-16">Icon</th>
+                        <th class="p-4 font-black">Name</th>
+                        <th class="p-4 font-black">Type</th>
+                        <th class="p-4 font-black">ID</th>
+                        <th class="p-4 font-black">Scans/Clicks</th>
+                        <th class="p-4 font-black">Status</th>
+                        <th class="p-4 font-black text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100">
+                    {% for qr in page_obj %}
+                    <tr class="hover:bg-slate-50 transition-colors" id="qr-row-{{ qr.id }}">
+                        <td class="p-4">
+                            {% if qr.is_short_url %}
+                            <div class="w-10 h-10 bg-slate-50 rounded-lg border border-slate-100 flex items-center justify-center">
+                                <i data-lucide="link" class="w-5 h-5 text-indigo-600"></i>
+                            </div>
+                            {% else %}
+                            <div class="w-10 h-10 bg-slate-50 rounded-lg border border-slate-100 flex items-center justify-center p-1">
+                                <img src="{% url 'dynamic_qr:generate_image' %}?qr_id={{ qr.id }}&v={{ qr.updated_at.timestamp }}" class="w-full h-full object-contain" alt="QR">
+                            </div>
+                            {% endif %}
+                        </td>
+                        <td class="p-4">
+                            <div class="text-sm font-black text-slate-900 truncate max-w-[200px]">{{ qr.qr_name }}</div>
+                        </td>
+                        <td class="p-4">
+                            <span class="inline-flex items-center gap-1.5 px-2.5 py-1 bg-slate-100 text-slate-600 rounded-lg text-[10px] font-black uppercase tracking-wider">
+                                {% if qr.is_short_url %}
+                                    SHORT URL
+                                {% else %}
+                                    {% if qr.qr_type == 'url' or qr.qr_type == 'custom-url' %}<i data-lucide="link-2" class="w-3 h-3"></i>
+                                    {% elif qr.qr_type == 'wifi' %}<i data-lucide="wifi" class="w-3 h-3"></i>
+                                    {% elif qr.qr_type == 'text' %}<i data-lucide="type" class="w-3 h-3"></i>
+                                    {% elif qr.qr_type == 'vcard' %}<i data-lucide="user" class="w-3 h-3"></i>
+                                    {% elif qr.qr_type == 'youtube' %}<i data-lucide="youtube" class="w-3 h-3 text-red-500"></i>
+                                    {% elif qr.qr_type == 'facebook' %}<i data-lucide="facebook" class="w-3 h-3 text-blue-600"></i>
+                                    {% elif qr.qr_type == 'instagram' %}<i data-lucide="instagram" class="w-3 h-3 text-pink-500"></i>
+                                    {% elif qr.qr_type == 'linkedin' %}<i data-lucide="linkedin" class="w-3 h-3 text-blue-700"></i>
+                                    {% elif qr.qr_type == 'x-twitter' %}<i data-lucide="twitter" class="w-3 h-3"></i>
+                                    {% elif qr.qr_type == 'pdf' %}<i data-lucide="file-text" class="w-3 h-3 text-red-500"></i>
+                                    {% elif qr.qr_type == 'image' %}<i data-lucide="image" class="w-3 h-3 text-emerald-500"></i>
+                                    {% else %}<i data-lucide="box" class="w-3 h-3"></i>
+                                    {% endif %}
+                                    {{ qr.qr_type }}
+                                {% endif %}
+                            </span>
+                        </td>
+                        <td class="p-4">
+                            <span class="inline-flex items-center px-2.5 py-1 bg-indigo-50 text-indigo-600 rounded-lg text-[10px] font-black font-mono">
+                                {{ qr.short_code }}
+                            </span>
+                        </td>
+                        <td class="p-4 text-sm font-black text-slate-900">
+                            {{ qr.scan_count }}
+                        </td>
+                        <td class="p-4">
+                            {% if qr.is_active %}
+                                <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-emerald-50 text-emerald-600 rounded-full text-[10px] font-black uppercase tracking-wider">
+                                    <span class="w-1.5 h-1.5 bg-emerald-500 rounded-full status-active-pulse"></span>
+                                    Active
+                                </span>
+                            {% else %}
+                                <span class="inline-flex items-center gap-1.5 px-3 py-1 bg-slate-100 text-slate-400 rounded-full text-[10px] font-black uppercase tracking-wider">
+                                    Paused
+                                </span>
+                            {% endif %}
+                        </td>
+                        <td class="p-4">
+                            <div class="flex items-center justify-end gap-1">
+                                <a href="{% url 'dynamic_qr:details' qr.id %}" class="w-8 h-8 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg flex items-center justify-center border border-slate-100" title="View">
+                                    <i data-lucide="eye" class="w-3.5 h-3.5"></i>
+                                </a>
+                                <a href="{% url 'dynamic_qr:edit' qr.id %}" class="w-8 h-8 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg flex items-center justify-center border border-slate-100" title="Edit">
+                                    <i data-lucide="pencil" class="w-3.5 h-3.5"></i>
+                                </a>
+                                <a href="{% if qr.is_short_url %}{% url 'dynamic_qr:short_url_analytics' qr.id %}{% else %}{% url 'dynamic_qr:analytics' qr.id %}{% endif %}" class="w-8 h-8 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg flex items-center justify-center border border-slate-100" title="Analytics">
+                                    <i data-lucide="bar-chart" class="w-3.5 h-3.5"></i>
+                                </a>
+                                <button onclick="copyLink('{{ request.scheme }}://{{ request.get_host }}{{ qr.public_url_path }}')" class="w-8 h-8 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg flex items-center justify-center border border-slate-100" title="Copy">
+                                    <i data-lucide="copy" class="w-3.5 h-3.5"></i>
+                                </button>
+                                <button onclick="shareLink('{{ request.scheme }}://{{ request.get_host }}{{ qr.public_url_path }}', '{{ qr.qr_name|escapejs }}')" class="w-8 h-8 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg flex items-center justify-center border border-slate-100" title="Share">
+                                    <i data-lucide="share-2" class="w-3.5 h-3.5"></i>
+                                </button>
+                                <button onclick="toggleStatus('{{ qr.id }}')" class="w-8 h-8 bg-slate-50 hover:bg-slate-100 {% if qr.is_active %}text-emerald-600{% else %}text-slate-400{% endif %} rounded-lg flex items-center justify-center border border-slate-100" title="Status">
+                                    <i data-lucide="power" class="w-3.5 h-3.5"></i>
+                                </button>
+                                {% if not qr.is_short_url %}
+                                <div class="download-action relative inline-flex">
+                                    <button type="button" class="download-btn w-8 h-8 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-lg flex items-center justify-center border border-slate-100" title="Download Options">
+                                        <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                                    </button>
+                                    <div class="download-menu hidden absolute z-[9999] min-w-[120px] bg-slate-900 border border-slate-800 rounded-xl shadow-2xl py-1.5 overflow-hidden">
+                                        <a href="{% url 'dynamic_qr:download' qr.id %}?format=png" class="flex items-center gap-2 px-3 py-2 hover:bg-slate-800 text-slate-300 hover:text-white transition-all font-bold text-[10px]">
+                                            <span class="text-blue-400 uppercase">PNG</span> 
+                                        </a>
+                                        <a href="{% url 'dynamic_qr:download' qr.id %}?format=jpg" class="flex items-center gap-2 px-3 py-2 hover:bg-slate-800 text-slate-300 hover:text-white transition-all font-bold text-[10px]">
+                                            <span class="text-orange-400 uppercase">JPG</span> 
+                                        </a>
+                                        <a href="{% url 'dynamic_qr:download' qr.id %}?format=svg" class="flex items-center gap-2 px-3 py-2 hover:bg-slate-800 text-slate-300 hover:text-white transition-all font-bold text-[10px]">
+                                            <span class="text-emerald-400 uppercase">SVG</span> 
+                                        </a>
+                                    </div>
+                                </div>
+                                {% else %}
+                                <button type="button" disabled class="w-8 h-8 bg-slate-50 text-slate-300 rounded-lg flex items-center justify-center border border-slate-100 cursor-not-allowed" title="Download not available">
+                                    <i data-lucide="download" class="w-3.5 h-3.5"></i>
+                                </button>
+                                {% endif %}
+                                <button onclick="deleteQR('{{ qr.id }}')" class="w-8 h-8 bg-slate-50 hover:bg-red-50 text-slate-400 hover:text-red-600 rounded-lg flex items-center justify-center border border-slate-100" title="Delete">
+                                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i>
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.has_other_pages %}
+    <div class="mt-8 flex flex-col sm:flex-row items-center justify-between gap-4 bg-white p-4 rounded-xl border border-slate-200 shadow-sm">
+        <div class="text-xs font-bold text-slate-500">
+            Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ page_obj.paginator.count }} assets
+        </div>
+        <div class="flex items-center gap-1.5 flex-wrap justify-center">
+            {% if page_obj.has_previous %}
+                <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}" class="h-9 px-3 flex items-center justify-center bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-lg text-xs font-black transition-all">
+                    <i data-lucide="chevron-left" class="w-4 h-4 mr-1"></i> Previous
+                </a>
+            {% else %}
+                <button disabled class="h-9 px-3 flex items-center justify-center bg-slate-50 border border-slate-100 text-slate-300 rounded-lg text-xs font-black cursor-not-allowed">
+                    <i data-lucide="chevron-left" class="w-4 h-4 mr-1"></i> Previous
+                </button>
+            {% endif %}
+
+            {% for num in page_obj.paginator.page_range %}
+                {% if page_obj.number == num %}
+                    <span class="h-9 min-w-[36px] flex items-center justify-center bg-indigo-600 border border-indigo-600 text-white rounded-lg text-xs font-black shadow-sm">
+                        {{ num }}
+                    </span>
+                {% elif num > page_obj.number|add:'-3' and num < page_obj.number|add:'3' %}
+                    <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ num }}" class="h-9 min-w-[36px] flex items-center justify-center bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-lg text-xs font-black transition-all">
+                        {{ num }}
+                    </a>
+                {% elif num == 1 or num == page_obj.paginator.num_pages %}
+                    <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ num }}" class="h-9 min-w-[36px] flex items-center justify-center bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-lg text-xs font-black transition-all">
+                        {{ num }}
+                    </a>
+                {% elif num == page_obj.number|add:'-3' or num == page_obj.number|add:'3' %}
+                    <span class="h-9 min-w-[36px] flex items-center justify-center text-slate-400 text-xs font-black">
+                        ...
+                    </span>
+                {% endif %}
+            {% endfor %}
+
+            {% if page_obj.has_next %}
+                <a href="?{% for key, value in request.GET.items %}{% if key != 'page' %}{{ key }}={{ value }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}" class="h-9 px-3 flex items-center justify-center bg-white border border-slate-200 hover:bg-slate-50 text-slate-600 rounded-lg text-xs font-black transition-all">
+                    Next <i data-lucide="chevron-right" class="w-4 h-4 ml-1"></i>
+                </a>
+            {% else %}
+                <button disabled class="h-9 px-3 flex items-center justify-center bg-slate-50 border border-slate-100 text-slate-300 rounded-lg text-xs font-black cursor-not-allowed">
+                    Next <i data-lucide="chevron-right" class="w-4 h-4 ml-1"></i>
+                </button>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+    
     {% else %}
     <div class="bg-white rounded-[40px] border border-dashed border-slate-200 p-20 text-center">
         <div class="w-24 h-24 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-8">
@@ -281,48 +493,32 @@
             <div class="w-6 h-6 bg-emerald-500 rounded-full flex items-center justify-center">
                 <i data-lucide="check" class="w-3 h-3"></i>
             </div>
-            <span class="font-black text-xs uppercase tracking-widest" id="toast-message">Image Copied!</span>
+            <span class="font-black text-xs uppercase tracking-widest" id="toast-message">Copied!</span>
         </div>
     </div>
 {% endblock %}
 
 {% block dqr_scripts %}
-    async function copyQRImage(imageUrl) {
+    async function copyLink(url) {
         try {
-            showToast('Processing Image...', false);
-            const response = await fetch(imageUrl);
-            const blob = await response.blob();
-            
-            if (window.ClipboardItem) {
-                const item = new ClipboardItem({ 'image/png': blob });
-                await navigator.clipboard.write([item]);
-                showToast('QR Image Copied to Clipboard!');
-            } else {
-                throw new Error('ClipboardItem not supported');
-            }
+            await navigator.clipboard.writeText(url);
+            showToast('Copied!');
         } catch (err) {
             console.error(err);
-            showToast('Failed to copy image.', true);
+            showToast('Failed to copy link.', true);
         }
     }
 
-    async function shareQRImage(imageUrl, title) {
+    async function shareLink(url, title) {
         try {
-            showToast('Preparing for Share...', false);
-            const response = await fetch(imageUrl);
-            const blob = await response.blob();
-            const file = new File([blob], 'qr_code.png', { type: 'image/png' });
-
-            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+            if (navigator.canShare && navigator.canShare({ url: url })) {
                 await navigator.share({
                     title: title,
-                    text: 'Check out this QR Code!',
-                    files: [file]
+                    text: 'Check out this link!',
+                    url: url
                 });
             } else {
-                // Fallback: Copy link
-                const shortUrl = imageUrl.split('text=')[1].split('&')[0];
-                navigator.clipboard.writeText(decodeURIComponent(shortUrl));
+                navigator.clipboard.writeText(url);
                 showToast('Sharing not supported. Link copied instead.');
             }
         } catch (err) {
@@ -357,9 +553,16 @@
             });
             if (response.ok) {
                 const card = document.getElementById(`qr-card-${qrId}`);
-                card.style.opacity = '0';
-                card.style.transform = 'scale(0.9)';
-                setTimeout(() => card.remove(), 400);
+                if (card) {
+                    card.style.opacity = '0';
+                    card.style.transform = 'scale(0.9)';
+                    setTimeout(() => card.remove(), 400);
+                }
+                const row = document.getElementById(`qr-row-${qrId}`);
+                if (row) {
+                    row.style.opacity = '0';
+                    setTimeout(() => row.remove(), 400);
+                }
                 showToast('QR Code deleted successfully');
             } else {
                 showToast('Delete Action Failed', true);
@@ -376,4 +579,123 @@
         toast.classList.remove('hidden');
         setTimeout(() => toast.classList.add('hidden'), 3000);
     }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const btnGrid = document.getElementById('btn-grid-view');
+        const btnList = document.getElementById('btn-list-view');
+        const gridView = document.getElementById('recent-assets-grid-view');
+        const listView = document.getElementById('recent-assets-list-view');
+        
+        if (!btnGrid || !btnList || !gridView || !listView) return;
+
+        let currentView = localStorage.getItem('dashboardRecentAssetsView') || 'grid';
+        
+        function setView(view) {
+            if (view === 'list') {
+                gridView.classList.remove('block');
+                gridView.classList.add('hidden');
+                listView.classList.remove('hidden');
+                listView.classList.add('block');
+                
+                btnList.classList.add('bg-blue-50', 'text-blue-600');
+                btnList.classList.remove('hover:bg-slate-50', 'text-slate-400');
+                btnList.setAttribute('aria-pressed', 'true');
+                
+                btnGrid.classList.remove('bg-blue-50', 'text-blue-600');
+                btnGrid.classList.add('hover:bg-slate-50', 'text-slate-400');
+                btnGrid.setAttribute('aria-pressed', 'false');
+                
+                localStorage.setItem('dashboardRecentAssetsView', 'list');
+            } else {
+                listView.classList.remove('block');
+                listView.classList.add('hidden');
+                gridView.classList.remove('hidden');
+                gridView.classList.add('block');
+                
+                btnGrid.classList.add('bg-blue-50', 'text-blue-600');
+                btnGrid.classList.remove('hover:bg-slate-50', 'text-slate-400');
+                btnGrid.setAttribute('aria-pressed', 'true');
+                
+                btnList.classList.remove('bg-blue-50', 'text-blue-600');
+                btnList.classList.add('hover:bg-slate-50', 'text-slate-400');
+                btnList.setAttribute('aria-pressed', 'false');
+                
+                localStorage.setItem('dashboardRecentAssetsView', 'grid');
+            }
+        }
+        
+        setView(currentView);
+        
+        btnGrid.addEventListener('click', () => setView('grid'));
+        btnList.addEventListener('click', () => setView('list'));
+
+        // Download Menu JS
+        let downloadMenuTimer;
+
+        document.querySelectorAll('.download-action').forEach(action => {
+            const btn = action.querySelector('.download-btn');
+            const menu = action.querySelector('.download-menu');
+            if (!btn || !menu) return;
+            
+            const showMenu = () => {
+                clearTimeout(downloadMenuTimer);
+                document.querySelectorAll('.download-menu').forEach(m => {
+                    if (m !== menu) m.classList.add('hidden');
+                });
+                
+                menu.classList.remove('hidden');
+                
+                const rect = btn.getBoundingClientRect();
+                const spaceBelow = window.innerHeight - rect.bottom;
+                const menuHeight = 110; 
+                
+                menu.style.position = 'fixed';
+                menu.style.right = (window.innerWidth - rect.right) + 'px';
+                menu.style.left = 'auto';
+                
+                if (spaceBelow < menuHeight && rect.top > menuHeight) {
+                    menu.style.top = (rect.top - menuHeight - 6) + 'px';
+                    menu.style.bottom = 'auto';
+                } else {
+                    menu.style.top = (rect.bottom + 6) + 'px';
+                    menu.style.bottom = 'auto';
+                }
+            };
+            
+            const hideMenu = () => {
+                downloadMenuTimer = setTimeout(() => {
+                    menu.classList.add('hidden');
+                }, 150);
+            };
+            
+            action.addEventListener('mouseenter', showMenu);
+            action.addEventListener('mouseleave', hideMenu);
+            
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                if (menu.classList.contains('hidden')) {
+                    showMenu();
+                } else {
+                    menu.classList.add('hidden');
+                }
+            });
+        });
+
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('.download-action')) {
+                document.querySelectorAll('.download-menu').forEach(m => {
+                    m.classList.add('hidden');
+                });
+            }
+        });
+
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                document.querySelectorAll('.download-menu').forEach(m => {
+                    m.classList.add('hidden');
+                });
+            }
+        });
+    });
 {% endblock %}
