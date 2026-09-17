@@ -451,10 +451,6 @@ body { background:var(--s0); }
                 <span style="width:20px;height:10px;border-radius:3px;background:linear-gradient(to right,#c7d2fe,#4f46e5);display:inline-block;"></span>
                 State Traffic Intensity (Low → High)
             </span>
-            <span style="display:inline-flex;align-items:center;gap:5px;">
-                <span style="width:11px;height:11px;border-radius:50%;background:#f97316;border:2px solid #fff;box-shadow:0 0 0 1px #f97316;display:inline-block;"></span>
-                City Marker
-            </span>
         </div>
         <style>
             /* ── Tile-free map: light analytics background, no raster tiles ── */
@@ -608,9 +604,23 @@ body { background:var(--s0); }
                                 }
                                 if (!matched) return;
                                 var pct = matched.percentage ? Number(matched.percentage).toFixed(2) : '0.00';
+                                
+                                var cityHtml = '';
+                                var stateCities = cityMapData.filter(function(c) {
+                                    return normName(c.state) === normName(matched.state);
+                                });
+                                if (stateCities.length > 0) {
+                                    cityHtml = '<div style="margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.2);">';
+                                    stateCities.forEach(function(c) {
+                                        var cpct = c.percentage ? Number(c.percentage).toFixed(2) : '0.00';
+                                        cityHtml += '<div style="font-size:11px;font-weight:600;margin-bottom:2px;">' + (c.city || 'Unknown') + ' : ' + c.clicks + ' (' + cpct + '%)</div>';
+                                    });
+                                    cityHtml += '</div>';
+                                }
+
                                 var label = '<strong>' + displayName + ', ' + (matched.country || 'India') + '</strong><br>'
                                           + matched.count + ' Click' + (matched.count === 1 ? '' : 's')
-                                          + ' &nbsp;·&nbsp; ' + pct + '% of traffic';
+                                          + ' &nbsp;·&nbsp; ' + pct + '% of traffic' + cityHtml;
                                 layer.bindTooltip(label, { className: 'geo-tooltip', sticky: true, direction: 'top', offset: [0,-4] });
                                 layer.on({
                                     mouseover: function(e) {
@@ -623,57 +633,36 @@ body { background:var(--s0); }
                                 });
                             }
                         }).addTo(lmap);
+
+                        // ── Auto-fit: zoom to active state data (prevent excessive city zoom) ──
+                        var activeStateBounds = L.latLngBounds();
+                        indiaStateLayer.eachLayer(function(layer) {
+                            var props = layer.feature.properties || {};
+                            var names = [props.NAME_1, props.name, props.NAME, props.admin, props.name_en].filter(Boolean);
+                            for (var i = 0; i < names.length; i++) {
+                                var key = normName(names[i]);
+                                if (stateLookup[key] && layer.getBounds) {
+                                    activeStateBounds.extend(layer.getBounds());
+                                    break;
+                                }
+                            }
+                        });
+
+                        if (activeStateBounds.isValid()) {
+                            lmap.fitBounds(activeStateBounds, {
+                                padding: [30, 30],
+                                maxZoom: 6
+                            });
+                        } else if (indiaStateLayer.getBounds().isValid()) {
+                            lmap.fitBounds(indiaStateLayer.getBounds(), { maxZoom: 5 });
+                        } else {
+                            lmap.setView([20, 78], 4);
+                        }
                     })
                     .catch(function(err) {
                         console.warn('Geographic Activity Map GeoJSON error:', err);
-                    });
-
-                // ── City circle markers (rendered above GeoJSON layers) ───────
-                function cityRadius(clicks) {
-                    var n = Number(clicks) || 0;
-                    return Math.max(7, Math.min(20, 6 + Math.sqrt(n) * 2.2));
-                }
-                cityMapData.forEach(function(city) {
-                    var lat = city.latitude, lng = city.longitude;
-                    if (typeof lat !== 'number' || typeof lng !== 'number') return;
-                    if (!isFinite(lat) || !isFinite(lng)) return;
-                    var r = cityRadius(city.clicks);
-                    var pct = city.percentage ? Number(city.percentage).toFixed(2) : '0.00';
-                    var statePart = city.state ? ', ' + city.state : '';
-                    var label = '<strong>' + (city.city || 'Unknown') + statePart + '</strong><br>'
-                              + city.clicks + ' Click' + (city.clicks === 1 ? '' : 's')
-                              + ' &nbsp;·&nbsp; ' + pct + '% of traffic';
-                    var marker = L.circleMarker([lat, lng], {
-                        radius: r,
-                        fillColor: '#f97316',
-                        color: '#ffffff',
-                        weight: 2,
-                        opacity: 1,
-                        fillOpacity: 0.88
-                    }).addTo(lmap);
-                    marker.bindTooltip(label, { className: 'geo-tooltip', sticky: true, direction: 'top', offset: [0,-4] });
-                });
-
-                // ── Auto-fit: zoom to active data ────────────────────────────
-                if (cityMapData.length > 0) {
-                    var validCoords = cityMapData.filter(function(c) {
-                        return typeof c.latitude === 'number' && isFinite(c.latitude) && isFinite(c.longitude);
-                    });
-                    if (validCoords.length > 0) {
-                        var latLngs = validCoords.map(function(c) { return [c.latitude, c.longitude]; });
-                        try {
-                            lmap.fitBounds(L.latLngBounds(latLngs).pad(0.4));
-                        } catch(e) {
-                            lmap.setView([20, 78], 4);
-                        }
-                    } else {
                         lmap.setView([20, 0], 2);
-                    }
-                } else if (stateMapData.length > 0) {
-                    lmap.setView([22, 80], 4);
-                } else {
-                    lmap.setView([20, 0], 2);
-                }
+                    });
             }
 
             if (document.readyState === 'loading') {

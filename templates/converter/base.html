@@ -4,28 +4,24 @@
 
 <head>
     {% block meta %}
-<meta name="description" content="{{ seo_description }}">
-<meta name="keywords" content="{{ seo_keywords }}">
+<meta name="description" content="{{ seo_description|default:'ScanPDF — Scan Smart. Share Fast. Convert Word, PowerPoint, Excel, HTML to PDF and back. Merge, split, compress PDFs. Fast, free, and secure.' }}">
+<meta name="keywords" content="{{ seo_keywords|default:'scan pdf, file converter, word to pdf, pptx to pdf, excel to pdf, pdf tools, merge pdf, split pdf, compress pdf, online converter' }}">
 <meta name="robots" content="index, follow">
 
 <link rel="canonical" href="{{ request.scheme }}://{{ request.get_host }}{{ request.path }}">
 
 <meta property="og:type" content="website">
-<meta property="og:title" content="{{ seo_title }}">
-<meta property="og:description" content="{{ seo_description }}">
+<meta property="og:title" content="{{ seo_title|default:'ScanPDF' }}">
+<meta property="og:description" content="{{ seo_description|default:'ScanPDF — Scan Smart. Share Fast.' }}">
 <meta property="og:url" content="{{ request.scheme }}://{{ request.get_host }}{{ request.path }}">
 
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="{{ seo_title }}">
-<meta name="twitter:description" content="{{ seo_description }}">
+<meta name="twitter:title" content="{{ seo_title|default:'ScanPDF' }}">
+<meta name="twitter:description" content="{{ seo_description|default:'ScanPDF — Scan Smart. Share Fast.' }}">
 {% endblock %}
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description"
-        content="ScanPDF — Scan Smart. Share Fast. Convert Word, PowerPoint, Excel, HTML to PDF and back. Merge, split, compress PDFs. Fast, free, and secure.">
-    <meta name="keywords"
-        content="scan pdf, file converter, word to pdf, pptx to pdf, excel to pdf, pdf tools, merge pdf, split pdf, compress pdf, online converter">
-    <meta name="author" content="ScanPDF">
+<meta name="author" content="ScanPDF">
     <meta name="theme-color" content="#7c3aed">
 
     <!-- Google Site Verification -->

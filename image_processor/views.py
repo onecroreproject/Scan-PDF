@@ -296,6 +296,14 @@ def tool_page(request, tool_slug):
 
     tool = IMAGE_TOOLS[tool_slug]
 
+    # SEO Integration
+    try:
+        from converter.seo_content import SEO_DATA
+        seo_extra = SEO_DATA.get(tool_slug, {})
+        tool.update(seo_extra)
+    except ImportError:
+        pass
+
     context = {
         'tool': tool,
         'tool_slug': tool_slug,
@@ -345,7 +353,7 @@ def tool_page(request, tool_slug):
 
     return render(
         request,
-        'image_processor/tool_detail.html',
+        f'image_processor/{tool_slug.replace("-", "_")}.html',
         context
     )
 

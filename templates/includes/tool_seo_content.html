@@ -1,0 +1,106 @@
+{% load static %}
+
+<!-- SEO CONTENT SECTION -->
+<div class="mt-16 sm:mt-24 border-t border-surface-200 pt-12 sm:pt-16 pb-12">
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+        
+        <!-- SECTION A: HOW TO USE -->
+        {% if tool.steps %}
+        <section class="mb-16">
+            <h2 class="text-3xl font-bold text-surface-900 mb-8 text-center">How to {{ seo_h1|default:tool.title }}</h2>
+            <div class="grid gap-6 md:grid-cols-{{ tool.steps|length }}">
+                {% for step in tool.steps %}
+                <div class="bg-white rounded-2xl p-6 shadow-sm border border-surface-100 relative">
+                    <div class="w-10 h-10 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-lg mb-4">
+                        {{ forloop.counter }}
+                    </div>
+                    <h3 class="text-xl font-semibold text-surface-900 mb-2">{{ step.title }}</h3>
+                    <p class="text-surface-600 leading-relaxed">{{ step.description }}</p>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+
+        <!-- ABOUT SECTION -->
+        {% if tool.about %}
+        <section class="mb-16 bg-gradient-to-br from-surface-50 to-white rounded-3xl p-8 sm:p-12 border border-surface-200">
+            <h2 class="text-3xl font-bold text-surface-900 mb-6">About {{ tool.title }}</h2>
+            <div class="prose prose-purple max-w-none text-surface-600 text-lg leading-relaxed">
+                {{ tool.about|safe }}
+            </div>
+        </section>
+        {% endif %}
+
+        <!-- BENEFIT / FEATURE CARDS -->
+        {% if tool.cards %}
+        <section class="mb-16">
+            <div class="grid gap-6 md:grid-cols-2 lg:grid-cols-4">
+                {% for card in tool.cards %}
+                <div class="bg-white rounded-xl p-6 border border-surface-200 shadow-sm hover:shadow-md transition-shadow">
+                    <h4 class="text-lg font-bold text-surface-900 mb-2">{{ card.title }}</h4>
+                    <p class="text-surface-600 text-sm leading-relaxed">{{ card.description }}</p>
+                </div>
+                {% endfor %}
+            </div>
+        </section>
+        {% endif %}
+
+        <!-- FAQ SECTION -->
+        {% if tool.faqs %}
+        <section class="mb-16">
+            <h2 class="text-3xl font-bold text-surface-900 mb-8 text-center">Frequently Asked Questions</h2>
+            <div class="space-y-4">
+                {% for faq in tool.faqs %}
+                <details class="group bg-white rounded-2xl border border-surface-200 overflow-hidden">
+                    <summary class="flex justify-between items-center font-medium cursor-pointer list-none p-6 text-surface-900 hover:bg-surface-50 transition-colors">
+                        <span class="text-lg font-semibold">{{ faq.question }}</span>
+                        <span class="transition group-open:rotate-180">
+                            <svg fill="none" height="24" shape-rendering="geometricPrecision" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" viewBox="0 0 24 24" width="24"><path d="M6 9l6 6 6-6"></path></svg>
+                        </span>
+                    </summary>
+                    <div class="text-surface-600 mt-3 group-open:animate-fadeIn px-6 pb-6 leading-relaxed">
+                        <p>{{ faq.answer }}</p>
+                    </div>
+                </details>
+                {% endfor %}
+            </div>
+        </section>
+        
+        <!-- JSON-LD FAQ Schema -->
+        <script type="application/ld+json">
+        {
+          "@context": "https://schema.org",
+          "@type": "FAQPage",
+          "mainEntity": [
+            {% for faq in tool.faqs %}
+            {
+              "@type": "Question",
+              "name": "{{ faq.question|escapejs }}",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "{{ faq.answer|escapejs }}"
+              }
+            }{% if not forloop.last %},{% endif %}
+            {% endfor %}
+          ]
+        }
+        </script>
+        {% endif %}
+
+        <!-- WebApplication / SoftwareApplication Schema -->
+        {% if seo_h1 %}
+        <script type="application/ld+json">
+        {
+          "@context": "https://schema.org",
+          "@type": "WebApplication",
+          "name": "{{ seo_h1|escapejs }}",
+          "url": "{{ request.build_absolute_uri }}",
+          "description": "{{ seo_description|escapejs }}",
+          "applicationCategory": "UtilityApplication",
+          "operatingSystem": "All"
+        }
+        </script>
+        {% endif %}
+    </div>
+</div>

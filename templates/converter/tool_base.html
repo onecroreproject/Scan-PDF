@@ -30,6 +30,10 @@
 
 </section>
 
+{% if tool_slug != 'qrcode-generator' %}
+{% include 'includes/tool_seo_content.html' %}
+{% endif %}
+
 {% endblock %}
 
 
