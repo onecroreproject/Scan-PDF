@@ -6,7 +6,6 @@
 {% block extra_head %}
 {{ block.super }}
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 {% endblock %}
@@ -44,13 +43,9 @@ body { background:var(--s0); }
 .ftab.active { background:var(--p6); color:#fff; box-shadow:0 2px 6px rgba(79,70,229,.3); }
 
 /* Export */
-.exp-wrap { position:relative; display:inline-block; }
 .exp-btn { display:inline-flex; align-items:center; gap:6px; padding:8px 16px; background:#fff; border:1px solid var(--p3); color:var(--p6); font-size:12px; font-weight:800; text-transform:uppercase; letter-spacing:.05em; border-radius:12px; cursor:pointer; transition:all .15s; }
-.exp-btn:hover { background:var(--p01); }
-.exp-menu { display:none; position:absolute; right:0; top:calc(100% + 8px); background:#fff; border:1px solid var(--s2); border-radius:12px; box-shadow:0 8px 20px rgba(0,0,0,.08); z-index:100; min-width:160px; overflow:hidden; }
-.exp-wrap:hover .exp-menu { display:block; }
-.exp-item { display:flex; align-items:center; gap:8px; padding:10px 16px; font-size:13px; font-weight:700; color:var(--s7); text-decoration:none; }
-.exp-item:hover { background:var(--s0); color:var(--p6); }
+.exp-btn:hover:not(:disabled) { background:var(--p01); }
+.exp-btn:disabled { opacity:0.6; cursor:not-allowed; }
 
 /* Header Layout */
 .analytics-header-row { display:flex; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; gap:24px; margin-bottom:16px; width:100%; min-width:0; }
@@ -173,6 +168,9 @@ body { background:var(--s0); }
 
 /* PDF mode */
 .pdf-mode .print-hide { display:none !important; }
+@media print {
+    #exportPdfBtn { display:none !important; }
+}
 .pdf-mode body { background:#fff !important; }
 .pdf-mode .an-card { box-shadow:none !important; page-break-inside:avoid; }
 .pdf-mode .pdf-hdr { display:block !important; }
@@ -206,7 +204,7 @@ body { background:var(--s0); }
 /* ─── PDF Report Styles ────────────────────────────────────────────────── */
 #pdf-report {
     display: none;
-    width: 740px;
+    width: 100%;
     font-family: 'Inter', 'Segoe UI', system-ui, sans-serif;
     background: #fff;
     color: #0f172a;
@@ -281,6 +279,60 @@ body { background:var(--s0); }
     padding: 5px 4px; font-size: 8px; font-weight: 600; color: #334155;
     border-bottom: 1px solid #f8fafc; vertical-align: top;
 }
+
+@media print {
+    html, body {
+        width: 100% !important;
+        height: auto !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: visible !important;
+        background: #fff !important;
+    }
+    
+    /* Safely hide explicit web UI, never parent containers */
+    header, footer, .navbar, .sidebar, #dashboard-sidebar, 
+    .dashboard-nav, .mobile-toggle, #analytics-container, .pdf-overlay {
+        display: none !important;
+    }
+    
+    /* Neutralize layout wrappers so the report flows naturally */
+    main, .flex-grow, .dashboard-layout, .main-content {
+        display: block !important;
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        position: static !important;
+        height: auto !important;
+        min-height: 0 !important;
+    }
+
+    #pdf-report {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        transform: none !important;
+        position: static !important;
+    }
+
+    .pdf-card, .pdf-section, .pdf-act-tbl tr {
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+    }
+
+    canvas, svg, img {
+        max-width: 100% !important;
+    }
+
+    @page {
+        size: A4 portrait;
+        margin: 10mm;
+    }
+}
 </style>
 {% endblock %}
 
@@ -296,7 +348,7 @@ body { background:var(--s0); }
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;font-size:13px;font-weight:700;color:var(--s5);">
             <div>Link: <span style="color:var(--s9);">{{ qr.qr_name }}</span></div>
             <div style="text-align:right;">Generated: {% now "M d, Y H:i" %}</div>
-            <div>Period: <span style="color:var(--p6);text-transform:uppercase;">{{ selected_range }}</span></div>
+            <div>Period: <span style="color:var(--p6);text-transform:uppercase;">{{ period_label }}</span></div>
             <div style="text-align:right;">Status: {% if qr.is_active %}<span style="color:var(--green);">Active</span>{% else %}<span style="color:var(--red);">Inactive</span>{% endif %}</div>
         </div>
     </div>
@@ -316,19 +368,34 @@ body { background:var(--s0); }
                 </div>
             </div>
             <div class="analytics-header-actions">
-                <div class="exp-wrap">
-                    <button class="exp-btn"><i data-lucide="download" style="width:14px;height:14px;"></i> Export <i data-lucide="chevron-down" style="width:12px;height:12px;"></i></button>
-                    <div class="exp-menu">
-                        <a href="javascript:void(0)" onclick="generatePDF()" class="exp-item" style="color:var(--p6);"><i data-lucide="file-text" style="width:15px;height:15px;"></i> PDF Report</a>
-                        <a href="?range={{ selected_range }}&export=csv" class="exp-item"><i data-lucide="sheet" style="width:15px;height:15px;"></i> CSV Data</a>
-                    </div>
-                </div>
-                <div class="ftabs">
+                <button type="button" id="exportPdfBtn" class="exp-btn print-hide"><i data-lucide="download" style="width:14px;height:14px;"></i> Export PDF</button>
+                <div class="ftabs" style="position:relative;">
                     <a href="?range=today" class="ftab {% if selected_range == 'today' %}active{% endif %}">Today</a>
                     <a href="?range=7days" class="ftab {% if selected_range == '7days' %}active{% endif %}">7 Days</a>
                     <a href="?range=28days" class="ftab {% if selected_range == '28days' %}active{% endif %}">28 Days</a>
                     <a href="?range=1month" class="ftab {% if selected_range == '1month' or selected_range == '30days' %}active{% endif %}">1 Month</a>
                     <a href="?range=12months" class="ftab {% if selected_range == '12months' %}active{% endif %}">12 Months</a>
+                    <button type="button" class="ftab {% if selected_range == 'custom' %}active{% endif %}" id="customDateBtn" style="border:none;cursor:pointer;font-family:inherit;">Custom</button>
+                    
+                    <!-- Custom Date Popup -->
+                    <div id="customDatePopup" style="display:none;position:absolute;top:calc(100% + 8px);right:0;background:#fff;border:1px solid var(--s2);border-radius:12px;box-shadow:0 8px 20px rgba(0,0,0,.08);padding:16px;z-index:100;min-width:240px;text-align:left;">
+                        <div style="font-size:11px;font-weight:800;color:var(--s9);margin-bottom:12px;text-transform:uppercase;letter-spacing:.05em;">Custom Date Range</div>
+                        <div style="display:flex;flex-direction:column;gap:12px;">
+                            <div>
+                                <label style="display:block;font-size:10px;font-weight:800;color:var(--s5);margin-bottom:4px;text-transform:uppercase;">From</label>
+                                <input type="date" id="customStartDate" value="{{ request.GET.start }}" max="{% now 'Y-m-d' %}" style="width:100%;padding:8px 10px;border:1px solid var(--s2);border-radius:8px;font-size:13px;font-weight:600;color:var(--s7);font-family:inherit;">
+                            </div>
+                            <div>
+                                <label style="display:block;font-size:10px;font-weight:800;color:var(--s5);margin-bottom:4px;text-transform:uppercase;">To</label>
+                                <input type="date" id="customEndDate" value="{{ request.GET.end }}" max="{% now 'Y-m-d' %}" style="width:100%;padding:8px 10px;border:1px solid var(--s2);border-radius:8px;font-size:13px;font-weight:600;color:var(--s7);font-family:inherit;">
+                            </div>
+                            <div id="customDateError" style="display:none;font-size:11px;font-weight:700;color:var(--red);margin-top:-4px;">Start date must be before end date.</div>
+                            <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:4px;">
+                                <button type="button" id="customDateCancel" style="padding:6px 12px;background:transparent;border:none;color:var(--s5);font-size:12px;font-weight:800;cursor:pointer;border-radius:6px;">Cancel</button>
+                                <button type="button" id="customDateApply" style="padding:6px 12px;background:var(--p6);color:#fff;border:none;font-size:12px;font-weight:800;cursor:pointer;border-radius:6px;transition:background .15s;">Apply</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -908,39 +975,8 @@ body { background:var(--s0); }
     </div>
 
     <!-- Recent Activity -->
-    <div class="an-card print-hide">
-        <div class="an-title">Recent Activity</div>
-        <div class="unique-help"><span>*</span> <span>Unique visitor</span></div>
-        <div class="an-tbl-wrap">
-            <table class="an-tbl">
-                <thead>
-                    <tr><th>Time</th><th>Location</th><th>Location Source</th><th>Device</th><th>Browser / OS</th><th>Traffic Source</th><th>Referrer</th><th>Type</th></tr>
-                </thead>
-                <tbody>
-                    {% for scan in page_obj %}
-                    <tr>
-                        <td style="white-space:nowrap;">{{ scan.timestamp|date:"M d, H:i" }}{% if scan.is_unique_visit %}<span class="unique-marker" title="Unique visitor">*</span>{% endif %}</td>
-                        <td>{% if scan.location_source == 'local' or scan.country_code == 'LCL' or scan.country == 'Internal' %}Local Network{% elif scan.location_source == 'gps' %}{% if scan.city and scan.city not in 'Unknown,' and scan.country and scan.country not in 'Unknown,' %}{% if scan.region and scan.region not in 'Unknown,' %}<span title="Lat: {{ scan.gps_latitude|floatformat:4 }} Lng: {{ scan.gps_longitude|floatformat:4 }}">{{ scan.city }}, {{ scan.region }}, {{ scan.country }}</span>{% else %}<span title="Lat: {{ scan.gps_latitude|floatformat:4 }} Lng: {{ scan.gps_longitude|floatformat:4 }}">{{ scan.city }}, {{ scan.country }}</span>{% endif %}{% elif scan.gps_latitude %}<span title="GPS coordinates (area resolving)">{{ scan.gps_latitude|floatformat:4 }}, {{ scan.gps_longitude|floatformat:4 }}</span>{% else %}Unknown{% endif %}{% elif scan.city and scan.city != 'Unknown' and scan.country and scan.country != 'Unknown' %}{% if scan.region and scan.region != 'Unknown' %}{{ scan.city }}, {{ scan.region }}, {{ scan.country }}{% else %}{{ scan.city }}, {{ scan.country }}{% endif %}{% else %}Unknown{% endif %}</td>
-                        <td>{% if scan.location_source == 'gps' %}GPS{% elif scan.location_source == 'ip' %}IP Approximate{% elif scan.location_source == 'local' or scan.country_code == 'LCL' or scan.country == 'Internal' %}Local{% else %}Unknown{% endif %}</td>
-                        <td>{{ scan.device_type|default:"Unknown" }}</td>
-                        <td>{{ scan.browser|default:"Other" }} / {{ scan.os|default:"Other" }}</td>
-                        <td>{{ scan.display_source }}</td>
-                        <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{% if scan.referrer %}{{ scan.referrer|truncatechars:35 }}{% else %}None{% endif %}</td>
-                        <td>{% if scan.display_type == 'QR' %}<span class="bdg bdg-q">QR</span>{% else %}{{ scan.display_type }}{% endif %}</td>
-                    </tr>
-                    {% empty %}
-                    <tr><td colspan="8" style="text-align:center;padding:32px;color:var(--s5);font-weight:700;">No recent activity in this period.</td></tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-        </div>
-        {% if page_obj.has_other_pages %}
-        <div style="display:flex;align-items:center;justify-content:center;gap:12px;padding-top:16px;margin-top:16px;border-top:1px solid var(--s1);">
-            {% if page_obj.has_previous %}<a href="?range={{ selected_range }}&page={{ page_obj.previous_page_number }}" style="font-size:12px;font-weight:700;color:var(--p6);text-decoration:none;">← Prev</a>{% endif %}
-            <span style="font-size:12px;font-weight:700;color:var(--s5);">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
-            {% if page_obj.has_next %}<a href="?range={{ selected_range }}&page={{ page_obj.next_page_number }}" style="font-size:12px;font-weight:700;color:var(--p6);text-decoration:none;">Next →</a>{% endif %}
-        </div>
-        {% endif %}
+    <div id="recent-activity-wrapper">
+        {% include "dynamic_qr/partials/_recent_activity.html" %}
     </div>
 
     <div class="pdf-ftr">ScanPDF Analytics Report · {{ qr.qr_name }} · Generated {% now "M d, Y H:i" %}</div>
@@ -1087,7 +1123,9 @@ body { background:var(--s0); }
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px;">
     <div class="pdf-card" style="margin:0;">
       <div class="pdf-section-title">Top Countries</div>
-      {% if country_stats %}{% for item in country_stats|slice:":7" %}
+      {% if country_stats %}
+      <img id="pdf-img-topCountriesPie" src="" alt="Top Countries" style="display:none;width:120px;height:120px;object-fit:contain;margin:0 auto 10px;border-radius:4px;">
+      {% for item in country_stats|slice:":7" %}
       <div class="pdf-prog-row">
         <div class="pdf-prog-name">{{ item.country }}</div>
         <div class="pdf-prog-bg"><div class="pdf-prog-fill" style="width:{{ item.percentage }}%;"></div></div>
@@ -1097,7 +1135,9 @@ body { background:var(--s0); }
     </div>
     <div class="pdf-card" style="margin:0;">
       <div class="pdf-section-title">Top Cities</div>
-      {% if city_stats %}{% for item in city_stats|slice:":7" %}
+      {% if city_stats %}
+      <img id="pdf-img-topCitiesPie" src="" alt="Top Cities" style="display:none;width:120px;height:120px;object-fit:contain;margin:0 auto 10px;border-radius:4px;">
+      {% for item in city_stats|slice:":7" %}
       <div class="pdf-prog-row">
         <div class="pdf-prog-name">{{ item.city }}</div>
         <div class="pdf-prog-bg"><div class="pdf-prog-fill" style="width:{{ item.percentage }}%;"></div></div>
@@ -1112,7 +1152,9 @@ body { background:var(--s0); }
     <div class="pdf-card" style="margin:0;">
       <div class="pdf-section-title" style="margin-bottom:4px;">Top Referrers</div>
       <div style="font-size:9px;color:#64748b;margin-bottom:10px;">Which websites sent visitors</div>
-      {% if referrer_stats %}{% for item in referrer_stats|slice:":7" %}
+      {% if referrer_stats %}
+      <img id="pdf-img-topReferrersPie" src="" alt="Top Referrers" style="display:none;width:120px;height:120px;object-fit:contain;margin:0 auto 10px;border-radius:4px;">
+      {% for item in referrer_stats|slice:":7" %}
       <div class="pdf-prog-row">
         <div class="pdf-prog-name">{{ item.display_name|default:"Unknown" }}</div>
         <div class="pdf-prog-bg"><div class="pdf-prog-fill" style="width:{{ item.percentage }}%;"></div></div>
@@ -1123,7 +1165,9 @@ body { background:var(--s0); }
     <div class="pdf-card" style="margin:0;">
       <div class="pdf-section-title" style="margin-bottom:4px;">Traffic Sources</div>
       <div style="font-size:9px;color:#64748b;margin-bottom:10px;">Where your visitors came from</div>
-      {% if ts_stats %}{% for item in ts_stats %}
+      {% if ts_stats %}
+      <img id="pdf-img-trafficSourcesPie" src="" alt="Traffic Sources" style="display:none;width:120px;height:120px;object-fit:contain;margin:0 auto 10px;border-radius:4px;">
+      {% for item in ts_stats %}
       <div class="pdf-prog-row">
         <div class="pdf-prog-name">{{ item.source }}</div>
         <div class="pdf-prog-bg"><div class="pdf-prog-fill" style="width:{{ item.percentage }}%;"></div></div>
@@ -1487,33 +1531,57 @@ body { background:var(--s0); }
         makeDonut('osChart',      jd('d-os-labels'),      jd('d-os-data'),      ['#10b981','#3b82f6','#ec4899','#f59e0b',GRAY]);
     });
 
-    window.generatePDF = function() {
-        var overlay = document.getElementById('pdf-overlay');
-        overlay.classList.add('show');
+    window.generatePDF = async function() {
+        var shortCode = '{{ qr.short_code|escapejs }}';
+        var range = '{{ selected_range|escapejs }}';
+        var today = new Date().toISOString().slice(0, 10);
+        document.title = 'scanpdf-analytics-' + shortCode + '-' + range + '-' + today;
 
-        // Step 1: Capture every Chart.js canvas to a PNG data URL.
-        // canvas.toDataURL() always returns the FULL canvas bitmap,
-        // regardless of CSS overflow, viewport clipping, or scroll position.
-        // This eliminates ALL chart-clipping bugs at their root.
+        document.body.classList.add('printing-analytics');
+
+        // Step 1: Force all charts to resize and update without animation
+        if (typeof Chart !== 'undefined') {
+            Object.values(Chart.instances || {}).forEach(function(chart) {
+                chart.resize();
+                chart.update('none');
+            });
+        }
+
+        // Wait a frame to ensure drawing is complete
+        await new Promise(function(resolve) { requestAnimationFrame(resolve); });
+
+        // Step 2: Capture every Chart.js canvas to a PNG data URL.
         function captureChart(id) {
             var canvas = document.getElementById(id);
-            if (!canvas) return '';
+            if (!canvas || canvas.width === 0 || canvas.height === 0) return '';
             try { return canvas.toDataURL('image/png', 1.0); } catch(e) { return ''; }
         }
+
         var imgs = {
             activityChart: captureChart('activityChart'),
             ratioChart:    captureChart('ratioChart'),
             hourChart:     captureChart('hourChart'),
             dayChart:      captureChart('dayChart'),
+            topCountriesPie: captureChart('topCountriesPie'),
+            topStatesPie: captureChart('topStatesPie'),
+            topCitiesPie: captureChart('topCitiesPie'),
+            topReferrersPie: captureChart('topReferrersPie'),
+            trafficSourcesPie: captureChart('trafficSourcesPie'),
             deviceChart:   captureChart('deviceChart'),
             browserChart:  captureChart('browserChart'),
-            osChart:       captureChart('osChart'),
+            osChart:       captureChart('osChart')
         };
 
-        // Step 2: Inject captured images into #pdf-report <img> placeholders.
+        // Step 3: Inject captured images into #pdf-report <img> placeholders.
+        var imageLoadPromises = [];
         Object.keys(imgs).forEach(function(id) {
             var img = document.getElementById('pdf-img-' + id);
             if (img && imgs[id]) {
+                var p = new Promise(function(resolve) {
+                    img.onload = resolve;
+                    img.onerror = resolve;
+                });
+                imageLoadPromises.push(p);
                 img.src = imgs[id];
                 img.style.display = 'block';
             } else if (img) {
@@ -1521,8 +1589,7 @@ body { background:var(--s0); }
             }
         });
 
-        // Step 3: Build Recent Activity table rows from JSON data island
-        // (all records in range, not just the paginated page_obj).
+        // Step 4: Build Recent Activity table rows from JSON data island
         var activityData = jd('d-recent-activity') || [];
         var tbody = document.getElementById('pdf-activity-tbody');
         if (tbody) {
@@ -1532,7 +1599,7 @@ body { background:var(--s0); }
                 var rows = '';
                 activityData.forEach(function(row, i) {
                     var bg = (i % 2 !== 0) ? 'background:#f8fafc;' : '';
-                    rows += '<tr style="' + bg + 'border-bottom:1px solid #f1f5f9;">' +
+                    rows += '<tr style="' + bg + 'border-bottom:1px solid #f1f5f9;page-break-inside:avoid;break-inside:avoid;">' +
                         '<td style="padding:5px 4px;white-space:nowrap;">' + row.time + '</td>' +
                         '<td style="padding:5px 4px;word-break:break-all;">' + row.location + '</td>' +
                         '<td style="padding:5px 4px;white-space:nowrap;">' + row.location_source + '</td>' +
@@ -1547,41 +1614,181 @@ body { background:var(--s0); }
             }
         }
 
-        // Step 4: Show #pdf-report (fixed at 740px) and run html2pdf on it.
-        // We target this narrow element, NOT the wide #analytics-container,
-        // so no desktop-width content is ever scaled/clipped.
-        var pdfEl = document.getElementById('pdf-report');
-        pdfEl.style.display = 'block';
+        // Step 5: Wait for all images to finish loading and DOM to re-layout
+        await Promise.all(imageLoadPromises);
+        await new Promise(function(resolve) { requestAnimationFrame(function() { requestAnimationFrame(resolve); }); });
 
-        var shortCode = '{{ qr.short_code|escapejs }}';
-        var range = '{{ selected_range|escapejs }}';
-        var today = new Date().toISOString().slice(0, 10);
-        var filename = 'scanpdf-analytics-' + shortCode + '-' + range + '-' + today + '.pdf';
-
-        setTimeout(function() {
-            html2pdf().set({
-                margin: [8, 8, 8, 8],
-                filename: filename,
-                image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: {
-                    scale: 2,
-                    useCORS: true,
-                    logging: false,
-                    allowTaint: true,
-                    width: 740,
-                    windowWidth: 740
-                },
-                jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
-            }).from(pdfEl).save().then(function() {
-                pdfEl.style.display = 'none';
-                overlay.classList.remove('show');
-            }).catch(function(err) {
-                console.error('[PDF] Error:', err);
-                pdfEl.style.display = 'none';
-                overlay.classList.remove('show');
-                alert('PDF generation failed. Check browser console for details.');
-            });
-        }, 400);
+        // Step 6: Print
+        window.print();
     };
+
+    window.addEventListener('afterprint', function() {
+        document.body.classList.remove('printing-analytics');
+        setTimeout(function() {
+            document.title = 'Short URL Analytics: {{ qr.qr_name|escapejs }} — ScanPDF';
+        }, 1000);
+    });
+
+    // --- Recent Activity AJAX Pagination ---
+    var isActivityLoading = false;
+    
+    function loadRecentActivity(page, perPage) {
+        if (isActivityLoading) return;
+        isActivityLoading = true;
+        
+        var container = document.getElementById('recent-activity-wrapper');
+        if (!container) return;
+        
+        var card = container.querySelector('.an-card');
+        if (card) card.style.opacity = '0.5';
+        
+        var url = new URL(window.location.href);
+        url.searchParams.set('activity_page', page);
+        url.searchParams.set('activity_per_page', perPage);
+        url.searchParams.set('target', 'recent_activity');
+        
+        fetch(url.toString(), {
+            headers: {
+                'X-Requested-With': 'XMLHttpRequest'
+            }
+        })
+        .then(function(res) {
+            if (!res.ok) throw new Error('Network response was not ok');
+            return res.text();
+        })
+        .then(function(html) {
+            container.innerHTML = html;
+            // Update browser URL silently (remove target=recent_activity)
+            url.searchParams.delete('target');
+            window.history.replaceState({}, '', url.toString());
+        })
+        .catch(function(err) {
+            console.error('Error loading activity:', err);
+            if (card) card.style.opacity = '1';
+            var errEl = document.getElementById('activity-error');
+            if (errEl) errEl.style.display = 'block';
+        })
+        .finally(function() {
+            isActivityLoading = false;
+        });
+    }
+
+    document.addEventListener('click', function(e) {
+        var pgBtn = e.target.closest('.act-pg-btn');
+        if (pgBtn) {
+            e.preventDefault();
+            var page = pgBtn.getAttribute('data-page');
+            var perPageSelect = document.getElementById('activity-per-page');
+            var perPage = perPageSelect ? perPageSelect.value : 10;
+            if (perPage === 'custom') {
+                var cVal = document.getElementById('activity-custom-val');
+                perPage = cVal ? cVal.value : 10;
+            }
+            loadRecentActivity(page, perPage);
+            return;
+        }
+        
+        var applyBtn = e.target.closest('#activity-custom-apply');
+        if (applyBtn) {
+            e.preventDefault();
+            var cVal = document.getElementById('activity-custom-val');
+            var perPage = cVal ? parseInt(cVal.value, 10) : 10;
+            if (isNaN(perPage) || perPage < 1) perPage = 10;
+            loadRecentActivity(1, perPage);
+            return;
+        }
+    });
+    
+    document.addEventListener('change', function(e) {
+        if (e.target.id === 'activity-per-page') {
+            var val = e.target.value;
+            var customWrap = document.getElementById('activity-custom-wrap');
+            if (val === 'custom') {
+                if (customWrap) customWrap.style.display = 'flex';
+            } else {
+                if (customWrap) customWrap.style.display = 'none';
+                loadRecentActivity(1, val);
+            }
+        }
+    });
+
+    // --- PDF Export Button ---
+    const exportPdfBtn = document.getElementById('exportPdfBtn');
+    if (exportPdfBtn) {
+        exportPdfBtn.addEventListener('click', async function() {
+            if (this.disabled) return;
+            this.disabled = true;
+            const originalHTML = this.innerHTML;
+            try {
+                this.innerHTML = 'Preparing PDF...';
+                await generatePDF();
+            } catch (error) {
+                console.error('PDF export failed', error);
+            } finally {
+                this.disabled = false;
+                this.innerHTML = originalHTML;
+            }
+        });
+    }
+
+    // --- Custom Date Range Popup ---
+    const customDateBtn = document.getElementById('customDateBtn');
+    const customDatePopup = document.getElementById('customDatePopup');
+    const customDateCancel = document.getElementById('customDateCancel');
+    const customDateApply = document.getElementById('customDateApply');
+    const customStartDate = document.getElementById('customStartDate');
+    const customEndDate = document.getElementById('customEndDate');
+    const customDateError = document.getElementById('customDateError');
+
+    if (customDateBtn && customDatePopup) {
+        customDateBtn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            const isVisible = customDatePopup.style.display === 'block';
+            customDatePopup.style.display = isVisible ? 'none' : 'block';
+        });
+
+        customDateCancel.addEventListener('click', function(e) {
+            e.stopPropagation();
+            customDatePopup.style.display = 'none';
+            customDateError.style.display = 'none';
+        });
+
+        document.addEventListener('click', function(e) {
+            if (!customDatePopup.contains(e.target) && e.target !== customDateBtn) {
+                customDatePopup.style.display = 'none';
+            }
+        });
+
+        customDatePopup.addEventListener('click', function(e) {
+            e.stopPropagation();
+        });
+
+        customDateApply.addEventListener('click', function() {
+            const start = customStartDate.value;
+            const end = customEndDate.value;
+            if (!start || !end) {
+                customDateError.textContent = 'Both start and end dates are required.';
+                customDateError.style.display = 'block';
+                return;
+            }
+            if (start > end) {
+                customDateError.textContent = 'Start date must be before or equal to end date.';
+                customDateError.style.display = 'block';
+                return;
+            }
+            
+            // Build new URL preserving other params if needed
+            const url = new URL(window.location.href);
+            url.searchParams.set('range', 'custom');
+            url.searchParams.set('start', start);
+            url.searchParams.set('end', end);
+            
+            // Reset activity pagination if present
+            url.searchParams.delete('activity_page');
+            
+            window.location.href = url.toString();
+        });
+    }
+
 })();
 {% endblock %}

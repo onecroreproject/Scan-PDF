@@ -1162,6 +1162,129 @@ def dqr_short_url_view(request):
         return JsonResponse({'error': str(e)}, status=500)
 
 
+def get_analytics_date_range(request, max_history_days):
+    """Unified date range calculation for Short URL Analytics."""
+    from django.utils import timezone
+    from datetime import datetime, timedelta, time
+    
+    selected_range = request.GET.get('range', '7days')
+    
+    tz = timezone.get_current_timezone()
+    local_now = timezone.localtime(timezone.now(), tz)
+    local_today = local_now.date()
+    
+    start_date = None
+    end_date = None
+    prev_start = None
+    prev_end = None
+    granularity = 'daily'
+    
+    def add_months(sourcedate, months):
+        month = sourcedate.month - 1 + months
+        year = sourcedate.year + month // 12
+        month = month % 12 + 1
+        day = min(sourcedate.day, [31,
+            29 if year % 4 == 0 and not year % 100 == 0 or year % 400 == 0 else 28,
+            31, 30, 31, 30, 31, 31, 30, 31, 30, 31][month - 1])
+        return sourcedate.replace(year=year, month=month, day=day)
+    
+    if selected_range == 'custom':
+        start_str = request.GET.get('start')
+        end_str = request.GET.get('end')
+        try:
+            custom_start_date = datetime.strptime(start_str, "%Y-%m-%d").date()
+            custom_end_date = datetime.strptime(end_str, "%Y-%m-%d").date()
+            if custom_start_date > custom_end_date:
+                raise ValueError
+            
+            if (local_today - custom_start_date).days > max_history_days:
+                custom_start_date = local_today - timedelta(days=max_history_days)
+            
+            local_start = datetime.combine(custom_start_date, time.min)
+            local_end = datetime.combine(custom_end_date + timedelta(days=1), time.min)
+            
+            start_date = timezone.make_aware(local_start, tz)
+            end_date = timezone.make_aware(local_end, tz)
+            
+            delta_days = (custom_end_date - custom_start_date).days + 1
+            prev_start = start_date - timedelta(days=delta_days)
+            prev_end = start_date
+            
+            if delta_days <= 1:
+                granularity = 'hourly'
+            elif delta_days <= 60:
+                granularity = 'daily'
+            else:
+                granularity = 'monthly'
+                
+        except (ValueError, TypeError):
+            selected_range = '7days'
+            
+    if selected_range == 'today':
+        local_start = datetime.combine(local_today, time.min)
+        local_end = local_start + timedelta(days=1)
+        
+        start_date = timezone.make_aware(local_start, tz)
+        end_date = timezone.make_aware(local_end, tz)
+        
+        prev_start = start_date - timedelta(days=1)
+        prev_end = start_date
+        granularity = 'hourly'
+        
+    elif selected_range in ['7d', '7days']:
+        selected_range = '7days'
+        local_start = datetime.combine(local_today - timedelta(days=6), time.min)
+        local_end = datetime.combine(local_today + timedelta(days=1), time.min)
+        
+        start_date = timezone.make_aware(local_start, tz)
+        end_date = timezone.make_aware(local_end, tz)
+        
+        prev_start = start_date - timedelta(days=7)
+        prev_end = start_date
+        granularity = 'daily'
+        
+    elif selected_range == '28days':
+        local_start = datetime.combine(local_today - timedelta(days=27), time.min)
+        local_end = datetime.combine(local_today + timedelta(days=1), time.min)
+        
+        start_date = timezone.make_aware(local_start, tz)
+        end_date = timezone.make_aware(local_end, tz)
+        
+        prev_start = start_date - timedelta(days=28)
+        prev_end = start_date
+        granularity = 'daily'
+        
+    elif selected_range in ['1month', '30days', '30d']:
+        selected_range = '1month'
+        target_start = add_months(local_today, -1) + timedelta(days=1)
+        
+        local_start = datetime.combine(target_start, time.min)
+        local_end = datetime.combine(local_today + timedelta(days=1), time.min)
+        
+        start_date = timezone.make_aware(local_start, tz)
+        end_date = timezone.make_aware(local_end, tz)
+        
+        prev_start = timezone.make_aware(datetime.combine(add_months(local_today, -2) + timedelta(days=1), time.min), tz)
+        prev_end = start_date
+        granularity = 'daily'
+        
+    elif selected_range == '12months':
+        local_start = datetime.combine(add_months(local_today, -12) + timedelta(days=1), time.min)
+        local_end = datetime.combine(local_today + timedelta(days=1), time.min)
+        
+        start_date = timezone.make_aware(local_start, tz)
+        end_date = timezone.make_aware(local_end, tz)
+        
+        prev_start = timezone.make_aware(datetime.combine(add_months(local_today, -24) + timedelta(days=1), time.min), tz)
+        prev_end = start_date
+        granularity = 'monthly'
+        
+    min_allowed_date = timezone.make_aware(datetime.combine(local_today - timedelta(days=max_history_days), time.min), tz)
+    if start_date < min_allowed_date:
+        start_date = min_allowed_date
+        
+    return start_date, end_date, prev_start, prev_end, selected_range, granularity
+
 @dqr_login_required
 def dqr_short_url_analytics_view(request, qr_id):
     """Detailed analytics for a specific Short URL, matching QR excellence."""
@@ -1188,73 +1311,10 @@ def dqr_short_url_analytics_view(request, qr_id):
     else:
         max_history_days = 7  # Default free: 7 days if analytics disabled/not configured
             
-    selected_range = request.GET.get('range', '7days')
-    now = timezone.now()
-    today = timezone.localdate()
-    history_clamped = False
-    
-    range_map = {
-        'today': 1,
-        '7d': 7,
-        '7days': 7,
-        '28days': 28,
-        '1month': 30,
-        '30days': 30,
-        '30d': 30,
-        '12months': 365
-    }
-    
-    req_days = range_map.get(selected_range, 7)
-    if req_days > max_history_days:
-        history_clamped = True
-        req_days = max_history_days
-        
-    start_day = today - timedelta(days=req_days - 1)
-    start_date = timezone.make_aware(datetime.combine(start_day, datetime.min.time()))
-    end_date = timezone.make_aware(datetime.combine(today + timedelta(days=1), datetime.min.time()))
-    prev_start = start_date - timedelta(days=req_days)
-    prev_end = start_date
+    start_date, end_date, prev_start, prev_end, selected_range, chart_granularity = get_analytics_date_range(request, max_history_days)
+    history_clamped = (timezone.make_aware(datetime.combine(timezone.localdate() - timedelta(days=max_history_days), datetime.min.time())) == start_date)
     visit_results = ('redirect_success', 'gps_required', 'gps_denied')
         
-    # 2. CSV Export
-    if request.GET.get('export') == 'csv':
-        export_pf = get_plan_feature(request.user, 'analytics_export')
-        if not export_pf or not export_pf.enabled:
-            return HttpResponse("Your current plan does not support Analytics Export. Please upgrade.", status=403)
-            
-        # Optional: Increment export usage if tracking usage count
-        if export_pf.usage_limit and not export_pf.is_unlimited:
-            if getattr(export_pf, 'usage_count', 0) >= export_pf.usage_limit:
-                return HttpResponse("Export limit reached.", status=403)
-            # You would normally increment it here via a service method
-            
-        response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = f'attachment; filename="analytics_{qr.short_code}.csv"'
-        writer = csv.writer(response)
-        writer.writerow(['Timestamp', 'Short Code', 'Header', 'Result', 'Status', 'Country', 'City', 'Device', 'Browser', 'OS', 'Referrer', 'Type', 'Is Bot'])
-        
-        for record in qr.analytics.filter(
-            timestamp__gte=start_date,
-            timestamp__lt=end_date,
-            redirect_result__in=visit_results,
-        ).order_by('-timestamp'):
-            writer.writerow([
-                record.timestamp.strftime('%Y-%m-%d %H:%M:%S'),
-                qr.short_code,
-                qr.header or '',
-                record.redirect_result,
-                record.http_status,
-                record.country,
-                record.city,
-                record.device_type,
-                record.browser,
-                record.os,
-                record.referrer or 'Direct',
-                record.source,
-                'Yes' if record.is_bot else 'No'
-            ])
-        return response
-
     # 3. Base Queries
     base_query = qr.analytics.filter(
         timestamp__gte=start_date,
@@ -1500,9 +1560,9 @@ def dqr_short_url_analytics_view(request, qr_id):
                 except: pass
             return ts_val
 
-        # Zero-padded time series buckets
+        # Time Series based on chart_granularity
         time_series = []
-        if selected_range == 'today':
+        if chart_granularity == 'hourly':
             raw_ts = list(base_query.annotate(ts=TruncHour('timestamp')).values('ts').annotate(
                 count=Count('id'), unique=Count('visitor_id', distinct=True),
                 qr=Count('id', filter=Q(is_qr_scan=True)),
@@ -1512,14 +1572,19 @@ def dqr_short_url_analytics_view(request, qr_id):
             ts_dict = {}
             for r in raw_ts:
                 if r['ts']:
-                    try: ts_dict[safe_dt(r['ts']).strftime('%I %p')] = r
+                    try: ts_dict[safe_dt(r['ts']).strftime('%Y-%m-%d %H')] = r
                     except: pass
-            for i in range(24):
-                hr_label = (start_date + timedelta(hours=i)).strftime('%I %p')
-                r = ts_dict.get(hr_label, {'count': 0, 'unique': 0, 'qr': 0, 'human': 0, 'bot': 0})
+            
+            hours = int((end_date - start_date).total_seconds() // 3600)
+            if hours <= 0: hours = 24
+            for i in range(hours):
+                dt = start_date + timedelta(hours=i)
+                key = dt.strftime('%Y-%m-%d %H')
+                hr_label = dt.strftime('%b %d, %I %p') if hours > 24 else dt.strftime('%I %p')
+                r = ts_dict.get(key, {'count': 0, 'unique': 0, 'qr': 0, 'human': 0, 'bot': 0})
                 time_series.append({'label': hr_label, 'count': r['count'], 'unique': r['unique'],
                                     'qr': r['qr'], 'human': r.get('human', 0), 'bot': r.get('bot', 0)})
-        elif selected_range == '12months':
+        elif chart_granularity == 'monthly':
             raw_ts = list(base_query.annotate(ts=TruncMonth('timestamp')).values('ts').annotate(
                 count=Count('id'), unique=Count('visitor_id', distinct=True),
                 qr=Count('id', filter=Q(is_qr_scan=True)),
@@ -1529,14 +1594,27 @@ def dqr_short_url_analytics_view(request, qr_id):
             ts_dict = {}
             for r in raw_ts:
                 if r['ts']:
-                    try: ts_dict[safe_dt(r['ts']).strftime('%b %Y')] = r
+                    try: ts_dict[safe_dt(r['ts']).strftime('%Y-%m')] = r
                     except: pass
-            for i in range(12):
-                m_label = (now - timedelta(days=365) + timedelta(days=30*i)).strftime('%b %Y')
-                r = ts_dict.get(m_label, {'count': 0, 'unique': 0, 'qr': 0, 'human': 0, 'bot': 0})
+                    
+            def add_months(sourcedate, months):
+                month = sourcedate.month - 1 + months
+                year = sourcedate.year + month // 12
+                month = month % 12 + 1
+                day = min(sourcedate.day, [31,
+                    29 if year % 4 == 0 and not year % 100 == 0 or year % 400 == 0 else 28,
+                    31, 30, 31, 30, 31, 31, 30, 31, 30, 31][month - 1])
+                return sourcedate.replace(year=year, month=month, day=day)
+            
+            curr = start_date
+            while curr < end_date:
+                key = curr.strftime('%Y-%m')
+                m_label = curr.strftime('%b %Y')
+                r = ts_dict.get(key, {'count': 0, 'unique': 0, 'qr': 0, 'human': 0, 'bot': 0})
                 time_series.append({'label': m_label, 'count': r['count'], 'unique': r['unique'],
                                     'qr': r['qr'], 'human': r.get('human', 0), 'bot': r.get('bot', 0)})
-        else:
+                curr = timezone.make_aware(datetime.combine(add_months(curr.date(), 1), datetime.min.time()))
+        else: # daily
             raw_ts = list(base_query.annotate(ts=TruncDate('timestamp')).values('ts').annotate(
                 count=Count('id'), unique=Count('visitor_id', distinct=True),
                 qr=Count('id', filter=Q(is_qr_scan=True)),
@@ -1546,15 +1624,20 @@ def dqr_short_url_analytics_view(request, qr_id):
             ts_dict = {}
             for r in raw_ts:
                 if r['ts']:
-                    try: ts_dict[safe_dt(r['ts']).strftime('%b %d')] = r
+                    try: ts_dict[safe_dt(r['ts']).strftime('%Y-%m-%d')] = r
                     except: pass
-            for i in range(req_days):
-                d_label = (start_day + timedelta(days=i)).strftime('%b %d')
-                r = ts_dict.get(d_label, {'count': 0, 'unique': 0, 'qr': 0, 'human': 0, 'bot': 0})
+            
+            days = (end_date - start_date).days
+            if days <= 0: days = 1
+            for i in range(days):
+                dt = start_date + timedelta(days=i)
+                key = dt.strftime('%Y-%m-%d')
+                d_label = dt.strftime('%b %d')
+                r = ts_dict.get(key, {'count': 0, 'unique': 0, 'qr': 0, 'human': 0, 'bot': 0})
                 time_series.append({'label': d_label, 'count': r['count'], 'unique': r['unique'],
                                     'qr': r['qr'], 'human': r.get('human', 0), 'bot': r.get('bot', 0)})
                 
-            first_unique_visit_ids = {}
+        first_unique_visit_ids = {}
         for scan in base_query.filter(is_bot=False).exclude(visitor_id__isnull=True).exclude(visitor_id='').order_by('timestamp', 'id'):
             visitor_key = (scan.visitor_id or '').strip()
             if visitor_key and visitor_key not in first_unique_visit_ids:
@@ -1681,8 +1764,15 @@ def dqr_short_url_analytics_view(request, qr_id):
     utm_terms = [{'label': row['utm_term'], 'count': row['count'], 'percentage': round((row['count'] / total_clicks) * 100, 2) if total_clicks else 0} for row in utm_terms_raw]
     utm_contents = [{'label': row['utm_content'], 'count': row['count'], 'percentage': round((row['count'] / total_clicks) * 100, 2) if total_clicks else 0} for row in utm_contents_raw]
 
-    paginator = Paginator(recent_scans_qs, 10)
-    page_number = request.GET.get('page')
+    try:
+        per_page = int(request.GET.get('activity_per_page', 10))
+        if per_page < 1: per_page = 10
+        if per_page > 500: per_page = 500
+    except ValueError:
+        per_page = 10
+
+    paginator = Paginator(recent_scans_qs, per_page)
+    page_number = request.GET.get('activity_page', 1)
     page_obj = paginator.get_page(page_number)
 
     source_display = {
@@ -1822,9 +1912,33 @@ def dqr_short_url_analytics_view(request, qr_id):
     js_recent_activity = json.dumps(_pdf_records)
     # ─────────────────────────────────────────────────────────────────────────
 
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest' and request.GET.get('target') == 'recent_activity':
+        return render(request, 'dynamic_qr/partials/_recent_activity.html', {
+            'page_obj': page_obj,
+            'per_page': per_page,
+            'qr': qr,
+            'selected_range': selected_range
+        })
+
+    range_labels = {
+        'today': 'Today',
+        '7days': '7 Days',
+        '28days': '28 Days',
+        '1month': '1 Month',
+        '12months': '12 Months'
+    }
+    
+    if selected_range == 'custom' and start_date and prev_end:
+        # prev_end is the exact start_date, but to show the end date we subtract 1 day from end_date
+        display_end = end_date - timedelta(days=1)
+        period_label = f"{start_date.strftime('%b %d, %Y')} - {display_end.strftime('%b %d, %Y')}"
+    else:
+        period_label = range_labels.get(selected_range, '7 Days')
+
     return render(request, 'dynamic_qr/short_url_analytics.html', {
         'qr': qr,
         'selected_range': selected_range,
+        'period_label': period_label,
         'history_clamped': history_clamped,
         'max_history_days': max_history_days,
         'total_clicks': total_clicks,
