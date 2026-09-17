@@ -3,8 +3,7 @@ from image_processor.views import IMAGE_TOOLS
 from django.urls import reverse
 
 def tools_processor(request):
-    """Make all tools available to all templates, grouped by category."""
-    grouped_tools = {}
+    """Make all tools available to all templates, strictly grouped by category to avoid cross-contamination."""
     
     # Combined dictionary for search metadata
     all_combined = {**TOOLS, **IMAGE_TOOLS}
@@ -13,51 +12,74 @@ def tools_processor(request):
     CATEGORY_LABELS = {
         'convert': 'Convert to/from PDF',
         'pdf-tools': 'PDF Tools',
-        'image-tools': 'Image Tools',
-        'image-pro': 'Image Tools',
-        'image-conv': 'Image Tools',
+        'pdf-edit': 'PDF Edit & Security',
+        'pdf-adv': 'Advanced PDF',
+        'image-tools': 'Image Editing',
+        'image-pro': 'Image Editing',
+        'image-conv': 'Image Converter',
         'generate': 'Smart Creators',
         'ai-tools': 'AI Generation',
         'other': 'Utilities',
         'audio-tools': 'Audio Editor',
     }
 
-    CATEGORY_ORDER = [
-        'convert', 'pdf-tools', 'image-tools', 'image-pro', 'image-conv',
-        'generate', 'ai-tools', 'other', 'audio-tools'
-    ]
+    # Desired order for PDF Tools Mega Menu
+    PDF_CATEGORY_ORDER = ['convert', 'pdf-tools', 'pdf-edit', 'pdf-adv', 'other']
+    
+    # Desired order for Image Tools Mega Menu
+    IMAGE_CATEGORY_ORDER = ['image-tools', 'image-pro', 'image-conv', 'generate', 'ai-tools']
 
-    for slug, data in all_combined.items():
-        # Skip if coming soon and marked as such in the source
-        if data.get('is_coming_soon') and slug in IMAGE_TOOLS:
-            continue
-            
+    pdf_tools_grouped = {}
+    for slug, data in TOOLS.items():
         cat = data.get('category', 'other')
-        if cat not in grouped_tools:
-            grouped_tools[cat] = {
+        if cat not in pdf_tools_grouped:
+            pdf_tools_grouped[cat] = {
                 'label': CATEGORY_LABELS.get(cat, cat.replace('-', ' ').title()),
                 'tools': []
             }
-
-        def _app_name(s):
-            if slug in IMAGE_TOOLS: return 'image_processor'
-            return 'converter'
-        grouped_tools[cat]['tools'].append({
+        pdf_tools_grouped[cat]['tools'].append({
             'title': data.get('title'),
             'icon': data.get('icon'),
             'slug': slug,
             'is_coming_soon': data.get('is_coming_soon', False),
-            'app_name': _app_name(slug)
+            'app_name': 'converter'
         })
 
-    # Re-order the dict
-    ordered = {}
-    for cat in CATEGORY_ORDER:
-        if cat in grouped_tools:
-            ordered[cat] = grouped_tools[cat]
-    for cat, info in grouped_tools.items():
-        if cat not in ordered:
-            ordered[cat] = info
+    image_tools_grouped = {}
+    for slug, data in IMAGE_TOOLS.items():
+        if data.get('is_coming_soon'):
+            continue
+            
+        cat = data.get('category', 'other')
+        if cat not in image_tools_grouped:
+            image_tools_grouped[cat] = {
+                'label': CATEGORY_LABELS.get(cat, cat.replace('-', ' ').title()),
+                'tools': []
+            }
+        image_tools_grouped[cat]['tools'].append({
+            'title': data.get('title'),
+            'icon': data.get('icon'),
+            'slug': slug,
+            'is_coming_soon': data.get('is_coming_soon', False),
+            'app_name': 'image_processor'
+        })
+
+    # Re-order the dicts
+    ordered_pdf = {}
+    for cat in PDF_CATEGORY_ORDER:
+        if cat in pdf_tools_grouped:
+            ordered_pdf[cat] = pdf_tools_grouped[cat]
+    for cat, info in pdf_tools_grouped.items():
+        if cat not in ordered_pdf:
+            ordered_pdf[cat] = info
+
+    ordered_image = {}
+    for cat in IMAGE_CATEGORY_ORDER:
+        if cat in image_tools_grouped:
+            ordered_image[cat] = image_tools_grouped[cat]
+    for cat, info in image_tools_grouped.items():
+        if cat not in ordered_image:
+            ordered_image[cat] = info
 
     def _tool_url(s):
         if s in IMAGE_TOOLS:
@@ -159,8 +181,33 @@ def tools_processor(request):
         'url': reverse('video_downloader:dailymotion_downloader')
     }
 
+    # Video Tools and Link Tools for global navigation
+    video_tools = [
+        {'title': 'Converter', 'icon': 'video', 'url': reverse('converter:convert_page', args=['video-converter'])},
+        {'title': 'Universal Downloader', 'icon': 'download-cloud', 'url': reverse('video_downloader:index')},
+        {'title': 'YouTube', 'icon': 'youtube', 'url': reverse('video_downloader:youtube_downloader')},
+        {'title': 'Trim Video', 'icon': 'scissors', 'url': reverse('media_tools:trim_video')},
+        {'title': 'Merge Video', 'icon': 'combine', 'url': reverse('media_tools:merge_video')},
+        {'title': 'Crop Video', 'icon': 'crop', 'url': reverse('media_tools:crop')},
+        {'title': 'Resize Video', 'icon': 'scaling', 'url': reverse('media_tools:resize_video')},
+        {'title': 'Facebook', 'icon': 'facebook', 'url': reverse('video_downloader:facebook_downloader')},
+        {'title': 'X (Twitter)', 'icon': 'twitter', 'url': reverse('video_downloader:twitter_downloader')},
+        {'title': 'Instagram', 'icon': 'instagram', 'url': reverse('video_downloader:instagram_downloader')},
+        {'title': 'TikTok', 'icon': 'music-2', 'url': reverse('video_downloader:tiktok_downloader')},
+        {'title': 'Vimeo', 'icon': 'video', 'url': reverse('video_downloader:vimeo_downloader')},
+        {'title': 'Reddit', 'icon': 'hash', 'url': reverse('video_downloader:reddit_downloader')},
+        {'title': 'Dailymotion', 'icon': 'play-circle', 'url': reverse('video_downloader:dailymotion_downloader')},
+    ]
+
+    link_tools = [
+        {'title': 'Dynamic QR', 'icon': 'qr-code', 'url': reverse('dynamic_qr:dashboard') if is_dqr_user else reverse('dynamic_qr:login')},
+        {'title': 'Short URL', 'icon': 'link', 'url': reverse('dynamic_qr:short_url') if is_dqr_user else reverse('dynamic_qr:login')},
+    ]
 
     return {
-        'grouped_tools': ordered,
+        'pdf_tools_grouped': ordered_pdf,
+        'image_tools_grouped': ordered_image,
+        'video_tools': video_tools,
+        'link_tools': link_tools,
         'all_tools_metadata': metadata,
     }

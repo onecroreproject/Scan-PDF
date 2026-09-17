@@ -1,0 +1,83 @@
+<div class="an-card print-hide" id="recent-activity-container">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
+        <div class="an-title" style="margin-bottom:0;">Recent Activity</div>
+        <div class="activity-page-size" style="display:flex;align-items:center;gap:8px;font-size:12px;color:var(--s6);font-weight:600;">
+            Rows per page:
+            <select id="activity-per-page" style="padding:4px 8px;border:1px solid var(--s2);border-radius:4px;font-size:12px;background:#fff;color:var(--s8);">
+                <option value="10" {% if per_page == 10 %}selected{% endif %}>10</option>
+                <option value="50" {% if per_page == 50 %}selected{% endif %}>50</option>
+                <option value="100" {% if per_page == 100 %}selected{% endif %}>100</option>
+                <option value="custom" {% if per_page != 10 and per_page != 50 and per_page != 100 %}selected{% endif %}>Custom</option>
+            </select>
+            <div id="activity-custom-wrap" style="{% if per_page != 10 and per_page != 50 and per_page != 100 %}display:flex;{% else %}display:none;{% endif %}align-items:center;gap:4px;">
+                <input type="number" id="activity-custom-val" value="{{ per_page }}" min="1" max="500" style="width:50px;padding:4px;border:1px solid var(--s2);border-radius:4px;font-size:12px;text-align:center;">
+                <button id="activity-custom-apply" style="padding:4px 8px;background:var(--p6);color:#fff;border:none;border-radius:4px;font-size:12px;cursor:pointer;">Apply</button>
+            </div>
+        </div>
+    </div>
+    
+    <div class="unique-help" style="margin-top:-8px;margin-bottom:12px;"><span>*</span> <span>Unique visitor</span></div>
+    
+    <div class="an-tbl-wrap" style="position:relative;">
+        <table class="an-tbl">
+            <thead>
+                <tr><th>Time</th><th>Location</th><th>Location Source</th><th>Device</th><th>Browser / OS</th><th>Traffic Source</th><th>Referrer</th><th>Type</th></tr>
+            </thead>
+            <tbody>
+                {% for scan in page_obj %}
+                <tr>
+                    <td style="white-space:nowrap;">{{ scan.timestamp|date:"M d, H:i" }}{% if scan.is_unique_visit %}<span class="unique-marker" title="Unique visitor">*</span>{% endif %}</td>
+                    <td>{% if scan.location_source == 'local' or scan.country_code == 'LCL' or scan.country == 'Internal' %}Local Network{% elif scan.location_source == 'gps' %}{% if scan.city and scan.city not in 'Unknown,' and scan.country and scan.country not in 'Unknown,' %}{% if scan.region and scan.region not in 'Unknown,' %}<span title="Lat: {{ scan.gps_latitude|floatformat:4 }} Lng: {{ scan.gps_longitude|floatformat:4 }}">{{ scan.city }}, {{ scan.region }}, {{ scan.country }}</span>{% else %}<span title="Lat: {{ scan.gps_latitude|floatformat:4 }} Lng: {{ scan.gps_longitude|floatformat:4 }}">{{ scan.city }}, {{ scan.country }}</span>{% endif %}{% elif scan.gps_latitude %}<span title="GPS coordinates (area resolving)">{{ scan.gps_latitude|floatformat:4 }}, {{ scan.gps_longitude|floatformat:4 }}</span>{% else %}Unknown{% endif %}{% elif scan.city and scan.city != 'Unknown' and scan.country and scan.country != 'Unknown' %}{% if scan.region and scan.region != 'Unknown' %}{{ scan.city }}, {{ scan.region }}, {{ scan.country }}{% else %}{{ scan.city }}, {{ scan.country }}{% endif %}{% else %}Unknown{% endif %}</td>
+                    <td>{% if scan.location_source == 'gps' %}GPS{% elif scan.location_source == 'ip' %}IP Approximate{% elif scan.location_source == 'local' or scan.country_code == 'LCL' or scan.country == 'Internal' %}Local{% else %}Unknown{% endif %}</td>
+                    <td>{{ scan.device_type|default:"Unknown" }}</td>
+                    <td>{{ scan.browser|default:"Other" }} / {{ scan.os|default:"Other" }}</td>
+                    <td>{{ scan.display_source }}</td>
+                    <td style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">{% if scan.referrer %}{{ scan.referrer|truncatechars:35 }}{% else %}None{% endif %}</td>
+                    <td>{% if scan.display_type == 'QR' %}<span class="bdg bdg-q">QR</span>{% else %}{{ scan.display_type }}{% endif %}</td>
+                </tr>
+                {% empty %}
+                <tr><td colspan="8" style="text-align:center;padding:32px;color:var(--s5);font-weight:700;">No recent activity in this period.</td></tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    
+    <div class="activity-pagination" style="display:flex;align-items:center;justify-content:space-between;padding-top:16px;margin-top:16px;border-top:1px solid var(--s1);">
+        <div style="font-size:12px;font-weight:600;color:var(--s5);">
+            {% if page_obj.paginator.count > 0 %}
+            Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ page_obj.paginator.count }} activities
+            {% else %}
+            Showing 0 of 0 activities
+            {% endif %}
+        </div>
+        
+        {% if page_obj.has_other_pages %}
+        <div style="display:flex;align-items:center;gap:4px;">
+            {% if page_obj.has_previous %}
+            <a href="#" data-page="{{ page_obj.previous_page_number }}" class="act-pg-btn" style="font-size:12px;font-weight:600;color:var(--p6);padding:4px 8px;text-decoration:none;border-radius:4px;border:1px solid var(--s2);">← Prev</a>
+            {% else %}
+            <span style="font-size:12px;font-weight:600;color:var(--s3);padding:4px 8px;border-radius:4px;border:1px solid var(--s1);cursor:not-allowed;">← Prev</span>
+            {% endif %}
+            
+            {% for i in page_obj.paginator.page_range %}
+                {% if i == 1 or i == page_obj.paginator.num_pages or i >= page_obj.number|add:"-2" and i <= page_obj.number|add:"2" %}
+                    {% if page_obj.number == i %}
+                    <span style="font-size:12px;font-weight:700;color:#fff;background:var(--p6);padding:4px 10px;border-radius:4px;">{{ i }}</span>
+                    {% else %}
+                    <a href="#" data-page="{{ i }}" class="act-pg-btn" style="font-size:12px;font-weight:600;color:var(--s7);padding:4px 10px;text-decoration:none;border-radius:4px;border:1px solid var(--s2);">{{ i }}</a>
+                    {% endif %}
+                {% elif i == page_obj.number|add:"-3" or i == page_obj.number|add:"3" %}
+                    <span style="font-size:12px;font-weight:600;color:var(--s4);padding:4px 8px;">...</span>
+                {% endif %}
+            {% endfor %}
+            
+            {% if page_obj.has_next %}
+            <a href="#" data-page="{{ page_obj.next_page_number }}" class="act-pg-btn" style="font-size:12px;font-weight:600;color:var(--p6);padding:4px 8px;text-decoration:none;border-radius:4px;border:1px solid var(--s2);">Next →</a>
+            {% else %}
+            <span style="font-size:12px;font-weight:600;color:var(--s3);padding:4px 8px;border-radius:4px;border:1px solid var(--s1);cursor:not-allowed;">Next →</span>
+            {% endif %}
+        </div>
+        {% endif %}
+    </div>
+    <div id="activity-error" style="display:none;font-size:12px;color:var(--red);font-weight:600;text-align:center;margin-top:8px;">Unable to load activity. Please try again.</div>
+</div>
