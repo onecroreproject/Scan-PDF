@@ -3,7 +3,7 @@ from django.shortcuts import redirect
 
 def superuser_required(view_func):
     def check_perms(user):
-        return user.is_active and user.is_superuser
+        return user.is_active and (user.is_superuser or user.is_staff)
     
     actual_decorator = user_passes_test(
         check_perms,
@@ -13,7 +13,7 @@ def superuser_required(view_func):
     def wrapped_view(request, *args, **kwargs):
         if not request.user.is_authenticated:
             return redirect('dynamic_qr:login')
-        if not (request.user.is_active and request.user.is_superuser):
+        if not (request.user.is_active and (request.user.is_superuser or request.user.is_staff)):
             return redirect('dynamic_qr:dashboard')
         return actual_decorator(view_func)(request, *args, **kwargs)
         

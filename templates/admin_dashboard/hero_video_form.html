@@ -47,6 +47,15 @@
                 <p class="text-xs text-surface-500 mt-2">Supported formats: .mp4, .webm, .mov, .m4v</p>
             </div>
 
+            <!-- Video Target -->
+            <div>
+                <label class="block text-sm font-bold text-surface-900 mb-2">Video For</label>
+                {{ form.section }}
+                {% if form.section.help_text %}
+                <p class="text-xs text-surface-500 mt-1">{{ form.section.help_text }}</p>
+                {% endif %}
+            </div>
+
             <div class="grid grid-cols-2 gap-6">
                 <!-- Order -->
                 <div>

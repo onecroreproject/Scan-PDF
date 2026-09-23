@@ -76,9 +76,17 @@
                         <span class="text-sm font-black text-surface-900">{{ data.qr_count }}</span>
                     </td>
                     <td class="px-6 py-4 text-right">
-                        <a href="{% url 'custom_admin:user_detail' data.user.id %}" class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-surface-100 text-surface-500 hover:bg-brand-50 hover:text-brand-600 transition-colors">
-                            <i data-lucide="eye" class="w-4 h-4"></i>
-                        </a>
+                        <div class="flex items-center justify-end gap-2">
+                            <a href="{% url 'custom_admin:user_detail' data.user.id %}" class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-surface-100 text-surface-500 hover:bg-brand-50 hover:text-brand-600 transition-colors">
+                                <i data-lucide="eye" class="w-4 h-4"></i>
+                            </a>
+                            <form method="POST" action="{% url 'custom_admin:user_delete' data.user.id %}" onsubmit="return confirm('Delete User?\n\nThis will permanently delete this user and related owned data. This action cannot be undone.');" class="inline">
+                                {% csrf_token %}
+                                <button type="submit" class="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-red-50 text-red-500 hover:bg-red-100 hover:text-red-600 transition-colors" title="Delete User">
+                                    <i data-lucide="trash-2" class="w-4 h-4"></i>
+                                </button>
+                            </form>
+                        </div>
                     </td>
                 </tr>
                 {% empty %}

@@ -4,28 +4,24 @@
 
 <head>
     {% block meta %}
-<meta name="description" content="{{ seo_description }}">
-<meta name="keywords" content="{{ seo_keywords }}">
+<meta name="description" content="{{ seo_description|default:'ScanPDF — Scan Smart. Share Fast. Convert Word, PowerPoint, Excel, HTML to PDF and back. Merge, split, compress PDFs. Fast, free, and secure.' }}">
+<meta name="keywords" content="{{ seo_keywords|default:'scan pdf, file converter, word to pdf, pptx to pdf, excel to pdf, pdf tools, merge pdf, split pdf, compress pdf, online converter' }}">
 <meta name="robots" content="index, follow">
 
 <link rel="canonical" href="{{ request.scheme }}://{{ request.get_host }}{{ request.path }}">
 
 <meta property="og:type" content="website">
-<meta property="og:title" content="{{ seo_title }}">
-<meta property="og:description" content="{{ seo_description }}">
+<meta property="og:title" content="{{ seo_title|default:'ScanPDF' }}">
+<meta property="og:description" content="{{ seo_description|default:'ScanPDF — Scan Smart. Share Fast.' }}">
 <meta property="og:url" content="{{ request.scheme }}://{{ request.get_host }}{{ request.path }}">
 
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="{{ seo_title }}">
-<meta name="twitter:description" content="{{ seo_description }}">
+<meta name="twitter:title" content="{{ seo_title|default:'ScanPDF' }}">
+<meta name="twitter:description" content="{{ seo_description|default:'ScanPDF — Scan Smart. Share Fast.' }}">
 {% endblock %}
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description"
-        content="ScanPDF — Scan Smart. Share Fast. Convert Word, PowerPoint, Excel, HTML to PDF and back. Merge, split, compress PDFs. Fast, free, and secure.">
-    <meta name="keywords"
-        content="scan pdf, file converter, word to pdf, pptx to pdf, excel to pdf, pdf tools, merge pdf, split pdf, compress pdf, online converter">
-    <meta name="author" content="ScanPDF">
+<meta name="author" content="ScanPDF">
     <meta name="theme-color" content="#7c3aed">
 
     <!-- Google Site Verification -->
@@ -297,61 +293,259 @@
 
 <body class="bg-white text-surface-800 font-sans antialiased min-h-screen flex flex-col">
     <!-- ═══════════════ NAVBAR ═══════════════ -->
-    {% block navbar %}
+        {% block navbar %}
     <header id="navbar" class="navbar fixed top-0 left-0 right-0 z-50 bg-white shadow-card transition-all duration-300">
         <div class="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8">
-            <div class="navbar-row flex items-center justify-between h-[70px]">
-                <!-- Logo -->
-                <a href="{% url 'converter:home' %}" class="flex items-center gap-2 group flex-shrink-0"
-                    aria-label="ScanPDF Home">
-                    <img src="{% static 'images/logo.png' %}?v=1.1.0" alt="ScanPDFLogo"
-                        class="h-10 sm:h-12 w-auto object-contain transition-transform group-hover:scale-105">
+            <div class="navbar-row grid grid-cols-[auto_1fr_auto] items-center h-[70px]">
+                
+                <!-- 1. LOGO -->
+                <a href="{% url 'converter:home' %}" class="flex items-center gap-2 group flex-shrink-0" aria-label="ScanPDF Home">
+                    <img src="{% static 'images/logo.png' %}?v=1.1.0" alt="ScanPDFLogo" class="h-10 sm:h-12 w-auto object-contain transition-transform group-hover:scale-105">
                 </a>
 
-                <!-- Desktop Nav: Properly Aligned -->
-                <div class="desktop-nav hidden md:flex items-center flex-1 justify-between ml-4 lg:ml-12 xl:ml-16 gap-3 lg:gap-6 xl:gap-10">
-                <!-- Left Side Tools -->
-                    <div class="flex items-center gap-0 lg:gap-1 xl:gap-2">
-                        <!-- Mega Menu: All PDF Tools -->
-                        <div class="relative group">
-                            <!-- Invisible Hover Bridge -->
-                            <div class="absolute top-full left-1/2 -translate-x-1/2 w-[120%] h-[35px] bg-transparent z-40"></div>
-                            <button
-                                class="flex items-center gap-1.5 px-4 py-2 text-[14px] font-black text-surface-900 transition-all uppercase tracking-widest hover:text-brand-600">
-                                All PDF Tools <i data-lucide="chevron-down"
-                                    class="w-4 h-4 transition-transform group-hover:rotate-180"></i>
-                            </button>
-                            <!-- Mega Menu Content: EXHAUSTIVE LIST (DYNAMIC) -->
-                            <div id="mega-menu-all-pdf"
-                                class="fixed top-[80px] left-1/2 -translate-x-1/2 w-[95vw] max-w-7xl bg-white border border-surface-100 shadow-mega rounded-3xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 translate-y-2 group-hover:translate-y-0 z-50 overflow-hidden">
-                                <div
-                                    class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 divide-x divide-surface-100 max-h-[70vh] overflow-y-auto">
-                                    {% for cat_id, cat_data in grouped_tools.items %}
-                                    <div
-                                        class="p-6 space-y-4 {% if forloop.counter|divisibleby:2 %}bg-surface-5/20{% endif %}">
-                                        <div class="flex items-center gap-3 mb-2 px-3">
-                                            <div class="w-1.5 h-6 bg-brand-500 rounded-full"></div>
-                                            <h3
-                                                class="text-[11px] font-black text-surface-400 uppercase tracking-[0.2em]">
-                                                {{ cat_data.label }}</h3>
-                                        </div>
-                                        <div class="grid gap-0.5">
-                                            {% for t in cat_data.tools %}
-                                            <a href="{% if t.app_name == 'image_processor' %}{% url 'image_processor:tool_page' t.slug %}{% else %}{% url 'converter:convert_page' t.slug %}{% endif %}"
-                                                class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
-                                                <i data-lucide="{{ t.icon }}" class="w-4 h-4 text-brand-600"></i>
-                                                <span
-                                                    class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">
-                                                    {{ t.title }}
-                                                    {% if t.is_coming_soon %}
-                                                    <span
-                                                        class="text-[10px] bg-brand-100 text-brand-600 px-1.5 py-0.5 rounded-full ml-auto">SOON</span>
-                                                    {% endif %}
-                                                </span>
-                                            </a>
-                                            {% endfor %}
-                                        </div>
+                <!-- 2. DESKTOP NAV LINKS -->
+                <div class="desktop-nav hidden md:flex items-center justify-center gap-3 lg:gap-6 xl:gap-8">
+                    
+                    <!-- PDF TOOLS MEGA MENU -->
+                    <div class="relative group">
+                        <div class="absolute top-full left-1/2 -translate-x-1/2 w-[120%] h-[35px] bg-transparent z-40"></div>
+                        <button class="flex items-center gap-1.5 px-4 py-2 text-[14px] font-black text-surface-900 transition-all uppercase tracking-widest hover:text-brand-600">
+                            PDF Tools <i data-lucide="chevron-down" class="w-4 h-4 transition-transform group-hover:rotate-180"></i>
+                        </button>
+                        <div class="mega-menu-content fixed top-[80px] left-1/2 -translate-x-1/2 w-[95vw] max-w-7xl bg-white border border-surface-100 shadow-mega rounded-3xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 translate-y-2 group-hover:translate-y-0 z-50 overflow-hidden">
+                            <div class="grid grid-cols-2 md:grid-cols-4 divide-x divide-surface-100 max-h-[70vh] overflow-y-auto">
+                                {% for cat_id, cat_data in pdf_tools_grouped.items %}
+                                <div class="p-6 space-y-4 {% if forloop.counter|divisibleby:2 %}bg-surface-5/20{% endif %}">
+                                    <div class="flex items-center gap-3 mb-2 px-3">
+                                        <div class="w-1.5 h-6 bg-brand-500 rounded-full"></div>
+                                        <h3 class="text-[11px] font-black text-surface-400 uppercase tracking-[0.2em]">{{ cat_data.label }}</h3>
                                     </div>
+                                    <div class="grid gap-0.5">
+                                        {% for t in cat_data.tools %}
+                                        <a href="{% if t.app_name == 'image_processor' %}{% url 'image_processor:tool_page' t.slug %}{% else %}{% url 'converter:convert_page' t.slug %}{% endif %}" class="flex items-center gap-3 py-2 px-3 rounded-xl hover:bg-brand-50/50 group/item transition-all justify-self-start">
+                                            <i data-lucide="{{ t.icon }}" class="w-4 h-4 text-brand-600"></i>
+                                            <span class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">
+                                                {{ t.title }}
+                                                {% if t.is_coming_soon %}<span class="text-[10px] bg-brand-100 text-brand-600 px-1.5 py-0.5 rounded-full ml-auto">SOON</span>{% endif %}
+                                            </span>
+                                        </a>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- IMAGE TOOLS MEGA MENU -->
+                    <div class="relative group">
+                        <div class="absolute top-full left-1/2 -translate-x-1/2 w-[120%] h-[35px] bg-transparent z-40"></div>
+                        <button class="flex items-center gap-1.5 px-4 py-2 text-[14px] font-black text-surface-900 transition-all uppercase tracking-widest hover:text-brand-600">
+                            Image Tools <i data-lucide="chevron-down" class="w-4 h-4 transition-transform group-hover:rotate-180"></i>
+                        </button>
+                        <div class="mega-menu-content absolute top-[65px] left-1/2 -translate-x-1/2 w-[580px] bg-white border border-surface-100 shadow-mega rounded-3xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 translate-y-2 group-hover:translate-y-0 z-50 overflow-hidden">
+                            <div class="grid grid-cols-2 divide-x divide-surface-100 max-h-[70vh] overflow-y-auto">
+                                {% for cat_id, cat_data in image_tools_grouped.items %}
+                                <div class="p-6 space-y-4 {% if forloop.counter|divisibleby:2 %}bg-surface-5/20{% endif %}">
+                                    <div class="flex items-center gap-3 mb-2 px-3">
+                                        <div class="w-1.5 h-6 bg-brand-500 rounded-full"></div>
+                                        <h3 class="text-[11px] font-black text-surface-400 uppercase tracking-[0.2em]">{{ cat_data.label }}</h3>
+                                    </div>
+                                    <div class="grid gap-0.5">
+                                        {% for t in cat_data.tools %}
+                                        <a href="{% if t.app_name == 'image_processor' %}{% url 'image_processor:tool_page' t.slug %}{% else %}{% url 'converter:convert_page' t.slug %}{% endif %}" class="flex items-center gap-3 py-2 px-3 rounded-xl hover:bg-brand-50/50 group/item transition-all justify-self-start">
+                                            <i data-lucide="{{ t.icon }}" class="w-4 h-4 text-brand-600"></i>
+                                            <span class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">
+                                                {{ t.title }}
+                                                {% if t.is_coming_soon %}<span class="text-[10px] bg-brand-100 text-brand-600 px-1.5 py-0.5 rounded-full ml-auto">SOON</span>{% endif %}
+                                            </span>
+                                        </a>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- VIDEO TOOLS MEGA MENU -->
+                    <div class="relative group">
+                        <div class="absolute top-full left-1/2 -translate-x-1/2 w-[120%] h-[35px] bg-transparent z-40"></div>
+                        <button class="flex items-center gap-1.5 px-4 py-2 text-[14px] font-black text-surface-900 transition-all uppercase tracking-widest hover:text-brand-600">
+                            Video <i data-lucide="chevron-down" class="w-4 h-4 transition-transform group-hover:rotate-180"></i>
+                        </button>
+                        <div class="mega-menu-content absolute top-[65px] left-1/2 -translate-x-1/2 w-[280px] bg-white border border-surface-100 shadow-mega rounded-3xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 translate-y-2 group-hover:translate-y-0 z-50 overflow-hidden">
+                            <div class="grid grid-cols-1 max-h-[70vh] overflow-y-auto">
+                                <div class="p-6 space-y-4">
+                                    <div class="flex items-center gap-3 mb-2 px-3">
+                                        <div class="w-1.5 h-6 bg-brand-500 rounded-full"></div>
+                                        <h3 class="text-[11px] font-black text-surface-400 uppercase tracking-[0.2em]">Video Tools</h3>
+                                    </div>
+                                    <div class="grid gap-0.5">
+                                        {% for t in video_tools %}
+                                        <a href="{{ t.url }}" class="flex items-center gap-3 py-2 px-3 rounded-xl hover:bg-brand-50/50 group/item transition-all justify-self-start">
+                                            <i data-lucide="{{ t.icon }}" class="w-4 h-4 text-brand-600"></i>
+                                            <span class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">{{ t.title }}</span>
+                                        </a>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- LINK TOOLS MEGA MENU -->
+                    <div class="relative group">
+                        <div class="absolute top-full left-1/2 -translate-x-1/2 w-[120%] h-[35px] bg-transparent z-40"></div>
+                        <button class="flex items-center gap-1.5 px-4 py-2 text-[14px] font-black text-surface-900 transition-all uppercase tracking-widest hover:text-brand-600">
+                            Link Tools <i data-lucide="chevron-down" class="w-4 h-4 transition-transform group-hover:rotate-180"></i>
+                        </button>
+                        <div class="mega-menu-content absolute top-[65px] left-1/2 -translate-x-1/2 w-[240px] bg-white border border-surface-100 shadow-mega rounded-3xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 translate-y-2 group-hover:translate-y-0 z-50 overflow-hidden">
+                            <div class="grid grid-cols-1 max-h-[70vh] overflow-y-auto">
+                                <div class="p-6 space-y-4">
+                                    <div class="flex items-center gap-3 mb-2 px-3">
+                                        <div class="w-1.5 h-6 bg-brand-500 rounded-full"></div>
+                                        <h3 class="text-[11px] font-black text-surface-400 uppercase tracking-[0.2em]">Link Tools</h3>
+                                    </div>
+                                    <div class="grid gap-0.5">
+                                        {% for t in link_tools %}
+                                        <a href="{{ t.url }}" class="flex items-center gap-3 py-2 px-3 rounded-xl hover:bg-brand-50/50 group/item transition-all justify-self-start">
+                                            <i data-lucide="{{ t.icon }}" class="w-4 h-4 text-brand-600"></i>
+                                            <span class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">{{ t.title }}</span>
+                                        </a>
+                                        {% endfor %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 3. RIGHT SIDE (SEARCH, PROFILE, HAMBURGER) -->
+                <div class="flex items-center justify-end gap-2 lg:gap-4">
+                    
+                    <!-- Search Bar -->
+                    <div class="relative flex-1 min-w-0 max-w-xs lg:max-w-sm group/search hidden md:block">
+                        <div class="relative flex items-center">
+                            <i data-lucide="search" class="absolute left-3 lg:left-4 w-4 h-4 text-surface-400 group-focus-within/search:text-brand-600 transition-colors"></i>
+                            <input type="text" id="tool-search" placeholder="Search tools..." class="w-full pl-10 lg:pl-11 pr-3 lg:pr-4 py-2.5 lg:py-3 rounded-2xl bg-surface-50 border border-surface-100 focus:bg-white focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 outline-none transition-all text-sm font-semibold text-surface-900 placeholder:text-surface-400 min-w-0">
+                        </div>
+                        <div id="search-results" class="absolute top-full right-0 w-[min(500px,calc(100vw-2rem))] mt-3 bg-white border border-surface-100 shadow-mega rounded-2xl py-3 opacity-0 invisible translate-y-2 transition-all duration-300 z-[60] max-h-[400px] overflow-y-auto">
+                            <div id="no-results" class="px-6 py-10 text-center space-y-3">
+                                <i data-lucide="search-x" class="w-8 h-8 text-surface-300 mx-auto"></i>
+                                <p class="text-xs font-bold text-surface-500 uppercase tracking-widest">No tools found</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Profile Dropdown -->
+                    <div class="relative group hidden md:block">
+                        <button id="profile-dropdown-btn" class="flex items-center gap-2 p-1 rounded-full border-2 border-surface-100 hover:border-brand-500 transition-all focus:ring-4 focus:ring-brand-500/10 outline-none bg-surface-50">
+                            <div class="w-10 h-10 rounded-full bg-brand-50 flex items-center justify-center text-brand-600 overflow-hidden">
+                                {% if request.user.is_authenticated and request.session.is_dqr_user %}
+                                <span class="font-black text-sm">{% if request.user.first_name %}{{ request.user.first_name|first|upper }}{% else %}{{ request.user.username|first|upper }}{% endif %}</span>
+                                {% else %}
+                                <i data-lucide="user" class="w-6 h-6"></i>
+                                {% endif %}
+                            </div>
+                        </button>
+                        
+                        <div id="profile-dropdown" class="absolute right-0 mt-3 w-64 bg-white border border-surface-100 shadow-mega rounded-2xl py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 translate-y-2 group-hover:translate-y-0 z-50">
+                            {% if request.user.is_authenticated and request.session.is_dqr_user %}
+                            <div class="px-4 py-2 border-b border-surface-50 mb-1">
+                                <p class="text-[10px] font-black text-surface-400 uppercase tracking-widest">Account</p>
+                                <div class="flex items-center gap-3 mt-3">
+                                    <div class="min-w-0">
+                                        <p class="text-sm font-black text-surface-800 truncate">{% if request.user.get_full_name %}{{ request.user.get_full_name }}{% else %}{{ request.user.username }}{% endif %}</p>
+                                        <p class="text-xs font-semibold text-surface-400 truncate">{{ request.user.email|default:request.user.username }}</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <form id="navbar-logout-form" action="{% url 'dynamic_qr:logout' %}" method="POST" style="display:none;">{% csrf_token %}</form>
+                            <a href="{% url 'dynamic_qr:dashboard' %}" class="flex items-center gap-3 px-4 py-2 text-sm font-bold text-surface-700 hover:text-brand-600 hover:bg-brand-50 transition-all">
+                                <i data-lucide="layout-dashboard" class="w-4 h-4"></i> Dashboard
+                            </a>
+                            {% endif %}
+                            
+                            <!-- Services Submenu -->
+                            <div class="relative py-1">
+                                <button type="button" id="services-submenu-btn" aria-expanded="false" class="w-full flex items-center justify-between gap-3 px-4 py-2 text-sm font-bold text-surface-700 hover:text-brand-600 hover:bg-brand-50 transition-all text-left">
+                                    <span class="flex items-center gap-3"><i data-lucide="box" class="w-4 h-4"></i> Services</span>
+                                    <i data-lucide="chevron-right" id="services-submenu-icon" class="w-4 h-4 transition-transform duration-200"></i>
+                                </button>
+                                <div id="services-submenu-content" class="hidden flex-col pl-11 pr-4 py-1 space-y-1">
+                                    <a href="{% url 'services:pricing' %}" class="flex items-center gap-3 px-3 py-2 text-sm font-bold text-surface-600 hover:text-brand-600 hover:bg-brand-50 transition-all rounded-lg">
+                                        <i data-lucide="credit-card" class="w-4 h-4"></i> Pricing
+                                    </a>
+                                    <a href="{% url 'services:help' %}" class="flex items-center gap-3 px-3 py-2 text-sm font-bold text-surface-600 hover:text-brand-600 hover:bg-brand-50 transition-all rounded-lg">
+                                        <i data-lucide="help-circle" class="w-4 h-4"></i> Help
+                                    </a>
+                                    <a href="{% url 'services:contact' %}" class="flex items-center gap-3 px-3 py-2 text-sm font-bold text-surface-600 hover:text-brand-600 hover:bg-brand-50 transition-all rounded-lg">
+                                        <i data-lucide="mail" class="w-4 h-4"></i> Contact Us
+                                    </a>
+                                </div>
+                            </div>
+
+                            {% if request.user.is_authenticated and request.session.is_dqr_user %}
+                            <a href="#" onclick="event.preventDefault(); document.getElementById('navbar-logout-form').submit();" class="flex items-center gap-3 px-4 py-2 text-sm font-bold text-surface-700 hover:text-red-500 hover:bg-red-50 transition-all">
+                                <i data-lucide="log-out" class="w-4 h-4"></i> Logout
+                            </a>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <!-- Mobile Hamburger -->
+                    <button id="mobile-menu-btn" class="md:hidden p-2.5 rounded-xl hover:bg-surface-50 transition-colors text-surface-500 border border-surface-100" aria-label="Toggle menu">
+                        <i data-lucide="menu" class="w-6 h-6"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- MOBILE DRAWER (New Implementation) -->
+        <div id="mobile-drawer-overlay" class="fixed inset-0 bg-surface-900/50 backdrop-blur-sm z-[100] opacity-0 invisible transition-all duration-300 md:hidden"></div>
+        <div id="mobile-drawer" class="fixed top-0 right-0 h-[100dvh] w-[85vw] max-w-[400px] bg-white z-[110] transform translate-x-full transition-transform duration-300 flex flex-col shadow-2xl md:hidden">
+            <!-- Header -->
+            <div class="flex items-center justify-between p-4 border-b border-surface-100 bg-surface-50/50">
+                <span class="font-black text-surface-900 tracking-widest uppercase">Menu</span>
+                <button id="close-drawer-btn" class="p-2 rounded-xl text-surface-500 hover:bg-surface-100 transition-colors">
+                    <i data-lucide="x" class="w-6 h-6"></i>
+                </button>
+            </div>
+            
+            <!-- Mobile Search -->
+            <div class="p-4 border-b border-surface-100 relative">
+                <div class="relative flex items-center">
+                    <i data-lucide="search" class="absolute left-3 w-4 h-4 text-surface-400"></i>
+                    <input type="text" id="tool-search-mobile" placeholder="Search tools..." class="w-full pl-10 pr-4 py-3 rounded-xl bg-surface-50 border border-surface-100 focus:bg-white focus:border-brand-500 outline-none transition-all text-sm font-bold text-surface-900 shadow-sm">
+                </div>
+                <div id="search-results-mobile" class="hidden absolute top-[calc(100%-0.5rem)] left-4 right-4 bg-white border border-surface-100 shadow-mega rounded-xl py-2 z-[60] max-h-[300px] overflow-y-auto"></div>
+            </div>
+
+            <!-- Scrollable Content -->
+            <div class="flex-1 overflow-y-auto p-4 space-y-1">
+                <!-- Accordions -->
+                
+                <!-- PDF Tools Accordion -->
+                <div class="accordion-item rounded-xl overflow-hidden border border-surface-100 mb-2">
+                    <button class="accordion-btn flex items-center justify-between w-full p-4 bg-white hover:bg-surface-50 transition-colors text-left" aria-expanded="false">
+                        <div class="flex items-center gap-3">
+                            <i data-lucide="file-text" class="w-5 h-5 text-brand-600"></i>
+                            <span class="font-bold text-sm text-surface-800">PDF Tools</span>
+                        </div>
+                        <i data-lucide="chevron-down" class="w-4 h-4 text-surface-400 transition-transform duration-200"></i>
+                    </button>
+                    <div class="accordion-content hidden bg-surface-50 border-t border-surface-100">
+                        <div class="p-4 space-y-4">
+                            {% for cat_id, cat_data in pdf_tools_grouped.items %}
+                            <div>
+                                <span class="text-[10px] font-black text-surface-400 uppercase tracking-widest block mb-2">{{ cat_data.label }}</span>
+                                <div class="grid grid-cols-1 gap-1">
+                                    {% for t in cat_data.tools %}
+                                    <a href="{% if t.app_name == 'image_processor' %}{% url 'image_processor:tool_page' t.slug %}{% else %}{% url 'converter:convert_page' t.slug %}{% endif %}" class="flex items-center gap-3 p-2 rounded-lg hover:bg-white transition-colors">
+                                        <i data-lucide="{{ t.icon }}" class="w-4 h-4 text-brand-600"></i>
+                                        <span class="text-xs font-bold text-surface-700">{{ t.title }}</span>
+                                    </a>
                                     {% endfor %}
                                 </div>
                             </div>
@@ -931,195 +1125,109 @@
                                     </a>
                                 </div>
                             </div>
+               {% endfor %}
+
                         </div>
                     </div>
                 </div>
+
+                <!-- Image Tools Accordion -->
+                <div class="accordion-item rounded-xl overflow-hidden border border-surface-100 mb-2">
+                    <button class="accordion-btn flex items-center justify-between w-full p-4 bg-white hover:bg-surface-50 transition-colors text-left" aria-expanded="false">
+                        <div class="flex items-center gap-3">
+                            <i data-lucide="image" class="w-5 h-5 text-brand-600"></i>
+                            <span class="font-bold text-sm text-surface-800">Image Tools</span>
+                        </div>
+                        <i data-lucide="chevron-down" class="w-4 h-4 text-surface-400 transition-transform duration-200"></i>
+                    </button>
+                    <div class="accordion-content hidden bg-surface-50 border-t border-surface-100">
+                        <div class="p-4 space-y-4">
+                            {% for cat_id, cat_data in image_tools_grouped.items %}
+                            <div>
+                                <span class="text-[10px] font-black text-surface-400 uppercase tracking-widest block mb-2">{{ cat_data.label }}</span>
+                                <div class="grid grid-cols-1 gap-1">
+                                    {% for t in cat_data.tools %}
+                                    <a href="{% if t.app_name == 'image_processor' %}{% url 'image_processor:tool_page' t.slug %}{% else %}{% url 'converter:convert_page' t.slug %}{% endif %}" class="flex items-center gap-3 p-2 rounded-lg hover:bg-white transition-colors">
+                                        <i data-lucide="{{ t.icon }}" class="w-4 h-4 text-brand-600"></i>
+                                        <span class="text-xs font-bold text-surface-700">{{ t.title }}</span>
+                                    </a>
+                                    {% endfor %}
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Video Tools Accordion -->
+                <div class="accordion-item rounded-xl overflow-hidden border border-surface-100 mb-2">
+                    <button class="accordion-btn flex items-center justify-between w-full p-4 bg-white hover:bg-surface-50 transition-colors text-left" aria-expanded="false">
+                        <div class="flex items-center gap-3">
+                            <i data-lucide="video" class="w-5 h-5 text-brand-600"></i>
+                            <span class="font-bold text-sm text-surface-800">Video Tools</span>
+                        </div>
+                        <i data-lucide="chevron-down" class="w-4 h-4 text-surface-400 transition-transform duration-200"></i>
+                    </button>
+                    <div class="accordion-content hidden bg-surface-50 border-t border-surface-100">
+                        <div class="p-4 grid grid-cols-1 gap-1">
+                            {% for t in video_tools %}
+                            <a href="{{ t.url }}" class="flex items-center gap-3 p-2 rounded-lg hover:bg-white transition-colors"><i data-lucide="{{ t.icon }}" class="w-4 h-4 text-brand-600"></i><span class="text-xs font-bold text-surface-700">{{ t.title }}</span></a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Link Tools Accordion -->
+                <div class="accordion-item rounded-xl overflow-hidden border border-surface-100 mb-2">
+                    <button class="accordion-btn flex items-center justify-between w-full p-4 bg-white hover:bg-surface-50 transition-colors text-left" aria-expanded="false">
+                        <div class="flex items-center gap-3">
+                            <i data-lucide="link" class="w-5 h-5 text-brand-600"></i>
+                            <span class="font-bold text-sm text-surface-800">Link Tools</span>
+                        </div>
+                        <i data-lucide="chevron-down" class="w-4 h-4 text-surface-400 transition-transform duration-200"></i>
+                    </button>
+                    <div class="accordion-content hidden bg-surface-50 border-t border-surface-100">
+                        <div class="p-4 grid grid-cols-1 gap-1">
+                            {% for t in link_tools %}
+                            <a href="{{ t.url }}" class="flex items-center gap-3 p-2 rounded-lg hover:bg-white transition-colors"><i data-lucide="{{ t.icon }}" class="w-4 h-4 text-brand-600"></i><span class="text-xs font-bold text-surface-700">{{ t.title }}</span></a>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+
             </div>
 
-            <!-- Search Bar: Properly Aligned Right -->
-                    <div class="relative flex-1 min-w-0 max-w-xs lg:max-w-sm group/search">
-                        <div class="relative flex items-center">
-                            <i data-lucide="search"
-                                class="absolute left-3 lg:left-4 w-4 h-4 text-surface-400 group-focus-within/search:text-brand-600 transition-colors"></i>
-                            <input type="text" id="tool-search" placeholder="Search tools..."
-                                class="w-full pl-10 lg:pl-11 pr-3 lg:pr-4 py-2.5 lg:py-3 rounded-2xl bg-surface-50 border border-surface-100 focus:bg-white focus:border-brand-500 focus:ring-4 focus:ring-brand-500/10 outline-none transition-all text-sm font-semibold text-surface-900 placeholder:text-surface-400 min-w-0">
-                        </div>
-
-                        <!-- Search Results Overlay -->
-                        <div id="search-results"
-                            class="absolute top-full right-0 w-[min(500px,calc(100vw-2rem))] mt-3 bg-white border border-surface-100 shadow-mega rounded-2xl py-3 opacity-0 invisible translate-y-2 transition-all duration-300 z-[60] max-h-[400px] overflow-y-auto">
-                            <!-- Results will be injected here -->
-                            <div id="no-results" class="px-6 py-10 text-center space-y-3">
-                                <i data-lucide="search-x" class="w-8 h-8 text-surface-300 mx-auto"></i>
-                                <p class="text-xs font-bold text-surface-500 uppercase tracking-widest">No tools found
-                                    for your search</p>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- DQR User Profile & Logout Dropdown -->
-                    {% if request.session.is_dqr_user %}
-                    <div class="relative group">
-                        <button id="profile-dropdown-btn"
-                            class="flex items-center gap-2 p-1 rounded-full border-2 border-surface-100 hover:border-brand-500 transition-all focus:ring-4 focus:ring-brand-500/10 outline-none">
-                            <div
-                                class="w-10 h-10 rounded-full bg-brand-50 flex items-center justify-center text-brand-600 overflow-hidden">
-                                <i data-lucide="user" class="w-6 h-6"></i>
-                            </div>
-                        </button>
-
-                        <!-- Dropdown Menu -->
-                        <div id="profile-dropdown"
-                            class="absolute right-0 mt-3 w-48 bg-white border border-surface-100 shadow-mega rounded-2xl py-2 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-300 translate-y-2 group-hover:translate-y-0 z-50">
-                            <div class="px-4 py-2 border-b border-surface-50 mb-1">
-                                <p class="text-[10px] font-black text-surface-400 uppercase tracking-widest">Account</p>
-                            </div>
-                            <form id="navbar-logout-form" action="{% url 'dynamic_qr:logout' %}" method="POST"
-                                style="display:none;">
-                                {% csrf_token %}
-                            </form>
-                            <a href="{% url 'dynamic_qr:dashboard' %}"
-                                class="flex items-center gap-3 px-4 py-2 text-sm font-bold text-surface-700 hover:text-brand-600 hover:bg-brand-50 transition-all">
-                                <i data-lucide="layout-dashboard" class="w-4 h-4"></i>
-                                Dashboard
-                            </a>
-                            <a href="#"
-                                onclick="event.preventDefault(); document.getElementById('navbar-logout-form').submit();"
-                                class="flex items-center gap-3 px-4 py-2 text-sm font-bold text-surface-700 hover:text-red-500 hover:bg-red-50 transition-all">
-                                <i data-lucide="log-out" class="w-4 h-4"></i>
-                                Logout
-                            </a>
-                        </div>
-                    </div>
-                    {% endif %}
+            <!-- Footer / Services & Account -->
+            <div class="border-t border-surface-100 p-4 space-y-1 bg-surface-50 mt-auto">
+                {% if request.user.is_authenticated and request.session.is_dqr_user %}
+                <div class="px-2 py-2 mb-2 border-b border-surface-200">
+                    <p class="text-[10px] font-black text-surface-400 uppercase tracking-widest">Account</p>
+                    <p class="text-sm font-black text-surface-800 truncate mt-1">{% if request.user.get_full_name %}{{ request.user.get_full_name }}{% else %}{{ request.user.username }}{% endif %}</p>
+                    <p class="text-xs font-semibold text-surface-400 truncate">{{ request.user.email|default:request.user.username }}</p>
                 </div>
+                <a href="{% url 'dynamic_qr:dashboard' %}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-surface-700 hover:bg-white transition-colors font-bold text-sm"><i data-lucide="layout-dashboard" class="w-4 h-4 text-surface-400"></i> Dashboard</a>
+                {% endif %}
 
-                <!-- Mobile Hamburger -->
-                <button id="mobile-menu-btn"
-                    class="md:hidden p-2.5 rounded-xl hover:bg-surface-50 transition-colors text-surface-500 border border-surface-100"
-                    aria-label="Toggle menu">
-                    <i data-lucide="menu" class="w-6 h-6"></i>
-                </button>
-            </div>
-        </div>
-
-        <!-- Mobile Menu -->
-        <div id="mobile-menu"
-            class="md:hidden hidden bg-white border-t border-surface-100 shadow-elevated h-[calc(100vh-100px)] overflow-y-auto">
-            <div class="px-4 py-8 space-y-6">
-                <!-- Mobile Search -->
-                <div class="relative group/m-search mt-4 px-2">
-                    <div class="relative flex items-center">
-                        <i data-lucide="search" class="absolute left-4 w-4 h-4 text-surface-400"></i>
-                        <input type="text" id="tool-search-mobile" placeholder="Search for PDF tools..."
-                            class="w-full pl-11 pr-4 py-4 rounded-2xl bg-surface-50 border border-surface-100 focus:bg-white focus:border-brand-500 outline-none transition-all text-sm font-bold text-surface-900 shadow-sm">
-                    </div>
-                    <!-- Results Overlay Mobile -->
-                    <div id="search-results-mobile"
-                        class="hidden absolute top-full left-0 right-0 mt-3 bg-white border border-surface-100 shadow-mega rounded-3xl py-3 z-[60] max-h-[400px] overflow-y-auto">
-                        <!-- Results will be injected here -->
+                <!-- Mobile Services Submenu -->
+                <div class="relative">
+                    <button type="button" id="mobile-services-submenu-btn" aria-expanded="false" class="w-full flex items-center justify-between gap-3 px-3 py-2 rounded-lg text-surface-700 hover:bg-white transition-colors font-bold text-sm text-left">
+                        <span class="flex items-center gap-3"><i data-lucide="box" class="w-4 h-4 text-surface-400"></i> Services</span>
+                        <i data-lucide="chevron-right" id="mobile-services-submenu-icon" class="w-4 h-4 text-surface-400 transition-transform duration-200"></i>
+                    </button>
+                    <div id="mobile-services-submenu-content" class="hidden flex-col pl-10 pr-3 py-1 space-y-1">
+                        <a href="{% url 'services:pricing' %}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-surface-600 hover:bg-white transition-colors font-bold text-sm"><i data-lucide="credit-card" class="w-4 h-4 text-surface-400"></i> Pricing</a>
+                        <a href="{% url 'services:help' %}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-surface-600 hover:bg-white transition-colors font-bold text-sm"><i data-lucide="help-circle" class="w-4 h-4 text-surface-400"></i> Help</a>
+                        <a href="{% url 'services:contact' %}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-surface-600 hover:bg-white transition-colors font-bold text-sm"><i data-lucide="mail" class="w-4 h-4 text-surface-400"></i> Contact Us</a>
                     </div>
                 </div>
 
-                <div class="space-y-2">
-                    <div class="px-4 py-2 border-b border-surface-50 mb-2">
-                        <span class="text-[10px] font-bold text-surface-400 uppercase tracking-widest">Main Menu</span>
-                    </div>
-                    <a href="{% url 'converter:home' %}"
-                        class="flex items-center gap-3 px-4 py-3 rounded-2xl text-surface-700 hover:text-brand-600 hover:bg-brand-50/60 transition-all font-bold text-sm">
-                        <i data-lucide="home" class="w-5 h-5"></i>Home
-                    </a>
-                    <a href="{% url 'converter:home' %}#tools"
-                        class="flex items-center gap-3 px-4 py-3 rounded-2xl text-surface-700 hover:text-brand-600 hover:bg-brand-50/60 transition-all font-bold text-sm">
-                        <i data-lucide="layout-grid" class="w-5 h-5"></i>All Tools
-                    </a>
-
-                    <!-- Mobile Important Tools -->
-                    <div class="px-4 py-2 border-b border-surface-50 mt-4 mb-2">
-                        <span class="text-[10px] font-bold text-surface-400 uppercase tracking-widest">Important
-                            Tools</span>
-                    </div>
-                    <a href="{% if request.user.is_authenticated and request.session.is_dqr_user %}{% url 'dynamic_qr:dashboard' %}{% else %}{% url 'dynamic_qr:login' %}{% endif %}"
-                        class="flex items-center gap-3 px-4 py-3 rounded-2xl text-brand-700 bg-brand-50 border border-brand-100 hover:text-brand-800 hover:bg-brand-100 transition-all font-bold text-sm">
-                        <i data-lucide="qr-code" class="w-5 h-5 text-brand-600"></i>
-                        Dynamic QR
-                    </a>
-                    <a href="{% if request.user.is_authenticated and request.session.is_dqr_user %}{% url 'dynamic_qr:short_url' %}{% else %}{% url 'dynamic_qr:login' %}{% endif %}"
-                        class="flex items-center gap-3 px-4 py-3 rounded-2xl text-surface-700 hover:text-brand-600 hover:bg-brand-50/60 transition-all font-bold text-sm">
-                        <i data-lucide="link" class="w-5 h-5 text-indigo-600"></i>
-                        Short URL
-                    </a>
-
-                    <!-- Mobile Video Tools -->
-                    <div class="px-4 py-2 border-b border-surface-50 mt-4 mb-2">
-                        <span class="text-[10px] font-bold text-surface-400 uppercase tracking-widest">Video Tools</span>
-                    </div>
-                    <a href="{% url 'converter:convert_page' 'video-converter' %}"
-                        class="flex items-center gap-3 px-4 py-3 rounded-2xl text-surface-700 hover:text-brand-600 hover:bg-brand-50/60 transition-all font-bold text-sm">
-                        <i data-lucide="video" class="w-5 h-5 text-violet-600"></i>
-                        Video Converter
-                    </a>
-                    <a href="{% url 'video_downloader:index' %}"
-                        class="flex items-center gap-3 px-4 py-3 rounded-2xl text-surface-700 hover:text-brand-600 hover:bg-brand-50/60 transition-all font-bold text-sm">
-                        <i data-lucide="download-cloud" class="w-5 h-5 text-brand-600"></i>
-                        Video Downloader
-                    </a>
-
-                    {% if request.session.is_dqr_user %}
-                    <a href="{% url 'dynamic_qr:dashboard' %}"
-                        class="flex items-center gap-3 px-4 py-3 rounded-2xl text-surface-700 hover:text-brand-600 hover:bg-brand-50/60 transition-all font-bold text-sm">
-                        <i data-lucide="layout-dashboard" class="w-5 h-5"></i>Dashboard
-                    </a>
-                    <a href="#"
-                        onclick="event.preventDefault(); document.getElementById('navbar-logout-form').submit();"
-                        class="flex items-center gap-3 px-4 py-3 rounded-2xl text-red-600 hover:bg-red-50 transition-all font-bold text-sm">
-                        <i data-lucide="log-out" class="w-5 h-5"></i>Logout
-                    </a>
-                    {% endif %}
-
-                    <!-- Mobile Services Section -->
-                    <div class="px-4 py-2 border-b border-surface-50 mt-4 mb-2">
-                        <span class="text-[10px] font-bold text-surface-400 uppercase tracking-widest">Services</span>
-                    </div>
-                    <a href="{% url 'services:pricing' %}"
-                        class="flex items-center gap-3 px-4 py-3 rounded-2xl text-surface-700 hover:text-brand-600 hover:bg-brand-50/60 transition-all font-bold text-sm">
-                        <i data-lucide="credit-card" class="w-5 h-5 text-brand-600"></i>
-                        Pricing
-                    </a>
-                    <a href="{% url 'services:support' %}"
-                        class="flex items-center gap-3 px-4 py-3 rounded-2xl text-surface-700 hover:text-brand-600 hover:bg-brand-50/60 transition-all font-bold text-sm">
-                        <i data-lucide="help-circle" class="w-5 h-5 text-brand-600"></i>
-                        Support
-                    </a>
-                    <a href="{% url 'services:contact' %}"
-                        class="flex items-center gap-3 px-4 py-3 rounded-2xl text-surface-700 hover:text-brand-600 hover:bg-brand-50/60 transition-all font-bold text-sm">
-                        <i data-lucide="mail" class="w-5 h-5 text-brand-600"></i>
-                        Contact Us
-                    </a>
-
-                    <div class="px-4 py-2 border-b border-surface-50 mt-6 mb-2">
-                        <span class="text-[10px] font-bold text-surface-400 uppercase tracking-widest block">Core PDF
-                            Toolsets</span>
-                    </div>
-                    <div class="grid grid-cols-2 gap-3 mt-1 px-1">
-                        <a href="{% url 'converter:convert_page' 'word-to-pdf' %}"
-                            class="p-4 sm:p-6 bg-surface-50 border border-surface-100 rounded-3xl flex flex-col items-center gap-2 sm:gap-3 group active:bg-brand-50 transition-all">
-                            <i data-lucide="file-text" class="w-6 h-6 text-brand-600"></i>
-                            <span class="text-[12px] font-black text-surface-800 uppercase tracking-[0.05em]">To
-                                PDF</span>
-                        </a>
-                        <a href="{% url 'converter:convert_page' 'pdf-to-word' %}"
-                            class="p-4 sm:p-6 bg-surface-50 border border-surface-100 rounded-3xl flex flex-col items-center gap-2 sm:gap-3 group active:bg-brand-50 transition-all">
-                            <i data-lucide="file-type" class="w-6 h-6 text-brand-600"></i>
-                            <span class="text-[12px] font-black text-surface-800 uppercase tracking-[0.05em]">From
-                                PDF</span>
-                        </a>
-                    </div>
-                </div>
+                {% if request.user.is_authenticated and request.session.is_dqr_user %}
+                <a href="#" onclick="event.preventDefault(); document.getElementById('navbar-logout-form').submit();" class="flex items-center gap-3 px-3 py-2 rounded-lg text-red-600 hover:bg-red-50 transition-colors font-bold text-sm"><i data-lucide="log-out" class="w-4 h-4"></i> Logout</a>
+                {% endif %}
             </div>
         </div>
     </header>
-    {% endblock %}
+    {% endblock navbar %}
 
     <!-- Main Content -->
     <main class="flex-grow" style="padding-top: var(--nav-h, 70px);">
@@ -1340,16 +1448,61 @@
             });
         }
 
+        // Services Submenu Toggle (Desktop)
+        const servicesBtn = document.getElementById('services-submenu-btn');
+        const servicesContent = document.getElementById('services-submenu-content');
+        const servicesIcon = document.getElementById('services-submenu-icon');
+        if (servicesBtn && servicesContent && servicesIcon) {
+            servicesBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const isExpanded = servicesBtn.getAttribute('aria-expanded') === 'true';
+                servicesBtn.setAttribute('aria-expanded', !isExpanded);
+                servicesContent.classList.toggle('hidden');
+                servicesIcon.style.transform = isExpanded ? '' : 'rotate(90deg)';
+            });
+        }
+
+        // Services Submenu Toggle (Mobile)
+        const mobileServicesBtn = document.getElementById('mobile-services-submenu-btn');
+        const mobileServicesContent = document.getElementById('mobile-services-submenu-content');
+        const mobileServicesIcon = document.getElementById('mobile-services-submenu-icon');
+        if (mobileServicesBtn && mobileServicesContent && mobileServicesIcon) {
+            mobileServicesBtn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const isExpanded = mobileServicesBtn.getAttribute('aria-expanded') === 'true';
+                mobileServicesBtn.setAttribute('aria-expanded', !isExpanded);
+                mobileServicesContent.classList.toggle('hidden');
+                mobileServicesIcon.style.transform = isExpanded ? '' : 'rotate(90deg)';
+            });
+        }
+
         // Close on click outside
         document.addEventListener('click', (e) => {
-            if (profileBtn && profileMenu && !profileBtn.contains(e.target)) {
+            if (profileBtn && profileMenu && !profileBtn.contains(e.target) && !profileMenu.contains(e.target)) {
                 profileMenu.classList.add('invisible', 'opacity-0', 'translate-y-2');
+                if (servicesBtn) {
+                    servicesBtn.setAttribute('aria-expanded', 'false');
+                    servicesContent.classList.add('hidden');
+                    servicesIcon.style.transform = '';
+                }
             }
             if (searchInput && !searchInput.contains(e.target) && !resultsBox.contains(e.target)) {
                 resultsBox.classList.add('invisible', 'opacity-0', 'translate-y-2');
             }
             if (searchInputMobile && !searchInputMobile.contains(e.target) && !resultsBoxMobile.contains(e.target)) {
                 resultsBoxMobile.classList.add('hidden');
+            }
+        });
+
+        // Close Profile Dropdown on ESC key
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && profileMenu && !profileMenu.classList.contains('invisible')) {
+                profileMenu.classList.add('invisible', 'opacity-0', 'translate-y-2');
+                if (servicesBtn) {
+                    servicesBtn.setAttribute('aria-expanded', 'false');
+                    servicesContent.classList.add('hidden');
+                    servicesIcon.style.transform = '';
+                }
             }
         });
     </script>

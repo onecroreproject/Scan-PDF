@@ -14,9 +14,11 @@ urlpatterns = [
 
     # Dashboard
     path('dashboard/', views.dqr_dashboard_view, name='dashboard'),
+    path('plan/', views.dqr_plan_view, name='plan'),
     path('all/', views.dqr_all_qrs_view, name='all_qrs'),
     path('create/', views.dqr_create_view, name='create'),
     path('short-url/', views.dqr_short_url_view, name='short_url'),
+    path('short-url/get/<uuid:qr_id>/', views.dqr_get_short_url_details, name='get_short_url'),
     path('short-url/analytics/<uuid:qr_id>/', views.dqr_short_url_analytics_view, name='short_url_analytics'),
     path('edit/<uuid:qr_id>/', views.dqr_edit_view, name='edit'),
     path('delete/<uuid:qr_id>/', views.dqr_delete_view, name='delete'),
@@ -34,5 +36,4 @@ urlpatterns = [
     path('api/generate-image/', views.dqr_generate_image, name='generate_image'),
     path('api/check-username/', views.dqr_check_username_view, name='check_username'),
     path('api/check-email/', views.dqr_check_email_view, name='check_email'),
-    path('repair-db/', views.dqr_repair_db, name='repair_db'),
 ]

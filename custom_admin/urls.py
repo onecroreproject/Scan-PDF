@@ -10,14 +10,18 @@ urlpatterns = [
     # Users
     path('users/', views.users_view, name='users'),
     path('users/<int:user_id>/', views.user_detail_view, name='user_detail'),
+    path('users/<int:user_id>/delete/', views.user_delete_view, name='user_delete'),
 
     # Subscriptions & Payments
     path('subscriptions/', views.subscriptions_view, name='subscriptions'),
+    path('subscriptions/<int:sub_id>/delete/', views.subscription_delete_view, name='subscription_delete'),
     path('payments/', views.payments_view, name='payments'),
+    path('payments/<int:payment_id>/delete/', views.payment_delete_view, name='payment_delete'),
 
     # Plans & Pricing
     path('plans/', views.plans_view, name='plans'),
     path('plans/<int:plan_id>/edit/', views.plan_edit_view, name='plan_edit'),
+    path('plans/<int:plan_id>/save-features/', views.plan_save_features_view, name='plan_save_features'),
 
     # Section AJAX endpoints
     path('plans/<int:plan_id>/sections/create/', views.section_create, name='section_create'),
@@ -38,6 +42,7 @@ urlpatterns = [
     path('hero-videos/', views.hero_videos_view, name='hero_videos'),
     path('hero-videos/add/', views.hero_video_add_view, name='hero_video_add'),
     path('hero-videos/<int:video_id>/edit/', views.hero_video_edit_view, name='hero_video_edit'),
+    path('hero-videos/<int:video_id>/toggle/', views.hero_video_toggle_view, name='hero_video_toggle'),
     path('hero-videos/<int:video_id>/delete/', views.hero_video_delete_view, name='hero_video_delete'),
 
     # Other

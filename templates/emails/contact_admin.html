@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>New ScanPDF enquiry</title>
+</head>
+<body style="margin:0;padding:0;background:#f6f4fb;font-family:Arial,Helvetica,sans-serif;color:#1f2937;">
+  <div style="max-width:640px;margin:32px auto;background:#ffffff;border:1px solid #e7e3f5;border-radius:18px;overflow:hidden;">
+    <div style="padding:24px 28px;background:linear-gradient(135deg,#6d4ecf,#8b5cf6);color:#ffffff;">
+      <div style="font-size:12px;letter-spacing:1.4px;text-transform:uppercase;font-weight:700;opacity:0.9;">ScanPDF</div>
+      <h1 style="margin:10px 0 0;font-size:28px;line-height:1.2;">New enquiry received</h1>
+    </div>
+    <div style="padding:28px;">
+      <p style="margin:0 0 18px;font-size:16px;line-height:1.6;">A new ScanPDF enquiry has been submitted from the {{ source }} page.</p>
+      <table cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;">
+        <tr><td style="padding:8px 0;color:#6b7280;font-weight:700;width:130px;">Name:</td><td style="padding:8px 0;color:#111827;">{{ name }}</td></tr>
+        <tr><td style="padding:8px 0;color:#6b7280;font-weight:700;">Email:</td><td style="padding:8px 0;color:#111827;">{{ email }}</td></tr>
+        <tr><td style="padding:8px 0;color:#6b7280;font-weight:700;">Phone:</td><td style="padding:8px 0;color:#111827;">{{ phone }}</td></tr>
+        <tr><td style="padding:8px 0;color:#6b7280;font-weight:700;">Type:</td><td style="padding:8px 0;color:#111827;">{{ category }}</td></tr>
+        <tr><td style="padding:8px 0;color:#6b7280;font-weight:700;">Subject:</td><td style="padding:8px 0;color:#111827;">{{ subject }}</td></tr>
+        <tr><td style="padding:8px 0;color:#6b7280;font-weight:700;vertical-align:top;">Message:</td><td style="padding:8px 0;color:#111827;line-height:1.6;">{{ message|linebreaksbr }}</td></tr>
+        <tr><td style="padding:8px 0;color:#6b7280;font-weight:700;">Reference ID:</td><td style="padding:8px 0;color:#111827;">{{ ticket_id }}</td></tr>
+        <tr><td style="padding:8px 0;color:#6b7280;font-weight:700;">Submitted At:</td><td style="padding:8px 0;color:#111827;">{{ created_at }}</td></tr>
+        <tr><td style="padding:8px 0;color:#6b7280;font-weight:700;">Source:</td><td style="padding:8px 0;color:#111827;">{{ source }} Page</td></tr>
+      </table>
+    </div>
+    <div style="padding:18px 28px 28px;background:#faf8ff;border-top:1px solid #eee7ff;color:#6b7280;font-size:12px;line-height:1.6;">
+      ScanPDF Team<br />
+      This email was sent automatically for admin review.
+    </div>
+  </div>
+</body>
+</html>

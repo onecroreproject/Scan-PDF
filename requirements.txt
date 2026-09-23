@@ -52,3 +52,5 @@ daphne>=4.2.1
 opencv-python==5.0.0.93
 
 av==18.0.0
+
+geopy>=2.4.1

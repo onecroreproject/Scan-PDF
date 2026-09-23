@@ -91,6 +91,8 @@ class DynamicQRCode(models.Model):
     eye_style = models.CharField(max_length=20, default='square')
     ball_style = models.CharField(max_length=20, default='square')
     logo = models.ImageField(upload_to='dynamic_qr_logos/', null=True, blank=True)
+    branding_background_image = models.ImageField(upload_to='dynamic_qr_branding/backgrounds/', blank=True, null=True)
+    branding_foreground_image = models.ImageField(upload_to='dynamic_qr_branding/foregrounds/', blank=True, null=True)
     design_options = models.JSONField(default=dict, blank=True, help_text="Advanced design options like frames, text, error correction, etc.")
 
 
@@ -106,6 +108,22 @@ class DynamicQRCode(models.Model):
     password = models.CharField(max_length=128, blank=True, null=True, help_text="Hashed password for protected links")
     expiry_date = models.DateTimeField(null=True, blank=True, help_text="When the link expires")
     require_gps = models.BooleanField(default=False, help_text="Require GPS location to access")
+    
+    # ── UTM Parameters ──
+    utm_enabled = models.BooleanField(default=False)
+    utm_source = models.CharField(max_length=100, blank=True, null=True)
+    utm_medium = models.CharField(max_length=100, blank=True, null=True)
+    utm_campaign = models.CharField(max_length=150, blank=True, null=True)
+    utm_term = models.CharField(max_length=150, blank=True, null=True)
+    utm_content = models.CharField(max_length=150, blank=True, null=True)
+    
+    # ── URL Cloaking ──
+    cloaking_enabled = models.BooleanField(default=False)
+    cloaked_title = models.CharField(max_length=200, blank=True, null=True)
+    cloaked_meta_description = models.TextField(blank=True, null=True)
+    cloaked_favicon = models.ImageField(upload_to='dynamic_qr_favicons/', blank=True, null=True)
+    cloaked_og_image = models.ImageField(upload_to='dynamic_qr_og_images/', blank=True, null=True)
+    cloaked_custom_js = models.TextField(blank=True, null=True, help_text="Restricted to Pro/Business. Executed in iframe wrapper context.")
 
     # Timestamps
     created_at = models.DateTimeField(auto_now_add=True)
@@ -135,15 +153,18 @@ class DynamicQRCode(models.Model):
             return f"/{self.header}/{self.short_code}/"
         return f"/{self.short_code}/"
 
-    def get_static_content(self, request=None):
+    def get_static_content(self, request=None, source=None):
         """
         Determines the content to be encoded in the QR code.
         Always return the stable dynamic redirect URL so old downloaded QR images
         continue to resolve the latest edited content.
         """
+        path = self.public_url_path
+        if source:
+            path = f'{path}?source={source}'
         if request:
-            return request.build_absolute_uri(self.public_url_path)
-        return self.public_url_path
+            return request.build_absolute_uri(path)
+        return path
 
     def get_raw_payload(self):
         """
@@ -205,11 +226,45 @@ class QRAnalytics(models.Model):
     city = models.CharField(max_length=100, default='Unknown')
     latitude = models.FloatField(null=True, blank=True)
     longitude = models.FloatField(null=True, blank=True)
+    location_source = models.CharField(max_length=20, default='unknown')
+    gps_permission = models.CharField(max_length=20, default='not_required')
+    gps_latitude = models.FloatField(null=True, blank=True)
+    gps_longitude = models.FloatField(null=True, blank=True)
+    gps_accuracy = models.FloatField(null=True, blank=True)
+    gps_captured_at = models.DateTimeField(null=True, blank=True)
     referrer = models.CharField(max_length=500, null=True, blank=True, help_text="HTTP Referrer")
     is_bot = models.BooleanField(default=False, help_text="Whether this scan/click was made by a bot")
     is_qr_scan = models.BooleanField(default=False, help_text="True if originated from a QR code scan")
     source = models.CharField(max_length=50, default='Direct', help_text="Traffic source (QR, Direct, Referral, etc.)")
     visitor_id = models.CharField(max_length=64, blank=True, null=True, help_text="Hashed IP+UA for unique visitor tracking")
+    
+    # New Analytics fields for incoming UTMs & Cloaking
+    utm_source = models.CharField(max_length=100, blank=True, null=True)
+    utm_medium = models.CharField(max_length=100, blank=True, null=True)
+    utm_campaign = models.CharField(max_length=150, blank=True, null=True)
+    utm_term = models.CharField(max_length=150, blank=True, null=True)
+    utm_content = models.CharField(max_length=150, blank=True, null=True)
+    incoming_utm_source = models.CharField(max_length=100, blank=True, null=True)
+    incoming_utm_medium = models.CharField(max_length=100, blank=True, null=True)
+    incoming_utm_campaign = models.CharField(max_length=150, blank=True, null=True)
+    incoming_utm_term = models.CharField(max_length=150, blank=True, null=True)
+    incoming_utm_content = models.CharField(max_length=150, blank=True, null=True)
+    was_cloaked = models.BooleanField(default=False)
+    
+    # New Access Outcome Analytics
+    RESULT_CHOICES = [
+        ('redirect_success', 'Successful Redirect'),
+        ('password_required', 'Password Challenge'),
+        ('password_failed', 'Password Failure'),
+        ('expired', 'Expired Link Attempt'),
+        ('disabled', 'Disabled Link Attempt'),
+        ('gps_required', 'GPS Permission Required'),
+        ('gps_denied', 'GPS Permission Denied'),
+        ('invalid_link', 'Invalid Link Request'),
+        ('bot_request', 'Bot Request Ignored'),
+    ]
+    redirect_result = models.CharField(max_length=30, choices=RESULT_CHOICES, default='redirect_success', db_index=True)
+    http_status = models.IntegerField(default=200)
 
     class Meta:
         ordering = ['-timestamp']

@@ -22,7 +22,7 @@
         z-index: 40;
         padding: 24px 12px;
         display: none;
-        transition: transform 0.25s ease;
+        transition: width 0.25s ease, padding 0.25s ease;
     }
     @media (min-width: 768px) { .sidebar { display: block; } }
 
@@ -37,13 +37,28 @@
     @media (min-width: 768px) { .main-content { margin-left: 210px; } }
 
     .sidebar.desktop-collapsed {
-        transform: translateX(-100%);
+        width: 68px;
+        padding-left: 8px;
+        padding-right: 8px;
     }
     @media (min-width: 768px) {
         .main-content.sidebar-hidden {
-            margin-left: 0;
+            margin-left: 68px;
         }
     }
+    .sidebar-toggle {
+        width: 100%;
+        display: flex;
+        align-items: center;
+        justify-content: flex-end;
+        padding: 4px 8px 12px;
+        color: #64748b;
+    }
+    .sidebar-toggle:hover { color: #3b82f6; }
+    .sidebar.desktop-collapsed .sidebar-label,
+    .sidebar.desktop-collapsed .sidebar-heading { display: none; }
+    .sidebar.desktop-collapsed .sidebar-toggle { justify-content: center; }
+    .sidebar.desktop-collapsed .nav-link { justify-content: center; padding-left: 10px; padding-right: 10px; }
 
     /* Custom Header */
     .dashboard-nav {
@@ -115,19 +130,25 @@
 <div class="dashboard-layout">
     <!-- Sidebar -->
     <aside class="sidebar" id="dashboard-sidebar">
+        <button type="button" class="sidebar-toggle" id="sidebar-toggle" aria-label="Collapse sidebar" aria-expanded="true" onclick="toggleSidebar()">
+            <i data-lucide="panel-left-close"></i>
+        </button>
         <div class="space-y-6">
             <div>
-                <p class="text-[10px] font-bold text-surface-400 uppercase tracking-widest mb-3 px-4">Management</p>
+                <p class="sidebar-heading text-[10px] font-bold text-surface-400 uppercase tracking-widest mb-3 px-4">Management</p>
                 <a href="{% url 'dynamic_qr:dashboard' %}" class="nav-link {% if request.resolver_match.url_name == 'dashboard' %}active{% endif %}">
-                    <i data-lucide="layout-dashboard"></i> Dashboard
+                    <i data-lucide="layout-dashboard"></i><span class="sidebar-label">Dashboard</span>
                 </a>
                 
                 <a href="{% url 'dynamic_qr:all_qrs' %}" class="nav-link {% if request.resolver_match.url_name == 'all_qrs' %}active{% endif %}">
-                    <i data-lucide="list"></i> All QR
+                    <i data-lucide="list"></i><span class="sidebar-label">Dynamic QR</span>
                 </a>
                
                 <a href="{% url 'dynamic_qr:short_url' %}" class="nav-link {% if 'short_url' in request.resolver_match.url_name %}active{% endif %}">
-                    <i data-lucide="link"></i> Short URL
+                    <i data-lucide="link"></i><span class="sidebar-label">Short URL</span>
+                </a>
+                <a href="{% url 'dynamic_qr:plan' %}" class="nav-link {% if request.resolver_match.url_name == 'plan' %}active{% endif %}">
+                    <i data-lucide="credit-card"></i><span class="sidebar-label">Plan</span>
                 </a>
             </div>
 
@@ -148,6 +169,22 @@
 
 {% block extra_scripts %}
 <script>
+    function setSidebarCollapsed(collapsed) {
+        const sidebar = document.getElementById('dashboard-sidebar');
+        const mainContent = document.querySelector('.main-content');
+        const toggle = document.getElementById('sidebar-toggle');
+        if (!sidebar || !mainContent) return;
+        sidebar.classList.toggle('desktop-collapsed', collapsed);
+        mainContent.classList.toggle('sidebar-hidden', collapsed);
+        if (toggle) {
+            toggle.setAttribute('aria-expanded', String(!collapsed));
+            toggle.setAttribute('aria-label', collapsed ? 'Expand sidebar' : 'Collapse sidebar');
+            toggle.innerHTML = '<i data-lucide="' + (collapsed ? 'panel-left-open' : 'panel-left-close') + '"></i>';
+            lucide.createIcons();
+        }
+        localStorage.setItem('dqr-sidebar-collapsed', collapsed ? '1' : '0');
+    }
+
     function toggleSidebar() {
         const sidebar = document.getElementById('dashboard-sidebar');
         const mainContent = document.querySelector('.main-content');
@@ -155,13 +192,16 @@
         const isDesktop = window.matchMedia('(min-width: 768px)').matches;
 
         if (isDesktop) {
-            sidebar.classList.toggle('desktop-collapsed');
-            mainContent.classList.toggle('sidebar-hidden');
-            if (pageFooter) pageFooter.classList.toggle('sidebar-hidden');
+            const collapsed = !sidebar.classList.contains('desktop-collapsed');
+            setSidebarCollapsed(collapsed);
+            if (pageFooter) pageFooter.classList.toggle('sidebar-hidden', collapsed);
             return;
         }
 
         sidebar.style.display = (sidebar.style.display === 'block') ? 'none' : 'block';
+    }
+    if (window.matchMedia('(min-width: 768px)').matches && localStorage.getItem('dqr-sidebar-collapsed') === '1') {
+        setSidebarCollapsed(true);
     }
     lucide.createIcons();
     {% block dqr_scripts %}{% endblock %}

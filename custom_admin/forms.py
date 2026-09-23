@@ -5,6 +5,9 @@ class HeroVideoForm(forms.ModelForm):
     class Meta:
         model = HeroVideo
         fields = ['section', 'title', 'video', 'order', 'is_active']
+        labels = {
+            'section': 'Video For',
+        }
         widgets = {
             'section': forms.Select(attrs={
                 'class': 'w-full px-4 py-2 border border-surface-300 rounded-xl focus:ring-2 focus:ring-brand-500 focus:border-brand-500 transition-all bg-white'

@@ -1085,15 +1085,17 @@ def home(request):
     # Auto-discover videos from Django Admin (HeroVideo model)
     from .models import HeroVideo
     
-    short_url_videos = []
-    qr_code_videos = []
-    # Fetch active videos, ordering is already handled by Meta class ("order", "id")
-    for video_obj in HeroVideo.objects.filter(is_active=True):
-        if video_obj.video:
-            if video_obj.section == 'qr_code':
-                qr_code_videos.append(video_obj.video.url)
-            else:
-                short_url_videos.append(video_obj.video.url)
+    # Keep each public hero playlist isolated at the database boundary.
+    short_url_videos = [
+        video.video.url
+        for video in HeroVideo.objects.filter(section='short_url', is_active=True)
+        if video.video
+    ]
+    qr_code_videos = [
+        video.video.url
+        for video in HeroVideo.objects.filter(section='qr_code', is_active=True)
+        if video.video
+    ]
     
     context = {
         'tools': all_tools,
@@ -1114,11 +1116,7 @@ def convert_page(request, tool_slug):
     form = FileUploadForm()
 
     # Determine which template to use
-    if tool_slug == 'merge-pdf' or tool_slug == 'merge-word':
-        template = 'converter/merge.html'
-    elif tool_slug == 'split-pdf':
-        template = 'converter/split.html'
-    elif tool_slug == 'remove-pages':
+    if tool_slug == 'remove-pages':
         template = 'converter/remove_pages.html'
     elif tool_slug == 'extract-pages':
         template = 'converter/extract_pages.html'
@@ -1138,8 +1136,6 @@ def convert_page(request, tool_slug):
         template = 'converter/protect_pdf.html'
     elif tool_slug == 'image-to-pdf':
         template = 'converter/image_to_pdf.html'
-    elif tool_slug == 'ocr-pdf':
-        template = 'converter/ocr.html'
     elif tool_slug == 'resize-image':
         template = 'converter/resize_image.html'
     elif tool_slug == 'scale-image':
@@ -1152,7 +1148,6 @@ def convert_page(request, tool_slug):
         template = 'converter/compress_image.html'
     elif tool_slug == 'crop-image' or tool_slug == 'cut-image':
         template = 'converter/crop_image.html'
-
     elif tool_slug == 'chemical-balancer':
         template = 'converter/chemical_balancer.html'
     elif tool_slug == 'password-generator':
@@ -1161,7 +1156,6 @@ def convert_page(request, tool_slug):
         template = 'converter/unit_converter.html'
     elif tool_slug == 'speed-test':
         template = 'converter/speed_test.html'
-
     elif tool_slug == 'qrcode-generator':
         template = 'converter/qrcode_generator.html'
     elif tool_slug == 'meme-generator':
@@ -1185,23 +1179,23 @@ def convert_page(request, tool_slug):
     elif tool_slug == 'video-converter':
         template = 'converter/video_converter.html'
     else:
-        template = 'converter/convert.html'
+        template = f"converter/{tool_slug.replace('-', '_')}.html"
+
+    # SEO Integration
+    from .seo_content import SEO_DATA
+    seo_extra = SEO_DATA.get(tool_slug, {})
+    tool.update(seo_extra)
 
     context = {
         'tool': tool,
         'tool_slug': tool_slug,
-        'form': form,
-        'page_title': f'{tool["title"]} — ScanPDF',
-                'tool': tool,
-        'tool_slug': tool_slug,
-        'seo_title': tool.get('seo_title', tool['title']),
+        'seo_title': tool.get('seo_title', f"{tool['title']} | ScanPDF"),
         'seo_description': tool.get('seo_description', tool['description']),
         'seo_keywords': tool.get('seo_keywords', ''),
         'seo_h1': tool.get('seo_h1', tool['title']),
         'seo_intro': tool.get('seo_intro', tool['description']),
-
-    's1': tool.get('s1', ''),
-    'highlight': tool.get('highlight', ''),
+        's1': tool.get('s1', ''),
+        'highlight': tool.get('highlight', ''),
     }
     return render(request, template, context)
 
