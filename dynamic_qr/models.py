@@ -238,6 +238,10 @@ class QRAnalytics(models.Model):
     source = models.CharField(max_length=50, default='Direct', help_text="Traffic source (QR, Direct, Referral, etc.)")
     visitor_id = models.CharField(max_length=64, blank=True, null=True, help_text="Hashed IP+UA for unique visitor tracking")
     
+    # New Analytics fields for explicit referrer tracking
+    detected_source = models.CharField(max_length=100, default='Direct / Unknown', help_text="Detected referring platform (e.g. Facebook)")
+    detected_medium = models.CharField(max_length=100, blank=True, null=True, help_text="Detected referring medium (e.g. social)")
+    
     # New Analytics fields for incoming UTMs & Cloaking
     utm_source = models.CharField(max_length=100, blank=True, null=True)
     utm_medium = models.CharField(max_length=100, blank=True, null=True)

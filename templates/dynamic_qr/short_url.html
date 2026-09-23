@@ -415,7 +415,7 @@
                 <div class="create-short-url-toggle bg-slate-50 rounded-xl border border-slate-100">
                     <div class="flex items-center justify-between">
                         <div>
-                            <p class="font-black text-slate-900 text-sm flex items-center gap-2">UTM Parameters 
+                            <p class="font-black text-slate-900 text-sm flex items-center gap-2">Manual UTM Campaign Tracking 
                             {% if not feature_statuses.shorturl_utm.enabled %}
                                 <a href="{% url 'services:pricing' %}" class="text-[9px] uppercase tracking-widest bg-amber-100 text-amber-600 px-2 py-0.5 rounded-md font-bold">Upgrade</a>
                             {% elif not feature_statuses.shorturl_utm.unlimited %}
@@ -425,6 +425,7 @@
                             {% endif %}
                             </p>
                             <p class="text-[10px] font-bold text-slate-400">Append UTM tags to your destination URL.</p>
+                            <p class="text-[10px] font-bold text-indigo-500 mt-1"><i data-lucide="info" class="w-3 h-3 inline-block"></i> Automatic Source Detection: The system automatically records the referring platform (Facebook, Instagram, Google, etc.) on every click. Use this section only if you want explicit manual campaign attribution.</p>
                             {% if feature_statuses.shorturl_utm.limit_reached %}
                             <p class="text-[10px] text-red-500 font-bold mt-1">Limit reached.</p>
                             {% endif %}

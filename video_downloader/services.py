@@ -16,12 +16,6 @@ logger = logging.getLogger(__name__)
 import random
 
 def get_ytdl_base_options():
-    user_agents = [
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/16.6 Safari/605.1.15',
-        'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:122.0) Gecko/20100101 Firefox/122.0'
-    ]
-    
     options = {
         'quiet': True,
         'no_warnings': True,
@@ -31,12 +25,7 @@ def get_ytdl_base_options():
         'fragment_retries': 10,
         'format_sort': ['vcodec:h264', 'res', 'acodec:m4a'],
         'force_ipv4': True,
-        'http_headers': {
-            'User-Agent': random.choice(user_agents),
-            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-            'Accept-Language': 'en-US,en;q=0.5',
-            'Sec-Fetch-Mode': 'navigate',
-        },
+        'extractor_args': {'youtube': ['player_client=web,default']},
     }
     
     # Secure Optional Authentication Support
@@ -44,6 +33,11 @@ def get_ytdl_base_options():
     if cookies_file and os.path.exists(cookies_file):
         options['cookiefile'] = cookies_file
         logger.info("Loaded secure cookies file from environment variable.")
+
+    browser_name = os.environ.get('YTDLP_COOKIES_FROM_BROWSER')
+    if browser_name and not options.get('cookiefile'):
+        options['cookiesfrombrowser'] = (browser_name.strip(), None, None, None)
+        logger.info("Configured yt-dlp to load cookies from %s.", browser_name.strip())
     
     # Try to use bundled FFmpeg if available
     ffmpeg_dir = getattr(settings, 'FFMPEG_BIN_DIR', None)
@@ -53,19 +47,32 @@ def get_ytdl_base_options():
     return options
 
 class YTDLPError(Exception):
-    def __init__(self, code, message):
+    def __init__(self, code, message, raw_error=None):
         self.code = code
         self.message = message
+        self.raw_error = raw_error
         super().__init__(self.message)
 
 def _categorize_error(e, url):
     error_msg = str(e).lower()
+
+    if 'facebook.com' in urlparse(url).netloc.lower():
+        if any(k in error_msg for k in ['could not copy chrome cookie database', 'cookie database', 'permission denied']):
+            return 'FACEBOOK_BROWSER_LOCKED', 'Close Chrome completely, restart this server, and try again. For a running browser, export Facebook cookies and configure YTDLP_COOKIE_FILE instead.'
+        if any(k in error_msg for k in ['cannot parse data', 'login', 'sign in', 'private']):
+            return 'FACEBOOK_ACCESS_REQUIRED', 'Facebook did not provide the video to this server. Export your Facebook cookies and configure YTDLP_COOKIE_FILE, then try again.'
+    
+    if "nonetype" in error_msg and "youtubedl" in error_msg:
+        return "YT_DLP_MISSING", "yt-dlp is not installed or available on this server."
+        
+    if "http error 400" in error_msg or "bad request" in error_msg:
+        return "YOUTUBE_API_BLOCK", "YouTube API rejected the request. Please update yt-dlp or check player clients."
     
     if any(k in error_msg for k in ['sign in', 'bot', 'age', 'verify', 'cookies-from-browser', 'authentication', 'logged-in', 'login', 'empty media response']):
         return "YOUTUBE_BOT_CHALLENGE", "Unable to analyze this video from the current server. Please try again later."
     
-    if any(k in error_msg for k in ['video unavailable', 'unavailable video']):
-        return "VIDEO_UNAVAILABLE", "This video is unavailable."
+    if any(k in error_msg for k in ['video unavailable', 'unavailable video', 'not available']):
+        return "VIDEO_UNAVAILABLE", "This video is unavailable or cannot be accessed from the server."
         
     if any(k in error_msg for k in ['private video']):
         return "AUTH_REQUIRED", "This video requires authorized access."
@@ -78,6 +85,8 @@ def _categorize_error(e, url):
         
     if any(k in error_msg for k in ['format is not available', 'requested format']):
         return "FORMAT_UNAVAILABLE", "The requested format is not available."
+    if any(k in error_msg for k in ['ffmpeg is not installed', 'ffmpeg not found', 'ffprobe and ffmpeg']):
+        return "FFMPEG_MISSING", "FFmpeg is required for this format but is not available on the server."
         
     return "UNKNOWN_YOUTUBE_ERROR", "Unable to prepare this download."
 
@@ -88,16 +97,20 @@ def _execute_with_retry(execute_func, url, options):
     try:
         return execute_func(options)
     except Exception as e:
+        import traceback
         code, safe_msg = _categorize_error(e, url)
-        logger.warning(
-            "youtube_analysis_failed",
+        raw_err_str = str(e) + "\n\n" + traceback.format_exc()
+        logger.error(
+            "YouTube analysis/download failed.",
             extra={
                 "video_url": url,
                 "error_type": code,
-                "raw_error": str(e)
+                "yt_dlp_version": getattr(yt_dlp.version, '__version__', 'unknown') if hasattr(yt_dlp, 'version') else getattr(yt_dlp, '__version__', 'unknown'),
+                "raw_error": str(e),
+                "traceback": traceback.format_exc()
             }
         )
-        raise YTDLPError(code, safe_msg)
+        raise YTDLPError(code, safe_msg, raw_error=raw_err_str)
 
 
 def verify_video_audio_streams(filepath):
@@ -175,56 +188,44 @@ def analyze_video(url):
         
         # Basic metadata
         if True:
+            # Extract duration safely
+            duration = info.get('duration')
+            if not duration:
+                for f in info.get('formats', []):
+                    if f.get('duration'):
+                        duration = f.get('duration')
+                        break
+            if not duration:
+                duration = 0
+                
             result = {
                 'title': info.get('title', 'Unknown Title'),
                 'thumbnail': info.get('thumbnail'),
-                'duration': info.get('duration'),
+                'duration': duration,
                 'uploader': info.get('uploader', info.get('extractor_key')),
                 'formats': []
             }
             
-            extractor = str(info.get('extractor_key', '')).lower()
-            social_extractors = ['instagram', 'facebook', 'twitter', 'tiktok', 'x', 'vimeo']
-            
-            if any(ext in extractor for ext in social_extractors):
-                # For social media, provide only best synthetic formats
-                result['formats'] = [
-                    {
-                        'format_id': 'bestvideo+bestaudio/best',
-                        'resolution': 'Highest Quality',
-                        'ext': 'mp4',
-                        'vcodec': 'H.264',
-                        'acodec': 'AAC',
-                        'filesize': 0,
-                        'type': 'Video + Audio'
-                    },
-                    {
-                        'format_id': 'bestaudio/best',
-                        'resolution': 'Best Audio',
-                        'ext': 'mp3',
-                        'vcodec': 'none',
-                        'acodec': 'MP3',
-                        'filesize': 0,
-                        'type': 'Audio Only'
-                    }
-                ]
-                return result
-
-            # Standard parsing for YouTube and others
+            # Standard parsing for YouTube and all platforms
             video_formats_by_height = {}
             audio_formats = []
             
             for f in info.get('formats', []):
-                vcodec = f.get('vcodec', 'none')
-                acodec = f.get('acodec', 'none')
+                vcodec = str(f.get('vcodec') or 'none').lower()
+                acodec = str(f.get('acodec') or 'none').lower()
+                ext = str(f.get('ext') or 'unknown').lower()
                 
-                if vcodec == 'none' and acodec == 'none':
-                    continue
-                    
                 filesize = f.get('filesize') or f.get('filesize_approx') or 0
                 height = f.get('height') or 0
+                width = f.get('width') or 0
                 bitrate = f.get('tbr') or f.get('vbr') or f.get('abr') or 0
-                ext = f.get('ext', 'unknown')
+                
+                # Some social extractors (Instagram, TikTok) don't label vcodec but output MP4s
+                if vcodec == 'none' and acodec == 'none':
+                    if (height > 0 or width > 0) and ext in ['mp4', 'webm', 'mov']:
+                        vcodec = 'unknown' # Force parsing as video
+                    else:
+                        continue
                 
                 if vcodec == 'none' and acodec != 'none':
                     abr = f.get('abr') or bitrate or 0
@@ -245,9 +246,12 @@ def analyze_video(url):
                 if height > 0:
                     priority = get_codec_priority(vcodec)
                     
+                    # Normalize vertical video resolution (Shorts)
+                    display_height = width if (height > width and width > 0) else height
+                    
                     fmt = {
                         'format_id': f.get('format_id'),
-                        'resolution': f"{height}p",
+                        'resolution': f"{display_height}p",
                         'ext': 'mp4', # Force MP4
                         'vcodec': 'H.264' if priority >= 3 else vcodec, # Simplify UI
                         'acodec': 'AAC',
@@ -258,11 +262,11 @@ def analyze_video(url):
                         'raw_acodec': acodec
                     }
                     
-                    if height not in video_formats_by_height:
-                        video_formats_by_height[height] = fmt
+                    if display_height not in video_formats_by_height:
+                        video_formats_by_height[display_height] = fmt
                     else:
-                        if priority > video_formats_by_height[height]['priority']:
-                            video_formats_by_height[height] = fmt
+                        if priority > video_formats_by_height[display_height]['priority']:
+                            video_formats_by_height[display_height] = fmt
             
             final_video_formats = []
             for height in sorted(video_formats_by_height.keys(), reverse=True):
@@ -304,11 +308,13 @@ def analyze_video(url):
                 
             result['formats'] = final_video_formats + final_audio_formats
             return result
-    except ValueError as e:
+    except YTDLPError:
         raise
     except Exception as e:
+        import traceback
         logger.error(f"Failed to analyze URL {url}: {e}")
-        raise ValueError(str(e))
+        raw_err_str = str(e) + "\n\n" + traceback.format_exc()
+        raise YTDLPError("METADATA_PARSE_FAILED", "Failed to parse video metadata.", raw_error=raw_err_str)
 
 def download_format(url, format_id, format_type):
     """
@@ -317,20 +323,9 @@ def download_format(url, format_id, format_type):
     """
     import shutil
     
-    # 1. Fresh Metadata Extraction and Validation
-    try:
-        fresh_info = analyze_video(url)
-    except YTDLPError:
-        raise
-    except Exception as e:
-        raise YTDLPError("INVALID_URL", f"Failed to retrieve metadata: {str(e)}")
-        
-    formats = fresh_info.get('formats', [])
-    selected_fmt = next((f for f in formats if str(f.get('format_id')) == str(format_id)), None)
-    
-    # Special case: bestaudio/best and bestvideo+bestaudio/best are pseudo format IDs used in fallbacks
-    if not selected_fmt and format_id not in ('bestaudio/best', 'bestvideo+bestaudio/best'):
-        raise YTDLPError("FORMAT_UNAVAILABLE", "The requested format is not available for this video.")
+    # Format IDs can change between metadata extraction and download, especially
+    # for Facebook. Let yt-dlp validate the selected ID during the real download.
+    selected_fmt = None
     
     ffmpeg_available = bool(shutil.which('ffmpeg'))
     ffmpeg_dir = getattr(settings, 'FFMPEG_BIN_DIR', None)
@@ -446,6 +441,50 @@ def download_format(url, format_id, format_type):
                         except Exception:
                             pass
                         raise Exception("Failed to convert unsupported audio codec to AAC.")
+            elif format_type == 'Audio Only':
+                has_video, has_audio, audio_codec, video_codec = verify_video_audio_streams(downloaded_file)
+                if not has_audio:
+                    # Delete the defective file
+                    try:
+                        os.remove(downloaded_file)
+                    except Exception:
+                        pass
+                    raise Exception("Downloaded file does not contain an audio track.")
+                    
+                ffmpeg_dir = getattr(settings, 'FFMPEG_BIN_DIR', None)
+                ffmpeg_cmd = 'ffmpeg'
+                if ffmpeg_dir and os.path.exists(ffmpeg_dir):
+                    ffmpeg_cmd = os.path.join(ffmpeg_dir, 'ffmpeg')
+                    
+                transcoded_file = os.path.join(temp_dir, f"{file_id}_transcoded.mp3")
+                
+                cmd = [
+                    ffmpeg_cmd,
+                    '-i', downloaded_file,
+                    '-c:a', 'libmp3lame',
+                    '-b:a', '192k',
+                    '-ar', '44100',
+                    '-ac', '2',
+                    '-vn',
+                    transcoded_file,
+                    '-y'
+                ]
+                
+                logger.info(f"Transcoding audio ({audio_codec}) to standard MP3: {' '.join(cmd)}")
+                transcode_result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+                if transcode_result.returncode == 0 and os.path.exists(transcoded_file):
+                    try:
+                        os.remove(downloaded_file)
+                    except Exception:
+                        pass
+                    downloaded_file = transcoded_file
+                else:
+                    logger.error(f"Audio Transcode failed: {transcode_result.stderr}")
+                    try:
+                        os.remove(downloaded_file)
+                    except Exception:
+                        pass
+                    raise Exception("Failed to convert audio stream to MP3 format.")
                 
             return downloaded_file, info.get('title', 'video')
             
