@@ -1,0 +1,104 @@
+{% extends 'media_tools/editor_base.html' %}
+{% load static %}
+
+{% block tool_title %}
+Blur <span class="mt-gradient-text">Video</span>
+{% endblock %}
+
+{% block tool_subtitle %}
+Censor faces, sensitive content, background details, or apply artistic blur filters to video.
+{% endblock %}
+
+{% block tool_bar_title %}
+Video Blur & Censor Editor
+{% endblock %}
+
+{% block hidden_fields %}
+<input type="hidden" name="blur_type" id="id_blur_type" value="full">
+<input type="hidden" name="intensity" id="id_intensity" value="15">
+<input type="hidden" name="x" id="id_x" value="0">
+<input type="hidden" name="y" id="id_y" value="0">
+<input type="hidden" name="width" id="id_width" value="0">
+<input type="hidden" name="height" id="id_height" value="0">
+<input type="hidden" name="output_format" id="id_output_format" value="mp4">
+{% endblock %}
+
+{% block tool_controls %}
+<div class="mt-section">
+    <div class="mt-section-title">1. Blur Mode</div>
+    <div class="mt-chip-grid">
+        <button type="button" class="mt-chip active" data-type="full">Full Video</button>
+        <button type="button" class="mt-chip" data-type="region">Center Box Region</button>
+    </div>
+</div>
+
+<div class="mt-section">
+    <div class="mt-range-wrapper">
+        <div class="mt-range-header">
+            <span>Blur Intensity</span>
+            <span class="mt-range-val" id="blurVal">15px</span>
+        </div>
+        <input type="range" class="mt-range-slider" id="blurSlider" min="2" max="50" value="15">
+    </div>
+</div>
+
+<div class="mt-section">
+    <div class="mt-section-title">Intensity Presets</div>
+    <div class="mt-chip-grid">
+        <button type="button" class="mt-chip" data-blur="5">Mild (5px)</button>
+        <button type="button" class="mt-chip active" data-blur="15">Medium (15px)</button>
+        <button type="button" class="mt-chip" data-blur="30">Heavy (30px)</button>
+        <button type="button" class="mt-chip" data-blur="50">Maximum (50px)</button>
+    </div>
+</div>
+{% endblock %}
+
+{% block process_btn_text %}
+Apply Blur & Export
+{% endblock %}
+
+{% block tool_scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    var videoPreview = document.getElementById("mtVideoPreview");
+    var hiddenType = document.getElementById("id_blur_type");
+    var hiddenIntensity = document.getElementById("id_intensity");
+
+    var typeChips = document.querySelectorAll("[data-type]");
+    var blurChips = document.querySelectorAll("[data-blur]");
+    var blurSlider = document.getElementById("blurSlider");
+    var blurVal = document.getElementById("blurVal");
+
+    function updateBlur(val) {
+        var v = parseInt(val);
+        hiddenIntensity.value = v;
+        blurSlider.value = v;
+        blurVal.textContent = v + "px";
+        blurChips.forEach(c => c.classList.toggle("active", parseInt(c.getAttribute("data-blur")) === v));
+        videoPreview.style.filter = "blur(" + Math.min(10, v * 0.3) + "px)";
+    }
+
+    typeChips.forEach(function(chip) {
+        chip.addEventListener("click", function() {
+            typeChips.forEach(c => c.classList.remove("active"));
+            this.classList.add("active");
+            hiddenType.value = this.getAttribute("data-type");
+        });
+    });
+
+    blurChips.forEach(function(chip) {
+        chip.addEventListener("click", function() {
+            updateBlur(this.getAttribute("data-blur"));
+        });
+    });
+
+    blurSlider.addEventListener("input", function() {
+        updateBlur(this.value);
+    });
+
+    MediaTools.initUploadCard({ fileInputSelector: "#id_video", videoPlayerSelector: "#mtVideoPreview" });
+    MediaTools.initPlaybar(videoPreview);
+    MediaTools.initAjaxForm("#mtToolForm");
+});
+</script>
+{% endblock %}

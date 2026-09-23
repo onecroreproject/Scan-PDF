@@ -1,0 +1,25 @@
+{% comment %}
+Reusable fragment for six information cards.
+Expected context: cards = [{"icon": "svg_path_or_class", "title": "Title", "description": "Short description"}, ...]
+{% endcomment %}
+
+<div class="mt-info-cards">
+    <div class="mt-card-grid" style="
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 20px;
+">
+        {% for card in cards %}
+        <div class="mt-card">
+            <div class="mt-card-icon">
+                {{ card.icon|safe }}
+            </div>
+
+            <div class="mt-card-content">
+                <h3 class="mt-card-title">{{ card.title }}</h3>
+                <p class="mt-card-description">{{ card.description }}</p>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>

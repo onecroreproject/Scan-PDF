@@ -1,0 +1,98 @@
+{% extends 'media_tools/editor_base.html' %}
+{% load static %}
+
+{% block tool_title %}
+Add Video <span class="mt-gradient-text">Transition</span>
+{% endblock %}
+
+{% block tool_subtitle %}
+Apply smooth fade-in, fade-out, or color crossfade transitions to video scenes.
+{% endblock %}
+
+{% block tool_bar_title %}
+Fade & Transition Studio
+{% endblock %}
+
+{% block hidden_fields %}
+<input type="hidden" name="transition_type" id="id_transition_type" value="fade-both">
+<input type="hidden" name="duration" id="id_duration" value="1.0">
+<input type="hidden" name="color" id="id_color" value="black">
+<input type="hidden" name="output_format" id="id_output_format" value="mp4">
+{% endblock %}
+
+{% block tool_controls %}
+<div class="mt-section">
+    <div class="mt-section-title">1. Transition Type</div>
+    <div class="mt-chip-grid">
+        <button type="button" class="mt-chip active" data-type="fade-both">Fade In & Out</button>
+        <button type="button" class="mt-chip" data-type="fade-in">Fade In Only</button>
+        <button type="button" class="mt-chip" data-type="fade-out">Fade Out Only</button>
+        <button type="button" class="mt-chip" data-type="fade-white">Fade via White</button>
+    </div>
+</div>
+
+<div class="mt-section">
+    <div class="mt-range-wrapper">
+        <div class="mt-range-header">
+            <span>Transition Duration</span>
+            <span class="mt-range-val" id="durVal">1.0s</span>
+        </div>
+        <input type="range" class="mt-range-slider" id="durSlider" min="0.2" max="4.0" step="0.1" value="1.0">
+    </div>
+</div>
+
+<div class="mt-section">
+    <div class="mt-section-title">Fade Color</div>
+    <div class="mt-chip-grid">
+        <button type="button" class="mt-chip active" data-color="black">Deep Black</button>
+        <button type="button" class="mt-chip" data-color="white">Bright White</button>
+    </div>
+</div>
+{% endblock %}
+
+{% block process_btn_text %}
+Apply Transition & Export
+{% endblock %}
+
+{% block tool_scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    var videoPreview = document.getElementById("mtVideoPreview");
+
+    var hiddenType = document.getElementById("id_transition_type");
+    var hiddenDur = document.getElementById("id_duration");
+    var hiddenColor = document.getElementById("id_color");
+
+    var typeChips = document.querySelectorAll("[data-type]");
+    var colorChips = document.querySelectorAll("[data-color]");
+    var durSlider = document.getElementById("durSlider");
+    var durVal = document.getElementById("durVal");
+
+    typeChips.forEach(function(chip) {
+        chip.addEventListener("click", function() {
+            typeChips.forEach(c => c.classList.remove("active"));
+            this.classList.add("active");
+            hiddenType.value = this.getAttribute("data-type");
+        });
+    });
+
+    colorChips.forEach(function(chip) {
+        chip.addEventListener("click", function() {
+            colorChips.forEach(c => c.classList.remove("active"));
+            this.classList.add("active");
+            hiddenColor.value = this.getAttribute("data-color");
+        });
+    });
+
+    durSlider.addEventListener("input", function() {
+        var d = parseFloat(this.value).toFixed(1);
+        hiddenDur.value = d;
+        durVal.textContent = d + "s";
+    });
+
+    MediaTools.initUploadCard({ fileInputSelector: "#id_video", videoPlayerSelector: "#mtVideoPreview" });
+    MediaTools.initPlaybar(videoPreview);
+    MediaTools.initAjaxForm("#mtToolForm");
+});
+</script>
+{% endblock %}

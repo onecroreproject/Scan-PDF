@@ -1,0 +1,63 @@
+{% extends 'media_tools/editor_base.html' %}
+{% load static %}
+
+{% block tool_title %}
+Stabilize <span class="mt-gradient-text">Video</span>
+{% endblock %}
+
+{% block tool_subtitle %}
+Remove camera shake, jitter, and handheld motion using digital video stabilization algorithms.
+{% endblock %}
+
+{% block tool_bar_title %}
+Deshake & Motion Stabilization
+{% endblock %}
+
+{% block hidden_fields %}
+<input type="hidden" name="strength" id="id_strength" value="medium">
+<input type="hidden" name="output_format" id="id_output_format" value="mp4">
+{% endblock %}
+
+{% block tool_controls %}
+<div class="mt-section">
+    <div class="mt-section-title">1. Stabilization Strength</div>
+    <div class="mt-chip-grid">
+        <button type="button" class="mt-chip" data-strength="mild">Mild (Light Shake)</button>
+        <button type="button" class="mt-chip active" data-strength="medium">Medium (Standard)</button>
+        <button type="button" class="mt-chip" data-strength="strong">Strong (Heavy Shake)</button>
+    </div>
+</div>
+
+<div class="mt-section">
+    <div class="mt-section-title">Algorithmic Info</div>
+    <div style="font-size: 0.85rem; color: #94a3b8; line-height: 1.5; background: rgba(255,255,255,0.03); padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.08);">
+        Deshaking estimates motion vectors frame-by-frame and compensates for high-frequency jitter while preserving smooth camera pans.
+    </div>
+</div>
+{% endblock %}
+
+{% block process_btn_text %}
+Stabilize Video & Export
+{% endblock %}
+
+{% block tool_scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    var videoPreview = document.getElementById("mtVideoPreview");
+    var hiddenStrength = document.getElementById("id_strength");
+    var strengthChips = document.querySelectorAll("[data-strength]");
+
+    strengthChips.forEach(function(chip) {
+        chip.addEventListener("click", function() {
+            strengthChips.forEach(c => c.classList.remove("active"));
+            this.classList.add("active");
+            hiddenStrength.value = this.getAttribute("data-strength");
+        });
+    });
+
+    MediaTools.initUploadCard({ fileInputSelector: "#id_video", videoPlayerSelector: "#mtVideoPreview" });
+    MediaTools.initPlaybar(videoPreview);
+    MediaTools.initAjaxForm("#mtToolForm");
+});
+</script>
+{% endblock %}

@@ -1,0 +1,84 @@
+{% extends 'media_tools/editor_base.html' %}
+{% load static %}
+
+{% block tool_title %}
+Convert <span class="mt-gradient-text">Video Format</span>
+{% endblock %}
+
+{% block tool_subtitle %}
+Transcode your video into MP4, MOV, WEBM, AVI, MKV, or GIF with broadcast-grade FFmpeg quality.
+{% endblock %}
+
+{% block tool_bar_title %}
+Video Converter
+{% endblock %}
+
+{% block hidden_fields %}
+<input type="hidden" name="target_format" id="id_target_format" value="mp4">
+{% endblock %}
+
+{% block tool_controls %}
+<div class="mt-section">
+    <div class="mt-section-title">Select Target Format</div>
+    <div class="mt-chip-grid" style="grid-template-columns: repeat(3, 1fr);">
+        <button type="button" class="mt-chip active" data-fmt="mp4">MP4</button>
+        <button type="button" class="mt-chip" data-fmt="mov">MOV</button>
+        <button type="button" class="mt-chip" data-fmt="webm">WEBM</button>
+        <button type="button" class="mt-chip" data-fmt="avi">AVI</button>
+        <button type="button" class="mt-chip" data-fmt="mkv">MKV</button>
+        <button type="button" class="mt-chip" data-fmt="gif">GIF</button>
+    </div>
+</div>
+
+<div class="mt-section">
+    <div class="mt-section-title">Format Characteristics</div>
+    <div style="background: var(--mt-bg-card); border: 1px solid var(--mt-border); border-radius: var(--mt-radius-sm); padding: 0.9rem; font-size: 0.8rem; color: var(--mt-text-secondary); line-height: 1.5;" id="fmtDescription">
+        <strong style="color: var(--mt-text);">MP4 (H.264 / AAC)</strong><br>
+        Universally supported across iOS, Android, macOS, Windows, Chrome, Safari, and social media.
+    </div>
+</div>
+{% endblock %}
+
+{% block process_btn_text %}
+Convert Video
+{% endblock %}
+
+{% block tool_scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    var videoPreview = document.getElementById("mtVideoPreview");
+    var targetInput = document.getElementById("id_target_format");
+    var fmtChips = document.querySelectorAll(".mt-chip[data-fmt]");
+    var fmtDesc = document.getElementById("fmtDescription");
+
+    var descriptions = {
+        mp4: "<strong>MP4 (H.264 / AAC)</strong><br>Universally supported across iOS, Android, macOS, Windows, Chrome, Safari, and social media.",
+        mov: "<strong>MOV (Apple QuickTime)</strong><br>Optimal format for Apple ecosystem, Final Cut Pro, and professional video editing suites.",
+        webm: "<strong>WEBM (VP9 / Opus)</strong><br>Highly compressed open web format optimized for fast loading on modern browsers and Chrome.",
+        avi: "<strong>AVI (Audio Video Interleave)</strong><br>Classic Microsoft multimedia container compatible with legacy Windows applications and media players.",
+        mkv: "<strong>MKV (Matroska)</strong><br>Robust container supporting multiple audio and subtitle streams for high fidelity archival.",
+        gif: "<strong>GIF (Animated Loop)</strong><br>Lightweight looping soundless animation easily embeddable in chat, emails, and forum posts."
+    };
+
+    fmtChips.forEach(function(chip) {
+        chip.addEventListener("click", function() {
+            fmtChips.forEach(function(c) { c.classList.remove("active"); });
+            this.classList.add("active");
+            var fmt = this.getAttribute("data-fmt");
+            targetInput.value = fmt;
+            if (fmtDesc && descriptions[fmt]) {
+                fmtDesc.innerHTML = descriptions[fmt];
+            }
+        });
+    });
+
+    MediaTools.initUploadCard({
+        fileInputSelector: "#id_video",
+        videoPlayerSelector: "#mtVideoPreview",
+    });
+
+    MediaTools.initPlaybar(videoPreview);
+    MediaTools.initAjaxForm("#mtToolForm");
+});
+</script>
+{% endblock %}

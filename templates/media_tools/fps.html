@@ -1,0 +1,76 @@
+{% extends 'media_tools/editor_base.html' %}
+{% load static %}
+
+{% block tool_title %}
+Change <span class="mt-gradient-text">Frame Rate (FPS)</span>
+{% endblock %}
+
+{% block tool_subtitle %}
+Standardize or adjust frames per second. Choose cinematic 24 FPS, standard 30 FPS, smooth 60 FPS, or retro 15 FPS.
+{% endblock %}
+
+{% block tool_bar_title %}
+Frame Rate (FPS) Editor
+{% endblock %}
+
+{% block hidden_fields %}
+<input type="hidden" name="fps" id="id_fps" value="30">
+<input type="hidden" name="output_format" id="id_output_format" value="mp4">
+{% endblock %}
+
+{% block tool_controls %}
+<div class="mt-section">
+    <div class="mt-section-title">Select Target Frame Rate</div>
+    <div class="mt-chip-grid">
+        <button type="button" class="mt-chip" data-fps="15">15 FPS (Compact)</button>
+        <button type="button" class="mt-chip" data-fps="24">24 FPS (Cinema)</button>
+        <button type="button" class="mt-chip active" data-fps="30">30 FPS (Standard)</button>
+        <button type="button" class="mt-chip" data-fps="60">60 FPS (Ultra Smooth)</button>
+    </div>
+</div>
+
+<div class="mt-section">
+    <div class="mt-section-title">Output Format</div>
+    <select class="mt-select" id="formatSelect">
+        <option value="mp4" selected>MP4 (Universal)</option>
+        <option value="mov">MOV (Apple)</option>
+        <option value="webm">WEBM (Web)</option>
+    </select>
+</div>
+{% endblock %}
+
+{% block process_btn_text %}
+Export Video at Target FPS
+{% endblock %}
+
+{% block tool_scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    var videoPreview = document.getElementById("mtVideoPreview");
+    var fpsInput = document.getElementById("id_fps");
+    var formatInput = document.getElementById("id_output_format");
+    var formatSelect = document.getElementById("formatSelect");
+    var fpsChips = document.querySelectorAll(".mt-chip[data-fps]");
+
+    fpsChips.forEach(function(chip) {
+        chip.addEventListener("click", function() {
+            fpsChips.forEach(function(c) { c.classList.remove("active"); });
+            this.classList.add("active");
+            fpsInput.value = this.getAttribute("data-fps");
+        });
+    });
+
+    formatSelect.addEventListener("change", function() {
+        formatInput.value = this.value;
+    });
+
+    MediaTools.initUploadCard({
+        fileInputSelector: "#id_video",
+        videoPlayerSelector: "#mtVideoPreview",
+    });
+
+    MediaTools.initPlaybar(videoPreview);
+    MediaTools.initAjaxForm("#mtToolForm");
+});
+</script>
+{% endblock %}

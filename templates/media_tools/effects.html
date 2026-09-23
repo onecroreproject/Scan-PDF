@@ -1,0 +1,144 @@
+{% extends 'media_tools/editor_base.html' %}
+{% load static %}
+
+{% block tool_title %}
+Video <span class="mt-gradient-text">Filters & Color Effects</span>
+{% endblock %}
+
+{% block tool_subtitle %}
+Adjust brightness, contrast, and saturation, or apply artistic vintage, grayscale, sepia, and invert filters with instant visual feedback.
+{% endblock %}
+
+{% block tool_bar_title %}
+Color & Effects Studio
+{% endblock %}
+
+{% block hidden_fields %}
+<input type="hidden" name="brightness" id="id_brightness" value="0.0">
+<input type="hidden" name="contrast" id="id_contrast" value="1.0">
+<input type="hidden" name="saturation" id="id_saturation" value="1.0">
+<input type="hidden" name="filter_type" id="id_filter_type" value="none">
+<input type="hidden" name="output_format" id="id_output_format" value="mp4">
+{% endblock %}
+
+{% block tool_controls %}
+<div class="mt-section">
+    <div class="mt-section-title">Artistic Style</div>
+    <div class="mt-chip-grid">
+        <button type="button" class="mt-chip active" data-style="none">Normal</button>
+        <button type="button" class="mt-chip" data-style="grayscale">B&W Grayscale</button>
+        <button type="button" class="mt-chip" data-style="sepia">Vintage Sepia</button>
+        <button type="button" class="mt-chip" data-style="invert">Negative Invert</button>
+    </div>
+</div>
+
+<div class="mt-section">
+    <div class="mt-range-wrapper">
+        <div class="mt-range-header">
+            <span>Brightness</span>
+            <span class="mt-range-val" id="brightDisplay">0.0</span>
+        </div>
+        <input type="range" class="mt-range-slider" id="brightSlider" min="-0.5" max="0.5" step="0.05" value="0.0">
+    </div>
+</div>
+
+<div class="mt-section">
+    <div class="mt-range-wrapper">
+        <div class="mt-range-header">
+            <span>Contrast</span>
+            <span class="mt-range-val" id="contrastDisplay">1.0</span>
+        </div>
+        <input type="range" class="mt-range-slider" id="contrastSlider" min="0.5" max="2.0" step="0.05" value="1.0">
+    </div>
+</div>
+
+<div class="mt-section">
+    <div class="mt-range-wrapper">
+        <div class="mt-range-header">
+            <span>Saturation</span>
+            <span class="mt-range-val" id="satDisplay">1.0</span>
+        </div>
+        <input type="range" class="mt-range-slider" id="satSlider" min="0.0" max="2.5" step="0.05" value="1.0">
+    </div>
+</div>
+{% endblock %}
+
+{% block process_btn_text %}
+Render Video Effects
+{% endblock %}
+
+{% block tool_scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    var videoPreview = document.getElementById("mtVideoPreview");
+    var bInput = document.getElementById("id_brightness");
+    var cInput = document.getElementById("id_contrast");
+    var sInput = document.getElementById("id_saturation");
+    var fInput = document.getElementById("id_filter_type");
+
+    var bSlider = document.getElementById("brightSlider");
+    var cSlider = document.getElementById("contrastSlider");
+    var sSlider = document.getElementById("satSlider");
+
+    var bDisp = document.getElementById("brightDisplay");
+    var cDisp = document.getElementById("contrastDisplay");
+    var sDisp = document.getElementById("satDisplay");
+    var styleChips = document.querySelectorAll(".mt-chip[data-style]");
+
+    var currentFilter = "none";
+
+    function updateLiveCSS() {
+        var b = parseFloat(bSlider.value);
+        var c = parseFloat(cSlider.value);
+        var s = parseFloat(sSlider.value);
+
+        bInput.value = b;
+        cInput.value = c;
+        sInput.value = s;
+
+        bDisp.textContent = b.toFixed(2);
+        cDisp.textContent = c.toFixed(2);
+        sDisp.textContent = s.toFixed(2);
+
+        // Convert FFmpeg brightness (-0.5 to 0.5) to CSS brightness (0.5 to 1.5)
+        var cssBrightness = 1.0 + b;
+        var cssContrast = c;
+        var cssSaturate = s;
+
+        var cssFilters = [
+            "brightness(" + cssBrightness + ")",
+            "contrast(" + cssContrast + ")",
+            "saturate(" + cssSaturate + ")"
+        ];
+
+        if (currentFilter === "grayscale") cssFilters.push("grayscale(100%)");
+        if (currentFilter === "sepia") cssFilters.push("sepia(100%)");
+        if (currentFilter === "invert") cssFilters.push("invert(100%)");
+
+        videoPreview.style.filter = cssFilters.join(" ");
+    }
+
+    bSlider.addEventListener("input", updateLiveCSS);
+    cSlider.addEventListener("input", updateLiveCSS);
+    sSlider.addEventListener("input", updateLiveCSS);
+
+    styleChips.forEach(function(chip) {
+        chip.addEventListener("click", function() {
+            styleChips.forEach(function(c) { c.classList.remove("active"); });
+            this.classList.add("active");
+            currentFilter = this.getAttribute("data-style");
+            fInput.value = currentFilter;
+            updateLiveCSS();
+        });
+    });
+
+    MediaTools.initUploadCard({
+        fileInputSelector: "#id_video",
+        videoPlayerSelector: "#mtVideoPreview",
+    });
+
+    MediaTools.initPlaybar(videoPreview);
+    MediaTools.initAjaxForm("#mtToolForm");
+});
+</script>
+{% endblock %}

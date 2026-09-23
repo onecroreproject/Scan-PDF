@@ -2,8 +2,12 @@ import os
 import uuid
 import math
 import tempfile
-from moviepy.editor import AudioFileClip, concatenate_audioclips
-import moviepy.video.fx.all as vfx
+try:
+    from moviepy.editor import AudioFileClip, concatenate_audioclips
+    import moviepy.video.fx.all as vfx
+except (ImportError, ModuleNotFoundError):
+    from moviepy import AudioFileClip, concatenate_audioclips
+    import moviepy.video.fx as vfx
 from converter.utils import ensure_media_dirs
 from converter.media_binaries import ensure_ffmpeg_configured
 

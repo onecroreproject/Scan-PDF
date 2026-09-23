@@ -1,0 +1,79 @@
+{% extends 'media_tools/editor_base.html' %}
+{% load static %}
+
+{% block tool_title %}
+Video to <span class="mt-gradient-text">GIF</span>
+{% endblock %}
+
+{% block tool_subtitle %}
+Turn video clips into vibrant, lightweight animated GIFs using high-quality color palette rendering.
+{% endblock %}
+
+{% block tool_bar_title %}
+GIF Creator
+{% endblock %}
+
+{% block hidden_fields %}
+<input type="hidden" name="fps" id="id_fps" value="15">
+<input type="hidden" name="width" id="id_width" value="480">
+{% endblock %}
+
+{% block tool_controls %}
+<div class="mt-section">
+    <div class="mt-section-title">Resolution (Width)</div>
+    <div class="mt-chip-grid">
+        <button type="button" class="mt-chip" data-width="320">320px (Compact)</button>
+        <button type="button" class="mt-chip active" data-width="480">480px (Standard)</button>
+        <button type="button" class="mt-chip" data-width="640">640px (Large)</button>
+    </div>
+</div>
+
+<div class="mt-section">
+    <div class="mt-section-title">Animation Smoothness (FPS)</div>
+    <div class="mt-chip-grid">
+        <button type="button" class="mt-chip" data-fps="10">10 FPS</button>
+        <button type="button" class="mt-chip active" data-fps="15">15 FPS</button>
+        <button type="button" class="mt-chip" data-fps="24">24 FPS (Ultra)</button>
+    </div>
+</div>
+{% endblock %}
+
+{% block process_btn_text %}
+Generate Animated GIF
+{% endblock %}
+
+{% block tool_scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    var videoPreview = document.getElementById("mtVideoPreview");
+    var widthInput = document.getElementById("id_width");
+    var fpsInput = document.getElementById("id_fps");
+    var widthChips = document.querySelectorAll(".mt-chip[data-width]");
+    var fpsChips = document.querySelectorAll(".mt-chip[data-fps]");
+
+    widthChips.forEach(function(chip) {
+        chip.addEventListener("click", function() {
+            widthChips.forEach(function(c) { c.classList.remove("active"); });
+            this.classList.add("active");
+            widthInput.value = this.getAttribute("data-width");
+        });
+    });
+
+    fpsChips.forEach(function(chip) {
+        chip.addEventListener("click", function() {
+            fpsChips.forEach(function(c) { c.classList.remove("active"); });
+            this.classList.add("active");
+            fpsInput.value = this.getAttribute("data-fps");
+        });
+    });
+
+    MediaTools.initUploadCard({
+        fileInputSelector: "#id_video",
+        videoPlayerSelector: "#mtVideoPreview",
+    });
+
+    MediaTools.initPlaybar(videoPreview);
+    MediaTools.initAjaxForm("#mtToolForm");
+});
+</script>
+{% endblock %}

@@ -1,0 +1,84 @@
+{% extends 'media_tools/editor_base.html' %}
+{% load static %}
+
+{% block tool_title %}
+Compress <span class="mt-gradient-text">Video</span>
+{% endblock %}
+
+{% block tool_subtitle %}
+Shrink video file sizes dramatically without noticeable quality loss. Perfect for emailing, sharing, and fast web hosting.
+{% endblock %}
+
+{% block tool_bar_title %}
+Video Compressor
+{% endblock %}
+
+{% block hidden_fields %}
+<input type="hidden" name="compression_level" id="id_compression_level" value="medium">
+<input type="hidden" name="output_format" id="id_output_format" value="mp4">
+{% endblock %}
+
+{% block tool_controls %}
+<div class="mt-section">
+    <div class="mt-section-title">Compression Profile</div>
+    <div class="mt-chip-grid" style="grid-template-columns: 1fr;">
+        <button type="button" class="mt-chip" data-level="low" style="text-align: left; padding: 0.85rem 1rem;">
+            <div style="color: var(--mt-text); font-size: 0.9rem;">High Quality (Low Compression)</div>
+            <div style="font-size: 0.75rem; color: var(--mt-text-muted); margin-top: 0.2rem;">~25% smaller, preserves maximum crispness</div>
+        </button>
+        <button type="button" class="mt-chip active" data-level="medium" style="text-align: left; padding: 0.85rem 1rem;">
+            <div style="color: var(--mt-text); font-size: 0.9rem;">Balanced (Recommended)</div>
+            <div style="font-size: 0.75rem; color: var(--mt-text-muted); margin-top: 0.2rem;">~50% smaller, ideal for web and messaging</div>
+        </button>
+        <button type="button" class="mt-chip" data-level="high" style="text-align: left; padding: 0.85rem 1rem;">
+            <div style="color: var(--mt-text); font-size: 0.9rem;">Smallest File (High Compression)</div>
+            <div style="font-size: 0.75rem; color: var(--mt-text-muted); margin-top: 0.2rem;">~75% smaller, lightweight for email attachments</div>
+        </button>
+    </div>
+</div>
+
+<div class="mt-section">
+    <div class="mt-section-title">Output Format</div>
+    <select class="mt-select" id="formatSelect">
+        <option value="mp4" selected>MP4 (H.264 Universal)</option>
+        <option value="webm">WEBM (VP9 Web)</option>
+        <option value="mkv">MKV (Archival)</option>
+    </select>
+</div>
+{% endblock %}
+
+{% block process_btn_text %}
+Compress Video Now
+{% endblock %}
+
+{% block tool_scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    var videoPreview = document.getElementById("mtVideoPreview");
+    var levelInput = document.getElementById("id_compression_level");
+    var formatInput = document.getElementById("id_output_format");
+    var formatSelect = document.getElementById("formatSelect");
+    var levelChips = document.querySelectorAll(".mt-chip[data-level]");
+
+    levelChips.forEach(function(chip) {
+        chip.addEventListener("click", function() {
+            levelChips.forEach(function(c) { c.classList.remove("active"); });
+            this.classList.add("active");
+            levelInput.value = this.getAttribute("data-level");
+        });
+    });
+
+    formatSelect.addEventListener("change", function() {
+        formatInput.value = this.value;
+    });
+
+    MediaTools.initUploadCard({
+        fileInputSelector: "#id_video",
+        videoPlayerSelector: "#mtVideoPreview",
+    });
+
+    MediaTools.initPlaybar(videoPreview);
+    MediaTools.initAjaxForm("#mtToolForm");
+});
+</script>
+{% endblock %}

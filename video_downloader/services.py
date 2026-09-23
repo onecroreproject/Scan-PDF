@@ -6,7 +6,10 @@ import subprocess
 import json
 from django.conf import settings
 from urllib.parse import urlparse
-import yt_dlp
+try:
+    import yt_dlp
+except ImportError:
+    yt_dlp = None
 
 logger = logging.getLogger(__name__)
 

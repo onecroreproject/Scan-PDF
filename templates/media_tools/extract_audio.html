@@ -1,0 +1,81 @@
+{% extends 'media_tools/editor_base.html' %}
+{% load static %}
+
+{% block tool_title %}
+Extract <span class="mt-gradient-text">Audio</span>
+{% endblock %}
+
+{% block tool_subtitle %}
+Extract soundtracks, background music, or dialogue from your video into MP3, WAV, AAC, or M4A audio files.
+{% endblock %}
+
+{% block tool_bar_title %}
+Audio Extractor
+{% endblock %}
+
+{% block hidden_fields %}
+<input type="hidden" name="audio_format" id="id_audio_format" value="mp3">
+<input type="hidden" name="audio_bitrate" id="id_audio_bitrate" value="192k">
+{% endblock %}
+
+{% block tool_controls %}
+<div class="mt-section">
+    <div class="mt-section-title">Audio Format</div>
+    <div class="mt-chip-grid">
+        <button type="button" class="mt-chip active" data-afmt="mp3">MP3</button>
+        <button type="button" class="mt-chip" data-afmt="wav">WAV (Lossless)</button>
+        <button type="button" class="mt-chip" data-afmt="aac">AAC</button>
+        <button type="button" class="mt-chip" data-afmt="m4a">M4A</button>
+        <button type="button" class="mt-chip" data-afmt="ogg">OGG</button>
+    </div>
+</div>
+
+<div class="mt-section">
+    <div class="mt-section-title">Bitrate Quality</div>
+    <div class="mt-chip-grid">
+        <button type="button" class="mt-chip" data-br="128k">128 kbps (Standard)</button>
+        <button type="button" class="mt-chip active" data-br="192k">192 kbps (High)</button>
+        <button type="button" class="mt-chip" data-br="320k">320 kbps (Studio)</button>
+    </div>
+</div>
+{% endblock %}
+
+{% block process_btn_text %}
+Extract Audio Track
+{% endblock %}
+
+{% block tool_scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    var videoPreview = document.getElementById("mtVideoPreview");
+    var fmtInput = document.getElementById("id_audio_format");
+    var brInput = document.getElementById("id_audio_bitrate");
+    var afmtChips = document.querySelectorAll(".mt-chip[data-afmt]");
+    var brChips = document.querySelectorAll(".mt-chip[data-br]");
+
+    afmtChips.forEach(function(chip) {
+        chip.addEventListener("click", function() {
+            afmtChips.forEach(function(c) { c.classList.remove("active"); });
+            this.classList.add("active");
+            fmtInput.value = this.getAttribute("data-afmt");
+        });
+    });
+
+    brChips.forEach(function(chip) {
+        chip.addEventListener("click", function() {
+            brChips.forEach(function(c) { c.classList.remove("active"); });
+            this.classList.add("active");
+            brInput.value = this.getAttribute("data-br");
+        });
+    });
+
+    MediaTools.initUploadCard({
+        fileInputSelector: "#id_video",
+        videoPlayerSelector: "#mtVideoPreview",
+    });
+
+    MediaTools.initPlaybar(videoPreview);
+    MediaTools.initAjaxForm("#mtToolForm");
+});
+</script>
+{% endblock %}

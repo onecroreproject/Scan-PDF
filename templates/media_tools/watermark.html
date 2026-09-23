@@ -1,0 +1,158 @@
+{% extends 'media_tools/editor_base.html' %}
+{% load static %}
+
+{% block tool_title %}
+Add <span class="mt-gradient-text">Watermark</span>
+{% endblock %}
+
+{% block tool_subtitle %}
+Brand your video with custom transparent PNG logo overlays, customizable placement, scale, and opacity.
+{% endblock %}
+
+{% block tool_bar_title %}
+Watermark & Logo Studio
+{% endblock %}
+
+{% block hidden_fields %}
+<input type="hidden" name="position" id="id_position" value="bottom-right">
+<input type="hidden" name="opacity" id="id_opacity" value="0.8">
+<input type="hidden" name="scale" id="id_scale" value="15">
+<input type="hidden" name="output_format" id="id_output_format" value="mp4">
+{% endblock %}
+
+{% block stage_overlays %}
+<img id="liveWatermarkOverlay" style="display: none; position: absolute; pointer-events: none; z-index: 20; object-fit: contain;">
+{% endblock %}
+
+{% block tool_controls %}
+<div class="mt-section">
+    <div class="mt-section-title">Upload Logo Image</div>
+    <input type="file" name="watermark_image" id="id_watermark_image" accept="image/png,image/jpeg,image/webp" style="display: block; width: 100%; font-size: 0.8rem; color: var(--mt-text-secondary);">
+</div>
+
+<div class="mt-section">
+    <div class="mt-section-title">Overlay Position</div>
+    <div class="mt-chip-grid" style="grid-template-columns: 1fr 1fr;">
+        <button type="button" class="mt-chip" data-pos="top-left">Top Left</button>
+        <button type="button" class="mt-chip" data-pos="top-right">Top Right</button>
+        <button type="button" class="mt-chip" data-pos="bottom-left">Bottom Left</button>
+        <button type="button" class="mt-chip active" data-pos="bottom-right">Bottom Right</button>
+        <button type="button" class="mt-chip" data-pos="center" style="grid-column: span 2;">Center</button>
+    </div>
+</div>
+
+<div class="mt-section">
+    <div class="mt-range-wrapper">
+        <div class="mt-range-header">
+            <span>Watermark Size</span>
+            <span class="mt-range-val" id="scaleDisplay">15%</span>
+        </div>
+        <input type="range" class="mt-range-slider" id="scaleSlider" min="5" max="50" step="1" value="15">
+    </div>
+</div>
+
+<div class="mt-section">
+    <div class="mt-range-wrapper">
+        <div class="mt-range-header">
+            <span>Opacity</span>
+            <span class="mt-range-val" id="opacityDisplay">80%</span>
+        </div>
+        <input type="range" class="mt-range-slider" id="opacitySlider" min="10" max="100" step="5" value="80">
+    </div>
+</div>
+{% endblock %}
+
+{% block process_btn_text %}
+Apply Watermark & Export
+{% endblock %}
+
+{% block tool_scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    var videoPreview = document.getElementById("mtVideoPreview");
+    var wmFile = document.getElementById("id_watermark_image");
+    var posInput = document.getElementById("id_position");
+    var opInput = document.getElementById("id_opacity");
+    var scaleInput = document.getElementById("id_scale");
+
+    var scaleSlider = document.getElementById("scaleSlider");
+    var scaleDisplay = document.getElementById("scaleDisplay");
+    var opSlider = document.getElementById("opacitySlider");
+    var opDisplay = document.getElementById("opacityDisplay");
+
+    var posChips = document.querySelectorAll(".mt-chip[data-pos]");
+    var wmOverlay = document.getElementById("liveWatermarkOverlay");
+
+    var currentPos = "bottom-right";
+
+    function updateOverlay() {
+        if (!wmOverlay.src) return;
+        var sc = parseInt(scaleSlider.value);
+        var op = parseInt(opSlider.value);
+
+        scaleInput.value = sc;
+        opInput.value = (op / 100).toFixed(2);
+        scaleDisplay.textContent = sc + "%";
+        opDisplay.textContent = op + "%";
+
+        wmOverlay.style.width = sc + "%";
+        wmOverlay.style.opacity = op / 100;
+
+        // Reset positions
+        wmOverlay.style.top = "auto";
+        wmOverlay.style.bottom = "auto";
+        wmOverlay.style.left = "auto";
+        wmOverlay.style.right = "auto";
+        wmOverlay.style.transform = "none";
+
+        if (currentPos === "top-left") {
+            wmOverlay.style.top = "15px";
+            wmOverlay.style.left = "15px";
+        } else if (currentPos === "top-right") {
+            wmOverlay.style.top = "15px";
+            wmOverlay.style.right = "15px";
+        } else if (currentPos === "bottom-left") {
+            wmOverlay.style.bottom = "15px";
+            wmOverlay.style.left = "15px";
+        } else if (currentPos === "bottom-right") {
+            wmOverlay.style.bottom = "15px";
+            wmOverlay.style.right = "15px";
+        } else if (currentPos === "center") {
+            wmOverlay.style.top = "50%";
+            wmOverlay.style.left = "50%";
+            wmOverlay.style.transform = "translate(-50%, -50%)";
+        }
+    }
+
+    wmFile.addEventListener("change", function() {
+        if (this.files && this.files[0]) {
+            var url = URL.createObjectURL(this.files[0]);
+            wmOverlay.src = url;
+            wmOverlay.style.display = "block";
+            updateOverlay();
+        }
+    });
+
+    scaleSlider.addEventListener("input", updateOverlay);
+    opSlider.addEventListener("input", updateOverlay);
+
+    posChips.forEach(function(chip) {
+        chip.addEventListener("click", function() {
+            posChips.forEach(function(c) { c.classList.remove("active"); });
+            this.classList.add("active");
+            currentPos = this.getAttribute("data-pos");
+            posInput.value = currentPos;
+            updateOverlay();
+        });
+    });
+
+    MediaTools.initUploadCard({
+        fileInputSelector: "#id_video",
+        videoPlayerSelector: "#mtVideoPreview",
+    });
+
+    MediaTools.initPlaybar(videoPreview);
+    MediaTools.initAjaxForm("#mtToolForm");
+});
+</script>
+{% endblock %}

@@ -1,0 +1,65 @@
+{% extends 'media_tools/editor_base.html' %}
+{% load static %}
+
+{% block tool_title %}
+Repair Corrupted <span class="mt-gradient-text">Video</span>
+{% endblock %}
+
+{% block tool_subtitle %}
+Recover unplayable, damaged, truncated, or broken header video files automatically.
+{% endblock %}
+
+{% block tool_bar_title %}
+Video Recovery & Stream Repair
+{% endblock %}
+
+{% block hidden_fields %}
+<input type="hidden" name="repair_mode" id="id_repair_mode" value="smart">
+<input type="hidden" name="output_format" id="id_output_format" value="mp4">
+{% endblock %}
+
+{% block tool_controls %}
+<div class="mt-section">
+    <div class="mt-section-title">1. Repair Strategy</div>
+    <div class="mt-chip-grid">
+        <button type="button" class="mt-chip active" data-mode="smart">Smart Auto-Repair (Recommended)</button>
+        <button type="button" class="mt-chip" data-mode="remux">Fast Container Remux</button>
+        <button type="button" class="mt-chip" data-mode="reencode">Deep Stream Re-encode</button>
+    </div>
+</div>
+
+<div class="mt-section">
+    <div class="mt-section-title">Repair Process Overview</div>
+    <div style="font-size: 0.85rem; color: #94a3b8; line-height: 1.5; background: rgba(255,255,255,0.03); padding: 12px; border-radius: 8px; border: 1px solid rgba(255,255,255,0.08);">
+        • Rebuilds MOOV index atom & keyframe timestamp offsets.<br>
+        • Bypasses damaged NAL units & corrupted packets.<br>
+        • Outputs web-optimized faststart MP4 file.
+    </div>
+</div>
+{% endblock %}
+
+{% block process_btn_text %}
+Repair Video File
+{% endblock %}
+
+{% block tool_scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    var videoPreview = document.getElementById("mtVideoPreview");
+    var hiddenMode = document.getElementById("id_repair_mode");
+    var modeChips = document.querySelectorAll("[data-mode]");
+
+    modeChips.forEach(function(chip) {
+        chip.addEventListener("click", function() {
+            modeChips.forEach(c => c.classList.remove("active"));
+            this.classList.add("active");
+            hiddenMode.value = this.getAttribute("data-mode");
+        });
+    });
+
+    MediaTools.initUploadCard({ fileInputSelector: "#id_video", videoPlayerSelector: "#mtVideoPreview" });
+    MediaTools.initPlaybar(videoPreview);
+    MediaTools.initAjaxForm("#mtToolForm");
+});
+</script>
+{% endblock %}

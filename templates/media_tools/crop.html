@@ -1,1394 +1,308 @@
-{% extends 'converter/tool_base.html' %}
-{% block tool_content %}
+{% extends 'media_tools/editor_base.html' %}
 {% load static %}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-
-<title>Crop Video Online Free - Easy Video Cropper Tool</title>
-
-<meta name="description"
-      content="Crop video online for free. Select and resize any area of your video with a visual crop box. Fast, easy, and no software required.">
-
+{% block tool_head %}
 <style>
-
-    * {
-        box-sizing: border-box;
-    }
-
-    body {
-        margin: 0;
-        padding: 30px;
-        font-family: Arial, sans-serif;
-        background: #ffffff;
-        color: #1f2937;
-    }
-
-    .crop-container {
-        width: 100%;
-        max-width: 1150px;
-        margin: 0 auto;
-    }
-
-
-    /* =====================================================
-       HEADER
-       ===================================================== */
-
-    .page-header {
-        text-align: center;
-        margin-bottom: 40px;
-    }
-
-    .page-title {
-        margin: 0 0 14px;
-        font-size: clamp(2rem, 5vw, 3.5rem);
-        line-height: .95;
-        font-weight: 900;
-        letter-spacing: -.04em;
-        color: #1f2937;
-    }
-
-    .gradient-text {
-        display: block;
-
-        background: linear-gradient(
-            135deg,
-            #7c3aed,
-            #a855f7,
-            #ec4899
-        );
-
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-        background-clip: text;
-    }
-
-    .page-description {
-        max-width: 760px;
-        margin: 0 auto;
-        color: #6b7280;
-        font-size: 15px;
-        line-height: 1.7;
-    }
-
-    .page-keywords {
-        max-width: 760px;
-        margin: 10px auto 0;
-        color: #9ca3af;
-        font-size: 13px;
-    }
-
-
-    /* =====================================================
-       MAIN CARD
-       ===================================================== */
-
-    .crop-card {
-        background: #faf5ff;
-        border-radius: 24px;
-        padding: 20px;
-    }
-
-
-    /* =====================================================
-       DJANGO MESSAGES
-       ===================================================== */
-
-    .messages {
-        margin-bottom: 20px;
-    }
-
-    .message {
-        padding: 14px 16px;
-        border-radius: 14px;
-        margin-bottom: 10px;
-
-        font-size: 14px;
-        font-weight: 600;
-
-        opacity: 1;
-        transform: translateY(0);
-
-        transition:
-            opacity .4s ease,
-            transform .4s ease;
-    }
-
-    .message.hide {
-        opacity: 0;
-        transform: translateY(-8px);
-    }
-
-    .message.success {
-        background: #ecfdf5;
-        color: #047857;
-        border: 1px solid #bbf7d0;
-    }
-
-    .message.error {
-        background: #fef2f2;
-        color: #b91c1c;
-        border: 1px solid #fecaca;
-    }
-
-    .message.warning {
-        background: #fffbeb;
-        color: #b45309;
-        border: 1px solid #fde68a;
-    }
-
-    .message.info {
-        background: #eff6ff;
-        color: #1d4ed8;
-        border: 1px solid #bfdbfe;
-    }
-
-
-    /* =====================================================
-       UPLOAD SECTION
-       ===================================================== */
-
-    .upload-section {
-        padding: 45px 20px;
-
-        text-align: center;
-
-        border: 2px dashed #c4b5fd;
-
-        border-radius: 20px;
-
-        background: #faf5ff;
-
-        transition:
-            border-color .25s ease,
-            background .25s ease;
-    }
-
-    .upload-section:hover {
-        border-color: #8b5cf6;
-
-        background: #f5edff;
-    }
-
-
-    /* =====================================================
-       HIDE DJANGO FILE INPUT
-       ===================================================== */
-
-    .upload-section input[type="file"] {
-        display: none !important;
-
-        visibility: hidden !important;
-
-        opacity: 0 !important;
-
-        width: 0 !important;
-
-        height: 0 !important;
-
-        position: absolute !important;
-
-        pointer-events: none !important;
-    }
-
-
-    /* =====================================================
-       SELECT VIDEO BUTTON
-       ===================================================== */
-
-    .select-video-button {
-        display: inline-flex;
-
-        align-items: center;
-        justify-content: center;
-
-        min-width: 170px;
-
-        padding: 14px 30px;
-
-        border: none;
-
-        border-radius: 14px;
-
-        background: linear-gradient(
-            135deg,
-            #6d28d9,
-            #7c3aed,
-            #a855f7
-        );
-
-        color: #ffffff !important;
-
-        font-family: Arial, sans-serif;
-
-        font-size: 14px;
-
-        font-weight: 900;
-
-        text-decoration: none;
-
-        cursor: pointer;
-
-        box-shadow:
-            0 8px 20px rgba(124, 58, 237, .20);
-
-        transition:
-            transform .2s ease,
-            box-shadow .2s ease;
-    }
-
-    .select-video-button:hover {
-        color: #ffffff !important;
-
-        transform: translateY(-2px);
-
-        box-shadow:
-            0 12px 25px rgba(124, 58, 237, .30);
-    }
-
-    .select-video-button:active {
-        transform: translateY(0);
-    }
-
-
-    /* =====================================================
-       EDITOR
-       ===================================================== */
-
-    .editor-wrapper {
-        display: none;
-
-        margin-top: 5px;
-    }
-
-    .editor-grid {
-        display: grid;
-
-        grid-template-columns: 70% 30%;
-
-        gap: 0;
-
-        align-items: stretch;
-
-        overflow: hidden;
-
-        border-radius: 20px;
-
-        background: #ffffff;
-
-        border: 1px solid #ede9fe;
-    }
-
-
-    /* =====================================================
-       VIDEO AREA - 70%
-       ===================================================== */
-
-    .video-column {
-        min-width: 0;
-
-        padding: 16px;
-
-        background: #0b0b0f;
-    }
-
-    .editor-title {
-        margin-bottom: 12px;
-
-        color: #d1d5db;
-
-        font-size: 12px;
-
-        font-weight: 900;
-
-        text-transform: uppercase;
-
-        letter-spacing: .08em;
-    }
-
-    .video-editor {
-        position: relative;
-
-        width: 100%;
-
-        background: #000000;
-
-        overflow: hidden;
-
-        border-radius: 14px;
-
-        line-height: 0;
-
-        min-height: 420px;
-
-        display: flex;
-
-        align-items: center;
-
-        justify-content: center;
-    }
-
-    #videoPreview {
-        display: block;
-
-        width: 100%;
-
-        height: auto;
-
-        max-height: 600px;
-
-        object-fit: contain;
-
-        background: #000000;
-    }
-
-
-    /* =====================================================
-       CROP OVERLAY
-       ===================================================== */
-
-    .crop-overlay {
-        position: absolute;
-
-        inset: 0;
-
-        pointer-events: none;
-    }
-
-    .crop-box {
-        position: absolute;
-
-        border: 2px solid #ffffff;
-
-        cursor: move;
-
-        pointer-events: auto;
-
-        touch-action: none;
-
-        box-shadow:
-            0 0 0 9999px rgba(0, 0, 0, .58);
-
-        min-width: 40px;
-
-        min-height: 40px;
-    }
-
-    .crop-box::before {
-        content: "";
-
-        position: absolute;
-
-        left: 33.33%;
-
-        top: 0;
-
-        width: 33.33%;
-
-        height: 100%;
-
-        border-left:
-            1px solid rgba(255,255,255,.45);
-
-        border-right:
-            1px solid rgba(255,255,255,.45);
-
-        pointer-events: none;
-    }
-
-    .crop-box::after {
-        content: "";
-
-        position: absolute;
-
-        left: 0;
-
-        top: 33.33%;
-
-        width: 100%;
-
-        height: 33.33%;
-
-        border-top:
-            1px solid rgba(255,255,255,.45);
-
-        border-bottom:
-            1px solid rgba(255,255,255,.45);
-
-        pointer-events: none;
-    }
-
-
-    /* =====================================================
-       HANDLES
-       ===================================================== */
-
-    .handle {
-        position: absolute;
-
-        width: 14px;
-
-        height: 14px;
-
-        background: #ffffff;
-
-        border:
-            2px solid #7c3aed;
-
-        border-radius: 50%;
-
-        z-index: 10;
-    }
-
-    .handle-nw {
-        left: -7px;
-        top: -7px;
-        cursor: nwse-resize;
-    }
-
-    .handle-ne {
-        right: -7px;
-        top: -7px;
-        cursor: nesw-resize;
-    }
-
-    .handle-sw {
-        left: -7px;
-        bottom: -7px;
-        cursor: nesw-resize;
-    }
-
-    .handle-se {
-        right: -7px;
-        bottom: -7px;
-        cursor: nwse-resize;
-    }
-
-
-    /* =====================================================
-       SIDE PANEL - 30%
-       ===================================================== */
-
-    .side-panel {
-        min-width: 0;
-
-        padding: 20px;
-
-        background: #ffffff;
-
-        border-left:
-            1px solid #ede9fe;
-    }
-
-    .panel-heading {
-        margin-bottom: 18px;
-
-        color: #1f2937;
-
-        font-size: 16px;
-
-        font-weight: 900;
-    }
-
-
-    /* =====================================================
-       INFO BOX
-       ===================================================== */
-
-    .info-box {
-        padding: 14px;
-
-        margin-bottom: 10px;
-
-        background: #faf5ff;
-
-        border:
-            1px solid #ede9fe;
-
-        border-radius: 14px;
-    }
-
-    .info-label {
-        margin-bottom: 5px;
-
-        color: #9ca3af;
-
-        font-size: 10px;
-
-        font-weight: 900;
-
-        text-transform: uppercase;
-
-        letter-spacing: .07em;
-    }
-
-    .info-value {
-        color: #5b21b6;
-
-        font-size: 16px;
-
-        font-weight: 900;
-    }
-
-
-    /* =====================================================
-       LIVE PREVIEW
-       ===================================================== */
-
-    .preview-title {
-        margin: 18px 0 10px;
-
-        color: #374151;
-
-        font-size: 11px;
-
-        font-weight: 900;
-
-        text-transform: uppercase;
-
-        letter-spacing: .07em;
-    }
-
-    .live-preview-container {
-        width: 100%;
-
-        min-height: 130px;
-
-        background: #000000;
-
-        border-radius: 14px;
-
-        overflow: hidden;
-
-        display: flex;
-
-        align-items: center;
-
-        justify-content: center;
-    }
-
-    #liveCropPreview {
-        display: block;
-
-        max-width: 100%;
-
-        max-height: 200px;
-    }
-
-
-    /* =====================================================
-       PROCESS BUTTON
-       ===================================================== */
-
-    .process-button {
-        width: 100%;
-
-        margin-top: 18px;
-
-        padding: 14px 18px;
-
-        border: none;
-
-        border-radius: 14px;
-
-        color: #ffffff;
-
-        font-size: 13px;
-
-        font-weight: 900;
-
-        text-transform: uppercase;
-
-        letter-spacing: .06em;
-
-        cursor: pointer;
-
-        background: linear-gradient(
-            135deg,
-            #6d28d9,
-            #7c3aed,
-            #a855f7
-        );
-
-        box-shadow:
-            0 8px 25px rgba(124,58,237,.25);
-
-        transition: .25s ease;
-    }
-
-    .process-button:hover {
-        transform: translateY(-2px);
-    }
-
-    .process-button:disabled {
-        opacity: .55;
-
-        cursor: not-allowed;
-
-        transform: none;
-    }
-
-
-    /* =====================================================
-       LOADING
-       ===================================================== */
-
-    .loading {
-        display: none;
-
-        margin-top: 15px;
-
-        padding: 18px 12px;
-
-        text-align: center;
-
-        background: #faf5ff;
-
-        border:
-            1px solid #ede9fe;
-
-        border-radius: 14px;
-
-        color: #7c3aed;
-
-        font-size: 13px;
-
-        font-weight: 800;
-    }
-
-    .loading-spinner {
-        width: 20px;
-
-        height: 20px;
-
-        margin: 0 auto 9px;
-
-        border:
-            3px solid #ddd6fe;
-
-        border-top-color:
-            #7c3aed;
-
-        border-radius: 50%;
-
-        animation:
-            crop-spin .8s linear infinite;
-    }
-
-    @keyframes crop-spin {
-
-        to {
-            transform: rotate(360deg);
-        }
-
-    }
-
-
-    /* =====================================================
-       RESULT
-       ===================================================== */
-
-    .result-container {
-        width: 100%;
-
-        max-width: 1150px;
-
-        margin: 25px auto 0;
-    }
-
-    .result-card {
-        padding: 28px;
-
-        text-align: center;
-
-        background: #faf5ff;
-
-        border:
-            1px solid #e9d5ff;
-
-        border-radius: 20px;
-    }
-
-    .result-icon {
-        width: 58px;
-
-        height: 58px;
-
-        margin: 0 auto 14px;
-
-        display: flex;
-
-        align-items: center;
-
-        justify-content: center;
-
-        border-radius: 16px;
-
-        background: #ede9fe;
-
-        color: #7c3aed;
-
-        font-size: 25px;
-
-        font-weight: 900;
-    }
-
-    .result-card h2 {
-        margin: 0 0 7px;
-
-        color: #1f2937;
-
-        font-size: 19px;
-
-        font-weight: 900;
-    }
-
-    .result-card p {
-        margin: 0 0 20px;
-
-        color: #6b7280;
-
-        font-size: 14px;
-    }
-
-
-    /* =====================================================
-       DOWNLOAD BUTTON
-       ===================================================== */
-
-    .download-button {
-        display: inline-flex;
-
-        align-items: center;
-
-        justify-content: center;
-
-        padding: 14px 25px;
-
-        border-radius: 14px;
-
-        background: linear-gradient(
-            135deg,
-            #7c3aed,
-            #8b5cf6,
-            #a855f7
-        );
-
-        color: #ffffff;
-
-        text-decoration: none;
-
-        font-size: 14px;
-
-        font-weight: 900;
-
-        box-shadow:
-            0 8px 20px rgba(124,58,237,.25);
-
-        transition: .25s ease;
-    }
-
-    .download-button:hover {
-        color: #ffffff;
-
-        transform: translateY(-2px);
-
-        box-shadow:
-            0 12px 28px rgba(124,58,237,.35);
-    }
-
-
-    /* =====================================================
-       FORM ERRORS
-       ===================================================== */
-
-    .form-errors {
-        margin-top: 14px;
-
-        padding: 14px 16px;
-
-        background: #fef2f2;
-
-        border:
-            1px solid #fee2e2;
-
-        border-radius: 14px;
-
-        color: #b91c1c;
-
-        font-size: 13px;
-
-        font-weight: 600;
-
-        opacity: 1;
-
-        transform: translateY(0);
-
-        transition:
-            opacity .4s ease,
-            transform .4s ease;
-    }
-
-
-    /* =====================================================
-       VALIDATION POPUP
-       ===================================================== */
-
-    .validation-popup {
-        position: fixed;
-
-        top: 20px;
-
-        right: 20px;
-
-        z-index: 99999;
-
-        max-width: 360px;
-
-        padding: 14px 18px;
-
-        background: #dc2626;
-
-        color: #ffffff;
-
-        border-radius: 14px;
-
-        opacity: 0;
-
-        transform: translateY(-15px);
-
-        pointer-events: none;
-
-        transition:
-            opacity .3s ease,
-            transform .3s ease;
-
-        font-size: 13px;
-
-        font-weight: 700;
-
-        box-shadow:
-            0 8px 25px rgba(220,38,38,.25);
-    }
-
-    .validation-popup.show {
-        opacity: 1;
-
-        transform: translateY(0);
-    }
-
-
-    /* =====================================================
-       MOBILE
-       ===================================================== */
-
-    @media (max-width: 850px) {
-
-        body {
-            padding: 20px 15px;
-        }
-
-        .crop-card {
-            padding: 12px;
-        }
-
-        .editor-grid {
-            grid-template-columns: 1fr;
-        }
-
-        .side-panel {
-            border-left: none;
-
-            border-top:
-                1px solid #ede9fe;
-        }
-
-        .video-editor {
-            min-height: 280px;
-        }
-
-    }
-
-
-    @media (max-width: 480px) {
-
-        body {
-            padding: 15px 10px;
-        }
-
-        .crop-card {
-            padding: 8px;
-
-            border-radius: 18px;
-        }
-
-        .video-column {
-            padding: 10px;
-        }
-
-        .side-panel {
-            padding: 14px;
-        }
-
-        .validation-popup {
-            left: 15px;
-
-            right: 15px;
-
-            max-width: none;
-        }
-
-        .select-video-button {
-            width: 100%;
-
-            max-width: 280px;
-        }
-
-    }
-
+.mt-crop-box {
+    position: absolute;
+    border: 2px solid #ffffff;
+    box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.65);
+    cursor: move;
+    z-index: 25;
+    touch-action: none;
+}
+.mt-crop-box::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-left: 1px dashed rgba(255, 255, 255, 0.4);
+    border-right: 1px dashed rgba(255, 255, 255, 0.4);
+    left: 33.33%;
+    width: 33.33%;
+    pointer-events: none;
+}
+.mt-crop-box::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-top: 1px dashed rgba(255, 255, 255, 0.4);
+    border-bottom: 1px dashed rgba(255, 255, 255, 0.4);
+    top: 33.33%;
+    height: 33.33%;
+    pointer-events: none;
+}
+.mt-crop-handle {
+    position: absolute;
+    width: 14px;
+    height: 14px;
+    background: #ffffff;
+    border: 2px solid #7c3aed;
+    border-radius: 50%;
+    z-index: 30;
+}
+.mt-h-nw { top: -7px; left: -7px; cursor: nwse-resize; }
+.mt-h-ne { top: -7px; right: -7px; cursor: nesw-resize; }
+.mt-h-sw { bottom: -7px; left: -7px; cursor: nesw-resize; }
+.mt-h-se { bottom: -7px; right: -7px; cursor: nwse-resize; }
 </style>
-
-
-</head>
-
-<body>
-
-<div class="crop-container">
-
-
-<!-- =====================================================
-     HEADER
-     ===================================================== -->
-
-<section class="page-header">
-
-    <h1 class="page-title">
-
-        <span>Crop</span>
-
-        <span class="gradient-text">
-            Video
-        </span>
-
-    </h1>
-
-    <p class="page-description">
-
-        Crop video online for free. Select and resize any area
-        of your video with a visual crop box. Fast, secure,
-        and works directly in your browser.
-
-    </p>
-
-    <p class="page-keywords">
-
-        crop video online, free video cropper, crop video,
-        video crop tool, online video editor, crop mp4
-
-    </p>
-
-</section>
-
-
-<!-- =====================================================
-     MAIN CARD
-     ===================================================== -->
-
-<div class="crop-card">
-
-
-    <!-- =================================================
-         DJANGO MESSAGES
-         ================================================= -->
-
-    {% if messages %}
-
-        <div class="messages"
-             id="djangoMessages">
-
-            {% for message in messages %}
-
-                <div class="message
-                    {% if message.tags %}
-                        {{ message.tags }}
-                    {% endif %}">
-
-                    {{ message }}
-
-                </div>
-
-            {% endfor %}
-
-        </div>
-
-    {% endif %}
-
-
-    <!-- =================================================
-         FORM
-         ================================================= -->
-
-    <form method="POST"
-          enctype="multipart/form-data"
-          id="cropForm">
-
-        {% csrf_token %}
-
-
-        <!-- =============================================
-             UPLOAD SECTION
-             ============================================= -->
-
-        <div class="upload-section"
-             id="uploadSection">
-
-            <label for="id_video"
-                   class="select-video-button">
-
-                Select Video
-
-            </label>
-
-            {{ form.video }}
-
-
-            {% if form.video.errors %}
-
-                <div class="form-errors">
-
-                    {% for error in form.video.errors %}
-
-                        <div>
-                            {{ error }}
-                        </div>
-
-                    {% endfor %}
-
-                </div>
-
-            {% endif %}
-
-        </div>
-
-
-        <!-- =================================================
-             HIDDEN CROP FIELDS
-             ================================================= -->
-
-        {{ form.x }}
-        {{ form.y }}
-        {{ form.width }}
-        {{ form.height }}
-
-
-        <!-- =================================================
-             EDITOR
-             ================================================= -->
-
-        <div class="editor-wrapper"
-             id="editorWrapper">
-
-            <div class="editor-grid">
-
-
-                <!-- =========================================
-                     LEFT 70%
-                     ========================================= -->
-
-                <div class="video-column"
-                     id="videoColumn">
-
-                    <div class="editor-title">
-
-                        Select Crop Area
-
-                    </div>
-
-                    <div class="video-editor"
-                         id="videoEditor">
-
-                        <video id="videoPreview"
-                               controls
-                               playsinline
-                               preload="metadata">
-                        </video>
-
-
-                        <div class="crop-overlay"
-                             id="cropOverlay">
-
-                            <div class="crop-box"
-                                 id="cropBox">
-
-                                <div class="handle handle-nw"
-                                     data-handle="nw">
-                                </div>
-
-                                <div class="handle handle-ne"
-                                     data-handle="ne">
-                                </div>
-
-                                <div class="handle handle-sw"
-                                     data-handle="sw">
-                                </div>
-
-                                <div class="handle handle-se"
-                                     data-handle="se">
-                                </div>
-
-                            </div>
-
-                        </div>
-
-                    </div>
-
-                </div>
-
-
-                <!-- =========================================
-                     RIGHT 30%
-                     ========================================= -->
-
-                <div class="side-panel"
-                     id="sidePanel">
-
-                    <div class="panel-heading">
-
-                        Crop Settings
-
-                    </div>
-
-
-                    <div class="info-box">
-
-                        <div class="info-label">
-
-                            Original Video
-
-                        </div>
-
-                        <div class="info-value"
-                             id="originalDimensions">
-
-                            —
-
-                        </div>
-
-                    </div>
-
-
-                    <div class="info-box">
-
-                        <div class="info-label">
-
-                            Crop Size
-
-                        </div>
-
-                        <div class="info-value"
-                             id="cropDimensions">
-
-                            —
-
-                        </div>
-
-                    </div>
-
-
-                    <div class="info-box">
-
-                        <div class="info-label">
-
-                            Crop Position
-
-                        </div>
-
-                        <div class="info-value"
-                             id="cropPosition">
-
-                            —
-
-                        </div>
-
-                    </div>
-
-
-                    <div class="preview-title">
-
-                        Live Crop Preview
-
-                    </div>
-
-
-                    <div class="live-preview-container">
-
-                        <canvas id="liveCropPreview">
-                        </canvas>
-
-                    </div>
-
-
-                    <button type="submit"
-                            class="process-button"
-                            id="processButton">
-
-                        Crop Video
-
-                    </button>
-
-
-                    <div class="loading"
-                         id="loading">
-
-                        <div class="loading-spinner">
-                        </div>
-
-                        <div>
-                            Processing video...
-                        </div>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-        </div>
-
-
-        <!-- =================================================
-             DJANGO NON-FIELD ERRORS
-             ================================================= -->
-
-        {% if form.non_field_errors %}
-
-            <div class="form-errors"
-                 id="serverErrors">
-
-                {% for error in form.non_field_errors %}
-
-                    <div>
-                        {{ error }}
-                    </div>
-
-                {% endfor %}
-
-            </div>
-
-        {% endif %}
-
-    </form>
-
+{% endblock %}
+
+{% block tool_title %}
+Crop <span class="mt-gradient-text">Video</span>
+{% endblock %}
+
+{% block tool_subtitle %}
+Select, drag, and resize any portion of your video with visual presets and real-time preview.
+{% endblock %}
+
+{% block tool_bar_title %}
+Visual Crop Studio
+{% endblock %}
+
+{% block hidden_fields %}
+<input type="hidden" name="x" id="id_x" value="0">
+<input type="hidden" name="y" id="id_y" value="0">
+<input type="hidden" name="width" id="id_width" value="0">
+<input type="hidden" name="height" id="id_height" value="0">
+<input type="hidden" name="output_format" id="id_output_format" value="mp4">
+{% endblock %}
+
+{% block stage_overlays %}
+<div id="cropBox" class="mt-crop-box" style="display: none;">
+    <div class="mt-crop-handle mt-h-nw" data-handle="nw"></div>
+    <div class="mt-crop-handle mt-h-ne" data-handle="ne"></div>
+    <div class="mt-crop-handle mt-h-sw" data-handle="sw"></div>
+    <div class="mt-crop-handle mt-h-se" data-handle="se"></div>
 </div>
+{% endblock %}
 
-
-</div>
-
-<!-- =========================================================
-     VALIDATION POPUP
-     ========================================================= -->
-
-<div id="validationPopup"
-     class="validation-popup">
-</div>
-
-<!-- =========================================================
-     RESULT
-     ========================================================= -->
-
-{% if output_url %}
-
-<div class="result-container"
-     id="resultContainer">
-
-    <div class="result-card">
-
-        <div class="result-icon">
-            ✓
-        </div>
-
-        <h2>
-            Video Cropped Successfully
-        </h2>
-
-        <p>
-            Your cropped video is ready to download.
-        </p>
-
-        <a href="{{ output_url }}"
-           class="download-button"
-           id="downloadButton"
-           download>
-
-            Download Cropped Video
-
-        </a>
-
+{% block tool_controls %}
+<div class="mt-section">
+    <div class="mt-section-title">Aspect Ratio Presets</div>
+    <div class="mt-chip-grid">
+        <button type="button" class="mt-chip active" data-ratio="free">Free</button>
+        <button type="button" class="mt-chip" data-ratio="1:1">1:1 Square</button>
+        <button type="button" class="mt-chip" data-ratio="16:9">16:9 Wide</button>
+        <button type="button" class="mt-chip" data-ratio="9:16">9:16 Story</button>
+        <button type="button" class="mt-chip" data-ratio="4:3">4:3 TV</button>
+        <button type="button" class="mt-chip" data-ratio="21:9">21:9 Cinema</button>
     </div>
-
 </div>
 
+<div class="mt-section">
+    <div class="mt-section-title">Live Crop Preview</div>
+    <div style="width: 100%; height: 140px; background: #000000; border-radius: var(--mt-radius-sm); border: 1px solid var(--mt-border); overflow: hidden; display: flex; align-items: center; justify-content: center;">
+        <canvas id="liveCropPreview" style="max-width: 100%; max-height: 100%; object-fit: contain;"></canvas>
+    </div>
+</div>
+{% endblock %}
 
-{% endif %}
+{% block process_btn_text %}
+<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M6 2v14a2 2 0 0 0 2 2h14"></path>
+    <path d="M18 22V8a2 2 0 0 0-2-2H2"></path>
+</svg>
+Crop & Export Video
+{% endblock %}
 
-<!-- =========================================================
-     AUTO HIDE DJANGO MESSAGES
-     ========================================================= -->
+{% block how_to_use_steps %}
+<ol>
+    <li>Upload your video using the upload zone above.</li>
+    <li>Drag or resize the crop box handles visually, or choose an aspect ratio preset.</li>
+    <li>Preview the live crop result and click "Crop & Export Video".</li>
+    <li>Download your cropped video instantly in crisp original quality.</li>
+</ol>
+{% endblock %}
 
+{% block what_we_provide_items %}
+<ul>
+    <li>Frame-accurate crop filter without stretching or distortion.</li>
+    <li>Zero quality degradation and lossless original audio stream retention.</li>
+    <li>Preset aspect ratios for 16:9, 9:16, 1:1, and 4:5 social formats.</li>
+    <li>Completely private processing with automatic temporary file cleanup.</li>
+</ul>
+{% endblock %}
+
+{% block tool_scripts %}
 <script>
+document.addEventListener("DOMContentLoaded", function() {
+    var video = document.getElementById("mtVideoPreview");
+    var cropBox = document.getElementById("cropBox");
+    var canvasContainer = document.getElementById("mtCanvasContainer");
+    var liveCanvas = document.getElementById("liveCropPreview");
+    var liveCtx = liveCanvas ? liveCanvas.getContext("2d") : null;
 
-document.addEventListener(
-    "DOMContentLoaded",
-    function () {
+    var idX = document.getElementById("id_x");
+    var idY = document.getElementById("id_y");
+    var idW = document.getElementById("id_width");
+    var idH = document.getElementById("id_height");
+    var ratioChips = document.querySelectorAll(".mt-chip[data-ratio]");
+    var resetBtn = document.getElementById("mtResetSettingsBtn");
 
-        const messages =
-            document.querySelectorAll(
-                "#djangoMessages .message, .form-errors"
-            );
+    var currentRatio = "free";
+    var box = { x: 50, y: 50, w: 200, h: 200 };
+    var isDragging = false;
+    var activeHandle = null;
+    var startMouse = { x: 0, y: 0 };
+    var startBox = { x: 0, y: 0, w: 0, h: 0 };
 
+    function getRenderedVideoRect() {
+        if (!canvasContainer || !video) return { left: 0, top: 0, width: 300, height: 200 };
+        var cWidth = canvasContainer.clientWidth || 640;
+        var cHeight = canvasContainer.clientHeight || 360;
+        var vWidth = video.videoWidth || 1920;
+        var vHeight = video.videoHeight || 1080;
+        var vAspect = vWidth / vHeight;
+        var cAspect = cWidth / cHeight;
 
-        messages.forEach(
-            function (message) {
-
-                setTimeout(
-                    function () {
-
-                        message.classList.add("hide");
-
-                        setTimeout(
-                            function () {
-
-                                message.remove();
-
-                            },
-                            400
-                        );
-
-                    },
-                    5000
-                );
-
-            }
-        );
-
+        var rWidth, rHeight, rLeft, rTop;
+        if (vAspect > cAspect) {
+            rWidth = cWidth;
+            rHeight = cWidth / vAspect;
+            rLeft = 0;
+            rTop = (cHeight - rHeight) / 2;
+        } else {
+            rHeight = cHeight;
+            rWidth = cHeight * vAspect;
+            rTop = 0;
+            rLeft = (cWidth - rWidth) / 2;
+        }
+        return { left: rLeft, top: rTop, width: rWidth, height: rHeight };
     }
-);
 
+    function initCropBox() {
+        var vRect = getRenderedVideoRect();
+        box.w = Math.max(60, Math.round(vRect.width * 0.7));
+        box.h = Math.max(60, Math.round(vRect.height * 0.7));
+        box.x = Math.round(vRect.left + (vRect.width - box.w) / 2);
+        box.y = Math.round(vRect.top + (vRect.height - box.h) / 2);
+        if (cropBox) cropBox.style.display = "block";
+        renderBox();
+    }
+
+    function renderBox() {
+        if (!cropBox || !video) return;
+        var vRect = getRenderedVideoRect();
+        box.w = Math.max(40, Math.min(box.w, vRect.width));
+        box.h = Math.max(40, Math.min(box.h, vRect.height));
+        box.x = Math.max(vRect.left, Math.min(box.x, vRect.left + vRect.width - box.w));
+        box.y = Math.max(vRect.top, Math.min(box.y, vRect.top + vRect.height - box.h));
+
+        cropBox.style.left = box.x + "px";
+        cropBox.style.top = box.y + "px";
+        cropBox.style.width = box.w + "px";
+        cropBox.style.height = box.h + "px";
+
+        var scaleX = (video.videoWidth || 1920) / vRect.width;
+        var scaleY = (video.videoHeight || 1080) / vRect.height;
+        var cropX = Math.round((box.x - vRect.left) * scaleX);
+        var cropY = Math.round((box.y - vRect.top) * scaleY);
+        var cropW = Math.round(box.w * scaleX);
+        var cropH = Math.round(box.h * scaleY);
+
+        if (idX) idX.value = Math.max(0, cropX);
+        if (idY) idY.value = Math.max(0, cropY);
+        if (idW) idW.value = Math.max(10, cropW);
+        if (idH) idH.value = Math.max(10, cropH);
+
+        // Update live canvas preview
+        if (liveCanvas && liveCtx && video.videoWidth) {
+            liveCanvas.width = Math.max(10, cropW);
+            liveCanvas.height = Math.max(10, cropH);
+            try {
+                liveCtx.drawImage(video, cropX, cropY, cropW, cropH, 0, 0, liveCanvas.width, liveCanvas.height);
+            } catch(e) {}
+        }
+    }
+
+    if (cropBox) {
+        cropBox.addEventListener("mousedown", function(e) {
+            if (e.target.classList.contains("mt-crop-handle")) {
+                activeHandle = e.target.getAttribute("data-handle");
+            } else {
+                isDragging = true;
+            }
+            startMouse = { x: e.clientX, y: e.clientY };
+            startBox = { x: box.x, y: box.y, w: box.w, h: box.h };
+            e.preventDefault();
+        });
+    }
+
+    window.addEventListener("mousemove", function(e) {
+        if (!isDragging && !activeHandle) return;
+        var dx = e.clientX - startMouse.x;
+        var dy = e.clientY - startMouse.y;
+
+        if (isDragging) {
+            box.x = startBox.x + dx;
+            box.y = startBox.y + dy;
+        } else if (activeHandle) {
+            var newW = startBox.w;
+            var newH = startBox.h;
+            if (activeHandle.includes("e")) newW = startBox.w + dx;
+            if (activeHandle.includes("s")) newH = startBox.h + dy;
+            if (activeHandle.includes("w")) {
+                newW = startBox.w - dx;
+                if (newW > 40) box.x = startBox.x + dx;
+            }
+            if (activeHandle.includes("n")) {
+                newH = startBox.h - dy;
+                if (newH > 40) box.y = startBox.y + dy;
+            }
+            if (currentRatio !== "free") {
+                var parts = currentRatio.split(":");
+                var r = parseFloat(parts[0]) / parseFloat(parts[1]);
+                if (activeHandle === "e" || activeHandle === "w" || activeHandle === "se") {
+                    newH = Math.round(newW / r);
+                } else {
+                    newW = Math.round(newH * r);
+                }
+            }
+            box.w = newW;
+            box.h = newH;
+        }
+        renderBox();
+    });
+
+    window.addEventListener("mouseup", function() {
+        isDragging = false;
+        activeHandle = null;
+    });
+
+    ratioChips.forEach(function(chip) {
+        chip.addEventListener("click", function() {
+            ratioChips.forEach(function(c) { c.classList.remove("active"); });
+            this.classList.add("active");
+            currentRatio = this.getAttribute("data-ratio");
+            if (currentRatio !== "free") {
+                var parts = currentRatio.split(":");
+                var r = parseFloat(parts[0]) / parseFloat(parts[1]);
+                box.h = Math.round(box.w / r);
+                renderBox();
+            }
+        });
+    });
+
+    if (resetBtn) resetBtn.addEventListener("click", initCropBox);
+
+    if (video) {
+        video.addEventListener("timeupdate", function() {
+            if (!isDragging && !activeHandle && video.videoWidth) {
+                renderBox();
+            }
+        });
+    }
+
+    MediaTools.initUploadCard({
+        fileInputSelector: "#id_video",
+        videoPlayerSelector: "#mtVideoPreview",
+        onVideoLoaded: function() {
+            initCropBox();
+        }
+    });
+
+    MediaTools.initPlaybar(video);
+    MediaTools.initAjaxForm("#mtToolForm");
+});
 </script>
-
-<!-- =========================================================
-     JAVASCRIPT
-     ========================================================= -->
-
-<script src="{% static 'media_tools/js/validation.js' %}">
-</script>
-
-<script src="{% static 'media_tools/js/crop.js' %}">
-</script>
-
-</body>
-
 {% endblock %}

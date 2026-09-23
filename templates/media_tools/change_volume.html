@@ -1,0 +1,91 @@
+{% extends 'media_tools/editor_base.html' %}
+{% load static %}
+
+{% block tool_title %}
+Change Video <span class="mt-gradient-text">Volume</span>
+{% endblock %}
+
+{% block tool_subtitle %}
+Boost quiet audio up to 300% or attenuate loud tracks with clean digital amplification.
+{% endblock %}
+
+{% block tool_bar_title %}
+Volume Booster & Attenuator
+{% endblock %}
+
+{% block hidden_fields %}
+<input type="hidden" name="volume" id="id_volume" value="100">
+<input type="hidden" name="output_format" id="id_output_format" value="mp4">
+{% endblock %}
+
+{% block tool_controls %}
+<div class="mt-section">
+    <div class="mt-range-wrapper">
+        <div class="mt-range-header">
+            <span>Volume Level</span>
+            <span class="mt-range-val" id="volDisplay">100% (Original)</span>
+        </div>
+        <input type="range" class="mt-range-slider" id="volSlider" min="0" max="300" step="5" value="100">
+    </div>
+</div>
+
+<div class="mt-section">
+    <div class="mt-section-title">Quick Presets</div>
+    <div class="mt-chip-grid">
+        <button type="button" class="mt-chip" data-vol="0">0% (Mute)</button>
+        <button type="button" class="mt-chip" data-vol="50">50%</button>
+        <button type="button" class="mt-chip active" data-vol="100">100%</button>
+        <button type="button" class="mt-chip" data-vol="150">150%</button>
+        <button type="button" class="mt-chip" data-vol="200">200% (2x)</button>
+        <button type="button" class="mt-chip" data-vol="300">300% (Max)</button>
+    </div>
+</div>
+{% endblock %}
+
+{% block process_btn_text %}
+Apply Volume & Export
+{% endblock %}
+
+{% block tool_scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    var videoPreview = document.getElementById("mtVideoPreview");
+    var volInput = document.getElementById("id_volume");
+    var volSlider = document.getElementById("volSlider");
+    var volDisplay = document.getElementById("volDisplay");
+    var volChips = document.querySelectorAll(".mt-chip[data-vol]");
+
+    function updateVolume(val) {
+        var v = parseInt(val);
+        volInput.value = v;
+        volSlider.value = v;
+        volDisplay.textContent = v === 100 ? "100% (Original)" : v + "%";
+
+        volChips.forEach(function(c) {
+            c.classList.toggle("active", parseInt(c.getAttribute("data-vol")) === v);
+        });
+
+        // Browser preview volume (max is 1.0)
+        videoPreview.volume = Math.min(1.0, v / 100.0);
+    }
+
+    volChips.forEach(function(chip) {
+        chip.addEventListener("click", function() {
+            updateVolume(this.getAttribute("data-vol"));
+        });
+    });
+
+    volSlider.addEventListener("input", function() {
+        updateVolume(this.value);
+    });
+
+    MediaTools.initUploadCard({
+        fileInputSelector: "#id_video",
+        videoPlayerSelector: "#mtVideoPreview",
+    });
+
+    MediaTools.initPlaybar(videoPreview);
+    MediaTools.initAjaxForm("#mtToolForm");
+});
+</script>
+{% endblock %}

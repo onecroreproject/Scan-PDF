@@ -1,0 +1,98 @@
+{% extends 'media_tools/editor_base.html' %}
+{% load static %}
+
+{% block tool_title %}
+Sync Audio & <span class="mt-gradient-text">Video</span>
+{% endblock %}
+
+{% block tool_subtitle %}
+Fix lip sync delay or out-of-time soundtracks by shifting the audio timing relative to video.
+{% endblock %}
+
+{% block tool_bar_title %}
+Audio / Video Synchronization
+{% endblock %}
+
+{% block hidden_fields %}
+<input type="hidden" name="audio_offset" id="id_audio_offset" value="0.0">
+<input type="hidden" name="output_format" id="id_output_format" value="mp4">
+{% endblock %}
+
+{% block tool_controls %}
+<div class="mt-section">
+    <div class="mt-range-wrapper" style="margin-bottom: 12px;">
+        <div class="mt-range-header">
+            <span>Audio Time Shift</span>
+            <span class="mt-range-val" id="shiftVal">0.00s (In Sync)</span>
+        </div>
+        <input type="range" class="mt-range-slider" id="shiftSlider" min="-3000" max="3000" step="50" value="0">
+    </div>
+    <div style="display: flex; justify-content: space-between; font-size: 0.78rem; color: #64748b;">
+        <span>← Audio Earlier (-3.0s)</span>
+        <span>Audio Delayed (+3.0s) →</span>
+    </div>
+</div>
+
+<div class="mt-section">
+    <div class="mt-section-title">Quick Offset Presets</div>
+    <div class="mt-chip-grid">
+        <button type="button" class="mt-chip" data-shift="-1.0">-1.0s</button>
+        <button type="button" class="mt-chip" data-shift="-0.5">-0.5s</button>
+        <button type="button" class="mt-chip" data-shift="-0.2">-0.2s</button>
+        <button type="button" class="mt-chip active" data-shift="0">0.0s</button>
+        <button type="button" class="mt-chip" data-shift="0.2">+0.2s</button>
+        <button type="button" class="mt-chip" data-shift="0.5">+0.5s</button>
+        <button type="button" class="mt-chip" data-shift="1.0">+1.0s</button>
+    </div>
+</div>
+{% endblock %}
+
+{% block process_btn_text %}
+Synchronize & Export
+{% endblock %}
+
+{% block tool_scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    var videoPreview = document.getElementById("mtVideoPreview");
+    var hiddenOffset = document.getElementById("id_audio_offset");
+    var shiftSlider = document.getElementById("shiftSlider");
+    var shiftVal = document.getElementById("shiftVal");
+    var shiftChips = document.querySelectorAll("[data-shift]");
+
+    function updateShift(valInSec) {
+        var sec = parseFloat(valInSec);
+        var ms = Math.round(sec * 1000);
+        hiddenOffset.value = sec.toFixed(3);
+        shiftSlider.value = ms;
+
+        if (sec === 0) {
+            shiftVal.textContent = "0.00s (In Sync)";
+        } else if (sec > 0) {
+            shiftVal.textContent = "+" + sec.toFixed(2) + "s (Audio Delayed)";
+        } else {
+            shiftVal.textContent = sec.toFixed(2) + "s (Audio Earlier)";
+        }
+
+        shiftChips.forEach(function(c) {
+            var cSec = parseFloat(c.getAttribute("data-shift"));
+            c.classList.toggle("active", Math.abs(cSec - sec) < 0.05);
+        });
+    }
+
+    shiftSlider.addEventListener("input", function() {
+        updateShift(parseFloat(this.value) / 1000.0);
+    });
+
+    shiftChips.forEach(function(chip) {
+        chip.addEventListener("click", function() {
+            updateShift(this.getAttribute("data-shift"));
+        });
+    });
+
+    MediaTools.initUploadCard({ fileInputSelector: "#id_video", videoPlayerSelector: "#mtVideoPreview" });
+    MediaTools.initPlaybar(videoPreview);
+    MediaTools.initAjaxForm("#mtToolForm");
+});
+</script>
+{% endblock %}

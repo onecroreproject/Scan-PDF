@@ -1,0 +1,81 @@
+{% extends 'media_tools/editor_base.html' %}
+{% load static %}
+
+{% block tool_title %}
+Loop <span class="mt-gradient-text">Video</span>
+{% endblock %}
+
+{% block tool_subtitle %}
+Repeat a video clip seamlessly N times to create extended ambient loops, music visualizers, or digital signage reels.
+{% endblock %}
+
+{% block tool_bar_title %}
+Video Looper
+{% endblock %}
+
+{% block hidden_fields %}
+<input type="hidden" name="loop_count" id="id_loop_count" value="2">
+<input type="hidden" name="output_format" id="id_output_format" value="mp4">
+{% endblock %}
+
+{% block tool_controls %}
+<div class="mt-section">
+    <div class="mt-section-title">Loop Repetition Count</div>
+    <div class="mt-chip-grid">
+        <button type="button" class="mt-chip active" data-loop="2">2x Loops</button>
+        <button type="button" class="mt-chip" data-loop="3">3x Loops</button>
+        <button type="button" class="mt-chip" data-loop="4">4x Loops</button>
+        <button type="button" class="mt-chip" data-loop="5">5x Loops</button>
+        <button type="button" class="mt-chip" data-loop="8">8x Loops</button>
+        <button type="button" class="mt-chip" data-loop="10">10x Loops</button>
+    </div>
+</div>
+
+<div class="mt-section">
+    <div class="mt-section-title">Output Format</div>
+    <select class="mt-select" id="formatSelect">
+        <option value="mp4" selected>MP4 (Universal)</option>
+        <option value="mov">MOV (Apple)</option>
+        <option value="webm">WEBM (Web)</option>
+    </select>
+</div>
+{% endblock %}
+
+{% block process_btn_text %}
+Create Looped Video
+{% endblock %}
+
+{% block tool_scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    var videoPreview = document.getElementById("mtVideoPreview");
+    var loopInput = document.getElementById("id_loop_count");
+    var formatInput = document.getElementById("id_output_format");
+    var formatSelect = document.getElementById("formatSelect");
+    var loopChips = document.querySelectorAll(".mt-chip[data-loop]");
+
+    loopChips.forEach(function(chip) {
+        chip.addEventListener("click", function() {
+            loopChips.forEach(function(c) { c.classList.remove("active"); });
+            this.classList.add("active");
+            loopInput.value = this.getAttribute("data-loop");
+        });
+    });
+
+    formatSelect.addEventListener("change", function() {
+        formatInput.value = this.value;
+    });
+
+    MediaTools.initUploadCard({
+        fileInputSelector: "#id_video",
+        videoPlayerSelector: "#mtVideoPreview",
+        onVideoLoaded: function(video) {
+            video.loop = true;
+        }
+    });
+
+    MediaTools.initPlaybar(videoPreview);
+    MediaTools.initAjaxForm("#mtToolForm");
+});
+</script>
+{% endblock %}

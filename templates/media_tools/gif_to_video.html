@@ -1,0 +1,59 @@
+{% extends 'media_tools/editor_base.html' %}
+{% load static %}
+
+{% block tool_title %}
+GIF to <span class="mt-gradient-text">Video</span>
+{% endblock %}
+
+{% block tool_subtitle %}
+Convert silent animated GIFs into universal MP4/MOV videos for Instagram, YouTube, TikTok, and WhatsApp.
+{% endblock %}
+
+{% block tool_bar_title %}
+GIF to Video Converter
+{% endblock %}
+
+{% block hidden_fields %}
+<input type="hidden" name="output_format" id="id_output_format" value="mp4">
+{% endblock %}
+
+{% block tool_controls %}
+<div class="mt-section">
+    <div class="mt-section-title">Target Video Container</div>
+    <div class="mt-chip-grid">
+        <button type="button" class="mt-chip active" data-fmt="mp4">MP4 (H.264)</button>
+        <button type="button" class="mt-chip" data-fmt="mov">MOV (QuickTime)</button>
+        <button type="button" class="mt-chip" data-fmt="webm">WEBM</button>
+    </div>
+</div>
+{% endblock %}
+
+{% block process_btn_text %}
+Convert GIF to Video
+{% endblock %}
+
+{% block tool_scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    var videoPreview = document.getElementById("mtVideoPreview");
+    var formatInput = document.getElementById("id_output_format");
+    var fmtChips = document.querySelectorAll(".mt-chip[data-fmt]");
+
+    fmtChips.forEach(function(chip) {
+        chip.addEventListener("click", function() {
+            fmtChips.forEach(function(c) { c.classList.remove("active"); });
+            this.classList.add("active");
+            formatInput.value = this.getAttribute("data-fmt");
+        });
+    });
+
+    MediaTools.initUploadCard({
+        fileInputSelector: "#id_video",
+        videoPlayerSelector: "#mtVideoPreview",
+    });
+
+    MediaTools.initPlaybar(videoPreview);
+    MediaTools.initAjaxForm("#mtToolForm");
+});
+</script>
+{% endblock %}

@@ -1,0 +1,406 @@
+{% extends 'media_tools/editor_base.html' %}
+{% load static %}
+
+{% block tool_title %}
+Trim &amp; Cut <span class="mt-gradient-text">Video</span>
+{% endblock %}
+
+{% block tool_subtitle %}
+Precisely cut any portion of your video with a visual timeline editor. Drag handles to select start and end points with frame-accurate precision.
+{% endblock %}
+
+{% block tool_bar_title %}
+Video Trim Editor
+{% endblock %}
+
+{% block hidden_fields %}
+<input type="hidden" name="start_time" id="id_start_time" value="0.000">
+<input type="hidden" name="end_time" id="id_end_time" value="0.000">
+<input type="hidden" name="output_format" id="id_output_format" value="mp4">
+{% endblock %}
+
+{% block bottom_timeline %}
+<div class="mt-timeline-container" id="timelineContainer">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.65rem;">
+        <div style="font-size: 0.72rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.07em; color: var(--mt-text-muted);">
+            Timeline — Drag Handles to Set In/Out Points
+        </div>
+        <div style="display: flex; align-items: center; gap: 0.75rem; font-family: monospace; font-size: 0.8rem;">
+            <span style="color: #a78bfa; font-weight: 700;">
+                In: <span id="timelineStartDisplay">0:00.0</span>
+            </span>
+            <span style="color: var(--mt-text-muted);">→</span>
+            <span style="color: #34d399; font-weight: 700;">
+                Out: <span id="timelineEndDisplay">0:00.0</span>
+            </span>
+            <span style="background: rgba(124,58,237,0.18); border: 1px solid var(--mt-accent); color: #c4b5fd; padding: 0.2rem 0.55rem; border-radius: 5px; font-weight: 700;">
+                Dur: <span id="durationDisplay">0:00.0</span>
+            </span>
+        </div>
+    </div>
+
+    <div class="mt-timeline-track" id="timelineTrack">
+        <!-- Waveform/Thumbnail placeholder background -->
+        <div id="timelineWaveform" style="position: absolute; inset: 0; background: repeating-linear-gradient(90deg, rgba(255,255,255,0.03) 0px, rgba(255,255,255,0.03) 1px, transparent 1px, transparent 24px); pointer-events: none;"></div>
+
+        <!-- Selected Range Window -->
+        <div class="mt-timeline-window" id="trimWindow"></div>
+
+        <!-- Left / In Handle -->
+        <div class="mt-timeline-handle mt-handle-left" id="handleLeft" title="Drag to set start point">
+        </div>
+
+        <!-- Playhead -->
+        <div id="timelinePlayhead" style="position: absolute; top: 0; bottom: 0; width: 2px; background: #ffffff; opacity: 0.7; pointer-events: none; z-index: 20;"></div>
+
+        <!-- Right / Out Handle -->
+        <div class="mt-timeline-handle mt-handle-right" id="handleRight" title="Drag to set end point">
+        </div>
+    </div>
+
+    <!-- Timecode Ruler -->
+    <div id="timelineRuler" style="position: relative; height: 22px; margin-top: 4px; overflow: hidden;"></div>
+</div>
+{% endblock %}
+
+{% block tool_controls %}
+<div class="mt-section">
+    <div class="mt-section-title">
+        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="4" y1="9" x2="20" y2="9"></line>
+            <line x1="4" y1="15" x2="20" y2="15"></line>
+            <line x1="10" y1="3" x2="8" y2="21"></line>
+            <line x1="16" y1="3" x2="14" y2="21"></line>
+        </svg>
+        Trim Range
+    </div>
+    <div style="background: var(--mt-bg-card); border: 1px solid var(--mt-border); border-radius: var(--mt-radius-sm); padding: 1rem; display: flex; flex-direction: column; gap: 0.65rem;">
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 0.8rem; color: var(--mt-text-secondary);">Start (In Point)</span>
+            <span style="font-family: monospace; font-size: 0.95rem; font-weight: 700; color: #a78bfa;" id="startTimeLabel">00:00.000</span>
+        </div>
+        <div style="height: 1px; background: var(--mt-border);"></div>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 0.8rem; color: var(--mt-text-secondary);">End (Out Point)</span>
+            <span style="font-family: monospace; font-size: 0.95rem; font-weight: 700; color: #34d399;" id="endTimeLabel">00:00.000</span>
+        </div>
+        <div style="height: 1px; background: var(--mt-border);"></div>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <span style="font-size: 0.8rem; color: var(--mt-text-muted);">Selected Duration</span>
+            <span style="font-family: monospace; font-size: 0.95rem; font-weight: 700; color: var(--mt-text);" id="selectedDurationLabel">00:00.000</span>
+        </div>
+    </div>
+</div>
+
+<div class="mt-section">
+    <div class="mt-section-title">Quick Trim Presets</div>
+    <div class="mt-chip-grid" style="grid-template-columns: 1fr 1fr;">
+        <button type="button" class="mt-chip" id="btnFirst30">First 30s</button>
+        <button type="button" class="mt-chip" id="btnLast30">Last 30s</button>
+        <button type="button" class="mt-chip" id="btnFirst60">First 1 min</button>
+        <button type="button" class="mt-chip" id="btnLast60">Last 1 min</button>
+    </div>
+</div>
+
+<div class="mt-section">
+    <div class="mt-section-title">Output Format</div>
+    <select class="mt-select" id="formatSelect">
+        <option value="mp4" selected>MP4 (H.264 Universal)</option>
+        <option value="mov">MOV (Apple QuickTime)</option>
+        <option value="webm">WEBM (Web Optimized)</option>
+        <option value="mkv">MKV (Matroska)</option>
+        <option value="avi">AVI (Windows Legacy)</option>
+    </select>
+</div>
+{% endblock %}
+
+{% block process_btn_text %}
+<svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+    <line x1="4" y1="9" x2="20" y2="9"></line>
+    <line x1="4" y1="15" x2="20" y2="15"></line>
+    <line x1="10" y1="3" x2="8" y2="21"></line>
+    <line x1="16" y1="3" x2="14" y2="21"></line>
+</svg>
+Trim &amp; Export Video
+{% endblock %}
+
+{% block how_to_use_steps %}
+<ol>
+    <li>Upload your video file into the studio above.</li>
+    <li>Drag the left handle (purple) to set the start point and right handle (green) to set the end point.</li>
+    <li>Use Quick Presets for common trim lengths like first 30s or last 1 minute.</li>
+    <li>Click "Trim & Export Video" and download your trimmed video instantly.</li>
+</ol>
+{% endblock %}
+
+{% block what_we_provide_items %}
+<ul>
+    <li>Frame-accurate FFmpeg trimming with zero quality re-encoding (stream copy when possible).</li>
+    <li>Visual timeline with drag handles, playhead, and timecode ruler for precise control.</li>
+    <li>Output in MP4, MOV, WEBM, MKV, or AVI with original audio preserved.</li>
+    <li>Fully private processing with automatic temporary file cleanup after download.</li>
+</ul>
+{% endblock %}
+
+{% block tool_scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    var video         = document.getElementById("mtVideoPreview");
+    var startInput    = document.getElementById("id_start_time");
+    var endInput      = document.getElementById("id_end_time");
+    var formatInput   = document.getElementById("id_output_format");
+    var formatSelect  = document.getElementById("formatSelect");
+
+    var track         = document.getElementById("timelineTrack");
+    var trimWindow    = document.getElementById("trimWindow");
+    var handleLeft    = document.getElementById("handleLeft");
+    var handleRight   = document.getElementById("handleRight");
+    var playhead      = document.getElementById("timelinePlayhead");
+    var ruler         = document.getElementById("timelineRuler");
+
+    var startDisp     = document.getElementById("startTimeLabel");
+    var endDisp       = document.getElementById("endTimeLabel");
+    var selDurDisp    = document.getElementById("selectedDurationLabel");
+    var tlStartDisp   = document.getElementById("timelineStartDisplay");
+    var tlEndDisp     = document.getElementById("timelineEndDisplay");
+    var tlDurDisp     = document.getElementById("durationDisplay");
+
+    var totalDuration = 0;
+    var trimStart     = 0;
+    var trimEnd       = 0;
+
+    /* ------- FORMAT HELPERS ------- */
+    function fmtTime(s) {
+        var m = Math.floor(s / 60);
+        var ss = (s - m * 60).toFixed(1);
+        if (parseFloat(ss) < 10) ss = "0" + ss;
+        return m + ":" + ss;
+    }
+
+    function fmtTimeMS(s) {
+        var m = Math.floor(s / 60);
+        var rem = s - m * 60;
+        var ss = rem.toFixed(3);
+        if (parseFloat(ss) < 10) ss = "0" + ss;
+        return ("0" + m).slice(-2) + ":" + ss;
+    }
+
+    /* ------- SAFE END TIME -------
+       Always keep end_time at most (totalDuration - 0.1s) to
+       prevent floating-point overshoot that triggers server error:
+       "End time cannot be greater than the video duration."
+    */
+    function clampEnd(t) {
+        if (totalDuration <= 0) return t;
+        return Math.min(t, totalDuration - 0.1);
+    }
+
+    /* ------- UPDATE DISPLAY & HIDDEN INPUTS ------- */
+    function updateUI() {
+        var safeEnd = clampEnd(trimEnd);
+        var dur = safeEnd - trimStart;
+        if (dur < 0) dur = 0;
+
+        // Write safely clamped values to hidden inputs
+        startInput.value = trimStart.toFixed(3);
+        endInput.value   = safeEnd.toFixed(3);
+
+        // Display (show user the real trimEnd position)
+        if (startDisp)  startDisp.textContent  = fmtTimeMS(trimStart);
+        if (endDisp)    endDisp.textContent     = fmtTimeMS(safeEnd);
+        if (selDurDisp) selDurDisp.textContent  = fmtTimeMS(dur);
+        if (tlStartDisp) tlStartDisp.textContent = fmtTime(trimStart);
+        if (tlEndDisp)   tlEndDisp.textContent   = fmtTime(safeEnd);
+        if (tlDurDisp)   tlDurDisp.textContent   = fmtTime(dur);
+
+        if (!totalDuration) return;
+        var pctStart = (trimStart / totalDuration) * 100;
+        var pctEnd   = (safeEnd   / totalDuration) * 100;
+
+        if (trimWindow)  { trimWindow.style.left  = pctStart + "%"; trimWindow.style.width = (pctEnd - pctStart) + "%"; }
+        if (handleLeft)  handleLeft.style.left  = pctStart + "%";
+        if (handleRight) handleRight.style.left = pctEnd + "%";
+    }
+
+    /* ------- RULER TICKS ------- */
+    function buildRuler() {
+        if (!ruler) return;
+        ruler.innerHTML = "";
+        if (!totalDuration) return;
+        var step = 10;
+        if (totalDuration > 600) step = 60;
+        else if (totalDuration > 120) step = 30;
+        else if (totalDuration < 30) step = 5;
+
+        for (var t = 0; t <= totalDuration; t += step) {
+            var pct = (t / totalDuration) * 100;
+            var tick = document.createElement("div");
+            tick.style.cssText = "position: absolute; left: " + pct + "%; transform: translateX(-50%); font-size: 0.65rem; color: var(--mt-text-muted); font-family: monospace; white-space: nowrap;";
+            tick.textContent = fmtTime(t);
+            ruler.appendChild(tick);
+        }
+    }
+
+    /* ------- HANDLE DRAG LOGIC ------- */
+    function onHandleDrag(handle, isLeft) {
+        if (!handle || !track) return;
+        var dragging = false;
+
+        handle.addEventListener("mousedown", function(e) {
+            dragging = true;
+            e.preventDefault();
+        });
+
+        window.addEventListener("mousemove", function(e) {
+            if (!dragging) return;
+            var rect = track.getBoundingClientRect();
+            var pct  = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+            var t    = pct * totalDuration;
+
+            if (isLeft) {
+                trimStart = Math.min(t, trimEnd - 0.1);
+                if (trimStart < 0) trimStart = 0;
+            } else {
+                // Clamp right handle — never go past totalDuration
+                trimEnd = Math.max(t, trimStart + 0.1);
+                if (trimEnd > totalDuration) trimEnd = totalDuration;
+            }
+            updateUI();
+        });
+
+        window.addEventListener("mouseup", function() {
+            if (dragging) {
+                dragging = false;
+                if (video) {
+                    video.currentTime = isLeft
+                        ? trimStart
+                        : Math.min(clampEnd(trimEnd), totalDuration);
+                }
+            }
+        });
+
+        // Touch
+        handle.addEventListener("touchstart", function(e) {
+            dragging = true;
+            e.preventDefault();
+        }, { passive: false });
+
+        window.addEventListener("touchmove", function(e) {
+            if (!dragging) return;
+            var rect  = track.getBoundingClientRect();
+            var touch = e.touches[0];
+            var pct   = Math.max(0, Math.min(1, (touch.clientX - rect.left) / rect.width));
+            var t     = pct * totalDuration;
+
+            if (isLeft) {
+                trimStart = Math.min(t, trimEnd - 0.1);
+                if (trimStart < 0) trimStart = 0;
+            } else {
+                trimEnd = Math.max(t, trimStart + 0.1);
+                if (trimEnd > totalDuration) trimEnd = totalDuration;
+            }
+            updateUI();
+        }, { passive: false });
+
+        window.addEventListener("touchend", function() { dragging = false; });
+    }
+
+    onHandleDrag(handleLeft, true);
+    onHandleDrag(handleRight, false);
+
+    /* ------- CLICK-ON-TRACK to SEEK ------- */
+    if (track) {
+        track.addEventListener("click", function(e) {
+            if (!totalDuration || !video) return;
+            var rect = track.getBoundingClientRect();
+            var pct  = (e.clientX - rect.left) / rect.width;
+            video.currentTime = Math.min(pct * totalDuration, totalDuration);
+        });
+    }
+
+    /* ------- PLAYHEAD SYNC ------- */
+    if (video) {
+        video.addEventListener("timeupdate", function() {
+            if (!totalDuration) return;
+            var pct = (video.currentTime / totalDuration) * 100;
+            if (playhead) playhead.style.left = pct + "%";
+
+            if (!video.paused && video.currentTime > clampEnd(trimEnd)) {
+                video.currentTime = trimStart;
+            }
+        });
+    }
+
+    /* ------- PRESET BUTTONS ------- */
+    function wirePreset(id, fn) {
+        var btn = document.getElementById(id);
+        if (btn) btn.addEventListener("click", function() { if (totalDuration > 0) fn(); });
+    }
+
+    wirePreset("btnFirst30", function() {
+        trimStart = 0; trimEnd = Math.min(30, totalDuration); updateUI();
+    });
+    wirePreset("btnLast30", function() {
+        trimStart = Math.max(0, totalDuration - 30); trimEnd = totalDuration; updateUI();
+    });
+    wirePreset("btnFirst60", function() {
+        trimStart = 0; trimEnd = Math.min(60, totalDuration); updateUI();
+    });
+    wirePreset("btnLast60", function() {
+        trimStart = Math.max(0, totalDuration - 60); trimEnd = totalDuration; updateUI();
+    });
+
+    /* ------- FORMAT SELECT ------- */
+    if (formatSelect) {
+        formatSelect.addEventListener("change", function() {
+            if (formatInput) formatInput.value = this.value;
+        });
+    }
+
+    /* ------- PRE-SUBMIT CLAMP (capture phase — runs before initAjaxForm) -------
+       Final safety: ensure end_time never exceeds video duration.
+       Browser's video.duration is used as ground truth.
+    */
+    var toolForm = document.getElementById("mtToolForm");
+    if (toolForm) {
+        toolForm.addEventListener("submit", function() {
+            var videoDur = (video && video.duration && isFinite(video.duration))
+                ? video.duration
+                : totalDuration;
+
+            if (videoDur > 0) {
+                var endVal   = parseFloat(endInput.value)   || 0;
+                var startVal = parseFloat(startInput.value) || 0;
+
+                // Hard clamp: leave 0.1s buffer
+                var safeMax = videoDur - 0.1;
+                if (endVal > safeMax || endVal <= 0) {
+                    endInput.value = Math.max(startVal + 0.1, safeMax).toFixed(3);
+                }
+                // Ensure end > start
+                if (parseFloat(endInput.value) <= startVal) {
+                    endInput.value = (startVal + 0.1).toFixed(3);
+                }
+            }
+        }, true); // capture phase
+    }
+
+    /* ------- INIT ------- */
+    MediaTools.initUploadCard({
+        fileInputSelector: "#id_video",
+        videoPlayerSelector: "#mtVideoPreview",
+        onVideoLoaded: function(v) {
+            totalDuration = (v.duration && isFinite(v.duration)) ? v.duration : 0;
+            trimStart = 0;
+            trimEnd   = totalDuration;
+            updateUI();
+            buildRuler();
+            window.addEventListener("resize", buildRuler);
+        }
+    });
+
+    MediaTools.initPlaybar(video);
+    MediaTools.initAjaxForm("#mtToolForm");
+});
+</script>
+{% endblock %}

@@ -1,0 +1,138 @@
+{% extends 'media_tools/editor_base.html' %}
+{% load static %}
+
+{% block tool_title %}
+Brighten & Color Adjust <span class="mt-gradient-text">Video</span>
+{% endblock %}
+
+{% block tool_subtitle %}
+Fix dark or underexposed videos, adjust contrast, color saturation, and gamma levels.
+{% endblock %}
+
+{% block tool_bar_title %}
+Color & Lighting Equalizer
+{% endblock %}
+
+{% block hidden_fields %}
+<input type="hidden" name="brightness" id="id_brightness" value="0.15">
+<input type="hidden" name="contrast" id="id_contrast" value="1.0">
+<input type="hidden" name="saturation" id="id_saturation" value="1.0">
+<input type="hidden" name="gamma" id="id_gamma" value="1.0">
+<input type="hidden" name="output_format" id="id_output_format" value="mp4">
+{% endblock %}
+
+{% block tool_controls %}
+<div class="mt-section">
+    <div class="mt-range-wrapper" style="margin-bottom: 12px;">
+        <div class="mt-range-header">
+            <span>Brightness</span>
+            <span class="mt-range-val" id="brightVal">+15%</span>
+        </div>
+        <input type="range" class="mt-range-slider" id="brightSlider" min="-50" max="50" value="15">
+    </div>
+    <div class="mt-range-wrapper" style="margin-bottom: 12px;">
+        <div class="mt-range-header">
+            <span>Contrast</span>
+            <span class="mt-range-val" id="contrastVal">1.00x</span>
+        </div>
+        <input type="range" class="mt-range-slider" id="contrastSlider" min="50" max="200" value="100">
+    </div>
+    <div class="mt-range-wrapper" style="margin-bottom: 12px;">
+        <div class="mt-range-header">
+            <span>Saturation</span>
+            <span class="mt-range-val" id="satVal">1.00x</span>
+        </div>
+        <input type="range" class="mt-range-slider" id="satSlider" min="0" max="200" value="100">
+    </div>
+    <div class="mt-range-wrapper">
+        <div class="mt-range-header">
+            <span>Gamma Correction</span>
+            <span class="mt-range-val" id="gammaVal">1.00</span>
+        </div>
+        <input type="range" class="mt-range-slider" id="gammaSlider" min="50" max="200" value="100">
+    </div>
+</div>
+
+<div class="mt-section">
+    <div class="mt-section-title">Lighting Presets</div>
+    <div class="mt-chip-grid">
+        <button type="button" class="mt-chip active" data-preset="bright">Brighten Dark (+15%)</button>
+        <button type="button" class="mt-chip" data-preset="super">Super Bright (+30%)</button>
+        <button type="button" class="mt-chip" data-preset="vivid">Vivid Colors</button>
+        <button type="button" class="mt-chip" data-preset="reset">Reset Normal</button>
+    </div>
+</div>
+{% endblock %}
+
+{% block process_btn_text %}
+Brighten & Export
+{% endblock %}
+
+{% block tool_scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    var videoPreview = document.getElementById("mtVideoPreview");
+
+    var hiddenB = document.getElementById("id_brightness");
+    var hiddenC = document.getElementById("id_contrast");
+    var hiddenS = document.getElementById("id_saturation");
+    var hiddenG = document.getElementById("id_gamma");
+
+    var brightSlider = document.getElementById("brightSlider");
+    var contrastSlider = document.getElementById("contrastSlider");
+    var satSlider = document.getElementById("satSlider");
+    var gammaSlider = document.getElementById("gammaSlider");
+
+    var presetChips = document.querySelectorAll("[data-preset]");
+
+    function updatePreview() {
+        var b = (parseFloat(brightSlider.value) / 100.0).toFixed(2);
+        var c = (parseFloat(contrastSlider.value) / 100.0).toFixed(2);
+        var s = (parseFloat(satSlider.value) / 100.0).toFixed(2);
+        var g = (parseFloat(gammaSlider.value) / 100.0).toFixed(2);
+
+        hiddenB.value = b;
+        hiddenC.value = c;
+        hiddenS.value = s;
+        hiddenG.value = g;
+
+        document.getElementById("brightVal").textContent = (brightSlider.value >= 0 ? "+" : "") + brightSlider.value + "%";
+        document.getElementById("contrastVal").textContent = c + "x";
+        document.getElementById("satVal").textContent = s + "x";
+        document.getElementById("gammaVal").textContent = g;
+
+        // Apply visual CSS filter to live video preview
+        var cssBrightness = 1 + parseFloat(b);
+        videoPreview.style.filter = "brightness(" + cssBrightness + ") contrast(" + c + ") saturate(" + s + ")";
+    }
+
+    brightSlider.addEventListener("input", updatePreview);
+    contrastSlider.addEventListener("input", updatePreview);
+    satSlider.addEventListener("input", updatePreview);
+    gammaSlider.addEventListener("input", updatePreview);
+
+    presetChips.forEach(function(chip) {
+        chip.addEventListener("click", function() {
+            presetChips.forEach(c => c.classList.remove("active"));
+            this.classList.add("active");
+            var p = this.getAttribute("data-preset");
+
+            if (p === "bright") {
+                brightSlider.value = 15; contrastSlider.value = 100; satSlider.value = 100; gammaSlider.value = 100;
+            } else if (p === "super") {
+                brightSlider.value = 30; contrastSlider.value = 110; satSlider.value = 110; gammaSlider.value = 110;
+            } else if (p === "vivid") {
+                brightSlider.value = 10; contrastSlider.value = 125; satSlider.value = 140; gammaSlider.value = 100;
+            } else {
+                brightSlider.value = 0; contrastSlider.value = 100; satSlider.value = 100; gammaSlider.value = 100;
+            }
+            updatePreview();
+        });
+    });
+
+    MediaTools.initUploadCard({ fileInputSelector: "#id_video", videoPlayerSelector: "#mtVideoPreview" });
+    MediaTools.initPlaybar(videoPreview);
+    MediaTools.initAjaxForm("#mtToolForm");
+});
+</script>
+{% endblock %}

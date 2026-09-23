@@ -1,0 +1,73 @@
+{% extends 'media_tools/editor_base.html' %}
+{% load static %}
+
+{% block tool_title %}
+Mute & <span class="mt-gradient-text">Remove Audio</span>
+{% endblock %}
+
+{% block tool_subtitle %}
+Completely strip all audio, background noise, or unwanted speech from your video in seconds.
+{% endblock %}
+
+{% block tool_bar_title %}
+Remove Audio
+{% endblock %}
+
+{% block hidden_fields %}
+<input type="hidden" name="output_format" id="id_output_format" value="mp4">
+{% endblock %}
+
+{% block tool_controls %}
+<div class="mt-section">
+    <div class="mt-section-title">Audio Track Removal</div>
+    <div style="background: rgba(239, 68, 68, 0.1); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: var(--mt-radius-sm); padding: 1rem; color: #fca5a5; font-size: 0.85rem; display: flex; align-items: center; gap: 0.75rem;">
+        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="1" y1="1" x2="23" y2="23"></line>
+            <path d="M9 9v3a3 3 0 0 0 5.12 2.12M15 9.34V4a3 3 0 0 0-5.94-.6"></path>
+            <path d="M17 16.95A7 7 0 0 1 5 12v-2m14 0v2a7 7 0 0 1-.11 1.23"></path>
+            <line x1="12" y1="19" x2="12" y2="23"></line>
+            <line x1="8" y1="23" x2="16" y2="23"></line>
+        </svg>
+        All audio streams will be removed. Video quality is untouched.
+    </div>
+</div>
+
+<div class="mt-section">
+    <div class="mt-section-title">Output Format</div>
+    <select class="mt-select" id="formatSelect">
+        <option value="mp4" selected>MP4 (Universal)</option>
+        <option value="mov">MOV (Apple)</option>
+        <option value="webm">WEBM (Web)</option>
+        <option value="mkv">MKV</option>
+    </select>
+</div>
+{% endblock %}
+
+{% block process_btn_text %}
+Mute & Export Video
+{% endblock %}
+
+{% block tool_scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    var videoPreview = document.getElementById("mtVideoPreview");
+    var formatInput = document.getElementById("id_output_format");
+    var formatSelect = document.getElementById("formatSelect");
+
+    formatSelect.addEventListener("change", function() {
+        formatInput.value = this.value;
+    });
+
+    MediaTools.initUploadCard({
+        fileInputSelector: "#id_video",
+        videoPlayerSelector: "#mtVideoPreview",
+        onVideoLoaded: function(video) {
+            video.muted = true;
+        }
+    });
+
+    MediaTools.initPlaybar(videoPreview);
+    MediaTools.initAjaxForm("#mtToolForm");
+});
+</script>
+{% endblock %}

@@ -1,0 +1,94 @@
+{% extends 'media_tools/editor_base.html' %}
+{% load static %}
+
+{% block tool_title %}
+Split Screen <span class="mt-gradient-text">Video</span>
+{% endblock %}
+
+{% block tool_subtitle %}
+Combine 2 or 4 video streams into a side-by-side, top-bottom, or 2x2 grid composite.
+{% endblock %}
+
+{% block tool_bar_title %}
+Multi-Stream Split Screen
+{% endblock %}
+
+{% block hidden_fields %}
+<input type="hidden" name="layout" id="id_layout" value="2-side">
+<input type="hidden" name="output_format" id="id_output_format" value="mp4">
+{% endblock %}
+
+{% block tool_controls %}
+<div class="mt-section">
+    <div class="mt-section-title">1. Split Screen Layout</div>
+    <div class="mt-chip-grid">
+        <button type="button" class="mt-chip active" data-layout="2-side">Side-by-Side (2 Videos)</button>
+        <button type="button" class="mt-chip" data-layout="2-stack">Top & Bottom (2 Videos)</button>
+        <button type="button" class="mt-chip" data-layout="4-grid">2x2 Grid (4 Videos)</button>
+    </div>
+</div>
+
+<div class="mt-section">
+    <div class="mt-section-title">2. Select Video Files</div>
+    <div class="mt-file-field-group" style="margin-bottom: 10px;">
+        <label for="id_video1_file" class="mt-sublabel">Primary Video 1</label>
+        <input type="file" name="video1" id="id_video1_file" accept="video/*" class="mt-input-file" required>
+    </div>
+    <div class="mt-file-field-group" style="margin-bottom: 10px;">
+        <label for="id_video2_file" class="mt-sublabel">Second Video 2</label>
+        <input type="file" name="video2" id="id_video2_file" accept="video/*" class="mt-input-file" required>
+    </div>
+    <div id="gridExtraFiles" style="display: none;">
+        <div class="mt-file-field-group" style="margin-bottom: 10px;">
+            <label for="id_video3_file" class="mt-sublabel">Third Video 3</label>
+            <input type="file" name="video3" id="id_video3_file" accept="video/*" class="mt-input-file">
+        </div>
+        <div class="mt-file-field-group">
+            <label for="id_video4_file" class="mt-sublabel">Fourth Video 4</label>
+            <input type="file" name="video4" id="id_video4_file" accept="video/*" class="mt-input-file">
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block process_btn_text %}
+Combine & Create Split Screen
+{% endblock %}
+
+{% block tool_scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    var videoPreview = document.getElementById("mtVideoPreview");
+    var hiddenLayout = document.getElementById("id_layout");
+    var layoutChips = document.querySelectorAll("[data-layout]");
+    var gridExtraFiles = document.getElementById("gridExtraFiles");
+    var v1File = document.getElementById("id_video1_file");
+
+    layoutChips.forEach(function(chip) {
+        chip.addEventListener("click", function() {
+            layoutChips.forEach(c => c.classList.remove("active"));
+            this.classList.add("active");
+            var l = this.getAttribute("data-layout");
+            hiddenLayout.value = l;
+            gridExtraFiles.style.display = l === "4-grid" ? "block" : "none";
+        });
+    });
+
+    v1File.addEventListener("change", function() {
+        if (this.files && this.files[0]) {
+            // Mirror to base video field so preview plays
+            var baseInput = document.getElementById("id_video");
+            if (baseInput) {
+                var container = new DataTransfer();
+                container.items.add(this.files[0]);
+                baseInput.files = container.files;
+            }
+        }
+    });
+
+    MediaTools.initUploadCard({ fileInputSelector: "#id_video1_file", videoPlayerSelector: "#mtVideoPreview" });
+    MediaTools.initPlaybar(videoPreview);
+    MediaTools.initAjaxForm("#mtToolForm");
+});
+</script>
+{% endblock %}

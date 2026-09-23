@@ -1,0 +1,97 @@
+{% extends 'media_tools/editor_base.html' %}
+{% load static %}
+
+{% block tool_title %}
+Video <span class="mt-gradient-text">Fade In / Fade Out</span>
+{% endblock %}
+
+{% block tool_subtitle %}
+Add cinematic black or white fade-in at the beginning and fade-out at the end with synchronized audio smoothing.
+{% endblock %}
+
+{% block tool_bar_title %}
+Fade Transition Editor
+{% endblock %}
+
+{% block hidden_fields %}
+<input type="hidden" name="fade_in" id="id_fade_in" value="1.5">
+<input type="hidden" name="fade_out" id="id_fade_out" value="1.5">
+<input type="hidden" name="fade_color" id="id_fade_color" value="black">
+<input type="hidden" name="output_format" id="id_output_format" value="mp4">
+{% endblock %}
+
+{% block tool_controls %}
+<div class="mt-section">
+    <div class="mt-range-wrapper">
+        <div class="mt-range-header">
+            <span>Fade In Duration</span>
+            <span class="mt-range-val" id="fadeInDisplay">1.5s</span>
+        </div>
+        <input type="range" class="mt-range-slider" id="fadeInSlider" min="0.0" max="5.0" step="0.5" value="1.5">
+    </div>
+</div>
+
+<div class="mt-section">
+    <div class="mt-range-wrapper">
+        <div class="mt-range-header">
+            <span>Fade Out Duration</span>
+            <span class="mt-range-val" id="fadeOutDisplay">1.5s</span>
+        </div>
+        <input type="range" class="mt-range-slider" id="fadeOutSlider" min="0.0" max="5.0" step="0.5" value="1.5">
+    </div>
+</div>
+
+<div class="mt-section">
+    <div class="mt-section-title">Fade Color</div>
+    <div class="mt-chip-grid">
+        <button type="button" class="mt-chip active" data-color="black">Black (Cinematic)</button>
+        <button type="button" class="mt-chip" data-color="white">White (Flash)</button>
+    </div>
+</div>
+{% endblock %}
+
+{% block process_btn_text %}
+Apply Fade Transitions
+{% endblock %}
+
+{% block tool_scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    var videoPreview = document.getElementById("mtVideoPreview");
+    var fadeInInput = document.getElementById("id_fade_in");
+    var fadeOutInput = document.getElementById("id_fade_out");
+    var colorInput = document.getElementById("id_fade_color");
+    var fadeInSlider = document.getElementById("fadeInSlider");
+    var fadeInDisplay = document.getElementById("fadeInDisplay");
+    var fadeOutSlider = document.getElementById("fadeOutSlider");
+    var fadeOutDisplay = document.getElementById("fadeOutDisplay");
+    var colorChips = document.querySelectorAll(".mt-chip[data-color]");
+
+    fadeInSlider.addEventListener("input", function() {
+        fadeInInput.value = this.value;
+        fadeInDisplay.textContent = this.value + "s";
+    });
+
+    fadeOutSlider.addEventListener("input", function() {
+        fadeOutInput.value = this.value;
+        fadeOutDisplay.textContent = this.value + "s";
+    });
+
+    colorChips.forEach(function(chip) {
+        chip.addEventListener("click", function() {
+            colorChips.forEach(function(c) { c.classList.remove("active"); });
+            this.classList.add("active");
+            colorInput.value = this.getAttribute("data-color");
+        });
+    });
+
+    MediaTools.initUploadCard({
+        fileInputSelector: "#id_video",
+        videoPlayerSelector: "#mtVideoPreview",
+    });
+
+    MediaTools.initPlaybar(videoPreview);
+    MediaTools.initAjaxForm("#mtToolForm");
+});
+</script>
+{% endblock %}

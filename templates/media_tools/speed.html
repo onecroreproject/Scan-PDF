@@ -1,0 +1,124 @@
+{% extends 'media_tools/editor_base.html' %}
+{% load static %}
+
+{% block tool_title %}
+Change <span class="mt-gradient-text">Video Speed</span>
+{% endblock %}
+
+{% block tool_subtitle %}
+Accelerate or slow down video footage. Create smooth slow-motion or fast timelapse with synchronized audio.
+{% endblock %}
+
+{% block tool_bar_title %}
+Video Speed Editor
+{% endblock %}
+
+{% block hidden_fields %}
+<input type="hidden" name="speed" id="id_speed" value="1.0">
+<input type="hidden" name="keep_audio" id="id_keep_audio" value="True">
+<input type="hidden" name="output_format" id="id_output_format" value="mp4">
+{% endblock %}
+
+{% block tool_controls %}
+<div class="mt-section">
+    <div class="mt-section-title">Speed Presets</div>
+    <div class="mt-chip-grid">
+        <button type="button" class="mt-chip" data-speed="0.25">0.25x</button>
+        <button type="button" class="mt-chip" data-speed="0.5">0.5x</button>
+        <button type="button" class="mt-chip" data-speed="0.75">0.75x</button>
+        <button type="button" class="mt-chip active" data-speed="1.0">1.0x</button>
+        <button type="button" class="mt-chip" data-speed="1.25">1.25x</button>
+        <button type="button" class="mt-chip" data-speed="1.5">1.5x</button>
+        <button type="button" class="mt-chip" data-speed="2.0">2.0x</button>
+        <button type="button" class="mt-chip" data-speed="4.0">4.0x</button>
+    </div>
+</div>
+
+<div class="mt-section">
+    <div class="mt-range-wrapper">
+        <div class="mt-range-header">
+            <span>Custom Multiplier</span>
+            <span class="mt-range-val" id="speedDisplay">1.0x</span>
+        </div>
+        <input type="range" class="mt-range-slider" id="speedSlider" min="0.2" max="4.0" step="0.05" value="1.0">
+    </div>
+</div>
+
+<div class="mt-section">
+    <div class="mt-section-title">Audio Pitch & Sound</div>
+    <label style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer; font-size: 0.85rem; color: var(--mt-text-secondary);">
+        <input type="checkbox" id="chkAudio" checked style="accent-color: var(--mt-accent); width: 16px; height: 16px;">
+        Synchronize Audio Pitch
+    </label>
+</div>
+
+<div class="mt-section">
+    <div class="mt-section-title">Output Format</div>
+    <select class="mt-select" id="formatSelect">
+        <option value="mp4" selected>MP4 (Universal)</option>
+        <option value="mov">MOV (Apple ProRes / QuickTime)</option>
+        <option value="webm">WEBM (Web Optimized)</option>
+    </select>
+</div>
+{% endblock %}
+
+{% block process_btn_text %}
+Export Speed Adjusted Video
+{% endblock %}
+
+{% block tool_scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    var videoPreview = document.getElementById("mtVideoPreview");
+    var speedInput = document.getElementById("id_speed");
+    var keepAudioInput = document.getElementById("id_keep_audio");
+    var formatInput = document.getElementById("id_output_format");
+    var speedSlider = document.getElementById("speedSlider");
+    var speedDisplay = document.getElementById("speedDisplay");
+    var chkAudio = document.getElementById("chkAudio");
+    var formatSelect = document.getElementById("formatSelect");
+    var presetChips = document.querySelectorAll(".mt-chip[data-speed]");
+
+    function updateSpeed(val) {
+        var num = parseFloat(val);
+        speedInput.value = num.toFixed(2);
+        speedDisplay.textContent = num.toFixed(2) + "x";
+        speedSlider.value = num;
+
+        presetChips.forEach(function(c) {
+            c.classList.toggle("active", parseFloat(c.getAttribute("data-speed")) === num);
+        });
+
+        // Live preview rate
+        videoPreview.playbackRate = num;
+    }
+
+    presetChips.forEach(function(chip) {
+        chip.addEventListener("click", function() {
+            updateSpeed(this.getAttribute("data-speed"));
+        });
+    });
+
+    speedSlider.addEventListener("input", function() {
+        updateSpeed(this.value);
+    });
+
+    chkAudio.addEventListener("change", function() {
+        keepAudioInput.value = this.checked ? "True" : "False";
+        videoPreview.muted = !this.checked;
+    });
+
+    formatSelect.addEventListener("change", function() {
+        formatInput.value = this.value;
+    });
+
+    MediaTools.initUploadCard({
+        fileInputSelector: "#id_video",
+        videoPlayerSelector: "#mtVideoPreview",
+    });
+
+    MediaTools.initPlaybar(videoPreview);
+    MediaTools.initAjaxForm("#mtToolForm");
+});
+</script>
+{% endblock %}

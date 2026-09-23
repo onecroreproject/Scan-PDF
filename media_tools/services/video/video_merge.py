@@ -4,7 +4,10 @@ from fractions import Fraction
 from pathlib import Path
 from uuid import uuid4
 
-import av
+try:
+    import av
+except ImportError:
+    av = None
 from django.conf import settings
 
 

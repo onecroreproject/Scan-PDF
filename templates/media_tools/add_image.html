@@ -1,0 +1,150 @@
+{% extends 'media_tools/editor_base.html' %}
+{% load static %}
+
+{% block tool_title %}
+Add Image / Logo to <span class="mt-gradient-text">Video</span>
+{% endblock %}
+
+{% block tool_subtitle %}
+Overlay PNG, JPG, or transparent branding logos onto your video.
+{% endblock %}
+
+{% block tool_bar_title %}
+Image & Logo Overlay Editor
+{% endblock %}
+
+{% block stage_overlays %}
+<div id="mtImageStageOverlay" style="position: absolute; display: none; pointer-events: none; transform: translate(-50%, -50%); top: 80%; left: 80%; width: 20%; opacity: 0.85;">
+    <img id="mtOverlayPreviewImg" src="" style="width: 100%; height: auto; display: block; border-radius: 4px;">
+</div>
+{% endblock %}
+
+{% block hidden_fields %}
+<input type="hidden" name="position" id="id_position" value="bottom-right">
+<input type="hidden" name="opacity" id="id_opacity" value="0.85">
+<input type="hidden" name="scale_percent" id="id_scale_percent" value="20">
+<input type="hidden" name="x_percent" id="id_x_percent" value="80">
+<input type="hidden" name="y_percent" id="id_y_percent" value="80">
+<input type="hidden" name="output_format" id="id_output_format" value="mp4">
+{% endblock %}
+
+{% block tool_controls %}
+<div class="mt-section">
+    <div class="mt-section-title">1. Select Overlay Image</div>
+    <div class="mt-file-field-group">
+        <label for="id_image_file" class="mt-sublabel">Image File (PNG, JPG, WEBP)</label>
+        <input type="file" name="image" id="id_image_file" accept="image/*" class="mt-input-file" required>
+        <div class="mt-file-badge-info" id="imgFileInfo" style="display: none; margin-top: 6px; font-size: 0.82rem; color: #a7f3d0;">
+            ✓ Overlay image attached
+        </div>
+    </div>
+</div>
+
+<div class="mt-section">
+    <div class="mt-section-title">2. Positioning</div>
+    <div class="mt-chip-grid">
+        <button type="button" class="mt-chip" data-pos="top-left">Top Left</button>
+        <button type="button" class="mt-chip" data-pos="top-center">Top Center</button>
+        <button type="button" class="mt-chip" data-pos="top-right">Top Right</button>
+        <button type="button" class="mt-chip" data-pos="center">Center</button>
+        <button type="button" class="mt-chip" data-pos="bottom-left">Bottom Left</button>
+        <button type="button" class="mt-chip active" data-pos="bottom-right">Bottom Right</button>
+    </div>
+</div>
+
+<div class="mt-section">
+    <div class="mt-range-wrapper" style="margin-bottom: 12px;">
+        <div class="mt-range-header">
+            <span>Size Scale</span>
+            <span class="mt-range-val" id="scaleVal">20%</span>
+        </div>
+        <input type="range" class="mt-range-slider" id="scaleSlider" min="5" max="80" value="20">
+    </div>
+    <div class="mt-range-wrapper">
+        <div class="mt-range-header">
+            <span>Opacity</span>
+            <span class="mt-range-val" id="opacityVal">85%</span>
+        </div>
+        <input type="range" class="mt-range-slider" id="opacitySlider" min="10" max="100" value="85">
+    </div>
+</div>
+{% endblock %}
+
+{% block process_btn_text %}
+Add Image & Export
+{% endblock %}
+
+{% block tool_scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    var videoPreview = document.getElementById("mtVideoPreview");
+    var overlay = document.getElementById("mtImageStageOverlay");
+    var overlayImg = document.getElementById("mtOverlayPreviewImg");
+
+    var imageFile = document.getElementById("id_image_file");
+    var imgFileInfo = document.getElementById("imgFileInfo");
+
+    var hiddenPos = document.getElementById("id_position");
+    var hiddenOpacity = document.getElementById("id_opacity");
+    var hiddenScale = document.getElementById("id_scale_percent");
+
+    var posChips = document.querySelectorAll("[data-pos]");
+    var scaleSlider = document.getElementById("scaleSlider");
+    var opacitySlider = document.getElementById("opacitySlider");
+
+    imageFile.addEventListener("change", function() {
+        if (this.files && this.files[0]) {
+            var reader = new FileReader();
+            reader.onload = function(e) {
+                overlayImg.src = e.target.result;
+                overlay.style.display = "block";
+            };
+            reader.readAsDataURL(this.files[0]);
+            imgFileInfo.textContent = "✓ Image: " + this.files[0].name;
+            imgFileInfo.style.display = "block";
+        }
+    });
+
+    posChips.forEach(function(chip) {
+        chip.addEventListener("click", function() {
+            posChips.forEach(c => c.classList.remove("active"));
+            this.classList.add("active");
+            var p = this.getAttribute("data-pos");
+            hiddenPos.value = p;
+
+            var posStyles = {
+                "top-left": { top: "15%", left: "15%" },
+                "top-center": { top: "15%", left: "50%" },
+                "top-right": { top: "15%", left: "85%" },
+                "center": { top: "50%", left: "50%" },
+                "bottom-left": { top: "85%", left: "15%" },
+                "bottom-center": { top: "85%", left: "50%" },
+                "bottom-right": { top: "85%", left: "85%" }
+            };
+            if (posStyles[p]) {
+                overlay.style.top = posStyles[p].top;
+                overlay.style.left = posStyles[p].left;
+            }
+        });
+    });
+
+    scaleSlider.addEventListener("input", function() {
+        var sc = this.value;
+        hiddenScale.value = sc;
+        document.getElementById("scaleVal").textContent = sc + "%";
+        overlay.style.width = sc + "%";
+    });
+
+    opacitySlider.addEventListener("input", function() {
+        var op = this.value;
+        hiddenOpacity.value = (op / 100.0).toFixed(2);
+        document.getElementById("opacityVal").textContent = op + "%";
+        overlay.style.opacity = op / 100.0;
+    });
+
+    MediaTools.initUploadCard({ fileInputSelector: "#id_video", videoPlayerSelector: "#mtVideoPreview" });
+    MediaTools.initPlaybar(videoPreview);
+    MediaTools.initAjaxForm("#mtToolForm");
+});
+</script>
+{% endblock %}

@@ -1,0 +1,123 @@
+{% extends 'media_tools/editor_base.html' %}
+{% load static %}
+
+{% block tool_title %}
+Add Audio to <span class="mt-gradient-text">Video</span>
+{% endblock %}
+
+{% block tool_subtitle %}
+Replace original soundtrack or mix background music, voiceovers, and sound effects onto video.
+{% endblock %}
+
+{% block tool_bar_title %}
+Audio Overlay & Sound Mixer
+{% endblock %}
+
+{% block hidden_fields %}
+<input type="hidden" name="mode" id="id_mode" value="replace">
+<input type="hidden" name="audio_volume" id="id_audio_volume" value="1.0">
+<input type="hidden" name="video_volume" id="id_video_volume" value="1.0">
+<input type="hidden" name="output_format" id="id_output_format" value="mp4">
+{% endblock %}
+
+{% block tool_controls %}
+<div class="mt-section">
+    <div class="mt-section-title">1. Select Audio Track</div>
+    <div class="mt-file-field-group">
+        <label for="id_audio_file" class="mt-sublabel">Audio File (MP3, WAV, AAC, M4A)</label>
+        <input type="file" name="audio" id="id_audio_file" accept="audio/*" class="mt-input-file" required>
+        <div class="mt-file-badge-info" id="audioFileInfo" style="display: none; margin-top: 6px; font-size: 0.82rem; color: #a7f3d0;">
+            ✓ Audio track attached
+        </div>
+    </div>
+</div>
+
+<div class="mt-section">
+    <div class="mt-section-title">2. Audio Mode</div>
+    <div class="mt-chip-grid">
+        <button type="button" class="mt-chip active" data-mode="replace">Replace Original Audio</button>
+        <button type="button" class="mt-chip" data-mode="mix">Mix with Original Audio</button>
+    </div>
+</div>
+
+<div class="mt-section" id="mixVolumeSection">
+    <div class="mt-range-wrapper" style="margin-bottom: 12px;">
+        <div class="mt-range-header">
+            <span>New Audio Volume</span>
+            <span class="mt-range-val" id="audioVolVal">100%</span>
+        </div>
+        <input type="range" class="mt-range-slider" id="audioVolSlider" min="0" max="200" step="5" value="100">
+    </div>
+    <div class="mt-range-wrapper" id="videoVolWrapper" style="display: none;">
+        <div class="mt-range-header">
+            <span>Original Video Volume</span>
+            <span class="mt-range-val" id="videoVolVal">100%</span>
+        </div>
+        <input type="range" class="mt-range-slider" id="videoVolSlider" min="0" max="200" step="5" value="100">
+    </div>
+</div>
+{% endblock %}
+
+{% block process_btn_text %}
+Add Audio & Process
+{% endblock %}
+{% block how_to_use %}
+<div class="mt-how-to-use">
+  <h2 class="mt-section-title">How to Use</h2>
+  <ol class="mt-how-list">
+    <li>Upload a video file using the button above.</li>
+    <li>Select an audio track and configure volume/mix options.</li>
+    <li>Press “Add Audio &amp; Process” to apply changes.</li>
+    <li>Download the resulting video from the result card.</li>
+  </ol>
+</div>
+{% endblock %}
+
+{% block tool_scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    var videoPreview = document.getElementById("mtVideoPreview");
+    var modeInput = document.getElementById("id_mode");
+    var audioVolInput = document.getElementById("id_audio_volume");
+    var videoVolInput = document.getElementById("id_video_volume");
+
+    var modeChips = document.querySelectorAll("[data-mode]");
+    var audioFile = document.getElementById("id_audio_file");
+    var audioFileInfo = document.getElementById("audioFileInfo");
+    var videoVolWrapper = document.getElementById("videoVolWrapper");
+
+    modeChips.forEach(function(chip) {
+        chip.addEventListener("click", function() {
+            modeChips.forEach(c => c.classList.remove("active"));
+            this.classList.add("active");
+            var m = this.getAttribute("data-mode");
+            modeInput.value = m;
+            videoVolWrapper.style.display = m === "mix" ? "block" : "none";
+        });
+    });
+
+    audioFile.addEventListener("change", function() {
+        if (this.files && this.files[0]) {
+            audioFileInfo.textContent = "✓ Track selected: " + this.files[0].name;
+            audioFileInfo.style.display = "block";
+        }
+    });
+
+    document.getElementById("audioVolSlider").addEventListener("input", function() {
+        var v = parseFloat(this.value);
+        audioVolInput.value = (v / 100.0).toFixed(2);
+        document.getElementById("audioVolVal").textContent = v + "%";
+    });
+
+    document.getElementById("videoVolSlider").addEventListener("input", function() {
+        var v = parseFloat(this.value);
+        videoVolInput.value = (v / 100.0).toFixed(2);
+        document.getElementById("videoVolVal").textContent = v + "%";
+    });
+
+    MediaTools.initUploadCard({ fileInputSelector: "#id_video", videoPlayerSelector: "#mtVideoPreview" });
+    MediaTools.initPlaybar(videoPreview);
+    MediaTools.initAjaxForm("#mtToolForm");
+});
+</script>
+{% endblock %}

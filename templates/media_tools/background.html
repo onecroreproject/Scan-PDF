@@ -1,0 +1,93 @@
+{% extends 'media_tools/editor_base.html' %}
+{% load static %}
+
+{% block tool_title %}
+Video Background & <span class="mt-gradient-text">Aspect Ratio</span>
+{% endblock %}
+
+{% block tool_subtitle %}
+Fit videos for TikTok, YouTube, Instagram Reels, and Shorts with blurred background or solid padding.
+{% endblock %}
+
+{% block tool_bar_title %}
+Background & Social Canvas Editor
+{% endblock %}
+
+{% block hidden_fields %}
+<input type="hidden" name="bg_type" id="id_bg_type" value="blur">
+<input type="hidden" name="bg_color" id="id_bg_color" value="#000000">
+<input type="hidden" name="aspect_ratio" id="id_aspect_ratio" value="9:16">
+<input type="hidden" name="output_format" id="id_output_format" value="mp4">
+{% endblock %}
+
+{% block tool_controls %}
+<div class="mt-section">
+    <div class="mt-section-title">1. Target Aspect Ratio</div>
+    <div class="mt-chip-grid">
+        <button type="button" class="mt-chip active" data-ratio="9:16">9:16 (TikTok / Reels / Shorts)</button>
+        <button type="button" class="mt-chip" data-ratio="16:9">16:9 (YouTube Landscape)</button>
+        <button type="button" class="mt-chip" data-ratio="1:1">1:1 (Square Feed)</button>
+        <button type="button" class="mt-chip" data-ratio="4:5">4:5 (Instagram Portrait)</button>
+        <button type="button" class="mt-chip" data-ratio="21:9">21:9 (Ultrawide)</button>
+    </div>
+</div>
+
+<div class="mt-section">
+    <div class="mt-section-title">2. Background Style</div>
+    <div class="mt-chip-grid">
+        <button type="button" class="mt-chip active" data-bg="blur">Blurred Video Background</button>
+        <button type="button" class="mt-chip" data-bg="color">Solid Color Padding</button>
+    </div>
+    <div id="colorSection" style="display: none; margin-top: 12px;">
+        <label class="mt-sublabel">Padding Color</label>
+        <input type="color" id="bgColorPicker" value="#000000" style="width: 100%; height: 38px; border: none; border-radius: 6px; cursor: pointer; background: transparent;">
+    </div>
+</div>
+{% endblock %}
+
+{% block process_btn_text %}
+Apply Canvas & Export
+{% endblock %}
+
+{% block tool_scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    var videoPreview = document.getElementById("mtVideoPreview");
+
+    var hiddenBg = document.getElementById("id_bg_type");
+    var hiddenColor = document.getElementById("id_bg_color");
+    var hiddenRatio = document.getElementById("id_aspect_ratio");
+
+    var ratioChips = document.querySelectorAll("[data-ratio]");
+    var bgChips = document.querySelectorAll("[data-bg]");
+    var colorSection = document.getElementById("colorSection");
+    var colorPicker = document.getElementById("bgColorPicker");
+
+    ratioChips.forEach(function(chip) {
+        chip.addEventListener("click", function() {
+            ratioChips.forEach(c => c.classList.remove("active"));
+            this.classList.add("active");
+            hiddenRatio.value = this.getAttribute("data-ratio");
+        });
+    });
+
+    bgChips.forEach(function(chip) {
+        chip.addEventListener("click", function() {
+            bgChips.forEach(c => c.classList.remove("active"));
+            this.classList.add("active");
+            var b = this.getAttribute("data-bg");
+            hiddenBg.value = b;
+            colorSection.style.display = b === "color" ? "block" : "none";
+        });
+    });
+
+    colorPicker.addEventListener("input", function() {
+        hiddenColor.value = this.value;
+    });
+
+    MediaTools.initUploadCard({ fileInputSelector: "#id_video", videoPlayerSelector: "#mtVideoPreview" });
+    MediaTools.initPlaybar(videoPreview);
+    MediaTools.initAjaxForm("#mtToolForm");
+});
+</script>
+{% endblock %}

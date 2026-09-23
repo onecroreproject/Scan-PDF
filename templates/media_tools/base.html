@@ -1,0 +1,11 @@
+{% extends 'converter/base.html' %}
+{% load static %}
+
+{% block extra_head %}
+<link rel="stylesheet" href="{% static 'media_tools/css/media_tools.css' %}">
+{% block tool_head %}{% endblock %}
+{% endblock %}
+
+{% block content %}
+{% block tool_content %}{% endblock %}
+{% endblock %}

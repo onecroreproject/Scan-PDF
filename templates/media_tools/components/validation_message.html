@@ -1,0 +1,12 @@
+<!-- ==========================================================================
+     SERVER MESSAGES & TOAST NOTIFICATION INITIALIZER
+     ========================================================================== -->
+{% if messages %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    {% for message in messages %}
+    MediaTools.showToast("{{ message|escapejs }}", "{% if 'error' in message.tags %}error{% else %}info{% endif %}");
+    {% endfor %}
+});
+</script>
+{% endif %}

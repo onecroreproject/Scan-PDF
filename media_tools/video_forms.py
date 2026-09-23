@@ -197,3 +197,794 @@ class ResizeVideoForm(forms.Form):
         )
 
         return output_format or "mp4"
+
+import logging
+
+from django import forms
+
+
+logger = logging.getLogger("media_tools")
+
+
+class TrimVideoForm(forms.Form):
+    """
+    Form for extracting a selected section
+    from an uploaded video.
+
+    Start and end times are controlled by the
+    JavaScript timeline editor. Users do not
+    manually enter time values.
+    """
+
+    video = forms.FileField(
+        required=True,
+        label="Video",
+        widget=forms.ClearableFileInput(
+            attrs={
+                "accept": (
+                    "video/mp4,"
+                    "video/quicktime,"
+                    "video/webm,"
+                    "video/x-msvideo,"
+                    "video/x-matroska,"
+                    "video/x-m4v,"
+                    "video/x-flv,"
+                    "video/x-ms-wmv,"
+                    "video/mpeg"
+                ),
+            }
+        ),
+    )
+
+    start_time = forms.DecimalField(
+        required=True,
+        min_value=0,
+        max_digits=12,
+        decimal_places=3,
+        widget=forms.HiddenInput(),
+    )
+
+    end_time = forms.DecimalField(
+        required=True,
+        min_value=0,
+        max_digits=12,
+        decimal_places=3,
+        widget=forms.HiddenInput(),
+    )
+
+    background_color = forms.CharField(
+        required=False,
+        max_length=7,
+        initial="#000000",
+        widget=forms.HiddenInput(),
+    )
+
+    output_format = forms.ChoiceField(
+        required=True,
+        choices=(
+            ("mp4", "MP4"),
+            ("mov", "MOV"),
+            ("webm", "WEBM"),
+            ("avi", "AVI"),
+            ("mkv", "MKV"),
+            ("m4v", "M4V"),
+            ("flv", "FLV"),
+            ("wmv", "WMV"),
+            ("gif", "GIF"),
+            ("mpeg", "MPEG"),
+        ),
+        initial="mp4",
+        widget=forms.HiddenInput(),
+    )
+
+    def clean_video(self):
+        """
+        Validate uploaded video.
+        """
+
+        video = self.cleaned_data.get(
+            "video"
+        )
+
+        if not video:
+            raise forms.ValidationError(
+                "Please select a video."
+            )
+
+        allowed_extensions = {
+            ".mp4",
+            ".mov",
+            ".webm",
+            ".avi",
+            ".mkv",
+            ".m4v",
+            ".flv",
+            ".wmv",
+            ".mpeg",
+            ".mpg",
+        }
+
+        filename = (
+            getattr(
+                video,
+                "name",
+                "",
+            )
+            or ""
+        ).lower()
+
+        extension = ""
+
+        if "." in filename:
+            extension = (
+                "."
+                + filename.rsplit(
+                    ".",
+                    1,
+                )[-1]
+            )
+
+        if extension not in allowed_extensions:
+            raise forms.ValidationError(
+                "Unsupported video format."
+            )
+
+        max_size = (
+            500
+            * 1024
+            * 1024
+        )
+
+        if video.size > max_size:
+            raise forms.ValidationError(
+                "Video file must be smaller than 500 MB."
+            )
+
+        return video
+
+    def clean_start_time(self):
+        """
+        Validate timeline start position.
+        """
+
+        start_time = (
+            self.cleaned_data.get(
+                "start_time"
+            )
+        )
+
+        if start_time is None:
+            raise forms.ValidationError(
+                "Start position is required."
+            )
+
+        if start_time < 0:
+            raise forms.ValidationError(
+                "Start position cannot be negative."
+            )
+
+        return start_time
+
+    def clean_end_time(self):
+        """
+        Validate timeline end position.
+        """
+
+        end_time = (
+            self.cleaned_data.get(
+                "end_time"
+            )
+        )
+
+        if end_time is None:
+            raise forms.ValidationError(
+                "End position is required."
+            )
+
+        if end_time <= 0:
+            raise forms.ValidationError(
+                "End position must be greater than zero."
+            )
+
+        return end_time
+
+    def clean_background_color(self):
+        """
+        Validate hexadecimal background color.
+        """
+
+        color = (
+            self.cleaned_data.get(
+                "background_color"
+            )
+        )
+
+        if not color:
+            return "#000000"
+
+        color = color.strip().upper()
+
+        if not color.startswith("#"):
+            raise forms.ValidationError(
+                "Invalid background color."
+            )
+
+        if len(color) != 7:
+            raise forms.ValidationError(
+                "Invalid background color."
+            )
+
+        valid_characters = (
+            "0123456789ABCDEF"
+        )
+
+        if any(
+            character
+            not in valid_characters
+            for character in color[1:]
+        ):
+            raise forms.ValidationError(
+                "Invalid background color."
+            )
+
+        return color
+
+    def clean_output_format(self):
+        """
+        Validate requested output format.
+        """
+
+        output_format = (
+            self.cleaned_data.get(
+                "output_format"
+            )
+        )
+
+        allowed_formats = {
+            "mp4",
+            "mov",
+            "webm",
+            "avi",
+            "mkv",
+            "m4v",
+            "flv",
+            "wmv",
+            "gif",
+            "mpeg",
+        }
+
+        if (
+            output_format
+            not in allowed_formats
+        ):
+            raise forms.ValidationError(
+                "Invalid output format."
+            )
+
+        return output_format
+
+    def clean(self):
+        """
+        Validate the complete trim selection.
+        """
+
+        cleaned_data = super().clean()
+
+        start_time = cleaned_data.get(
+            "start_time"
+        )
+
+        end_time = cleaned_data.get(
+            "end_time"
+        )
+
+        if (
+            start_time is not None
+            and end_time is not None
+        ):
+
+            if end_time <= start_time:
+
+                self.add_error(
+                    "end_time",
+                    (
+                        "End position must be "
+                        "after the start position."
+                    ),
+                )
+
+            else:
+
+                selected_duration = (
+                    end_time - start_time
+                )
+
+                if (
+                    selected_duration
+                    < 0.001
+                ):
+
+                    self.add_error(
+                        "end_time",
+                        (
+                            "The selected section "
+                            "is too short."
+                        ),
+                    )
+
+        return cleaned_data
+
+class RotateVideoForm(forms.Form):
+    """
+    Form for rotating a video.
+
+    Rotation is selected by the UI.
+    The user does not manually enter an angle.
+    """
+
+    ROTATION_CHOICES = (
+        ("90", "90° clockwise"),
+        ("180", "180°"),
+        ("270", "90° counter-clockwise"),
+    )
+
+    OUTPUT_FORMAT_CHOICES = (
+        ("mp4", "MP4"),
+        ("mov", "MOV"),
+        ("webm", "WEBM"),
+        ("avi", "AVI"),
+        ("mkv", "MKV"),
+        ("gif", "GIF"),
+        ("m4v", "M4V"),
+    )
+
+    video = forms.FileField(
+        required=True,
+        widget=forms.ClearableFileInput(
+            attrs={
+                "accept": (
+                    "video/mp4,"
+                    "video/quicktime,"
+                    "video/webm,"
+                    "video/x-msvideo,"
+                    "video/x-matroska,"
+                    "video/x-m4v"
+                ),
+                "class": "rotate-video-input",
+            }
+        ),
+    )
+
+    rotation = forms.ChoiceField(
+        required=True,
+        choices=ROTATION_CHOICES,
+        widget=forms.HiddenInput(),
+    )
+
+    output_format = forms.ChoiceField(
+        required=True,
+        choices=OUTPUT_FORMAT_CHOICES,
+        initial="mp4",
+        widget=forms.HiddenInput(),
+    )
+
+    def clean_video(self):
+        """
+        Validate the uploaded video.
+        """
+
+        video = self.cleaned_data.get(
+            "video"
+        )
+
+        if not video:
+            raise forms.ValidationError(
+                "Please select a video."
+            )
+
+        if video.size <= 0:
+            raise forms.ValidationError(
+                "The selected video is empty."
+            )
+
+        filename = (
+            getattr(video, "name", "")
+            or ""
+        )
+
+        extension = ""
+
+        if "." in filename:
+            extension = (
+                filename
+                .rsplit(".", 1)[-1]
+                .lower()
+            )
+
+        allowed_extensions = {
+            "mp4",
+            "mov",
+            "webm",
+            "avi",
+            "mkv",
+            "m4v",
+            "gif",
+        }
+
+        if extension not in allowed_extensions:
+            raise forms.ValidationError(
+                "Unsupported video format."
+            )
+
+        return video
+
+    def clean_rotation(self):
+        """
+        Validate rotation value.
+        """
+
+        rotation = (
+            self.cleaned_data.get(
+                "rotation"
+            )
+        )
+
+        allowed_rotations = {
+            "90",
+            "180",
+            "270",
+        }
+
+        if rotation not in allowed_rotations:
+            raise forms.ValidationError(
+                "Please select a valid rotation."
+            )
+
+        return rotation
+
+    def clean_output_format(self):
+        """
+        Validate requested output format.
+        """
+
+        output_format = (
+            self.cleaned_data.get(
+                "output_format"
+            )
+        )
+
+        allowed_formats = {
+            "mp4",
+            "mov",
+            "webm",
+            "avi",
+            "mkv",
+            "gif",
+            "m4v",
+        }
+
+        if (
+            output_format
+            not in allowed_formats
+        ):
+            raise forms.ValidationError(
+                "Please select a valid output format."
+            )
+
+        return output_format
+
+
+class FlipVideoForm(BaseVideoForm):
+    flip_mode = forms.ChoiceField(
+        choices=[("horizontal", "Horizontal"), ("vertical", "Vertical")],
+        initial="horizontal",
+        required=True,
+    )
+    output_format = forms.CharField(initial="mp4", required=False)
+
+
+class SpeedVideoForm(BaseVideoForm):
+    speed = forms.FloatField(initial=1.0, required=True)
+    keep_audio = forms.BooleanField(initial=True, required=False)
+    output_format = forms.CharField(initial="mp4", required=False)
+
+
+class CompressVideoForm(BaseVideoForm):
+    compression_level = forms.ChoiceField(
+        choices=[("low", "Low"), ("medium", "Medium"), ("high", "High")],
+        initial="medium",
+        required=True,
+    )
+    output_format = forms.CharField(initial="mp4", required=False)
+
+
+class ConvertVideoForm(BaseVideoForm):
+    target_format = forms.ChoiceField(
+        choices=[
+            ("mp4", "MP4"),
+            ("mov", "MOV"),
+            ("webm", "WEBM"),
+            ("avi", "AVI"),
+            ("mkv", "MKV"),
+            ("gif", "GIF"),
+        ],
+        initial="mp4",
+        required=True,
+    )
+
+
+class VideoToGifForm(BaseVideoForm):
+    fps = forms.IntegerField(initial=15, min_value=5, max_value=30, required=False)
+    width = forms.IntegerField(initial=480, min_value=120, max_value=1920, required=False)
+
+
+class GifToVideoForm(forms.Form):
+    video = forms.FileField(required=True)
+    output_format = forms.CharField(initial="mp4", required=False)
+
+
+class RemoveAudioForm(BaseVideoForm):
+    output_format = forms.CharField(initial="mp4", required=False)
+
+
+class ExtractAudioForm(BaseVideoForm):
+    audio_format = forms.ChoiceField(
+        choices=[
+            ("mp3", "MP3"),
+            ("wav", "WAV"),
+            ("aac", "AAC"),
+            ("m4a", "M4A"),
+            ("ogg", "OGG"),
+        ],
+        initial="mp3",
+        required=True,
+    )
+    audio_bitrate = forms.CharField(initial="192k", required=False)
+
+
+class ChangeVolumeForm(BaseVideoForm):
+    volume = forms.IntegerField(initial=100, min_value=0, max_value=300, required=True)
+    output_format = forms.CharField(initial="mp4", required=False)
+
+
+class ReverseVideoForm(BaseVideoForm):
+    reverse_audio = forms.BooleanField(initial=True, required=False)
+    output_format = forms.CharField(initial="mp4", required=False)
+
+
+class FadeVideoForm(BaseVideoForm):
+    fade_in = forms.FloatField(initial=1.0, min_value=0.0, max_value=10.0, required=False)
+    fade_out = forms.FloatField(initial=1.0, min_value=0.0, max_value=10.0, required=False)
+    fade_color = forms.ChoiceField(
+        choices=[("black", "Black"), ("white", "White")],
+        initial="black",
+        required=False,
+    )
+    output_format = forms.CharField(initial="mp4", required=False)
+
+
+class EffectsVideoForm(BaseVideoForm):
+    brightness = forms.FloatField(initial=0.0, min_value=-1.0, max_value=1.0, required=False)
+    contrast = forms.FloatField(initial=1.0, min_value=0.0, max_value=3.0, required=False)
+    saturation = forms.FloatField(initial=1.0, min_value=0.0, max_value=3.0, required=False)
+    filter_type = forms.ChoiceField(
+        choices=[
+            ("none", "None"),
+            ("grayscale", "Grayscale"),
+            ("sepia", "Sepia"),
+            ("invert", "Invert"),
+        ],
+        initial="none",
+        required=False,
+    )
+    output_format = forms.CharField(initial="mp4", required=False)
+
+
+class FpsVideoForm(BaseVideoForm):
+    fps = forms.ChoiceField(
+        choices=[("15", "15 FPS"), ("24", "24 FPS"), ("30", "30 FPS"), ("60", "60 FPS")],
+        initial="30",
+        required=True,
+    )
+    output_format = forms.CharField(initial="mp4", required=False)
+
+
+class LoopVideoForm(BaseVideoForm):
+    loop_count = forms.IntegerField(initial=2, min_value=2, max_value=10, required=True)
+    output_format = forms.CharField(initial="mp4", required=False)
+
+
+class FrameExtractForm(BaseVideoForm):
+    time_offset = forms.FloatField(initial=0.0, min_value=0.0, required=False)
+    image_format = forms.ChoiceField(
+        choices=[("jpg", "JPG"), ("png", "PNG")],
+        initial="jpg",
+        required=False,
+    )
+
+
+class WatermarkVideoForm(BaseVideoForm):
+    watermark_image = forms.FileField(required=True)
+    position = forms.ChoiceField(
+        choices=[
+            ("top-left", "Top Left"),
+            ("top-right", "Top Right"),
+            ("bottom-left", "Bottom Left"),
+            ("bottom-right", "Bottom Right"),
+            ("center", "Center"),
+        ],
+        initial="bottom-right",
+        required=False,
+    )
+    opacity = forms.FloatField(initial=0.8, min_value=0.1, max_value=1.0, required=False)
+    scale = forms.IntegerField(initial=15, min_value=5, max_value=50, required=False)
+    output_format = forms.CharField(initial="mp4", required=False)
+
+
+class MergeVideoForm(forms.Form):
+    video = forms.FileField(required=False)
+    output_format = forms.CharField(initial="mp4", required=False)
+
+
+class AddAudioForm(BaseVideoForm):
+    audio = forms.FileField(required=True)
+    mode = forms.ChoiceField(
+        choices=[("replace", "Replace Original Audio"), ("mix", "Mix with Original Audio")],
+        initial="replace",
+        required=False,
+    )
+    audio_volume = forms.FloatField(initial=1.0, min_value=0.0, max_value=3.0, required=False)
+    video_volume = forms.FloatField(initial=1.0, min_value=0.0, max_value=3.0, required=False)
+    output_format = forms.CharField(initial="mp4", required=False)
+
+
+class AddTextForm(BaseVideoForm):
+    text = forms.CharField(initial="Sample Text", max_length=250, required=True)
+    font_size = forms.IntegerField(initial=36, min_value=12, max_value=140, required=False)
+    font_color = forms.CharField(initial="#ffffff", max_length=20, required=False)
+    position = forms.ChoiceField(
+        choices=[
+            ("top-left", "Top Left"),
+            ("top-center", "Top Center"),
+            ("top-right", "Top Right"),
+            ("center", "Center"),
+            ("bottom-left", "Bottom Left"),
+            ("bottom-center", "Bottom Center"),
+            ("bottom-right", "Bottom Right"),
+            ("custom", "Custom Position"),
+        ],
+        initial="bottom-center",
+        required=False,
+    )
+    bg_box = forms.BooleanField(initial=False, required=False)
+    x_percent = forms.FloatField(initial=50.0, min_value=0.0, max_value=100.0, required=False)
+    y_percent = forms.FloatField(initial=85.0, min_value=0.0, max_value=100.0, required=False)
+    start_time = forms.FloatField(required=False)
+    end_time = forms.FloatField(required=False)
+    output_format = forms.CharField(initial="mp4", required=False)
+
+
+class AddImageForm(BaseVideoForm):
+    image = forms.FileField(required=True)
+    position = forms.ChoiceField(
+        choices=[
+            ("top-left", "Top Left"),
+            ("top-center", "Top Center"),
+            ("top-right", "Top Right"),
+            ("center", "Center"),
+            ("bottom-left", "Bottom Left"),
+            ("bottom-center", "Bottom Center"),
+            ("bottom-right", "Bottom Right"),
+            ("custom", "Custom Position"),
+        ],
+        initial="bottom-right",
+        required=False,
+    )
+    opacity = forms.FloatField(initial=0.85, min_value=0.05, max_value=1.0, required=False)
+    scale_percent = forms.IntegerField(initial=20, min_value=5, max_value=100, required=False)
+    x_percent = forms.FloatField(initial=80.0, min_value=0.0, max_value=100.0, required=False)
+    y_percent = forms.FloatField(initial=80.0, min_value=0.0, max_value=100.0, required=False)
+    start_time = forms.FloatField(required=False)
+    end_time = forms.FloatField(required=False)
+    output_format = forms.CharField(initial="mp4", required=False)
+
+
+class BlurVideoForm(BaseVideoForm):
+    blur_type = forms.ChoiceField(
+        choices=[("full", "Entire Video"), ("region", "Selected Region")],
+        initial="full",
+        required=False,
+    )
+    intensity = forms.IntegerField(initial=15, min_value=1, max_value=60, required=False)
+    x = forms.IntegerField(initial=0, min_value=0, required=False)
+    y = forms.IntegerField(initial=0, min_value=0, required=False)
+    width = forms.IntegerField(initial=0, min_value=0, required=False)
+    height = forms.IntegerField(initial=0, min_value=0, required=False)
+    output_format = forms.CharField(initial="mp4", required=False)
+
+
+class BrightenVideoForm(BaseVideoForm):
+    brightness = forms.FloatField(initial=0.15, min_value=-1.0, max_value=1.0, required=False)
+    contrast = forms.FloatField(initial=1.0, min_value=0.1, max_value=3.0, required=False)
+    saturation = forms.FloatField(initial=1.0, min_value=0.0, max_value=3.0, required=False)
+    gamma = forms.FloatField(initial=1.0, min_value=0.1, max_value=3.0, required=False)
+    output_format = forms.CharField(initial="mp4", required=False)
+
+
+class SplitScreenForm(forms.Form):
+    video1 = forms.FileField(required=True)
+    video2 = forms.FileField(required=True)
+    video3 = forms.FileField(required=False)
+    video4 = forms.FileField(required=False)
+    layout = forms.ChoiceField(
+        choices=[("2-side", "Side-by-Side (2 Videos)"), ("2-stack", "Top / Bottom (2 Videos)"), ("4-grid", "2x2 Grid (4 Videos)")],
+        initial="2-side",
+        required=False,
+    )
+    output_format = forms.CharField(initial="mp4", required=False)
+
+
+class StabilizeVideoForm(BaseVideoForm):
+    strength = forms.ChoiceField(
+        choices=[("mild", "Mild"), ("medium", "Medium"), ("strong", "Strong")],
+        initial="medium",
+        required=False,
+    )
+    output_format = forms.CharField(initial="mp4", required=False)
+
+
+class SyncAudioForm(BaseVideoForm):
+    audio_offset = forms.FloatField(initial=0.0, required=False)
+    output_format = forms.CharField(initial="mp4", required=False)
+
+
+class TransitionVideoForm(BaseVideoForm):
+    transition_type = forms.ChoiceField(
+        choices=[
+            ("fade-both", "Fade In & Fade Out"),
+            ("fade-in", "Fade In Only"),
+            ("fade-out", "Fade Out Only"),
+            ("fade-white", "Fade via White"),
+        ],
+        initial="fade-both",
+        required=False,
+    )
+    duration = forms.FloatField(initial=1.0, min_value=0.2, max_value=5.0, required=False)
+    color = forms.CharField(initial="black", max_length=20, required=False)
+    output_format = forms.CharField(initial="mp4", required=False)
+
+
+class RepairVideoForm(BaseVideoForm):
+    repair_mode = forms.ChoiceField(
+        choices=[
+            ("smart", "Smart Auto-Repair"),
+            ("remux", "Fast Container Remux"),
+            ("reencode", "Deep Stream Re-encode"),
+        ],
+        initial="smart",
+        required=False,
+    )
+    output_format = forms.CharField(initial="mp4", required=False)
+
+
+class BackgroundVideoForm(BaseVideoForm):
+    bg_type = forms.ChoiceField(
+        choices=[("blur", "Blurred Video Background"), ("color", "Solid Color Padding")],
+        initial="blur",
+        required=False,
+    )
+    bg_color = forms.CharField(initial="#000000", max_length=20, required=False)
+    aspect_ratio = forms.ChoiceField(
+        choices=[
+            ("9:16", "9:16 (Vertical / TikTok / Shorts / Reels)"),
+            ("16:9", "16:9 (Landscape / YouTube)"),
+            ("1:1", "1:1 (Square / Instagram Post)"),
+            ("4:5", "4:5 (Portrait / Feed)"),
+            ("21:9", "21:9 (Ultrawide)"),
+        ],
+        initial="9:16",
+        required=False,
+    )
+    output_format = forms.CharField(initial="mp4", required=False)
+
+

@@ -557,107 +557,299 @@
                                             <h3 class="text-[11px] font-black text-surface-400 uppercase tracking-[0.2em]">Video Tools</h3>
                                         </div>
                                         <div class="grid gap-0.5">
-                                    <a href="{% url 'converter:convert_page' 'video-converter' %}"
-                                        class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
-                                        <i data-lucide="video" class="w-4 h-4 text-brand-600"></i>
-                                        <span
-                                            class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Converter</span>
-                                    </a>
+                                            <a href="{% url 'converter:convert_page' 'video-converter' %}"
+                                                class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="video" class="w-4 h-4 text-brand-600"></i>
+                                                <span
+                                                    class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Converter</span>
+                                            </a>
 
-                                    <a href="{% url 'video_downloader:index' %}"
-                                        class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
-                                        <i data-lucide="download-cloud" class="w-4 h-4 text-brand-600"></i>
-                                        <span
-                                            class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Universal</span>
-                                    </a>
+                                            <a href="{% url 'video_downloader:index' %}"
+                                                class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="download-cloud" class="w-4 h-4 text-brand-600"></i>
+                                                <span
+                                                    class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Universal</span>
+                                            </a>
 
+                                            <a href="{% url 'video_downloader:youtube_downloader' %}"
+                                                class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="youtube" class="w-4 h-4 text-brand-600"></i>
+                                                <span
+                                                    class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">YouTube</span>
+                                            </a>
 
-                                    <a href="{% url 'video_downloader:youtube_downloader' %}"
-                                        class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
-                                        <i data-lucide="youtube" class="w-4 h-4 text-brand-600"></i>
-                                        <span
-                                            class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">YouTube</span>
-                                    </a>
-<a href="{% url 'media_tools:trim_video' %}"
-                                        class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
-                                        <i data-lucide="scissors" class="w-4 h-4 text-brand-600"></i>
-                                        <span
-                                            class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Trim video</span>
-                                    </a>
-<a href="{% url 'media_tools:merge_video' %}"
-                                        class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
-                                        <i data-lucide="combine" class="w-4 h-4 text-brand-600"></i>
-                                        <span
-                                            class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Merge Video</span>
-                                    </a>
-                             <a href="{% url 'media_tools:crop' %}"
-    class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
-    <i data-lucide="crop" class="w-4 h-4 text-brand-600"></i>
-    <span
-        class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">
-        Crop Video
-    </span>
-</a>
+                                            <a href="{% url 'media_tools:trim' %}"
+                                                class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="scissors" class="w-4 h-4 text-brand-600"></i>
+                                                <span
+                                                    class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Trim Video</span>
+                                            </a>
 
-<a href="{% url 'media_tools:resize_video' %}"
-    class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
-    <i data-lucide="scaling" class="w-4 h-4 text-brand-600"></i>
-    <span
-        class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">
-        Resize Video
-    </span>
-</a>
+                                            <a href="{% url 'media_tools:merge' %}"
+                                                class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="combine" class="w-4 h-4 text-brand-600"></i>
+                                                <span
+                                                    class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Merge Video</span>
+                                            </a>
 
-                                    <a href="{% url 'video_downloader:facebook_downloader' %}"
-                                        class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
-                                        <i data-lucide="facebook" class="w-4 h-4 text-brand-600"></i>
-                                        <span
-                                            class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Facebook</span>
-                                    </a>
+                                            <a href="{% url 'media_tools:crop' %}"
+                                                class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="crop" class="w-4 h-4 text-brand-600"></i>
+                                                <span
+                                                    class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Crop Video</span>
+                                            </a>
 
-                                    <a href="{% url 'video_downloader:twitter_downloader' %}"
-                                        class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
-                                        <i data-lucide="twitter" class="w-4 h-4 text-brand-600"></i>
-                                        <span
-                                            class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">X (Twitter)</span>
-                                    </a>
+                                            <a href="{% url 'media_tools:resize' %}"
+                                                class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="scaling" class="w-4 h-4 text-brand-600"></i>
+                                                <span
+                                                    class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Resize Video</span>
+                                            </a>
 
-                                    <a href="{% url 'video_downloader:instagram_downloader' %}"
-                                        class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
-                                        <i data-lucide="instagram" class="w-4 h-4 text-brand-600"></i>
-                                        <span
-                                            class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Instagram</span>
-                                    </a>
+                                            <a href="{% url 'media_tools:rotate' %}"
+                                                class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="rotate-cw" class="w-4 h-4 text-brand-600"></i>
+                                                <span
+                                                    class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Rotate Video</span>
+                                            </a>
 
-                                    <a href="{% url 'video_downloader:tiktok_downloader' %}"
-                                        class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
-                                        <i data-lucide="music-2" class="w-4 h-4 text-brand-600"></i>
-                                        <span
-                                            class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">TikTok</span>
-                                    </a>
+                                            <a href="{% url 'media_tools:flip' %}"
+                                                class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="flip-horizontal" class="w-4 h-4 text-brand-600"></i>
+                                                <span
+                                                    class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Flip Video</span>
+                                            </a>
 
-                                    <a href="{% url 'video_downloader:vimeo_downloader' %}"
-                                        class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
-                                        <i data-lucide="video" class="w-4 h-4 text-brand-600"></i>
-                                        <span
-                                            class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Vimeo</span>
-                                    </a>
+                                            <a href="{% url 'media_tools:speed' %}"
+                                                class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="gauge" class="w-4 h-4 text-brand-600"></i>
+                                                <span
+                                                    class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Change Speed</span>
+                                            </a>
 
-                                    <a href="{% url 'video_downloader:reddit_downloader' %}"
-                                        class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
-                                        <i data-lucide="hash" class="w-4 h-4 text-brand-600"></i>
-                                        <span
-                                            class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Reddit</span>
-                                    </a>
+                                            <a href="{% url 'media_tools:compress' %}"
+                                                class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="minimize-2" class="w-4 h-4 text-brand-600"></i>
+                                                <span
+                                                    class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Compress Video</span>
+                                            </a>
 
-                                    
+                                            <a href="{% url 'media_tools:convert' %}"
+                                                class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="refresh-cw" class="w-4 h-4 text-brand-600"></i>
+                                                <span
+                                                    class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Convert Video</span>
+                                            </a>
 
-                                    <a href="{% url 'video_downloader:dailymotion_downloader' %}"
-                                        class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
-                                        <i data-lucide="play-circle" class="w-4 h-4 text-brand-600"></i>
-                                        <span
-                                            class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Dailymotion</span>
-                                    </a>
+                                            <a href="{% url 'media_tools:video_to_gif' %}"
+                                                class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="film" class="w-4 h-4 text-brand-600"></i>
+                                                <span
+                                                    class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Video to GIF</span>
+                                            </a>
+
+                                            <a href="{% url 'media_tools:gif_to_video' %}"
+                                                class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="video" class="w-4 h-4 text-brand-600"></i>
+                                                <span
+                                                    class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">GIF to Video</span>
+                                            </a>
+
+                                            <a href="{% url 'media_tools:remove_audio' %}"
+                                                class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="volume-x" class="w-4 h-4 text-brand-600"></i>
+                                                <span
+                                                    class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Remove Audio</span>
+                                            </a>
+
+                                            <a href="{% url 'media_tools:extract_audio' %}"
+                                                class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="music" class="w-4 h-4 text-brand-600"></i>
+                                                <span
+                                                    class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Extract Audio</span>
+                                            </a>
+
+                                            <a href="{% url 'media_tools:change_volume' %}"
+                                                class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="volume-2" class="w-4 h-4 text-brand-600"></i>
+                                                <span
+                                                    class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Change Volume</span>
+                                            </a>
+
+                                            <a href="{% url 'media_tools:reverse' %}"
+                                                class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="rewind" class="w-4 h-4 text-brand-600"></i>
+                                                <span
+                                                    class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Reverse Video</span>
+                                            </a>
+
+                                            <a href="{% url 'media_tools:fade' %}"
+                                                class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="sun" class="w-4 h-4 text-brand-600"></i>
+                                                <span
+                                                    class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Fade In / Out</span>
+                                            </a>
+
+                                            <a href="{% url 'media_tools:effects' %}"
+                                                class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="sparkles" class="w-4 h-4 text-brand-600"></i>
+                                                <span
+                                                    class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Video Effects</span>
+                                            </a>
+
+                                            <a href="{% url 'media_tools:fps' %}"
+                                                class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="clock" class="w-4 h-4 text-brand-600"></i>
+                                                <span
+                                                    class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Change FPS</span>
+                                            </a>
+
+                                            <a href="{% url 'media_tools:loop' %}"
+                                                class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="repeat" class="w-4 h-4 text-brand-600"></i>
+                                                <span
+                                                    class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Loop Video</span>
+                                            </a>
+
+                                            <a href="{% url 'media_tools:extract_frame' %}"
+                                                class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="camera" class="w-4 h-4 text-brand-600"></i>
+                                                <span
+                                                    class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Extract Frame</span>
+                                            </a>
+
+                                            <a href="{% url 'media_tools:watermark' %}"
+                                                class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="shield" class="w-4 h-4 text-brand-600"></i>
+                                                <span
+                                                    class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Add Watermark</span>
+                                            </a>
+
+                                            <a href="{% url 'media_tools:add_audio' %}"
+                                                class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="music-2" class="w-4 h-4 text-brand-600"></i>
+                                                <span
+                                                    class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Add Audio</span>
+                                            </a>
+
+                                            <a href="{% url 'media_tools:add_text' %}"
+                                                class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="type" class="w-4 h-4 text-brand-600"></i>
+                                                <span
+                                                    class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Add Text</span>
+                                            </a>
+
+                                            <a href="{% url 'media_tools:add_image' %}"
+                                                class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="image" class="w-4 h-4 text-brand-600"></i>
+                                                <span
+                                                    class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Add Image / Logo</span>
+                                            </a>
+
+                                            <a href="{% url 'media_tools:blur' %}"
+                                                class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="eye-off" class="w-4 h-4 text-brand-600"></i>
+                                                <span
+                                                    class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Blur Video</span>
+                                            </a>
+
+                                            <a href="{% url 'media_tools:brighten' %}"
+                                                class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="sun-medium" class="w-4 h-4 text-brand-600"></i>
+                                                <span
+                                                    class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Brighten Video</span>
+                                            </a>
+
+                                            <a href="{% url 'media_tools:split_screen' %}"
+                                                class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="layout-grid" class="w-4 h-4 text-brand-600"></i>
+                                                <span
+                                                    class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Split Screen</span>
+                                            </a>
+
+                                            <a href="{% url 'media_tools:stabilize' %}"
+                                                class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="activity" class="w-4 h-4 text-brand-600"></i>
+                                                <span
+                                                    class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Stabilize Video</span>
+                                            </a>
+
+                                            <a href="{% url 'media_tools:sync_audio' %}"
+                                                class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="sliders" class="w-4 h-4 text-brand-600"></i>
+                                                <span
+                                                    class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Sync Audio</span>
+                                            </a>
+
+                                            <a href="{% url 'media_tools:transition' %}"
+                                                class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="layers" class="w-4 h-4 text-brand-600"></i>
+                                                <span
+                                                    class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Video Transition</span>
+                                            </a>
+
+                                            <a href="{% url 'media_tools:repair' %}"
+                                                class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="wrench" class="w-4 h-4 text-brand-600"></i>
+                                                <span
+                                                    class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Repair Video</span>
+                                            </a>
+
+                                            <a href="{% url 'media_tools:background' %}"
+                                                class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="layout" class="w-4 h-4 text-brand-600"></i>
+                                                <span
+                                                    class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Video Background</span>
+                                            </a>
+
+                                            <a href="{% url 'video_downloader:facebook_downloader' %}"
+                                                class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="facebook" class="w-4 h-4 text-brand-600"></i>
+                                                <span
+                                                    class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Facebook</span>
+                                            </a>
+
+                                            <a href="{% url 'video_downloader:twitter_downloader' %}"
+                                                class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="twitter" class="w-4 h-4 text-brand-600"></i>
+                                                <span
+                                                    class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">X (Twitter)</span>
+                                            </a>
+
+                                            <a href="{% url 'video_downloader:instagram_downloader' %}"
+                                                class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="instagram" class="w-4 h-4 text-brand-600"></i>
+                                                <span
+                                                    class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Instagram</span>
+                                            </a>
+
+                                            <a href="{% url 'video_downloader:tiktok_downloader' %}"
+                                                class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="music-2" class="w-4 h-4 text-brand-600"></i>
+                                                <span
+                                                    class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">TikTok</span>
+                                            </a>
+
+                                            <a href="{% url 'video_downloader:vimeo_downloader' %}"
+                                                class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="video" class="w-4 h-4 text-brand-600"></i>
+                                                <span
+                                                    class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Vimeo</span>
+                                            </a>
+
+                                            <a href="{% url 'video_downloader:reddit_downloader' %}"
+                                                class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="hash" class="w-4 h-4 text-brand-600"></i>
+                                                <span
+                                                    class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Reddit</span>
+                                            </a>
+
+                                            <a href="{% url 'video_downloader:dailymotion_downloader' %}"
+                                                class="flex items-center gap-3 p-2 rounded-xl hover:bg-brand-50/50 group/item transition-all">
+                                                <i data-lucide="play-circle" class="w-4 h-4 text-brand-600"></i>
+                                                <span
+                                                    class="text-[12px] font-bold text-surface-700 group-hover/item:text-brand-600">Dailymotion</span>
+                                            </a>
                                         </div>
                                     </div>
                                 </div>

@@ -4,7 +4,10 @@ from pathlib import Path
 from uuid import uuid4
 
 from django.conf import settings
-from moviepy.editor import VideoFileClip
+try:
+    from moviepy.editor import VideoFileClip
+except (ImportError, ModuleNotFoundError):
+    from moviepy import VideoFileClip
 
 
 logger = logging.getLogger(__name__)

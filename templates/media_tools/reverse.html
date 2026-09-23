@@ -1,0 +1,70 @@
+{% extends 'media_tools/editor_base.html' %}
+{% load static %}
+
+{% block tool_title %}
+Reverse <span class="mt-gradient-text">Video</span>
+{% endblock %}
+
+{% block tool_subtitle %}
+Play video backwards from end to start. Create eye-catching rewind effects for social reels and creative clips.
+{% endblock %}
+
+{% block tool_bar_title %}
+Video Rewind Editor
+{% endblock %}
+
+{% block hidden_fields %}
+<input type="hidden" name="reverse_audio" id="id_reverse_audio" value="True">
+<input type="hidden" name="output_format" id="id_output_format" value="mp4">
+{% endblock %}
+
+{% block tool_controls %}
+<div class="mt-section">
+    <div class="mt-section-title">Rewind Options</div>
+    <label style="display: flex; align-items: center; gap: 0.6rem; cursor: pointer; font-size: 0.85rem; color: var(--mt-text-secondary);">
+        <input type="checkbox" id="chkRevAudio" checked style="accent-color: var(--mt-accent); width: 16px; height: 16px;">
+        Reverse Audio Sound as well
+    </label>
+</div>
+
+<div class="mt-section">
+    <div class="mt-section-title">Output Format</div>
+    <select class="mt-select" id="formatSelect">
+        <option value="mp4" selected>MP4 (Universal)</option>
+        <option value="mov">MOV (Apple)</option>
+        <option value="webm">WEBM (Web)</option>
+    </select>
+</div>
+{% endblock %}
+
+{% block process_btn_text %}
+Reverse Video
+{% endblock %}
+
+{% block tool_scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    var videoPreview = document.getElementById("mtVideoPreview");
+    var revAudioInput = document.getElementById("id_reverse_audio");
+    var chkRevAudio = document.getElementById("chkRevAudio");
+    var formatInput = document.getElementById("id_output_format");
+    var formatSelect = document.getElementById("formatSelect");
+
+    chkRevAudio.addEventListener("change", function() {
+        revAudioInput.value = this.checked ? "True" : "False";
+    });
+
+    formatSelect.addEventListener("change", function() {
+        formatInput.value = this.value;
+    });
+
+    MediaTools.initUploadCard({
+        fileInputSelector: "#id_video",
+        videoPlayerSelector: "#mtVideoPreview",
+    });
+
+    MediaTools.initPlaybar(videoPreview);
+    MediaTools.initAjaxForm("#mtToolForm");
+});
+</script>
+{% endblock %}

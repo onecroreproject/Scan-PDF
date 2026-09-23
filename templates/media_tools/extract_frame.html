@@ -1,0 +1,76 @@
+{% extends 'media_tools/editor_base.html' %}
+{% load static %}
+
+{% block tool_title %}
+Video Screenshot & <span class="mt-gradient-text">Frame Grabber</span>
+{% endblock %}
+
+{% block tool_subtitle %}
+Capture pristine, uncompressed full-resolution still frames and screenshots from any moment of your video.
+{% endblock %}
+
+{% block tool_bar_title %}
+Frame Capture
+{% endblock %}
+
+{% block hidden_fields %}
+<input type="hidden" name="time_offset" id="id_time_offset" value="0.0">
+<input type="hidden" name="image_format" id="id_image_format" value="jpg">
+{% endblock %}
+
+{% block tool_controls %}
+<div class="mt-section">
+    <div class="mt-section-title">Selected Timestamp</div>
+    <div style="background: var(--mt-bg-card); border: 1px solid var(--mt-border); border-radius: var(--mt-radius-sm); padding: 1rem; text-align: center;">
+        <div style="font-size: 0.75rem; color: var(--mt-text-muted); text-transform: uppercase;">Capture Point</div>
+        <div style="font-size: 1.5rem; font-weight: 900; color: #c4b5fd; font-family: monospace; margin: 0.25rem 0;" id="frameTimeDisplay">00:00.0</div>
+        <div style="font-size: 0.75rem; color: var(--mt-text-secondary);">Scrub or play the video to exact frame</div>
+    </div>
+</div>
+
+<div class="mt-section">
+    <div class="mt-section-title">Image Format</div>
+    <div class="mt-chip-grid" style="grid-template-columns: 1fr 1fr;">
+        <button type="button" class="mt-chip active" data-ifmt="jpg">JPG (Compact)</button>
+        <button type="button" class="mt-chip" data-ifmt="png">PNG (Lossless)</button>
+    </div>
+</div>
+{% endblock %}
+
+{% block process_btn_text %}
+Capture Frame
+{% endblock %}
+
+{% block tool_scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    var videoPreview = document.getElementById("mtVideoPreview");
+    var timeInput = document.getElementById("id_time_offset");
+    var fmtInput = document.getElementById("id_image_format");
+    var frameTimeDisplay = document.getElementById("frameTimeDisplay");
+    var ifmtChips = document.querySelectorAll(".mt-chip[data-ifmt]");
+
+    videoPreview.addEventListener("timeupdate", function() {
+        var t = videoPreview.currentTime || 0;
+        timeInput.value = t.toFixed(3);
+        frameTimeDisplay.textContent = MediaTools.formatTime(t);
+    });
+
+    ifmtChips.forEach(function(chip) {
+        chip.addEventListener("click", function() {
+            ifmtChips.forEach(function(c) { c.classList.remove("active"); });
+            this.classList.add("active");
+            fmtInput.value = this.getAttribute("data-ifmt");
+        });
+    });
+
+    MediaTools.initUploadCard({
+        fileInputSelector: "#id_video",
+        videoPlayerSelector: "#mtVideoPreview",
+    });
+
+    MediaTools.initPlaybar(videoPreview);
+    MediaTools.initAjaxForm("#mtToolForm");
+});
+</script>
+{% endblock %}
