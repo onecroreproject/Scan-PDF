@@ -159,22 +159,23 @@
             flex: 1;
             display: flex;
             align-items: center;
-            justify-content: space-between;
+            justify-content: flex-start;
             margin-left: 16px;
-            gap: 12px;
+            gap: 8px;
+            flex-wrap: nowrap;
         }
 
         @media (min-width: 1024px) {
             #navbar .desktop-nav {
                 margin-left: 32px;
-                gap: 16px;
+                gap: 10px;
             }
         }
 
         @media (min-width: 1280px) {
             #navbar .desktop-nav {
                 margin-left: 48px;
-                gap: 20px;
+                gap: 12px;
             }
         }
 
@@ -206,6 +207,8 @@
             padding-right: 6px;
             font-size: 12px;
             letter-spacing: 0.05em;
+            white-space: nowrap;
+            flex-shrink: 0;
         }
 
         @media (min-width: 1280px) {
@@ -304,7 +307,7 @@
                 </a>
 
                 <!-- 2. DESKTOP NAV LINKS -->
-                <div class="desktop-nav hidden md:flex items-center justify-center gap-3 lg:gap-6 xl:gap-8">
+                <div class="desktop-nav hidden md:flex items-center justify-center gap-2 lg:gap-3 xl:gap-4">
                     
                     <!-- PDF TOOLS MEGA MENU -->
                     <div class="relative group">
@@ -419,6 +422,12 @@
                             </div>
                         </div>
                     </div>
+
+                    <!-- Add Invoice -->
+                    <a href="https://invoice.scanpdf.co.in/" target="_blank" rel="noopener noreferrer" class="hidden md:flex items-center gap-1.5 px-2 py-2 text-sm font-bold text-brand-600 whitespace-nowrap">
+                        <i data-lucide="file-text" class="w-5 h-5"></i>
+                        Invoice
+                    </a>
                 </div>
 
                 <!-- 3. RIGHT SIDE (SEARCH, PROFILE, HAMBURGER) -->

@@ -144,22 +144,62 @@ SOURCE_LABELS = {
 }
 
 
-def classify_traffic_source(referrer, is_qr_scan):
+def detect_source(referrer, is_qr_scan):
+    """
+    Returns (detected_source, detected_medium).
+    """
     if is_qr_scan:
-        return 'qr'
+        return ('QR Scan', 'qr')
     if not referrer:
-        return 'direct'
+        return ('Direct / Unknown', 'direct')
+    
     ref_lower = referrer.lower()
-    if any(value in ref_lower for value in ('google', 'bing', 'yahoo', 'duckduckgo', 'baidu', 'yandex')):
-        return 'search'
-    if any(value in ref_lower for value in (
-        'facebook', 'instagram', 'twitter', 't.co', 'linkedin', 'x.com',
-        'tiktok', 'snapchat', 'whatsapp', 'telegram', 'reddit', 'pinterest',
-    )):
-        return 'social'
+    
+    # Specific Platforms
+    if 'facebook.com' in ref_lower or 'l.facebook.com' in ref_lower or 'm.facebook.com' in ref_lower:
+        return ('Facebook', 'social')
+    if 'instagram.com' in ref_lower:
+        return ('Instagram', 'social')
+    if 'youtube.com' in ref_lower or 'youtu.be' in ref_lower:
+        return ('YouTube', 'social')
+    if 'linkedin.com' in ref_lower:
+        return ('LinkedIn', 'social')
+    if 'twitter.com' in ref_lower or 't.co' in ref_lower or 'x.com' in ref_lower:
+        return ('X (Twitter)', 'social')
+    if 'tiktok.com' in ref_lower:
+        return ('TikTok', 'social')
+    if 'pinterest.com' in ref_lower:
+        return ('Pinterest', 'social')
+    if 'snapchat.com' in ref_lower:
+        return ('Snapchat', 'social')
+    if 'reddit.com' in ref_lower:
+        return ('Reddit', 'social')
+    if 't.me' in ref_lower or 'telegram.org' in ref_lower:
+        return ('Telegram', 'social')
+    if 'whatsapp.com' in ref_lower or 'wa.me' in ref_lower:
+        return ('WhatsApp', 'social')
+        
+    # Generic Search
+    if any(s in ref_lower for s in ('google.com', 'google.co')):
+        return ('Google', 'search')
+    if 'bing.com' in ref_lower:
+        return ('Bing', 'search')
+    if 'yahoo.com' in ref_lower:
+        return ('Yahoo', 'search')
+    if 'duckduckgo.com' in ref_lower:
+        return ('DuckDuckGo', 'search')
+    if 'baidu.com' in ref_lower:
+        return ('Baidu', 'search')
+    if 'yandex.ru' in ref_lower or 'yandex.com' in ref_lower:
+        return ('Yandex', 'search')
+
     if any(value in ref_lower for value in ('scanpdf', '127.0.0.1', 'localhost')):
-        return 'internal'
-    return 'referral'
+        return ('Internal Navigation', 'internal')
+        
+    from urllib.parse import urlparse
+    parsed = urlparse(referrer)
+    domain = parsed.netloc if parsed.netloc else referrer[:40]
+    return (domain, 'referral')
 
 
 def is_private_address(value):
@@ -207,7 +247,9 @@ def record_short_url_event(qr, request, result, status, visitor_id=None, utm_dat
     referrer = request.META.get('HTTP_REFERER', '')[:500]
     
     # Classify source
-    source = classify_traffic_source(referrer, is_qr_scan)
+    detected_source, detected_medium = detect_source(referrer, is_qr_scan)
+    # Map back to old source field for backward compatibility
+    source = detected_medium
 
     # 4. Generate stable visitor ID if not provided
     if not visitor_id:
@@ -293,6 +335,8 @@ def record_short_url_event(qr, request, result, status, visitor_id=None, utm_dat
                 is_qr_scan=is_qr_scan,
                 source=source,
                 visitor_id=visitor_id,
+                detected_source=detected_source,
+                detected_medium=detected_medium,
                 location_source=location_source,
                 gps_permission='not_required',
                 redirect_result=result,

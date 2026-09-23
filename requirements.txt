@@ -26,7 +26,7 @@ celery>=5.3.0
 redis>=4.6.0
 python-magic>=0.4.27
 python-magic-bin>=0.4.14; platform_system=="Windows"
-yt-dlp>=2024.04.09
+yt-dlp>=2024.11.04
 
 curl-cffi
 

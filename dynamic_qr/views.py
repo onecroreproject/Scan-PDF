@@ -1358,7 +1358,7 @@ def dqr_short_url_analytics_view(request, qr_id):
         }
         
         # Aggregate device/browser/os — replace None with 'Unknown'
-        source_stats_raw = list(base_query.values('source').annotate(count=Count('id', distinct=True)).order_by('-count'))
+        source_stats_raw = list(base_query.values('detected_source', 'source').annotate(count=Count('id', distinct=True)).order_by('-count'))
         source_counts = {}
         source_labels = {
             'direct': 'Direct Visit', 'internal': 'Internal Navigation', 'qr': 'QR Scan',
@@ -1367,7 +1367,11 @@ def dqr_short_url_analytics_view(request, qr_id):
             'QR': 'QR Scan', 'Search': 'Search Engine', 'Social': 'Social Media', 'Referral': 'Referral Website',
         }
         for row in source_stats_raw:
-            label = source_labels.get(row['source'], 'Unknown')
+            det_src = row.get('detected_source')
+            if det_src and det_src not in ('Direct / Unknown', 'Other / Unknown', ''):
+                label = det_src
+            else:
+                label = source_labels.get(row.get('source'), 'Unknown')
             source_counts[label] = source_counts.get(label, 0) + row['count']
         source_stats = [{'source': label, 'count': count} for label, count in source_counts.items()]
         source_stats.sort(key=lambda row: -row['count'])
@@ -1784,7 +1788,12 @@ def dqr_short_url_analytics_view(request, qr_id):
         'referral': 'Referral Website', 'Referral': 'Referral Website',
     }
     for scan in page_obj:
-        scan.display_source = source_display.get(scan.source, 'Unknown')
+        det_src = getattr(scan, 'detected_source', None)
+        if det_src and det_src not in ('Direct / Unknown', 'Other / Unknown', ''):
+            scan.display_source = det_src
+        else:
+            scan.display_source = source_display.get(scan.source, 'Unknown')
+            
         scan.display_type = 'Bot' if scan.is_bot else ('QR' if scan.is_qr_scan else {
             'search': 'Search', 'social': 'Social', 'referral': 'Referral', 'internal': 'Internal'
         }.get(scan.source, 'Direct'))

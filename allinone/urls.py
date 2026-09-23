@@ -43,7 +43,6 @@ if settings.DEBUG:
     urlpatterns += staticfiles_urlpatterns()
     # static() is already covered by the explicit re_path above for media
     # urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-"""
 # IMPORT SHORT LINK VIEWS
 from dynamic_qr.views import dqr_redirect_view, dqr_redirect_with_header_view
 
@@ -52,4 +51,3 @@ urlpatterns += [
     path('<str:header>/<str:short_code>/', dqr_redirect_with_header_view, name='root_redirect_header'),
     path('<str:short_code>/', dqr_redirect_view, name='root_redirect'),
 ]
-"""
