@@ -46,6 +46,12 @@
         }
     });
     
+    urlInput.addEventListener('input', function() {
+        if (!errorAlert.classList.contains('hidden')) {
+            errorAlert.classList.add('hidden');
+        }
+    });
+    
     analyzeBtn.addEventListener('click', async function() {
         const url = urlInput.value.trim();
         if (!url) {

@@ -1,761 +1,701 @@
-{% extends 'converter/tool_base.html' %}
+{% extends 'converter/base.html' %}
 {% load static %}
 
-{% block tool_content %}
+{% block content %}
+<section class="min-h-[40vh] pt-10 sm:pt-14 pb-6 sm:pb-8 relative overflow-hidden">
+    <div class="absolute inset-0 bg-gradient-to-b from-surface-50 via-white to-surface-50 -z-10"></div>
+    <div class="absolute top-1/4 left-[5%] w-[400px] h-[400px] bg-brand-100/20 rounded-full blur-[100px] -z-10 animate-pulse-slow"></div>
+    <div class="absolute bottom-1/4 right-[5%] w-[350px] h-[350px] bg-purple-100/20 rounded-full blur-[100px] -z-10 animate-pulse-slow-delayed"></div>
+    <div class="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="max-w-5xl mx-auto">
+            <div class="tool-card-container">
 
 <style>
-
 /* =========================================================
-   PAGE HEADING
+   CLEAN CONVERTER STYLES
    ========================================================= */
 
 .tool-heading {
-    font-size: clamp(1.75rem, 5vw + 0.75rem, 3.5rem);
-    line-height: 0.95;
+    font-size: clamp(2rem, 5vw + 1rem, 3.5rem);
+    line-height: 1.1;
     font-weight: 900;
-    letter-spacing: -0.04em;
+    letter-spacing: -0.02em;
+    color: #1e1b4b; /* Deep navy/purple dark */
 }
 
-.gradient-text {
-    background: linear-gradient(
-        135deg,
-        #7c3aed,
-        #a855f7,
-        #ec4899
-    );
-
-    -webkit-background-cliAp: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-
-/* =========================================================
-   PURPLE BUTTON
-   ========================================================= */
-
+/* Purple button */
 .purple-btn {
-    background: linear-gradient(
-        135deg,
-        #6d28d9 0%,
-        #7c3aed 45%,
-        #a855f7 100%
-    );
-
+    background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
     color: white;
-
-    box-shadow:
-        0 8px 25px rgba(124, 58, 237, 0.25);
-
-    transition:
-        all 0.25s ease;
+    box-shadow: 0 4px 14px rgba(124, 58, 237, 0.3);
+    transition: all 0.2s ease;
 }
-
 .purple-btn:hover {
     transform: translateY(-2px);
-
-    box-shadow:
-        0 12px 30px rgba(124, 58, 237, 0.38);
+    box-shadow: 0 6px 20px rgba(124, 58, 237, 0.4);
 }
-
 .purple-btn:active {
     transform: translateY(0);
 }
-
 .purple-btn:disabled {
-    opacity: 0.45;
+    opacity: 0.6;
     cursor: not-allowed;
     transform: none;
-
     box-shadow: none;
 }
 
-
-/* =========================================================
-   SELECT FILE AREA
-   ========================================================= */
-
-.select-file-area {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-
-    padding: 1.5rem 1rem;
-}
-
-
-/* =========================================================
-   SELECTED FILE CARD
-   ========================================================= */
-
-.selected-file-card {
+/* Central Area */
+.hero-dropzone {
     width: 100%;
-    max-width: 620px;
-
-    margin-top: 1.25rem;
-
-    padding: 1rem;
-
-    border-radius: 1rem;
-
-    background: #ddd6fe;
-
-    border: 1px solid #ddd6fe;
-}
-
-.remove-file-btn {
-    width: 38px;
-    height: 38px;
-
-    border-radius: 10px;
-
-    border: 1px solid #ddd6fe;
-
-    background: #f5f3ff;
-
-    color: #7c3aed;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    cursor: pointer;
-
     transition: all 0.2s ease;
+    border: 2px dashed transparent;
 }
 
-.remove-file-btn:hover {
-    background: #7c3aed;
-    color: white;
+.hero-dropzone.drag-active {
+    background: #faf5ff;
+    border-color: #a855f7;
 }
 
-
-/* =========================================================
-   PROGRESS
-   ========================================================= */
-
-.progress-card {
-    background: #fafafa;
-
-    border: 1px solid #f1f5f9;
-
-    border-radius: 1rem;
-
-    padding: 1rem 1.5rem;
-}
-
-.progress-spinner {
-    width: 32px;
-    height: 32px;
-
-    border-radius: 50%;
-
-    border: 3px solid #e2e8f0;
-
-    border-top-color: #7c3aed;
-
-    animation: spin 0.8s linear infinite;
-}
-
+/* Progress Fill */
 .progress-fill {
     height: 100%;
-
     width: 0%;
-
-    background: linear-gradient(
-        90deg,
-        #6d28d9,
-        #7c3aed,
-        #a855f7,
-        #ec4899
-    );
-
+    background: linear-gradient(90deg, #7c3aed, #a855f7);
     border-radius: 999px;
-
     transition: width 0.4s ease;
 }
 
-@keyframes spin {
-
-    to {
-        transform: rotate(360deg);
-    }
-
-}
-
-
-/* =========================================================
-   SUCCESS CARD
-   ========================================================= */
-
-.success-card {
-    text-align: center;
-
-    padding: 1.5rem;
-
-    border-radius: 1rem;
-
-    background: #faf5ff;
-
-    border: 1px solid #e9d5ff;
-}
-
-.success-icon {
-    width: 64px;
-    height: 64px;
-
-    border-radius: 1rem;
-
-    background: #ede9fe;
-
+.selected-file-box {
     display: flex;
     align-items: center;
-    justify-content: center;
-
-    margin: 0 auto 1rem;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    border-radius: 16px;
+    background: white;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    border: 1px solid #f3e8ff;
+    width: 100%;
+    max-width: 400px;
 }
-
-.success-icon i {
-    color: #7c3aed;
-}
-
-
-/* =========================================================
-   ERROR
-   ========================================================= */
-
-.error-card {
-    padding: 1.25rem;
-
-    border-radius: 1rem;
-
-    background: #fef2f2;
-
-    border: 1px solid #fee2e2;
-}
-
-
-/* =========================================================
-   MOBILE
-   ========================================================= */
-
-@media (max-width: 768px) {
-
-    .tool-heading {
-        font-size: clamp(1.75rem, 7vw, 3rem);
-    }
-
-}
-
-@media (max-width: 480px) {
-
-    .tool-heading {
-        font-size: clamp(1.625rem, 8vw, 2.6rem);
-    }
-
-}
-
-
-.select-file-area {
-    padding: 2rem;
-    border: 2px dashed transparent;
-    border-radius: 20px;
-    transition: all 0.25s ease;
-}
-
-.select-file-area.drag-active {
-    border-color: #7c3aed;
-    background: #faf5ff;
-}
-
 </style>
 
-
 <!-- =========================================================
-     PAGE HEADER
+     PAGE HEADER & CONVERTER
      ========================================================= -->
+<section id="hero-dropzone" class="hero-dropzone text-center pt-10 pb-10 px-4 w-full">
 
-<section class="text-center mb-8 sm:mb-10">
-
-    <h1 class="tool-heading text-surface-900 mb-3">
-
-        <span class="block">
-            {{ s1 }}
-        </span>
-
-        <span class="block gradient-text">
-            {{ highlight }}
-        </span>
-
+    <!-- Clean Title -->
+    <h1 class="tool-heading mb-4 text-center">
+        <span class="text-surface-900">Excel to </span>
+        <span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-700 to-purple-500">PDF Converter</span>
     </h1>
-
-
-    <!-- SEO Intro -->
-
-    <p class="max-w-3xl mx-auto text-sm sm:text-base lg:text-lg text-surface-500 leading-relaxed">
-
-        {{ seo_intro }}
-
+    <p class="text-[16px] md:text-[17px] leading-relaxed text-surface-500 max-w-[740px] mx-auto text-center font-medium mb-8 px-4">
+        Convert Excel spreadsheets to PDF while keeping your worksheets clear, organized, and easy to share.<br>
+        Upload your XLSX file and turn spreadsheet content into a professional PDF in just a few steps.
     </p>
 
+    <!-- Central Converter Interaction Area -->
+    <div class="flex flex-col items-center w-full max-w-[600px] mx-auto">
+        
+        <!-- =====================================================
+             STATE: IDLE (SELECT FILE)
+             ===================================================== -->
+        <div id="state-idle" class="flex flex-col items-center w-full">
+            <button type="button" id="select-file-btn" class="purple-btn px-10 py-4 rounded-2xl text-white font-bold text-[15px] tracking-wide flex items-center justify-center gap-3 w-full sm:w-auto">
+                <i data-lucide="upload" class="w-5 h-5"></i>
+                SELECT FILE
+            </button>
+            <p id="drop-text" class="text-surface-500 text-[15px] mt-3 font-medium">Drop your XLSX file here</p>
+            <input type="file" id="file-input" class="hidden" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet">
+        </div>
 
-    <!-- SEO Keywords -->
+        <!-- =====================================================
+             STATE: FILE SELECTED
+             ===================================================== -->
+        <div id="state-selected" class="hidden flex flex-col items-center w-full">
+            <div class="selected-file-box mb-6 relative">
+                <div class="w-10 h-10 bg-purple-50 rounded-lg flex items-center justify-center flex-shrink-0 text-purple-600">
+                    <i data-lucide="table" class="w-5 h-5"></i>
+                </div>
+                <div class="flex-1 min-w-0 text-left pr-8">
+                    <p id="file-name" class="text-surface-900 font-bold text-[14px] truncate"></p>
+                    <div class="flex items-center gap-2 mt-0.5">
+                        <span id="file-size" class="text-surface-500 text-[12px]"></span>
+                        <span class="text-surface-300 text-[10px]">•</span>
+                        <span class="text-green-600 text-[12px] font-semibold flex items-center gap-1"><i data-lucide="check" class="w-3 h-3"></i> Ready</span>
+                    </div>
+                </div>
+                <button type="button" id="remove-file-btn" class="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center rounded-lg text-surface-400 hover:text-red-500 hover:bg-red-50 transition-colors" title="Remove file">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+            
+            <button type="button" id="convert-btn" class="purple-btn px-10 py-4 rounded-2xl text-white font-bold text-[15px] tracking-wide flex items-center justify-center gap-3 w-full sm:w-auto">
+                <i data-lucide="sparkles" class="w-5 h-5"></i>
+                CONVERT NOW
+            </button>
+        </div>
 
-    {% if seo_keywords %}
+        <!-- =====================================================
+             STATE: CONVERTING
+             ===================================================== -->
+        <div id="state-converting" class="hidden flex flex-col items-center w-full max-w-[320px]">
+            <div class="flex items-center justify-center gap-2 mb-4 text-purple-600 font-bold text-[15px]">
+                <i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i>
+                Converting...
+            </div>
+            
+            <div class="w-full h-2 rounded-full bg-purple-100 overflow-hidden mb-2">
+                <div id="progress-bar" class="progress-fill"></div>
+            </div>
+            
+            <div class="flex justify-between items-center w-full px-1">
+                <p id="progress-status" class="text-surface-500 text-[13px] font-medium">Converting Excel to PDF...</p>
+                <p id="progress-percent" class="text-purple-700 text-[13px] font-bold">0%</p>
+            </div>
+        </div>
 
-    <p class="max-w-3xl mx-auto mt-2 text-xs sm:text-sm text-surface-400 leading-relaxed">
+        <!-- =====================================================
+             STATE: SUCCESS
+             ===================================================== -->
+        <div id="state-success" class="hidden flex flex-col items-center w-full">
+            <div class="w-12 h-12 bg-green-50 text-green-600 rounded-full flex items-center justify-center mb-4 mx-auto">
+                <i data-lucide="check" class="w-6 h-6"></i>
+            </div>
+            <h3 class="text-xl font-black text-surface-900 mb-1">Conversion Complete</h3>
+            <p class="text-surface-500 text-[15px] mb-6">Your PDF is ready.</p>
+            
+            <a id="download-btn" href="#" class="purple-btn px-10 py-4 rounded-2xl text-white font-bold text-[15px] tracking-wide flex items-center justify-center gap-3 w-full sm:w-auto mb-4">
+                <i data-lucide="download" class="w-5 h-5"></i>
+                DOWNLOAD PDF
+            </a>
+            
+            <button type="button" id="convert-another-btn" class="text-purple-600 font-semibold text-[14px] hover:text-purple-800 transition-colors">
+                Convert another file
+            </button>
+        </div>
 
-        {{ seo_keywords }}
+        <!-- =====================================================
+             STATE: ERROR
+             ===================================================== -->
+        <div id="state-error" class="hidden flex flex-col items-center w-full">
+            <div class="w-12 h-12 bg-red-50 text-red-600 rounded-full flex items-center justify-center mb-4 mx-auto">
+                <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+            </div>
+            <h3 class="text-lg font-black text-surface-900 mb-1">Conversion failed</h3>
+            <p id="error-message" class="text-surface-500 text-[14px] mb-6">We couldn't convert this file.</p>
+            
+            <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto justify-center">
+                <button type="button" id="retry-btn" class="purple-btn px-8 py-3.5 rounded-xl text-white font-bold text-[14px] tracking-wide flex items-center justify-center gap-2">
+                    TRY AGAIN
+                </button>
+                <button type="button" id="choose-another-btn" class="bg-surface-100 hover:bg-surface-200 text-surface-700 font-bold text-[14px] px-8 py-3.5 rounded-xl transition-colors flex items-center justify-center gap-2">
+                    Choose another file
+                </button>
+            </div>
+        </div>
 
-    </p>
-
-    {% endif %}
+    </div>
 
 </section>
 
 
-
 <!-- =========================================================
-     MAIN CARD
+     PREMIUM EXCEL TO PDF INSTRUCTIONS
      ========================================================= -->
+<div class="mt-12 sm:mt-16 border-t border-surface-100 pt-16 sm:pt-24 pb-20 relative">
+    
+    <!-- Decorative background elements -->
+    <div class="absolute top-40 left-0 w-[500px] h-[500px] bg-purple-100/40 rounded-full blur-[120px] -z-10 pointer-events-none"></div>
+    <div class="absolute top-[800px] right-0 w-[600px] h-[600px] bg-purple-50/60 rounded-full blur-[100px] -z-10 pointer-events-none"></div>
 
-<!-- =========================================================
-     MAIN CARD
-     ========================================================= -->
-
-<div class="rounded-2xl bg-[#faf5ff]  p-4 sm:p-6 ">
-
-
-    <!-- =====================================================
-         SELECT FILE
-         ===================================================== -->
-<div id="select-file-area" class="select-file-area">
-
-
-        <!-- Select File Button -->
-
-        <button
-            type="button"
-            id="select-file-btn"
-            class="purple-btn px-8 py-3 rounded-2xl text-white font-black text-sm sm:text-base uppercase tracking-widest flex items-center justify-center gap-3">
-
-            <i
-                data-lucide="upload"
-                class="w-5 h-5">
-            </i>
-
-            Select File
-
-        </button>
-
-
-        <!-- File Information -->
-
-        <p class="text-xs text-surface-400 mt-3">
-
-            Max 50MB
-            &nbsp;&nbsp;•&nbsp;&nbsp;
-            Accepted:
-
-            <span class="text-surface-500 font-medium">
-                {{ tool.accept }}
-            </span>
-
-        </p>
-
-
-        <!-- =================================================
-             SELECTED FILE
-             ================================================= -->
-
-        <div
-            id="file-selected"
-            class="hidden selected-file-card">
-
-            <div class="flex items-center gap-4">
-
-
-                <!-- File Icon -->
-
-                <div
-                    class="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center flex-shrink-0">
-
-                    <i
-                        data-lucide="file-check-2"
-                        class="w-6 h-6 text-purple-600">
-                    </i>
-
+    <!-- 01. SECTION 1 — SPREADSHEET CONVERSION -->
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mb-12 md:mb-16">
+        <div class="grid md:grid-cols-[1fr_1fr] items-center gap-10 md:gap-16">
+            <div class="order-2 md:order-1 pr-0 md:pr-4">
+                <div class="flex items-center gap-2 text-purple-600 font-bold tracking-widest text-[12px] uppercase mb-4">
+                    <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Seamless Conversion
                 </div>
-
-
-                <!-- File Details -->
-
-                <div class="text-left min-w-0 flex-1">
-
-                    <p
-                        id="file-name"
-                        class="text-surface-800 font-bold text-sm truncate">
-                    </p>
-
-                    <p
-                        id="file-size"
-                        class="text-xs text-surface-400 mt-1">
-                    </p>
-
+                <h3 class="text-2xl md:text-[2rem] font-bold text-surface-900 mb-5 leading-tight tracking-tight">Convert Excel Spreadsheets to PDF</h3>
+                <p class="text-surface-500 text-[17px] leading-relaxed mb-8">
+                    Turn your Excel workbook into a PDF that is easier to share, archive, print, and view without requiring the recipient to open the original spreadsheet.
+                </p>
+                <ul class="space-y-4">
+                    <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                        <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                        Simple XLSX upload
+                    </li>
+                    <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                        <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                        Clean PDF output
+                    </li>
+                    <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                        <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                        Workbook content prepared for sharing
+                    </li>
+                    <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                        <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                        Fast download after conversion
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="order-1 md:order-2">
+                <div class="relative bg-purple-50/50 rounded-[28px] p-8 py-14 flex items-center justify-center border border-purple-100/50 shadow-[inset_0_0_0_1px_rgba(255,255,255,1),0_8px_30px_-12px_rgba(147,51,234,0.1)] group transition-transform duration-300 hover:-translate-y-1">
+                    <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(147,51,234,0.04)_0%,transparent_70%)] rounded-[28px]"></div>
+                    
+                    <div class="flex items-center gap-6 relative z-10 w-full justify-center">
+                        <!-- XLSX Sheet -->
+                        <div class="w-[120px] h-[160px] bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-surface-300 flex flex-col p-4 relative z-10">
+                            <div class="w-8 h-8 bg-green-100 text-green-700 rounded flex items-center justify-center mb-4 font-bold text-lg font-serif">X</div>
+                            <div class="space-y-1 mt-1">
+                                <div class="flex gap-1">
+                                    <div class="h-2 bg-surface-200 w-1/3"></div>
+                                    <div class="h-2 bg-surface-200 w-1/3"></div>
+                                    <div class="h-2 bg-surface-200 w-1/3"></div>
+                                </div>
+                                <div class="flex gap-1">
+                                    <div class="h-2 bg-surface-200 w-1/3"></div>
+                                    <div class="h-2 bg-surface-200 w-1/3"></div>
+                                    <div class="h-2 bg-surface-200 w-1/3"></div>
+                                </div>
+                                <div class="flex gap-1">
+                                    <div class="h-2 bg-surface-200 w-1/3"></div>
+                                    <div class="h-2 bg-surface-200 w-1/3"></div>
+                                    <div class="h-2 bg-surface-200 w-1/3"></div>
+                                </div>
+                                <div class="flex gap-1">
+                                    <div class="h-2 bg-surface-200 w-1/3"></div>
+                                    <div class="h-2 bg-surface-200 w-1/3"></div>
+                                    <div class="h-2 bg-surface-200 w-1/3"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Arrow -->
+                        <div class="flex flex-col items-center justify-center w-10 h-10 bg-white rounded-full shadow-lg text-purple-700 z-20 border border-purple-200 font-bold">
+                            <i data-lucide="arrow-right" class="w-6 h-6"></i>
+                        </div>
+                        
+                        <!-- PDF Sheet -->
+                        <div class="w-[120px] h-[160px] bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-purple-300 flex flex-col p-4 relative z-10">
+                            <div class="w-8 h-8 bg-red-100 text-red-600 rounded flex items-center justify-center mb-4 font-bold text-xs uppercase tracking-wider">PDF</div>
+                            <div class="space-y-2.5">
+                                <div class="h-2 bg-purple-300 rounded w-full"></div>
+                                <div class="h-2 bg-purple-200 rounded w-3/4"></div>
+                                <div class="h-2 bg-purple-200 rounded w-5/6"></div>
+                                <div class="h-2 bg-purple-200 rounded w-full"></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-
-
-                <!-- Remove -->
-
-                <button
-                    type="button"
-                    id="remove-file-btn"
-                    class="remove-file-btn"
-                    title="Remove file">
-
-                    <i
-                        data-lucide="x"
-                        class="w-5 h-5">
-                    </i>
-
-                </button>
-
             </div>
-
         </div>
-
-
-        <!-- Hidden File Input -->
-
-        <input
-            type="file"
-            id="file-input"
-            class="hidden"
-            accept="{{ tool.accept }}">
-
-
     </div>
 
-
-
-    <!-- =====================================================
-         PDF TO IMAGE FORMAT
-         ===================================================== -->
-
-    {% if tool_slug == 'pdf-to-image' %}
-
-    <div
-        class="mt-3 flex flex-col items-center gap-3 py-4 border-t border-surface-50 animate-fade-in-up">
-
-
-        <span
-            class="text-[11px] font-black text-surface-400 uppercase tracking-widest">
-
-            Select Format
-
-        </span>
-
-
-        <div class="flex gap-2">
-
-
-            <!-- PNG -->
-
-            <label class="cursor-pointer">
-
-                <input
-                    type="radio"
-                    name="image_format"
-                    value="png"
-                    checked
-                    class="hidden peer">
-
-                <span
-                    class="px-6 py-2.5 rounded-xl text-sm font-bold border border-surface-200
-                    peer-checked:border-violet-500
-                    peer-checked:bg-violet-50
-                    peer-checked:text-violet-700
-                    text-surface-400
-                    hover:bg-surface-50
-                    transition-all
-                    block">
-
-                    PNG
-
-                </span>
-
-            </label>
-
-
-            <!-- JPG -->
-
-            <label class="cursor-pointer">
-
-                <input
-                    type="radio"
-                    name="image_format"
-                    value="jpg"
-                    class="hidden peer">
-
-                <span
-                    class="px-6 py-2.5 rounded-xl text-sm font-bold border border-surface-200
-                    peer-checked:border-violet-500
-                    peer-checked:bg-violet-50
-                    peer-checked:text-violet-700
-                    text-surface-400
-                    hover:bg-surface-50
-                    transition-all
-                    block">
-
-                    JPG
-
-                </span>
-
-            </label>
-
-
-        </div>
-
-    </div>
-
-    {% endif %}
-
-
-
-    <!-- =====================================================
-         CONVERT BUTTON
-         ===================================================== -->
-
-    <div class="text-center">
-
-        <button
-            id="convert-btn"
-            disabled
-            class="purple-btn w-auto mx-auto px-8 py-3 mt-5 sm:py-4 rounded-2xl text-white font-black text-sm sm:text-base uppercase tracking-widest flex items-center justify-center gap-3">
-
-            <i
-                data-lucide="sparkles"
-                class="w-5 h-5">
-            </i>
-
-            Convert Now
-
-        </button>
-
-    </div>
-
-
-
-    <!-- =====================================================
-         PROGRESS STATE
-         ===================================================== -->
-
-    <div
-        id="progress-section"
-        class="hidden mt-4">
-
-
-        <div class="progress-card flex items-center gap-4">
-
-
-            <!-- Spinner -->
-
-            <div class="relative flex-shrink-0">
-
-                <div class="progress-spinner"></div>
-
+    <!-- 02. SECTION 2 — SPREADSHEET STRUCTURE -->
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mb-12 md:mb-16">
+        <div class="grid md:grid-cols-[1fr_1fr] items-center gap-10 md:gap-16">
+            <div class="order-1 md:order-1">
+                <div class="relative bg-surface-50/60 rounded-[28px] p-8 py-14 flex items-center justify-center border border-surface-200/50 shadow-[inset_0_0_0_1px_rgba(255,255,255,1)] group transition-transform duration-300 hover:-translate-y-1 overflow-hidden">
+                    
+                    <div class="relative z-10 flex items-center justify-center w-full h-full">
+                        <div class="w-[260px] h-[220px] bg-white rounded-xl shadow-[0_12px_40px_rgb(0,0,0,0.12)] border border-surface-300 p-4 flex flex-col relative z-10 overflow-hidden">
+                            <!-- Header row -->
+                            <div class="flex border-b border-surface-200 pb-2 mb-2 gap-2">
+                                <div class="w-6 text-center text-[10px] text-surface-400 font-bold"></div>
+                                <div class="flex-1 text-center text-[10px] text-surface-400 font-bold">A</div>
+                                <div class="flex-1 text-center text-[10px] text-surface-400 font-bold">B</div>
+                                <div class="flex-1 text-center text-[10px] text-surface-400 font-bold">C</div>
+                            </div>
+                            
+                            <!-- Grid rows -->
+                            <div class="flex flex-col gap-1.5 flex-1">
+                                <!-- Row 1 -->
+                                <div class="flex items-center gap-2 border-b border-surface-100 pb-1.5">
+                                    <div class="w-6 text-center text-[9px] text-surface-400">1</div>
+                                    <div class="flex-1 h-3 bg-purple-100 rounded-sm"></div>
+                                    <div class="flex-1 h-3 bg-purple-100 rounded-sm"></div>
+                                    <div class="flex-1 h-3 bg-purple-100 rounded-sm"></div>
+                                </div>
+                                <!-- Row 2 -->
+                                <div class="flex items-center gap-2 border-b border-surface-100 pb-1.5">
+                                    <div class="w-6 text-center text-[9px] text-surface-400">2</div>
+                                    <div class="flex-1 h-2.5 bg-surface-200 rounded-sm w-3/4"></div>
+                                    <div class="flex-1 h-2.5 bg-surface-200 rounded-sm w-1/2"></div>
+                                    <div class="flex-1 h-2.5 bg-surface-200 rounded-sm"></div>
+                                </div>
+                                <!-- Row 3 -->
+                                <div class="flex items-center gap-2 border-b border-surface-100 pb-1.5">
+                                    <div class="w-6 text-center text-[9px] text-surface-400">3</div>
+                                    <div class="flex-1 h-2.5 bg-surface-200 rounded-sm w-5/6"></div>
+                                    <div class="flex-1 h-2.5 bg-surface-200 rounded-sm w-2/3"></div>
+                                    <div class="flex-1 h-2.5 bg-surface-200 rounded-sm w-4/5"></div>
+                                </div>
+                                <!-- Row 4 -->
+                                <div class="flex items-center gap-2 border-b border-surface-100 pb-1.5">
+                                    <div class="w-6 text-center text-[9px] text-surface-400">4</div>
+                                    <div class="flex-1 h-2.5 bg-surface-200 rounded-sm w-2/3"></div>
+                                    <div class="flex-1 h-2.5 bg-surface-200 rounded-sm w-5/6"></div>
+                                    <div class="flex-1 h-2.5 bg-surface-200 rounded-sm w-1/2"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Floating controls for visual -->
+                        <div class="absolute -left-4 top-10 bg-white rounded-lg shadow-xl border border-surface-200 p-1.5 flex flex-col gap-1.5 z-20">
+                            <div class="w-8 h-8 rounded bg-purple-100 flex items-center justify-center text-purple-700 text-sm border border-purple-200"><i data-lucide="align-left" class="w-4 h-4"></i></div>
+                            <div class="w-8 h-8 rounded bg-surface-100 flex items-center justify-center text-surface-600 text-sm"><i data-lucide="align-center" class="w-4 h-4"></i></div>
+                        </div>
+                    </div>
+                </div>
             </div>
-
-
-            <!-- Text -->
-
-            <div class="min-w-0">
-
-                <p class="text-surface-800 font-bold text-base">
-
-                    Converting your file…
-
+            
+            <div class="order-2 md:order-2 pl-0 md:pl-4">
+                <div class="flex items-center gap-2 text-purple-600 font-bold tracking-widest text-[12px] uppercase mb-4">
+                    <i data-lucide="table-properties" class="w-3.5 h-3.5"></i> Spreadsheet Structure
+                </div>
+                <h3 class="text-2xl md:text-[2rem] font-bold text-surface-900 mb-5 leading-tight tracking-tight">Keep Your Data Clear and Organized</h3>
+                <p class="text-surface-500 text-[17px] leading-relaxed mb-8">
+                    Convert spreadsheet content into a readable PDF while preserving the worksheet structure and presentation as closely as the current conversion engine supports.
                 </p>
+                <ul class="space-y-4">
+                    <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                        <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                        Cell content & formatting where supported
+                    </li>
+                    <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                        <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                        Rows and columns structure
+                    </li>
+                    <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                        <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                        Tables & alignment
+                    </li>
+                    <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                        <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                        Worksheet organization
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
 
-                <p class="text-xs text-surface-400 mt-1">
-
-                    This may take a moment
-
+    <!-- 03. SECTION 3 — PAGE LAYOUT -->
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mb-12 md:mb-16">
+        <div class="grid md:grid-cols-[1fr_1fr] items-center gap-10 md:gap-16">
+            <div class="order-2 md:order-1 pr-0 md:pr-4">
+                <div class="flex items-center gap-2 text-purple-600 font-bold tracking-widest text-[12px] uppercase mb-4">
+                    <i data-lucide="layout" class="w-3.5 h-3.5"></i> Page Layout
+                </div>
+                <h3 class="text-2xl md:text-[2rem] font-bold text-surface-900 mb-5 leading-tight tracking-tight">From Worksheet to Printable PDF</h3>
+                <p class="text-surface-500 text-[17px] leading-relaxed mb-8">
+                    Spreadsheet pages can be prepared for PDF output while maintaining a practical page structure for viewing, sharing, and printing where supported by the conversion engine.
                 </p>
-
+                <ul class="space-y-4">
+                    <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                        <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                        Worksheet layout adaptation
+                    </li>
+                    <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                        <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                        Page orientation & margins
+                    </li>
+                    <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                        <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                        Print areas where supported
+                    </li>
+                    <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                        <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                        Consistent multi-page output
+                    </li>
+                </ul>
             </div>
+            
+            <div class="order-1 md:order-2">
+                <div class="relative bg-purple-50/40 rounded-[28px] p-8 py-14 flex items-center justify-center border border-purple-100/50 shadow-[inset_0_0_0_1px_rgba(255,255,255,1)] group transition-transform duration-300 hover:-translate-y-1">
+                    <div class="flex gap-6 relative z-10 items-end justify-center w-full">
+                        
+                        <!-- Spreadsheet Grid -->
+                        <div class="w-[120px] h-[120px] bg-white rounded-lg shadow-[0_8px_24px_rgb(0,0,0,0.12)] border border-surface-300 p-2 flex flex-col relative z-10 mb-4">
+                            <div class="absolute inset-1 border border-blue-400 border-dashed rounded opacity-100 pointer-events-none"></div>
+                            <div class="w-full h-full grid grid-cols-3 grid-rows-3 gap-1 relative z-10">
+                                <div class="bg-purple-100"></div><div class="bg-purple-100"></div><div class="bg-purple-100"></div>
+                                <div class="bg-surface-100"></div><div class="bg-surface-100"></div><div class="bg-surface-100"></div>
+                                <div class="bg-surface-100"></div><div class="bg-surface-100"></div><div class="bg-surface-100"></div>
+                            </div>
+                        </div>
 
+                        <!-- Arrow -->
+                        <div class="flex flex-col items-center justify-center w-8 h-8 mb-8 text-purple-700 z-20 font-bold">
+                            <i data-lucide="arrow-right" class="w-6 h-6"></i>
+                        </div>
 
-        </div>
+                        <!-- PDF Pages -->
+                        <div class="flex flex-col gap-2 relative z-10">
+                            <!-- Page 1 -->
+                            <div class="w-[80px] h-[110px] bg-white rounded shadow-md border border-surface-300 p-2 flex flex-col items-center justify-center">
+                                <div class="w-full h-full grid grid-cols-2 grid-rows-2 gap-0.5">
+                                    <div class="bg-purple-100"></div><div class="bg-purple-100"></div>
+                                    <div class="bg-surface-100"></div><div class="bg-surface-100"></div>
+                                </div>
+                            </div>
+                            <!-- Page 2 -->
+                            <div class="w-[80px] h-[110px] bg-white rounded shadow-md border border-surface-300 p-2 flex flex-col items-center justify-center opacity-75 transform translate-x-2 -translate-y-20 -z-10 absolute">
+                                <div class="w-full h-full grid grid-cols-2 grid-rows-2 gap-0.5">
+                                    <div class="bg-surface-100"></div><div class="bg-surface-100"></div>
+                                    <div class="bg-surface-100"></div><div class="bg-surface-100"></div>
+                                </div>
+                            </div>
+                        </div>
 
-
-        <!-- Progress Bar -->
-
-        <div
-            class="w-full h-2 rounded-full bg-surface-100 overflow-hidden mt-4">
-
-            <div
-                id="progress-bar"
-                class="progress-fill">
+                    </div>
+                </div>
             </div>
-
         </div>
-
-
-        <!-- Percentage -->
-
-        <p
-            id="progress-percent"
-            class="text-center text-xs font-bold text-violet-600 mt-2">
-
-            0%
-
-        </p>
-
-
     </div>
 
-
-
-    <!-- =====================================================
-         SUCCESS STATE
-         ===================================================== -->
-
-    <div
-        id="success-section"
-        class="hidden mt-4">
-
-
-        <div class="success-card">
-
-
-            <!-- Success Icon -->
-
-            <div class="success-icon">
-
-                <i
-                    data-lucide="check-circle-2"
-                    class="w-8 h-8">
-                </i>
-
+    <!-- 04. SECTION 4 — WORKBOOK SUPPORT -->
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mb-12 md:mb-16">
+        <div class="grid md:grid-cols-[1fr_1fr] items-center gap-10 md:gap-16">
+            <div class="order-1 md:order-1">
+                <div class="relative bg-surface-50/60 rounded-[28px] p-8 py-14 flex items-center justify-center border border-surface-200/50 shadow-[inset_0_0_0_1px_rgba(255,255,255,1)] group transition-transform duration-300 hover:-translate-y-1 overflow-hidden">
+                    
+                    <div class="relative z-10 flex flex-col items-center justify-center w-full h-full gap-4">
+                        <div class="flex items-center gap-4 text-sm font-bold text-surface-600 mb-2">
+                            <div class="bg-purple-100 text-purple-700 px-3 py-1 rounded-t-lg border-b-2 border-purple-600">Sheet 1</div>
+                            <div class="bg-surface-100 px-3 py-1 rounded-t-lg">Sheet 2</div>
+                            <div class="bg-surface-100 px-3 py-1 rounded-t-lg">Sheet 3</div>
+                        </div>
+                        <i data-lucide="arrow-down" class="w-6 h-6 text-purple-400"></i>
+                        <div class="flex gap-3">
+                            <div class="w-[70px] h-[90px] bg-white shadow-md rounded border border-surface-200 flex flex-col items-center p-2 relative">
+                                <span class="text-[8px] font-bold text-surface-400 mb-1">Page 1</span>
+                                <div class="w-full h-2 bg-purple-100 rounded-sm mb-1"></div>
+                                <div class="w-full h-1 bg-surface-100 rounded-sm mb-0.5"></div>
+                                <div class="w-full h-1 bg-surface-100 rounded-sm mb-0.5"></div>
+                            </div>
+                            <div class="w-[70px] h-[90px] bg-white shadow-md rounded border border-surface-200 flex flex-col items-center p-2 relative">
+                                <span class="text-[8px] font-bold text-surface-400 mb-1">Page 2</span>
+                                <div class="w-full h-2 bg-blue-50 rounded-sm mb-1"></div>
+                                <div class="w-full h-1 bg-surface-100 rounded-sm mb-0.5"></div>
+                                <div class="w-full h-1 bg-surface-100 rounded-sm mb-0.5"></div>
+                            </div>
+                            <div class="w-[70px] h-[90px] bg-white shadow-md rounded border border-surface-200 flex flex-col items-center p-2 relative">
+                                <span class="text-[8px] font-bold text-surface-400 mb-1">Page 3</span>
+                                <div class="w-full h-2 bg-green-50 rounded-sm mb-1"></div>
+                                <div class="w-full h-1 bg-surface-100 rounded-sm mb-0.5"></div>
+                                <div class="w-full h-1 bg-surface-100 rounded-sm mb-0.5"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-
-
-            <!-- Title -->
-
-            <h3
-                class="text-lg font-black text-surface-900 mb-1">
-
-                Conversion Complete!
-
-            </h3>
-
-
-            <p
-                class="text-surface-500 text-sm mb-6">
-
-                Your file is ready to download.
-
-            </p>
-
-
-
-            <!-- Buttons -->
-
-            <div
-                class="flex flex-col sm:flex-row gap-3 justify-center">
-
-
-                <!-- Download -->
-
-             <a
-    id="download-btn"
-    href="#"
-    class="purple-btn inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-2xl text-white font-black text-sm" style="  background: linear-gradient(135deg, #16a34a, #22c55e);
-    color: #ffffff;
-
-    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.25);">
-
-    <i data-lucide="download" class="w-5 h-5"></i>
-    Download File
-
-</a>
-
-
-                <!-- Convert Another -->
-
-       <button
-    type="button"
-    id="convert-another-btn"
-    class="purple-btn inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-2xl text-white font-black text-sm">
-
-    <i data-lucide="refresh-cw" class="w-4 h-4"></i>
-    Convert Another
-
-</button>
-
-
-            </div>
-
-
-        </div>
-
-    </div>
-
-
-
-    <!-- =====================================================
-         ERROR STATE
-         ===================================================== -->
-
-    <div
-        id="error-section"
-        class="hidden mt-4">
-
-
-        <div
-            class="error-card flex items-start gap-4">
-
-
-            <!-- Icon -->
-
-            <div
-                class="w-9 h-9 rounded-xl bg-red-100 flex items-center justify-center flex-shrink-0">
-
-                <i
-                    data-lucide="alert-triangle"
-                    class="w-5 h-5 text-red-500">
-                </i>
-
-            </div>
-
-
-            <!-- Error -->
-
-            <div class="min-w-0 pt-1">
-
-                <h4
-                    class="font-black text-red-700 text-sm uppercase tracking-wider mb-1">
-
-                    Conversion Failed
-
-                </h4>
-
-                <p
-                    id="error-message"
-                    class="text-xs text-red-500 leading-relaxed font-semibold">
+            
+            <div class="order-2 md:order-2 pl-0 md:pl-4">
+                <div class="flex items-center gap-2 text-purple-600 font-bold tracking-widest text-[12px] uppercase mb-4">
+                    <i data-lucide="layers" class="w-3.5 h-3.5"></i> Workbook Support
+                </div>
+                <h3 class="text-2xl md:text-[2rem] font-bold text-surface-900 mb-5 leading-tight tracking-tight">Handle Multi-Sheet Workbooks</h3>
+                <p class="text-surface-500 text-[17px] leading-relaxed mb-8">
+                    When supported by the current conversion engine, worksheets from your workbook are converted into an organized PDF output while keeping their content separated and readable.
                 </p>
-
+                <ul class="space-y-4">
+                    <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                        <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                        Multiple worksheets support
+                    </li>
+                    <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                        <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                        Sheet-by-sheet content conversion
+                    </li>
+                    <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                        <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                        Structured page output
+                    </li>
+                    <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                        <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                        Easy sharing and printing
+                    </li>
+                </ul>
             </div>
-
-
         </div>
-
     </div>
 
+    <!-- 05. HOW TO CONVERT EXCEL TO PDF -->
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mb-12 md:mb-16">
+        <div class="bg-gradient-to-br from-purple-50/70 to-white rounded-[32px] border border-purple-100/60 p-8 md:p-14 shadow-sm relative overflow-hidden">
+            <div class="text-center md:text-left mb-12 relative z-10">
+                <h2 class="text-3xl md:text-[2.25rem] font-bold text-surface-900 mb-4 tracking-tight">How to Convert Excel to PDF</h2>
+                <p class="text-[17px] text-surface-500 max-w-2xl leading-relaxed">
+                    Convert your Excel spreadsheet to PDF in a few simple steps.
+                </p>
+            </div>
+            
+            <div class="grid lg:grid-cols-[50%_50%] gap-12 lg:gap-16 items-center relative z-10">
+                <!-- Vertical Timeline -->
+                <div class="relative w-full">
+                    <div class="space-y-8 relative">
+                        <!-- 01 -->
+                        <div class="flex gap-5">
+                            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-sm">1</div>
+                            <div>
+                                <h4 class="text-[17px] font-bold text-surface-900 mb-1.5">Upload Your Excel File</h4>
+                                <p class="text-surface-500 text-[15px] leading-relaxed">Choose your XLSX file using SELECT FILE or drag it into the upload area.</p>
+                            </div>
+                        </div>
+                        <!-- 02 -->
+                        <div class="flex gap-5">
+                            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-sm">2</div>
+                            <div>
+                                <h4 class="text-[17px] font-bold text-surface-900 mb-1.5">Review Your File</h4>
+                                <p class="text-surface-500 text-[15px] leading-relaxed">Confirm the selected spreadsheet and make sure it is ready for conversion.</p>
+                            </div>
+                        </div>
+                        <!-- 03 -->
+                        <div class="flex gap-5">
+                            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-sm">3</div>
+                            <div>
+                                <h4 class="text-[17px] font-bold text-surface-900 mb-1.5">Convert to PDF</h4>
+                                <p class="text-surface-500 text-[15px] leading-relaxed">Click CONVERT NOW and allow ScanPDF to process the workbook.</p>
+                            </div>
+                        </div>
+                        <!-- 04 -->
+                        <div class="flex gap-5">
+                            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-sm">4</div>
+                            <div>
+                                <h4 class="text-[17px] font-bold text-surface-900 mb-1.5">Download Your PDF</h4>
+                                <p class="text-surface-500 text-[15px] leading-relaxed">When conversion is complete, download the generated PDF to your device.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Mini UI Visual -->
+                <div class="flex justify-center lg:justify-end w-full">
+                    <div class="bg-white p-7 rounded-[24px] shadow-[0_12px_40px_rgb(0,0,0,0.06)] border border-surface-200/60 w-full max-w-[400px]">
+                        <div class="font-bold text-surface-900 text-[15px] text-center mb-6">Excel to PDF Converter</div>
+                        
+                        <div class="bg-white border border-surface-200/80 rounded-lg p-3.5 flex items-center justify-between mb-5 shadow-sm">
+                            <div class="flex items-center gap-3">
+                                <div class="w-9 h-9 rounded-md bg-green-50 flex items-center justify-center">
+                                    <i data-lucide="table" class="w-4 h-4 text-green-600"></i>
+                                </div>
+                                <div>
+                                    <div class="text-[13px] font-bold text-surface-900">spreadsheet.xlsx</div>
+                                    <div class="text-[11px] text-surface-500 mt-0.5">Ready</div>
+                                </div>
+                            </div>
+                            <i data-lucide="check-circle-2" class="w-4 h-4 text-green-500"></i>
+                        </div>
+                        
+                        <div class="mb-5">
+                            <div class="flex justify-between text-[11px] font-bold text-surface-700 mb-2">
+                                <span>Converting...</span>
+                                <span>100%</span>
+                            </div>
+                            <div class="h-1.5 w-full bg-surface-100 rounded-full overflow-hidden">
+                                <div class="h-full w-full bg-purple-500 rounded-full"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="w-full bg-purple-600 text-white rounded-xl py-3.5 text-center font-bold text-[14px] shadow-sm">
+                            DOWNLOAD PDF
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 06. WHY CONVERT EXCEL TO PDF -->
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mb-12 md:mb-16">
+        <div class="text-center mb-12 md:mb-16">
+            <h2 class="text-3xl md:text-[2.25rem] font-bold text-surface-900 mb-5 tracking-tight">Why Convert Excel to PDF?</h2>
+        </div>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="bg-surface-50/50 border border-surface-200/60 rounded-2xl p-6 hover:bg-white hover:shadow-md hover:border-purple-200 transition-all duration-300">
+                <div class="w-12 h-12 rounded-xl bg-purple-50 flex items-center justify-center mb-5">
+                    <i data-lucide="share-2" class="w-5 h-5 text-purple-600"></i>
+                </div>
+                <h4 class="text-[17px] font-bold text-surface-900 mb-3">Share Reports</h4>
+                <p class="text-surface-600 text-[14px] leading-relaxed">Send spreadsheet reports in a format that is easier to open and review.</p>
+            </div>
+            
+            <div class="bg-surface-50/50 border border-surface-200/60 rounded-2xl p-6 hover:bg-white hover:shadow-md hover:border-purple-200 transition-all duration-300">
+                <div class="w-12 h-12 rounded-xl bg-purple-50 flex items-center justify-center mb-5">
+                    <i data-lucide="printer" class="w-5 h-5 text-purple-600"></i>
+                </div>
+                <h4 class="text-[17px] font-bold text-surface-900 mb-3">Print Worksheets</h4>
+                <p class="text-surface-600 text-[14px] leading-relaxed">Prepare spreadsheet content for consistent printing and distribution.</p>
+            </div>
+            
+            <div class="bg-surface-50/50 border border-surface-200/60 rounded-2xl p-6 hover:bg-white hover:shadow-md hover:border-purple-200 transition-all duration-300">
+                <div class="w-12 h-12 rounded-xl bg-purple-50 flex items-center justify-center mb-5">
+                    <i data-lucide="archive" class="w-5 h-5 text-purple-600"></i>
+                </div>
+                <h4 class="text-[17px] font-bold text-surface-900 mb-3">Archive Data</h4>
+                <p class="text-surface-600 text-[14px] leading-relaxed">Store finalized reports in a document-friendly format.</p>
+            </div>
+            
+            <div class="bg-surface-50/50 border border-surface-200/60 rounded-2xl p-6 hover:bg-white hover:shadow-md hover:border-purple-200 transition-all duration-300">
+                <div class="w-12 h-12 rounded-xl bg-purple-50 flex items-center justify-center mb-5">
+                    <i data-lucide="presentation" class="w-5 h-5 text-purple-600"></i>
+                </div>
+                <h4 class="text-[17px] font-bold text-surface-900 mb-3">Present Information</h4>
+                <p class="text-surface-600 text-[14px] leading-relaxed">Share tables and spreadsheet results without requiring recipients to edit the workbook.</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- 07. FAQ -->
+    <div class="max-w-[800px] mx-auto px-4 sm:px-6 lg:px-8 mb-12 md:mb-16">
+        <div class="text-center mb-10">
+            <h2 class="text-2xl md:text-[2rem] font-bold text-surface-900 tracking-tight">Frequently Asked Questions</h2>
+        </div>
+        
+        <div class="space-y-4">
+            <div class="bg-white border border-surface-200 rounded-xl p-5 shadow-sm">
+                <h4 class="text-[16px] font-bold text-surface-900 mb-2">Will my Excel formatting be preserved?</h4>
+                <p class="text-surface-600 text-[15px] leading-relaxed">The conversion engine aims to preserve standard formatting such as fonts, colors, and basic layouts where supported.</p>
+            </div>
+            <div class="bg-white border border-surface-200 rounded-xl p-5 shadow-sm">
+                <h4 class="text-[16px] font-bold text-surface-900 mb-2">Can I convert an XLSX file to PDF?</h4>
+                <p class="text-surface-600 text-[15px] leading-relaxed">Yes, the tool is specifically designed to accept and process standard .xlsx spreadsheet files.</p>
+            </div>
+            <div class="bg-white border border-surface-200 rounded-xl p-5 shadow-sm">
+                <h4 class="text-[16px] font-bold text-surface-900 mb-2">What happens to multiple worksheets?</h4>
+                <p class="text-surface-600 text-[15px] leading-relaxed">If the workbook contains multiple sheets with data, they will be sequentially converted into pages of the resulting PDF where supported by the converter.</p>
+            </div>
+            <div class="bg-white border border-surface-200 rounded-xl p-5 shadow-sm">
+                <h4 class="text-[16px] font-bold text-surface-900 mb-2">Will charts and tables appear in the PDF?</h4>
+                <p class="text-surface-600 text-[15px] leading-relaxed">Standard tables, grids, and basic charts are designed to be preserved in the output PDF as closely as the conversion engine supports.</p>
+            </div>
+        </div>
+    </div>
 
 </div>
+
+<!-- WebApplication / SoftwareApplication Schema -->
+{% if seo_h1 %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "{{ seo_h1|escapejs }}",
+  "url": "{{ request.build_absolute_uri }}",
+  "description": "{{ seo_description|escapejs }}",
+  "applicationCategory": "UtilityApplication",
+  "operatingSystem": "All"
+}
+</script>
+{% endif %}
+
+            </div>
+        </div>
+    </div>
+</section>
 
 {% endblock %}
 
@@ -763,971 +703,268 @@
 {% block extra_scripts %}
 
 <script>
-
 /* =========================================================
    DJANGO VALUES
    ========================================================= */
-
-const TOOL_SLUG = '{{ tool_slug }}';
-
-const CONVERT_URL =
-    '{% url "converter:convert_file" tool_slug %}';
-
-const CSRF_TOKEN =
-    '{{ csrf_token }}';
-
+const CONVERT_URL = '{% url "converter:convert_file" tool_slug %}';
+const CSRF_TOKEN = '{{ csrf_token }}';
 
 /* =========================================================
    ELEMENTS
    ========================================================= */
+const dropText = document.getElementById('drop-text');
 
-const selectFileArea =
-    document.getElementById('select-file-area');
+const stateIdle = document.getElementById('state-idle');
+const stateSelected = document.getElementById('state-selected');
+const stateConverting = document.getElementById('state-converting');
+const stateSuccess = document.getElementById('state-success');
+const stateError = document.getElementById('state-error');
 
-const selectFileBtn =
-    document.getElementById('select-file-btn');
+const selectFileBtn = document.getElementById('select-file-btn');
+const fileInput = document.getElementById('file-input');
 
-const fileInput =
-    document.getElementById('file-input');
+const fileName = document.getElementById('file-name');
+const fileSize = document.getElementById('file-size');
+const removeFileBtn = document.getElementById('remove-file-btn');
+const convertBtn = document.getElementById('convert-btn');
 
-const fileSelected =
-    document.getElementById('file-selected');
+const progressBar = document.getElementById('progress-bar');
+const progressPercent = document.getElementById('progress-percent');
+const progressStatus = document.getElementById('progress-status');
 
-const fileName =
-    document.getElementById('file-name');
-
-const fileSize =
-    document.getElementById('file-size');
-
-const removeFileBtn =
-    document.getElementById('remove-file-btn');
-
-const convertBtn =
-    document.getElementById('convert-btn');
-
-const progressSection =
-    document.getElementById('progress-section');
-
-const progressBar =
-    document.getElementById('progress-bar');
-
-const progressPercent =
-    document.getElementById('progress-percent');
-
-const successSection =
-    document.getElementById('success-section');
-
-const errorSection =
-    document.getElementById('error-section');
-
-const errorMessage =
-    document.getElementById('error-message');
-
-const downloadBtn =
-    document.getElementById('download-btn');
-
-const convertAnotherBtn =
-    document.getElementById('convert-another-btn');
-
+const downloadBtn = document.getElementById('download-btn');
+const convertAnotherBtn = document.getElementById('convert-another-btn');
+const retryBtn = document.getElementById('retry-btn');
+const chooseAnotherBtn = document.getElementById('choose-another-btn');
+const errorMessage = document.getElementById('error-message');
 
 /* =========================================================
    VARIABLES
    ========================================================= */
-
 let selectedFile = null;
-
 let progressInterval = null;
-
-
-/* =========================================================
-   SELECT FILE BUTTON
-   ========================================================= */
-
-selectFileBtn.addEventListener('click', function () {
-
-    fileInput.click();
-
-});
-
+let isConverting = false;
 
 /* =========================================================
-   FILE INPUT CHANGE
+   STATE MANAGEMENT
    ========================================================= */
-
-fileInput.addEventListener('change', function (event) {
-
-    if (
-        event.target.files &&
-        event.target.files.length > 0
-    ) {
-
-        handleFile(
-            event.target.files[0]
-        );
-
-    }
-
-});
-
-
-/* =========================================================
-   DRAG OVER
-   ========================================================= */
-
-selectFileArea.addEventListener(
-    'dragover',
-    function (event) {
-
-        event.preventDefault();
-
-        selectFileArea.classList.add(
-            'drag-active'
-        );
-
-    }
-);
-
-
-/* =========================================================
-   DRAG LEAVE
-   ========================================================= */
-
-selectFileArea.addEventListener(
-    'dragleave',
-    function () {
-
-        selectFileArea.classList.remove(
-            'drag-active'
-        );
-
-    }
-);
-
-
-/* =========================================================
-   DROP FILE
-   ========================================================= */
-
-selectFileArea.addEventListener(
-    'drop',
-    function (event) {
-
-        event.preventDefault();
-
-        selectFileArea.classList.remove(
-            'drag-active'
-        );
-
-
-        if (
-            event.dataTransfer.files &&
-            event.dataTransfer.files.length > 0
-        ) {
-
-            handleFile(
-                event.dataTransfer.files[0]
-            );
-
+function switchState(stateEl) {
+    [stateIdle, stateSelected, stateConverting, stateSuccess, stateError].forEach(el => {
+        if (el) {
+            el.classList.add('hidden');
+            el.style.display = ''; 
         }
-
+    });
+    if (stateEl) {
+        stateEl.classList.remove('hidden');
     }
-);
-
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+}
 
 /* =========================================================
-   HANDLE FILE
+   FILE SELECTION
    ========================================================= */
+selectFileBtn.addEventListener('click', () => {
+    if (!isConverting) fileInput.click();
+});
+
+fileInput.addEventListener('change', (e) => {
+    if (e.target.files && e.target.files.length > 0) {
+        handleFile(e.target.files[0]);
+    }
+    fileInput.value = ''; 
+});
+
+/* =========================================================
+   DRAG AND DROP
+   ========================================================= */
+const heroDropzone = document.getElementById('hero-dropzone');
+let dragCounter = 0;
+
+heroDropzone.addEventListener('dragenter', (e) => {
+    e.preventDefault();
+    if (isConverting) return;
+    dragCounter++;
+    if (dragCounter === 1) {
+        heroDropzone.classList.add('drag-active');
+        dropText.textContent = 'Drop your XLSX file here';
+    }
+});
+
+heroDropzone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+});
+
+heroDropzone.addEventListener('dragleave', (e) => {
+    e.preventDefault();
+    if (isConverting) return;
+    dragCounter--;
+    if (dragCounter === 0) {
+        heroDropzone.classList.remove('drag-active');
+        dropText.textContent = 'Drop your XLSX file here';
+    }
+});
+
+heroDropzone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dragCounter = 0;
+    heroDropzone.classList.remove('drag-active');
+    dropText.textContent = 'Drop your XLSX file here';
+    if (isConverting) return;
+    
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        handleFile(e.dataTransfer.files[0]);
+    }
+});
+
+/* =========================================================
+   FILE HANDLING
+   ========================================================= */
+function formatFileSize(bytes) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const index = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, index)).toFixed(2)) + ' ' + sizes[index];
+}
 
 function handleFile(file) {
-
-    /* ---------------------------------------------
-       Accepted file types
-    --------------------------------------------- */
-
-    const accept =
-        '{{ tool.accept }}'
-        .split(',')
-        .map(function (item) {
-
-            return item
-                .trim()
-                .toLowerCase();
-
-        });
-
-
-    /* ---------------------------------------------
-       Get extension
-    --------------------------------------------- */
-
-    const extension =
-        '.' +
-        file.name
-            .split('.')
-            .pop()
-            .toLowerCase();
-
-
-    /* ---------------------------------------------
-       Validate file type
-    --------------------------------------------- */
-
-    if (
-        !accept.includes(extension)
-    ) {
-
-        showError(
-            'Invalid file type. Accepted: ' +
-            accept.join(', ')
-        );
-
+    const extension = '.' + file.name.split('.').pop().toLowerCase();
+    
+    if (extension !== '.xlsx' && extension !== '.xls') {
+        errorMessage.textContent = 'Please select a valid Excel (.xlsx) file.';
+        switchState(stateError);
         return;
-
     }
-
-
-    /* ---------------------------------------------
-       Validate file size
-       50 MB
-    --------------------------------------------- */
-
-    if (
-        file.size > 52428800
-    ) {
-
-        showError(
-            'File exceeds the 50MB limit.'
-        );
-
-        return;
-
-    }
-
-
-    /* ---------------------------------------------
-       Store file
-    --------------------------------------------- */
-
+    
     selectedFile = file;
-
-
-    /* ---------------------------------------------
-       Show file name
-    --------------------------------------------- */
-
-    fileName.textContent =
-        file.name;
-
-
-    /* ---------------------------------------------
-       Show file size
-    --------------------------------------------- */
-
-    fileSize.textContent =
-        formatFileSize(file.size);
-
-
-    /* ---------------------------------------------
-       Show selected file card
-    --------------------------------------------- */
-
-    fileSelected.classList.remove(
-        'hidden'
-    );
-
-
-    /* ---------------------------------------------
-       Enable Convert button
-    --------------------------------------------- */
-
-    convertBtn.disabled = false;
-
-
-    /* ---------------------------------------------
-       Hide error
-    --------------------------------------------- */
-
-    errorSection.classList.add(
-        'hidden'
-    );
-
-
-    /* ---------------------------------------------
-       Refresh icons
-    --------------------------------------------- */
-
-    if (
-        typeof lucide !== 'undefined'
-    ) {
-
-        lucide.createIcons();
-
-    }
-
+    fileName.textContent = file.name;
+    fileSize.textContent = formatFileSize(file.size);
+    
+    switchState(stateSelected);
 }
 
+removeFileBtn.addEventListener('click', resetUpload);
+chooseAnotherBtn.addEventListener('click', resetUpload);
+convertAnotherBtn.addEventListener('click', resetUpload);
 
-/* =========================================================
-   FORMAT FILE SIZE
-   ========================================================= */
-
-function formatFileSize(bytes) {
-
-    if (bytes === 0) {
-
-        return '0 Bytes';
-
-    }
-
-
-    const k = 1024;
-
-    const sizes = [
-        'Bytes',
-        'KB',
-        'MB',
-        'GB'
-    ];
-
-
-    const index =
-        Math.floor(
-            Math.log(bytes) /
-            Math.log(k)
-        );
-
-
-    return (
-        parseFloat(
-            (
-                bytes /
-                Math.pow(k, index)
-            ).toFixed(2)
-        )
-        +
-        ' '
-        +
-        sizes[index]
-    );
-
-}
-
-
-/* =========================================================
-   REMOVE FILE
-   ========================================================= */
-
-removeFileBtn.addEventListener(
-    'click',
-    function (event) {
-
-        event.stopPropagation();
-
+retryBtn.addEventListener('click', () => {
+    if (selectedFile) {
+        switchState(stateSelected);
+    } else {
         resetUpload();
-
     }
-);
-
-
-/* =========================================================
-   CONVERT BUTTON
-   ========================================================= */
-
-convertBtn.addEventListener(
-    'click',
-    async function () {
-
-
-        /* ---------------------------------------------
-           Safety check
-        --------------------------------------------- */
-
-        if (!selectedFile) {
-
-            return;
-
-        }
-
-
-        /* ---------------------------------------------
-           Hide Convert button
-        --------------------------------------------- */
-
-        convertBtn.classList.add(
-            'hidden'
-        );
-
-
-        /* ---------------------------------------------
-           Hide success
-        --------------------------------------------- */
-
-        successSection.classList.add(
-            'hidden'
-        );
-
-
-        /* ---------------------------------------------
-           Hide error
-        --------------------------------------------- */
-
-        errorSection.classList.add(
-            'hidden'
-        );
-
-
-        /* ---------------------------------------------
-           Show loading
-        --------------------------------------------- */
-
-        progressSection.classList.remove(
-            'hidden'
-        );
-
-
-        /* ---------------------------------------------
-           Start progress
-        --------------------------------------------- */
-
-        startProgress();
-
-
-        /* ---------------------------------------------
-           Create FormData
-        --------------------------------------------- */
-
-        const formData =
-            new FormData();
-
-
-        formData.append(
-            'file',
-            selectedFile
-        );
-
-
-        formData.append(
-            'csrfmiddlewaretoken',
-            CSRF_TOKEN
-        );
-
-
-        /* ---------------------------------------------
-           PDF to Image
-        --------------------------------------------- */
-
-        if (
-            TOOL_SLUG ===
-            'pdf-to-image'
-        ) {
-
-            const format =
-                document.querySelector(
-                    'input[name="image_format"]:checked'
-                );
-
-
-            if (format) {
-
-                formData.append(
-                    'image_format',
-                    format.value
-                );
-
-            }
-
-        }
-
-
-        /* ---------------------------------------------
-           Send request
-        --------------------------------------------- */
-
-        try {
-
-            const response =
-                await fetch(
-                    CONVERT_URL,
-                    {
-                        method: 'POST',
-                        body: formData
-                    }
-                );
-
-
-            /* -----------------------------------------
-               Check response
-            ----------------------------------------- */
-
-            if (!response.ok) {
-
-                let message =
-                    'Conversion failed.';
-
-
-                try {
-
-                    const data =
-                        await response.json();
-
-                    message =
-                        data.error ||
-                        message;
-
-                } catch (error) {
-
-                    /* Ignore JSON error */
-
-                }
-
-
-                throw new Error(
-                    message
-                );
-
-            }
-
-
-            /* -----------------------------------------
-               Stop progress
-            ----------------------------------------- */
-
-            stopProgress();
-
-
-            /* -----------------------------------------
-               Get output filename
-            ----------------------------------------- */
-
-            const disposition =
-                response.headers.get(
-                    'Content-Disposition'
-                );
-
-
-            let outputFilename =
-                'converted_file';
-
-
-            if (disposition) {
-
-                const match =
-                    disposition.match(
-                        /filename="(.+?)"/
-                    );
-
-
-                if (match) {
-
-                    outputFilename =
-                        match[1];
-
-                }
-
-            }
-
-
-            /* -----------------------------------------
-               Get converted file
-            ----------------------------------------- */
-
-            const blob =
-                await response.blob();
-
-
-            /* -----------------------------------------
-               Create download URL
-            ----------------------------------------- */
-
-            const url =
-                window.URL.createObjectURL(
-                    blob
-                );
-
-
-            /* -----------------------------------------
-               Set download button
-            ----------------------------------------- */
-
-            downloadBtn.href =
-                url;
-
-            downloadBtn.download =
-                outputFilename;
-
-
-            /* -----------------------------------------
-               HIDE SELECT FILE AREA
-               
-               This happens after successful
-               conversion.
-            ----------------------------------------- */
-
-            selectFileArea.classList.add(
-                'hidden'
-            );
-
-
-            /* -----------------------------------------
-               Hide progress
-            ----------------------------------------- */
-
-            progressSection.classList.add(
-                'hidden'
-            );
-
-
-            /* -----------------------------------------
-               Show success
-            ----------------------------------------- */
-
-            successSection.classList.remove(
-                'hidden'
-            );
-
-
-            /* -----------------------------------------
-               Refresh icons
-            ----------------------------------------- */
-
-            if (
-                typeof lucide !== 'undefined'
-            ) {
-
-                lucide.createIcons();
-
-            }
-
-
-        } catch (error) {
-
-
-            /* -----------------------------------------
-               Stop progress
-            ----------------------------------------- */
-
-            stopProgress();
-
-
-            /* -----------------------------------------
-               Hide progress
-            ----------------------------------------- */
-
-            progressSection.classList.add(
-                'hidden'
-            );
-
-
-            /* -----------------------------------------
-               Show Convert button again
-            ----------------------------------------- */
-
-            convertBtn.classList.remove(
-                'hidden'
-            );
-
-
-            /* -----------------------------------------
-               Show error
-            ----------------------------------------- */
-
-            showError(
-                error.message
-            );
-
-        }
-
-    }
-);
-
-
-/* =========================================================
-   CONVERT ANOTHER
-   ========================================================= */
-
-convertAnotherBtn.addEventListener(
-    'click',
-    function () {
-
-        resetUpload();
-
-    }
-);
-
-
-/* =========================================================
-   RESET UPLOAD
-   ========================================================= */
+});
 
 function resetUpload() {
-
-
-    /* ---------------------------------------------
-       Clear selected file
-    --------------------------------------------- */
-
+    if (isConverting) return;
     selectedFile = null;
-
-
-    /* ---------------------------------------------
-       Clear browser input
-    --------------------------------------------- */
-
     fileInput.value = '';
-
-
-    /* ---------------------------------------------
-       SHOW SELECT FILE AREA AGAIN
-    --------------------------------------------- */
-
-    selectFileArea.classList.remove(
-        'hidden'
-    );
-
-
-    /* ---------------------------------------------
-       Hide selected file
-    --------------------------------------------- */
-
-    fileSelected.classList.add(
-        'hidden'
-    );
-
-
-    /* ---------------------------------------------
-       Disable Convert button
-    --------------------------------------------- */
-
-    convertBtn.disabled = true;
-
-
-    /* ---------------------------------------------
-       Show Convert button
-    --------------------------------------------- */
-
-    convertBtn.classList.remove(
-        'hidden'
-    );
-
-
-    /* ---------------------------------------------
-       Hide progress
-    --------------------------------------------- */
-
-    progressSection.classList.add(
-        'hidden'
-    );
-
-
-    /* ---------------------------------------------
-       Hide success
-    --------------------------------------------- */
-
-    successSection.classList.add(
-        'hidden'
-    );
-
-
-    /* ---------------------------------------------
-       Hide error
-    --------------------------------------------- */
-
-    errorSection.classList.add(
-        'hidden'
-    );
-
-
-    /* ---------------------------------------------
-       Stop progress
-    --------------------------------------------- */
-
-    if (progressInterval) {
-
-        clearInterval(
-            progressInterval
-        );
-
-        progressInterval = null;
-
-    }
-
-
-    /* ---------------------------------------------
-       Reset progress bar
-    --------------------------------------------- */
-
-    if (progressBar) {
-
-        progressBar.style.width =
-            '0%';
-
-    }
-
-
-    if (progressPercent) {
-
-        progressPercent.textContent =
-            '0%';
-
-    }
-
-
-    /* ---------------------------------------------
-       Refresh icons
-    --------------------------------------------- */
-
-    if (
-        typeof lucide !== 'undefined'
-    ) {
-
-        lucide.createIcons();
-
-    }
-
+    stopProgress();
+    switchState(stateIdle);
 }
 
+/* =========================================================
+   CONVERSION
+   ========================================================= */
+convertBtn.addEventListener('click', async () => {
+    if (!selectedFile || isConverting) return;
+    
+    isConverting = true;
+    switchState(stateConverting);
+    startProgress();
+    
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+    formData.append('csrfmiddlewaretoken', CSRF_TOKEN);
+    
+    try {
+        const response = await fetch(CONVERT_URL, {
+            method: 'POST',
+            body: formData
+        });
+        
+        if (!response.ok) {
+            let msg = 'We couldn\'t convert this file.';
+            try {
+                const data = await response.json();
+                msg = data.error || msg;
+            } catch(e){}
+            throw new Error(msg);
+        }
+        
+        const disposition = response.headers.get('Content-Disposition');
+        let outputFilename = 'converted_spreadsheet.pdf';
+        if (disposition) {
+            const match = disposition.match(/filename="(.+?)"/);
+            if (match) outputFilename = match[1];
+        }
+        
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        
+        downloadBtn.href = url;
+        downloadBtn.download = outputFilename;
+        
+        finishProgressAndShowSuccess();
+        
+    } catch (error) {
+        stopProgress();
+        errorMessage.textContent = error.message;
+        switchState(stateError);
+        isConverting = false;
+    }
+});
 
 /* =========================================================
-   START PROGRESS
+   PROGRESS
    ========================================================= */
-
 function startProgress() {
-
     let progress = 0;
-
-
-    progressBar.style.width =
-        '0%';
-
-
-    progressPercent.textContent =
-        '0%';
-
-
-    progressInterval =
-        setInterval(
-            function () {
-
-
-                /*
-                 * Keep at 90%.
-                 * Actual completion happens
-                 * when backend response arrives.
-                 */
-
-                if (
-                    progress < 90
-                ) {
-
-                    progress +=
-                        Math.random() * 5;
-
-
-                    if (
-                        progress > 90
-                    ) {
-
-                        progress = 90;
-
-                    }
-
-
-                    progress =
-                        Math.floor(
-                            progress
-                        );
-
-
-                    progressBar.style.width =
-                        progress + '%';
-
-
-                    progressPercent.textContent =
-                        progress + '%';
-
-                }
-
-            },
-            500
-        );
-
+    progressBar.style.width = '0%';
+    progressPercent.textContent = '0%';
+    progressStatus.textContent = 'Preparing your spreadsheet...';
+    
+    progressInterval = setInterval(() => {
+        if (progress < 95) {
+            progress += Math.random() * 4;
+            if (progress > 95) progress = 95;
+            
+            let p = Math.floor(progress);
+            progressBar.style.width = p + '%';
+            progressPercent.textContent = p + '%';
+            
+            if (p > 20) progressStatus.textContent = 'Uploading spreadsheet...';
+            if (p > 40) progressStatus.textContent = 'Converting Excel to PDF...';
+            if (p > 75) progressStatus.textContent = 'Finalizing your PDF...';
+        }
+    }, 400);
 }
-
-
-/* =========================================================
-   STOP PROGRESS
-   ========================================================= */
 
 function stopProgress() {
-
-
     if (progressInterval) {
-
-        clearInterval(
-            progressInterval
-        );
-
+        clearInterval(progressInterval);
         progressInterval = null;
-
     }
-
-
-    if (progressBar) {
-
-        progressBar.style.width =
-            '100%';
-
-    }
-
-
-    if (progressPercent) {
-
-        progressPercent.textContent =
-            '100%';
-
-    }
-
 }
 
-
-/* =========================================================
-   SHOW ERROR
-   ========================================================= */
-
-function showError(message) {
-
-    errorMessage.textContent =
-        message;
-
-
-    errorSection.classList.remove(
-        'hidden'
-    );
-
-
-    if (
-        typeof lucide !== 'undefined'
-    ) {
-
-        lucide.createIcons();
-
-    }
-
+function finishProgressAndShowSuccess() {
+    stopProgress();
+    progressBar.style.width = '100%';
+    progressPercent.textContent = '100%';
+    progressStatus.textContent = 'Conversion complete';
+    
+    setTimeout(() => {
+        isConverting = false;
+        switchState(stateSuccess);
+    }, 400);
 }
 
-
-/* =========================================================
-   INITIAL LUCIDE ICONS
-   ========================================================= */
-
-if (
-    typeof lucide !== 'undefined'
-) {
-
+if (typeof lucide !== 'undefined') {
     lucide.createIcons();
-
 }
-
 </script>
 
 {% endblock %}

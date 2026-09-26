@@ -121,20 +121,116 @@ def convert_word_to_pdf(input_path, original_name):
     
     if is_ole:
         raise Exception(
-            "The uploaded file appears to be an older .doc format (Word 97-2003). "
+            "INVALID_DOCUMENT: The uploaded file appears to be an older .doc format (Word 97-2003). "
             "Please save it as .docx (Word 2007+) first, then upload again."
         )
     
-    if not is_zip and not is_ole:
-        # File is neither a ZIP (.docx) nor OLE (.doc) — might be corrupted or wrong type
+    if not is_zip:
         logger.warning(
             f"File '{original_name}' (size={file_size}) failed zip check. "
-            f"Header bytes: {header[:8].hex()}. Attempting conversion anyway..."
+            f"Header bytes: {header[:8].hex()}."
         )
+        raise Exception("INVALID_DOCUMENT: The selected file is not a valid DOCX document. Please check the file and try again.")
+
+    # ── Robust DOCX Integrity Validation ──
+    try:
+        with zipfile.ZipFile(input_path, 'r') as zf:
+            file_list = zf.namelist()
+            # A valid DOCX MUST contain at least [Content_Types].xml and word/document.xml
+            if '[Content_Types].xml' not in file_list or 'word/document.xml' not in file_list:
+                raise ValueError("Missing core DOCX XML components ([Content_Types].xml or word/document.xml).")
+                
+            # Test extracting word/document.xml to check for CRC errors or corruption
+            with zf.open('word/document.xml') as doc_xml:
+                # Read a chunk to verify it is accessible without CRC errors
+                doc_xml.read(1024)
+                
+    except zipfile.BadZipFile:
+        logger.warning(f"DOCX integrity validation failed for '{original_name}': BadZipFile")
+        raise Exception("INVALID_DOCUMENT: The DOCX archive is corrupted and cannot be extracted.")
+    except Exception as e:
+        logger.warning(f"DOCX integrity validation failed for '{original_name}': {e}")
+        raise Exception("INVALID_DOCUMENT: The selected DOCX file is corrupted or improperly formatted. It cannot be converted.")
     
     output_path = get_output_path(original_name, 'pdf')
 
-    # ── Attempt 1: Mammoth + WeasyPrint (best quality) ──
+    # ── Attempt 1: High-Fidelity Conversion via COM (MS Word) ──
+    try:
+        import comtypes.client
+        import pythoncom
+        pythoncom.CoInitialize() # Ensure COM is initialized for this thread
+        word = comtypes.client.CreateObject('Word.Application')
+        word.Visible = False
+        try:
+            doc = word.Documents.Open(os.path.abspath(input_path))
+            doc.SaveAs(os.path.abspath(output_path), FileFormat=17) # 17 is wdFormatPDF
+            doc.Close()
+            word.Quit()
+            if os.path.exists(output_path) and os.path.getsize(output_path) > 0:
+                logger.info(f"Word→PDF via COM succeeded for '{original_name}'")
+                return output_path
+        except Exception as inner_e:
+            word.Quit()
+            raise inner_e
+    except ImportError:
+        logger.info("comtypes is not installed. Skipping Word COM conversion.")
+    except Exception as e:
+        logger.warning(f"COM conversion failed for '{original_name}': {e}")
+        
+    # ── Attempt 2: High-Fidelity Conversion via docx2pdf ──
+    try:
+        from docx2pdf import convert
+        import pythoncom
+        pythoncom.CoInitialize() # Needed in threads
+        convert(input_path, output_path)
+        if os.path.exists(output_path) and os.path.getsize(output_path) > 0:
+            logger.info(f"Word→PDF via docx2pdf succeeded for '{original_name}'")
+            return output_path
+    except ImportError:
+        logger.info("docx2pdf is not installed. Skipping docx2pdf conversion.")
+    except Exception as e:
+        logger.warning(f"docx2pdf conversion failed for '{original_name}': {e}")
+
+    # ── Attempt 3: LibreOffice fallback (headless) ──
+    try:
+        import subprocess
+        outdir = os.path.dirname(output_path)
+        
+        # Check env variable first
+        soffice_cmd = os.environ.get('LIBREOFFICE_PATH')
+        
+        if not soffice_cmd:
+            soffice_cmd = "soffice"
+            if os.name == 'nt':
+                if os.path.exists(r"C:\Program Files\LibreOffice\program\soffice.exe"):
+                    soffice_cmd = r"C:\Program Files\LibreOffice\program\soffice.exe"
+                elif os.path.exists(r"C:\Program Files (x86)\LibreOffice\program\soffice.exe"):
+                    soffice_cmd = r"C:\Program Files (x86)\LibreOffice\program\soffice.exe"
+        
+        process = subprocess.run([
+            soffice_cmd,
+            '--headless',
+            '--nologo',
+            '--nofirststartwizard',
+            '--convert-to', 'pdf',
+            '--outdir', outdir,
+            input_path
+        ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=120)
+        
+        # LibreOffice outputs with same basename and .pdf extension
+        lo_output = os.path.join(outdir, os.path.splitext(os.path.basename(input_path))[0] + ".pdf")
+        if os.path.exists(lo_output) and os.path.getsize(lo_output) > 0:
+            if lo_output != output_path:
+                import shutil
+                shutil.move(lo_output, output_path)
+            logger.info(f"Word→PDF via LibreOffice succeeded for '{original_name}'")
+            return output_path
+        else:
+            logger.warning(f"LibreOffice returned empty or missing PDF. Stderr: {process.stderr.decode('utf-8', errors='ignore')}")
+    except Exception as e:
+        logger.warning(f"LibreOffice fallback failed for '{original_name}': {e}")
+
+    # ── Attempt 4: Mammoth + WeasyPrint (legacy fallback) ──
     try:
         import mammoth
         with open(input_path, "rb") as docx_file:
@@ -144,24 +240,16 @@ def convert_word_to_pdf(input_path, original_name):
             if not body_html or not body_html.strip():
                 raise Exception("Mammoth produced empty HTML output")
             
-            # Add professional styles and Ensure A4 multi-page pagination
             html_content = f"""
             <!DOCTYPE html>
             <html>
             <head>
                 <meta charset="utf-8">
                 <style>
-                    @page {{
-                        size: A4;
-                        margin: 2.5cm;
-                    }}
+                    @page {{ size: A4; margin: 2.5cm; }}
                     body {{
                         font-family: 'Times New Roman', Times, serif;
-                        font-size: 11pt;
-                        line-height: 1.5;
-                        color: #1a1a1a;
-                        margin: 0;
-                        padding: 0;
+                        font-size: 11pt; line-height: 1.5; color: #1a1a1a; margin: 0; padding: 0;
                     }}
                     p {{ margin-bottom: 0.5cm; }}
                     h1, h2, h3 {{ color: #1a365d; margin-top: 1cm; margin-bottom: 0.5cm; }}
@@ -175,171 +263,25 @@ def convert_word_to_pdf(input_path, original_name):
             </body>
             </html>
             """
-            
-            # Use WeasyPrint for high-quality multi-page PDF generation
             import weasyprint
             weasyprint.HTML(string=html_content).write_pdf(output_path)
             
             if os.path.exists(output_path) and os.path.getsize(output_path) > 0:
                 logger.info(f"Word→PDF via Mammoth+WeasyPrint succeeded for '{original_name}'")
                 return output_path
-            else:
-                raise Exception("WeasyPrint produced an empty PDF")
             
     except Exception as e:
         logger.warning(f"Mammoth+WeasyPrint failed for '{original_name}': {e}")
-        # Continue to fallback
 
-    # ── Attempt 2: python-docx + PyMuPDF fallback ──
-    try:
-        from docx import Document
-        import fitz
-        
-        doc = Document(input_path)
-        try:
-            import pymupdf as fitz
-        except ImportError:
-            import fitz
-            
-        try:
-            pdf_doc = fitz.Document()
-        except AttributeError:
-            pdf_doc = fitz.open()
-        page = pdf_doc.new_page()
-        y_position = 72
-        
-        for para in doc.paragraphs:
-            text = para.text.strip()
-            if not text:
-                y_position += 12
-                continue
-            
-            fontsize = 11
-            style_name = para.style.name.lower() if para.style else ''
-            if 'heading' in style_name or 'title' in style_name:
-                fontsize = 16
-            
-            # Simple word wrap calculation
-            words = text.split()
-            line = ""
-            for word in words:
-                test_line = f"{line} {word}".strip()
-                if len(test_line) * fontsize * 0.5 > 470:  # approx width
-                    if y_position > 750:
-                        page = pdf_doc.new_page()
-                        y_position = 72
-                    page.insert_text((72, y_position), line, fontsize=fontsize)
-                    y_position += fontsize + 4
-                    line = word
-                else:
-                    line = test_line
-            
-            if line:
-                if y_position > 750:
-                    page = pdf_doc.new_page()
-                    y_position = 72
-                page.insert_text((72, y_position), line, fontsize=fontsize)
-                y_position += fontsize + 8
-        
-        # Add tables to fallback if needed (simplified)
-        for table in doc.tables:
-            if y_position > 700:
-                page = pdf_doc.new_page()
-                y_position = 72
-            page.insert_text((72, y_position), "[Table Included]", fontsize=10, color=(0.5, 0.5, 0.5))
-            y_position += 20
-
-        pdf_doc.save(output_path)
-        pdf_doc.close()
-        
-        if os.path.exists(output_path) and os.path.getsize(output_path) > 0:
-            logger.info(f"Word→PDF via python-docx+PyMuPDF fallback succeeded for '{original_name}'")
-            return output_path
-        else:
-            raise Exception("Fallback produced an empty PDF")
-    except Exception as e:
-        logger.warning(f"python-docx fallback failed for '{original_name}': {e}")
-        # Continue to Attempt 3
-
-    # ── Attempt 3: Ultimate Fallbacks (Handling incorrect extensions) ──
-    try:
-        # Check if it's actually already a PDF masquerading as a docx
-        if header.startswith(b'%PDF'):
-            import shutil
-            shutil.copy2(input_path, output_path)
-            logger.info(f"File '{original_name}' was actually a PDF. Copied directly.")
-            return output_path
-            
-        # Check if it's an HTML or RTF or plain text file
-        # We can try to decode it as text and render it
-        text_content = None
-        for encoding in ['utf-8', 'latin-1', 'cp1252']:
-            try:
-                with open(input_path, 'r', encoding=encoding) as f:
-                    text_content = f.read()
-                # If we read it successfully and it's mostly printable, consider it text
-                # We'll reject if it contains too many null bytes (binary)
-                if text_content.count('\x00') < 5:
-                    break
-                else:
-                    text_content = None
-            except Exception:
-                continue
-                
-        if text_content:
-            import weasyprint
-            import html
-            
-            # If it looks like HTML, just render it directly
-            if '<html' in text_content.lower() or '<body' in text_content.lower():
-                weasyprint.HTML(string=text_content).write_pdf(output_path)
-            else:
-                # Wrap plain text in a basic preformatted HTML template
-                escaped_text = html.escape(text_content)
-                # Quick formatting for basic text
-                escaped_text = escaped_text.replace('\n', '<br>')
-                
-                html_content = f"""
-                <!DOCTYPE html>
-                <html>
-                <head>
-                    <meta charset="utf-8">
-                    <style>
-                        @page {{ size: A4; margin: 2.5cm; }}
-                        body {{
-                            font-family: monospace, 'Courier New', Courier;
-                            font-size: 10pt;
-                            line-height: 1.5;
-                            color: #1a1a1a;
-                            white-space: pre-wrap;
-                        }}
-                    </style>
-                </head>
-                <body>
-                    {escaped_text}
-                </body>
-                </html>
-                """
-                weasyprint.HTML(string=html_content).write_pdf(output_path)
-                
-            if os.path.exists(output_path) and os.path.getsize(output_path) > 0:
-                logger.info(f"Word→PDF via text fallback succeeded for '{original_name}'")
-                return output_path
-
-    except Exception as fallback_e:
-        logger.warning(f"Ultimate fallbacks failed: {fallback_e}")
-
-    # If everything fails, raise the informative error
+    # If everything fails, cleanup and raise the SERVER_CONFIGURATION error
     if os.path.exists(output_path):
         try:
             os.remove(output_path)
         except OSError:
             pass
-    raise Exception(
-        f"Failed to convert Word to PDF. The file '{original_name}' may be corrupted or not a valid .docx document. "
-        f"If it's an older .doc file, please open it in Word and use 'Save As' -> .docx. "
-        f"(Debug info: {str(e)})"
-    )
+            
+    logger.error(f"All Word-to-PDF conversion methods failed for '{original_name}'. Server lacks comtypes/Word, docx2pdf, LibreOffice, or WeasyPrint dependencies.")
+    raise Exception("SERVER_CONFIGURATION: Word to PDF conversion is temporarily unavailable. Please try again later.")
 
 
 def merge_word_files(input_paths, original_name):
@@ -441,471 +383,133 @@ def merge_word_files(input_paths, original_name):
 # ═══════════════════════════════════════════════════════════════
 # 2. POWERPOINT (.pptx) → PDF
 # ═══════════════════════════════════════════════════════════════
-def _emu_to_px(emu):
-    """Convert EMU to CSS pixels (96 DPI)."""
-    if emu is None:
-        return 0
-    return emu / 914400 * 96
-
-
-def _rgb_from_pptx_color(color_obj):
-    """Try to extract an RGB hex string from a python-pptx color object."""
-    try:
-        if color_obj and color_obj.type is not None:
-            rgb = color_obj.rgb  # RGBColor object
-            return f'#{rgb}'
-    except Exception:
-        pass
-    return None
-
-
-def _build_run_html(run):
-    """Convert a single python-pptx Run into an HTML span with inline styles."""
-    import html as html_mod
-    text = html_mod.escape(run.text)
-    if not text:
-        return ''
-
-    styles = []
-    font = run.font
-
-    # Font size
-    if font.size:
-        styles.append(f'font-size:{font.size.pt}pt')
-
-    # Bold / Italic / Underline
-    if font.bold:
-        styles.append('font-weight:bold')
-    if font.italic:
-        styles.append('font-style:italic')
-    if font.underline:
-        styles.append('text-decoration:underline')
-
-    # Font color
-    color_hex = _rgb_from_pptx_color(font.color)
-    if color_hex:
-        styles.append(f'color:{color_hex}')
-
-    # Font family
-    if font.name:
-        styles.append(f"font-family:'{font.name}',Arial,sans-serif")
-
-    style_attr = ';'.join(styles)
-    return f'<span style="{style_attr}">{text}</span>'
-
-
-def _build_paragraph_html(paragraph):
-    """Convert a python-pptx Paragraph into an HTML <p> element."""
-    runs_html = ''.join(_build_run_html(r) for r in paragraph.runs)
-    if not runs_html.strip():
-        return '<p style="margin:0;min-height:0.5em;">&nbsp;</p>'
-
-    p_styles = ['margin:0 0 2px 0']
-
-    # Alignment
-    from pptx.enum.text import PP_ALIGN
-    align_map = {
-        PP_ALIGN.CENTER: 'center',
-        PP_ALIGN.RIGHT: 'right',
-        PP_ALIGN.JUSTIFY: 'justify',
-    }
-    if paragraph.alignment and paragraph.alignment in align_map:
-        p_styles.append(f'text-align:{align_map[paragraph.alignment]}')
-
-    # Line spacing
-    if paragraph.line_spacing and hasattr(paragraph.line_spacing, 'pt'):
-        p_styles.append(f'line-height:{paragraph.line_spacing.pt}pt')
-
-    style_attr = ';'.join(p_styles)
-    return f'<p style="{style_attr}">{runs_html}</p>'
-
-
-def _extract_shape_fill_css(shape):
-    """Try to get a CSS background from the shape's fill."""
-    try:
-        fill = shape.fill
-        if fill and fill.type is not None:
-            from pptx.enum.dml import MSO_THEME_COLOR
-            # Solid fill
-            if fill.type == 1:  # MSO_FILL_TYPE.SOLID
-                rgb = fill.fore_color.rgb
-                return f'background-color:#{rgb};'
-    except Exception:
-        pass
-    return ''
-
-
 def convert_pptx_to_pdf(input_path, original_name):
-    """Convert a PowerPoint presentation (.pptx) to PDF with high-quality rendering."""
+    """Convert a PowerPoint presentation (.pptx) to PDF with high-quality rendering using COM or LibreOffice."""
     import logging
+    import os
+    import zipfile
     logger = logging.getLogger(__name__)
     
-    from pptx import Presentation
-    from pptx.util import Emu
-    import base64
-    import html as html_mod
+    if not input_path or not os.path.exists(input_path):
+        raise Exception("The uploaded PowerPoint file could not be saved correctly.")
 
+    file_size = os.path.getsize(input_path)
+    if file_size == 0:
+        raise Exception("The uploaded PowerPoint file is empty.")
+
+    # Validation
+    with open(input_path, 'rb') as f:
+        header = f.read(8)
+    
+    is_zip = zipfile.is_zipfile(input_path)
+    is_ole = header[:8] == b'\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1'
+    
+    if is_ole:
+        raise Exception(
+            "INVALID_DOCUMENT: The uploaded file appears to be an older .ppt format (PowerPoint 97-2003). "
+            "Please save it as .pptx (PowerPoint 2007+) first, then upload again."
+        )
+    
+    if not is_zip:
+        raise Exception("INVALID_DOCUMENT: The selected file is not a valid PPTX presentation.")
+
+    try:
+        with zipfile.ZipFile(input_path, 'r') as zf:
+            file_list = zf.namelist()
+            if '[Content_Types].xml' not in file_list or 'ppt/presentation.xml' not in file_list:
+                raise ValueError("Missing core PPTX XML components.")
+    except Exception as e:
+        logger.warning(f"PPTX validation failed for '{original_name}': {e}")
+        raise Exception("INVALID_DOCUMENT: The selected PPTX file is corrupted.")
+        
     output_path = get_output_path(original_name, 'pdf')
 
+    # 1. Native Microsoft PowerPoint COM export
     try:
-        prs = Presentation(input_path)
-    except Exception as e:
-        logger.warning(f"Failed to open '{original_name}' as PPTX: {e}")
-        # ── Ultimate Fallbacks for invalid PPTX files ──
+        import comtypes.client
+        import pythoncom
+        pythoncom.CoInitialize()
+        powerpoint_app = None
         try:
-            with open(input_path, 'rb') as f:
-                header = f.read(8)
-            # Check if it's actually already a PDF masquerading as a pptx
-            if header.startswith(b'%PDF'):
-                import shutil
-                shutil.copy2(input_path, output_path)
-                logger.info(f"File '{original_name}' was actually a PDF. Copied directly.")
-                return output_path
+            powerpoint_app = comtypes.client.CreateObject("PowerPoint.Application")
+            
+            # ppAlertsNone = 1
+            try:
+                powerpoint_app.DisplayAlerts = 1
+            except Exception:
+                pass
                 
-            # Check if it's plain text or HTML
-            text_content = None
-            for encoding in ['utf-8', 'latin-1', 'cp1252']:
-                try:
-                    with open(input_path, 'r', encoding=encoding) as f:
-                        text_content = f.read()
-                    if text_content.count('\x00') < 5:
-                        break
-                    else:
-                        text_content = None
-                except Exception:
-                    continue
-                    
-            if text_content:
-                import weasyprint
-                import html
-                if '<html' in text_content.lower() or '<body' in text_content.lower():
-                    weasyprint.HTML(string=text_content).write_pdf(output_path)
-                else:
-                    escaped_text = html.escape(text_content).replace('\n', '<br>')
-                    html_content = f"""
-                    <!DOCTYPE html>
-                    <html><head><meta charset="utf-8">
-                    <style>@page {{ size: A4 landscape; margin: 2.5cm; }}
-                    body {{ font-family: monospace, sans-serif; font-size: 10pt; white-space: pre-wrap; }}
-                    </style></head><body>{escaped_text}</body></html>
-                    """
-                    weasyprint.HTML(string=html_content).write_pdf(output_path)
-                    
-                if os.path.exists(output_path) and os.path.getsize(output_path) > 0:
-                    logger.info(f"PPTX→PDF via text fallback succeeded for '{original_name}'")
-                    return output_path
-        except Exception as fallback_e:
-            logger.warning(f"PPTX ultimate fallbacks failed: {fallback_e}")
+            # 32 = ppSaveAsPDF
+            # Open(FileName, ReadOnly, Untitled, WithWindow)
+            # Use positional arguments with integers for MsoTriState (ReadOnly=1, Untitled=0, WithWindow=0)
+            presentation = powerpoint_app.Presentations.Open(os.path.abspath(input_path), 1, 0, 0)
             
-        raise Exception(
-            f"Failed to convert PowerPoint to PDF. The file '{original_name}' may be corrupted or not a valid .pptx document. "
-            f"If it's an older .ppt file, please open it in PowerPoint and use 'Save As' -> .pptx. "
-            f"(Debug info: {str(e)})"
-        )
-
-    slide_w_emu = prs.slide_width or Emu(9144000)   # 10 in
-    slide_h_emu = prs.slide_height or Emu(6858000)  # 7.5 in
-    slide_w_px = _emu_to_px(slide_w_emu)
-    slide_h_px = _emu_to_px(slide_h_emu)
-
-    # Build CSS for each page to match the slide dimensions exactly
-    page_css = f"""
-    @page {{
-        size: {slide_w_px}px {slide_h_px}px;
-        margin: 0;
-    }}
-    * {{ box-sizing: border-box; }}
-    body {{ margin:0; padding:0; font-family: Arial, Helvetica, sans-serif; }}
-    .slide {{
-        width: {slide_w_px}px;
-        height: {slide_h_px}px;
-        position: relative;
-        overflow: hidden;
-        background: #ffffff;
-        page-break-after: always;
-    }}
-    .slide:last-child {{ page-break-after: auto; }}
-    .shape {{
-        position: absolute;
-        overflow: hidden;
-        word-wrap: break-word;
-    }}
-    .shape-text {{
-        padding: 4px 8px;
-    }}
-    table.pptx-table {{
-        border-collapse: collapse;
-        width: 100%;
-        height: 100%;
-    }}
-    table.pptx-table td {{
-        border: 1px solid #bbb;
-        padding: 4px 6px;
-        font-size: 10pt;
-        vertical-align: middle;
-    }}
-    """
-
-    slides_html = []
-
-    for slide_idx, slide in enumerate(prs.slides):
-        shapes_html = []
-
-        # --- try to get slide background colour ---
-        slide_bg = '#ffffff'
-        try:
-            bg = slide.background
-            if bg.fill and bg.fill.type is not None and bg.fill.type == 1:
-                slide_bg = f'#{bg.fill.fore_color.rgb}'
-        except Exception:
-            pass
-
-        # Sort shapes by their z-order (shape_id) so layering is correct
-        sorted_shapes = sorted(slide.shapes, key=lambda s: s.shape_id)
-
-        for shape in sorted_shapes:
-            left = _emu_to_px(shape.left)
-            top = _emu_to_px(shape.top)
-            width = _emu_to_px(shape.width)
-            height = _emu_to_px(shape.height)
-
-            shape_style = (
-                f'left:{left}px;top:{top}px;'
-                f'width:{width}px;height:{height}px;'
-            )
-
-            # Shape fill
-            fill_css = _extract_shape_fill_css(shape)
-            if fill_css:
-                shape_style += fill_css
-
-            # Rotation
-            if shape.rotation:
-                shape_style += f'transform:rotate({shape.rotation}deg);'
-
-            inner_html = ''
-
-            # ── Image shapes ────────────────────────────
-            if shape.shape_type and shape.shape_type == 13:  # MSO_SHAPE_TYPE.PICTURE
-                try:
-                    image = shape.image
-                    blob = image.blob
-                    content_type = image.content_type or 'image/png'
-                    b64 = base64.b64encode(blob).decode('ascii')
-                    inner_html = (
-                        f'<img src="data:{content_type};base64,{b64}" '
-                        f'style="width:100%;height:100%;object-fit:contain;" />'
-                    )
-                except Exception:
-                    pass
-
-            # ── Tables ──────────────────────────────────
-            elif shape.has_table:
-                table = shape.table
-                rows_html = []
-                for row in table.rows:
-                    cells_html = []
-                    for cell in row.cells:
-                        cell_text = html_mod.escape(cell.text)
-                        cell_bg = ''
-                        try:
-                            if cell.fill and cell.fill.type is not None and cell.fill.type == 1:
-                                cell_bg = f'background-color:#{cell.fill.fore_color.rgb};'
-                        except Exception:
-                            pass
-                        cells_html.append(
-                            f'<td style="{cell_bg}">{cell_text}</td>'
-                        )
-                    rows_html.append('<tr>' + ''.join(cells_html) + '</tr>')
-                inner_html = (
-                    '<table class="pptx-table">'
-                    + ''.join(rows_html)
-                    + '</table>'
-                )
-
-            # ── Text frames ─────────────────────────────
-            elif shape.has_text_frame:
-                tf = shape.text_frame
-                paras_html = ''.join(
-                    _build_paragraph_html(p) for p in tf.paragraphs
-                )
-
-                # Vertical alignment
-                vert_align_css = 'justify-content:flex-start;'
-                try:
-                    from pptx.enum.text import MSO_ANCHOR
-                    if tf.word_wrap is not None:
-                        pass  # just accessing to ensure tf is valid
-                    anchor = tf.paragraphs[0]  # dummy access
-                    # Use the text frame's anchor property if available
-                    if hasattr(tf, '_txBody'):
-                        anchor_val = tf._txBody.bodyPr.get('anchor', 't')
-                        if anchor_val == 'ctr':
-                            vert_align_css = 'justify-content:center;'
-                        elif anchor_val == 'b':
-                            vert_align_css = 'justify-content:flex-end;'
-                except Exception:
-                    pass
-
-                inner_html = (
-                    f'<div class="shape-text" style="display:flex;flex-direction:column;'
-                    f'height:100%;{vert_align_css}">'
-                    f'{paras_html}</div>'
-                )
-
-            # Only add shape if it has content
-            if inner_html:
-                shapes_html.append(
-                    f'<div class="shape" style="{shape_style}">{inner_html}</div>'
-                )
-
-        slide_div = (
-            f'<div class="slide" style="background:{slide_bg};">'
-            + ''.join(shapes_html)
-            + '</div>'
-        )
-        slides_html.append(slide_div)
-
-    if not slides_html:
-        slides_html.append(
-            f'<div class="slide"><p style="padding:40px;font-size:14pt;">'
-            f'Empty presentation – no content to convert.</p></div>'
-        )
-
-    full_html = (
-        '<!DOCTYPE html><html><head><meta charset="utf-8">'
-        f'<style>{page_css}</style></head><body>'
-        + ''.join(slides_html)
-        + '</body></html>'
-    )
-
-    # ── Primary path: WeasyPrint (best quality) ─────────
-    try:
-        import weasyprint
-        weasyprint.HTML(string=full_html).write_pdf(output_path)
-        return output_path
-    except Exception:
-        pass
-
-    # ── Fallback: render HTML pages as images with PyMuPDF ─
-    try:
-        import fitz
-        # Write HTML to a temp file so PyMuPDF can attempt to open it
-        import tempfile
-        tmp_html = tempfile.NamedTemporaryFile(
-            suffix='.html', delete=False, mode='w', encoding='utf-8'
-        )
-        tmp_html.write(full_html)
-        tmp_html.close()
-
-        # Fallback: manual text extraction when neither renderer works
-        try:
-            import pymupdf as fitz
-        except ImportError:
-            import fitz
+            try:
+                presentation.SaveAs(os.path.abspath(output_path), 32)
+            finally:
+                presentation.Close()
             
+            powerpoint_app.Quit()
+            
+            if os.path.exists(output_path) and os.path.getsize(output_path) > 0:
+                logger.info(f"PowerPoint→PDF via COM succeeded for '{original_name}'")
+                return output_path
+        except Exception as inner_e:
+            if powerpoint_app:
+                try:
+                    powerpoint_app.Quit()
+                except:
+                    pass
+            raise inner_e
+    except ImportError:
+        logger.info("comtypes is not installed. Skipping PowerPoint COM conversion.")
+    except Exception as e:
+        logger.warning(f"COM conversion failed for '{original_name}': {e}")
+
+    # 2. LibreOffice Fallback
+    try:
+        import subprocess
+        outdir = os.path.dirname(output_path)
+        soffice_cmd = os.environ.get('LIBREOFFICE_PATH')
+        
+        if not soffice_cmd:
+            soffice_cmd = "soffice"
+            if os.name == 'nt':
+                if os.path.exists(r"C:\Program Files\LibreOffice\program\soffice.exe"):
+                    soffice_cmd = r"C:\Program Files\LibreOffice\program\soffice.exe"
+                elif os.path.exists(r"C:\Program Files (x86)\LibreOffice\program\soffice.exe"):
+                    soffice_cmd = r"C:\Program Files (x86)\LibreOffice\program\soffice.exe"
+        
+        process = subprocess.run([
+            soffice_cmd,
+            '--headless',
+            '--nologo',
+            '--nofirststartwizard',
+            '--convert-to', 'pdf',
+            '--outdir', outdir,
+            input_path
+        ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=120)
+        
+        lo_output = os.path.join(outdir, os.path.splitext(os.path.basename(input_path))[0] + ".pdf")
+        if os.path.exists(lo_output) and os.path.getsize(lo_output) > 0:
+            if lo_output != output_path:
+                import shutil
+                shutil.move(lo_output, output_path)
+            logger.info(f"PowerPoint→PDF via LibreOffice succeeded for '{original_name}'")
+            return output_path
+        else:
+            logger.warning(f"LibreOffice returned empty/missing PDF. Stderr: {process.stderr.decode('utf-8', errors='ignore')}")
+    except Exception as e:
+        logger.warning(f"LibreOffice fallback failed for '{original_name}': {e}")
+        
+    if os.path.exists(output_path):
         try:
-            pdf_doc = fitz.Document()
-        except AttributeError:
-            pdf_doc = fitz.open()
-
-        page_w_pt = slide_w_emu / 914400 * 72
-        page_h_pt = slide_h_emu / 914400 * 72
-
-        for slide_idx, slide in enumerate(prs.slides):
-            page = pdf_doc.new_page(width=page_w_pt, height=page_h_pt)
-            page.draw_rect(
-                fitz.Rect(0, 0, page_w_pt, page_h_pt),
-                color=(1, 1, 1), fill=(1, 1, 1),
-            )
-
-            y_cursor = 36  # running y position for sequential text
-
-            for shape in sorted(slide.shapes, key=lambda s: s.shape_id):
-                s_top_pt = (shape.top / 914400 * 72) if shape.top else y_cursor
-                s_left_pt = (shape.left / 914400 * 72) if shape.left else 36
-                s_width_pt = (shape.width / 914400 * 72) if shape.width else 500
-
-                if shape.has_text_frame:
-                    cur_y = s_top_pt + 14  # small inner padding
-                    for para in shape.text_frame.paragraphs:
-                        text = para.text.strip()
-                        if not text:
-                            cur_y += 10
-                            continue
-
-                        fontsize = 12
-                        is_bold = False
-                        for run in para.runs:
-                            if run.font.size:
-                                fontsize = run.font.size.pt
-                                break
-                            if run.font.bold:
-                                is_bold = True
-                        fontsize = max(7, min(fontsize, 48))
-
-                        # Simple word-wrap
-                        max_chars = max(int(s_width_pt / (fontsize * 0.52)), 10)
-                        words = text.split()
-                        line = ''
-                        for word in words:
-                            test = f'{line} {word}'.strip()
-                            if len(test) > max_chars and line:
-                                if cur_y > page_h_pt - 20:
-                                    page = pdf_doc.new_page(width=page_w_pt, height=page_h_pt)
-                                    page.draw_rect(fitz.Rect(0, 0, page_w_pt, page_h_pt), fill=(1, 1, 1))
-                                    cur_y = 36
-                                page.insert_text(
-                                    (s_left_pt + 4, cur_y), line,
-                                    fontsize=fontsize, color=(0.1, 0.1, 0.1),
-                                )
-                                cur_y += fontsize + 3
-                                line = word
-                            else:
-                                line = test
-                        if line:
-                            if cur_y > page_h_pt - 20:
-                                page = pdf_doc.new_page(width=page_w_pt, height=page_h_pt)
-                                page.draw_rect(fitz.Rect(0, 0, page_w_pt, page_h_pt), fill=(1, 1, 1))
-                                cur_y = 36
-                            page.insert_text(
-                                (s_left_pt + 4, cur_y), line,
-                                fontsize=fontsize, color=(0.1, 0.1, 0.1),
-                            )
-                            cur_y += fontsize + 5
-
-                elif shape.has_table:
-                    table = shape.table
-                    cur_y = s_top_pt + 14
-                    for row in table.rows:
-                        col_x = s_left_pt + 4
-                        col_w = max(int(s_width_pt / max(len(row.cells), 1)), 40)
-                        for cell in row.cells:
-                            ct = cell.text.strip()[:30]
-                            if ct:
-                                page.insert_text(
-                                    (col_x, cur_y), ct,
-                                    fontsize=9, color=(0.15, 0.15, 0.15),
-                                )
-                            col_x += col_w
-                        cur_y += 16
-
-        if len(pdf_doc) == 0:
-            p = pdf_doc.new_page()
-            p.insert_text((72, 72), 'Empty presentation.', fontsize=14)
-
-        pdf_doc.save(output_path)
-        pdf_doc.close()
-
-        # Clean temp file
-        try:
-            os.remove(tmp_html.name)
+            os.remove(output_path)
         except OSError:
             pass
-
-        return output_path
-    except Exception as e:
-        raise Exception(f'Failed to convert PPTX to PDF: {str(e)}')
+            
+    logger.error(f"All PowerPoint-to-PDF methods failed for '{original_name}'. Server lacks PowerPoint or LibreOffice.")
+    raise Exception("SERVER_CONFIGURATION: PowerPoint to PDF conversion is temporarily unavailable. Please try again later.")
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -949,6 +553,39 @@ def convert_excel_to_pdf(input_path, original_name):
     from openpyxl.utils import get_column_letter
 
     output_path = get_output_path(original_name, 'pdf')
+
+    # 1. Native Microsoft Excel COM export
+    try:
+        import comtypes.client
+        import pythoncom
+        pythoncom.CoInitialize()
+        excel_app = None
+        try:
+            excel_app = comtypes.client.CreateObject("Excel.Application")
+            excel_app.Visible = False
+            excel_app.DisplayAlerts = False
+            
+            # Open workbook
+            workbook = excel_app.Workbooks.Open(os.path.abspath(input_path))
+            
+            # 0 = xlTypePDF
+            workbook.ExportAsFixedFormat(0, os.path.abspath(output_path))
+            
+            workbook.Close(False)
+            excel_app.Quit()
+            
+            if os.path.exists(output_path) and os.path.getsize(output_path) > 0:
+                logger.info(f"Excel→PDF via COM succeeded for '{original_name}'")
+                return output_path
+        except Exception as inner_e:
+            if excel_app:
+                try:
+                    excel_app.Quit()
+                except:
+                    pass
+            raise inner_e
+    except Exception as e:
+        logger.info(f"Excel COM export failed or unavailable: {e}. Falling back to openpyxl.")
 
     try:
         wb = load_workbook(input_path, data_only=True)

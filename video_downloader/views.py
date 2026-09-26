@@ -96,6 +96,21 @@ def analyze_url(request):
         if not parsed_url.scheme or not parsed_url.netloc:
             return JsonResponse({'error': 'Invalid URL format'}, status=400)
             
+        allowed_domains = [
+            'youtube.com', 'youtu.be',
+            'facebook.com', 'fb.watch',
+            'instagram.com',
+            'tiktok.com', 'vm.tiktok.com',
+            'twitter.com', 'x.com',
+            'vimeo.com',
+            'reddit.com', 'v.redd.it',
+            'dailymotion.com', 'dai.ly'
+        ]
+        
+        hostname = parsed_url.hostname.lower() if parsed_url.hostname else ''
+        if not any(hostname == domain or hostname.endswith('.' + domain) for domain in allowed_domains):
+            return JsonResponse({'error': 'Unsupported video provider URL'}, status=400)
+            
         # Analyze using service
         result = services.analyze_video(url)
         
@@ -129,6 +144,22 @@ def download_video(request):
             
         if not all([url, format_id, format_type]):
             return JsonResponse({'error': 'Missing required parameters'}, status=400)
+            
+        parsed_url = urlparse(url)
+        allowed_domains = [
+            'youtube.com', 'youtu.be',
+            'facebook.com', 'fb.watch',
+            'instagram.com',
+            'tiktok.com', 'vm.tiktok.com',
+            'twitter.com', 'x.com',
+            'vimeo.com',
+            'reddit.com', 'v.redd.it',
+            'dailymotion.com', 'dai.ly'
+        ]
+        
+        hostname = parsed_url.hostname.lower() if parsed_url.hostname else ''
+        if not any(hostname == domain or hostname.endswith('.' + domain) for domain in allowed_domains):
+            return JsonResponse({'error': 'Unsupported video provider URL'}, status=400)
             
         # Download format
         filepath, title = services.download_format(url, format_id, format_type)

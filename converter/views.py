@@ -2139,8 +2139,17 @@ def convert_file(request, tool_slug):
         return create_cleanup_response(output_path, content_type=content_type, filename=uploaded_file.name)
 
     except Exception as e:
+        err_msg = str(e)
+        if "INVALID_DOCUMENT:" in err_msg:
+            return JsonResponse({
+                'error': err_msg.split("INVALID_DOCUMENT:", 1)[1].strip()
+            }, status=400)
+        if "SERVER_CONFIGURATION:" in err_msg:
+            return JsonResponse({
+                'error': err_msg.split("SERVER_CONFIGURATION:", 1)[1].strip()
+            }, status=503)
         return JsonResponse({
-            'error': f'Conversion failed: {str(e)}'
+            'error': f'Conversion failed: {err_msg}'
         }, status=500)
 
 # ─── Speed Test Endpoints ─────────────────────────────────────

@@ -33,11 +33,6 @@ def get_ytdl_base_options():
     if cookies_file and os.path.exists(cookies_file):
         options['cookiefile'] = cookies_file
         logger.info("Loaded secure cookies file from environment variable.")
-
-    browser_name = os.environ.get('YTDLP_COOKIES_FROM_BROWSER')
-    if browser_name and not options.get('cookiefile'):
-        options['cookiesfrombrowser'] = (browser_name.strip(), None, None, None)
-        logger.info("Configured yt-dlp to load cookies from %s.", browser_name.strip())
     
     # Try to use bundled FFmpeg if available
     ffmpeg_dir = getattr(settings, 'FFMPEG_BIN_DIR', None)
@@ -249,8 +244,12 @@ def analyze_video(url):
                     # Normalize vertical video resolution (Shorts)
                     display_height = width if (height > width and width > 0) else height
                     
+                    fid = f.get('format_id')
+                    if acodec == 'none':
+                        fid = f"{fid}+bestaudio/best"
+                        
                     fmt = {
-                        'format_id': f.get('format_id'),
+                        'format_id': fid,
                         'resolution': f"{display_height}p",
                         'ext': 'mp4', # Force MP4
                         'vcodec': 'H.264' if priority >= 3 else vcodec, # Simplify UI
@@ -334,10 +333,8 @@ def download_format(url, format_id, format_type):
 
     actual_ytdl_format = format_id
     if format_type == 'Video + Audio':
-        if selected_fmt and selected_fmt.get('raw_acodec') == 'none':
-            if not ffmpeg_available:
-                raise YTDLPError("FFMPEG_REQUIRED", "This quality requires media merging, which is currently unavailable.")
-            actual_ytdl_format = f"{format_id}+bestaudio/best"
+        if '+bestaudio' in format_id and not ffmpeg_available:
+            raise YTDLPError("FFMPEG_REQUIRED", "This quality requires media merging, which is currently unavailable.")
             
     if format_type == 'Audio Only':
         if not ffmpeg_available:
