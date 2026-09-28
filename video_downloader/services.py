@@ -93,14 +93,35 @@ def _execute_with_retry(execute_func, url, options):
         return execute_func(options)
     except Exception as e:
         import traceback
+        import platform
+        import shutil
         code, safe_msg = _categorize_error(e, url)
         raw_err_str = str(e) + "\n\n" + traceback.format_exc()
+        
+        ffmpeg_dir = getattr(settings, 'FFMPEG_BIN_DIR', None)
+        ffmpeg_path = shutil.which('ffmpeg')
+        if not ffmpeg_path and ffmpeg_dir and os.path.exists(ffmpeg_dir):
+            ffmpeg_path = shutil.which('ffmpeg', path=ffmpeg_dir)
+            
+        ffprobe_path = shutil.which('ffprobe')
+        if not ffprobe_path and ffmpeg_dir and os.path.exists(ffmpeg_dir):
+            ffprobe_path = shutil.which('ffprobe', path=ffmpeg_dir)
+            
+        cookies_file = os.environ.get('YTDLP_COOKIE_FILE')
+        cookies_enabled = bool(cookies_file)
+        cookies_exists = os.path.exists(cookies_file) if cookies_file else False
+        
         logger.error(
             "YouTube analysis/download failed.",
             extra={
                 "video_url": url,
                 "error_type": code,
                 "yt_dlp_version": getattr(yt_dlp.version, '__version__', 'unknown') if hasattr(yt_dlp, 'version') else getattr(yt_dlp, '__version__', 'unknown'),
+                "ffmpeg_available": bool(ffmpeg_path),
+                "ffprobe_available": bool(ffprobe_path),
+                "os_platform": platform.platform(),
+                "cookies_enabled": cookies_enabled,
+                "cookies_exists": cookies_exists,
                 "raw_error": str(e),
                 "traceback": traceback.format_exc()
             }
