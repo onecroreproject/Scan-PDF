@@ -25,7 +25,8 @@ def get_ytdl_base_options(url):
         'fragment_retries': 3,
         'socket_timeout': 15,
         'format_sort': ['vcodec:h264', 'res', 'acodec:m4a'],
-        'extractor_args': {'youtube': ['player_client=default']},
+        'extractor_args': {'youtube': ['player_client=ios,android,tv,web']},
+        'impersonate': 'chrome',
     }
     
     # Platform-specific Secure Authentication Support
@@ -76,22 +77,28 @@ def _categorize_error(e, url):
     if "nonetype" in error_msg and "youtubedl" in error_msg:
         return "SERVER_CONFIGURATION", "Video downloader is not correctly configured on this server."
         
+    if "po token" in error_msg or "potoken" in error_msg:
+        return "PO_TOKEN_REQUIRED", "YouTube extraction requires a PO Token which is currently unavailable."
+        
     if "http error 400" in error_msg or "bad request" in error_msg:
         return "NETWORK_ERROR", "The server could not reach the video platform. Please try again."
         
     if "http error 403" in error_msg or "forbidden" in error_msg:
         if any(k in error_msg for k in ['rate', 'captcha', 'bot']):
-            return "RATE_LIMITED", "The platform is temporarily limiting requests. Please try again later."
-        return "AUTH_REQUIRED", "This content requires authentication that is not available on the current server."
+            return "BOT_CHALLENGE", "The platform is requesting bot verification. Please try again later."
+        return "UPSTREAM_SERVER_CHALLENGE", "The platform rejected the server's request (HTTP 403)."
     
     if any(k in error_msg for k in ['private']):
-        return "PRIVATE_CONTENT", "This content is private or cannot be accessed."
+        return "VIDEO_PRIVATE", "This content is private or cannot be accessed."
+        
+    if "confirm you're not a bot" in error_msg or "confirm you are not a bot" in error_msg or "botguard" in error_msg:
+        return "BOT_CHALLENGE", "The platform is requesting bot verification. Please try again later."
         
     if any(k in error_msg for k in ['sign in', 'age', 'logged-in', 'login', 'authentication', 'cookies']):
-        return "AUTH_REQUIRED", "This content requires authentication that is not available on the current server."
+        return "REAL_AUTH_REQUIRED", "This content genuinely requires authentication."
 
     if any(k in error_msg for k in ['bot', 'verify', 'empty media response', 'too many requests', 'http error 429']):
-        return "RATE_LIMITED", "The platform is temporarily limiting requests. Please try again later."
+        return "RATE_LIMITED", "The platform is temporarily limiting requests (HTTP 429/Challenge)."
     
     if any(k in error_msg for k in ['video unavailable', 'unavailable video', 'not available', 'no video formats']):
         return "VIDEO_UNAVAILABLE", "This video is unavailable."
