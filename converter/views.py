@@ -205,7 +205,7 @@ TOOLS = {
         'seo_h1': 'PDF to Image Converter',
         's1': 'PDF to',
         'highlight': 'Image Converter',
-        'seo_intro': 'Convert PDF pages into JPG or PNG images online. Upload your PDF, choose your preferred image format, and download high-quality images.',
+        'seo_intro': 'Convert PDF pages into clear, high-quality images while preserving the original page layout. Upload your PDF and turn every page into a separate image ready to download.',
     },
 
     'pdf-to-word': {
@@ -1267,6 +1267,31 @@ def convert_file(request, tool_slug):
             return create_cleanup_response(output_path, content_type='application/vnd.openxmlformats-officedocument.wordprocessingml.document')
         except Exception as e:
             return JsonResponse({'error': f'Word Merge failed: {str(e)}'}, status=500)
+
+    # ── PDF to Image ──
+    if tool_slug == 'pdf-to-image':
+        if 'file' not in request.FILES:
+            return JsonResponse({'error': 'No file was uploaded.'}, status=400)
+            
+        uploaded_file = request.FILES['file']
+        image_format = request.POST.get('image_format', 'png').lower()
+        
+        try:
+            input_path = save_uploaded_file(uploaded_file)
+            from .utils import convert_pdf_to_image
+            result = convert_pdf_to_image(input_path, uploaded_file.name, image_format=image_format, return_b64=True)
+            
+            try:
+                os.remove(input_path)
+            except OSError:
+                pass
+                
+            return JsonResponse({
+                'success': True,
+                'result': result
+            })
+        except Exception as e:
+            return JsonResponse({'error': f'PDF to Image failed: {str(e)}'}, status=500)
 
     # ── HTML to PDF (URL or file) ──
     if tool_slug == 'html-to-pdf':

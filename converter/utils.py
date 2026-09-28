@@ -1113,7 +1113,7 @@ def convert_html_to_pdf(input_path, original_name, url=None):
 # ═══════════════════════════════════════════════════════════════
 # 5. PDF → IMAGE (JPG/PNG)
 # ═══════════════════════════════════════════════════════════════
-def convert_pdf_to_image(input_path, original_name, image_format='png'):
+def convert_pdf_to_image(input_path, original_name, image_format='png', return_b64=False):
     """Convert a PDF to images (one image per page). Returns a zip if multiple pages."""
     try:
         import pymupdf as fitz
@@ -1122,6 +1122,8 @@ def convert_pdf_to_image(input_path, original_name, image_format='png'):
     if not hasattr(fitz, 'open') and hasattr(fitz, 'Document'):
         fitz.open = fitz.Document
     import zipfile
+    import base64
+    import io
 
     _, output_dir = ensure_media_dirs()
     base_name = Path(original_name).stem
@@ -1132,26 +1134,43 @@ def convert_pdf_to_image(input_path, original_name, image_format='png'):
     if num_pages == 0:
         raise Exception("PDF has no pages to convert.")
     
+    images_b64 = []
+    
     if num_pages == 1:
-        # Single page: return a single image
+        # Single page
         page = pdf_doc[0]
         mat = fitz.Matrix(2.0, 2.0)
         pix = page.get_pixmap(matrix=mat, alpha=False)
         
         output_path = get_output_path(original_name, image_format)
+        img_filename = f"{base_name}_page_1.{image_format}"
         
         if image_format.lower() in ('jpg', 'jpeg'):
             from PIL import Image
             img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
             img.save(output_path, "JPEG", quality=95, subsampling=0)
+            if return_b64:
+                img_buffer = io.BytesIO()
+                img.save(img_buffer, "JPEG", quality=95, subsampling=0)
+                b64_data = base64.b64encode(img_buffer.getvalue()).decode('utf-8')
+                images_b64.append({'page': 1, 'filename': img_filename, 'data': f"data:image/jpeg;base64,{b64_data}"})
         else:
             pix.save(output_path)
+            if return_b64:
+                b64_data = base64.b64encode(pix.tobytes()).decode('utf-8')
+                images_b64.append({'page': 1, 'filename': img_filename, 'data': f"data:image/png;base64,{b64_data}"})
         
         pdf_doc.close()
+        
+        if return_b64:
+            try: os.remove(output_path)
+            except: pass
+            return {'images': images_b64}
         return output_path
     else:
-        # Multiple pages: create a ZIP archive
+        # Multiple pages
         zip_path = get_output_path(original_name, 'zip', suffix='_images')
+        zip_filename = f"{base_name}_images.zip"
         
         with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
             for page_num in range(num_pages):
@@ -1166,18 +1185,32 @@ def convert_pdf_to_image(input_path, original_name, image_format='png'):
                     from PIL import Image
                     img = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
                     img.save(img_path, "JPEG", quality=95, subsampling=0)
+                    if return_b64:
+                        img_buffer = io.BytesIO()
+                        img.save(img_buffer, "JPEG", quality=95, subsampling=0)
+                        b64_data = base64.b64encode(img_buffer.getvalue()).decode('utf-8')
+                        images_b64.append({'page': page_num + 1, 'filename': img_filename, 'data': f"data:image/jpeg;base64,{b64_data}"})
                 else:
                     pix.save(img_path)
+                    if return_b64:
+                        b64_data = base64.b64encode(pix.tobytes()).decode('utf-8')
+                        images_b64.append({'page': page_num + 1, 'filename': img_filename, 'data': f"data:image/png;base64,{b64_data}"})
                 
                 zipf.write(img_path, img_filename)
                 
-                # Clean up individual image
                 try:
                     os.remove(img_path)
                 except OSError:
                     pass
         
         pdf_doc.close()
+        
+        if return_b64:
+            with open(zip_path, 'rb') as f:
+                zip_b64 = base64.b64encode(f.read()).decode('utf-8')
+            try: os.remove(zip_path)
+            except: pass
+            return {'images': images_b64, 'zip_data': zip_b64, 'zip_filename': zip_filename}
         return zip_path
 
 
@@ -1188,21 +1221,9 @@ def convert_pdf_to_word(input_path, original_name):
     """Convert a PDF file to a Word document (.docx).
 
     Primary: pdf2docx (preserves layout, images, tables).
-    Fallback: PyMuPDF text extraction into a styled python-docx document.
     """
     output_path = get_output_path(original_name, 'docx')
 
-    # ── Primary: pdf2docx ───────────────────────────────
-    try:
-        from pdf2docx import Converter
-        cv = Converter(input_path)
-        cv.convert(output_path)
-        cv.close()
-        return output_path
-    except Exception:
-        pass
-
-    # ── Fallback: PyMuPDF + python-docx ─────────────────
     try:
         try:
             import pymupdf as fitz
@@ -1210,85 +1231,46 @@ def convert_pdf_to_word(input_path, original_name):
             import fitz
         if not hasattr(fitz, 'open') and hasattr(fitz, 'Document'):
             fitz.open = fitz.Document
-        from docx import Document
-        from docx.shared import Pt, Inches, RGBColor
-        from docx.enum.text import WD_ALIGN_PARAGRAPH
-
+            
+        # 1. Validate PDF
         pdf = fitz.open(input_path)
-        doc = Document()
-
-        # Set default style
-        style = doc.styles['Normal']
-        style.font.name = 'Calibri'
-        style.font.size = Pt(11)
-        style.paragraph_format.space_after = Pt(4)
-
-        for page_idx in range(len(pdf)):
+        
+        # 2. Check encryption
+        if pdf.is_encrypted:
+            pdf.close()
+            raise Exception("This PDF is password protected. Please remove the password protection and try again.")
+            
+        # 3. Check if empty or purely scanned
+        has_text = False
+        for page_idx in range(min(5, len(pdf))):
             page = pdf[page_idx]
-
-            if page_idx > 0:
-                doc.add_page_break()
-
-            # Add page header
-            header_para = doc.add_paragraph()
-            header_run = header_para.add_run(f'— Page {page_idx + 1} —')
-            header_run.font.size = Pt(8)
-            header_run.font.color.rgb = RGBColor(148, 163, 184)
-            header_para.alignment = WD_ALIGN_PARAGRAPH.CENTER
-            header_para.paragraph_format.space_after = Pt(12)
-
-            # Extract text blocks with positions
-            blocks = page.get_text("dict")["blocks"]
-
-            for block in blocks:
-                if block["type"] == 0:  # Text block
-                    for line in block.get("lines", []):
-                        para = doc.add_paragraph()
-                        for span in line.get("spans", []):
-                            text = span.get("text", "")
-                            if not text.strip():
-                                continue
-
-                            run = para.add_run(text)
-
-                            # Font size
-                            size = span.get("size", 11)
-                            run.font.size = Pt(max(6, min(size, 36)))
-
-                            # Bold / Italic detection from flags
-                            flags = span.get("flags", 0)
-                            if flags & 2 ** 4:  # bold flag
-                                run.bold = True
-                            if flags & 2 ** 1:  # italic flag
-                                run.italic = True
-
-                            # Font colour
-                            color_int = span.get("color", 0)
-                            if color_int and color_int != 0:
-                                r = (color_int >> 16) & 0xFF
-                                g = (color_int >> 8) & 0xFF
-                                b = color_int & 0xFF
-                                run.font.color.rgb = RGBColor(r, g, b)
-
-                            # Font family
-                            font_name = span.get("font", "")
-                            if font_name:
-                                clean = font_name.split("+")[-1].split("-")[0]
-                                run.font.name = clean
-
-                elif block["type"] == 1:  # Image block
-                    try:
-                        img_data = block.get("image")
-                        if img_data:
-                            img_stream = io.BytesIO(img_data)
-                            doc.add_picture(img_stream, width=Inches(5))
-                    except Exception:
-                        pass
-
-        doc.save(output_path)
+            if page.get_text("text").strip():
+                has_text = True
+                break
+        
         pdf.close()
-        return output_path
+        
+        if not has_text:
+            raise Exception("This PDF appears to be a scanned image with no selectable text. OCR is not available.")
+            
+    except Exception as e:
+        if "password protected" in str(e) or "OCR is not" in str(e):
+            raise
+        if "cannot open" in str(e).lower() or "file not found" in str(e).lower():
+            raise Exception("The PDF file is corrupted or invalid.")
 
+    # 4. Layout-aware PDF to DOCX conversion
+    try:
+        from pdf2docx import Converter
+        cv = Converter(input_path)
+        cv.convert(output_path)
+        cv.close()
+        
+        # 5. Output Validation
+        if not os.path.exists(output_path) or os.path.getsize(output_path) == 0:
+            raise Exception("Conversion completed but the output file is empty.")
+            
+        return output_path
     except Exception as e:
         raise Exception(f'Failed to convert PDF to Word: {str(e)}')
 
@@ -1298,8 +1280,9 @@ def convert_pdf_to_word(input_path, original_name):
 # ═══════════════════════════════════════════════════════════════
 def convert_pdf_to_pptx(input_path, original_name):
     """
-    Convert a PDF file to a PowerPoint presentation (.pptx) with accurate
-    alignment by mapping PDF coordinates directly to slide coordinates.
+    Convert a PDF file to a PowerPoint presentation (.pptx).
+    Prioritizes VISUAL FIDELITY by rendering each PDF page at high quality
+    and placing it onto a corresponding PowerPoint slide without stretching or cropping.
     """
     output_path = get_output_path(original_name, 'pptx')
 
@@ -1312,105 +1295,88 @@ def convert_pdf_to_pptx(input_path, original_name):
             fitz.open = fitz.Document
         from pptx import Presentation
         from pptx.util import Inches, Pt, Emu
-        from pptx.dml.color import RGBColor as PptxRGBColor
+        import tempfile
+        import os
 
+        # 1. Validate PDF
         pdf = fitz.open(input_path)
+        
+        # 2. Check encryption
+        if pdf.is_encrypted:
+            pdf.close()
+            raise Exception("This PDF is password protected. Please remove the password protection and try again.")
+            
+        if len(pdf) == 0:
+            pdf.close()
+            raise Exception("The PDF file contains no pages.")
+            
         prs = Presentation()
+
+        # Determine typical page size from the first page (in inches)
+        first_page = pdf[0]
+        base_width_in = first_page.rect.width / 72.0
+        base_height_in = first_page.rect.height / 72.0
+        
+        # PPTX requires dimensions in EMUs (1 inch = 914400 EMUs)
+        prs.slide_width = Emu(int(base_width_in * 914400))
+        prs.slide_height = Emu(int(base_height_in * 914400))
+        
+        blank_layout = prs.slide_layouts[6]
+        
+        # For rendering at high quality (3x scale)
+        zoom = 3.0
+        mat = fitz.Matrix(zoom, zoom)
 
         for page_idx in range(len(pdf)):
             page = pdf[page_idx]
-            p_rect = page.rect
-
-            # Set slide size to match PDF page exactly (points → EMU)
-            if page_idx == 0:
-                prs.slide_width = Emu(int(p_rect.width / 72 * 914400))
-                prs.slide_height = Emu(int(p_rect.height / 72 * 914400))
-
-            blank_layout = prs.slide_layouts[6]
-            slide = prs.slides.add_slide(blank_layout)
-
-            # Scale factor: PDF points to inches (1 inch = 72 pt)
-            s = 1.0 / 72.0
-
-            # Add images
-            images = page.get_images(full=True)
-            for img in images:
-                try:
-                    xref = img[0]
-                    base_image = pdf.extract_image(xref)
-                    image_bytes = base_image["image"]
-                    img_rects = page.get_image_rects(xref)
-                    for r in img_rects:
-                        img_stream = io.BytesIO(image_bytes)
-                        slide.shapes.add_picture(
-                            img_stream,
-                            Inches(r.x0 * s), Inches(r.y0 * s),
-                            width=Inches((r.x1 - r.x0) * s),
-                            height=Inches((r.y1 - r.y0) * s)
-                        )
-                except Exception:
-                    continue
-
-            # Add text blocks
-            blocks = page.get_text("dict")["blocks"]
-            for block in blocks:
-                if block["type"] != 0:
-                    continue
-
-                bbox = block["bbox"]
-                bx0 = bbox[0] * s
-                by0 = bbox[1] * s
-                bw = (bbox[2] - bbox[0]) * s
-                bh = (bbox[3] - bbox[1]) * s
-
-                if bw < 0.05 or bh < 0.05:
-                    continue
-
-                txBox = slide.shapes.add_textbox(
-                    Inches(bx0), Inches(by0), Inches(bw), Inches(bh)
+            
+            # Render page to a temporary image
+            pix = page.get_pixmap(matrix=mat, alpha=False)
+            
+            with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp_img:
+                pix.save(tmp_img.name)
+                tmp_img_path = tmp_img.name
+                
+            try:
+                slide = prs.slides.add_slide(blank_layout)
+                
+                # Page dimensions in inches
+                p_width_in = page.rect.width / 72.0
+                p_height_in = page.rect.height / 72.0
+                
+                # Proportional containment scaling
+                scale = min(base_width_in / p_width_in, base_height_in / p_height_in)
+                
+                final_width = p_width_in * scale
+                final_height = p_height_in * scale
+                
+                # Center the image on the slide
+                left = (base_width_in - final_width) / 2.0
+                top = (base_height_in - final_height) / 2.0
+                
+                slide.shapes.add_picture(
+                    tmp_img_path,
+                    Inches(left), Inches(top),
+                    Inches(final_width), Inches(final_height)
                 )
-                tf = txBox.text_frame
-                tf.word_wrap = True
-
-                for line_idx, line in enumerate(block.get("lines", [])):
-                    if line_idx == 0:
-                        para = tf.paragraphs[0]
-                    else:
-                        para = tf.add_paragraph()
-
-                    for span in line.get("spans", []):
-                        run = para.add_run()
-                        run.text = span["text"]
-                        fs = span.get("size", 12)
-                        run.font.size = Pt(max(6, min(fs, 72)))
-
-                        c_int = span.get("color", 0)
-                        if c_int:
-                            r_c = (c_int >> 16) & 0xFF
-                            g_c = (c_int >> 8) & 0xFF
-                            b_c = c_int & 0xFF
-                            run.font.color.rgb = PptxRGBColor(r_c, g_c, b_c)
-                        else:
-                            run.font.color.rgb = PptxRGBColor(0, 0, 0)
-
-                        flags = span.get("flags", 0)
-                        if flags & 2**4:
-                            run.bold = True
-                        if flags & 2**1:
-                            run.italic = True
-
-                        font_name = span.get("font", "")
-                        if font_name:
-                            clean_name = font_name.split("+")[-1].split("-")[0]
-                            run.font.name = clean_name
-
-                txBox.fill.background()
+            finally:
+                if os.path.exists(tmp_img_path):
+                    os.remove(tmp_img_path)
 
         prs.save(output_path)
         pdf.close()
+        
+        # Output Validation
+        if not os.path.exists(output_path) or os.path.getsize(output_path) == 0:
+            raise Exception("Conversion completed but the output file is empty.")
+            
         return output_path
 
     except Exception as e:
+        if "password protected" in str(e):
+            raise
+        if "cannot open" in str(e).lower() or "file not found" in str(e).lower():
+            raise Exception("The PDF file is corrupted or invalid.")
         raise Exception(f'Failed to convert PDF to PowerPoint: {str(e)}')
 
 
