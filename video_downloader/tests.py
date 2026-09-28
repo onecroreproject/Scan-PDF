@@ -36,11 +36,11 @@ class TestYouTubeDownloader(TestCase):
         )
         self.assertEqual(code, "FACEBOOK_BROWSER_LOCKED")
 
-    @patch.dict('os.environ', {'YTDLP_COOKIES_FROM_BROWSER': 'chrome'}, clear=False)
-    @patch('video_downloader.services.os.path.exists', return_value=False)
-    def test_browser_cookies_can_be_configured(self, mock_exists):
+    @patch('video_downloader.services.os.path.exists', return_value=True)
+    @patch.dict('os.environ', {'YTDLP_COOKIE_FILE': '/fake/cookies.txt'}, clear=False)
+    def test_file_cookies_can_be_configured(self, mock_exists):
         options = get_ytdl_base_options()
-        self.assertEqual(options['cookiesfrombrowser'][0], 'chrome')
+        self.assertEqual(options['cookiefile'], '/fake/cookies.txt')
 
     @patch('video_downloader.services.analyze_video')
     def test_analyze_url_catches_ytdlp_error(self, mock_analyze):
