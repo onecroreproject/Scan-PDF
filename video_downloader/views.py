@@ -11,8 +11,8 @@ def index(request):
     """Renders the main video downloader page."""
     context = {
         'page_title': 'Online Video Downloader - ScanPDF',
-        'meta_description': 'Free online video downloader. Download videos from YouTube, Facebook, Instagram, TikTok, Twitter and more in high quality.',
-        'keywords': 'YouTube Video Downloader, Facebook Video Downloader, Instagram Video Downloader, TikTok Video Downloader, X Video Downloader, Online Video Downloader, Video Downloader'
+        'meta_description': 'Free online video downloader. Download videos from YouTube, Facebook, Instagram, Twitter and more in high quality.',
+        'keywords': 'YouTube Video Downloader, Facebook Video Downloader, Instagram Video Downloader, X Video Downloader, Online Video Downloader, Video Downloader'
     }
     return render(request, 'video_downloader/universal.html', context)
 
@@ -48,38 +48,6 @@ def instagram_downloader(request):
     }
     return render(request, 'video_downloader/instagram.html', context)
 
-def tiktok_downloader(request):
-    context = {
-        'page_title': 'TikTok Video Downloader - Fast & Free | ScanPDF',
-        'meta_description': 'Download TikTok videos without watermark. Fast and free online TikTok video downloader.',
-        'keywords': 'TikTok Video Downloader, download tiktok without watermark, save tiktok video'
-    }
-    return render(request, 'video_downloader/tiktok.html', context)
-
-def vimeo_downloader(request):
-    context = {
-        'page_title': 'Vimeo Video Downloader - Fast & Free | ScanPDF',
-        'meta_description': 'Download Vimeo videos in HD quality. Free and fast online Vimeo video downloader.',
-        'keywords': 'Vimeo Video Downloader, download vimeo video, save vimeo video'
-    }
-    return render(request, 'video_downloader/vimeo.html', context)
-
-def reddit_downloader(request):
-    context = {
-        'page_title': 'Reddit Video Downloader - Fast & Free | ScanPDF',
-        'meta_description': 'Download Reddit videos with audio. Fast, free, and secure Reddit video downloader.',
-        'keywords': 'Reddit Video Downloader, download reddit video, save reddit video'
-    }
-    return render(request, 'video_downloader/reddit.html', context)
-
-def dailymotion_downloader(request):
-    context = {
-        'page_title': 'Dailymotion Video Downloader - Fast & Free | ScanPDF',
-        'meta_description': 'Download Dailymotion videos in high quality. Free online Dailymotion video downloader.',
-        'keywords': 'Dailymotion Video Downloader, download dailymotion video, save dailymotion video'
-    }
-    return render(request, 'video_downloader/dailymotion.html', context)
-
 @csrf_exempt
 @require_http_methods(["POST"])
 def analyze_url(request):
@@ -100,11 +68,7 @@ def analyze_url(request):
             'youtube.com', 'youtu.be',
             'facebook.com', 'fb.watch',
             'instagram.com',
-            'tiktok.com', 'vm.tiktok.com',
-            'twitter.com', 'x.com',
-            'vimeo.com',
-            'reddit.com', 'v.redd.it',
-            'dailymotion.com', 'dai.ly'
+            'twitter.com', 'x.com'
         ]
         
         hostname = parsed_url.hostname.lower() if parsed_url.hostname else ''
@@ -150,11 +114,7 @@ def download_video(request):
             'youtube.com', 'youtu.be',
             'facebook.com', 'fb.watch',
             'instagram.com',
-            'tiktok.com', 'vm.tiktok.com',
-            'twitter.com', 'x.com',
-            'vimeo.com',
-            'reddit.com', 'v.redd.it',
-            'dailymotion.com', 'dai.ly'
+            'twitter.com', 'x.com'
         ]
         
         hostname = parsed_url.hostname.lower() if parsed_url.hostname else ''
@@ -166,6 +126,10 @@ def download_video(request):
         
         if not filepath or not os.path.exists(filepath):
             return JsonResponse({'error': 'Failed to download file'}, status=500)
+            
+        if os.path.getsize(filepath) == 0:
+            os.remove(filepath)
+            return JsonResponse({'error': 'Downloaded file is empty'}, status=500)
             
         # Prepare response
         filename = os.path.basename(filepath)

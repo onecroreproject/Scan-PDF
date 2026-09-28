@@ -120,7 +120,7 @@ def tools_processor(request):
     metadata['video-downloader-universal'] = {
         'title': 'Universal Video Downloader',
         'icon': 'download-cloud',
-        'description': 'Download videos from YouTube, Facebook, Instagram, TikTok, and more.',
+        'description': 'Download videos from YouTube, Facebook, Instagram, Twitter, and more.',
         'slug': 'video-downloader',
         'url': reverse('video_downloader:index')
     }
@@ -152,34 +152,6 @@ def tools_processor(request):
         'slug': 'instagram-downloader',
         'url': reverse('video_downloader:instagram_downloader')
     }
-    metadata['tiktok-downloader'] = {
-        'title': 'TikTok Video Downloader',
-        'icon': 'music-2',
-        'description': 'Download TikTok videos without watermark.',
-        'slug': 'tiktok-downloader',
-        'url': reverse('video_downloader:tiktok_downloader')
-    }
-    metadata['vimeo-downloader'] = {
-        'title': 'Vimeo Video Downloader',
-        'icon': 'video',
-        'description': 'Download Vimeo videos in HD quality.',
-        'slug': 'vimeo-downloader',
-        'url': reverse('video_downloader:vimeo_downloader')
-    }
-    metadata['reddit-downloader'] = {
-        'title': 'Reddit Video Downloader',
-        'icon': 'hash',
-        'description': 'Download Reddit videos with audio.',
-        'slug': 'reddit-downloader',
-        'url': reverse('video_downloader:reddit_downloader')
-    }
-    metadata['dailymotion-downloader'] = {
-        'title': 'Dailymotion Video Downloader',
-        'icon': 'play-circle',
-        'description': 'Download Dailymotion videos in high quality.',
-        'slug': 'dailymotion-downloader',
-        'url': reverse('video_downloader:dailymotion_downloader')
-    }
 
     # Video Tools and Link Tools for global navigation
     video_tools = [
@@ -193,10 +165,6 @@ def tools_processor(request):
         {'title': 'Facebook', 'icon': 'facebook', 'url': reverse('video_downloader:facebook_downloader')},
         {'title': 'X (Twitter)', 'icon': 'twitter', 'url': reverse('video_downloader:twitter_downloader')},
         {'title': 'Instagram', 'icon': 'instagram', 'url': reverse('video_downloader:instagram_downloader')},
-        {'title': 'TikTok', 'icon': 'music-2', 'url': reverse('video_downloader:tiktok_downloader')},
-        {'title': 'Vimeo', 'icon': 'video', 'url': reverse('video_downloader:vimeo_downloader')},
-        {'title': 'Reddit', 'icon': 'hash', 'url': reverse('video_downloader:reddit_downloader')},
-        {'title': 'Dailymotion', 'icon': 'play-circle', 'url': reverse('video_downloader:dailymotion_downloader')},
     ]
 
     link_tools = [

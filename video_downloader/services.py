@@ -15,24 +15,40 @@ logger = logging.getLogger(__name__)
 
 import random
 
-def get_ytdl_base_options():
+def get_ytdl_base_options(url):
     options = {
         'quiet': True,
         'no_warnings': True,
         'nocheckcertificate': True,
         'geo_bypass': True,
-        'retries': 10,
-        'fragment_retries': 10,
+        'retries': 3,
+        'fragment_retries': 3,
+        'socket_timeout': 15,
         'format_sort': ['vcodec:h264', 'res', 'acodec:m4a'],
-        'force_ipv4': True,
-        'extractor_args': {'youtube': ['player_client=web,default']},
+        'extractor_args': {'youtube': ['player_client=default']},
     }
     
-    # Secure Optional Authentication Support
-    cookies_file = os.environ.get('YTDLP_COOKIE_FILE')
+    # Platform-specific Secure Authentication Support
+    parsed = urlparse(url)
+    hostname = parsed.hostname.lower() if parsed.hostname else ''
+    
+    cookies_file = None
+    if 'youtube.com' in hostname or 'youtu.be' in hostname:
+        cookies_file = os.environ.get('YTDLP_YOUTUBE_COOKIE_FILE')
+    elif 'facebook.com' in hostname or 'fb.watch' in hostname:
+        cookies_file = os.environ.get('YTDLP_FACEBOOK_COOKIE_FILE')
+    elif 'instagram.com' in hostname:
+        cookies_file = os.environ.get('YTDLP_INSTAGRAM_COOKIE_FILE')
+    elif 'twitter.com' in hostname or 'x.com' in hostname:
+        cookies_file = os.environ.get('YTDLP_TWITTER_COOKIE_FILE')
+        
+    # Fallback to general cookie file if specific one is not provided
+    if not cookies_file:
+        cookies_file = os.environ.get('YTDLP_COOKIE_FILE')
+
     if cookies_file and os.path.exists(cookies_file):
         options['cookiefile'] = cookies_file
-        logger.info("Loaded secure cookies file from environment variable.")
+        logger.info(f"Loaded secure cookies file for {hostname}.")
     
     # Try to use bundled FFmpeg if available
     ffmpeg_dir = getattr(settings, 'FFMPEG_BIN_DIR', None)
@@ -51,39 +67,48 @@ class YTDLPError(Exception):
 def _categorize_error(e, url):
     error_msg = str(e).lower()
 
-    if 'facebook.com' in urlparse(url).netloc.lower():
+    if 'facebook.com' in urlparse(url).netloc.lower() or 'instagram.com' in urlparse(url).netloc.lower():
         if any(k in error_msg for k in ['could not copy chrome cookie database', 'cookie database', 'permission denied']):
-            return 'FACEBOOK_BROWSER_LOCKED', 'Close Chrome completely, restart this server, and try again. For a running browser, export Facebook cookies and configure YTDLP_COOKIE_FILE instead.'
-        if any(k in error_msg for k in ['cannot parse data', 'login', 'sign in', 'private']):
-            return 'FACEBOOK_ACCESS_REQUIRED', 'Facebook did not provide the video to this server. Export your Facebook cookies and configure YTDLP_COOKIE_FILE, then try again.'
+            return 'AUTH_REQUIRED', 'This content requires authentication that is not available on the current server.'
+        if any(k in error_msg for k in ['cannot parse data', 'login', 'sign in', 'private', 'authentication']):
+            return 'AUTH_REQUIRED', 'This content requires authentication that is not available on the current server.'
     
     if "nonetype" in error_msg and "youtubedl" in error_msg:
-        return "YT_DLP_MISSING", "yt-dlp is not installed or available on this server."
+        return "SERVER_CONFIGURATION", "Video downloader is not correctly configured on this server."
         
     if "http error 400" in error_msg or "bad request" in error_msg:
-        return "YOUTUBE_API_BLOCK", "YouTube API rejected the request. Please update yt-dlp or check player clients."
-    
-    if any(k in error_msg for k in ['sign in', 'bot', 'age', 'verify', 'cookies-from-browser', 'authentication', 'logged-in', 'login', 'empty media response']):
-        return "YOUTUBE_BOT_CHALLENGE", "Unable to analyze this video from the current server. Please try again later."
-    
-    if any(k in error_msg for k in ['video unavailable', 'unavailable video', 'not available']):
-        return "VIDEO_UNAVAILABLE", "This video is unavailable or cannot be accessed from the server."
+        return "NETWORK_ERROR", "The server could not reach the video platform. Please try again."
         
-    if any(k in error_msg for k in ['private video']):
-        return "AUTH_REQUIRED", "This video requires authorized access."
+    if "http error 403" in error_msg or "forbidden" in error_msg:
+        if any(k in error_msg for k in ['rate', 'captcha', 'bot']):
+            return "RATE_LIMITED", "The platform is temporarily limiting requests. Please try again later."
+        return "AUTH_REQUIRED", "This content requires authentication that is not available on the current server."
+    
+    if any(k in error_msg for k in ['private']):
+        return "PRIVATE_CONTENT", "This content is private or cannot be accessed."
         
-    if any(k in error_msg for k in ['http error 429', 'too many requests']):
-        return "RATE_LIMITED", "YouTube is temporarily limiting requests. Please try again shortly."
+    if any(k in error_msg for k in ['sign in', 'age', 'logged-in', 'login', 'authentication', 'cookies']):
+        return "AUTH_REQUIRED", "This content requires authentication that is not available on the current server."
+
+    if any(k in error_msg for k in ['bot', 'verify', 'empty media response', 'too many requests', 'http error 429']):
+        return "RATE_LIMITED", "The platform is temporarily limiting requests. Please try again later."
+    
+    if any(k in error_msg for k in ['video unavailable', 'unavailable video', 'not available', 'no video formats']):
+        return "VIDEO_UNAVAILABLE", "This video is unavailable."
         
     if any(k in error_msg for k in ['network', 'timeout', 'timed out', 'connection']):
-        return "NETWORK_ERROR", "A network error occurred while reaching the video server."
+        return "NETWORK_ERROR", "The server could not reach the video platform. Please try again."
+        
+    if any(k in error_msg for k in ['geo', 'country', 'region']):
+        return "GEO_RESTRICTED", "This content is unavailable from the server's region."
         
     if any(k in error_msg for k in ['format is not available', 'requested format']):
-        return "FORMAT_UNAVAILABLE", "The requested format is not available."
+        return "EXTRACTION_FAILED", "The requested format is not available."
+        
     if any(k in error_msg for k in ['ffmpeg is not installed', 'ffmpeg not found', 'ffprobe and ffmpeg']):
         return "FFMPEG_MISSING", "FFmpeg is required for this format but is not available on the server."
         
-    return "UNKNOWN_YOUTUBE_ERROR", "Unable to prepare this download."
+    return "EXTRACTION_FAILED", "Unable to analyze this video. Please try again."
 
 def _execute_with_retry(execute_func, url, options):
     """
@@ -112,7 +137,7 @@ def _execute_with_retry(execute_func, url, options):
         cookies_exists = os.path.exists(cookies_file) if cookies_file else False
         
         logger.error(
-            "YouTube analysis/download failed.",
+            f"YouTube analysis/download failed: {str(e)}",
             extra={
                 "video_url": url,
                 "error_type": code,
@@ -193,7 +218,7 @@ def analyze_video(url):
     """
     Analyzes the given URL using yt-dlp and returns available formats and metadata.
     """
-    options = get_ytdl_base_options()
+    options = get_ytdl_base_options(url)
     
     def _extract(opts):
         with yt_dlp.YoutubeDL(opts) as ydl:
@@ -368,7 +393,7 @@ def download_format(url, format_id, format_type):
     file_id = str(uuid.uuid4())
     output_template = os.path.join(temp_dir, f"{file_id}.%(ext)s")
     
-    options = get_ytdl_base_options()
+    options = get_ytdl_base_options(url)
     options['outtmpl'] = output_template
     
     if format_type == 'Video + Audio':
