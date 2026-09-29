@@ -11,11 +11,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const videoDuration = document.getElementById('video-duration');
     const videoTitle = document.getElementById('video-title');
     
-    // Tables
-    const videoFormatsContainer = document.getElementById('video-formats-container');
-    const videoFormatsBody = document.getElementById('video-formats-body');
-    const audioFormatsContainer = document.getElementById('audio-formats-container');
-    const audioFormatsBody = document.getElementById('audio-formats-body');
+
     
     const mp4Btn = document.getElementById('btn-mp4-toggle');
     const mp4Menu = document.getElementById('mp4-menu');
@@ -102,7 +98,15 @@ document.addEventListener('DOMContentLoaded', function() {
                 body: JSON.stringify({ url: url })
             });
             
-            const data = await response.json();
+            const contentType = response.headers.get('content-type');
+            let data = {};
+            if (contentType && contentType.indexOf('application/json') !== -1) {
+                data = await response.json();
+            } else {
+                if (!response.ok) {
+                    throw new Error(`Server returned error ${response.status} without a valid JSON message.`);
+                }
+            }
             
             if (!response.ok) {
                 throw new Error(data.message || data.error || 'Failed to analyze video');
