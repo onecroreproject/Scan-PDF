@@ -17,6 +17,46 @@ document.addEventListener('DOMContentLoaded', function() {
     const audioFormatsContainer = document.getElementById('audio-formats-container');
     const audioFormatsBody = document.getElementById('audio-formats-body');
     
+    const mp4Btn = document.getElementById('btn-mp4-toggle');
+    const mp4Menu = document.getElementById('mp4-menu');
+    const mp3Btn = document.getElementById('btn-mp3-toggle');
+    const mp3Menu = document.getElementById('mp3-menu');
+    
+    // Dropdown toggles
+    if (mp4Btn && mp4Menu) {
+        mp4Btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            mp4Menu.classList.toggle('hidden');
+            if (mp3Menu) mp3Menu.classList.add('hidden');
+        });
+    }
+    
+    if (mp3Btn && mp3Menu) {
+        mp3Btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            mp3Menu.classList.toggle('hidden');
+            if (mp4Menu) mp4Menu.classList.add('hidden');
+        });
+    }
+    
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', function(e) {
+        if (mp4Menu && !mp4Menu.classList.contains('hidden') && !mp4Menu.contains(e.target) && (!mp4Btn || !mp4Btn.contains(e.target))) {
+            mp4Menu.classList.add('hidden');
+        }
+        if (mp3Menu && !mp3Menu.classList.contains('hidden') && !mp3Menu.contains(e.target) && (!mp3Btn || !mp3Btn.contains(e.target))) {
+            mp3Menu.classList.add('hidden');
+        }
+    });
+    
+    // Escape to close
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            if (mp4Menu) mp4Menu.classList.add('hidden');
+            if (mp3Menu) mp3Menu.classList.add('hidden');
+        }
+    });
+    
     function formatBytes(bytes, decimals = 2) {
         if (!+bytes) return 'Unknown';
         const k = 1024;
@@ -77,9 +117,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 videoThumbnail.src = window.STATIC_URLS?.placeholder || '';
             }
             
-            // Clear tables
-            videoFormatsBody.innerHTML = '';
-            audioFormatsBody.innerHTML = '';
+            // Clear dropdown menus
+            const mp4MenuItems = document.getElementById('mp4-menu-items');
+            const mp3MenuItems = document.getElementById('mp3-menu-items');
+            if (mp4MenuItems) mp4MenuItems.innerHTML = '';
+            if (mp3MenuItems) mp3MenuItems.innerHTML = '';
             
             let hasVideo = false;
             let hasAudio = false;
@@ -101,7 +143,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
             sortedFormats.forEach(fmt => {
                 const sizeStr = (fmt.filesize && fmt.filesize > 0) ? formatBytes(fmt.filesize) : '';
-                const sizeMarkup = sizeStr ? '<span class="text-surface-400 text-sm hidden sm:block ml-auto pr-4">' + sizeStr + '</span>' : '<span class="hidden sm:block ml-auto pr-4"></span>';
+                const sizeMarkup = sizeStr ? '<span class="text-surface-400 text-xs ml-auto">' + sizeStr + '</span>' : '';
                 const dlUrl = downloadEndpoint + '?url=' + encodeURIComponent(url) + '&format_id=' + encodeURIComponent(fmt.format_id) + '&format_type=' + encodeURIComponent(fmt.type);
                 
                 if (fmt.type === 'Audio Only') {
@@ -114,26 +156,136 @@ document.addEventListener('DOMContentLoaded', function() {
                     else if (rawBitrate >= 64) displayBitrate = rawBitrate;
                     
                     const isUnknown = displayBitrate === 0;
-                    const finalDisplayStr = isUnknown ? 'Best' : displayBitrate + ' kbps';
+                    const finalDisplayStr = isUnknown ? 'High Quality' : displayBitrate + ' kbps';
                     
-                    if ((displayBitrate >= 64 || isUnknown) && !addedAudioBitrate.has(displayBitrate)) {
+                    let descriptor = '';
+                    if (!isUnknown) {
+                        if (displayBitrate >= 256) descriptor = 'High';
+                        else if (displayBitrate >= 192) descriptor = 'Standard';
+                        else descriptor = 'Compact';
+                    }
+                    const descMarkup = descriptor ? `<span class="text-surface-400 text-xs">${descriptor}</span>` : '';
+                    
+                    if (!addedAudioBitrate.has(displayBitrate)) {
                         hasAudio = true;
                         addedAudioBitrate.add(displayBitrate);
                         
-                        const row = document.createElement('div');
-                        row.className = 'flex items-center justify-between px-6 py-4 hover:bg-surface-50 transition-colors';
-                        
-                        row.innerHTML = `
-                            <div class="flex items-center gap-4 sm:gap-8 flex-grow">
-                                <span class="font-bold text-surface-900 w-20">${finalDisplayStr}</span>
-                                <span class="font-medium text-surface-500 uppercase">MP3</span>
-                                ${sizeMarkup}
-                            </div>
-                            <a href="${dlUrl}" class="flex-shrink-0 inline-flex items-center justify-center w-10 h-10 bg-brand-50 hover:bg-brand-600 text-brand-600 hover:text-white rounded-full transition-colors shadow-sm" title="Download MP3">
-                                <i data-lucide="download" class="w-5 h-5"></i>
-                            </a>
+                        const item = document.createElement('a');
+                        item.href = '#'; // Handled via JS
+                        item.className = 'flex items-center gap-3 px-4 py-3 hover:bg-surface-50 transition-colors group cursor-pointer';
+                        item.innerHTML = `
+                            <span class="font-bold text-surface-900 group-hover:text-brand-600 transition-colors w-20">${finalDisplayStr}</span>
+                            ${descMarkup}
+                            ${sizeMarkup}
+                            <i data-lucide="download" class="w-4 h-4 text-surface-400 group-hover:text-brand-600 transition-colors ml-2"></i>
                         `;
-                        audioFormatsBody.appendChild(row);
+                        
+                        item.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            if (window.isMp3Downloading) return;
+                            window.isMp3Downloading = true;
+                            
+                            const downloadId = Date.now().toString();
+                            const finalUrl = dlUrl + '&download_id=' + downloadId;
+                            
+                            if (mp3Menu) mp3Menu.classList.add('hidden');
+                            
+                            const originalContent = mp3Btn.innerHTML;
+                            const originalClasses = mp3Btn.className;
+                            mp3Btn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i><span>Downloading...</span>';
+                            mp3Btn.classList.add('opacity-80', 'cursor-not-allowed', 'pointer-events-none', 'relative', 'overflow-hidden');
+                            if(window.lucide) window.lucide.createIcons();
+                            
+                            let iframe = document.getElementById('hidden-download-iframe');
+                            if (!iframe) {
+                                iframe = document.createElement('iframe');
+                                iframe.id = 'hidden-download-iframe';
+                                iframe.style.display = 'none';
+                                document.body.appendChild(iframe);
+                            }
+                            
+                            iframe.onload = function() {
+                                try {
+                                    const doc = iframe.contentDocument || iframe.contentWindow.document;
+                                    const text = doc.body.innerText;
+                                    const data = JSON.parse(text);
+                                    if (data.error || data.message || data.success === false) {
+                                        clearInterval(window.mp3Timer);
+                                        window.isMp3Downloading = false;
+                                        mp3Btn.innerHTML = originalContent;
+                                        mp3Btn.className = originalClasses;
+                                        if(window.lucide) window.lucide.createIcons();
+                                        errorMessage.textContent = data.error || data.message || "Download failed.";
+                                        errorAlert.classList.remove('hidden');
+                                    }
+                                } catch(err) {
+                                    clearInterval(window.mp3Timer);
+                                    window.isMp3Downloading = false;
+                                    mp3Btn.innerHTML = originalContent;
+                                    mp3Btn.className = originalClasses;
+                                    if(window.lucide) window.lucide.createIcons();
+                                    errorMessage.textContent = "A network error occurred during download.";
+                                    errorAlert.classList.remove('hidden');
+                                }
+                            };
+                            
+                            iframe.src = finalUrl;
+                            
+                            window.mp3Timer = setInterval(() => {
+                                // Fetch real progress
+                                fetch(`/video-downloader/api/progress/?download_id=${downloadId}`)
+                                    .then(r => r.json())
+                                    .then(data => {
+                                        if (data && data.status) {
+                                            if (data.status === 'downloading') {
+                                                mp3Btn.innerHTML = `
+                                                    <div class="relative z-10 flex items-center gap-2">
+                                                        <i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i>
+                                                        <span>Downloading ${data.percent}%</span>
+                                                    </div>
+                                                    <div class="absolute bottom-0 left-0 h-1 bg-white/40 transition-all duration-300" style="width: ${data.percent}%"></div>
+                                                `;
+                                                if(window.lucide) window.lucide.createIcons();
+                                            } else if (data.status === 'unknown') {
+                                                // ignore, initializing
+                                            } else {
+                                                // Merging / Processing
+                                                mp3Btn.innerHTML = `
+                                                    <div class="relative z-10 flex items-center gap-2">
+                                                        <i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i>
+                                                        <span>${data.status}</span>
+                                                    </div>
+                                                    <div class="absolute bottom-0 left-0 h-1 bg-white/40 transition-all duration-300" style="width: 100%"></div>
+                                                `;
+                                                if(window.lucide) window.lucide.createIcons();
+                                            }
+                                        }
+                                    }).catch(() => {});
+
+                                if (document.cookie.includes('download_started=' + downloadId)) {
+                                    clearInterval(window.mp3Timer);
+                                    document.cookie = 'download_started=; Max-Age=0; path=/';
+                                    
+                                    mp3Btn.innerHTML = `
+                                        <div class="relative z-10 flex items-center gap-2">
+                                            <i data-lucide="check" class="w-5 h-5"></i>
+                                            <span>100%</span>
+                                        </div>
+                                        <div class="absolute bottom-0 left-0 h-1 bg-green-400 transition-all duration-300" style="width: 100%"></div>
+                                    `;
+                                    if(window.lucide) window.lucide.createIcons();
+                                    
+                                    setTimeout(() => {
+                                        window.isMp3Downloading = false;
+                                        mp3Btn.innerHTML = originalContent;
+                                        mp3Btn.className = originalClasses;
+                                        if(window.lucide) window.lucide.createIcons();
+                                    }, 1500);
+                                }
+                            }, 500);
+                        });
+                        
+                        if (mp3MenuItems) mp3MenuItems.appendChild(item);
                     }
                 } else if (fmt.type === 'Video + Audio') {
                     let res = fmt.height ? fmt.height + 'p' : null;
@@ -145,26 +297,140 @@ document.addEventListener('DOMContentLoaded', function() {
                         hasVideo = true;
                         addedVideoRes.add(res);
                         
-                        const row = document.createElement('div');
-                        row.className = 'flex items-center justify-between px-6 py-4 hover:bg-surface-50 transition-colors';
+                        let descriptor = '';
+                        if (res === '2160p') descriptor = '4K';
+                        else if (res === '1440p') descriptor = '2K';
+                        else if (res === '1080p') descriptor = 'Full HD';
+                        else if (res === '720p') descriptor = 'HD';
                         
-                        row.innerHTML = `
-                            <div class="flex items-center gap-4 sm:gap-8 flex-grow">
-                                <span class="font-bold text-surface-900 w-16">${res}</span>
-                                <span class="font-medium text-surface-500 uppercase">MP4</span>
-                                ${sizeMarkup}
-                            </div>
-                            <a href="${dlUrl}" class="flex-shrink-0 inline-flex items-center justify-center w-10 h-10 bg-brand-50 hover:bg-brand-600 text-brand-600 hover:text-white rounded-full transition-colors shadow-sm" title="Download MP4">
-                                <i data-lucide="download" class="w-5 h-5"></i>
-                            </a>
+                        const descMarkup = descriptor ? `<span class="text-surface-400 text-xs">${descriptor}</span>` : '';
+                        
+                        const item = document.createElement('a');
+                        item.href = '#'; // Handled via JS
+                        item.className = 'flex items-center gap-3 px-4 py-3 hover:bg-surface-50 transition-colors group cursor-pointer';
+                        item.innerHTML = `
+                            <span class="font-bold text-surface-900 group-hover:text-brand-600 transition-colors w-16">${res}</span>
+                            ${descMarkup}
+                            ${sizeMarkup}
+                            <i data-lucide="download" class="w-4 h-4 text-surface-400 group-hover:text-brand-600 transition-colors ml-2"></i>
                         `;
-                        videoFormatsBody.appendChild(row);
+                        
+                        item.addEventListener('click', function(e) {
+                            e.preventDefault();
+                            if (window.isMp4Downloading) return;
+                            window.isMp4Downloading = true;
+                            
+                            const downloadId = Date.now().toString();
+                            const finalUrl = dlUrl + '&download_id=' + downloadId;
+                            
+                            if (mp4Menu) mp4Menu.classList.add('hidden');
+                            
+                            const originalContent = mp4Btn.innerHTML;
+                            const originalClasses = mp4Btn.className;
+                            mp4Btn.innerHTML = '<i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i><span>Downloading...</span>';
+                            mp4Btn.classList.add('opacity-80', 'cursor-not-allowed', 'pointer-events-none', 'relative', 'overflow-hidden');
+                            if(window.lucide) window.lucide.createIcons();
+                            
+                            let iframe = document.getElementById('hidden-download-iframe');
+                            if (!iframe) {
+                                iframe = document.createElement('iframe');
+                                iframe.id = 'hidden-download-iframe';
+                                iframe.style.display = 'none';
+                                document.body.appendChild(iframe);
+                            }
+                            
+                            iframe.onload = function() {
+                                try {
+                                    const doc = iframe.contentDocument || iframe.contentWindow.document;
+                                    const text = doc.body.innerText;
+                                    const data = JSON.parse(text);
+                                    if (data.error || data.message || data.success === false) {
+                                        clearInterval(window.mp4Timer);
+                                        window.isMp4Downloading = false;
+                                        mp4Btn.innerHTML = originalContent;
+                                        mp4Btn.className = originalClasses;
+                                        if(window.lucide) window.lucide.createIcons();
+                                        errorMessage.textContent = data.error || data.message || "Download failed.";
+                                        errorAlert.classList.remove('hidden');
+                                    }
+                                } catch(err) {
+                                    clearInterval(window.mp4Timer);
+                                    window.isMp4Downloading = false;
+                                    mp4Btn.innerHTML = originalContent;
+                                    mp4Btn.className = originalClasses;
+                                    if(window.lucide) window.lucide.createIcons();
+                                    errorMessage.textContent = "A network error occurred during download.";
+                                    errorAlert.classList.remove('hidden');
+                                }
+                            };
+                            
+                            iframe.src = finalUrl;
+                            
+                            window.mp4Timer = setInterval(() => {
+                                // Fetch real progress
+                                fetch(`/video-downloader/api/progress/?download_id=${downloadId}`)
+                                    .then(r => r.json())
+                                    .then(data => {
+                                        if (data && data.status) {
+                                            if (data.status === 'downloading') {
+                                                mp4Btn.innerHTML = `
+                                                    <div class="relative z-10 flex items-center gap-2">
+                                                        <i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i>
+                                                        <span>Downloading ${data.percent}%</span>
+                                                    </div>
+                                                    <div class="absolute bottom-0 left-0 h-1 bg-white/40 transition-all duration-300" style="width: ${data.percent}%"></div>
+                                                `;
+                                                if(window.lucide) window.lucide.createIcons();
+                                            } else if (data.status === 'unknown') {
+                                                // ignore, initializing
+                                            } else {
+                                                // Merging / Processing
+                                                mp4Btn.innerHTML = `
+                                                    <div class="relative z-10 flex items-center gap-2">
+                                                        <i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i>
+                                                        <span>${data.status}</span>
+                                                    </div>
+                                                    <div class="absolute bottom-0 left-0 h-1 bg-white/40 transition-all duration-300" style="width: 100%"></div>
+                                                `;
+                                                if(window.lucide) window.lucide.createIcons();
+                                            }
+                                        }
+                                    }).catch(() => {});
+
+                                if (document.cookie.includes('download_started=' + downloadId)) {
+                                    clearInterval(window.mp4Timer);
+                                    document.cookie = 'download_started=; Max-Age=0; path=/';
+                                    
+                                    mp4Btn.innerHTML = `
+                                        <div class="relative z-10 flex items-center gap-2">
+                                            <i data-lucide="check" class="w-5 h-5"></i>
+                                            <span>100%</span>
+                                        </div>
+                                        <div class="absolute bottom-0 left-0 h-1 bg-green-400 transition-all duration-300" style="width: 100%"></div>
+                                    `;
+                                    if(window.lucide) window.lucide.createIcons();
+                                    
+                                    setTimeout(() => {
+                                        window.isMp4Downloading = false;
+                                        mp4Btn.innerHTML = originalContent;
+                                        mp4Btn.className = originalClasses;
+                                        if(window.lucide) window.lucide.createIcons();
+                                    }, 1500);
+                                }
+                            }, 500);
+                        });
+                        
+                        if (mp4MenuItems) mp4MenuItems.appendChild(item);
                     }
                 }
             });
             
-            videoFormatsContainer.classList.toggle('hidden', !hasVideo);
-            audioFormatsContainer.classList.toggle('hidden', !hasAudio);
+            // Toggle dropdowns UI
+            const mp4Container = document.getElementById('mp4-dropdown-container');
+            const mp3Container = document.getElementById('mp3-dropdown-container');
+            
+            if (mp4Container) mp4Container.classList.toggle('hidden', !hasVideo);
+            if (mp3Container) mp3Container.classList.toggle('hidden', !hasAudio);
             
             const noFormatsMessage = document.getElementById('no-formats-message');
             if (noFormatsMessage) {

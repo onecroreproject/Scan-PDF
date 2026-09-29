@@ -25,8 +25,6 @@ def get_ytdl_base_options(url):
         'fragment_retries': 3,
         'socket_timeout': 15,
         'format_sort': ['vcodec:h264', 'res', 'acodec:m4a'],
-        'extractor_args': {'youtube': ['player_client=ios,android,tv,web']},
-        'impersonate': 'chrome',
     }
     
     # Platform-specific Secure Authentication Support
@@ -36,6 +34,12 @@ def get_ytdl_base_options(url):
     cookies_file = None
     if 'youtube.com' in hostname or 'youtu.be' in hostname:
         cookies_file = os.environ.get('YTDLP_YOUTUBE_COOKIE_FILE')
+        # Use client fallback to bypass web-client restrictions (e.g., bot challenges)
+        options['extractor_args'] = {
+            'youtube': {
+                'client': ['tv', 'android', 'ios', 'web']
+            }
+        }
     elif 'facebook.com' in hostname or 'fb.watch' in hostname:
         cookies_file = os.environ.get('YTDLP_FACEBOOK_COOKIE_FILE')
     elif 'instagram.com' in hostname:
@@ -183,7 +187,7 @@ def verify_video_audio_streams(filepath):
         result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
         if result.returncode != 0:
             logger.error(f"ffprobe failed for {filepath}: {result.stderr}")
-            return False
+            return False, False, None, None
             
         data = json.loads(result.stdout)
         streams = data.get('streams', [])
@@ -205,7 +209,7 @@ def verify_video_audio_streams(filepath):
         return has_video, has_audio, audio_codec, video_codec
     except Exception as e:
         logger.error(f"Error running ffprobe on {filepath}: {e}")
-        return False, False, None
+        return False, False, None, None
 
 def get_codec_priority(vcodec):
     if not vcodec or vcodec == 'none':
@@ -328,20 +332,31 @@ def analyze_video(url):
             seen_abr = set()
             final_audio_formats = []
             
+            has_any_audio = any(
+                (f.get('acodec') and f.get('acodec') != 'none') or
+                f.get('asr') or
+                f.get('audio_channels')
+                for f in info.get('formats', [])
+            )
+            # Default to True for Facebook/Instagram if we can't reliably detect
+            # since most Reels/videos on these platforms have audio but may lack metadata.
+            if not has_any_audio and any(domain in url.lower() for domain in ['facebook', 'instagram']):
+                has_any_audio = True
+            
             audio_formats.sort(key=lambda x: x['abr'], reverse=True)
             for fmt in audio_formats:
                 if fmt['abr'] not in seen_abr:
                     seen_abr.add(fmt['abr'])
                     final_audio_formats.append(fmt)
                     
-            if not final_audio_formats:
+            if not final_audio_formats and has_any_audio:
                 final_audio_formats.append({
                     'format_id': 'bestaudio/best',
                     'resolution': 'Best Audio',
                     'ext': 'mp3',
                     'vcodec': 'none',
                     'acodec': 'MP3',
-                    'bitrate': 0,
+                    'bitrate': 192,
                     'filesize': 0,
                     'type': 'Audio Only'
                 })
@@ -368,12 +383,13 @@ def analyze_video(url):
         raw_err_str = str(e) + "\n\n" + traceback.format_exc()
         raise YTDLPError("METADATA_PARSE_FAILED", "Failed to parse video metadata.", raw_error=raw_err_str)
 
-def download_format(url, format_id, format_type):
+def download_format(url, format_id, format_type, download_id=None):
     """
     Downloads the specific format.
     Returns the absolute path to the downloaded file.
     """
     import shutil
+    from django.core.cache import cache
     
     # Format IDs can change between metadata extraction and download, especially
     # for Facebook. Let yt-dlp validate the selected ID during the real download.
@@ -413,7 +429,37 @@ def download_format(url, format_id, format_type):
             'preferredcodec': 'mp3',
             'preferredquality': '192',
         }]
+    if download_id:
+        def progress_hook(d):
+            if d['status'] == 'downloading':
+                total_bytes = d.get('total_bytes') or d.get('total_bytes_estimate') or 0
+                downloaded = d.get('downloaded_bytes', 0)
+                
+                percent = 0
+                if total_bytes > 0:
+                    percent = (downloaded / total_bytes) * 100
+                
+                if percent >= 100:
+                    percent = 99
+                    
+                cache.set(f"dl_prog_{download_id}", {
+                    'status': 'downloading',
+                    'percent': min(100, max(0, round(percent)))
+                }, timeout=600)
+                
+            elif d['status'] == 'finished':
+                # File download is byte-complete. Now it might merge or convert.
+                state = 'Merging...' if format_type == 'Video + Audio' else 'Converting to MP3...'
+                cache.set(f"dl_prog_{download_id}", {
+                    'status': state,
+                    'percent': 100
+                }, timeout=600)
+
+        options['progress_hooks'] = [progress_hook]
         
+        # Initialize the cache state to 0% before starting
+        cache.set(f"dl_prog_{download_id}", {'status': 'downloading', 'percent': 0}, timeout=600)
+
     def _download(opts):
         with yt_dlp.YoutubeDL(opts) as ydl:
             return ydl.extract_info(url, download=True)

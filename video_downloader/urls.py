@@ -11,4 +11,5 @@ urlpatterns = [
     path('instagram/', views.instagram_downloader, name='instagram_downloader'),
     path('api/analyze/', views.analyze_url, name='analyze_url'),
     path('api/download/', views.download_video, name='download_video'),
+    path('api/progress/', views.download_progress, name='download_progress'),
 ]
