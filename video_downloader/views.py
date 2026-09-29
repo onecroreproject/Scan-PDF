@@ -75,6 +75,11 @@ def analyze_url(request):
         if not any(hostname == domain or hostname.endswith('.' + domain) for domain in allowed_domains):
             return JsonResponse({'error': 'Unsupported video provider URL'}, status=400)
             
+        # Normalize YouTube shorts URL
+        if 'youtube.com' in hostname and '/shorts/' in parsed_url.path:
+            video_id = parsed_url.path.split('/shorts/')[-1].split('/')[0]
+            url = f"https://www.youtube.com/watch?v={video_id}"
+            
         # Analyze using service
         result = services.analyze_video(url)
         
@@ -121,8 +126,18 @@ def download_video(request):
         if not any(hostname == domain or hostname.endswith('.' + domain) for domain in allowed_domains):
             return JsonResponse({'error': 'Unsupported video provider URL'}, status=400)
             
+        # Normalize YouTube shorts URL
+        if 'youtube.com' in hostname and '/shorts/' in parsed_url.path:
+            video_id = parsed_url.path.split('/shorts/')[-1].split('/')[0]
+            url = f"https://www.youtube.com/watch?v={video_id}"
+            
+        # Check for download_id to set cookie and track progress
+        download_id = request.GET.get('download_id')
+        if not download_id and request.method == "POST":
+            download_id = request.POST.get('download_id')
+            
         # Download format
-        filepath, title = services.download_format(url, format_id, format_type)
+        filepath, title = services.download_format(url, format_id, format_type, download_id=download_id)
         
         if not filepath or not os.path.exists(filepath):
             return JsonResponse({'error': 'Failed to download file'}, status=500)
@@ -150,6 +165,15 @@ def download_video(request):
             
         # Return FileResponse (file will be kept open until fully streamed)
         response = FileResponse(open(filepath, 'rb'), **kwargs)
+        
+        # Check for download_id to set cookie (tells frontend download has started)
+        download_id = request.GET.get('download_id')
+        if not download_id and request.method == "POST":
+            download_id = request.POST.get('download_id')
+            
+        if download_id:
+            response.set_cookie('download_started', download_id, max_age=60, samesite='Lax')
+            
         return response
         
     except services.YTDLPError as e:
@@ -163,3 +187,18 @@ def download_video(request):
     except Exception as e:
         return JsonResponse({'success': False, 'error_code': 'INTERNAL_ERROR', 'message': "An internal error occurred. Please try again."}, status=500)
 
+@require_http_methods(["GET"])
+def download_progress(request):
+    """Returns the current download progress for a specific download_id"""
+    download_id = request.GET.get('download_id')
+    if not download_id:
+        return JsonResponse({'error': 'Missing download_id'}, status=400)
+        
+    from django.core.cache import cache
+    progress_data = cache.get(f"dl_prog_{download_id}")
+    
+    if progress_data:
+        return JsonResponse(progress_data)
+        
+    # If not found in cache, it might be initializing or already finished
+    return JsonResponse({'status': 'unknown', 'percent': 0})

@@ -1330,13 +1330,12 @@ def convert_pdf_to_pptx(input_path, original_name):
         for page_idx in range(len(pdf)):
             page = pdf[page_idx]
             
-            # Render page to a temporary image
+            # Render page directly to memory as PNG bytes
             pix = page.get_pixmap(matrix=mat, alpha=False)
             
-            with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp_img:
-                pix.save(tmp_img.name)
-                tmp_img_path = tmp_img.name
-                
+            import io
+            image_stream = io.BytesIO(pix.tobytes("png"))
+            
             try:
                 slide = prs.slides.add_slide(blank_layout)
                 
@@ -1355,13 +1354,12 @@ def convert_pdf_to_pptx(input_path, original_name):
                 top = (base_height_in - final_height) / 2.0
                 
                 slide.shapes.add_picture(
-                    tmp_img_path,
+                    image_stream,
                     Inches(left), Inches(top),
                     Inches(final_width), Inches(final_height)
                 )
             finally:
-                if os.path.exists(tmp_img_path):
-                    os.remove(tmp_img_path)
+                image_stream.close()
 
         prs.save(output_path)
         pdf.close()
@@ -1405,7 +1403,7 @@ def convert_pdf_to_excel(input_path, original_name):
         header_fill = PatternFill(start_color='4F46E5', end_color='4F46E5', fill_type='solid')
         header_align = Alignment(horizontal='center', vertical='center', wrap_text=True)
         cell_font = Font(name='Calibri', size=10)
-        cell_align = Alignment(vertical='center', wrap_text=True)
+        cell_align = Alignment(vertical='top', wrap_text=True)
         thin_border = Border(
             left=Side(style='thin', color='E2E8F0'),
             right=Side(style='thin', color='E2E8F0'),
@@ -1414,60 +1412,99 @@ def convert_pdf_to_excel(input_path, original_name):
         )
         alt_fill = PatternFill(start_color='F8FAFC', end_color='F8FAFC', fill_type='solid')
 
+        def parse_value(val):
+            if not val:
+                return ""
+            val = val.strip()
+            # Try to convert to float/int if safe, but avoid strings that start with '0' (except '0' or '0.x') or are identifiers
+            if val.isdigit():
+                if len(val) > 1 and val.startswith('0'):
+                    return val # Identifier with leading zero
+                if len(val) >= 10:
+                    return val # Likely phone number or ID
+                return int(val)
+            try:
+                f_val = float(val)
+                # Ensure it wasn't a string with leading zero (e.g., "01.25" is rare but "00125" is handled by isdigit)
+                if '.' in val and val.startswith('0') and not val.startswith('0.'):
+                    return val
+                return f_val
+            except ValueError:
+                return val
+
         with pdfplumber.open(input_path) as pdf:
             for page_idx, page in enumerate(pdf.pages):
-                # 1. Attempt to find REAL tables first (with explicit lines)
+                # We'll use one sheet per page
+                ws = wb.create_sheet(title=f'Page {page_idx + 1}')
+                current_row = 1
+                
+                # 1. Attempt to find REAL tables first
+                # Try lines strategy
                 tables = page.extract_tables({
                     "vertical_strategy": "lines",
                     "horizontal_strategy": "lines",
                 })
 
-                # If strict lines found nothing, try text-based detection
+                # If no strict lines tables found, try text strategy
                 if not tables:
                     tables = page.extract_tables({
                         "vertical_strategy": "text",
                         "horizontal_strategy": "text",
                     })
-
-                # Decide if we found actual structured data or if we should fallback to logic-based extraction
-                # We consider it a "Real Table" only if it has more than 1 column.
-                valid_tables = [t for t in tables if t and len(t[0]) > 1]
+                    
+                # A valid table must have some structure
+                valid_tables = [t for t in tables if t and len(t) > 0 and len(t[0]) > 1]
 
                 if valid_tables:
-                    for table_data in valid_tables:
+                    for t_idx, table_data in enumerate(valid_tables):
                         if not table_data: continue
-                        ws = wb.create_sheet(title=f'Table p{page_idx+1}_{len(wb.sheetnames)+1}')
+                        
+                        # Add a blank row between tables if not the first table
+                        if t_idx > 0:
+                            current_row += 2
+                            
+                        start_row = current_row
                         
                         for r_i, row in enumerate(table_data):
                             for c_i, val in enumerate(row):
-                                cell = ws.cell(row=r_i+1, column=c_i+1, value=(val or '').strip())
-                                # Styling for tables
+                                parsed_val = parse_value(val)
+                                cell = ws.cell(row=current_row, column=c_i+1, value=parsed_val)
                                 cell.border = thin_border
                                 if r_i == 0:
                                     cell.font = header_font; cell.fill = header_fill; cell.alignment = header_align
                                 else:
                                     cell.font = cell_font; cell.alignment = cell_align
                                     if r_i % 2 == 0: cell.fill = alt_fill
-
-                        # Auto-fit
+                            current_row += 1
+                            
+                        # Auto-fit columns for this table
                         for col_idx in range(1, len(table_data[0]) + 1):
                             max_len = 8
-                            for row_idx in range(1, len(table_data) + 1):
-                                val = ws.cell(row=row_idx, column=col_idx).value
-                                if val: max_len = max(max_len, min(len(str(val)) + 2, 70))
-                            ws.column_dimensions[get_column_letter(col_idx)].width = max_len
+                            for r_idx in range(start_row, current_row):
+                                cell_val = ws.cell(row=r_idx, column=col_idx).value
+                                if cell_val: 
+                                    lines = str(cell_val).split('\n')
+                                    max_line_len = max(len(l) for l in lines) if lines else 0
+                                    max_len = max(max_len, min(max_line_len + 2, 60))
+                            
+                            current_width = ws.column_dimensions[get_column_letter(col_idx)].width
+                            if current_width is None or current_width < max_len:
+                                ws.column_dimensions[get_column_letter(col_idx)].width = max_len
+                                
+                    current_row += 2 # Extra spacing after all tables
+                    
                 else:
                     # 2. Logic-Based Extraction (For Paragraphs or borderless data)
                     words = page.extract_words()
                     if not words: continue
                     
-                    # Group words into lines based on vertical tolerance
+                    # Group words into lines
                     lines = []
                     words.sort(key=lambda w: (w['top'], w['x0']))
                     curr_line = [words[0]]
                     last_top = words[0]['top']
                     for i in range(1, len(words)):
-                        if abs(words[i]['top'] - last_top) < 3:
+                        if abs(words[i]['top'] - last_top) < 4:
                             curr_line.append(words[i])
                         else:
                             lines.append(sorted(curr_line, key=lambda x: x['x0']))
@@ -1475,72 +1512,37 @@ def convert_pdf_to_excel(input_path, original_name):
                             last_top = words[i]['top']
                     lines.append(sorted(curr_line, key=lambda x: x['x0']))
 
-                    # Split each line into logical "columns" based on horizontal gaps
-                    logical_rows = []
-                    gap_threshold = 15
+                    # Split into pseudo-columns based on gaps
+                    gap_threshold = 12
                     for line_words in lines:
-                        cells = []
                         if not line_words: continue
+                        col_idx = 1
                         temp_cell = [line_words[0]]
                         for i in range(1, len(line_words)):
                             if (line_words[i]['x0'] - line_words[i-1]['x1']) < gap_threshold:
                                 temp_cell.append(line_words[i])
                             else:
-                                cells.append({'text': " ".join(w['text'] for w in temp_cell), 
-                                             'x0': temp_cell[0]['x0'], 
-                                             'top': temp_cell[0]['top'],
-                                             'bottom': temp_cell[0]['bottom']})
+                                text = " ".join(w['text'] for w in temp_cell)
+                                cell = ws.cell(row=current_row, column=col_idx, value=parse_value(text))
+                                cell.font = cell_font
+                                cell.alignment = Alignment(wrap_text=True, vertical='top')
+                                col_idx += 1
                                 temp_cell = [line_words[i]]
-                        cells.append({'text': " ".join(w['text'] for w in temp_cell), 
-                                     'x0': temp_cell[0]['x0'], 
-                                     'top': temp_cell[0]['top'],
-                                     'bottom': temp_cell[0]['bottom']})
-                        logical_rows.append(cells)
-
-                    # Merge lines into paragraphs while preserving structure
-                    final_rows = []
-                    if logical_rows:
-                        curr_group = logical_rows[0]
-                        for i in range(1, len(logical_rows)):
-                            prev = curr_group
-                            curr = logical_rows[i]
-                            
-                            # Check if these lines should stay grouped (paragraph logic)
-                            # Criteria: Same column count, small vertical gap
-                            is_para = False
-                            if len(prev) == len(curr) and len(prev) > 0:
-                                v_gap = curr[0]['top'] - prev[0]['bottom'] if 'top' in curr[0] and 'bottom' in prev[0] else 5
-                                if v_gap < 12 and abs(curr[0]['x0'] - prev[0]['x0']) < 5:
-                                    is_para = True
-                            
-                            if is_para:
-                                for c_idx in range(len(curr)):
-                                    curr_group[c_idx]['text'] += " " + curr[c_idx]['text']
-                            else:
-                                final_rows.append([c['text'] for c in curr_group])
-                                # If there's a large vertical gap, add an empty row to preserve structure
-                                if 'top' in curr[0] and 'bottom' in prev[0]:
-                                    if (curr[0]['top'] - prev[0]['bottom']) > 15:
-                                        final_rows.append([]) 
-                                curr_group = curr
-                        final_rows.append([c['text'] for c in curr_group])
-
-                    # Write results to sheet
-                    ws = wb.create_sheet(title=f'Page {page_idx + 1}')
-                    for r_i, row_content in enumerate(final_rows):
-                        for c_i, text in enumerate(row_content):
-                            cell = ws.cell(row=r_i+1, column=c_i+1, value=text.strip())
-                            cell.font = cell_font
-                            cell.alignment = Alignment(wrap_text=True, vertical='top')
-                    
+                                
+                        text = " ".join(w['text'] for w in temp_cell)
+                        cell = ws.cell(row=current_row, column=col_idx, value=parse_value(text))
+                        cell.font = cell_font
+                        cell.alignment = Alignment(wrap_text=True, vertical='top')
+                        current_row += 1
+                        
                     # Auto-adjust column widths for text blocks
                     if ws.max_column:
                         for c in range(1, ws.max_column + 1):
-                            ws.column_dimensions[get_column_letter(c)].width = 90 # Wide for text
+                            ws.column_dimensions[get_column_letter(c)].width = min(80, max(12, ws.column_dimensions[get_column_letter(c)].width or 12))
 
         if len(wb.sheetnames) == 0:
-            ws = wb.create_sheet(title='Sheet1')
-            ws['A1'] = 'No translatable data found.'
+            ws = wb.create_sheet(title='Page 1')
+            ws['A1'] = 'No extractable data found.'
 
         wb.save(output_path)
         return output_path
@@ -2833,13 +2835,32 @@ def protect_pdf(input_path, original_name, user_password='',
 # 20. PNG TO JPG
 # ═══════════════════════════════════════════════════════════════
 def png_to_jpg(input_path, original_name):
-    """Convert a PNG image to JPEG format."""
-    from PIL import Image
+    """Convert a PNG image to JPEG format while preserving orientation and transparency over a white background."""
+    from PIL import Image, ImageOps
     output_path = get_output_path(original_name, 'jpg')
-    img = Image.open(input_path)
-    if img.mode in ('RGBA', 'P', 'LA'):
-        img = img.convert('RGB')
-    img.save(output_path, 'JPEG', quality=90, optimize=True)
+    
+    with Image.open(input_path) as img:
+        # 1. Normalize EXIF orientation
+        img = ImageOps.exif_transpose(img)
+        
+        # 2. Handle transparency (RGBA, LA, or P with transparency)
+        if img.mode in ('RGBA', 'LA') or (img.mode == 'P' and 'transparency' in img.info):
+            # Ensure the image is in RGBA mode for compositing
+            if img.mode != 'RGBA':
+                img = img.convert('RGBA')
+            # Create a clean white background
+            background = Image.new('RGBA', img.size, (255, 255, 255, 255))
+            # Alpha-composite the image onto the white background
+            composited = Image.alpha_composite(background, img)
+            # Convert to RGB (safe for JPEG)
+            img = composited.convert('RGB')
+        elif img.mode != 'RGB' and img.mode != 'L':
+            # Fallback for other modes without transparency (e.g., standard P)
+            img = img.convert('RGB')
+            
+        # 3. Save as JPEG
+        img.save(output_path, 'JPEG', quality=90, optimize=True)
+        
     return output_path
 
 
