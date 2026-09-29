@@ -437,7 +437,11 @@ document.addEventListener('DOMContentLoaded', function() {
                 noFormatsMessage.classList.toggle('hidden', hasVideo || hasAudio);
             }
             
-            if(window.lucide) window.lucide.createIcons();
+            try {
+                if(window.lucide) window.lucide.createIcons();
+            } catch(e) {
+                console.warn('Lucide icons creation failed', e);
+            }
             
             // Show results
             loadingState.classList.add('hidden');
