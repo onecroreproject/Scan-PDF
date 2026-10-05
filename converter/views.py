@@ -2132,6 +2132,70 @@ def convert_file(request, tool_slug):
         except Exception as e:
             return JsonResponse({'error': f'Video conversion failed: {str(e)}'}, status=500)
 
+    # ── JPG to PNG (In-Memory Processing) ──
+    if tool_slug == 'jpg-to-png':
+        if 'file' not in request.FILES:
+            return JsonResponse({'error': 'No file was uploaded. Please select a file.'}, status=400)
+            
+        uploaded_file = request.FILES['file']
+        file_ext = os.path.splitext(uploaded_file.name)[1].lower()
+        if file_ext not in ['.jpg', '.jpeg']:
+            return JsonResponse({'error': 'Please select a valid JPG or JPEG image.'}, status=400)
+            
+        try:
+            from PIL import Image, ImageOps
+            import io
+            
+            # Read bytes entirely in memory
+            file_bytes = uploaded_file.read()
+            
+            # Protection against decompression bombs (100 million pixels limit)
+            Image.MAX_IMAGE_PIXELS = 100000000
+            
+            # Actually attempt to verify
+            try:
+                img = Image.open(io.BytesIO(file_bytes))
+                img.verify()
+            except Exception:
+                return JsonResponse({'error': 'The selected image could not be read.'}, status=400)
+            
+            # Reopen for decoding after verify
+            img = Image.open(io.BytesIO(file_bytes))
+            
+            if img.format not in ['JPEG', 'MPO']:
+                return JsonResponse({'error': 'Please select a valid JPG or JPEG image.'}, status=400)
+                
+            # Handle EXIF orientation
+            try:
+                img = ImageOps.exif_transpose(img)
+            except Exception:
+                pass # If transpose fails, continue with original
+                
+            # Handle color mode - preserve Grayscale(L) and RGB, convert others (like CMYK) to RGB
+            if img.mode not in ['RGB', 'L']:
+                img = img.convert('RGB')
+                
+            # Encode PNG in memory
+            out_io = io.BytesIO()
+            img.save(out_io, format='PNG', optimize=False)
+            
+            from .utils import format_download_name
+            final_filename = format_download_name(uploaded_file.name)
+            if final_filename.lower().endswith(('.jpg', '.jpeg')):
+                final_filename = os.path.splitext(final_filename)[0] + '.png'
+            else:
+                final_filename += '.png'
+            
+            from django.http import HttpResponse
+            response = HttpResponse(out_io.getvalue(), content_type='image/png')
+            response['Content-Disposition'] = f'attachment; filename="{final_filename}"'
+            return response
+            
+        except Image.DecompressionBombError:
+            return JsonResponse({'error': 'This image is too large to process safely.'}, status=400)
+        except Exception as e:
+            return JsonResponse({'error': 'We couldn\'t convert this image. Please try another JPG.'}, status=400)
+
     # ── Default Fallback for other tools ──
     # ── Standard single-file conversion ──
     if 'file' not in request.FILES:
