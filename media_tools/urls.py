@@ -1,6 +1,7 @@
 from django.urls import path
 
 from . import video_views
+from . import downloader_views
 
 app_name = "media_tools"
 
@@ -49,5 +50,17 @@ urlpatterns = [
     path("background/", video_views.background_video, name="background"),
     path("tool/<str:tool_name>/", video_views.video_tool_view, name="tool_generic"),
     path("download/<str:filename>/", video_views.download_output, name="download_output"),
+
+    # Video Downloader Feature
+    path("downloader/", downloader_views.downloader_page, name="downloader"),
+    path("downloader/instagram/", downloader_views.instagram_downloader, name="downloader_instagram"),
+    path("downloader/twitter/", downloader_views.twitter_downloader, name="downloader_twitter"),
+    path("downloader/facebook/", downloader_views.facebook_downloader, name="downloader_facebook"),
+    path("downloader/threads/", downloader_views.threads_downloader, name="downloader_threads"),
+    path("downloader/youtube/", downloader_views.youtube_downloader, name="downloader_youtube"),
+    
+    # API endpoints
+    path("api/downloader/info/", downloader_views.api_downloader_info, name="api_downloader_info"),
+    path("api/downloader/download/", downloader_views.api_downloader_download, name="api_downloader_download"),
 ]
 

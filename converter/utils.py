@@ -2881,56 +2881,95 @@ def jpg_to_png(input_path, original_name):
 # ═══════════════════════════════════════════════════════════════
 # 23. HTML TO IMAGE
 # ═══════════════════════════════════════════════════════════════
-def html_to_image(input_path, original_name, url=None):
-    """Convert an HTML file or a URL to a pixel-perfect PNG using Chrome headless via html2image."""
+def html_to_image(input_data, is_file=True, output_format='png', width=1280, height=2000):
+    """Convert an HTML file or HTML string to a pixel-perfect PNG/JPG using Chrome headless via html2image."""
     from html2image import Html2Image
     import uuid
+    import os
+    import shutil
+    import tempfile
+    from PIL import Image
 
     try:
-        # Prepare output
-        output_path = get_output_path(original_name, 'png')
-        output_dir = os.path.dirname(output_path)
-        # Use a unique temp name to avoid collisions, then rename
-        temp_name = f'_h2i_{uuid.uuid4().hex[:8]}.png'
+        # Validate output format
+        output_format = output_format.lower()
+        if output_format not in ['png', 'jpg', 'jpeg']:
+            output_format = 'png'
+        
+        # Validate dimensions
+        try:
+            width = min(max(int(width), 100), 5000)
+            height = min(max(int(height), 100), 5000)
+        except (ValueError, TypeError):
+            width, height = 1280, 2000
+
+        # Prepare temporary directory for isolation
+        temp_dir = tempfile.mkdtemp(prefix='html2img_')
+        
+        # Output filename
+        ext = 'jpg' if output_format in ['jpg', 'jpeg'] else 'png'
+        temp_out_name = f'out_{uuid.uuid4().hex[:8]}.png'
 
         hti = Html2Image(
             browser='chrome',
-            output_path=output_dir,
+            output_path=temp_dir,
             custom_flags=[
                 '--no-sandbox',
                 '--disable-gpu',
                 '--hide-scrollbars',
                 '--disable-extensions',
+                '--disable-dev-shm-usage',
+                '--proxy-server=http://127.0.0.1:9999', # Block all external network (SSRF protection)
             ],
         )
 
-        if url:
-            # Direct URL Mode
-            hti.screenshot(
-                url=url,
-                save_as=temp_name,
-                size=(1280, 2000), # Taller for better "full page" view
-            )
-        else:
-            # File Mode
-            with open(input_path, 'r', encoding='utf-8', errors='replace') as f:
-                html_content = f.read()
-            hti.screenshot(
-                html_str=html_content,
-                save_as=temp_name,
-                size=(1280, 2000),
-            )
+        try:
+            if is_file:
+                # File Mode
+                input_path = input_data
+                with open(input_path, 'r', encoding='utf-8', errors='replace') as f:
+                    html_content = f.read()
+                hti.screenshot(
+                    html_str=html_content,
+                    save_as=temp_out_name,
+                    size=(width, height),
+                )
+            else:
+                # Code Mode
+                html_content = input_data
+                hti.screenshot(
+                    html_str=html_content,
+                    save_as=temp_out_name,
+                    size=(width, height),
+                )
 
-        temp_output = os.path.join(output_dir, temp_name)
-        if not os.path.exists(temp_output):
-            raise Exception("Capture failed - image was not generated.")
+            temp_output = os.path.join(temp_dir, temp_out_name)
+            if not os.path.exists(temp_output):
+                raise Exception("Capture failed - image was not generated or timeout occurred.")
 
-        # Rename temp file to final output path
-        if os.path.exists(output_path):
-            os.remove(output_path)
-        os.rename(temp_output, output_path)
+            # Final output generation
+            from django.conf import settings
+            final_filename = f"{uuid.uuid4().hex}.{ext}"
+            final_output_path = os.path.join(settings.MEDIA_ROOT, 'temp', final_filename)
+            os.makedirs(os.path.dirname(final_output_path), exist_ok=True)
 
-        return output_path
+            if output_format in ['jpg', 'jpeg']:
+                # Convert PNG to JPG and flatten background
+                with Image.open(temp_output) as img:
+                    if img.mode in ('RGBA', 'LA'):
+                        background = Image.new('RGB', img.size, (255, 255, 255))
+                        background.paste(img, mask=img.split()[3])
+                        background.save(final_output_path, 'JPEG', quality=95)
+                    else:
+                        img.convert('RGB').save(final_output_path, 'JPEG', quality=95)
+            else:
+                shutil.copy2(temp_output, final_output_path)
+
+            return final_output_path
+        finally:
+            # Cleanup isolated temp dir
+            shutil.rmtree(temp_dir, ignore_errors=True)
+
     except Exception as e:
         raise Exception(f"HTML to Image conversion failed: {str(e)}")
 

@@ -1,0 +1,18 @@
+            <form id="download-form" class="relative z-10" onsubmit="event.preventDefault(); analyzeMedia();">
+                {% csrf_token %}
+                <label for="url-input" class="block text-sm font-bold text-surface-700 mb-2">Media URL</label>
+                <div class="relative flex items-center mb-4">
+                    <div class="absolute left-4 text-surface-400">
+                        <i data-lucide="link" class="w-5 h-5"></i>
+                    </div>
+                    <input type="url" id="url-input" required
+                           placeholder="{{ input_placeholder|default:'Paste a public media URL here...' }}" 
+                           class="w-full pl-12 pr-32 py-4 rounded-2xl bg-surface-50 border-2 border-surface-200 focus:bg-white focus:border-brand-500 outline-none transition-all text-surface-900 font-medium placeholder:text-surface-400 shadow-inner">
+                    
+                    <button type="submit" id="analyze-btn" 
+                            class="absolute right-2 px-6 py-2.5 bg-brand-600 hover:bg-brand-700 text-white font-bold rounded-xl transition-all shadow-sm flex items-center gap-2">
+                        <span>Analyze</span>
+                        <i data-lucide="arrow-right" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            </form>

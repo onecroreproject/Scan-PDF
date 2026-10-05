@@ -35,8 +35,6 @@ INSTALLED_APPS = [
     'image_processor',
     'audio_processor',
     'dynamic_qr',
-    'video_downloader',
-
     'services',
     'custom_admin',
 

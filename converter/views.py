@@ -1324,30 +1324,43 @@ def convert_file(request, tool_slug):
 
     # ── HTML to Image (URL or file) ──
     if tool_slug == 'html-to-image':
-        url_input = request.POST.get('url', '').strip()
+        input_mode = request.POST.get('input_mode', 'code')
+        html_code = request.POST.get('html_code', '').strip()
         uploaded_file = request.FILES.get('file')
+        output_format = request.POST.get('output_format', 'png')
+        viewport_width = request.POST.get('viewport_width', 1280)
+        viewport_height = request.POST.get('viewport_height', 2000)
 
-        if not url_input and not uploaded_file:
-            return JsonResponse({'error': 'Please provide a URL or upload an HTML file.'}, status=400)
+        if input_mode == 'code' and not html_code:
+            return JsonResponse({'error': 'Please provide HTML code.'}, status=400)
+        if input_mode == 'file' and not uploaded_file:
+            return JsonResponse({'error': 'Please upload an HTML file.'}, status=400)
 
         try:
-            if url_input:
-                # URL mode
-                if not url_input.startswith(('http://', 'https://')):
-                    url_input = 'https://' + url_input
-                from urllib.parse import urlparse
-                domain = urlparse(url_input).netloc or 'webpage'
-                output_path = html_to_image(None, f"{domain}.png", url=url_input)
-            else:
-                # File mode
+            if input_mode == 'file':
                 input_path = save_uploaded_file(uploaded_file)
-                output_path = html_to_image(input_path, uploaded_file.name)
+                output_path = html_to_image(
+                    input_data=input_path, 
+                    is_file=True, 
+                    output_format=output_format,
+                    width=viewport_width,
+                    height=viewport_height
+                )
                 try:
                     os.remove(input_path)
                 except OSError:
                     pass
+            else:
+                output_path = html_to_image(
+                    input_data=html_code, 
+                    is_file=False, 
+                    output_format=output_format,
+                    width=viewport_width,
+                    height=viewport_height
+                )
 
-            return create_cleanup_response(output_path, content_type='image/png')
+            content_type = 'image/jpeg' if output_format in ['jpg', 'jpeg'] else 'image/png'
+            return create_cleanup_response(output_path, content_type=content_type)
         except Exception as e:
             return JsonResponse({'error': f'HTML to Image failed: {str(e)}'}, status=500)
 

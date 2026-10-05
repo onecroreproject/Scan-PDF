@@ -1,0 +1,358 @@
+{% load static %}
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+        
+        // Close dropdowns on outside click
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('#video-control-container')) {
+                closeDropdown('video');
+            }
+            if (!e.target.closest('#audio-control-container')) {
+                closeDropdown('audio');
+            }
+        });
+
+        // Close on ESC
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'Escape') {
+                closeDropdown('video');
+                closeDropdown('audio');
+            }
+        });
+    });
+
+    const loadingState = document.getElementById("loading-state");
+    const errorState = document.getElementById("error-state");
+    const resultsState = document.getElementById("results-state");
+    const loadingText = document.getElementById("loading-text");
+
+    let currentOpenDropdown = null;
+
+    function resetUI() {
+        loadingState.classList.add("hidden");
+        loadingState.classList.remove("flex");
+        errorState.classList.add("hidden");
+        resultsState.classList.add("hidden");
+        document.getElementById("url-input").value = "";
+        
+        const formContainer = document.getElementById("form-container");
+        if (formContainer) {
+            formContainer.classList.remove("hidden");
+        }
+        
+        const inlineError = document.getElementById("inline-error");
+        if (inlineError) {
+            inlineError.classList.add("hidden");
+        }
+        
+        closeDropdown("video");
+        closeDropdown("audio");
+    }
+
+    function toggleDropdown(type) {
+        const dropdown = document.getElementById(`${type}-dropdown`);
+        const chevron = document.getElementById(`${type}-chevron`);
+        const isHidden = dropdown.classList.contains('hidden');
+
+        // Close all first
+        closeDropdown('video');
+        closeDropdown('audio');
+
+        if (isHidden) {
+            dropdown.classList.remove('hidden');
+            chevron.style.transform = 'rotate(180deg)';
+            currentOpenDropdown = type;
+        }
+    }
+
+    function closeDropdown(type) {
+        const dropdown = document.getElementById(`${type}-dropdown`);
+        const chevron = document.getElementById(`${type}-chevron`);
+        if (dropdown && !dropdown.classList.contains('hidden')) {
+            dropdown.classList.add('hidden');
+            if (chevron) chevron.style.transform = 'rotate(0deg)';
+        }
+        if (currentOpenDropdown === type) currentOpenDropdown = null;
+    }
+
+    async function analyzeMedia() {
+        const urlInput = document.getElementById("url-input");
+        const url = urlInput.value.trim();
+        
+        if (!url) {
+            showError("Please enter a valid URL.");
+            return;
+        }
+        
+        errorState.classList.add("hidden");
+        resultsState.classList.add("hidden");
+        loadingState.classList.remove("hidden");
+        loadingState.classList.add("flex");
+        loadingText.textContent = "Analyzing media...";
+
+        // Get CSRF Token
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+
+        try {
+            const response = await fetch("{% url 'media_tools:api_downloader_info' %}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": csrfToken
+                },
+                body: JSON.stringify({ url: url, platform: "{{ platform }}" })
+            });
+            
+            const data = await response.json();
+            
+            if (data.success) {
+                renderResults(data, url);
+            } else {
+                showError(data.message || "Failed to analyze the provided URL.");
+            }
+        } catch (err) {
+            showError("Network error. Please try again.");
+        }
+    }
+    
+    function formatBytes(bytes) {
+        if (!bytes || bytes === 0) return '';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    function renderResults(data, originalUrl) {
+        loadingState.classList.add("hidden");
+        loadingState.classList.remove("flex");
+        resultsState.classList.remove("hidden");
+        
+        const formContainer = document.getElementById("form-container");
+        if (formContainer) {
+            formContainer.classList.add("hidden");
+        }
+
+        // Populate details
+        document.getElementById("media-title").textContent = data.title || "Untitled Media";
+        
+        if (data.author) {
+            document.getElementById("media-author").textContent = `@${data.author}`;
+            document.getElementById("media-author").classList.remove("hidden");
+        } else {
+            document.getElementById("media-author").classList.add("hidden");
+        }
+
+        document.getElementById("media-platform").textContent = (data.platform || "").toUpperCase();
+        
+        if (data.duration) {
+            const m = Math.floor(data.duration / 60);
+            const s = data.duration % 60;
+            document.getElementById("media-duration").textContent = `Duration: ${m}:${s.toString().padStart(2, '0')}`;
+        } else {
+            document.getElementById("media-duration").textContent = "";
+        }
+        
+        const typeIcon = document.getElementById("media-type-icon");
+        if (data.image_formats && data.image_formats.length > 0 && (!data.video_formats || data.video_formats.length === 0)) {
+            typeIcon.setAttribute("data-lucide", "image");
+        } else {
+            typeIcon.setAttribute("data-lucide", "video");
+        }
+        
+        if (data.thumbnail) {
+            document.getElementById("media-thumbnail").src = data.thumbnail;
+        } else {
+            document.getElementById("media-thumbnail").src = "{% static 'images/placeholder.png' %}";
+        }
+
+        // --- Render Video Formats ---
+        const videoControl = document.getElementById("video-control-container");
+        const videoList = document.getElementById("video-formats-list");
+        videoList.innerHTML = "";
+        
+        if (data.video_formats && data.video_formats.length > 0) {
+            videoControl.classList.remove("hidden");
+            data.video_formats.forEach(item => {
+                const sizeStr = formatBytes(item.fileSize);
+                const sizeHtml = sizeStr ? `<span class="text-xs text-surface-400 font-medium ml-auto w-16 text-right">${sizeStr}</span>` : '';
+                
+                const html = `
+                    <button onclick="downloadMedia('${originalUrl}', '${item.id}', 'video', null, this)" class="w-full flex items-center justify-between p-3 hover:bg-surface-50 border-b border-surface-100 last:border-0 transition-colors text-left group">
+                        <div class="flex flex-col">
+                            <span class="text-sm font-bold text-surface-900 group-hover:text-brand-600 transition-colors">${item.quality}</span>
+                            <span class="text-xs font-black text-surface-400 uppercase tracking-wider">${item.format}</span>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            ${sizeHtml}
+                            <i data-lucide="download" class="w-4 h-4 text-surface-400 group-hover:text-brand-600 transition-colors"></i>
+                        </div>
+                    </button>
+                `;
+                videoList.insertAdjacentHTML("beforeend", html);
+            });
+        } else {
+            videoControl.classList.add("hidden");
+        }
+
+        // --- Render MP3 Formats ---
+        const audioControl = document.getElementById("audio-control-container");
+        const audioList = document.getElementById("audio-formats-list");
+        audioList.innerHTML = "";
+
+        if (data.audio && data.audio.available && data.audio.qualities && data.audio.qualities.length > 0) {
+            audioControl.classList.remove("hidden");
+            data.audio.qualities.forEach(q => {
+                const html = `
+                    <button onclick="downloadMedia('${originalUrl}', 'default', 'audio', '${q.value}', this)" class="w-full flex items-center justify-between p-3 hover:bg-surface-50 border-b border-surface-100 last:border-0 transition-colors text-left group">
+                        <span class="text-sm font-bold text-surface-900 group-hover:text-brand-600 transition-colors">${q.label}</span>
+                        <i data-lucide="download" class="w-4 h-4 text-surface-400 group-hover:text-brand-600 transition-colors"></i>
+                    </button>
+                `;
+                audioList.insertAdjacentHTML("beforeend", html);
+            });
+        } else {
+            audioControl.classList.add("hidden");
+        }
+
+        // --- Render Image Formats ---
+        const imageControl = document.getElementById("image-control-container");
+        const imageList = document.getElementById("image-formats-list");
+        imageList.innerHTML = "";
+
+        if (data.image_formats && data.image_formats.length > 0) {
+            imageControl.classList.remove("hidden");
+            data.image_formats.forEach(item => {
+                const sizeStr = formatBytes(item.fileSize);
+                const sizeHtml = sizeStr ? `<span class="text-xs text-surface-500 font-medium">${sizeStr}</span>` : '';
+                
+                const html = `
+                    <div class="flex items-center justify-between p-3 rounded-xl bg-surface-50 border border-surface-100">
+                        <div class="flex items-center gap-3">
+                            <i data-lucide="image" class="w-5 h-5 text-surface-400"></i>
+                            <div class="flex flex-col">
+                                <span class="text-sm font-bold text-surface-900">Image</span>
+                                ${sizeHtml}
+                            </div>
+                        </div>
+                        <button onclick="downloadMedia('${originalUrl}', '${item.id}', 'image', null, this)" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white text-sm font-bold rounded-lg transition-colors flex items-center gap-2">
+                            <span>Get</span>
+                            <i data-lucide="download" class="w-4 h-4"></i>
+                        </button>
+                    </div>
+                `;
+                imageList.insertAdjacentHTML("beforeend", html);
+            });
+        } else {
+            imageControl.classList.add("hidden");
+        }
+        
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    }
+
+    function showError(msg) {
+        loadingState.classList.add("hidden");
+        loadingState.classList.remove("flex");
+        errorState.classList.remove("hidden");
+        document.getElementById("error-message").textContent = msg;
+    }
+    
+    async function downloadMedia(url, formatId, downloadType, audioQuality, btn) {
+        // Disable button and change text
+        const originalHtml = btn.innerHTML;
+        btn.disabled = true;
+        
+        // Show spinner inside button
+        btn.innerHTML = `<div class="w-4 h-4 rounded-full border-2 border-current border-t-transparent animate-spin mx-auto"></div>`;
+        
+        // Disable main toggle buttons to prevent opening while processing
+        const videoToggle = document.getElementById('video-toggle-btn');
+        const audioToggle = document.getElementById('audio-toggle-btn');
+        if(videoToggle) videoToggle.disabled = true;
+        if(audioToggle) audioToggle.disabled = true;
+        
+        // Get CSRF Token
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
+
+        try {
+            const bodyData = { 
+                url: url, 
+                format_id: formatId, 
+                platform: "{{ platform }}", 
+                download_type: downloadType 
+            };
+            if (audioQuality) {
+                bodyData.audio_quality = audioQuality;
+            }
+
+            const response = await fetch("{% url 'media_tools:api_downloader_download' %}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": csrfToken
+                },
+                body: JSON.stringify(bodyData)
+            });
+            
+            if (response.ok) {
+                // If the response is OK, it's a file stream. Trigger browser download.
+                const contentDisposition = response.headers.get('Content-Disposition');
+                let filename = "download";
+                if (contentDisposition && contentDisposition.indexOf('filename=') !== -1) {
+                    filename = contentDisposition.split('filename=')[1].replace(/["']/g, '');
+                }
+
+                const blob = await response.blob();
+                const downloadUrl = window.URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = downloadUrl;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(downloadUrl);
+                a.remove();
+                
+            } else {
+                let msg = "Download failed.";
+                try {
+                    const data = await response.json();
+                    msg = data.message || msg;
+                } catch(e) {}
+                showInlineError(msg);
+            }
+        } catch(err) {
+            showInlineError("Network error during download.");
+        } finally {
+            // Restore button state
+            if (btn) {
+                btn.innerHTML = originalHtml;
+                btn.disabled = false;
+            }
+            if(videoToggle) videoToggle.disabled = false;
+            if(audioToggle) audioToggle.disabled = false;
+            
+            // Close dropdowns after completion or error
+            closeDropdown('video');
+            closeDropdown('audio');
+        }
+    }
+    
+    function showInlineError(msg) {
+        const errorToast = document.getElementById("inline-error");
+        const errorText = document.getElementById("inline-error-text");
+        if(errorToast && errorText) {
+            errorText.textContent = msg;
+            errorToast.classList.remove("hidden");
+            
+            setTimeout(() => {
+                errorToast.classList.add("hidden");
+            }, 6000);
+        }
+    }
+</script>

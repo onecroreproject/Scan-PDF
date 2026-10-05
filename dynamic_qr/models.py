@@ -142,7 +142,7 @@ class DynamicQRCode(models.Model):
         self.save(update_fields=['scan_count'])
 
     RESERVED_PATHS = {
-        'admin', 'image', 'audio', 'videotools', 'qr', 'video-downloader', 
+        'admin', 'image', 'audio', 'videotools', 'qr', 
         'services', 'custom-admin', 'media_tools', 'media', 'static', 'ads.txt', 'favicon.ico'
     }
 
