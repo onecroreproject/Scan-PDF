@@ -4,1730 +4,791 @@
 {% block tool_content %}
 
 <style>
-
 /* =========================================================
-   PAGE HEADING
+   CLEAN CONVERTER STYLES
    ========================================================= */
 
 .tool-heading {
-    font-size: clamp(1.75rem, 5vw + 0.75rem, 3.5rem);
-    line-height: 0.95;
+    font-size: clamp(2rem, 5vw + 1rem, 3.5rem);
+    line-height: 1.1;
     font-weight: 900;
-    letter-spacing: -0.04em;
+    letter-spacing: -0.02em;
+    color: #1e1b4b; /* Deep navy/purple dark */
 }
 
-.gradient-text {
-    background: linear-gradient(
-        135deg,
-        #7c3aed,
-        #a855f7,
-        #ec4899
-    );
-
-    -webkit-background-cliAp: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-
-/* =========================================================
-   PURPLE BUTTON
-   ========================================================= */
-
+/* Purple button */
 .purple-btn {
-    background: linear-gradient(
-        135deg,
-        #6d28d9 0%,
-        #7c3aed 45%,
-        #a855f7 100%
-    );
-
+    background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
     color: white;
-
-    box-shadow:
-        0 8px 25px rgba(124, 58, 237, 0.25);
-
-    transition:
-        all 0.25s ease;
+    box-shadow: 0 4px 14px rgba(124, 58, 237, 0.3);
+    transition: all 0.2s ease;
 }
-
 .purple-btn:hover {
     transform: translateY(-2px);
-
-    box-shadow:
-        0 12px 30px rgba(124, 58, 237, 0.38);
+    box-shadow: 0 6px 20px rgba(124, 58, 237, 0.4);
 }
-
 .purple-btn:active {
     transform: translateY(0);
 }
-
 .purple-btn:disabled {
-    opacity: 0.45;
+    opacity: 0.6;
     cursor: not-allowed;
     transform: none;
-
     box-shadow: none;
 }
 
-
-/* =========================================================
-   SELECT FILE AREA
-   ========================================================= */
-
-.select-file-area {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-
-    padding: 1.5rem 1rem;
-}
-
-
-/* =========================================================
-   SELECTED FILE CARD
-   ========================================================= */
-
-.selected-file-card {
+/* Central Area */
+.hero-dropzone {
     width: 100%;
-    max-width: 620px;
-
-    margin-top: 1.25rem;
-
-    padding: 1rem;
-
-    border-radius: 1rem;
-
-    background: #ddd6fe;
-
-    border: 1px solid #ddd6fe;
-}
-
-.remove-file-btn {
-    width: 38px;
-    height: 38px;
-
-    border-radius: 10px;
-
-    border: 1px solid #ddd6fe;
-
-    background: #f5f3ff;
-
-    color: #7c3aed;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    cursor: pointer;
-
     transition: all 0.2s ease;
+    border: 2px dashed transparent;
 }
 
-.remove-file-btn:hover {
-    background: #7c3aed;
-    color: white;
+.hero-dropzone.drag-active {
+    background: #faf5ff;
+    border-color: #a855f7;
 }
 
-
-/* =========================================================
-   PROGRESS
-   ========================================================= */
-
-.progress-card {
-    background: #fafafa;
-
-    border: 1px solid #f1f5f9;
-
-    border-radius: 1rem;
-
-    padding: 1rem 1.5rem;
-}
-
-.progress-spinner {
-    width: 32px;
-    height: 32px;
-
-    border-radius: 50%;
-
-    border: 3px solid #e2e8f0;
-
-    border-top-color: #7c3aed;
-
-    animation: spin 0.8s linear infinite;
-}
-
+/* Progress Fill */
 .progress-fill {
     height: 100%;
-
     width: 0%;
-
-    background: linear-gradient(
-        90deg,
-        #6d28d9,
-        #7c3aed,
-        #a855f7,
-        #ec4899
-    );
-
+    background: linear-gradient(90deg, #7c3aed, #a855f7);
     border-radius: 999px;
-
     transition: width 0.4s ease;
 }
 
-@keyframes spin {
-
-    to {
-        transform: rotate(360deg);
-    }
-
-}
-
-
-/* =========================================================
-   SUCCESS CARD
-   ========================================================= */
-
-.success-card {
-    text-align: center;
-
-    padding: 1.5rem;
-
-    border-radius: 1rem;
-
-    background: #faf5ff;
-
-    border: 1px solid #e9d5ff;
-}
-
-.success-icon {
-    width: 64px;
-    height: 64px;
-
-    border-radius: 1rem;
-
-    background: #ede9fe;
-
+.selected-file-box {
     display: flex;
     align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    border-radius: 16px;
+    background: white;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    border: 1px solid #f3e8ff;
+    width: 100%;
+    max-width: 400px;
+}
+
+/* Mode Switcher */
+.mode-switch {
+    display: flex;
     justify-content: center;
-
-    margin: 0 auto 1rem;
+    gap: 10px;
+    margin-bottom: 1.5rem;
+}
+.mode-btn {
+    padding: 0.5rem 1.5rem;
+    border-radius: 999px;
+    font-weight: 600;
+    font-size: 14px;
+    transition: all 0.2s;
+    background: #f1f5f9;
+    color: #64748b;
+}
+.mode-btn.active {
+    background: #7c3aed;
+    color: white;
+    box-shadow: 0 2px 8px rgba(124, 58, 237, 0.25);
 }
 
-.success-icon i {
-    color: #7c3aed;
+.settings-box {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 1rem;
+    margin-top: 1rem;
+    width: 100%;
+    max-width: 600px;
 }
 
-
-/* =========================================================
-   ERROR
-   ========================================================= */
-
-.error-card {
-    padding: 1.25rem;
-
-    border-radius: 1rem;
-
-    background: #fef2f2;
-
-    border: 1px solid #fee2e2;
+.code-editor {
+    width: 100%;
+    height: 250px;
+    background: #1e1e1e;
+    color: #d4d4d4;
+    font-family: monospace;
+    border-radius: 12px;
+    padding: 1rem;
+    border: 1px solid #333;
+    resize: vertical;
 }
 
-
-/* =========================================================
-   MOBILE
-   ========================================================= */
-
-@media (max-width: 768px) {
-
-    .tool-heading {
-        font-size: clamp(1.75rem, 7vw, 3rem);
-    }
-
+/* Info Cards */
+.info-card {
+    background: white;
+    border: 1px solid #f1f5f9;
+    border-radius: 16px;
+    padding: 1.5rem;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.03);
 }
 
-@media (max-width: 480px) {
-
-    .tool-heading {
-        font-size: clamp(1.625rem, 8vw, 2.6rem);
-    }
-
+.info-card h4 {
+    font-weight: 800;
+    color: #1e1b4b;
+    margin-bottom: 0.5rem;
+    font-size: 1.1rem;
 }
 
-
-.select-file-area {
-    padding: 2rem;
-    border: 2px dashed transparent;
-    border-radius: 20px;
-    transition: all 0.25s ease;
+.info-card ul li {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: #475569;
+    font-size: 0.95rem;
+    margin-bottom: 0.25rem;
 }
 
-.select-file-area.drag-active {
-    border-color: #7c3aed;
-    background: #faf5ff;
+.info-card ul li i {
+    color: #10b981;
+    width: 18px;
+    height: 18px;
 }
 
 </style>
 
-
 <!-- =========================================================
-     PAGE HEADER
+     PAGE HEADER & CONVERTER
      ========================================================= -->
+<section id="hero-dropzone" class="hero-dropzone text-center pt-10 pb-10 px-4 w-full">
 
-<section class="text-center mb-8 sm:mb-10">
-
-    <h1 class="tool-heading text-surface-900 mb-3">
-
-        <span class="block">
-            {{ s1 }}
-        </span>
-
-        <span class="block gradient-text">
-            {{ highlight }}
-        </span>
-
+    <!-- Clean Title -->
+    <h1 class="tool-heading mb-4 text-center">
+        <span class="text-surface-900">HTML to </span>
+        <span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-700 to-purple-500">Image Converter</span>
     </h1>
-
-
-    <!-- SEO Intro -->
-
-    <p class="max-w-3xl mx-auto text-sm sm:text-base lg:text-lg text-surface-500 leading-relaxed">
-
-        {{ seo_intro }}
-
+    <p class="text-[16px] md:text-[17px] leading-relaxed text-surface-500 max-w-[740px] mx-auto text-center font-medium mb-8 px-4">
+        Convert HTML content into a high-quality image with accurate browser rendering and direct PNG or JPG download.
     </p>
 
+    <!-- Central Converter Interaction Area -->
+    <div class="flex flex-col items-center w-full max-w-[600px] mx-auto">
+        
+        <!-- Mode Switcher -->
+        <div class="mode-switch">
+            <button class="mode-btn active" data-mode="code" id="btn-mode-code">HTML Code</button>
+            <button class="mode-btn" data-mode="file" id="btn-mode-file">HTML File</button>
+        </div>
 
-    <!-- SEO Keywords -->
+        <!-- =====================================================
+             STATE: IDLE (INPUT)
+             ===================================================== -->
+        <div id="state-idle" class="flex flex-col items-center w-full">
+            
+            <!-- Code Mode Input -->
+            <div id="input-code" class="w-full mb-4">
+                <textarea id="html-code-input" class="code-editor w-full" placeholder="<!DOCTYPE html>&#10;<html>&#10;<head>&#10;  <title>Preview</title>&#10;</head>&#10;<body>&#10;  <h1>Hello World</h1>&#10;</body>&#10;</html>"></textarea>
+            </div>
 
-    {% if seo_keywords %}
+            <!-- File Mode Input -->
+            <div id="input-file" class="w-full hidden flex-col items-center">
+                <button type="button" id="select-file-btn" class="purple-btn px-10 py-4 rounded-2xl text-white font-bold text-[15px] tracking-wide flex items-center justify-center gap-3 w-full sm:w-auto">
+                    <i data-lucide="upload" class="w-5 h-5"></i>
+                    SELECT HTML FILE
+                </button>
+                <p id="drop-text" class="text-surface-500 text-[15px] mt-3 font-medium">Drop your HTML file here</p>
+                <input type="file" id="file-input" class="hidden" accept=".html,.htm" />
+            </div>
 
-    <p class="max-w-3xl mx-auto mt-2 text-xs sm:text-sm text-surface-400 leading-relaxed">
+            <!-- Selected File Display -->
+            <div id="selected-file" class="hidden flex-col items-center w-full mt-4">
+                <div class="selected-file-box">
+                    <div class="w-10 h-10 rounded-lg bg-purple-100 flex items-center justify-center flex-shrink-0">
+                        <i data-lucide="file-code" class="w-5 h-5 text-purple-600"></i>
+                    </div>
+                    <div class="text-left flex-1 min-w-0">
+                        <p id="file-name" class="text-surface-800 font-bold text-sm truncate"></p>
+                        <p id="file-size" class="text-surface-400 text-xs"></p>
+                    </div>
+                    <button type="button" id="remove-file-btn" class="text-surface-400 hover:text-red-500 transition-colors p-1">
+                        <i data-lucide="x" class="w-5 h-5"></i>
+                    </button>
+                </div>
+            </div>
 
-        {{ seo_keywords }}
+            <!-- Capture Settings -->
+            <div class="settings-box text-left">
+                <h4 class="font-bold text-surface-800 mb-3 text-sm uppercase tracking-wide">Capture Settings</h4>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-xs font-semibold text-surface-500 mb-1">Output Format</label>
+                        <select id="setting-format" class="w-full rounded-lg border border-surface-200 p-2 text-sm">
+                            <option value="png">PNG (Preserves Transparency)</option>
+                            <option value="jpg">JPG (White Background)</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold text-surface-500 mb-1">Viewport</label>
+                        <div class="flex gap-2">
+                            <input type="number" id="setting-width" value="1280" class="w-full rounded-lg border border-surface-200 p-2 text-sm" placeholder="W" />
+                            <span class="text-surface-400 self-center">x</span>
+                            <input type="number" id="setting-height" value="2000" class="w-full rounded-lg border border-surface-200 p-2 text-sm" placeholder="H" />
+                        </div>
+                    </div>
+                </div>
+            </div>
 
-    </p>
+            <button id="convert-btn" class="purple-btn px-12 py-4 mt-6 rounded-2xl text-white font-bold text-[15px] tracking-wide flex items-center justify-center gap-3 w-full sm:w-auto">
+                <i data-lucide="sparkles" class="w-5 h-5"></i>
+                CONVERT NOW
+            </button>
 
-    {% endif %}
+            <!-- Error Display -->
+            <div id="error-box" class="hidden w-full max-w-md mt-4 p-4 bg-red-50 border border-red-100 rounded-xl text-center">
+                <p id="error-message" class="text-red-600 text-sm font-semibold"></p>
+            </div>
+        </div>
 
+        <!-- =====================================================
+             STATE: PROCESSING
+             ===================================================== -->
+        <div id="state-processing" class="hidden flex-col items-center w-full max-w-sm mt-8">
+            <div class="w-16 h-16 border-4 border-purple-100 border-t-purple-600 rounded-full animate-spin mb-4"></div>
+            <h3 class="text-xl font-bold text-surface-900 mb-1">Rendering HTML...</h3>
+            <p class="text-surface-500 text-sm mb-4 text-center">This may take a moment</p>
+            <div class="w-full h-2 rounded-full bg-surface-100 overflow-hidden">
+                <div class="progress-fill w-[80%] animate-pulse"></div>
+            </div>
+        </div>
+
+        <!-- =====================================================
+             STATE: SUCCESS
+             ===================================================== -->
+        <div id="state-success" class="hidden flex-col items-center w-full mt-6">
+            <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-4">
+                <i data-lucide="check" class="w-8 h-8 text-green-600"></i>
+            </div>
+            <h3 class="text-2xl font-black text-surface-900 mb-1">Conversion Complete</h3>
+            <p class="text-surface-500 text-sm mb-6 text-center">Your generated image is ready.</p>
+            
+            <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto">
+                <a id="download-btn" href="#" download="html-render.png" class="px-8 py-4 bg-green-600 hover:bg-green-700 text-white rounded-2xl font-bold tracking-wide flex justify-center items-center gap-2 transition-colors">
+                    <i data-lucide="download" class="w-5 h-5"></i>
+                    DOWNLOAD <span id="download-format">PNG</span>
+                </a>
+                <button type="button" id="reset-btn" class="px-8 py-4 bg-surface-100 hover:bg-surface-200 text-surface-700 rounded-2xl font-bold tracking-wide flex justify-center items-center gap-2 transition-colors">
+                    <i data-lucide="refresh-cw" class="w-4 h-4"></i>
+                    Convert Another
+                </button>
+            </div>
+        </div>
+    </div>
 </section>
 
 
-
 <!-- =========================================================
-     MAIN CARD
+     PREMIUM LOWER CONTENT
      ========================================================= -->
 
-<!-- =========================================================
-     MAIN CARD
-     ========================================================= -->
-
-<div class="rounded-2xl bg-[#faf5ff]  p-4 sm:p-6 ">
-
-
-    <!-- =====================================================
-         SELECT FILE
-         ===================================================== -->
-<div id="select-file-area" class="select-file-area">
-
-
-        <!-- Select File Button -->
-
-        <button
-            type="button"
-            id="select-file-btn"
-            class="purple-btn px-8 py-3 rounded-2xl text-white font-black text-sm sm:text-base uppercase tracking-widest flex items-center justify-center gap-3">
-
-            <i
-                data-lucide="upload"
-                class="w-5 h-5">
-            </i>
-
-            Select File
-
-        </button>
-
-
-        <!-- File Information -->
-
-        <p class="text-xs text-surface-400 mt-3">
-
-            Max 50MB
-            &nbsp;&nbsp;•&nbsp;&nbsp;
-            Accepted:
-
-            <span class="text-surface-500 font-medium">
-                {{ tool.accept }}
-            </span>
-
+<!-- Premium Sections -->
+<section class="max-w-6xl mx-auto px-4 py-16 grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
+    <div>
+        <span class="inline-block px-3 py-1 bg-purple-100 text-purple-700 font-bold text-xs rounded-full uppercase tracking-wider mb-4">BROWSER-QUALITY RENDERING</span>
+        <h2 class="text-3xl font-black text-surface-900 mb-4">Turn HTML into a Visual Image</h2>
+        <p class="text-surface-600 mb-6 leading-relaxed">
+            Render supported HTML and CSS into a downloadable PNG or JPG image using a real browser-based rendering workflow.
         </p>
-
-
-        <!-- =================================================
-             SELECTED FILE
-             ================================================= -->
-
-        <div
-            id="file-selected"
-            class="hidden selected-file-card">
-
-            <div class="flex items-center gap-4">
-
-
-                <!-- File Icon -->
-
-                <div
-                    class="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center flex-shrink-0">
-
-                    <i
-                        data-lucide="file-check-2"
-                        class="w-6 h-6 text-purple-600">
-                    </i>
-
-                </div>
-
-
-                <!-- File Details -->
-
-                <div class="text-left min-w-0 flex-1">
-
-                    <p
-                        id="file-name"
-                        class="text-surface-800 font-bold text-sm truncate">
-                    </p>
-
-                    <p
-                        id="file-size"
-                        class="text-xs text-surface-400 mt-1">
-                    </p>
-
-                </div>
-
-
-                <!-- Remove -->
-
-                <button
-                    type="button"
-                    id="remove-file-btn"
-                    class="remove-file-btn"
-                    title="Remove file">
-
-                    <i
-                        data-lucide="x"
-                        class="w-5 h-5">
-                    </i>
-
-                </button>
-
-            </div>
-
-        </div>
-
-
-        <!-- Hidden File Input -->
-
-        <input
-            type="file"
-            id="file-input"
-            class="hidden"
-            accept="{{ tool.accept }}">
-
-
+        <ul class="space-y-3">
+            <li class="flex items-center gap-3 text-surface-700"><i data-lucide="check" class="text-green-500 w-5 h-5"></i> HTML and CSS rendering</li>
+            <li class="flex items-center gap-3 text-surface-700"><i data-lucide="check" class="text-green-500 w-5 h-5"></i> PNG and JPG output</li>
+            <li class="flex items-center gap-3 text-surface-700"><i data-lucide="check" class="text-green-500 w-5 h-5"></i> Custom viewport size</li>
+            <li class="flex items-center gap-3 text-surface-700"><i data-lucide="check" class="text-green-500 w-5 h-5"></i> Direct image download</li>
+        </ul>
     </div>
-
-
-
-    <!-- =====================================================
-         PDF TO IMAGE FORMAT
-         ===================================================== -->
-
-    {% if tool_slug == 'pdf-to-image' %}
-
-    <div
-        class="mt-3 flex flex-col items-center gap-3 py-4 border-t border-surface-50 animate-fade-in-up">
-
-
-        <span
-            class="text-[11px] font-black text-surface-400 uppercase tracking-widest">
-
-            Select Format
-
-        </span>
-
-
-        <div class="flex gap-2">
-
-
-            <!-- PNG -->
-
-            <label class="cursor-pointer">
-
-                <input
-                    type="radio"
-                    name="image_format"
-                    value="png"
-                    checked
-                    class="hidden peer">
-
-                <span
-                    class="px-6 py-2.5 rounded-xl text-sm font-bold border border-surface-200
-                    peer-checked:border-violet-500
-                    peer-checked:bg-violet-50
-                    peer-checked:text-violet-700
-                    text-surface-400
-                    hover:bg-surface-50
-                    transition-all
-                    block">
-
-                    PNG
-
-                </span>
-
-            </label>
-
-
-            <!-- JPG -->
-
-            <label class="cursor-pointer">
-
-                <input
-                    type="radio"
-                    name="image_format"
-                    value="jpg"
-                    class="hidden peer">
-
-                <span
-                    class="px-6 py-2.5 rounded-xl text-sm font-bold border border-surface-200
-                    peer-checked:border-violet-500
-                    peer-checked:bg-violet-50
-                    peer-checked:text-violet-700
-                    text-surface-400
-                    hover:bg-surface-50
-                    transition-all
-                    block">
-
-                    JPG
-
-                </span>
-
-            </label>
-
-
+    <div class="bg-surface-50 p-8 rounded-3xl border border-surface-100 flex items-center justify-center relative">
+        <div class="bg-white p-4 rounded-xl shadow-lg border border-surface-100 absolute -left-4 top-10">
+            <i data-lucide="code" class="w-8 h-8 text-purple-500"></i>
         </div>
-
+        <div class="bg-white p-4 rounded-xl shadow-lg border border-surface-100 absolute -right-4 bottom-10">
+            <i data-lucide="image" class="w-8 h-8 text-green-500"></i>
+        </div>
+        <i data-lucide="arrow-right" class="w-12 h-12 text-surface-300"></i>
     </div>
+</section>
 
-    {% endif %}
-
-
-
-    <!-- =====================================================
-         CONVERT BUTTON
-         ===================================================== -->
-
-    <div class="text-center">
-
-        <button
-            id="convert-btn"
-            disabled
-            class="purple-btn w-auto mx-auto px-8 py-3 mt-5 sm:py-4 rounded-2xl text-white font-black text-sm sm:text-base uppercase tracking-widest flex items-center justify-center gap-3">
-
-            <i
-                data-lucide="sparkles"
-                class="w-5 h-5">
-            </i>
-
-            Convert Now
-
-        </button>
-
+<!-- Features Grid -->
+<section class="max-w-6xl mx-auto px-4 py-16 bg-surface-50 rounded-3xl mb-16">
+    <div class="text-center mb-12">
+        <h2 class="text-3xl font-black text-surface-900 mb-4">What ScanPDF Renders</h2>
     </div>
-
-
-
-    <!-- =====================================================
-         PROGRESS STATE
-         ===================================================== -->
-
-    <div
-        id="progress-section"
-        class="hidden mt-4">
-
-
-        <div class="progress-card flex items-center gap-4">
-
-
-            <!-- Spinner -->
-
-            <div class="relative flex-shrink-0">
-
-                <div class="progress-spinner"></div>
-
-            </div>
-
-
-            <!-- Text -->
-
-            <div class="min-w-0">
-
-                <p class="text-surface-800 font-bold text-base">
-
-                    Converting your file…
-
-                </p>
-
-                <p class="text-xs text-surface-400 mt-1">
-
-                    This may take a moment
-
-                </p>
-
-            </div>
-
-
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="info-card">
+            <h4>HTML Structure</h4>
+            <ul>
+                <li><i data-lucide="check"></i> Headings</li>
+                <li><i data-lucide="check"></i> Paragraphs</li>
+                <li><i data-lucide="check"></i> Lists</li>
+                <li><i data-lucide="check"></i> Tables</li>
+            </ul>
         </div>
-
-
-        <!-- Progress Bar -->
-
-        <div
-            class="w-full h-2 rounded-full bg-surface-100 overflow-hidden mt-4">
-
-            <div
-                id="progress-bar"
-                class="progress-fill">
-            </div>
-
+        <div class="info-card">
+            <h4>CSS Styling</h4>
+            <ul>
+                <li><i data-lucide="check"></i> Colors</li>
+                <li><i data-lucide="check"></i> Borders</li>
+                <li><i data-lucide="check"></i> Spacing</li>
+                <li><i data-lucide="check"></i> Backgrounds</li>
+            </ul>
         </div>
+        <div class="info-card">
+            <h4>Modern Layouts</h4>
+            <ul>
+                <li><i data-lucide="check"></i> Flexbox</li>
+                <li><i data-lucide="check"></i> Grid</li>
+                <li><i data-lucide="check"></i> Alignment</li>
+                <li><i data-lucide="check"></i> Responsive layout rules</li>
+            </ul>
+        </div>
+        <div class="info-card">
+            <h4>Image Output</h4>
+            <ul>
+                <li><i data-lucide="check"></i> PNG</li>
+                <li><i data-lucide="check"></i> JPG</li>
+                <li><i data-lucide="check"></i> Selected viewport</li>
+                <li><i data-lucide="check"></i> Direct download</li>
+            </ul>
+        </div>
+    </div>
+</section>
 
-
-        <!-- Percentage -->
-
-        <p
-            id="progress-percent"
-            class="text-center text-xs font-bold text-violet-600 mt-2">
-
-            0%
-
+<!-- Premium Section 2: Preserve Your Page Design -->
+<section class="max-w-6xl mx-auto px-4 py-16 grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
+    <!-- Left: Illustration -->
+    <div class="order-2 md:order-1 bg-surface-50 p-8 rounded-3xl border border-surface-100 flex items-center justify-center relative min-h-[300px]">
+        <div class="bg-white p-6 rounded-2xl shadow-xl border border-surface-200 w-full max-w-sm">
+            <div class="w-2/3 h-4 bg-surface-200 rounded-full mb-6"></div>
+            <div class="w-full h-3 bg-surface-100 rounded-full mb-3"></div>
+            <div class="w-5/6 h-3 bg-surface-100 rounded-full mb-6"></div>
+            <div class="w-full h-24 bg-purple-50 border border-purple-100 rounded-xl mb-4 flex items-center justify-center">
+                <i data-lucide="image" class="text-purple-300 w-8 h-8"></i>
+            </div>
+            <div class="w-1/3 h-8 bg-purple-600 rounded-lg"></div>
+        </div>
+    </div>
+    <!-- Right: Content -->
+    <div class="order-1 md:order-2">
+        <span class="inline-block px-3 py-1 bg-purple-100 text-purple-700 font-bold text-xs rounded-full uppercase tracking-wider mb-4">LAYOUT PRESERVATION</span>
+        <h2 class="text-3xl font-black text-surface-900 mb-4">Preserve Your Page Design</h2>
+        <p class="text-surface-600 mb-6 leading-relaxed">
+            ScanPDF’s converter aims to retain the visual presentation of the rendered HTML. Maintain the structure produced by HTML and CSS rules.
         </p>
-
-
+        <ul class="space-y-3">
+            <li class="flex items-center gap-3 text-surface-700"><i data-lucide="check" class="text-green-500 w-5 h-5"></i> Typography and text styling</li>
+            <li class="flex items-center gap-3 text-surface-700"><i data-lucide="check" class="text-green-500 w-5 h-5"></i> Backgrounds and colors</li>
+            <li class="flex items-center gap-3 text-surface-700"><i data-lucide="check" class="text-green-500 w-5 h-5"></i> Spacing and alignment</li>
+            <li class="flex items-center gap-3 text-surface-700"><i data-lucide="check" class="text-green-500 w-5 h-5"></i> Images and visual elements</li>
+        </ul>
     </div>
+</section>
 
+<!-- Premium Section 3: Capture More Than Plain Text -->
+<section class="max-w-6xl mx-auto px-4 py-16 grid grid-cols-1 md:grid-cols-2 gap-16 items-center">
+    <!-- Left: Content -->
+    <div>
+        <span class="inline-block px-3 py-1 bg-purple-100 text-purple-700 font-bold text-xs rounded-full uppercase tracking-wider mb-4">RICH CONVERSION</span>
+        <h2 class="text-3xl font-black text-surface-900 mb-4">Capture More Than Plain Text</h2>
+        <p class="text-surface-600 mb-6 leading-relaxed">
+            Our HTML-to-Image engine captures the rendered design exactly as a browser would display it, rather than merely extracting textual content.
+        </p>
+        <ul class="space-y-3">
+            <li class="flex items-center gap-3 text-surface-700"><i data-lucide="check" class="text-green-500 w-5 h-5"></i> Styled sections</li>
+            <li class="flex items-center gap-3 text-surface-700"><i data-lucide="check" class="text-green-500 w-5 h-5"></i> Tables and cards</li>
+            <li class="flex items-center gap-3 text-surface-700"><i data-lucide="check" class="text-green-500 w-5 h-5"></i> Borders and backgrounds</li>
+            <li class="flex items-center gap-3 text-surface-700"><i data-lucide="check" class="text-green-500 w-5 h-5"></i> Structured page layouts</li>
+        </ul>
+    </div>
+    <!-- Right: Illustration -->
+    <div class="bg-surface-50 p-8 rounded-3xl border border-surface-100 flex flex-row items-center justify-center relative min-h-[300px] gap-4">
+        <!-- Code side -->
+        <div class="bg-surface-800 p-4 rounded-xl shadow-lg border border-surface-700 flex-1 h-48 flex flex-col justify-center">
+            <div class="w-1/2 h-2 bg-purple-500 rounded-full mb-3"></div>
+            <div class="w-3/4 h-2 bg-surface-500 rounded-full mb-3"></div>
+            <div class="w-full h-2 bg-surface-500 rounded-full mb-3"></div>
+            <div class="w-5/6 h-2 bg-surface-500 rounded-full mb-3"></div>
+        </div>
+        <i data-lucide="arrow-right" class="w-8 h-8 text-surface-400 shrink-0"></i>
+        <!-- Visual side -->
+        <div class="bg-white p-4 rounded-xl shadow-lg border border-surface-200 flex-1 h-48 flex flex-col">
+            <div class="w-1/2 h-4 bg-purple-600 rounded-lg mb-4"></div>
+            <div class="w-full h-20 bg-surface-100 border border-surface-200 rounded-lg"></div>
+        </div>
+    </div>
+</section>
 
-
-    <!-- =====================================================
-         SUCCESS STATE
-         ===================================================== -->
-
-    <div
-        id="success-section"
-        class="hidden mt-4">
-
-
-        <div class="success-card">
-
-
-            <!-- Success Icon -->
-
-            <div class="success-icon">
-
-                <i
-                    data-lucide="check-circle-2"
-                    class="w-8 h-8">
-                </i>
-
+<!-- How to Convert HTML to Image Panel -->
+<section class="max-w-6xl mx-auto px-4 py-16">
+    <div class="bg-white border border-surface-200 rounded-[2rem] shadow-xl overflow-hidden flex flex-col lg:flex-row">
+        <!-- Content Side -->
+        <div class="lg:w-1/2 p-10 lg:p-16">
+            <h2 class="text-3xl font-black text-surface-900 mb-10">How to Convert HTML to Image</h2>
+            
+            <div class="space-y-8">
+                <div class="flex gap-4">
+                    <div class="w-10 h-10 rounded-full bg-purple-100 text-purple-700 font-bold flex items-center justify-center shrink-0">01</div>
+                    <div>
+                        <h4 class="font-bold text-surface-900 text-lg mb-1">Add Your HTML</h4>
+                        <p class="text-surface-600">Paste/enter your HTML code or upload a supported HTML file directly into the converter.</p>
+                    </div>
+                </div>
+                <div class="flex gap-4">
+                    <div class="w-10 h-10 rounded-full bg-purple-100 text-purple-700 font-bold flex items-center justify-center shrink-0">02</div>
+                    <div>
+                        <h4 class="font-bold text-surface-900 text-lg mb-1">Choose Your Output</h4>
+                        <p class="text-surface-600">Select an available image format (PNG or JPG) and configure the preferred viewport settings.</p>
+                    </div>
+                </div>
+                <div class="flex gap-4">
+                    <div class="w-10 h-10 rounded-full bg-purple-100 text-purple-700 font-bold flex items-center justify-center shrink-0">03</div>
+                    <div>
+                        <h4 class="font-bold text-surface-900 text-lg mb-1">Convert the Page</h4>
+                        <p class="text-surface-600">Click the convert button and allow ScanPDF's rendering engine to capture the HTML.</p>
+                    </div>
+                </div>
+                <div class="flex gap-4">
+                    <div class="w-10 h-10 rounded-full bg-purple-100 text-purple-700 font-bold flex items-center justify-center shrink-0">04</div>
+                    <div>
+                        <h4 class="font-bold text-surface-900 text-lg mb-1">Download Your Image</h4>
+                        <p class="text-surface-600">Download the completed PNG or JPG image directly after successful processing.</p>
+                    </div>
+                </div>
             </div>
+        </div>
+        
+        <!-- Illustration Side -->
+        <div class="lg:w-1/2 bg-surface-50 p-10 lg:p-16 flex items-center justify-center border-t lg:border-t-0 lg:border-l border-surface-200">
+            <div class="w-full max-w-sm bg-white rounded-2xl shadow-lg border border-surface-200 p-6 flex flex-col items-center">
+                <div class="w-16 h-16 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center mb-4">
+                    <i data-lucide="check" class="w-8 h-8"></i>
+                </div>
+                <div class="w-3/4 h-4 bg-surface-200 rounded-full mb-8"></div>
+                <div class="w-full bg-green-500 text-white py-3 rounded-xl font-bold flex items-center justify-center gap-2">
+                    <i data-lucide="download" class="w-5 h-5"></i> DOWNLOAD IMAGE
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
 
+<!-- Designed for Different Content -->
+<section class="max-w-6xl mx-auto px-4 py-16">
+    <div class="text-center mb-12">
+        <h2 class="text-3xl font-black text-surface-900 mb-4">Designed for Different HTML Content</h2>
+        <p class="text-surface-600 max-w-2xl mx-auto">Render a wide variety of HTML-based content into static images perfectly.</p>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-surface-200 text-center">
+            <div class="w-12 h-12 bg-blue-50 text-blue-500 rounded-xl flex items-center justify-center mx-auto mb-4">
+                <i data-lucide="layout" class="w-6 h-6"></i>
+            </div>
+            <h4 class="font-bold text-surface-900 mb-2">WEB PAGES</h4>
+            <p class="text-sm text-surface-500">Landing pages and webpage layouts perfectly captured.</p>
+        </div>
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-surface-200 text-center">
+            <div class="w-12 h-12 bg-orange-50 text-orange-500 rounded-xl flex items-center justify-center mx-auto mb-4">
+                <i data-lucide="pie-chart" class="w-6 h-6"></i>
+            </div>
+            <h4 class="font-bold text-surface-900 mb-2">REPORTS</h4>
+            <p class="text-sm text-surface-500">HTML reports and formatted data summaries converted.</p>
+        </div>
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-surface-200 text-center">
+            <div class="w-12 h-12 bg-pink-50 text-pink-500 rounded-xl flex items-center justify-center mx-auto mb-4">
+                <i data-lucide="mail" class="w-6 h-6"></i>
+            </div>
+            <h4 class="font-bold text-surface-900 mb-2">EMAIL TEMPLATES</h4>
+            <p class="text-sm text-surface-500">Rendered HTML email designs converted for sharing.</p>
+        </div>
+        <div class="bg-white p-6 rounded-2xl shadow-sm border border-surface-200 text-center">
+            <div class="w-12 h-12 bg-teal-50 text-teal-500 rounded-xl flex items-center justify-center mx-auto mb-4">
+                <i data-lucide="smartphone" class="w-6 h-6"></i>
+            </div>
+            <h4 class="font-bold text-surface-900 mb-2">UI MOCKUPS</h4>
+            <p class="text-sm text-surface-500">HTML-based interface previews and UI components.</p>
+        </div>
+    </div>
+</section>
 
-            <!-- Title -->
-
-            <h3
-                class="text-lg font-black text-surface-900 mb-1">
-
-                Conversion Complete!
-
-            </h3>
-
-
-            <p
-                class="text-surface-500 text-sm mb-6">
-
-                Your file is ready to download.
-
+<!-- Why Use ScanPDF HTML to Image -->
+<section class="max-w-6xl mx-auto px-4 py-16">
+    <div class="text-center mb-12">
+        <h2 class="text-3xl font-black text-surface-900">Why Use ScanPDF HTML to Image</h2>
+    </div>
+    
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Left Large Purple Card -->
+        <div class="lg:col-span-1 bg-gradient-to-br from-purple-600 to-purple-800 rounded-3xl p-10 text-white flex flex-col justify-center">
+            <i data-lucide="zap" class="w-10 h-10 text-purple-200 mb-6"></i>
+            <h3 class="text-2xl font-black mb-4">Visual Conversion Flow</h3>
+            <p class="text-purple-100 leading-relaxed">
+                Add your HTML, render the content, and download the resulting image through one focused workflow.
             </p>
-
-
-
-            <!-- Buttons -->
-
-            <div
-                class="flex flex-col sm:flex-row gap-3 justify-center">
-
-
-                <!-- Download -->
-
-             <a
-    id="download-btn"
-    href="#"
-    class="purple-btn inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-2xl text-white font-black text-sm" style="  background: linear-gradient(135deg, #16a34a, #22c55e);
-    color: #ffffff;
-
-    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.25);">
-
-    <i data-lucide="download" class="w-5 h-5"></i>
-    Download File
-
-</a>
-
-
-                <!-- Convert Another -->
-
-       <button
-    type="button"
-    id="convert-another-btn"
-    class="purple-btn inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-2xl text-white font-black text-sm">
-
-    <i data-lucide="refresh-cw" class="w-4 h-4"></i>
-    Convert Another
-
-</button>
-
-
-            </div>
-
-
         </div>
-
-    </div>
-
-
-
-    <!-- =====================================================
-         ERROR STATE
-         ===================================================== -->
-
-    <div
-        id="error-section"
-        class="hidden mt-4">
-
-
-        <div
-            class="error-card flex items-start gap-4">
-
-
-            <!-- Icon -->
-
-            <div
-                class="w-9 h-9 rounded-xl bg-red-100 flex items-center justify-center flex-shrink-0">
-
-                <i
-                    data-lucide="alert-triangle"
-                    class="w-5 h-5 text-red-500">
-                </i>
-
+        
+        <!-- Right Stacked Cards -->
+        <div class="lg:col-span-2 flex flex-col gap-6">
+            <div class="bg-white border border-surface-200 rounded-2xl p-6 sm:p-8 flex items-start gap-5 shadow-sm">
+                <div class="w-12 h-12 bg-purple-50 text-purple-600 rounded-xl flex shrink-0 items-center justify-center">
+                    <i data-lucide="camera" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h4 class="text-lg font-bold text-surface-900 mb-2">Rendered Output</h4>
+                    <p class="text-surface-600">Output is generated directly from the rendered HTML engine rather than plain text extraction.</p>
+                </div>
             </div>
-
-
-            <!-- Error -->
-
-            <div class="min-w-0 pt-1">
-
-                <h4
-                    class="font-black text-red-700 text-sm uppercase tracking-wider mb-1">
-
-                    Conversion Failed
-
-                </h4>
-
-                <p
-                    id="error-message"
-                    class="text-xs text-red-500 leading-relaxed font-semibold">
-                </p>
-
+            
+            <div class="bg-white border border-surface-200 rounded-2xl p-6 sm:p-8 flex items-start gap-5 shadow-sm">
+                <div class="w-12 h-12 bg-purple-50 text-purple-600 rounded-xl flex shrink-0 items-center justify-center">
+                    <i data-lucide="loader" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h4 class="text-lg font-bold text-surface-900 mb-2">Clear Conversion Progress</h4>
+                    <p class="text-surface-600">The interface clearly separates input, processing, and completion states for a seamless experience.</p>
+                </div>
             </div>
-
-
+            
+            <div class="bg-white border border-surface-200 rounded-2xl p-6 sm:p-8 flex items-start gap-5 shadow-sm">
+                <div class="w-12 h-12 bg-purple-50 text-purple-600 rounded-xl flex shrink-0 items-center justify-center">
+                    <i data-lucide="download-cloud" class="w-6 h-6"></i>
+                </div>
+                <div>
+                    <h4 class="text-lg font-bold text-surface-900 mb-2">Direct Image Download</h4>
+                    <p class="text-surface-600">Successful image outputs can be downloaded directly and securely to your device.</p>
+                </div>
+            </div>
         </div>
-
     </div>
+</section>
 
-
-</div>
+<!-- Final Light-Purple Information Panel -->
+<section class="max-w-4xl mx-auto px-4 py-8 mb-16">
+    <div class="bg-purple-50 border border-purple-100 rounded-3xl p-8 sm:p-10">
+        <h3 class="text-xl font-bold text-purple-900 mb-3 text-center">Get the Best HTML-to-Image Result</h3>
+        <p class="text-purple-700 text-center mb-8">Follow these practical tips to ensure your generated image looks exactly as intended.</p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div class="flex items-start gap-3 text-purple-800">
+                <i data-lucide="check-circle-2" class="w-5 h-5 shrink-0 mt-0.5 text-purple-500"></i>
+                <span class="text-sm font-medium">Use valid HTML and CSS</span>
+            </div>
+            <div class="flex items-start gap-3 text-purple-800">
+                <i data-lucide="check-circle-2" class="w-5 h-5 shrink-0 mt-0.5 text-purple-500"></i>
+                <span class="text-sm font-medium">Check wide layouts before conversion</span>
+            </div>
+            <div class="flex items-start gap-3 text-purple-800">
+                <i data-lucide="check-circle-2" class="w-5 h-5 shrink-0 mt-0.5 text-purple-500"></i>
+                <span class="text-sm font-medium">Make required public resources accessible</span>
+            </div>
+            <div class="flex items-start gap-3 text-purple-800">
+                <i data-lucide="check-circle-2" class="w-5 h-5 shrink-0 mt-0.5 text-purple-500"></i>
+                <span class="text-sm font-medium">Avoid unsupported embedded resources</span>
+            </div>
+            <div class="flex items-start gap-3 text-purple-800">
+                <i data-lucide="check-circle-2" class="w-5 h-5 shrink-0 mt-0.5 text-purple-500"></i>
+                <span class="text-sm font-medium">Use standard web fonts where possible</span>
+            </div>
+            <div class="flex items-start gap-3 text-purple-800">
+                <i data-lucide="check-circle-2" class="w-5 h-5 shrink-0 mt-0.5 text-purple-500"></i>
+                <span class="text-sm font-medium">Review long pages after capture</span>
+            </div>
+        </div>
+    </div>
+</section>
 
 {% endblock %}
 
 
 {% block extra_scripts %}
-
 <script>
-
-/* =========================================================
-   DJANGO VALUES
-   ========================================================= */
-
-const TOOL_SLUG = '{{ tool_slug }}';
-
-const CONVERT_URL =
-    '{% url "converter:convert_file" tool_slug %}';
-
-const CSRF_TOKEN =
-    '{{ csrf_token }}';
-
-
-/* =========================================================
-   ELEMENTS
-   ========================================================= */
-
-const selectFileArea =
-    document.getElementById('select-file-area');
-
-const selectFileBtn =
-    document.getElementById('select-file-btn');
-
-const fileInput =
-    document.getElementById('file-input');
-
-const fileSelected =
-    document.getElementById('file-selected');
-
-const fileName =
-    document.getElementById('file-name');
-
-const fileSize =
-    document.getElementById('file-size');
-
-const removeFileBtn =
-    document.getElementById('remove-file-btn');
-
-const convertBtn =
-    document.getElementById('convert-btn');
-
-const progressSection =
-    document.getElementById('progress-section');
-
-const progressBar =
-    document.getElementById('progress-bar');
-
-const progressPercent =
-    document.getElementById('progress-percent');
-
-const successSection =
-    document.getElementById('success-section');
-
-const errorSection =
-    document.getElementById('error-section');
-
-const errorMessage =
-    document.getElementById('error-message');
-
-const downloadBtn =
-    document.getElementById('download-btn');
-
-const convertAnotherBtn =
-    document.getElementById('convert-another-btn');
-
-
-/* =========================================================
-   VARIABLES
-   ========================================================= */
-
-let selectedFile = null;
-
-let progressInterval = null;
-
-
-/* =========================================================
-   SELECT FILE BUTTON
-   ========================================================= */
-
-selectFileBtn.addEventListener('click', function () {
-
-    fileInput.click();
-
-});
-
-
-/* =========================================================
-   FILE INPUT CHANGE
-   ========================================================= */
-
-fileInput.addEventListener('change', function (event) {
-
-    if (
-        event.target.files &&
-        event.target.files.length > 0
-    ) {
-
-        handleFile(
-            event.target.files[0]
-        );
-
-    }
-
-});
-
-
-/* =========================================================
-   DRAG OVER
-   ========================================================= */
-
-selectFileArea.addEventListener(
-    'dragover',
-    function (event) {
-
-        event.preventDefault();
-
-        selectFileArea.classList.add(
-            'drag-active'
-        );
-
-    }
-);
-
-
-/* =========================================================
-   DRAG LEAVE
-   ========================================================= */
-
-selectFileArea.addEventListener(
-    'dragleave',
-    function () {
-
-        selectFileArea.classList.remove(
-            'drag-active'
-        );
-
-    }
-);
-
-
-/* =========================================================
-   DROP FILE
-   ========================================================= */
-
-selectFileArea.addEventListener(
-    'drop',
-    function (event) {
-
-        event.preventDefault();
-
-        selectFileArea.classList.remove(
-            'drag-active'
-        );
-
-
-        if (
-            event.dataTransfer.files &&
-            event.dataTransfer.files.length > 0
-        ) {
-
-            handleFile(
-                event.dataTransfer.files[0]
-            );
-
-        }
-
-    }
-);
-
-
-/* =========================================================
-   HANDLE FILE
-   ========================================================= */
-
-function handleFile(file) {
-
-    /* ---------------------------------------------
-       Accepted file types
-    --------------------------------------------- */
-
-    const accept =
-        '{{ tool.accept }}'
-        .split(',')
-        .map(function (item) {
-
-            return item
-                .trim()
-                .toLowerCase();
-
-        });
-
-
-    /* ---------------------------------------------
-       Get extension
-    --------------------------------------------- */
-
-    const extension =
-        '.' +
-        file.name
-            .split('.')
-            .pop()
-            .toLowerCase();
-
-
-    /* ---------------------------------------------
-       Validate file type
-    --------------------------------------------- */
-
-    if (
-        !accept.includes(extension)
-    ) {
-
-        showError(
-            'Invalid file type. Accepted: ' +
-            accept.join(', ')
-        );
-
-        return;
-
-    }
-
-
-    /* ---------------------------------------------
-       Validate file size
-       50 MB
-    --------------------------------------------- */
-
-    if (
-        file.size > 52428800
-    ) {
-
-        showError(
-            'File exceeds the 50MB limit.'
-        );
-
-        return;
-
-    }
-
-
-    /* ---------------------------------------------
-       Store file
-    --------------------------------------------- */
-
-    selectedFile = file;
-
-
-    /* ---------------------------------------------
-       Show file name
-    --------------------------------------------- */
-
-    fileName.textContent =
-        file.name;
-
-
-    /* ---------------------------------------------
-       Show file size
-    --------------------------------------------- */
-
-    fileSize.textContent =
-        formatFileSize(file.size);
-
-
-    /* ---------------------------------------------
-       Show selected file card
-    --------------------------------------------- */
-
-    fileSelected.classList.remove(
-        'hidden'
-    );
-
-
-    /* ---------------------------------------------
-       Enable Convert button
-    --------------------------------------------- */
-
-    convertBtn.disabled = false;
-
-
-    /* ---------------------------------------------
-       Hide error
-    --------------------------------------------- */
-
-    errorSection.classList.add(
-        'hidden'
-    );
-
-
-    /* ---------------------------------------------
-       Refresh icons
-    --------------------------------------------- */
-
-    if (
-        typeof lucide !== 'undefined'
-    ) {
-
-        lucide.createIcons();
-
-    }
-
-}
-
-
-/* =========================================================
-   FORMAT FILE SIZE
-   ========================================================= */
-
-function formatFileSize(bytes) {
-
-    if (bytes === 0) {
-
-        return '0 Bytes';
-
-    }
-
-
-    const k = 1024;
-
-    const sizes = [
-        'Bytes',
-        'KB',
-        'MB',
-        'GB'
-    ];
-
-
-    const index =
-        Math.floor(
-            Math.log(bytes) /
-            Math.log(k)
-        );
-
-
-    return (
-        parseFloat(
-            (
-                bytes /
-                Math.pow(k, index)
-            ).toFixed(2)
-        )
-        +
-        ' '
-        +
-        sizes[index]
-    );
-
-}
-
-
-/* =========================================================
-   REMOVE FILE
-   ========================================================= */
-
-removeFileBtn.addEventListener(
-    'click',
-    function (event) {
-
-        event.stopPropagation();
-
-        resetUpload();
-
-    }
-);
-
-
-/* =========================================================
-   CONVERT BUTTON
-   ========================================================= */
-
-convertBtn.addEventListener(
-    'click',
-    async function () {
-
-
-        /* ---------------------------------------------
-           Safety check
-        --------------------------------------------- */
-
-        if (!selectedFile) {
-
-            return;
-
-        }
-
-
-        /* ---------------------------------------------
-           Hide Convert button
-        --------------------------------------------- */
-
-        convertBtn.classList.add(
-            'hidden'
-        );
-
-
-        /* ---------------------------------------------
-           Hide success
-        --------------------------------------------- */
-
-        successSection.classList.add(
-            'hidden'
-        );
-
-
-        /* ---------------------------------------------
-           Hide error
-        --------------------------------------------- */
-
-        errorSection.classList.add(
-            'hidden'
-        );
-
-
-        /* ---------------------------------------------
-           Show loading
-        --------------------------------------------- */
-
-        progressSection.classList.remove(
-            'hidden'
-        );
-
-
-        /* ---------------------------------------------
-           Start progress
-        --------------------------------------------- */
-
-        startProgress();
-
-
-        /* ---------------------------------------------
-           Create FormData
-        --------------------------------------------- */
-
-        const formData =
-            new FormData();
-
-
-        formData.append(
-            'file',
-            selectedFile
-        );
-
-
-        formData.append(
-            'csrfmiddlewaretoken',
-            CSRF_TOKEN
-        );
-
-
-        /* ---------------------------------------------
-           PDF to Image
-        --------------------------------------------- */
-
-        if (
-            TOOL_SLUG ===
-            'pdf-to-image'
-        ) {
-
-            const format =
-                document.querySelector(
-                    'input[name="image_format"]:checked'
-                );
-
-
-            if (format) {
-
-                formData.append(
-                    'image_format',
-                    format.value
-                );
-
+document.addEventListener('DOMContentLoaded', () => {
+    // Mode Switcher
+    let currentMode = 'code';
+    const btnModeCode = document.getElementById('btn-mode-code');
+    const btnModeFile = document.getElementById('btn-mode-file');
+    const inputCode = document.getElementById('input-code');
+    const inputFile = document.getElementById('input-file');
+    const selectedFileBox = document.getElementById('selected-file');
+    
+    // File elements
+    const selectFileBtn = document.getElementById('select-file-btn');
+    const fileInput = document.getElementById('file-input');
+    const removeFileBtn = document.getElementById('remove-file-btn');
+    let selectedFile = null;
+
+    // States
+    const stateIdle = document.getElementById('state-idle');
+    const stateProcessing = document.getElementById('state-processing');
+    const stateSuccess = document.getElementById('state-success');
+    const errorBox = document.getElementById('error-box');
+    const errorMessage = document.getElementById('error-message');
+
+    // Action buttons
+    const convertBtn = document.getElementById('convert-btn');
+    const resetBtn = document.getElementById('reset-btn');
+    const downloadBtn = document.getElementById('download-btn');
+    const downloadFormatText = document.getElementById('download-format');
+
+    function switchMode(mode) {
+        currentMode = mode;
+        if (mode === 'code') {
+            btnModeCode.classList.add('active');
+            btnModeFile.classList.remove('active');
+            inputCode.classList.remove('hidden');
+            inputFile.classList.add('hidden');
+            if(selectedFile) {
+                selectedFileBox.classList.add('hidden');
             }
+        } else {
+            btnModeFile.classList.add('active');
+            btnModeCode.classList.remove('active');
+            inputCode.classList.add('hidden');
+            if(selectedFile) {
+                selectedFileBox.classList.remove('hidden');
+                selectedFileBox.classList.add('flex');
+            } else {
+                inputFile.classList.remove('hidden');
+                inputFile.classList.add('flex');
+            }
+        }
+    }
 
+    btnModeCode.addEventListener('click', () => switchMode('code'));
+    btnModeFile.addEventListener('click', () => switchMode('file'));
+
+    // File Handling
+    selectFileBtn.addEventListener('click', () => fileInput.click());
+    
+    fileInput.addEventListener('change', (e) => {
+        if(e.target.files && e.target.files.length > 0) {
+            handleFile(e.target.files[0]);
+        }
+    });
+
+    const dropzone = document.getElementById('hero-dropzone');
+    dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('drag-active'); });
+    dropzone.addEventListener('dragleave', () => dropzone.classList.remove('drag-active'));
+    dropzone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        dropzone.classList.remove('drag-active');
+        if(currentMode === 'file' && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            handleFile(e.dataTransfer.files[0]);
+        }
+    });
+
+    function handleFile(file) {
+        if(!file.name.toLowerCase().endsWith('.html') && !file.name.toLowerCase().endsWith('.htm')) {
+            showError("Only HTML files are accepted.");
+            return;
+        }
+        if(file.size > 10 * 1024 * 1024) {
+            showError("File too large. Max 10MB.");
+            return;
+        }
+        selectedFile = file;
+        document.getElementById('file-name').textContent = file.name;
+        document.getElementById('file-size').textContent = (file.size / 1024).toFixed(1) + " KB";
+        
+        inputFile.classList.add('hidden');
+        inputFile.classList.remove('flex');
+        selectedFileBox.classList.remove('hidden');
+        selectedFileBox.classList.add('flex');
+        errorBox.classList.add('hidden');
+    }
+
+    removeFileBtn.addEventListener('click', () => {
+        selectedFile = null;
+        fileInput.value = '';
+        selectedFileBox.classList.add('hidden');
+        selectedFileBox.classList.remove('flex');
+        inputFile.classList.remove('hidden');
+        inputFile.classList.add('flex');
+    });
+
+    // Conversion
+    convertBtn.addEventListener('click', async () => {
+        errorBox.classList.add('hidden');
+        
+        const htmlCode = document.getElementById('html-code-input').value.trim();
+        if (currentMode === 'code' && !htmlCode) {
+            showError("Please enter some HTML code.");
+            return;
+        }
+        if (currentMode === 'file' && !selectedFile) {
+            showError("Please select an HTML file.");
+            return;
         }
 
+        const format = document.getElementById('setting-format').value;
+        const width = document.getElementById('setting-width').value || 1280;
+        const height = document.getElementById('setting-height').value || 2000;
 
-        /* ---------------------------------------------
-           Send request
-        --------------------------------------------- */
+        const formData = new FormData();
+        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+        formData.append('input_mode', currentMode);
+        formData.append('output_format', format);
+        formData.append('viewport_width', width);
+        formData.append('viewport_height', height);
+
+        if (currentMode === 'code') {
+            formData.append('html_code', htmlCode);
+        } else {
+            formData.append('file', selectedFile);
+        }
+
+        // UI State
+        stateIdle.classList.add('hidden');
+        stateProcessing.classList.remove('hidden');
+        stateProcessing.classList.add('flex');
 
         try {
+            const res = await fetch('{% url "converter:convert_file" tool_slug %}', {
+                method: 'POST',
+                body: formData
+            });
 
-            const response =
-                await fetch(
-                    CONVERT_URL,
-                    {
-                        method: 'POST',
-                        body: formData
-                    }
-                );
-
-
-            /* -----------------------------------------
-               Check response
-            ----------------------------------------- */
-
-            if (!response.ok) {
-
-                let message =
-                    'Conversion failed.';
-
-
+            if(!res.ok) {
+                let errText = "Conversion failed.";
                 try {
-
-                    const data =
-                        await response.json();
-
-                    message =
-                        data.error ||
-                        message;
-
-                } catch (error) {
-
-                    /* Ignore JSON error */
-
-                }
-
-
-                throw new Error(
-                    message
-                );
-
+                    const data = await res.json();
+                    if(data.error) errText = data.error;
+                } catch(e) {}
+                throw new Error(errText);
             }
 
+            const blob = await res.blob();
+            const url = URL.createObjectURL(blob);
+            
+            // Success state
+            stateProcessing.classList.add('hidden');
+            stateProcessing.classList.remove('flex');
+            stateSuccess.classList.remove('hidden');
+            stateSuccess.classList.add('flex');
 
-            /* -----------------------------------------
-               Stop progress
-            ----------------------------------------- */
+            downloadBtn.href = url;
+            downloadFormatText.textContent = format.toUpperCase();
+            downloadBtn.download = `html-render.${format}`;
 
-            stopProgress();
-
-
-            /* -----------------------------------------
-               Get output filename
-            ----------------------------------------- */
-
-            const disposition =
-                response.headers.get(
-                    'Content-Disposition'
-                );
-
-
-            let outputFilename =
-                'converted_file';
-
-
-            if (disposition) {
-
-                const match =
-                    disposition.match(
-                        /filename="(.+?)"/
-                    );
-
-
-                if (match) {
-
-                    outputFilename =
-                        match[1];
-
-                }
-
-            }
-
-
-            /* -----------------------------------------
-               Get converted file
-            ----------------------------------------- */
-
-            const blob =
-                await response.blob();
-
-
-            /* -----------------------------------------
-               Create download URL
-            ----------------------------------------- */
-
-            const url =
-                window.URL.createObjectURL(
-                    blob
-                );
-
-
-            /* -----------------------------------------
-               Set download button
-            ----------------------------------------- */
-
-            downloadBtn.href =
-                url;
-
-            downloadBtn.download =
-                outputFilename;
-
-
-            /* -----------------------------------------
-               HIDE SELECT FILE AREA
-               
-               This happens after successful
-               conversion.
-            ----------------------------------------- */
-
-            selectFileArea.classList.add(
-                'hidden'
-            );
-
-
-            /* -----------------------------------------
-               Hide progress
-            ----------------------------------------- */
-
-            progressSection.classList.add(
-                'hidden'
-            );
-
-
-            /* -----------------------------------------
-               Show success
-            ----------------------------------------- */
-
-            successSection.classList.remove(
-                'hidden'
-            );
-
-
-            /* -----------------------------------------
-               Refresh icons
-            ----------------------------------------- */
-
-            if (
-                typeof lucide !== 'undefined'
-            ) {
-
-                lucide.createIcons();
-
-            }
-
-
-        } catch (error) {
-
-
-            /* -----------------------------------------
-               Stop progress
-            ----------------------------------------- */
-
-            stopProgress();
-
-
-            /* -----------------------------------------
-               Hide progress
-            ----------------------------------------- */
-
-            progressSection.classList.add(
-                'hidden'
-            );
-
-
-            /* -----------------------------------------
-               Show Convert button again
-            ----------------------------------------- */
-
-            convertBtn.classList.remove(
-                'hidden'
-            );
-
-
-            /* -----------------------------------------
-               Show error
-            ----------------------------------------- */
-
-            showError(
-                error.message
-            );
-
+        } catch (err) {
+            stateProcessing.classList.add('hidden');
+            stateProcessing.classList.remove('flex');
+            stateIdle.classList.remove('hidden');
+            showError(err.message);
         }
+    });
 
+    resetBtn.addEventListener('click', () => {
+        stateSuccess.classList.add('hidden');
+        stateSuccess.classList.remove('flex');
+        stateIdle.classList.remove('hidden');
+        
+        if (downloadBtn.href && downloadBtn.href.startsWith('blob:')) {
+            URL.revokeObjectURL(downloadBtn.href);
+            downloadBtn.href = '#';
+        }
+    });
+
+    function showError(msg) {
+        errorMessage.textContent = msg;
+        errorBox.classList.remove('hidden');
     }
-);
-
-
-/* =========================================================
-   CONVERT ANOTHER
-   ========================================================= */
-
-convertAnotherBtn.addEventListener(
-    'click',
-    function () {
-
-        resetUpload();
-
-    }
-);
-
-
-/* =========================================================
-   RESET UPLOAD
-   ========================================================= */
-
-function resetUpload() {
-
-
-    /* ---------------------------------------------
-       Clear selected file
-    --------------------------------------------- */
-
-    selectedFile = null;
-
-
-    /* ---------------------------------------------
-       Clear browser input
-    --------------------------------------------- */
-
-    fileInput.value = '';
-
-
-    /* ---------------------------------------------
-       SHOW SELECT FILE AREA AGAIN
-    --------------------------------------------- */
-
-    selectFileArea.classList.remove(
-        'hidden'
-    );
-
-
-    /* ---------------------------------------------
-       Hide selected file
-    --------------------------------------------- */
-
-    fileSelected.classList.add(
-        'hidden'
-    );
-
-
-    /* ---------------------------------------------
-       Disable Convert button
-    --------------------------------------------- */
-
-    convertBtn.disabled = true;
-
-
-    /* ---------------------------------------------
-       Show Convert button
-    --------------------------------------------- */
-
-    convertBtn.classList.remove(
-        'hidden'
-    );
-
-
-    /* ---------------------------------------------
-       Hide progress
-    --------------------------------------------- */
-
-    progressSection.classList.add(
-        'hidden'
-    );
-
-
-    /* ---------------------------------------------
-       Hide success
-    --------------------------------------------- */
-
-    successSection.classList.add(
-        'hidden'
-    );
-
-
-    /* ---------------------------------------------
-       Hide error
-    --------------------------------------------- */
-
-    errorSection.classList.add(
-        'hidden'
-    );
-
-
-    /* ---------------------------------------------
-       Stop progress
-    --------------------------------------------- */
-
-    if (progressInterval) {
-
-        clearInterval(
-            progressInterval
-        );
-
-        progressInterval = null;
-
-    }
-
-
-    /* ---------------------------------------------
-       Reset progress bar
-    --------------------------------------------- */
-
-    if (progressBar) {
-
-        progressBar.style.width =
-            '0%';
-
-    }
-
-
-    if (progressPercent) {
-
-        progressPercent.textContent =
-            '0%';
-
-    }
-
-
-    /* ---------------------------------------------
-       Refresh icons
-    --------------------------------------------- */
-
-    if (
-        typeof lucide !== 'undefined'
-    ) {
-
-        lucide.createIcons();
-
-    }
-
-}
-
-
-/* =========================================================
-   START PROGRESS
-   ========================================================= */
-
-function startProgress() {
-
-    let progress = 0;
-
-
-    progressBar.style.width =
-        '0%';
-
-
-    progressPercent.textContent =
-        '0%';
-
-
-    progressInterval =
-        setInterval(
-            function () {
-
-
-                /*
-                 * Keep at 90%.
-                 * Actual completion happens
-                 * when backend response arrives.
-                 */
-
-                if (
-                    progress < 90
-                ) {
-
-                    progress +=
-                        Math.random() * 5;
-
-
-                    if (
-                        progress > 90
-                    ) {
-
-                        progress = 90;
-
-                    }
-
-
-                    progress =
-                        Math.floor(
-                            progress
-                        );
-
-
-                    progressBar.style.width =
-                        progress + '%';
-
-
-                    progressPercent.textContent =
-                        progress + '%';
-
-                }
-
-            },
-            500
-        );
-
-}
-
-
-/* =========================================================
-   STOP PROGRESS
-   ========================================================= */
-
-function stopProgress() {
-
-
-    if (progressInterval) {
-
-        clearInterval(
-            progressInterval
-        );
-
-        progressInterval = null;
-
-    }
-
-
-    if (progressBar) {
-
-        progressBar.style.width =
-            '100%';
-
-    }
-
-
-    if (progressPercent) {
-
-        progressPercent.textContent =
-            '100%';
-
-    }
-
-}
-
-
-/* =========================================================
-   SHOW ERROR
-   ========================================================= */
-
-function showError(message) {
-
-    errorMessage.textContent =
-        message;
-
-
-    errorSection.classList.remove(
-        'hidden'
-    );
-
-
-    if (
-        typeof lucide !== 'undefined'
-    ) {
-
-        lucide.createIcons();
-
-    }
-
-}
-
-
-/* =========================================================
-   INITIAL LUCIDE ICONS
-   ========================================================= */
-
-if (
-    typeof lucide !== 'undefined'
-) {
-
-    lucide.createIcons();
-
-}
-
+});
 </script>
-
 {% endblock %}

@@ -117,54 +117,18 @@ def tools_processor(request):
     }
 
 
-    metadata['youtube-downloader'] = {
-        'title': 'YouTube Video Downloader',
-        'icon': 'youtube',
-        'description': 'Download YouTube videos easily in MP4 or MP3 format.',
-        'slug': 'youtube-downloader',
-        'url': reverse('video_downloader:youtube_downloader')
-    }
-    metadata['facebook-downloader'] = {
-        'title': 'Facebook Video Downloader',
-        'icon': 'facebook',
-        'description': 'Download Facebook videos directly to your device.',
-        'slug': 'facebook-downloader',
-        'url': reverse('video_downloader:facebook_downloader')
-    }
-    metadata['twitter-downloader'] = {
-        'title': 'X (Twitter) Video Downloader',
-        'icon': 'twitter',
-        'description': 'Download videos and GIFs from X (formerly Twitter).',
-        'slug': 'twitter-downloader',
-        'url': reverse('video_downloader:twitter_downloader')
-    }
-    metadata['instagram-downloader'] = {
-        'title': 'Instagram Video Downloader',
-        'icon': 'instagram',
-        'description': 'Download Instagram Reels, IGTV, and videos.',
-        'slug': 'instagram-downloader',
-        'url': reverse('video_downloader:instagram_downloader')
-    }
-    metadata['threads-downloader'] = {
-        'title': 'Threads Video Downloader',
-        'icon': 'hash',
-        'description': 'Download Threads videos and images.',
-        'slug': 'threads-downloader',
-        'url': reverse('video_downloader:threads_downloader')
-    }
-
     # Video Tools and Link Tools for global navigation
     video_tools = [
         {'title': 'Converter', 'icon': 'video', 'url': reverse('converter:convert_page', args=['video-converter'])},
-        {'title': 'YouTube', 'icon': 'youtube', 'url': reverse('video_downloader:youtube_downloader')},
         {'title': 'Trim Video', 'icon': 'scissors', 'url': reverse('media_tools:trim')},
         {'title': 'Merge Video', 'icon': 'combine', 'url': reverse('media_tools:merge')},
         {'title': 'Crop Video', 'icon': 'crop', 'url': reverse('media_tools:crop')},
         {'title': 'Resize Video', 'icon': 'scaling', 'url': reverse('media_tools:resize')},
-        {'title': 'Facebook', 'icon': 'facebook', 'url': reverse('video_downloader:facebook_downloader')},
-        {'title': 'X (Twitter)', 'icon': 'twitter', 'url': reverse('video_downloader:twitter_downloader')},
-        {'title': 'Instagram', 'icon': 'instagram', 'url': reverse('video_downloader:instagram_downloader')},
-        {'title': 'Threads', 'icon': 'hash', 'url': reverse('video_downloader:threads_downloader')},
+        {'title': 'Instagram', 'icon': 'instagram', 'url': reverse('media_tools:downloader_instagram')},
+        {'title': 'X/Twitter', 'icon': 'twitter', 'url': reverse('media_tools:downloader_twitter')},
+        {'title': 'Facebook', 'icon': 'facebook', 'url': reverse('media_tools:downloader_facebook')},
+        {'title': 'Threads', 'icon': 'download', 'url': reverse('media_tools:downloader_threads')},
+        {'title': 'YouTube', 'icon': 'youtube', 'url': reverse('media_tools:downloader_youtube')},
     ]
 
     link_tools = [

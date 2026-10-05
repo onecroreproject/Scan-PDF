@@ -6,7 +6,7 @@ A comprehensive Django-based web application offering a suite of tools for proce
 
 - **Converter (`converter`)**: Tools for document conversion (e.g., PDF processing).
 - **Image Processor (`image_processor`)**: Utilities for image manipulation and conversion.
-- **Audio & Video Tools (`audio_processor`, `audio_replacement`, `video_downloader`)**: Audio editing, extracting, video downloading, and replacement workflows.
+- **Audio & Video Tools (`audio_processor`, `audio_replacement`)**: Audio editing, extracting, and replacement workflows.
 - **Dynamic QR & Short URLs (`dynamic_qr`)**: Create, manage, and track Dynamic QR Codes and Shortened URLs with rich analytics.
 - **Services & Billing (`services`)**: Handles subscription plans, pricing tiers, payment processing, and usage limits.
 - **Custom Admin (`custom_admin`)**: A custom-built dashboard for system management, user administration, subscriptions, and platform insights.
@@ -101,3 +101,14 @@ python manage.py check_ffmpeg
 - If you **bundle Linux binaries** into `ffmpeg/bin/`, the app will use them.
 - If you **don’t bundle**, the app can still work via `ffmpeg` from system `PATH`, and/or `imageio-ffmpeg` (already in `requirements.txt`).
 - This repo also lists `ffmpeg` in `Aptfile` and `packages.txt` as a **Linux fallback** for buildpack-style environments.
+
+---
+
+## Video Download
+
+- **Supported platforms**: Instagram, X (Twitter), Facebook, Threads, YouTube
+- **Supported public media types**: Videos, Images, Audio, Reels, Shorts
+- **Required dependencies**: `yt-dlp` (Added to requirements)
+- **Temporary-file behavior**: Files are stored in the temporary system directory during streaming and are removed immediately after the request finishes to avoid persistence.
+- **Privacy behavior**: URLs and file history are not logged or stored.
+- **Known limitations**: Private posts, DRM-protected content, paywalled media, and age-restricted videos without login may not work.
