@@ -1,0 +1,46 @@
+ERROR: The included URLconf 'allinone.urls' does not appear to have any patterns in it. If you see the 'urlpatterns' variable with valid patterns in the file then the issue is probably caused by a circular import.
+Traceback (most recent call last):
+  File "C:\Users\1crore\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\urls\resolvers.py", line 720, in url_patterns
+    iter(patterns)
+    ~~~~^^^^^^^^^^
+TypeError: 'module' object is not iterable
+
+The above exception was the direct cause of the following exception:
+
+Traceback (most recent call last):
+  File "R:\DLK-Project\Scan-PDF\video_downloader\urls.py", line 22, in <module>
+    call_command('check', stdout=out, stderr=out)
+    ~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\1crore\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\management\__init__.py", line 194, in call_command
+    return command.execute(*args, **defaults)
+           ~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\1crore\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\management\base.py", line 464, in execute
+    output = self.handle(*args, **options)
+  File "C:\Users\1crore\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\management\commands\check.py", line 81, in handle
+    self.check(
+    ~~~~~~~~~~^
+        app_configs=app_configs,
+        ^^^^^^^^^^^^^^^^^^^^^^^^
+    ...<4 lines>...
+        databases=options["databases"],
+        ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+    )
+    ^
+  File "C:\Users\1crore\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\management\base.py", line 496, in check
+    all_issues = checks.run_checks(
+        app_configs=app_configs,
+    ...<2 lines>...
+        databases=databases,
+    )
+  File "C:\Users\1crore\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\checks\registry.py", line 89, in run_checks
+    new_errors = check(app_configs=app_configs, databases=databases)
+  File "C:\Users\1crore\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\checks\urls.py", line 44, in check_url_namespaces_unique
+    all_namespaces = _load_all_namespaces(resolver)
+  File "C:\Users\1crore\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\core\checks\urls.py", line 63, in _load_all_namespaces
+    url_patterns = getattr(resolver, "url_patterns", [])
+  File "C:\Users\1crore\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\utils\functional.py", line 47, in __get__
+    res = instance.__dict__[self.name] = self.func(instance)
+                                         ~~~~~~~~~^^^^^^^^^^
+  File "C:\Users\1crore\AppData\Local\Programs\Python\Python313\Lib\site-packages\django\urls\resolvers.py", line 728, in url_patterns
+    raise ImproperlyConfigured(msg.format(name=self.urlconf_name)) from e
+django.core.exceptions.ImproperlyConfigured: The included URLconf 'allinone.urls' does not appear to have any patterns in it. If you see the 'urlpatterns' variable with valid patterns in the file then the issue is probably caused by a circular import.

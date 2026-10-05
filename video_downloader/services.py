@@ -580,7 +580,10 @@ def analyze_video(url):
 
     try:
         try:
-            info = _execute_with_retry(_extract, url, options)
+            import tempfile
+            with tempfile.TemporaryDirectory(prefix='scanpdf_analyze_') as tmp_dir:
+                options['outtmpl'] = os.path.join(tmp_dir, '%(id)s.%(ext)s')
+                info = _execute_with_retry(_extract, url, options)
         except YTDLPError as e:
             if e.code == 'EXTRACTOR_LIMITATION' and ('threads.com' in url or 'threads.net' in url):
                 # Try image extraction
@@ -744,10 +747,9 @@ def download_format(url, format_id, format_type, download_id=None):
     if format_type == 'Audio Only' and not ffmpeg_available:
         raise YTDLPError('FFMPEG_REQUIRED', _ERROR_MESSAGES['FFMPEG_REQUIRED'])
 
-    temp_dir = os.path.join(settings.MEDIA_ROOT, 'video_downloads')
-    os.makedirs(temp_dir, exist_ok=True)
-    cleanup_old_files(temp_dir)
-
+    import tempfile
+    temp_dir = tempfile.mkdtemp(prefix='scanpdf_dl_')
+    
     file_id = str(uuid.uuid4())
     output_template = os.path.join(temp_dir, f"{file_id}.%(ext)s")
 
@@ -815,10 +817,10 @@ def download_format(url, format_id, format_type, download_id=None):
                 raise Exception(f"Invalid content type: {content_type}")
                 
             title = img_info.get('title') or 'Threads Image'
-            return final_file, title
+            return final_file, title, temp_dir
             
         except Exception as e:
-            _safe_remove(final_file)
+            shutil.rmtree(temp_dir, ignore_errors=True)
             raise YTDLPError('NETWORK_ERROR', f"Failed to download image: {str(e)}")
 
     if format_type == 'Video + Audio':
@@ -934,11 +936,13 @@ def download_format(url, format_id, format_type, download_id=None):
                 _safe_remove(downloaded_file)
                 raise Exception("Failed to transcode audio to MP3.")
 
-        return downloaded_file, info.get('title', 'video')
+        return downloaded_file, info.get('title', 'video'), temp_dir
 
     except YTDLPError:
+        shutil.rmtree(temp_dir, ignore_errors=True)
         raise
     except Exception as e:
+        shutil.rmtree(temp_dir, ignore_errors=True)
         logger.error("Download error for domain %s: %s", urlparse(url).netloc, str(e)[:200])
         raise YTDLPError('DOWNLOAD_FAILED', _ERROR_MESSAGES['DOWNLOAD_FAILED'])
 
