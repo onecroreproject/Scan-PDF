@@ -116,14 +116,7 @@ def tools_processor(request):
         'url': reverse('dynamic_qr:short_url') if is_dqr_user else reverse('dynamic_qr:login')
     }
 
-    # Add Video Downloader tools to search
-    metadata['video-downloader-universal'] = {
-        'title': 'Universal Video Downloader',
-        'icon': 'download-cloud',
-        'description': 'Download videos from YouTube, Facebook, Instagram, Twitter, and more.',
-        'slug': 'video-downloader',
-        'url': reverse('video_downloader:index')
-    }
+
     metadata['youtube-downloader'] = {
         'title': 'YouTube Video Downloader',
         'icon': 'youtube',
@@ -152,11 +145,17 @@ def tools_processor(request):
         'slug': 'instagram-downloader',
         'url': reverse('video_downloader:instagram_downloader')
     }
+    metadata['threads-downloader'] = {
+        'title': 'Threads Video Downloader',
+        'icon': 'hash',
+        'description': 'Download Threads videos and images.',
+        'slug': 'threads-downloader',
+        'url': reverse('video_downloader:threads_downloader')
+    }
 
     # Video Tools and Link Tools for global navigation
     video_tools = [
         {'title': 'Converter', 'icon': 'video', 'url': reverse('converter:convert_page', args=['video-converter'])},
-        {'title': 'Universal Downloader', 'icon': 'download-cloud', 'url': reverse('video_downloader:index')},
         {'title': 'YouTube', 'icon': 'youtube', 'url': reverse('video_downloader:youtube_downloader')},
         {'title': 'Trim Video', 'icon': 'scissors', 'url': reverse('media_tools:trim')},
         {'title': 'Merge Video', 'icon': 'combine', 'url': reverse('media_tools:merge')},
@@ -165,6 +164,7 @@ def tools_processor(request):
         {'title': 'Facebook', 'icon': 'facebook', 'url': reverse('video_downloader:facebook_downloader')},
         {'title': 'X (Twitter)', 'icon': 'twitter', 'url': reverse('video_downloader:twitter_downloader')},
         {'title': 'Instagram', 'icon': 'instagram', 'url': reverse('video_downloader:instagram_downloader')},
+        {'title': 'Threads', 'icon': 'hash', 'url': reverse('video_downloader:threads_downloader')},
     ]
 
     link_tools = [

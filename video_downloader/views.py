@@ -48,6 +48,14 @@ def instagram_downloader(request):
     }
     return render(request, 'video_downloader/instagram.html', context)
 
+def threads_downloader(request):
+    context = {
+        'page_title': 'Threads Video Downloader - Fast & Free | ScanPDF',
+        'meta_description': 'Download Threads videos and images. Free online Threads media downloader.',
+        'keywords': 'Threads Video Downloader, download threads video, save threads media'
+    }
+    return render(request, 'video_downloader/threads.html', context)
+
 @csrf_exempt
 @require_http_methods(["POST"])
 def analyze_url(request):
@@ -68,7 +76,8 @@ def analyze_url(request):
             'youtube.com', 'youtu.be',
             'facebook.com', 'fb.watch',
             'instagram.com',
-            'twitter.com', 'x.com'
+            'twitter.com', 'x.com',
+            'threads.net', 'threads.com'
         ]
         
         hostname = parsed_url.hostname.lower() if parsed_url.hostname else ''
@@ -97,7 +106,7 @@ def analyze_url(request):
         return JsonResponse({'success': False, 'error_code': 'INTERNAL_ERROR', 'message': "An internal error occurred. Please try again."}, status=500)
 
 @require_http_methods(["POST", "GET"])
-def download_video(request):
+def download_media(request):
     """Triggers the download for a specific format and returns the file."""
     try:
         # We can handle both GET and POST for download
@@ -119,7 +128,8 @@ def download_video(request):
             'youtube.com', 'youtu.be',
             'facebook.com', 'fb.watch',
             'instagram.com',
-            'twitter.com', 'x.com'
+            'twitter.com', 'x.com',
+            'threads.net', 'threads.com'
         ]
         
         hostname = parsed_url.hostname.lower() if parsed_url.hostname else ''
