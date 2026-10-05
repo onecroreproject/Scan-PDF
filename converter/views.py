@@ -1374,22 +1374,58 @@ def convert_file(request, tool_slug):
             return JsonResponse({'error': 'Please upload at least one image.'}, status=400)
 
         try:
-            input_paths = []
+            from PIL import Image, ImageOps
+            import io
+            
+            image_list = []
             for f in files:
                 ext = os.path.splitext(f.name)[1].lower()
                 if ext not in tool['allowed_extensions']:
                     return JsonResponse({'error': f'Invalid file "{f.name}". Only images (.jpg, .png) are allowed.'}, status=400)
-                input_paths.append(save_uploaded_file(f))
-
-            output_path = convert_images_to_pdf(input_paths, files[0].name)
-
-            for p in input_paths:
+                
                 try:
-                    os.remove(p)
-                except OSError:
-                    pass
+                    img = Image.open(f)
+                    img = ImageOps.exif_transpose(img)
+                    
+                    if img.mode in ('RGBA', 'LA', 'P'):
+                        if img.mode == 'P':
+                            img = img.convert('RGBA')
+                        bg = Image.new('RGB', img.size, (255, 255, 255))
+                        if img.mode in ('RGBA', 'LA'):
+                            bg.paste(img, mask=img.split()[-1])
+                        else:
+                            bg.paste(img)
+                        img = bg
+                    elif img.mode != 'RGB':
+                        img = img.convert('RGB')
+                    
+                    image_list.append(img)
+                except Exception as e:
+                    return JsonResponse({'error': f'Unable to read or process image "{f.name}". Please ensure it is a valid image file.'}, status=400)
 
-            return create_cleanup_response(output_path, content_type='application/pdf')
+            if not image_list:
+                return JsonResponse({'error': 'No valid images to convert.'}, status=400)
+
+            pdf_io = io.BytesIO()
+            first_image = image_list[0]
+            if len(image_list) > 1:
+                first_image.save(pdf_io, format="PDF", save_all=True, append_images=image_list[1:], resolution=100.0)
+            else:
+                first_image.save(pdf_io, format="PDF", resolution=100.0)
+            
+            # Clean up image resources
+            for img in image_list:
+                try:
+                    img.close()
+                except Exception:
+                    pass
+            
+            pdf_io.seek(0)
+            
+            from django.http import HttpResponse
+            response = HttpResponse(pdf_io, content_type='application/pdf')
+            response['Content-Disposition'] = 'attachment; filename="images-to-pdf.pdf"'
+            return response
         except Exception as e:
             return JsonResponse({'error': f'PDF creation failed: {str(e)}'}, status=500)
 

@@ -4,509 +4,1004 @@
 {% block tool_content %}
 
 <style>
-
 /* =========================================================
-   PAGE HEADING
+   CLEAN CONVERTER STYLES
    ========================================================= */
 
 .tool-heading {
-    font-size: 3.5rem;
-    line-height: 0.95;
+    font-size: clamp(2rem, 5vw + 1rem, 3.5rem);
+    line-height: 1.1;
     font-weight: 900;
-    letter-spacing: -0.04em;
+    letter-spacing: -0.02em;
+    color: #1e1b4b; /* Deep navy/purple dark */
 }
 
-.gradient-text {
-    background: linear-gradient(
-        135deg,
-        #7c3aed,
-        #a855f7,
-        #ec4899
-    );
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-
-/* =========================================================
-   PURPLE BUTTON
-   ========================================================= */
-
+/* Purple button */
 .purple-btn {
-    background: linear-gradient(
-        135deg,
-        #6d28d9 0%,
-        #7c3aed 45%,
-        #a855f7 100%
-    );
+    background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
     color: white;
-    box-shadow: 0 8px 25px rgba(124, 58, 237, 0.25);
-    transition: all 0.25s ease;
+    box-shadow: 0 4px 14px rgba(124, 58, 237, 0.3);
+    transition: all 0.2s ease;
 }
-
 .purple-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 12px 30px rgba(124, 58, 237, 0.38);
+    box-shadow: 0 6px 20px rgba(124, 58, 237, 0.4);
 }
-
 .purple-btn:active {
     transform: translateY(0);
 }
-
 .purple-btn:disabled {
-    opacity: 0.45;
+    opacity: 0.6;
     cursor: not-allowed;
     transform: none;
     box-shadow: none;
 }
 
-
-/* =========================================================
-   SELECT FILE AREA
-   ========================================================= */
-
-.select-file-area {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 2rem;
-    border: 2px dashed transparent;
-    border-radius: 20px;
-    transition: all 0.25s ease;
-}
-
-.select-file-area.drag-active {
-    border-color: #7c3aed;
-    background: #faf5ff;
-}
-
-
-/* =========================================================
-   SELECTED FILE CARD
-   ========================================================= */
-
-.selected-file-card {
+/* Central Area */
+.hero-dropzone {
     width: 100%;
-    padding: 0.85rem 1rem;
-    border-radius: 1rem;
-    background: #ddd6fe;
-    border: 1px solid #ddd6fe;
-}
-
-.remove-file-btn {
-    width: 34px;
-    height: 34px;
-    border-radius: 10px;
-    border: 1px solid #ddd6fe;
-    background: #f5f3ff;
-    color: #7c3aed;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
     transition: all 0.2s ease;
+    border: 2px dashed transparent;
 }
 
-.remove-file-btn:hover {
-    background: #7c3aed;
-    color: white;
-}
-
-
-/* =========================================================
-   PROGRESS
-   ========================================================= */
-
-.progress-card {
-    background: #fafafa;
-    border: 1px solid #f1f5f9;
-    border-radius: 1rem;
-    padding: 1rem 1.5rem;
-}
-
-.progress-spinner {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    border: 3px solid #e2e8f0;
-    border-top-color: #7c3aed;
-    animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-    to { transform: rotate(360deg); }
-}
-
-
-/* =========================================================
-   SUCCESS CARD
-   ========================================================= */
-
-.success-card {
-    text-align: center;
-    padding: 1.5rem;
-    border-radius: 1rem;
+.hero-dropzone.drag-active {
     background: #faf5ff;
-    border: 1px solid #e9d5ff;
+    border-color: #a855f7;
 }
 
-.success-icon {
-    width: 64px;
-    height: 64px;
-    border-radius: 1rem;
-    background: #ede9fe;
+/* Progress Fill */
+.progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #7c3aed, #a855f7);
+    border-radius: 999px;
+    transition: width 0.4s ease;
+}
+
+.selected-file-box {
     display: flex;
     align-items: center;
-    justify-content: center;
-    margin: 0 auto 1rem;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    border-radius: 16px;
+    background: white;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    border: 1px solid #f3e8ff;
+    width: 100%;
+    max-width: 400px;
 }
-
-.success-icon i {
-    color: #7c3aed;
-}
-
-
-/* =========================================================
-   ERROR
-   ========================================================= */
-
-.error-card {
-    padding: 1.25rem;
-    border-radius: 1rem;
-    background: #fef2f2;
-    border: 1px solid #fee2e2;
-}
-
-
-/* =========================================================
-   MOBILE
-   ========================================================= */
-
-@media (max-width: 768px) {
-    .tool-heading { font-size: 3rem; }
-}
-
-@media (max-width: 480px) {
-    .tool-heading { font-size: 2.6rem; }
-}
-
 </style>
 
-
 <!-- =========================================================
-     PAGE HEADER
+     PAGE HEADER & CONVERTER
      ========================================================= -->
+<section id="hero-dropzone" class="hero-dropzone text-center pt-10 pb-10 px-4 w-full">
 
-<section class="text-center mb-8 sm:mb-10">
-
-    <h1 class="tool-heading text-surface-900 mb-3">
-        <span class="block">{{ s1 }}</span>
-        <span class="block gradient-text">{{ highlight }}</span>
+    <!-- Clean Title -->
+    <h1 class="tool-heading mb-4 text-center">
+        <span class="text-surface-900">Image to </span>
+        <span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-700 to-purple-500">PDF Converter</span>
     </h1>
-
-    <p class="max-w-3xl mx-auto text-sm sm:text-base lg:text-lg text-surface-500 leading-relaxed">
-        {{ seo_intro }}
+    <p class="text-[16px] md:text-[17px] leading-relaxed text-surface-500 max-w-[740px] mx-auto text-center font-medium mb-8 px-4">
+        Convert your JPG and PNG images into a PDF document. Ensure your files are securely merged without losing original quality, preserving accurate image ordering and aspect ratios.
     </p>
 
-    {% if seo_keywords %}
-    <p class="max-w-3xl mx-auto mt-2 text-xs sm:text-sm text-surface-400 leading-relaxed">
-        {{ seo_keywords }}
-    </p>
-    {% endif %}
+    <!-- Central Converter Interaction Area -->
+    <div class="flex flex-col items-center w-full max-w-[600px] mx-auto">
+        
+        <!-- =====================================================
+             STATE: IDLE (SELECT FILE)
+             ===================================================== -->
+        <div id="state-idle" class="flex flex-col items-center w-full">
+            <button type="button" id="select-file-btn" class="purple-btn px-10 py-4 rounded-2xl text-white font-bold text-[15px] tracking-wide flex items-center justify-center gap-3 w-full sm:w-auto">
+                <i data-lucide="upload" class="w-5 h-5"></i>
+                SELECT IMAGES
+            </button>
+            <p id="drop-text" class="text-surface-500 text-[15px] mt-3 font-medium">Drop your JPG or PNG images here</p>
+            <input type="file" id="file-input" class="hidden" accept=".jpg,.jpeg,.png" multiple>
+        </div>
+
+        <!-- =====================================================
+             STATE: FILE SELECTED
+             ===================================================== -->
+        <div id="state-selected" class="hidden flex flex-col items-center w-full">
+            <div id="file-list-container" class="w-full max-w-[400px] mb-4 space-y-2 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+                <!-- Dynamic File Cards Here -->
+            </div>
+            
+            <button type="button" id="add-more-btn" class="mb-6 text-purple-600 font-semibold text-[14px] hover:text-purple-800 transition-colors flex items-center gap-1">
+                <i data-lucide="plus" class="w-4 h-4"></i> Add more images
+            </button>
+            
+            <button type="button" id="convert-btn" class="purple-btn px-10 py-4 rounded-2xl text-white font-bold text-[15px] tracking-wide flex items-center justify-center gap-3 w-full sm:w-auto">
+                <i data-lucide="sparkles" class="w-5 h-5"></i>
+                CONVERT NOW
+            </button>
+        </div>
+
+        <!-- =====================================================
+             STATE: CONVERTING
+             ===================================================== -->
+        <div id="state-converting" class="hidden flex flex-col items-center w-full max-w-[320px]">
+            <div class="flex items-center justify-center gap-2 mb-4 text-purple-600 font-bold text-[15px]">
+                <i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i>
+                Converting...
+            </div>
+            
+            <div class="w-full h-2 rounded-full bg-purple-100 overflow-hidden mb-2">
+                <div id="progress-bar" class="progress-fill"></div>
+            </div>
+            
+            <div class="flex justify-between items-center w-full px-1">
+                <p id="progress-status" class="text-surface-500 text-[13px] font-medium">Converting Images to PDF...</p>
+                <p id="progress-percent" class="text-purple-700 text-[13px] font-bold">0%</p>
+            </div>
+        </div>
+
+        <!-- =====================================================
+             STATE: SUCCESS
+             ===================================================== -->
+        <div id="state-success" class="hidden flex flex-col items-center w-full">
+            <div class="w-12 h-12 bg-green-50 text-green-600 rounded-full flex items-center justify-center mb-4 mx-auto">
+                <i data-lucide="check" class="w-6 h-6"></i>
+            </div>
+            <h3 class="text-xl font-black text-surface-900 mb-1">Conversion Complete</h3>
+            <p class="text-surface-500 text-[15px] mb-6">Your PDF is ready.</p>
+            
+            <a id="download-btn" href="#" class="purple-btn px-10 py-4 rounded-2xl text-white font-bold text-[15px] tracking-wide flex items-center justify-center gap-3 w-full sm:w-auto mb-4">
+                <i data-lucide="download" class="w-5 h-5"></i>
+                DOWNLOAD PDF
+            </a>
+            
+            <button type="button" id="convert-another-btn" class="text-purple-600 font-semibold text-[14px] hover:text-purple-800 transition-colors">
+                Convert more images
+            </button>
+        </div>
+
+        <!-- =====================================================
+             STATE: ERROR
+             ===================================================== -->
+        <div id="state-error" class="hidden flex flex-col items-center w-full">
+            <div class="w-12 h-12 bg-red-50 text-red-600 rounded-full flex items-center justify-center mb-4 mx-auto">
+                <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+            </div>
+            <h3 class="text-lg font-black text-surface-900 mb-1">Conversion failed</h3>
+            <p id="error-message" class="text-surface-500 text-[14px] mb-6">We couldn't convert these files.</p>
+            
+            <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto justify-center">
+                <button type="button" id="retry-btn" class="purple-btn px-8 py-3.5 rounded-xl text-white font-bold text-[14px] tracking-wide flex items-center justify-center gap-2">
+                    TRY AGAIN
+                </button>
+                <button type="button" id="choose-another-btn" class="bg-surface-100 hover:bg-surface-200 text-surface-700 font-bold text-[14px] px-8 py-3.5 rounded-xl transition-colors flex items-center justify-center gap-2">
+                    Choose other images
+                </button>
+            </div>
+        </div>
+
+    </div>
 
 </section>
 
 
 <!-- =========================================================
-     MAIN CARD
+     PREMIUM IMAGE TO PDF INSTRUCTIONS
      ========================================================= -->
+<div class="mt-12 sm:mt-16 border-t border-surface-100 pt-16 sm:pt-24 pb-20 relative">
+    
+    <!-- Decorative background elements -->
+    <div class="absolute top-40 left-0 w-[500px] h-[500px] bg-purple-100/40 rounded-full blur-[120px] -z-10 pointer-events-none"></div>
+    <div class="absolute top-[800px] right-0 w-[600px] h-[600px] bg-purple-50/60 rounded-full blur-[100px] -z-10 pointer-events-none"></div>
 
-<div class="rounded-2xl bg-[#faf5ff] p-4 sm:p-6">
-
-    <!-- =====================================================
-         SELECT FILE AREA
-         ===================================================== -->
-    <div id="select-file-area" class="select-file-area">
-
-        <button type="button" id="select-file-btn"
-            class="purple-btn px-8 py-3 rounded-2xl text-white font-black text-sm sm:text-base uppercase tracking-widest flex items-center justify-center gap-3">
-            <i data-lucide="images" class="w-5 h-5"></i>
-            Select Images
-        </button>
-
-        <p class="text-xs text-surface-400 mt-3">
-            Max 50MB each &nbsp;&nbsp;•&nbsp;&nbsp; Accepted:
-            <span class="text-surface-500 font-medium">.jpg, .jpeg, .png</span>
-        </p>
-
-        <input type="file" id="file-input" class="hidden" accept=".jpg,.jpeg,.png" multiple>
-    </div>
-
-
-    <!-- =====================================================
-         FILE LIST
-         ===================================================== -->
-    <div id="file-list" class="hidden mt-4 space-y-2.5"></div>
-
-
-    <!-- Add More Button -->
-    <button id="add-more-btn" class="hidden mt-4 w-full py-3 rounded-2xl border-2 border-dashed border-violet-200 text-violet-500 text-sm font-bold hover:bg-violet-50 transition-all flex items-center justify-center gap-2">
-        <i data-lucide="plus" class="w-4 h-4"></i>
-        Add More Images
-    </button>
-
-
-    <!-- =====================================================
-         CONVERT BUTTON
-         ===================================================== -->
-    <div class="text-center">
-        <button id="convert-btn" disabled
-            class="purple-btn w-auto mx-auto px-8 py-3 mt-5 sm:py-4 rounded-2xl text-white font-black text-sm sm:text-base uppercase tracking-widest flex items-center justify-center gap-3">
-            <i data-lucide="file-check" class="w-5 h-5"></i>
-            Create PDF
-        </button>
-    </div>
-
-
-    <!-- =====================================================
-         PROGRESS STATE
-         ===================================================== -->
-    <div id="progress-section" class="hidden mt-4">
-        <div class="progress-card flex items-center gap-4">
-            <div class="relative flex-shrink-0">
-                <div class="progress-spinner"></div>
+    <!-- 02. FEATURE 1: Turn Images Into a PDF -->
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mb-12 md:mb-16">
+        <div class="grid md:grid-cols-[1fr_1fr] items-center gap-10 md:gap-16">
+            <div class="order-2 md:order-1 pr-0 md:pr-4">
+                <div class="flex items-center gap-2 text-purple-600 font-bold tracking-widest text-[12px] uppercase mb-4">
+                    <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Seamless Conversion
+                </div>
+                <h3 class="text-2xl md:text-[2rem] font-bold text-surface-900 mb-5 leading-tight tracking-tight">Turn Images Into a PDF</h3>
+                <p class="text-surface-500 text-[17px] leading-relaxed mb-8">
+                    Easily combine one or multiple supported images into a clean, professional PDF document. Whether you have a single photo or a collection of scans, this converter handles them securely.
+                </p>
+                <ul class="space-y-4">
+                    <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                        <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                        Single or multiple image upload
+                    </li>
+                    <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                        <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                        Clean PDF output
+                    </li>
+                    <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                        <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                        Original image order preserved
+                    </li>
+                    <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                        <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                        Ready for direct download
+                    </li>
+                </ul>
             </div>
-            <div class="min-w-0">
-                <p class="text-surface-800 font-bold text-base">Processing images…</p>
-                <p class="text-xs text-surface-400 mt-1">Merging into a single PDF</p>
-            </div>
-        </div>
-    </div>
-
-
-    <!-- =====================================================
-         SUCCESS STATE
-         ===================================================== -->
-    <div id="success-section" class="hidden mt-4">
-        <div class="success-card">
-            <div class="success-icon">
-                <i data-lucide="check-circle-2" class="w-8 h-8"></i>
-            </div>
-            <h3 class="text-lg font-black text-surface-900 mb-1">PDF Created!</h3>
-            <p class="text-surface-500 text-sm mb-6">Your document is ready to download.</p>
-
-            <div class="flex flex-col sm:flex-row gap-3 justify-center">
-                <a id="download-btn" href="#"
-                    class="purple-btn inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-2xl text-white font-black text-sm"
-                    style="background: linear-gradient(135deg, #16a34a, #22c55e); box-shadow: 0 4px 12px rgba(34, 197, 94, 0.25);">
-                    <i data-lucide="download" class="w-5 h-5"></i>
-                    Download PDF
-                </a>
-                <button type="button" id="convert-another-btn"
-                    class="purple-btn inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-2xl text-white font-black text-sm">
-                    <i data-lucide="refresh-cw" class="w-4 h-4"></i>
-                    Convert More
-                </button>
+            
+            <div class="order-1 md:order-2">
+                <div class="relative bg-purple-50/50 rounded-[28px] p-8 py-14 flex items-center justify-center border border-purple-100/50 shadow-[inset_0_0_0_1px_rgba(255,255,255,1),0_8px_30px_-12px_rgba(147,51,234,0.1)] group transition-transform duration-300 hover:-translate-y-1">
+                    <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(147,51,234,0.04)_0%,transparent_70%)] rounded-[28px]"></div>
+                    
+                    <div class="flex items-center gap-6 relative z-10 w-full justify-center">
+                        <div class="flex flex-col gap-4">
+                            <div class="w-[80px] h-[100px] bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-surface-300 flex flex-col p-2 relative z-10 transform -rotate-6">
+                                <div class="w-full h-full bg-blue-100 rounded text-blue-600 flex items-center justify-center font-bold text-xs uppercase">JPG</div>
+                            </div>
+                            <div class="w-[80px] h-[100px] bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-surface-300 flex flex-col p-2 relative z-10 transform rotate-6">
+                                <div class="w-full h-full bg-purple-100 rounded text-purple-600 flex items-center justify-center font-bold text-xs uppercase">PNG</div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex flex-col items-center justify-center w-10 h-10 bg-white rounded-full shadow-lg text-purple-700 z-20 border border-purple-200 font-bold">
+                            <i data-lucide="arrow-right" class="w-6 h-6"></i>
+                        </div>
+                        
+                        <div class="w-[120px] h-[160px] bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-purple-300 flex flex-col p-4 relative z-10">
+                            <div class="w-8 h-8 bg-red-100 text-red-600 rounded flex items-center justify-center mb-4 font-bold text-xs uppercase tracking-wider">PDF</div>
+                            <div class="space-y-2.5">
+                                <div class="h-2 bg-purple-300 rounded w-full"></div>
+                                <div class="h-2 bg-purple-200 rounded w-3/4"></div>
+                                <div class="h-2 bg-purple-200 rounded w-5/6"></div>
+                                <div class="h-2 bg-purple-200 rounded w-full"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
-
-    <!-- =====================================================
-         ERROR STATE
-         ===================================================== -->
-    <div id="error-section" class="hidden mt-4">
-        <div class="error-card flex items-start gap-4">
-            <div class="w-9 h-9 rounded-xl bg-red-100 flex items-center justify-center flex-shrink-0">
-                <i data-lucide="alert-triangle" class="w-5 h-5 text-red-500"></i>
+    <!-- 03. FEATURE 2: Keep Every Image in Order -->
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mb-12 md:mb-16">
+        <div class="grid md:grid-cols-[1fr_1fr] items-center gap-10 md:gap-16">
+            <div class="order-1 md:order-1">
+                <div class="relative bg-surface-50/60 rounded-[28px] p-8 py-14 flex items-center justify-center border border-surface-200/50 shadow-[inset_0_0_0_1px_rgba(255,255,255,1)] group transition-transform duration-300 hover:-translate-y-1 overflow-hidden">
+                    
+                    <div class="relative z-10 flex flex-col items-center justify-center w-full h-full gap-4">
+                        <div class="flex gap-4">
+                            <div class="w-16 h-16 bg-white rounded-xl shadow-[0_12px_40px_rgb(0,0,0,0.12)] border border-surface-300 p-2 flex items-center justify-center relative z-10">
+                                <div class="font-bold text-surface-400 text-sm">1</div>
+                            </div>
+                            <div class="w-16 h-16 bg-white rounded-xl shadow-[0_12px_40px_rgb(0,0,0,0.12)] border border-surface-300 p-2 flex items-center justify-center relative z-10">
+                                <div class="font-bold text-surface-400 text-sm">2</div>
+                            </div>
+                            <div class="w-16 h-16 bg-white rounded-xl shadow-[0_12px_40px_rgb(0,0,0,0.12)] border border-surface-300 p-2 flex items-center justify-center relative z-10">
+                                <div class="font-bold text-surface-400 text-sm">3</div>
+                            </div>
+                        </div>
+                        
+                        <div class="w-10 h-10 flex items-center justify-center text-surface-300">
+                            <i data-lucide="arrow-down" class="w-6 h-6"></i>
+                        </div>
+                        
+                        <div class="relative w-[120px] h-[160px] bg-white rounded-xl shadow-[0_12px_40px_rgb(0,0,0,0.12)] border border-surface-300 flex items-center justify-center z-20">
+                            <span class="text-xs font-bold text-surface-400">Page 1</span>
+                        </div>
+                        <div class="absolute w-[120px] h-[160px] bg-white rounded-xl shadow-md border border-surface-200 mt-6 ml-6 z-10"></div>
+                        <div class="absolute w-[120px] h-[160px] bg-white rounded-xl shadow-sm border border-surface-200 mt-12 ml-12 z-0"></div>
+                    </div>
+                </div>
             </div>
-            <div class="min-w-0 pt-1">
-                <h4 class="font-black text-red-700 text-sm uppercase tracking-wider mb-1">Conversion Failed</h4>
-                <p id="error-message" class="text-xs text-red-500 leading-relaxed font-semibold"></p>
+            
+            <div class="order-2 md:order-2 pl-0 md:pl-4">
+                <div class="flex items-center gap-2 text-purple-600 font-bold tracking-widest text-[12px] uppercase mb-4">
+                    <i data-lucide="paintbrush" class="w-3.5 h-3.5"></i> Format Preservation
+                </div>
+                <h3 class="text-2xl md:text-[2rem] font-bold text-surface-900 mb-5 leading-tight tracking-tight">Keep Every Image in Order</h3>
+                <p class="text-surface-500 text-[17px] leading-relaxed mb-8">
+                    Selected images are converted into PDF pages in the exact order they appear in your list. The sequence you see is the sequence you get in the final document.
+                </p>
+                <ul class="space-y-4">
+                    <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                        <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                        Predictable page order
+                    </li>
+                    <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                        <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                        Portrait and landscape support
+                    </li>
+                    <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                        <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                        Aspect ratio preserved
+                    </li>
+                    <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                        <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                        Clean page placement
+                    </li>
+                </ul>
             </div>
         </div>
     </div>
 
+    <!-- 04. FEATURE 3: Fit Images Cleanly on PDF Pages -->
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mb-12 md:mb-16">
+        <div class="grid md:grid-cols-[1fr_1fr] items-center gap-10 md:gap-16">
+            <div class="order-2 md:order-1 pr-0 md:pr-4">
+                <div class="flex items-center gap-2 text-purple-600 font-bold tracking-widest text-[12px] uppercase mb-4">
+                    <i data-lucide="layout-template" class="w-3.5 h-3.5"></i> Page Layout
+                </div>
+                <h3 class="text-2xl md:text-[2rem] font-bold text-surface-900 mb-5 leading-tight tracking-tight">Fit Images Cleanly on PDF Pages</h3>
+                <p class="text-surface-500 text-[17px] leading-relaxed mb-8">
+                    Images are scaled properly without stretching or distorting their aspect ratios. PDF page dimensions are determined intelligently to match your image dimensions perfectly.
+                </p>
+                <ul class="space-y-4">
+                    <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                        <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                        No stretched images
+                    </li>
+                    <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                        <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                        Orientation corrected
+                    </li>
+                    <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                        <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                        Transparent PNG handled safely
+                    </li>
+                    <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                        <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                        High-quality PDF output
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="order-1 md:order-2">
+                <div class="relative bg-purple-50/40 rounded-[28px] p-8 py-14 flex items-center justify-center border border-purple-100/50 shadow-[inset_0_0_0_1px_rgba(255,255,255,1)] group transition-transform duration-300 hover:-translate-y-1">
+                    <div class="flex gap-6 relative z-10 items-end justify-center w-full">
+                        <!-- Portrait Page -->
+                        <div class="w-[120px] h-[160px] bg-white rounded-lg shadow-[0_8px_24px_rgb(0,0,0,0.12)] border border-surface-300 p-3 flex flex-col relative z-10">
+                            <div class="absolute inset-2 border border-purple-400 border-dashed rounded opacity-100 pointer-events-none"></div>
+                            <div class="w-full h-full bg-purple-50 rounded flex items-center justify-center">
+                                <i data-lucide="image" class="w-5 h-5 text-purple-400"></i>
+                            </div>
+                        </div>
+                        <!-- Landscape Page -->
+                        <div class="w-[160px] h-[120px] bg-white rounded-lg shadow-[0_8px_24px_rgb(0,0,0,0.12)] border border-surface-300 p-3 flex flex-col relative z-10">
+                            <div class="absolute inset-2 border border-blue-400 border-dashed rounded opacity-100 pointer-events-none"></div>
+                            <div class="w-full h-full bg-blue-50 rounded flex items-center justify-center">
+                                <i data-lucide="image" class="w-5 h-5 text-blue-400"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 05. WHAT SCANPDF PRESERVES -->
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mb-12 md:mb-16">
+        <div class="text-center mb-12 md:mb-16">
+            <h2 class="text-3xl md:text-[2.25rem] font-bold text-surface-900 mb-5 tracking-tight">What ScanPDF Preserves</h2>
+            <p class="text-[17px] text-surface-500 max-w-2xl mx-auto leading-relaxed">
+                Our Image to PDF engine ensures that your photos and documents are handled accurately without destructive processing.
+            </p>
+        </div>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <!-- Typography -->
+            <div class="bg-white border border-surface-200/80 rounded-2xl p-6 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300">
+                <div class="w-12 h-12 rounded-xl bg-purple-50 border border-purple-100/60 flex items-center justify-center mb-5 text-[22px] font-bold text-purple-600">
+                    <i data-lucide="monitor" class="w-5 h-5"></i>
+                </div>
+                <h4 class="text-[17px] font-bold text-surface-900 mb-4">Image Quality</h4>
+                <ul class="space-y-3">
+                    <li class="text-surface-600 text-[14px] flex items-center gap-2.5"><i data-lucide="check" class="w-3.5 h-3.5 text-purple-500"></i> Original proportions</li>
+                    <li class="text-surface-600 text-[14px] flex items-center gap-2.5"><i data-lucide="check" class="w-3.5 h-3.5 text-purple-500"></i> Clear visual content</li>
+                    <li class="text-surface-600 text-[14px] flex items-center gap-2.5"><i data-lucide="check" class="w-3.5 h-3.5 text-purple-500"></i> Sensible scaling</li>
+                    <li class="text-surface-600 text-[14px] flex items-center gap-2.5"><i data-lucide="check" class="w-3.5 h-3.5 text-purple-500"></i> Clean rendering</li>
+                </ul>
+            </div>
+            
+            <!-- Document Layout -->
+            <div class="bg-white border border-surface-200/80 rounded-2xl p-6 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300">
+                <div class="w-12 h-12 rounded-xl bg-blue-50 border border-blue-100/60 flex items-center justify-center mb-5 text-[22px] font-bold text-blue-600">
+                    <i data-lucide="list-ordered" class="w-5 h-5"></i>
+                </div>
+                <h4 class="text-[17px] font-bold text-surface-900 mb-4">Image Order</h4>
+                <ul class="space-y-3">
+                    <li class="text-surface-600 text-[14px] flex items-center gap-2.5"><i data-lucide="check" class="w-3.5 h-3.5 text-blue-500"></i> Selected order</li>
+                    <li class="text-surface-600 text-[14px] flex items-center gap-2.5"><i data-lucide="check" class="w-3.5 h-3.5 text-blue-500"></i> Multi-image sequence</li>
+                    <li class="text-surface-600 text-[14px] flex items-center gap-2.5"><i data-lucide="check" class="w-3.5 h-3.5 text-blue-500"></i> Predictable pages</li>
+                    <li class="text-surface-600 text-[14px] flex items-center gap-2.5"><i data-lucide="check" class="w-3.5 h-3.5 text-blue-500"></i> No random sorting</li>
+                </ul>
+            </div>
+            
+            <!-- Document Elements -->
+            <div class="bg-white border border-surface-200/80 rounded-2xl p-6 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300">
+                <div class="w-12 h-12 rounded-xl bg-green-50 border border-green-100/60 flex items-center justify-center mb-5 text-[22px] font-bold text-green-600">
+                    <i data-lucide="rotate-cw" class="w-5 h-5"></i>
+                </div>
+                <h4 class="text-[17px] font-bold text-surface-900 mb-4">Orientation</h4>
+                <ul class="space-y-3">
+                    <li class="text-surface-600 text-[14px] flex items-center gap-2.5"><i data-lucide="check" class="w-3.5 h-3.5 text-green-500"></i> Portrait images</li>
+                    <li class="text-surface-600 text-[14px] flex items-center gap-2.5"><i data-lucide="check" class="w-3.5 h-3.5 text-green-500"></i> Landscape images</li>
+                    <li class="text-surface-600 text-[14px] flex items-center gap-2.5"><i data-lucide="check" class="w-3.5 h-3.5 text-green-500"></i> EXIF rotation</li>
+                    <li class="text-surface-600 text-[14px] flex items-center gap-2.5"><i data-lucide="check" class="w-3.5 h-3.5 text-green-500"></i> Correct direction</li>
+                </ul>
+            </div>
+            
+            <!-- Page Structure -->
+            <div class="bg-white border border-surface-200/80 rounded-2xl p-6 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300">
+                <div class="w-12 h-12 rounded-xl bg-orange-50 border border-orange-100/60 flex items-center justify-center mb-5 text-[22px] font-bold text-orange-500">
+                    <i data-lucide="layers" class="w-5 h-5"></i>
+                </div>
+                <h4 class="text-[17px] font-bold text-surface-900 mb-4">Image Content</h4>
+                <ul class="space-y-3">
+                    <li class="text-surface-600 text-[14px] flex items-center gap-2.5"><i data-lucide="check" class="w-3.5 h-3.5 text-orange-500"></i> JPG / JPEG</li>
+                    <li class="text-surface-600 text-[14px] flex items-center gap-2.5"><i data-lucide="check" class="w-3.5 h-3.5 text-orange-500"></i> PNG format</li>
+                    <li class="text-surface-600 text-[14px] flex items-center gap-2.5"><i data-lucide="check" class="w-3.5 h-3.5 text-orange-500"></i> Transparency handling</li>
+                    <li class="text-surface-600 text-[14px] flex items-center gap-2.5"><i data-lucide="check" class="w-3.5 h-3.5 text-orange-500"></i> Color information</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- 06. HOW TO CONVERT IMAGES TO PDF -->
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mb-12 md:mb-16">
+        <div class="bg-gradient-to-br from-purple-50/70 to-white rounded-[32px] border border-purple-100/60 p-8 md:p-14 shadow-sm relative overflow-hidden">
+            <div class="text-center md:text-left mb-12 relative z-10">
+                <h2 class="text-3xl md:text-[2.25rem] font-bold text-surface-900 mb-4 tracking-tight">How to Convert Images to PDF</h2>
+            </div>
+            
+            <div class="grid lg:grid-cols-[50%_50%] gap-12 lg:gap-16 items-center relative z-10">
+                <!-- Vertical Timeline -->
+                <div class="relative w-full">
+                    <div class="space-y-8 relative">
+                        <!-- 01 -->
+                        <div class="flex gap-5">
+                            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-sm">01</div>
+                            <div>
+                                <h4 class="text-[17px] font-bold text-surface-900 mb-1.5">Select Your Images</h4>
+                                <p class="text-surface-500 text-[15px] leading-relaxed">Choose one or multiple supported images.</p>
+                            </div>
+                        </div>
+                        <!-- 02 -->
+                        <div class="flex gap-5">
+                            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-sm">02</div>
+                            <div>
+                                <h4 class="text-[17px] font-bold text-surface-900 mb-1.5">Review Your Images</h4>
+                                <p class="text-surface-500 text-[15px] leading-relaxed">Check the selected images and their PDF page order.</p>
+                            </div>
+                        </div>
+                        <!-- 03 -->
+                        <div class="flex gap-5">
+                            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-sm">03</div>
+                            <div>
+                                <h4 class="text-[17px] font-bold text-surface-900 mb-1.5">Create Your PDF</h4>
+                                <p class="text-surface-500 text-[15px] leading-relaxed">Click CONVERT NOW to combine the selected images.</p>
+                            </div>
+                        </div>
+                        <!-- 04 -->
+                        <div class="flex gap-5">
+                            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-sm">04</div>
+                            <div>
+                                <h4 class="text-[17px] font-bold text-surface-900 mb-1.5">Download Your PDF</h4>
+                                <p class="text-surface-500 text-[15px] leading-relaxed">Download the finished PDF after successful conversion.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Mini UI Visual -->
+                <div class="flex justify-center lg:justify-end w-full">
+                    <div class="bg-white p-7 rounded-[24px] shadow-[0_12px_40px_rgb(0,0,0,0.06)] border border-surface-200/60 w-full max-w-[400px]">
+                        <div class="font-bold text-surface-900 text-[15px] text-center mb-6">Image to PDF Converter</div>
+                        
+                        <div class="bg-white border border-surface-200/80 rounded-lg p-3.5 flex items-center justify-between mb-2 shadow-sm">
+                            <div class="flex items-center gap-3">
+                                <div class="w-9 h-9 rounded-md bg-blue-50 flex items-center justify-center">
+                                    <i data-lucide="image" class="w-4 h-4 text-blue-600"></i>
+                                </div>
+                                <div>
+                                    <div class="text-[13px] font-bold text-surface-900">photo-01.jpg</div>
+                                    <div class="text-[11px] text-surface-500 mt-0.5">Ready</div>
+                                </div>
+                            </div>
+                            <i data-lucide="check-circle-2" class="w-4 h-4 text-green-500"></i>
+                        </div>
+                        
+                        <div class="bg-white border border-surface-200/80 rounded-lg p-3.5 flex items-center justify-between mb-5 shadow-sm">
+                            <div class="flex items-center gap-3">
+                                <div class="w-9 h-9 rounded-md bg-purple-50 flex items-center justify-center">
+                                    <i data-lucide="image" class="w-4 h-4 text-purple-600"></i>
+                                </div>
+                                <div>
+                                    <div class="text-[13px] font-bold text-surface-900">photo-02.png</div>
+                                    <div class="text-[11px] text-surface-500 mt-0.5">Ready</div>
+                                </div>
+                            </div>
+                            <i data-lucide="check-circle-2" class="w-4 h-4 text-green-500"></i>
+                        </div>
+                        
+                        <div class="mb-5">
+                            <div class="flex justify-between text-[11px] font-bold text-surface-700 mb-2">
+                                <span>Creating PDF...</span>
+                                <span>100%</span>
+                            </div>
+                            <div class="h-1.5 w-full bg-surface-100 rounded-full overflow-hidden">
+                                <div class="h-full w-full bg-purple-500 rounded-full"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="w-full bg-purple-600 text-white rounded-xl py-3.5 text-center font-bold text-[14px] shadow-sm">
+                            DOWNLOAD PDF
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 07. DESIGNED FOR DIFFERENT IMAGES -->
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mb-12 md:mb-16">
+        <div class="text-center mb-12 md:mb-16">
+            <h2 class="text-3xl md:text-[2.25rem] font-bold text-surface-900 mb-5 tracking-tight">Designed for Different Images</h2>
+            <p class="text-[17px] text-surface-500 max-w-[700px] mx-auto leading-relaxed">
+                From simple text documents to structured reports, ScanPDF provides a straightforward way to create a PDF version of your supported image files.
+            </p>
+        </div>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <!-- Photos -->
+            <div class="bg-surface-50/50 border border-surface-200/60 rounded-2xl p-6 text-center hover:bg-white hover:shadow-md hover:border-purple-200 transition-all duration-300">
+                <div class="w-14 h-16 mx-auto bg-white border border-surface-200 shadow-sm rounded flex items-center justify-center p-2 mb-5">
+                    <i data-lucide="camera" class="w-8 h-8 text-purple-400"></i>
+                </div>
+                <h4 class="text-[15px] font-bold text-surface-900 mb-2 uppercase tracking-wide">PHOTOS</h4>
+                <p class="text-surface-500 text-[14px] leading-relaxed">Personal photos and camera images</p>
+            </div>
+            
+            <!-- Scanned Pages -->
+            <div class="bg-surface-50/50 border border-surface-200/60 rounded-2xl p-6 text-center hover:bg-white hover:shadow-md hover:border-purple-200 transition-all duration-300">
+                <div class="w-14 h-16 mx-auto bg-white border border-surface-200 shadow-sm rounded flex items-center justify-center p-2 mb-5">
+                    <i data-lucide="scan" class="w-8 h-8 text-purple-400"></i>
+                </div>
+                <h4 class="text-[15px] font-bold text-surface-900 mb-2 uppercase tracking-wide">SCANNED PAGES</h4>
+                <p class="text-surface-500 text-[14px] leading-relaxed">Turn scanned page images into a PDF</p>
+            </div>
+            
+            <!-- Document Images -->
+            <div class="bg-surface-50/50 border border-surface-200/60 rounded-2xl p-6 text-center hover:bg-white hover:shadow-md hover:border-purple-200 transition-all duration-300">
+                <div class="w-14 h-16 mx-auto bg-white border border-surface-200 shadow-sm rounded flex items-center justify-center p-2 mb-5">
+                    <i data-lucide="file-image" class="w-8 h-8 text-purple-400"></i>
+                </div>
+                <h4 class="text-[15px] font-bold text-surface-900 mb-2 uppercase tracking-wide">DOCUMENT IMAGES</h4>
+                <p class="text-surface-500 text-[14px] leading-relaxed">Screenshots and document captures</p>
+            </div>
+            
+            <!-- Multi-Page Sets -->
+            <div class="bg-surface-50/50 border border-surface-200/60 rounded-2xl p-6 text-center hover:bg-white hover:shadow-md hover:border-purple-200 transition-all duration-300">
+                <div class="w-14 h-16 mx-auto bg-white border border-surface-200 shadow-sm rounded flex items-center justify-center p-2 mb-5">
+                    <i data-lucide="images" class="w-8 h-8 text-purple-400"></i>
+                </div>
+                <h4 class="text-[15px] font-bold text-surface-900 mb-2 uppercase tracking-wide">MULTI-PAGE SETS</h4>
+                <p class="text-surface-500 text-[14px] leading-relaxed">Combine multiple related images into one PDF</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 08. WHY USE SCANPDF IMAGE TO PDF -->
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mb-12 md:mb-16">
+        <div class="text-center mb-12 md:mb-16">
+            <h2 class="text-3xl md:text-[2.25rem] font-bold text-surface-900 mb-5 tracking-tight">Why Use ScanPDF Image to PDF</h2>
+        </div>
+        
+        <div class="grid md:grid-cols-[1fr_1fr] gap-6">
+            <div class="bg-purple-600 rounded-[24px] p-8 md:p-12 text-white relative overflow-hidden flex flex-col justify-center">
+                <div class="absolute top-0 right-0 w-64 h-64 bg-purple-500 rounded-full blur-[80px] -z-0"></div>
+                <div class="relative z-10">
+                    <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mb-6">
+                        <i data-lucide="zap" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4">Simple Image-to-PDF Flow</h3>
+                    <p class="text-purple-100 text-[17px] leading-relaxed">
+                        Select your images, review their order, create the PDF, and download the finished document through one focused workflow.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="space-y-6">
+                <div class="bg-white border border-surface-200/80 rounded-[24px] p-8 flex items-start gap-5 shadow-sm">
+                    <div class="w-10 h-10 bg-purple-50 text-purple-600 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <i data-lucide="eye" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-[17px] font-bold text-surface-900 mb-2">Preserved Image Proportions</h4>
+                        <p class="text-surface-500 text-[15px] leading-relaxed">Your images maintain their native aspect ratios and quality inside the resulting PDF pages, preventing awkward stretching.</p>
+                    </div>
+                </div>
+                
+                <div class="bg-white border border-surface-200/80 rounded-[24px] p-8 flex items-start gap-5 shadow-sm">
+                    <div class="w-10 h-10 bg-purple-50 text-purple-600 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <i data-lucide="activity" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-[17px] font-bold text-surface-900 mb-2">Clear Conversion State</h4>
+                        <p class="text-surface-500 text-[15px] leading-relaxed">You are always informed during processing without fake loading bars or misleading progress notifications.</p>
+                    </div>
+                </div>
+                
+                <div class="bg-white border border-surface-200/80 rounded-[24px] p-8 flex items-start gap-5 shadow-sm">
+                    <div class="w-10 h-10 bg-purple-50 text-purple-600 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <i data-lucide="download" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-[17px] font-bold text-surface-900 mb-2">Direct PDF Download</h4>
+                        <p class="text-surface-500 text-[15px] leading-relaxed">Once your PDF is processed, it is delivered instantly to your device for downloading without delay.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 09. BEST RESULTS -->
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mb-12 md:mb-16">
+        <div class="bg-purple-50 border border-purple-100 rounded-[24px] p-8 md:p-12 flex flex-col md:flex-row gap-8 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.5)]">
+            <div class="md:w-1/3">
+                <div class="w-12 h-12 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center mb-5">
+                    <i data-lucide="info" class="w-6 h-6"></i>
+                </div>
+                <h3 class="text-xl font-bold text-surface-900 mb-3">Get the Best Image-to-PDF Result</h3>
+                <p class="text-surface-600 text-[15px] leading-relaxed">
+                    For the most consistent output, start with valid image files and organize them in the required order.
+                </p>
+            </div>
+            
+            <div class="md:w-2/3 grid sm:grid-cols-2 gap-4">
+                <div class="flex gap-3">
+                    <i data-lucide="check" class="w-5 h-5 text-purple-500 flex-shrink-0 mt-0.5"></i>
+                    <span class="text-[15px] font-medium text-surface-700">Upload clear source images</span>
+                </div>
+                <div class="flex gap-3">
+                    <i data-lucide="check" class="w-5 h-5 text-purple-500 flex-shrink-0 mt-0.5"></i>
+                    <span class="text-[15px] font-medium text-surface-700">Check image orientation</span>
+                </div>
+                <div class="flex gap-3">
+                    <i data-lucide="check" class="w-5 h-5 text-purple-500 flex-shrink-0 mt-0.5"></i>
+                    <span class="text-[15px] font-medium text-surface-700">Arrange files in the required page order</span>
+                </div>
+                <div class="flex gap-3">
+                    <i data-lucide="check" class="w-5 h-5 text-purple-500 flex-shrink-0 mt-0.5"></i>
+                    <span class="text-[15px] font-medium text-surface-700">Remove unwanted images before conversion</span>
+                </div>
+                <div class="flex gap-3">
+                    <i data-lucide="check" class="w-5 h-5 text-purple-500 flex-shrink-0 mt-0.5"></i>
+                    <span class="text-[15px] font-medium text-surface-700">Use supported image formats</span>
+                </div>
+                <div class="flex gap-3">
+                    <i data-lucide="check" class="w-5 h-5 text-purple-500 flex-shrink-0 mt-0.5"></i>
+                    <span class="text-[15px] font-medium text-surface-700">Review the downloaded PDF</span>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
+
+<!-- WebApplication / SoftwareApplication Schema -->
+{% if seo_h1 %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "{{ seo_h1|escapejs }}",
+  "url": "{{ request.build_absolute_uri }}",
+  "description": "{{ seo_description|escapejs }}",
+  "applicationCategory": "UtilityApplication",
+  "operatingSystem": "All"
+}
+</script>
+{% endif %}
 
 {% endblock %}
 
-
 {% block extra_scripts %}
 <script>
+/* =========================================================
+   DJANGO VALUES
+   ========================================================= */
 const CONVERT_URL = '{% url "converter:convert_file" tool_slug %}';
 const CSRF_TOKEN = '{{ csrf_token }}';
 
-const selectFileArea = document.getElementById('select-file-area');
-const selectFileBtn = document.getElementById('select-file-btn');
-const fileInput = document.getElementById('file-input');
-const fileList = document.getElementById('file-list');
-const addMoreBtn = document.getElementById('add-more-btn');
-const convertBtn = document.getElementById('convert-btn');
-const progressSection = document.getElementById('progress-section');
-const successSection = document.getElementById('success-section');
-const errorSection = document.getElementById('error-section');
-const errorMessage = document.getElementById('error-message');
-const downloadBtn = document.getElementById('download-btn');
-const convertAnotherBtn = document.getElementById('convert-another-btn');
+/* =========================================================
+   ELEMENTS
+   ========================================================= */
+const dropText = document.getElementById("drop-text");
 
+const stateIdle = document.getElementById("state-idle");
+const stateSelected = document.getElementById("state-selected");
+const stateConverting = document.getElementById("state-converting");
+const stateSuccess = document.getElementById("state-success");
+const stateError = document.getElementById("state-error");
+
+const selectFileBtn = document.getElementById("select-file-btn");
+const fileInput = document.getElementById("file-input");
+
+const fileListContainer = document.getElementById("file-list-container");
+const addMoreBtn = document.getElementById("add-more-btn");
+const convertBtn = document.getElementById("convert-btn");
+
+const progressBar = document.getElementById("progress-bar");
+const progressPercent = document.getElementById("progress-percent");
+const progressStatus = document.getElementById("progress-status");
+
+const downloadBtn = document.getElementById("download-btn");
+const convertAnotherBtn = document.getElementById("convert-another-btn");
+const retryBtn = document.getElementById("retry-btn");
+const chooseAnotherBtn = document.getElementById("choose-another-btn");
+const errorMessage = document.getElementById("error-message");
+
+/* =========================================================
+   VARIABLES
+   ========================================================= */
 let selectedFiles = [];
+let progressInterval = null;
+let isConverting = false;
 
-selectFileBtn.addEventListener('click', () => fileInput.click());
-addMoreBtn.addEventListener('click', () => fileInput.click());
-
-fileInput.addEventListener('change', () => {
-    if (fileInput.files.length) handleFiles(fileInput.files);
-});
-
-selectFileArea.addEventListener('dragover', (e) => {
-    e.preventDefault();
-    selectFileArea.classList.add('drag-active');
-});
-
-selectFileArea.addEventListener('dragleave', () => {
-    selectFileArea.classList.remove('drag-active');
-});
-
-selectFileArea.addEventListener('drop', (e) => {
-    e.preventDefault();
-    selectFileArea.classList.remove('drag-active');
-    if (e.dataTransfer.files.length) handleFiles(e.dataTransfer.files);
-});
-
-function handleFiles(files) {
-    const valid = Array.from(files).filter(f => {
-        const name = f.name.toLowerCase();
-        return name.endsWith('.jpg') || name.endsWith('.jpeg') || name.endsWith('.png');
+/* =========================================================
+   STATE MANAGEMENT
+   ========================================================= */
+function switchState(stateEl) {
+    [stateIdle, stateSelected, stateConverting, stateSuccess, stateError].forEach(el => {
+        if (el) {
+            el.classList.add("hidden");
+            el.style.display = ""; 
+        }
     });
-
-    if (valid.length === 0) {
-        showError('Please select JPG or PNG images only.');
-        return;
+    if (stateEl) {
+        stateEl.classList.remove("hidden");
     }
-
-    selectedFiles = [...selectedFiles, ...valid];
-    updateFileList();
-    errorSection.classList.add('hidden');
+    if (typeof lucide !== "undefined") {
+        lucide.createIcons();
+    }
 }
 
-function updateFileList() {
-    if (selectedFiles.length === 0) {
-        fileList.classList.add('hidden');
-        addMoreBtn.classList.add('hidden');
-        convertBtn.disabled = true;
-        selectFileArea.classList.remove('hidden');
+/* =========================================================
+   FILE SELECTION
+   ========================================================= */
+selectFileBtn.addEventListener("click", () => {
+    if (!isConverting) fileInput.click();
+});
+addMoreBtn.addEventListener("click", () => {
+    if (!isConverting) fileInput.click();
+});
+
+fileInput.addEventListener("change", (e) => {
+    if (e.target.files && e.target.files.length > 0) {
+        handleFiles(e.target.files);
+    }
+    fileInput.value = ""; 
+});
+
+/* =========================================================
+   DRAG AND DROP
+   ========================================================= */
+const heroDropzone = document.getElementById("hero-dropzone");
+let dragCounter = 0;
+
+heroDropzone.addEventListener("dragenter", (e) => {
+    e.preventDefault();
+    if (isConverting) return;
+    dragCounter++;
+    if (dragCounter === 1) {
+        heroDropzone.classList.add("drag-active");
+        dropText.textContent = "Drop your images here";
+    }
+});
+
+heroDropzone.addEventListener("dragover", (e) => {
+    e.preventDefault();
+});
+
+heroDropzone.addEventListener("dragleave", (e) => {
+    e.preventDefault();
+    if (isConverting) return;
+    dragCounter--;
+    if (dragCounter === 0) {
+        heroDropzone.classList.remove("drag-active");
+        dropText.textContent = "Drop your JPG or PNG images here";
+    }
+});
+
+heroDropzone.addEventListener("drop", (e) => {
+    e.preventDefault();
+    dragCounter = 0;
+    heroDropzone.classList.remove("drag-active");
+    dropText.textContent = "Drop your JPG or PNG images here";
+    if (isConverting) return;
+    
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        handleFiles(e.dataTransfer.files);
+    }
+});
+
+/* =========================================================
+   FILE HANDLING
+   ========================================================= */
+function formatFileSize(bytes) {
+    if (bytes === 0) return "0 Bytes";
+    const k = 1024;
+    const sizes = ["Bytes", "KB", "MB", "GB"];
+    const index = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, index)).toFixed(2)) + " " + sizes[index];
+}
+
+function handleFiles(files) {
+    const validFiles = Array.from(files).filter(f => {
+        const name = f.name.toLowerCase();
+        return name.endsWith(".jpg") || name.endsWith(".jpeg") || name.endsWith(".png");
+    });
+    
+    if (validFiles.length === 0) {
+        errorMessage.textContent = "Please select valid JPG or PNG images only.";
+        switchState(stateError);
         return;
     }
+    
+    selectedFiles = [...selectedFiles, ...validFiles];
+    renderFileList();
+    switchState(stateSelected);
+}
 
-    selectFileArea.classList.add('hidden');
-    fileList.classList.remove('hidden');
-    addMoreBtn.classList.remove('hidden');
-    convertBtn.disabled = false;
-
-    fileList.innerHTML = '';
-
+function renderFileList() {
+    fileListContainer.innerHTML = "";
     selectedFiles.forEach((file, index) => {
-        const item = document.createElement('div');
-        item.className = 'selected-file-card flex items-center gap-3';
-
-        item.innerHTML = `
-            <div class="w-10 h-10 rounded-xl bg-purple-100 flex items-center justify-center flex-shrink-0">
-                <i data-lucide="image" class="w-5 h-5 text-purple-600"></i>
+        const div = document.createElement("div");
+        div.className = "selected-file-box relative w-full max-w-[400px]";
+        
+        div.innerHTML = `
+            <div class="w-10 h-10 bg-purple-50 rounded-lg flex items-center justify-center flex-shrink-0 text-purple-600">
+                <i data-lucide="image" class="w-5 h-5"></i>
             </div>
-            <div class="min-w-0 flex-1 text-left">
-                <p class="text-sm font-bold text-surface-800 truncate">${file.name}</p>
-                <p class="text-xs text-surface-400 mt-0.5">${formatFileSize(file.size)}</p>
+            <div class="flex-1 min-w-0 text-left pr-8">
+                <p class="text-surface-900 font-bold text-[14px] truncate">${file.name}</p>
+                <div class="flex items-center gap-2 mt-0.5">
+                    <span class="text-surface-500 text-[12px]">${formatFileSize(file.size)}</span>
+                    <span class="text-surface-300 text-[10px]">•</span>
+                    <span class="text-green-600 text-[12px] font-semibold flex items-center gap-1"><i data-lucide="check" class="w-3 h-3"></i> Ready</span>
+                </div>
             </div>
-            <button type="button" onclick="removeFile(${index})" class="remove-file-btn" title="Remove">
+            <button type="button" onclick="removeFile(${index})" class="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center rounded-lg text-surface-400 hover:text-red-500 hover:bg-red-50 transition-colors" title="Remove file">
                 <i data-lucide="x" class="w-4 h-4"></i>
             </button>
         `;
-        fileList.appendChild(item);
+        fileListContainer.appendChild(div);
     });
-
-    if (typeof lucide !== 'undefined') lucide.createIcons();
+    
+    if (typeof lucide !== "undefined") lucide.createIcons();
 }
 
 window.removeFile = function(index) {
+    if (isConverting) return;
     selectedFiles.splice(index, 1);
-    updateFileList();
+    if (selectedFiles.length === 0) {
+        resetUpload();
+    } else {
+        renderFileList();
+    }
 };
 
-function formatFileSize(bytes) {
-    if (bytes === 0) return '0 Bytes';
-    const k = 1024;
-    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+chooseAnotherBtn.addEventListener("click", resetUpload);
+convertAnotherBtn.addEventListener("click", resetUpload);
+
+retryBtn.addEventListener("click", () => {
+    if (selectedFiles.length > 0) {
+        switchState(stateSelected);
+    } else {
+        resetUpload();
+    }
+});
+
+function resetUpload() {
+    if (isConverting) return;
+    selectedFiles = [];
+    fileInput.value = "";
+    fileListContainer.innerHTML = "";
+    stopProgress();
+    switchState(stateIdle);
 }
 
-convertBtn.addEventListener('click', async () => {
-    if (selectedFiles.length === 0) return;
-
-    convertBtn.classList.add('hidden');
-    progressSection.classList.remove('hidden');
-    successSection.classList.add('hidden');
-    errorSection.classList.add('hidden');
-
+/* =========================================================
+   CONVERSION
+   ========================================================= */
+convertBtn.addEventListener("click", async () => {
+    if (selectedFiles.length === 0 || isConverting) return;
+    
+    isConverting = true;
+    switchState(stateConverting);
+    startProgress();
+    
     const formData = new FormData();
-    selectedFiles.forEach(file => formData.append('files', file));
-    formData.append('csrfmiddlewaretoken', CSRF_TOKEN);
-
+    selectedFiles.forEach(file => formData.append("files", file));
+    formData.append("csrfmiddlewaretoken", CSRF_TOKEN);
+    
     try {
         const response = await fetch(CONVERT_URL, {
-            method: 'POST',
+            method: "POST",
             body: formData
         });
-
+        
         if (!response.ok) {
-            let message = 'Conversion failed.';
+            let msg = "We couldn't convert these files.";
             try {
                 const data = await response.json();
-                message = data.error || message;
-            } catch (e) {}
-            throw new Error(message);
+                msg = data.error || msg;
+            } catch(e){}
+            throw new Error(msg);
         }
-
-        const disposition = response.headers.get('Content-Disposition');
-        let outputFilename = 'images_to_pdf.pdf';
+        
+        const disposition = response.headers.get("Content-Disposition");
+        let outputFilename = "images_to_pdf.pdf";
         if (disposition) {
             const match = disposition.match(/filename="(.+?)"/);
             if (match) outputFilename = match[1];
         }
-
+        
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
+        
         downloadBtn.href = url;
         downloadBtn.download = outputFilename;
-
-        progressSection.classList.add('hidden');
-        successSection.classList.remove('hidden');
-
-        if (typeof lucide !== 'undefined') lucide.createIcons();
+        
+        finishProgressAndShowSuccess();
+        
     } catch (error) {
-        progressSection.classList.add('hidden');
-        convertBtn.classList.remove('hidden');
-        showError(error.message);
+        stopProgress();
+        errorMessage.textContent = error.message;
+        switchState(stateError);
+        isConverting = false;
     }
 });
 
-convertAnotherBtn.addEventListener('click', () => {
-    selectedFiles = [];
-    updateFileList();
-    successSection.classList.add('hidden');
-    convertBtn.classList.remove('hidden');
-    if (typeof lucide !== 'undefined') lucide.createIcons();
-});
-
-function showError(message) {
-    errorMessage.textContent = message;
-    errorSection.classList.remove('hidden');
-    if (typeof lucide !== 'undefined') lucide.createIcons();
+/* =========================================================
+   PROGRESS
+   ========================================================= */
+function startProgress() {
+    let progress = 0;
+    progressBar.style.width = "0%";
+    progressPercent.textContent = "0%";
+    progressStatus.textContent = "Preparing your images...";
+    
+    progressInterval = setInterval(() => {
+        if (progress < 95) {
+            progress += Math.random() * 4;
+            if (progress > 95) progress = 95;
+            
+            let p = Math.floor(progress);
+            progressBar.style.width = p + "%";
+            progressPercent.textContent = p + "%";
+            
+            if (p > 20) progressStatus.textContent = "Uploading images...";
+            if (p > 40) progressStatus.textContent = "Converting Images to PDF...";
+            if (p > 75) progressStatus.textContent = "Finalizing your PDF...";
+        }
+    }, 400);
 }
 
-if (typeof lucide !== 'undefined') lucide.createIcons();
+function stopProgress() {
+    if (progressInterval) {
+        clearInterval(progressInterval);
+        progressInterval = null;
+    }
+}
+
+function finishProgressAndShowSuccess() {
+    stopProgress();
+    progressBar.style.width = "100%";
+    progressPercent.textContent = "100%";
+    progressStatus.textContent = "Conversion complete";
+    
+    setTimeout(() => {
+        isConverting = false;
+        switchState(stateSuccess);
+    }, 400);
+}
+
+if (typeof lucide !== "undefined") {
+    lucide.createIcons();
+}
 </script>
 {% endblock %}

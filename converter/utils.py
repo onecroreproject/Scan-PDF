@@ -4663,9 +4663,22 @@ def convert_pdf_to_pdfa(input_path, original_name):
         fitz.open = fitz.Document
     import datetime
 
-    output_path = get_output_path(original_name, 'pdf', suffix='_pdfa')
+    # Validation: Must be a real PDF
+    try:
+        doc = fitz.open(input_path)
+    except Exception as e:
+        raise ValueError("INVALID_DOCUMENT: This file does not appear to be a valid PDF.")
 
-    doc = fitz.open(input_path)
+    if not doc.is_pdf:
+        doc.close()
+        raise ValueError("INVALID_DOCUMENT: The uploaded file is not recognized as a valid PDF document.")
+
+    # Validation: Must not be encrypted
+    if doc.needs_pass or doc.is_encrypted:
+        doc.close()
+        raise ValueError("INVALID_DOCUMENT: This PDF is password-protected. Please unlock it before converting to PDF/A.")
+
+    output_path = get_output_path(original_name, 'pdf', suffix='_pdfa')
 
     # --- Set PDF/A-2b compliant metadata ---
     now = datetime.datetime.now(datetime.timezone.utc)

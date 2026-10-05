@@ -41,10 +41,276 @@ def is_supported_url(url):
     except Exception:
         return None
 
+import urllib.request
+import urllib.parse
+import json
+import html
+
+class SafeThreadsRedirectHandler(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        parsed = urllib.parse.urlparse(newurl)
+        allowed = ['threads.net', 'www.threads.net', 'threads.com', 'www.threads.com']
+        if parsed.hostname not in allowed:
+            raise ValueError(f"Invalid redirect to {parsed.hostname}")
+        if parsed.scheme not in ['http', 'https']:
+            raise ValueError("Invalid redirect scheme")
+        return super().redirect_request(req, fp, code, msg, headers, newurl)
+
+def get_best_image_candidate(candidates_list):
+    if not isinstance(candidates_list, list):
+        return None
+    valid_cands = [c for c in candidates_list if isinstance(c, dict) and 'url' in c]
+    if not valid_cands:
+        return None
+    sorted_cands = sorted(
+        valid_cands,
+        key=lambda x: (x.get('width', 0) * x.get('height', 0)),
+        reverse=True
+    )
+    return sorted_cands[0]['url']
+
+def extract_images_from_post_object(post_obj):
+    images = []
+    if 'carousel_media' in post_obj and isinstance(post_obj['carousel_media'], list):
+        for item in post_obj['carousel_media']:
+            if isinstance(item, dict) and 'image_versions2' in item and 'candidates' in item['image_versions2']:
+                best = get_best_image_candidate(item['image_versions2']['candidates'])
+                if best:
+                    images.append(best)
+    elif 'image_versions2' in post_obj and 'candidates' in post_obj['image_versions2']:
+        best = get_best_image_candidate(post_obj['image_versions2']['candidates'])
+        if best:
+            images.append(best)
+    elif 'candidates' in post_obj and isinstance(post_obj['candidates'], list):
+        best = get_best_image_candidate(post_obj['candidates'])
+        if best:
+            images.append(best)
+    elif 'display_url' in post_obj and isinstance(post_obj['display_url'], str):
+        images.append(post_obj['display_url'])
+    elif 'image_url' in post_obj and isinstance(post_obj['image_url'], str):
+        images.append(post_obj['image_url'])
+    return images
+
+def find_post_object(data, shortcode):
+    if isinstance(data, dict):
+        if data.get('code') == shortcode or data.get('shortcode') == shortcode:
+            return data
+        for k, v in data.items():
+            if isinstance(v, (dict, list)):
+                res = find_post_object(v, shortcode)
+                if res:
+                    return res
+    elif isinstance(data, list):
+        for item in data:
+            if isinstance(item, (dict, list)):
+                res = find_post_object(item, shortcode)
+                if res:
+                    return res
+    return None
+
+def find_any_media_object(data):
+    if isinstance(data, dict):
+        if 'image_versions2' in data or 'carousel_media' in data or 'candidates' in data:
+            return data
+        for k, v in data.items():
+            if isinstance(v, (dict, list)):
+                res = find_any_media_object(v)
+                if res:
+                    return res
+    elif isinstance(data, list):
+        for item in data:
+            if isinstance(item, (dict, list)):
+                res = find_any_media_object(item)
+                if res:
+                    return res
+    return None
+
+def extract_all_json_from_string(s):
+    results = []
+    start_indices = [m.start() for m in re.finditer(r'\{"', s)]
+    for i in start_indices:
+        stack = 0
+        in_str = False
+        escape = False
+        for j in range(i, len(s)):
+            c = s[j]
+            if escape:
+                escape = False
+                continue
+            if c == '\\':
+                escape = True
+                continue
+            if c == '"':
+                in_str = not in_str
+                continue
+            
+            if not in_str:
+                if c == '{':
+                    stack += 1
+                elif c == '}':
+                    stack -= 1
+                    if stack == 0:
+                        block = s[i:j+1]
+                        if ('"code"' in block or '"shortcode"' in block or '"image_versions2"' in block or '"candidates"' in block):
+                            try:
+                                obj = json.loads(block)
+                                results.append(obj)
+                            except:
+                                pass
+                        break
+    return results
+
+def extract_threads_images(original_url):
+    try:
+        opener = urllib.request.build_opener(SafeThreadsRedirectHandler())
+        req = urllib.request.Request(
+            original_url, 
+            headers={
+                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8'
+            }
+        )
+        with opener.open(req, timeout=10) as response:
+            html_content = response.read().decode('utf-8', errors='ignore')
+            final_url = response.geturl()
+            status = response.status
+            
+        candidate_images = []
+        parsed_objects = []
+        
+        # 1. Parse all script blocks for JSON robustly
+        script_matches = re.findall(r'<script[^>]*>([\s\S]*?)</script>', html_content)
+        for s in script_matches:
+            if 'image_versions2' in s or 'candidates' in s or 'display_url' in s or 'carousel_media' in s or 'RelayPreloadedState' in s or 'requireLazy' in s:
+                parsed_objects.extend(extract_all_json_from_string(s))
+
+        # 2. Identify the requested post object
+        shortcode_match = re.search(r'/(?:t|share|post)/([a-zA-Z0-9_-]+)', original_url)
+        shortcode = shortcode_match.group(1) if shortcode_match else None
+        
+        post_obj = None
+        for obj in parsed_objects:
+            if shortcode:
+                post_obj = find_post_object(obj, shortcode)
+                if post_obj:
+                    break
+                    
+        # 3. Extract candidate images
+        if post_obj:
+            candidate_images.extend(extract_images_from_post_object(post_obj))
+        else:
+            for obj in parsed_objects:
+                any_obj = find_any_media_object(obj)
+                if any_obj:
+                    candidate_images.extend(extract_images_from_post_object(any_obj))
+                    if candidate_images:
+                        break
+                        
+        # 4. Fallback to generic JSON-LD and Meta tags if needed
+        if not candidate_images:
+            for obj in parsed_objects:
+                if isinstance(obj, dict):
+                    if obj.get('@type') == 'ImageObject':
+                        if 'contentUrl' in obj: candidate_images.append(obj['contentUrl'])
+                        elif 'url' in obj: candidate_images.append(obj['url'])
+                    elif obj.get('@type') in ['SocialMediaPosting', 'DiscussionForumPosting']:
+                        if 'image' in obj:
+                            images = obj['image']
+                            if isinstance(images, str): candidate_images.append(images)
+                            elif isinstance(images, list):
+                                for img in images:
+                                    if isinstance(img, str): candidate_images.append(img)
+                                    elif isinstance(img, dict) and 'url' in img: candidate_images.append(img['url'])
+
+            for match in re.finditer(r'<meta[^>]+>', html_content):
+                tag = match.group(0)
+                if 'property="og:image"' in tag or 'name="twitter:image"' in tag:
+                    content_match = re.search(r'content="([^"]+)"', tag)
+                    if content_match:
+                        val = html.unescape(content_match.group(1))
+                        candidate_images.append(val)
+                        
+        # 5. Deduplicate and validate
+        unique_images = []
+        for img in candidate_images:
+            if not isinstance(img, str):
+                continue
+            img = img.replace('\\/', '/')
+            if 'profile' in img.lower() or 'logo' in img.lower():
+                continue
+            if img not in unique_images and img.startswith('http'):
+                try:
+                    req_img = urllib.request.Request(img, method='HEAD', headers={'User-Agent': 'Mozilla/5.0'})
+                    with urllib.request.urlopen(req_img, timeout=5) as resp_img:
+                        ct = resp_img.headers.get('Content-Type', '')
+                        if ct.startswith('image/'):
+                            unique_images.append(img)
+                except urllib.error.HTTPError as e:
+                    if e.code == 405:
+                        try:
+                            req_img = urllib.request.Request(img, headers={'User-Agent': 'Mozilla/5.0'})
+                            with urllib.request.urlopen(req_img, timeout=5) as resp_img:
+                                ct = resp_img.headers.get('Content-Type', '')
+                                if ct.startswith('image/'):
+                                    unique_images.append(img)
+                        except:
+                            pass
+                except:
+                    pass
+                
+        # Diagnostic logging
+        script_types = list(set(re.findall(r'<script[^>]*type="([^"]+)"', html_content)))
+        media_key_hits = []
+        if 'image_versions2' in html_content: media_key_hits.append('image_versions2')
+        if 'candidates' in html_content: media_key_hits.append('candidates')
+        if 'carousel_media' in html_content: media_key_hits.append('carousel_media')
+        
+        logger.info(f"Threads image hydration scan: scripts={len(script_matches)} media_key_hits={media_key_hits} requested_post_obj_found={post_obj is not None} candidates={len(candidate_images)}")
+                
+        if not unique_images:
+            logger.error(f"Threads image fallback: original_host={urllib.parse.urlparse(original_url).hostname} final_host={urllib.parse.urlparse(final_url).hostname} status={status} html_length={len(html_content)} script_count={len(script_matches)} requested_obj_found={post_obj is not None} media_keys={media_key_hits} candidate_images={len(candidate_images)} validated_images=0")
+            raise ValueError("No downloadable media was found in this Threads post.")
+        
+        title_match = re.search(r'<meta[^>]+property="og:title"[^>]+content="([^"]+)"', html_content)
+        if not title_match:
+            title_match = re.search(r'<meta[^>]+content="([^"]+)"[^>]+property="og:title"', html_content)
+        title = html.unescape(title_match.group(1)) if title_match else "Threads Image"
+        
+        image_items = []
+        for idx, img_url in enumerate(unique_images):
+            image_items.append({
+                'id': f'img_{idx}',
+                'type': 'image',
+                'quality': 'Best available',
+                'format': 'jpg',
+                'fileSize': None,
+                'has_audio': False,
+                'can_download_mp3': False,
+                'url': img_url
+            })
+            
+        return {
+            'platform': 'threads',
+            'title': title,
+            'author': 'Threads',
+            'thumbnail': unique_images[0],
+            'duration': None,
+            'video_formats': [],
+            'audio': {'available': False, 'qualities': []},
+            'image_formats': image_items
+        }
+    except Exception as e:
+        logger.error(f"Threads image extraction failed: {str(e)}")
+        raise ValueError("No downloadable media was found in this Threads post.")
+
 def get_media_info(url):
     platform = is_supported_url(url)
     if not platform:
         raise ValueError("Unsupported platform or invalid URL.")
+
+    original_url = url
+    if platform == 'threads':
+        url = url.replace('threads.com', 'threads.net')
 
     ydl_opts = {
         'quiet': True,
@@ -189,12 +455,22 @@ def get_media_info(url):
         
         logger.error(f"yt-dlp info error: {clean_msg}")
         
-        if "Unsupported URL" in clean_msg or "not supported" in clean_msg.lower():
-            raise ValueError("Unable to access this public Threads post.")
-        elif "Sign in" in clean_msg or "Private" in clean_msg or "login" in clean_msg.lower() or "401" in clean_msg or "403" in clean_msg:
-            raise ValueError("This Threads post is not publicly accessible.")
+        if platform == "threads":
+            if "Unsupported URL" in clean_msg or "not supported" in clean_msg.lower():
+                raise ValueError("Unable to access this public Threads post.")
+            elif "Sign in" in clean_msg or "Private" in clean_msg or "login" in clean_msg.lower() or "401" in clean_msg or "403" in clean_msg:
+                raise ValueError("This Threads post is not publicly accessible.")
+            elif "has no downloadable video" in clean_msg.lower() or "image post" in clean_msg.lower():
+                return extract_threads_images(original_url)
+            else:
+                raise ValueError("No downloadable media was found in this Threads post.")
+        elif platform == "youtube":
+            if "Sign in" in clean_msg or "Private" in clean_msg or "login" in clean_msg.lower() or "401" in clean_msg or "403" in clean_msg:
+                raise ValueError("This YouTube video is not publicly accessible.")
+            else:
+                raise ValueError("Unable to analyze this media URL.")
         else:
-            raise ValueError("No downloadable media was found in this Threads post.")
+            raise ValueError("Unable to analyze this media URL.")
 
 import os
 import shutil
@@ -247,6 +523,35 @@ def download_media_to_temp(url, format_id, download_type="video", audio_quality=
     platform = is_supported_url(url)
     if not platform:
         raise ValueError("Unsupported platform or invalid URL.")
+
+    original_url = url
+    if platform == 'threads':
+        url = url.replace('threads.com', 'threads.net')
+        if format_id and format_id.startswith('img_'):
+            image_info = extract_threads_images(original_url)
+            img_url = None
+            for img in image_info['image_formats']:
+                if img['id'] == format_id:
+                    img_url = img['url']
+                    break
+            
+            if not img_url:
+                raise ValueError("Image not found in the post.")
+                
+            temp_dir = tempfile.gettempdir()
+            unique_filename = f"dl_{uuid.uuid4().hex}"
+            filepath = os.path.join(temp_dir, f"{unique_filename}.jpg")
+            
+            try:
+                req = urllib.request.Request(img_url, headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'})
+                with urllib.request.urlopen(req, timeout=15) as response, open(filepath, 'wb') as out_file:
+                    out_file.write(response.read())
+                    
+                safe_title = sanitize_filename(image_info['title']) or 'threads_image'
+                return filepath, f"{safe_title}.jpg"
+            except Exception as e:
+                logger.error(f"Threads image download failed: {str(e)}")
+                raise ValueError("Failed to download Threads image.")
 
     temp_dir = tempfile.gettempdir()
     unique_filename = f"dl_{uuid.uuid4().hex}"
