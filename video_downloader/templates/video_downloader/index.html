@@ -255,7 +255,7 @@
 
                 sortedFormats.forEach(fmt => {
                     const sizeStr = (fmt.filesize && fmt.filesize > 0) ? formatBytes(fmt.filesize) : '';
-                    const dlUrl = `{% url "video_downloader:download_video" %}?url=${encodeURIComponent(url)}&format_id=${encodeURIComponent(fmt.format_id)}&format_type=${encodeURIComponent(fmt.type)}`;
+                    const dlUrl = `{% url "video_downloader:download_media" %}?url=${encodeURIComponent(url)}&format_id=${encodeURIComponent(fmt.format_id)}&format_type=${encodeURIComponent(fmt.type)}`;
                     
                     if (fmt.type === 'Audio Only') {
                         const rawBitrate = Math.round(fmt.bitrate || fmt.abr || 0);

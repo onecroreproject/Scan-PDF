@@ -1,0 +1,258 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply bg-editor-dark text-editor-text font-sans antialiased;
+  }
+  
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+@layer components {
+  /* Custom scrollbar */
+  .custom-scrollbar::-webkit-scrollbar {
+    @apply w-2 h-2;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-track {
+    @apply bg-editor-dark;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-thumb {
+    @apply bg-editor-border rounded-full;
+  }
+  
+  .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+    @apply bg-editor-muted;
+  }
+  
+  /* Editor panel */
+  .editor-panel {
+    @apply bg-editor-panel border border-editor-border;
+  }
+  
+  /* Editor button */
+  .editor-btn {
+    @apply bg-editor-btn border border-editor-border text-editor-muted transition-all duration-150 cursor-pointer;
+  }
+  
+  .editor-btn:hover {
+    @apply bg-editor-btnHover text-editor-text;
+  }
+  
+  .editor-btn:disabled {
+    @apply opacity-30 cursor-not-allowed;
+  }
+  
+  .editor-btn.active {
+    @apply bg-editor-primary border-editor-primary text-white;
+  }
+  
+  .editor-btn-primary {
+    @apply bg-gradient-to-r from-editor-primary to-purple-600 border-none text-white transition-all duration-200;
+  }
+  
+  .editor-btn-primary:hover {
+    @apply bg-gradient-to-r from-editor-primaryHover to-purple-700 -translate-y-0.5 shadow-lg shadow-editor-primary/40;
+  }
+  
+  /* Editor input */
+  .editor-input {
+    @apply bg-editor-dark border border-editor-border text-editor-text;
+  }
+  
+  .editor-input:focus {
+    @apply border-editor-primary outline-none ring-2 ring-editor-primary/20;
+  }
+  
+  .editor-select {
+    @apply bg-editor-dark border border-editor-border text-editor-text;
+  }
+  
+  .editor-select:focus {
+    @apply border-editor-primary outline-none;
+  }
+  
+  /* Track background */
+  .track-bg {
+    @apply bg-[#0d0f15];
+  }
+  
+  /* Clip block */
+  .clip-block {
+    @apply absolute h-full overflow-hidden rounded cursor-grab border border-blue-500 bg-gradient-to-b from-blue-900/50 to-blue-800/50 transition-shadow;
+  }
+  
+  .clip-block:hover {
+    @apply shadow-[0_0_0_2px_rgba(99,102,241,0.5)];
+  }
+  
+  .clip-block.selected {
+    @apply border-indigo-400 shadow-[0_0_0_2px_rgba(129,140,248,0.5)];
+  }
+  
+  .clip-block:active {
+    @apply cursor-grabbing;
+  }
+  
+  .clip-block img {
+    @apply w-full h-full object-cover opacity-55;
+  }
+  
+  .clip-label {
+    @apply absolute bottom-0.5 left-1 text-[10px] text-white whitespace-nowrap pointer-events-none drop-shadow-md;
+  }
+  
+  /* Resize handle */
+  .resize-handle {
+    @apply absolute top-0 bottom-0 w-2 z-2 rounded bg-indigo-500/40 cursor-col-resize;
+  }
+  
+  .resize-handle:hover {
+    @apply bg-indigo-500/90;
+  }
+  
+  .resize-handle-left {
+    @apply left-0 rounded-l;
+  }
+  
+  .resize-handle-right {
+    @apply right-0 rounded-r;
+  }
+  
+  /* Playhead */
+  .playhead {
+    @apply absolute top-0 bottom-0 w-0.5 bg-rose-500 z-10 pointer-events-none;
+  }
+  
+  .playhead::before {
+    @apply absolute -top-1.5 -left-1.25 w-3 h-3 bg-rose-500 rounded-full content-[''];
+  }
+  
+  /* Trim handle */
+  .trim-handle {
+    @apply absolute top-0 bottom-0 w-2.5 z-5 rounded bg-amber-500 cursor-ew-resize;
+  }
+  
+  .trim-region {
+    @apply absolute top-0 bottom-0 bg-indigo-500/12 border border-indigo-500/30 pointer-events-none;
+  }
+  
+  /* Drop zone */
+  .drop-zone {
+    @apply border-2 border-dashed border-editor-border rounded-xl transition-all duration-200;
+  }
+  
+  .drop-zone.dragover {
+    @apply border-editor-primary bg-editor-primary/8;
+  }
+  
+  /* Range input */
+  input[type="range"] {
+    @apply h-1 bg-editor-border rounded-full outline-none appearance-none;
+  }
+  
+  input[type="range"]::-webkit-slider-thumb {
+    @apply w-3.5 h-3.5 bg-indigo-500 rounded-full cursor-pointer border-2 border-editor-dark appearance-none;
+  }
+  
+  input[type="range"]::-moz-range-thumb {
+    @apply w-3.5 h-3.5 bg-indigo-500 rounded-full cursor-pointer border-2 border-editor-dark;
+  }
+  
+  /* Filter button */
+  .filter-btn {
+    @apply text-[10px] py-1 px-2 rounded cursor-pointer transition-all duration-150 bg-editor-btn border border-editor-border text-editor-muted;
+  }
+  
+  .filter-btn:hover,
+  .filter-btn.active {
+    @apply bg-editor-primary border-editor-primary text-white;
+  }
+  
+  /* Tool button */
+  .tool-btn {
+    @apply w-7.5 h-7.5 flex items-center justify-center rounded cursor-pointer transition-all duration-150 bg-editor-btn border border-editor-border text-editor-muted;
+  }
+  
+  .tool-btn:hover,
+  .tool-btn.active {
+    @apply bg-editor-primary border-editor-primary text-white;
+  }
+  
+  /* Image list item */
+  .img-list-item {
+    @apply rounded transition-all duration-150 bg-editor-panel border border-editor-border;
+  }
+  
+  .img-list-item:hover {
+    @apply border-editor-btnHover;
+  }
+  
+  .img-list-item.selected-item {
+    @apply border-editor-primary bg-editor-primary/7;
+  }
+  
+  /* Section label */
+  .section-label {
+    @apply text-[9px] font-bold uppercase tracking-wider text-gray-500;
+  }
+  
+  /* Loader */
+  .loader {
+    @apply w-10.5 h-10.5 rounded-full border-3 border-editor-border border-t-editor-primary animate-spin;
+  }
+  
+  /* Panel tab */
+  .panel-tab {
+    @apply py-1 px-2.5 text-[10px] font-semibold text-gray-500 cursor-pointer border-b-2 border-transparent transition-all duration-150 whitespace-nowrap;
+  }
+  
+  .panel-tab.active {
+    @apply text-indigo-400 border-b-editor-primary;
+  }
+  
+  /* Modal overlay */
+  .modal-overlay {
+    @apply fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center;
+  }
+  
+  /* Modal content */
+  .modal-content {
+    @apply bg-editor-panel border border-editor-border rounded-2xl shadow-2xl max-w-md w-full mx-4 animate-scale-in;
+  }
+  
+  /* Toast */
+  .toast {
+    @apply fixed bottom-6 left-1/2 -translate-x-1/2 px-4 py-2.5 rounded-xl text-xs font-semibold z-[9999] shadow-xl backdrop-blur-md pointer-events-none;
+  }
+  
+  /* Responsive utilities */
+  @media (max-width: 768px) {
+    .hide-mobile {
+      @apply hidden;
+    }
+    
+    .mobile-full {
+      @apply w-full;
+    }
+  }
+}
+
+@layer utilities {
+  .glass-effect {
+    @apply bg-white/10 backdrop-blur-md border border-white/20;
+  }
+  
+  .text-balance {
+    text-wrap: balance;
+  }
+}

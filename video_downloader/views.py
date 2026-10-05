@@ -147,13 +147,14 @@ def download_media(request):
             download_id = request.POST.get('download_id')
             
         # Download format
-        filepath, title = services.download_format(url, format_id, format_type, download_id=download_id)
+        filepath, title, temp_dir = services.download_format(url, format_id, format_type, download_id=download_id)
         
         if not filepath or not os.path.exists(filepath):
+            if temp_dir: shutil.rmtree(temp_dir, ignore_errors=True)
             return JsonResponse({'error': 'Failed to download file'}, status=500)
             
         if os.path.getsize(filepath) == 0:
-            os.remove(filepath)
+            if temp_dir: shutil.rmtree(temp_dir, ignore_errors=True)
             return JsonResponse({'error': 'Downloaded file is empty'}, status=500)
             
         # Prepare response
@@ -173,8 +174,23 @@ def download_media(request):
         if ext.lower() == '.mp3':
             kwargs['content_type'] = 'audio/mpeg'
             
+        import shutil
+        class CleanupFile:
+            def __init__(self, file_obj, temp_dir):
+                self._file_obj = file_obj
+                self._temp_dir = temp_dir
+            def __getattr__(self, item):
+                return getattr(self._file_obj, item)
+            def __iter__(self):
+                return iter(self._file_obj)
+            def close(self):
+                try:
+                    self._file_obj.close()
+                finally:
+                    shutil.rmtree(self._temp_dir, ignore_errors=True)
+
         # Return FileResponse (file will be kept open until fully streamed)
-        response = FileResponse(open(filepath, 'rb'), **kwargs)
+        response = FileResponse(CleanupFile(open(filepath, 'rb'), temp_dir), **kwargs)
         
         # Check for download_id to set cookie (tells frontend download has started)
         download_id = request.GET.get('download_id')
