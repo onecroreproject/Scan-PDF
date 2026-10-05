@@ -124,6 +124,9 @@ _ERROR_MESSAGES = {
     'EXTRACTION_FAILED':     'Unable to extract video information. Please try again.',
     'METADATA_PARSE_FAILED': 'Unable to parse video metadata. Please try again.',
     'FFMPEG_REQUIRED':       'This quality requires media merging, which is currently unavailable on the server.',
+    'THREADS_EXTRACTOR_UNAVAILABLE': 'Threads media extraction is currently unavailable for this link.',
+    'UNSUPPORTED_MEDIA_TYPE': 'This media type is not supported.',
+    'EXTRACTOR_LIMITATION': 'The extractor does not support this media.',
 }
 
 
@@ -146,6 +149,13 @@ def _categorize_error(e, url=''):
             return 'SERVER_CONFIGURATION', _ERROR_MESSAGES['SERVER_CONFIGURATION']
         if any(k in error_msg for k in ['private', 'login', 'sign in', 'authentication']):
             return 'AUTH_REQUIRED', _ERROR_MESSAGES['AUTH_REQUIRED']
+
+    # Threads specific
+    if 'threads.net' in netloc or 'threads.com' in netloc:
+        if 'unsupported url' in error_msg:
+            return 'THREADS_EXTRACTOR_UNAVAILABLE', _ERROR_MESSAGES['THREADS_EXTRACTOR_UNAVAILABLE']
+        if any(k in error_msg for k in ['image-only', 'image only', 'unsupported media type', 'not supported', 'no video post found', 'has no downloadable video']):
+            return 'EXTRACTOR_LIMITATION', _ERROR_MESSAGES['EXTRACTOR_LIMITATION']
 
     # Null / configuration
     if 'nonetype' in error_msg and 'youtubedl' in error_msg:
@@ -299,6 +309,9 @@ def get_ytdl_base_options(url):
         if cookies_file and os.path.isfile(cookies_file):
             options['cookiefile'] = cookies_file
 
+    elif 'threads.net' in hostname or 'threads.com' in hostname:
+        options['geo_bypass'] = False
+
     ffmpeg_dir = getattr(settings, 'FFMPEG_BIN_DIR', None)
     if ffmpeg_dir and os.path.exists(ffmpeg_dir):
         options['ffmpeg_location'] = str(ffmpeg_dir)
@@ -400,6 +413,121 @@ def get_codec_priority(vcodec):
 # Analyze
 # ---------------------------------------------------------------------------
 
+def _extract_threads_image_post(url, netloc):
+    import urllib.request
+    import re
+    import json
+    
+    try:
+        req = urllib.request.Request(
+            url, 
+            method='GET',
+            headers={'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'}
+        )
+        with urllib.request.urlopen(req, timeout=10) as response:
+            html = response.read().decode('utf-8')
+            
+        # The ID is in the URL e.g. /post/SHORTCODE
+        shortcode_match = re.search(r'/post/([\w-]+)', url)
+        if not shortcode_match:
+            shortcode_match = re.search(r'/post/([\w-]+)', html)
+            
+        shortcode = shortcode_match.group(1) if shortcode_match else None
+        if not shortcode:
+            raise YTDLPError('METADATA_PARSE_FAILED', "Could not determine Threads post ID.")
+            
+        def collect_posts(obj, out):
+            if isinstance(obj, dict):
+                if obj.get('code') and ('image_versions2' in obj or 'carousel_media' in obj):
+                    out.append(obj)
+                for value in obj.values():
+                    collect_posts(value, out)
+            elif isinstance(obj, list):
+                for value in obj:
+                    collect_posts(value, out)
+                    
+        posts = []
+        for block in re.findall(r'<script type="application/json"[^>]*>(.*?)</script>', html, re.S):
+            try:
+                data = json.loads(block)
+                collect_posts(data, posts)
+            except Exception:
+                continue
+                
+        target_post = None
+        for p in posts:
+            if p.get('code') == shortcode:
+                target_post = p
+                break
+                
+        if not target_post:
+            raise YTDLPError('EXTRACTOR_LIMITATION', _ERROR_MESSAGES['EXTRACTOR_LIMITATION'])
+            
+        user = target_post.get('user') or {}
+        uploader_id = user.get('username', 'unknown')
+        caption_text = ''
+        if isinstance(target_post.get('caption'), dict):
+            caption_text = target_post['caption'].get('text', '')
+        elif 'accessibility_caption' in target_post:
+            caption_text = target_post['accessibility_caption']
+            
+        title = (caption_text or '').split('\n')[0][:72] or f"Threads image by {uploader_id}"
+        
+        result = {
+            'title': title,
+            'uploader': user.get('full_name') or uploader_id,
+            'uploader_id': uploader_id,
+            'duration': 0,
+            'media_type': 'image',
+            'formats': []
+        }
+        
+        def extract_img_fmt(post_item, format_id_prefix):
+            img_cands = post_item.get('image_versions2', {}).get('candidates', [])
+            if not img_cands:
+                return None
+            best_img = max(img_cands, key=lambda c: (c.get('width', 0) * c.get('height', 0)))
+            if not best_img or not best_img.get('url'):
+                return None
+            return {
+                'format_id': format_id_prefix,
+                'url': best_img['url'],
+                'ext': 'jpg',
+                'resolution': f"{best_img.get('height', 0)}p",
+                'width': best_img.get('width', 0),
+                'height': best_img.get('height', 0),
+                'vcodec': 'none',
+                'acodec': 'none',
+                'type': 'Image',
+                'filesize': 0
+            }
+            
+        carousel = target_post.get('carousel_media')
+        if isinstance(carousel, list) and carousel:
+            for idx, item in enumerate(carousel):
+                img_fmt = extract_img_fmt(item, f"{shortcode}_{idx+1}")
+                if img_fmt:
+                    if not result.get('thumbnail'):
+                        result['thumbnail'] = img_fmt['url']
+                    result['formats'].append(img_fmt)
+        else:
+            img_fmt = extract_img_fmt(target_post, shortcode)
+            if img_fmt:
+                result['thumbnail'] = img_fmt['url']
+                result['formats'].append(img_fmt)
+                
+        if not result['formats']:
+            raise YTDLPError('EXTRACTOR_LIMITATION', _ERROR_MESSAGES['EXTRACTOR_LIMITATION'])
+            
+        return result
+        
+    except YTDLPError:
+        raise
+    except Exception as e:
+        logger.error(f"Threads Image Extraction failed: {e}")
+        raise YTDLPError('EXTRACTOR_LIMITATION', _ERROR_MESSAGES['EXTRACTOR_LIMITATION'])
+
+
 def analyze_video(url):
     """
     Extract metadata and available formats using yt-dlp (download=False).
@@ -409,14 +537,55 @@ def analyze_video(url):
         raise YTDLPError('SERVER_CONFIGURATION', _ERROR_MESSAGES['SERVER_CONFIGURATION'])
 
     log_environment_snapshot(url)
+    
+    # Safe redirect resolution for Threads share links
+    if 'threads.com/share/' in url or 'threads.net/share/' in url:
+        import urllib.request
+        from urllib.error import URLError
+        try:
+            req = urllib.request.Request(
+                url, 
+                method='GET',
+                headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
+            )
+            # Follow at most 3 redirects
+            class NoRedir(urllib.request.HTTPRedirectHandler):
+                def redirect_request(self, req, fp, code, msg, headers, newurl):
+                    if not any(d in newurl for d in ['threads.net', 'threads.com']):
+                        raise Exception(f"Unsafe redirect to: {newurl}")
+                    return super().redirect_request(req, fp, code, msg, headers, newurl)
+            opener = urllib.request.build_opener(NoRedir)
+            res = opener.open(req, timeout=5)
+            url = res.url
+        except Exception as e:
+            logger.warning(f"Threads share redirect resolution failed: {e}")
+
+    # Canonicalize Threads URLs for yt-dlp (yt-dlp extractors usually match threads.net)
+    if 'threads.com' in url or 'threads.net' in url:
+        parsed_url = urlparse(url)
+        # Force threads.net and drop tracking query strings
+        if parsed_url.netloc.endswith('threads.com'):
+            netloc = parsed_url.netloc.replace('threads.com', 'threads.net')
+        else:
+            netloc = parsed_url.netloc
+        # Reconstruct canonical URL without query parameters
+        url = f"{parsed_url.scheme}://{netloc}{parsed_url.path}"
+
     options = get_ytdl_base_options(url)
 
     def _extract(opts):
+        logger.error(f"DEBUG YTDLP EXTRACTING: {url}")
         with yt_dlp.YoutubeDL(opts) as ydl:
             return ydl.extract_info(url, download=False)
 
     try:
-        info = _execute_with_retry(_extract, url, options)
+        try:
+            info = _execute_with_retry(_extract, url, options)
+        except YTDLPError as e:
+            if e.code == 'EXTRACTOR_LIMITATION' and ('threads.com' in url or 'threads.net' in url):
+                # Try image extraction
+                return _extract_threads_image_post(url, netloc)
+            raise
 
         duration = info.get('duration') or 0
         if not duration:
@@ -505,7 +674,7 @@ def analyze_video(url):
             f.get('asr') or f.get('audio_channels')
             for f in info.get('formats', [])
         )
-        if not has_any_audio and any(d in url.lower() for d in ['facebook', 'instagram']):
+        if not has_any_audio and any(d in url.lower() for d in ['facebook', 'instagram', 'twitter', 'x.com']):
             has_any_audio = True
 
         seen_abr = set()
@@ -582,8 +751,75 @@ def download_format(url, format_id, format_type, download_id=None):
     file_id = str(uuid.uuid4())
     output_template = os.path.join(temp_dir, f"{file_id}.%(ext)s")
 
+    # Safe redirect resolution for Threads share links
+    if 'threads.com/share/' in url or 'threads.net/share/' in url:
+        import urllib.request
+        from urllib.error import URLError
+        try:
+            req = urllib.request.Request(
+                url, 
+                method='GET',
+                headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
+            )
+            # Follow at most 3 redirects
+            class NoRedir(urllib.request.HTTPRedirectHandler):
+                def redirect_request(self, req, fp, code, msg, headers, newurl):
+                    if not any(d in newurl for d in ['threads.net', 'threads.com']):
+                        raise Exception(f"Unsafe redirect to: {newurl}")
+                    return super().redirect_request(req, fp, code, msg, headers, newurl)
+            opener = urllib.request.build_opener(NoRedir)
+            res = opener.open(req, timeout=5)
+            url = res.url
+        except Exception as e:
+            logger.warning(f"Threads share redirect resolution failed: {e}")
+
+    # Canonicalize Threads URLs for yt-dlp
+    if 'threads.com' in url or 'threads.net' in url:
+        parsed_url = urlparse(url)
+        if parsed_url.netloc.endswith('threads.com'):
+            netloc = parsed_url.netloc.replace('threads.com', 'threads.net')
+        else:
+            netloc = parsed_url.netloc
+        url = f"{parsed_url.scheme}://{netloc}{parsed_url.path}"
+
     options = get_ytdl_base_options(url)
     options['outtmpl'] = output_template
+
+    if format_type == 'Image':
+        # Bypass yt-dlp downloading for custom extracted images
+        img_info = analyze_video(url)
+        img_fmt = next((f for f in img_info.get('formats', []) if f['format_id'] == format_id and f['type'] == 'Image'), None)
+        if not img_fmt or not img_fmt.get('url'):
+            raise Exception("Image format URL not found.")
+            
+        import urllib.request
+        ext = img_fmt.get('ext') or 'jpg'
+        final_file = os.path.join(temp_dir, f"{file_id}.{ext}")
+        
+        if download_id:
+            cache.set(f"dl_prog_{download_id}", {'status': 'downloading', 'percent': 100}, timeout=600)
+            
+        try:
+            req = urllib.request.Request(
+                img_fmt['url'], 
+                method='GET',
+                headers={'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'}
+            )
+            with urllib.request.urlopen(req, timeout=15) as res, open(final_file, 'wb') as f:
+                shutil.copyfileobj(res, f)
+            
+            # verify content type
+            content_type = res.headers.get('Content-Type', '')
+            if 'image' not in content_type.lower():
+                _safe_remove(final_file)
+                raise Exception(f"Invalid content type: {content_type}")
+                
+            title = img_info.get('title') or 'Threads Image'
+            return final_file, title
+            
+        except Exception as e:
+            _safe_remove(final_file)
+            raise YTDLPError('NETWORK_ERROR', f"Failed to download image: {str(e)}")
 
     if format_type == 'Video + Audio':
         options['format'] = format_id
