@@ -328,6 +328,7 @@ def get_media_info(url):
         'skip_download': True,
         'geo_bypass': True,
         'extract_flat': 'in_playlist',
+        'cookiefile': '/app/secrets/youtube_cookies.txt',
     }
 
     try:
