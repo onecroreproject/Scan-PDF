@@ -598,6 +598,10 @@ def download_media_to_temp(url, format_id, download_type="video", audio_quality=
         'no_warnings': True,
         'outtmpl': out_tmpl,
     }
+
+     # Use authenticated YouTube cookies only for YouTube downloads
+    if platform == 'youtube':
+        ydl_opts['cookiefile'] = '/app/secrets/youtube_cookies.txt'
     
     ffmpeg_loc = get_ffmpeg_location()
 
