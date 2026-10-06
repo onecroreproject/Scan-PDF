@@ -81,12 +81,77 @@ def api_downloader_download(request):
         format_id = data.get("format_id")
         download_type = data.get("download_type", "video")
         audio_quality = data.get("audio_quality", "192")
+        media_url = data.get("media_url")
+        image_format = data.get("image_format")
         
         if not url:
             return JsonResponse({"success": False, "message": "URL is required."}, status=400)
             
         if len(url) > 2000:
             return JsonResponse({"success": False, "message": "URL is too long."}, status=400)
+            
+        if download_type == "image" and media_url:
+            from urllib.parse import urlparse
+            hostname = urlparse(media_url).hostname or ""
+            if not (hostname.endswith('.cdninstagram.com') or hostname.endswith('.fbcdn.net') or hostname.endswith('.threads.net')):
+                return JsonResponse({"success": False, "message": "Invalid media URL host."}, status=400)
+                
+            import urllib.request
+            req = urllib.request.Request(media_url, headers={'User-Agent': 'Mozilla/5.0'})
+            try:
+                cdn_resp = urllib.request.urlopen(req, timeout=15)
+            except Exception as e:
+                return JsonResponse({"success": False, "message": "Failed to fetch image."}, status=400)
+                
+            content_type = cdn_resp.headers.get('Content-Type', '')
+            if not content_type.startswith('image/'):
+                return JsonResponse({"success": False, "message": "Invalid content type."}, status=400)
+
+            import io
+            image_data = cdn_resp.read()
+            cdn_resp.close()
+
+            if image_format in ["jpg", "png"]:
+                from PIL import Image
+                try:
+                    img = Image.open(io.BytesIO(image_data))
+                    out_io = io.BytesIO()
+                    if image_format == "jpg":
+                        if img.mode in ("RGBA", "P", "LA"):
+                            # Handle transparency correctly by pasting on white background
+                            bg = Image.new("RGB", img.size, (255, 255, 255))
+                            if img.mode in ("RGBA", "LA"):
+                                bg.paste(img, mask=img.split()[-1])
+                            else:
+                                bg.paste(img)
+                            img = bg
+                        elif img.mode != "RGB":
+                            img = img.convert("RGB")
+                        img.save(out_io, format="JPEG", quality=95)
+                        content_type = "image/jpeg"
+                        ext = "jpg"
+                    elif image_format == "png":
+                        img.save(out_io, format="PNG")
+                        content_type = "image/png"
+                        ext = "png"
+                    image_data = out_io.getvalue()
+                except Exception as e:
+                    logger.error(f"Image conversion failed: {str(e)}")
+                    return JsonResponse({"success": False, "message": "Failed to convert image."}, status=500)
+            else:
+                ext = "jpg"
+                if "png" in content_type: ext = "png"
+                elif "webp" in content_type: ext = "webp"
+
+            content_length = str(len(image_data))
+
+            def stream_generator():
+                yield image_data
+
+            response = StreamingHttpResponse(stream_generator(), content_type=content_type)
+            response['Content-Disposition'] = f'attachment; filename="threads-image.{ext}"'
+            response['Content-Length'] = content_length
+            return response
             
         filepath, filename = download_media_to_temp(url, format_id, download_type, audio_quality)
         safe_filename = sanitize_filename(filename) or f"downloaded_media.{'mp3' if download_type == 'audio' else 'mp4'}"
