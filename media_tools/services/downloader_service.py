@@ -161,12 +161,17 @@ def extract_all_json_from_string(s):
     return results
 
 def extract_threads_images(original_url):
+    import re
+    shortcode_match = re.search(r'/(?:t|share|post|@[\w.-]+/post)/([a-zA-Z0-9_-]+)', original_url)
+    if shortcode_match:
+        original_url = f"https://www.threads.net/t/{shortcode_match.group(1)}"
+        
     try:
         opener = urllib.request.build_opener(SafeThreadsRedirectHandler())
         req = urllib.request.Request(
             original_url, 
             headers={
-                'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+                'User-Agent': 'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
                 'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,*/*;q=0.8'
             }
         )
@@ -240,13 +245,17 @@ def extract_threads_images(original_url):
                 continue
             if img not in unique_images and img.startswith('http'):
                 try:
-                    req_img = urllib.request.Request(img, method='HEAD', headers={'User-Agent': 'Mozilla/5.0'})
+                    req_img = urllib.request.Request(img, headers={
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                        'Range': 'bytes=0-1023'
+                    })
                     with urllib.request.urlopen(req_img, timeout=5) as resp_img:
                         ct = resp_img.headers.get('Content-Type', '')
                         if ct.startswith('image/'):
                             unique_images.append(img)
                 except urllib.error.HTTPError as e:
-                    if e.code == 405:
+                    # Some CDNs reject Range requests, try without if it fails
+                    if e.code in [405, 416, 400]:
                         try:
                             req_img = urllib.request.Request(img, headers={'User-Agent': 'Mozilla/5.0'})
                             with urllib.request.urlopen(req_img, timeout=5) as resp_img:
@@ -315,6 +324,7 @@ def get_media_info(url):
     ydl_opts = {
         'quiet': True,
         'no_warnings': True,
+        'no_color': True,
         'skip_download': True,
         'geo_bypass': True,
         'extract_flat': 'in_playlist',
@@ -447,30 +457,55 @@ def get_media_info(url):
                 'audio': audio_info,
                 'image_formats': image_items
             }
-    except Exception as e:
+    except yt_dlp.utils.DownloadError as e:
         import re
         raw_msg = str(e)
         ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
         clean_msg = ansi_escape.sub('', raw_msg)
         
-        logger.error(f"yt-dlp info error: {clean_msg}")
+        logger.error(f"yt-dlp DownloadError [{platform}] exc_class={type(e).__name__} msg={clean_msg!r}")
         
         if platform == "threads":
             if "Unsupported URL" in clean_msg or "not supported" in clean_msg.lower():
                 raise ValueError("Unable to access this public Threads post.")
             elif "Sign in" in clean_msg or "Private" in clean_msg or "login" in clean_msg.lower() or "401" in clean_msg or "403" in clean_msg:
                 raise ValueError("This Threads post is not publicly accessible.")
-            elif "has no downloadable video" in clean_msg.lower() or "image post" in clean_msg.lower():
-                return extract_threads_images(original_url)
+            elif "an image post" in clean_msg.lower() or "has no downloadable video" in clean_msg.lower() or "no video post found" in clean_msg.lower():
+                import re
+                m = re.search(r'Post "([^"]+)"', clean_msg)
+                if m:
+                    canonical_url = f"https://www.threads.net/t/{m.group(1)}"
+                else:
+                    canonical_url = original_url
+                return extract_threads_images(canonical_url)
             else:
                 raise ValueError("No downloadable media was found in this Threads post.")
         elif platform == "youtube":
-            if "Sign in" in clean_msg or "Private" in clean_msg or "login" in clean_msg.lower() or "401" in clean_msg or "403" in clean_msg:
+            if "Sign in" in clean_msg or "Private" in clean_msg or "This video is unavailable" in clean_msg or "members only" in clean_msg.lower():
                 raise ValueError("This YouTube video is not publicly accessible.")
+            elif "429" in clean_msg or "too many requests" in clean_msg.lower():
+                raise ValueError("YouTube rate-limited this request. Please try again in a moment.")
+            elif "bot" in clean_msg.lower() or "confirm you're not" in clean_msg.lower():
+                raise ValueError("YouTube is requesting a verification challenge on this server. Please try again later.")
             else:
-                raise ValueError("Unable to analyze this media URL.")
+                raise ValueError("Unable to analyze this YouTube video. Please try again later.")
         else:
             raise ValueError("Unable to analyze this media URL.")
+    except Exception as e:
+        import re
+        raw_msg = str(e)
+        ansi_escape = re.compile(r'\x1B(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])')
+        clean_msg = ansi_escape.sub('', raw_msg)
+        
+        logger.error(f"yt-dlp non-DownloadError [{platform}] exc_class={type(e).__name__} repr={repr(e)!r}")
+        
+        # UnicodeEncodeError means extraction succeeded but yt-dlp failed printing to the console.
+        # This is a Windows console encoding issue – not an extraction failure.
+        # The info dict was already returned above; getting here means extract_info itself raised.
+        if isinstance(e, UnicodeEncodeError):
+            raise ValueError("Media extraction encountered a text encoding issue on the server. Please try again.")
+        
+        raise ValueError("Unable to analyze this media URL. Please try again later.")
 
 import os
 import shutil

@@ -13,6 +13,9 @@
             if (!e.target.closest('#audio-control-container')) {
                 closeDropdown('audio');
             }
+            if (!e.target.closest('#image-overlay-control')) {
+                closeDropdown('image');
+            }
         });
 
         // Close on ESC
@@ -20,6 +23,7 @@
             if (e.key === 'Escape') {
                 closeDropdown('video');
                 closeDropdown('audio');
+                closeDropdown('image');
             }
         });
     });
@@ -50,6 +54,7 @@
         
         closeDropdown("video");
         closeDropdown("audio");
+        closeDropdown("image");
     }
 
     function toggleDropdown(type) {
@@ -60,10 +65,11 @@
         // Close all first
         closeDropdown('video');
         closeDropdown('audio');
+        closeDropdown('image');
 
         if (isHidden) {
             dropdown.classList.remove('hidden');
-            chevron.style.transform = 'rotate(180deg)';
+            if (chevron) chevron.style.transform = 'rotate(180deg)';
             currentOpenDropdown = type;
         }
     }
@@ -223,7 +229,30 @@
         const imageList = document.getElementById("image-formats-list");
         imageList.innerHTML = "";
 
-        if (data.image_formats && data.image_formats.length > 0) {
+        if (data.image_formats && data.image_formats.length === 1 && data.platform === 'threads' && (!data.video_formats || data.video_formats.length === 0)) {
+            const item = data.image_formats[0];
+            const overlayContainer = document.getElementById("image-overlay-control");
+            if (overlayContainer) {
+                overlayContainer.innerHTML = `
+                    <div class="relative">
+                        <button id="image-toggle-btn" onclick="toggleDropdown('image')" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white text-sm font-bold rounded-xl shadow-md flex items-center gap-2 backdrop-blur-sm transition-colors relative z-10">
+                            <span>Download</span>
+                            <i data-lucide="chevron-down" class="w-4 h-4 transition-transform duration-200" id="image-chevron"></i>
+                        </button>
+                        <div id="image-dropdown" class="absolute right-0 top-full mt-2 w-32 bg-white rounded-xl shadow-xl border border-surface-200 overflow-hidden hidden" style="z-index: 100;">
+                            <div class="flex flex-col py-1">
+                                <button onclick="downloadMedia('${originalUrl}', '${item.id}', 'image', null, document.getElementById('image-toggle-btn'), '${item.url}', 'jpg')" class="w-full text-left px-4 py-2 text-sm font-bold text-surface-900 hover:bg-surface-50 hover:text-brand-600 transition-colors">JPG</button>
+                                <button onclick="downloadMedia('${originalUrl}', '${item.id}', 'image', null, document.getElementById('image-toggle-btn'), '${item.url}', 'png')" class="w-full text-left px-4 py-2 text-sm font-bold text-surface-900 hover:bg-surface-50 hover:text-brand-600 transition-colors">PNG</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+                overlayContainer.classList.remove("hidden");
+            }
+            imageControl.classList.add("hidden");
+        } else if (data.image_formats && data.image_formats.length > 0) {
+            const overlayContainer = document.getElementById("image-overlay-control");
+            if (overlayContainer) overlayContainer.classList.add("hidden");
             imageControl.classList.remove("hidden");
             data.image_formats.forEach(item => {
                 const sizeStr = formatBytes(item.fileSize);
@@ -238,7 +267,7 @@
                                 ${sizeHtml}
                             </div>
                         </div>
-                        <button onclick="downloadMedia('${originalUrl}', '${item.id}', 'image', null, this)" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white text-sm font-bold rounded-lg transition-colors flex items-center gap-2">
+                        <button onclick="downloadMedia('${originalUrl}', '${item.id}', 'image', null, this, '${item.url}')" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white text-sm font-bold rounded-lg transition-colors flex items-center gap-2">
                             <span>Get</span>
                             <i data-lucide="download" class="w-4 h-4"></i>
                         </button>
@@ -248,6 +277,8 @@
             });
         } else {
             imageControl.classList.add("hidden");
+            const overlayContainer = document.getElementById("image-overlay-control");
+            if (overlayContainer) overlayContainer.classList.add("hidden");
         }
         
         if (typeof lucide !== 'undefined') {
@@ -262,7 +293,7 @@
         document.getElementById("error-message").textContent = msg;
     }
     
-    async function downloadMedia(url, formatId, downloadType, audioQuality, btn) {
+    async function downloadMedia(url, formatId, downloadType, audioQuality, btn, mediaUrl=null, imageFormat=null) {
         // Disable button and change text
         const originalHtml = btn.innerHTML;
         btn.disabled = true;
@@ -273,8 +304,13 @@
         // Disable main toggle buttons to prevent opening while processing
         const videoToggle = document.getElementById('video-toggle-btn');
         const audioToggle = document.getElementById('audio-toggle-btn');
+        const imageToggle = document.getElementById('image-toggle-btn');
         if(videoToggle) videoToggle.disabled = true;
         if(audioToggle) audioToggle.disabled = true;
+        if(imageToggle && imageToggle !== btn) imageToggle.disabled = true;
+        
+        // Close the dropdown immediately upon click
+        closeDropdown('image');
         
         // Get CSRF Token
         const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]')?.value || '';
@@ -284,7 +320,9 @@
                 url: url, 
                 format_id: formatId, 
                 platform: "{{ platform }}", 
-                download_type: downloadType 
+                download_type: downloadType,
+                media_url: mediaUrl,
+                image_format: imageFormat
             };
             if (audioQuality) {
                 bodyData.audio_quality = audioQuality;
@@ -300,24 +338,59 @@
             });
             
             if (response.ok) {
-                // If the response is OK, it's a file stream. Trigger browser download.
                 const contentDisposition = response.headers.get('Content-Disposition');
                 let filename = "download";
                 if (contentDisposition && contentDisposition.indexOf('filename=') !== -1) {
                     filename = contentDisposition.split('filename=')[1].replace(/["']/g, '');
                 }
 
-                const blob = await response.blob();
-                const downloadUrl = window.URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.style.display = 'none';
-                a.href = downloadUrl;
-                a.download = filename;
-                document.body.appendChild(a);
-                a.click();
-                window.URL.revokeObjectURL(downloadUrl);
-                a.remove();
-                
+                if (downloadType === 'image') {
+                    const contentLength = response.headers.get('content-length');
+                    const total = parseInt(contentLength, 10);
+                    const reader = response.body.getReader();
+                    let received = 0;
+                    let chunks = [];
+                    
+                    btn.innerHTML = `<span class="text-xs px-2">Preparing...</span>`;
+
+                    while(true) {
+                        const {done, value} = await reader.read();
+                        if (done) {
+                            btn.innerHTML = `<span class="text-xs px-2">100%</span>`;
+                            break;
+                        }
+                        chunks.push(value);
+                        received += value.length;
+                        
+                        if (total) {
+                            const pct = Math.round((received / total) * 100);
+                            btn.innerHTML = `<div class="flex items-center gap-1 px-2"><div class="w-3 h-3 rounded-full border-2 border-current border-t-transparent animate-spin"></div><span class="text-xs">${pct}%</span></div>`;
+                        } else {
+                            btn.innerHTML = `<div class="flex items-center gap-1 px-2"><div class="w-3 h-3 rounded-full border-2 border-current border-t-transparent animate-spin"></div><span class="text-xs">Downloading...</span></div>`;
+                        }
+                    }
+                    const blob = new Blob(chunks);
+                    const downloadUrl = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = downloadUrl;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(downloadUrl);
+                    a.remove();
+                } else {
+                    const blob = await response.blob();
+                    const downloadUrl = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.style.display = 'none';
+                    a.href = downloadUrl;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(downloadUrl);
+                    a.remove();
+                }
             } else {
                 let msg = "Download failed.";
                 try {
@@ -336,10 +409,12 @@
             }
             if(videoToggle) videoToggle.disabled = false;
             if(audioToggle) audioToggle.disabled = false;
+            if(imageToggle && imageToggle !== btn) imageToggle.disabled = false;
             
             // Close dropdowns after completion or error
             closeDropdown('video');
             closeDropdown('audio');
+            closeDropdown('image');
         }
     }
     
