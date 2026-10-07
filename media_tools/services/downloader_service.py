@@ -330,6 +330,11 @@ def get_media_info(url):
         'extract_flat': 'in_playlist',
     }
 
+    if platform == 'youtube':
+        cookie_path = '/app/secrets/youtube_cookies.txt'
+        if os.path.isfile(cookie_path):
+            ydl_opts['cookiefile'] = cookie_path
+
     try:
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             info = ydl.extract_info(url, download=False)
@@ -597,6 +602,11 @@ def download_media_to_temp(url, format_id, download_type="video", audio_quality=
         'no_warnings': True,
         'outtmpl': out_tmpl,
     }
+
+    if platform == 'youtube':
+        cookie_path = '/app/secrets/youtube_cookies.txt'
+        if os.path.isfile(cookie_path):
+            ydl_opts['cookiefile'] = cookie_path
     
     ffmpeg_loc = get_ffmpeg_location()
 
