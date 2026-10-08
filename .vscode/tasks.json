@@ -1,0 +1,72 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Django Check",
+			"type": "shell",
+			"command": "python manage.py check",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		},
+		{
+			"label": "Review Navbar Diff",
+			"type": "shell",
+			"command": "git --no-pager diff -- static/js/main.js static/css/style.css templates/converter/base.html",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Run Django Server",
+			"type": "shell",
+			"command": "python manage.py runserver 127.0.0.1:8000",
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Check JS Syntax",
+			"type": "shell",
+			"command": "node -e \"const fs=require('fs'); const s=fs.readFileSync('static/js/main.js','utf8'); try{new Function(s); console.log('OK');}catch(e){console.error(e.message); process.exit(1);} \"",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Parse inline scripts",
+			"type": "shell",
+			"command": "python -c \"import re, pathlib, subprocess, sys; txt = pathlib.Path('templates/converter/base.html').read_text(encoding='utf-8'); scripts = re.findall(r'<script[^>]*>(.*?)</script>', txt, re.S); print(f'Found {len(scripts)} script blocks'); i=0; \nfor s in scripts:\n    p = pathlib.Path(f'tmp_script_{i}.js');\n    p.write_text(s, encoding='utf-8');\n    r = subprocess.run(['node','--check', str(p)], capture_output=True, text=True);\n    print('BLOCK', i, 'RC', r.returncode)\n    if r.stdout: print(r.stdout)\n    if r.stderr: print(r.stderr)\n    p.unlink(missing_ok=True)\n    i += 1\"",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Parse Base Scripts",
+			"type": "shell",
+			"command": "python -c \"code = '''import re, pathlib, subprocess\\ntext = pathlib.Path('templates/converter/base.html').read_text(encoding='utf-8')\\nscripts = re.findall(r'<script[^>]*>(.*?)</script>', text, re.S)\\nprint('Found', len(scripts), 'script blocks')\\nfor i, s in enumerate(scripts):\\n    p = pathlib.Path(f'tmp_script_{i}.js')\\n    p.write_text(s, encoding='utf-8')\\n    r = subprocess.run(['node', '--check', str(p)], capture_output=True, text=True)\\n    print('BLOCK', i, 'RC', r.returncode)\\n    if r.stdout: print(r.stdout)\\n    if r.stderr: print(r.stderr)\\n    p.unlink(missing_ok=True)\\n'''; exec(code)\"",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Inspect Locally Served JS",
+			"type": "shell",
+			"command": "node -e \"const fs=require('fs'); const s=fs.readFileSync('static/js/main.js','utf8'); console.log(JSON.stringify(s.slice(0,300))); console.log(JSON.stringify(s.slice(-200)));\"",
+			"isBackground": false,
+			"problemMatcher": []
+		},
+		{
+			"label": "Start ScanPDF Server",
+			"type": "shell",
+			"command": "python manage.py runserver 127.0.0.1:8000",
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "Validate Django Checks",
+			"type": "shell",
+			"command": "python manage.py check",
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "test"
+		}
+	]
+}

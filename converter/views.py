@@ -1496,6 +1496,32 @@ def convert_file(request, tool_slug):
             return JsonResponse({'error': 'No file was uploaded.'}, status=400)
 
         uploaded_file = request.FILES['file']
+        
+        if request.POST.get('action') == 'analyze':
+            input_path = save_uploaded_file(uploaded_file)
+            try:
+                try:
+                    import pymupdf as fitz
+                except ImportError:
+                    import fitz
+                
+                doc = fitz.open(input_path)
+                if doc.is_encrypted:
+                    doc.close()
+                    os.remove(input_path)
+                    return JsonResponse({'error': 'This PDF is password-protected. Please unlock it before splitting.'}, status=400)
+                
+                total_pages = len(doc)
+                doc.close()
+            except Exception as e:
+                try: os.remove(input_path)
+                except: pass
+                return JsonResponse({'error': 'The selected file is corrupted or not a valid PDF.'}, status=400)
+            
+            try: os.remove(input_path)
+            except: pass
+            return JsonResponse({'total_pages': total_pages})
+
         split_mode = request.POST.get('split_mode', 'each')
         page_ranges = request.POST.get('page_ranges', '')
 
@@ -1510,7 +1536,10 @@ def convert_file(request, tool_slug):
 
             return create_cleanup_response(output_path, content_type='application/zip')
         except Exception as e:
-            return JsonResponse({'error': f'Split failed: {str(e)}'}, status=500)
+            err_str = str(e)
+            if "This PDF has" in err_str or "INVALID" in err_str or "ENCRYPTED" in err_str:
+                return JsonResponse({'error': err_str.replace("INVALID_RANGE: ", "").replace("INVALID_PDF: ", "").replace("ENCRYPTED_PDF: ", "")}, status=400)
+            return JsonResponse({'error': f'Split failed: {err_str}'}, status=500)
 
     # ── Remove Pages ──
     if tool_slug == 'remove-pages':
@@ -1518,6 +1547,32 @@ def convert_file(request, tool_slug):
             return JsonResponse({'error': 'No file was uploaded.'}, status=400)
 
         uploaded_file = request.FILES['file']
+        
+        if request.POST.get('action') == 'analyze':
+            input_path = save_uploaded_file(uploaded_file)
+            try:
+                try:
+                    import pymupdf as fitz
+                except ImportError:
+                    import fitz
+                
+                doc = fitz.open(input_path)
+                if doc.is_encrypted:
+                    doc.close()
+                    os.remove(input_path)
+                    return JsonResponse({'error': 'This PDF is password-protected. Please unlock it before removing pages.'}, status=400)
+                
+                total_pages = len(doc)
+                doc.close()
+            except Exception as e:
+                try: os.remove(input_path)
+                except: pass
+                return JsonResponse({'error': 'Please upload a valid PDF file.'}, status=400)
+            
+            try: os.remove(input_path)
+            except: pass
+            return JsonResponse({'total_pages': total_pages})
+
         pages_to_remove = request.POST.get('pages_to_remove', '')
 
         if not pages_to_remove.strip():
@@ -1534,7 +1589,10 @@ def convert_file(request, tool_slug):
 
             return create_cleanup_response(output_path, content_type='application/pdf')
         except Exception as e:
-            return JsonResponse({'error': f'Remove pages failed: {str(e)}'}, status=500)
+            err_str = str(e)
+            if "This PDF has" in err_str or "INVALID" in err_str or "ENCRYPTED" in err_str or "You must keep" in err_str or "Please upload" in err_str or "Cannot remove" in err_str:
+                return JsonResponse({'error': err_str.replace("INVALID_RANGE: ", "").replace("INVALID_PDF: ", "").replace("ENCRYPTED_PDF: ", "")}, status=400)
+            return JsonResponse({'error': f'Remove pages failed: {err_str}'}, status=500)
 
     # ── Extract Pages ──
     if tool_slug == 'extract-pages':
@@ -1542,6 +1600,37 @@ def convert_file(request, tool_slug):
             return JsonResponse({'error': 'No file was uploaded.'}, status=400)
 
         uploaded_file = request.FILES['file']
+        action = request.POST.get('action')
+
+        if action == 'analyze':
+            try:
+                input_path = save_uploaded_file(uploaded_file)
+                import fitz
+                if os.path.getsize(input_path) == 0:
+                    raise Exception("INVALID_PDF: Please upload a valid PDF file.")
+                pdf = fitz.open(input_path)
+                if pdf.is_encrypted:
+                    pdf.close()
+                    raise Exception("ENCRYPTED_PDF: This PDF is password-protected. Please unlock it before extracting pages.")
+                total_pages = len(pdf)
+                pdf.close()
+                try:
+                    os.remove(input_path)
+                except OSError:
+                    pass
+                if total_pages == 0:
+                    raise Exception("INVALID_PDF: Please upload a valid PDF file.")
+                return JsonResponse({'success': True, 'total_pages': total_pages})
+            except Exception as e:
+                try:
+                    os.remove(input_path)
+                except:
+                    pass
+                err_str = str(e)
+                if "INVALID_PDF:" in err_str or "ENCRYPTED_PDF:" in err_str:
+                    return JsonResponse({'error': err_str.replace("INVALID_PDF: ", "").replace("ENCRYPTED_PDF: ", "")}, status=400)
+                return JsonResponse({'error': f'Failed to analyze PDF: {err_str}'}, status=500)
+
         pages_to_extract = request.POST.get('pages_to_extract', '')
 
         if not pages_to_extract.strip():
@@ -1558,7 +1647,10 @@ def convert_file(request, tool_slug):
 
             return create_cleanup_response(output_path, content_type='application/pdf')
         except Exception as e:
-            return JsonResponse({'error': f'Extract pages failed: {str(e)}'}, status=500)
+            err_str = str(e)
+            if "This PDF contains" in err_str or "INVALID" in err_str or "ENCRYPTED" in err_str:
+                return JsonResponse({'error': err_str.replace("INVALID_RANGE: ", "").replace("INVALID_PDF: ", "").replace("ENCRYPTED_PDF: ", "")}, status=400)
+            return JsonResponse({'error': f'Extract pages failed: {err_str}'}, status=500)
 
     # ── Organize PDF ──
     if tool_slug == 'organize-pdf':
@@ -2245,6 +2337,54 @@ def convert_file(request, tool_slug):
         except Exception as e:
             return JsonResponse({'error': 'We couldn\'t convert this image. Please try another JPG.'}, status=400)
 
+    # ── Compress PDF ──
+    if tool_slug == 'compress-pdf':
+        if 'file' not in request.FILES:
+            return JsonResponse({'error': 'No file was uploaded.'}, status=400)
+
+        uploaded_file = request.FILES['file']
+        level = request.POST.get('level', 'recommended')
+
+        try:
+            input_path = save_uploaded_file(uploaded_file)
+            
+            try:
+                import pymupdf as fitz
+            except ImportError:
+                import fitz
+            try:
+                doc = fitz.open(input_path)
+                if doc.is_encrypted:
+                    doc.close()
+                    os.remove(input_path)
+                    return JsonResponse({'error': 'This PDF is password-protected. Please unlock it before compressing.'}, status=400)
+                original_size = os.path.getsize(input_path)
+                doc.close()
+            except Exception as e:
+                try: os.remove(input_path)
+                except: pass
+                return JsonResponse({'error': 'The selected file is corrupted or not a valid PDF.'}, status=400)
+            
+            output_path = compress_pdf(input_path, uploaded_file.name, level=level)
+            
+            try:
+                os.remove(input_path)
+            except OSError:
+                pass
+
+            compressed_size = os.path.getsize(output_path)
+            
+            response = create_cleanup_response(
+                output_path, 
+                content_type='application/pdf', 
+                filename=uploaded_file.name
+            )
+            response['X-Original-Size'] = str(original_size)
+            response['X-Compressed-Size'] = str(compressed_size)
+            return response
+        except Exception as e:
+            return JsonResponse({'error': f'Compression failed: {str(e)}'}, status=500)
+
     # ── Default Fallback for other tools ──
     # ── Standard single-file conversion ──
     if 'file' not in request.FILES:
@@ -2286,6 +2426,14 @@ def convert_file(request, tool_slug):
             return JsonResponse({
                 'error': err_msg.split("SERVER_CONFIGURATION:", 1)[1].strip()
             }, status=503)
+        if "CONVERSION_ENGINE_UNAVAILABLE:" in err_msg:
+            return JsonResponse({
+                'error': err_msg.split("CONVERSION_ENGINE_UNAVAILABLE:", 1)[1].strip()
+            }, status=503)
+        if "CONVERSION_FAILED:" in err_msg:
+            return JsonResponse({
+                'error': err_msg.split("CONVERSION_FAILED:", 1)[1].strip()
+            }, status=500)
         return JsonResponse({
             'error': f'Conversion failed: {err_msg}'
         }, status=500)

@@ -469,17 +469,29 @@ def convert_pptx_to_pdf(input_path, original_name):
     # 2. LibreOffice Fallback
     try:
         import subprocess
+        import shutil
         outdir = os.path.dirname(output_path)
         soffice_cmd = os.environ.get('LIBREOFFICE_PATH')
         
         if not soffice_cmd:
-            soffice_cmd = "soffice"
-            if os.name == 'nt':
-                if os.path.exists(r"C:\Program Files\LibreOffice\program\soffice.exe"):
-                    soffice_cmd = r"C:\Program Files\LibreOffice\program\soffice.exe"
-                elif os.path.exists(r"C:\Program Files (x86)\LibreOffice\program\soffice.exe"):
-                    soffice_cmd = r"C:\Program Files (x86)\LibreOffice\program\soffice.exe"
+            # Check PATH first for Linux/Production
+            soffice_cmd = shutil.which("libreoffice") or shutil.which("soffice")
+            
+            if not soffice_cmd and os.name == 'nt':
+                # Check common Windows paths
+                common_paths = [
+                    r"C:\Program Files\LibreOffice\program\soffice.exe",
+                    r"C:\Program Files (x86)\LibreOffice\program\soffice.exe"
+                ]
+                for path in common_paths:
+                    if os.path.exists(path):
+                        soffice_cmd = path
+                        break
+                        
+        if not soffice_cmd:
+            raise Exception("CONVERSION_ENGINE_UNAVAILABLE: Neither PowerPoint nor LibreOffice could be found on the server.")
         
+        # Execute LibreOffice headless conversion
         process = subprocess.run([
             soffice_cmd,
             '--headless',
@@ -491,16 +503,22 @@ def convert_pptx_to_pdf(input_path, original_name):
         ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=120)
         
         lo_output = os.path.join(outdir, os.path.splitext(os.path.basename(input_path))[0] + ".pdf")
+        
         if os.path.exists(lo_output) and os.path.getsize(lo_output) > 0:
             if lo_output != output_path:
-                import shutil
                 shutil.move(lo_output, output_path)
             logger.info(f"PowerPoint→PDF via LibreOffice succeeded for '{original_name}'")
             return output_path
         else:
-            logger.warning(f"LibreOffice returned empty/missing PDF. Stderr: {process.stderr.decode('utf-8', errors='ignore')}")
+            stderr_output = process.stderr.decode('utf-8', errors='ignore')
+            raise Exception(f"CONVERSION_FAILED: LibreOffice failed to generate PDF. Details: {stderr_output}")
+            
     except Exception as e:
         logger.warning(f"LibreOffice fallback failed for '{original_name}': {e}")
+        # Re-raise explicit CONVERSION errors so the user sees them
+        if "CONVERSION_" in str(e) or "INVALID_" in str(e):
+            raise
+        raise Exception(f"CONVERSION_FAILED: {str(e)}")
         
     if os.path.exists(output_path):
         try:
@@ -508,8 +526,7 @@ def convert_pptx_to_pdf(input_path, original_name):
         except OSError:
             pass
             
-    logger.error(f"All PowerPoint-to-PDF methods failed for '{original_name}'. Server lacks PowerPoint or LibreOffice.")
-    raise Exception("SERVER_CONFIGURATION: PowerPoint to PDF conversion is temporarily unavailable. Please try again later.")
+    raise Exception("CONVERSION_FAILED: PowerPoint to PDF conversion is temporarily unavailable. Please try again later.")
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -1667,7 +1684,7 @@ def split_pdf(input_path, original_name, split_mode='each', page_ranges=None):
 
                 if start < 1 or end > total_pages:
                     pdf.close()
-                    raise Exception(f"PAGE_OUT_OF_RANGE: Range '{part}' is out of bounds (1-{total_pages}).")
+                    raise Exception(f"This PDF has {total_pages} pages. Please enter pages between 1 and {total_pages}.")
 
                 out_pdf = fitz.open()
                 for p in range(start - 1, end):
@@ -1703,7 +1720,7 @@ def split_pdf(input_path, original_name, split_mode='each', page_ranges=None):
 # ═══════════════════════════════════════════════════════════════
 # 11. COMPRESS PDF
 # ═══════════════════════════════════════════════════════════════
-def compress_pdf(input_path, original_name):
+def compress_pdf(input_path, original_name, level='recommended'):
     """Compress a PDF file aggressively but extremely fast by caching image xrefs."""
     try:
         import pymupdf as fitz
@@ -1715,42 +1732,49 @@ def compress_pdf(input_path, original_name):
     output_path = get_output_path(original_name, 'pdf', suffix='_compressed')
     pdf = fitz.open(input_path)
 
-    processed_xrefs = set()
-    
-    # Aggressively compress images once per unique global object reference
-    for page in pdf:
-        images = page.get_images(full=True)
-        for img_info in images:
-            xref = img_info[0]
-            
-            if xref in processed_xrefs:
-                continue
-            processed_xrefs.add(xref)
-            
-            try:
-                base_image = pdf.extract_image(xref)
-                if base_image and base_image.get("image"):
-                    from PIL import Image
-                    img_bytes = base_image["image"]
-                    img = Image.open(io.BytesIO(img_bytes))
+    # Levels: 'low', 'recommended', 'high'
+    if level != 'low':
+        processed_xrefs = set()
+        
+        # Aggressively compress images once per unique global object reference
+        for page in pdf:
+            images = page.get_images(full=True)
+            for img_info in images:
+                xref = img_info[0]
+                
+                if xref in processed_xrefs:
+                    continue
+                processed_xrefs.add(xref)
+                
+                try:
+                    base_image = pdf.extract_image(xref)
+                    if base_image and base_image.get("image"):
+                        from PIL import Image
+                        img_bytes = base_image["image"]
+                        img = Image.open(io.BytesIO(img_bytes))
 
-                    # Fast integer downscaling using BILINEAR for speed over LANCZOS
-                    max_dim = 1600
-                    if img.width > max_dim or img.height > max_dim:
-                        ratio = min(max_dim / img.width, max_dim / img.height)
-                        new_size = (int(img.width * ratio), int(img.height * ratio))
-                        img = img.resize(new_size, Image.Resampling.BILINEAR)
+                        if level == 'high':
+                            max_dim = 1200
+                            quality = 40
+                        else:
+                            max_dim = 1800
+                            quality = 70
 
-                    # Ensure standard JPEG 8-bit compatibility
-                    if img.mode != 'RGB':
-                        img = img.convert('RGB')
+                        # Fast integer downscaling using BILINEAR for speed over LANCZOS
+                        if img.width > max_dim or img.height > max_dim:
+                            ratio = min(max_dim / img.width, max_dim / img.height)
+                            new_size = (int(img.width * ratio), int(img.height * ratio))
+                            img = img.resize(new_size, Image.Resampling.BILINEAR)
 
-                    buf = io.BytesIO()
-                    # Quality 60 heavily reduces file size without losing readability.
-                    img.save(buf, format='JPEG', quality=60, optimize=False)
-                    page.replace_image(xref, stream=buf.getvalue())
-            except Exception:
-                continue
+                        # Ensure standard JPEG 8-bit compatibility
+                        if img.mode != 'RGB':
+                            img = img.convert('RGB')
+
+                        buf = io.BytesIO()
+                        img.save(buf, format='JPEG', quality=quality, optimize=False)
+                        page.replace_image(xref, stream=buf.getvalue())
+                except Exception:
+                    continue
 
     # Remove unused objects, metadata, etc.
     pdf.set_metadata({})
@@ -1776,40 +1800,92 @@ def remove_pdf_pages(input_path, original_name, pages_to_remove):
 
     pages_to_remove: comma-separated string like '1,3,5-7'
     """
+    import os
     try:
         import pymupdf as fitz
     except ImportError:
         import fitz
     if not hasattr(fitz, 'open') and hasattr(fitz, 'Document'):
         fitz.open = fitz.Document
+        
+    if os.path.getsize(input_path) == 0:
+        raise Exception("INVALID_PDF: Please upload a valid PDF file.")
+
+    try:
+        pdf = fitz.open(input_path)
+    except Exception:
+        raise Exception("INVALID_PDF: Please upload a valid PDF file.")
+
+    if pdf.is_encrypted:
+        pdf.close()
+        raise Exception("ENCRYPTED_PDF: This PDF is password-protected. Please unlock it before removing pages.")
+
+    total_pages = len(pdf)
+    if total_pages == 0:
+        pdf.close()
+        raise Exception("INVALID_PDF: Please upload a valid PDF file.")
 
     output_path = get_output_path(original_name, 'pdf', suffix='_trimmed')
 
-    pdf = fitz.open(input_path)
-    total_pages = len(pdf)
-
     # Parse pages to remove (1-indexed input → 0-indexed)
     remove_set = set()
-    for part in pages_to_remove.split(','):
-        part = part.strip()
+    parts = [p.strip() for p in pages_to_remove.split(',') if p.strip()]
+    
+    if not parts:
+        pdf.close()
+        raise Exception("INVALID_RANGE: Please specify which pages to remove.")
+        
+    for part in parts:
         if '-' in part:
-            start, end = part.split('-', 1)
-            for p in range(int(start.strip()), int(end.strip()) + 1):
-                if 1 <= p <= total_pages:
-                    remove_set.add(p - 1)
-        else:
-            p = int(part.strip())
-            if 1 <= p <= total_pages:
+            try:
+                start_str, end_str = part.split('-', 1)
+                start = int(start_str.strip())
+                end = int(end_str.strip())
+            except ValueError:
+                pdf.close()
+                raise Exception(f"INVALID_RANGE: Invalid format '{part}'.")
+                
+            if start > end:
+                pdf.close()
+                raise Exception(f"INVALID_RANGE: Start page cannot be greater than end page '{part}'.")
+            
+            if start < 1 or end > total_pages:
+                pdf.close()
+                raise Exception(f"INVALID_RANGE: This PDF has {total_pages} pages. Enter page numbers between 1 and {total_pages}.")
+                
+            for p in range(start, end + 1):
                 remove_set.add(p - 1)
+        else:
+            try:
+                p = int(part.strip())
+            except ValueError:
+                pdf.close()
+                raise Exception(f"INVALID_RANGE: Invalid page number '{part}'.")
+                
+            if p < 1 or p > total_pages:
+                pdf.close()
+                raise Exception(f"INVALID_RANGE: This PDF has {total_pages} pages. Enter page numbers between 1 and {total_pages}.")
+                
+            remove_set.add(p - 1)
 
     if len(remove_set) >= total_pages:
-        raise Exception("Cannot remove all pages from the PDF.")
+        pdf.close()
+        raise Exception("INVALID_RANGE: You must keep at least one page in the PDF.")
 
     # Build new PDF with remaining pages
     new_pdf = fitz.open()
     for i in range(total_pages):
         if i not in remove_set:
             new_pdf.insert_pdf(pdf, from_page=i, to_page=i)
+            
+    # Output Validation
+    output_page_count = len(new_pdf)
+    expected_count = total_pages - len(remove_set)
+    
+    if output_page_count != expected_count or output_page_count == 0:
+        new_pdf.close()
+        pdf.close()
+        raise Exception("Output validation failed.")
 
     new_pdf.save(output_path)
     new_pdf.close()
@@ -1826,34 +1902,77 @@ def extract_pdf_pages(input_path, original_name, pages_to_extract):
 
     pages_to_extract: comma-separated string like '1,3,5-7'
     """
+    import os
     try:
         import pymupdf as fitz
     except ImportError:
         import fitz
     if not hasattr(fitz, 'open') and hasattr(fitz, 'Document'):
         fitz.open = fitz.Document
+        
+    if os.path.getsize(input_path) == 0:
+        raise Exception("INVALID_PDF: Please upload a valid PDF file.")
+
+    try:
+        pdf = fitz.open(input_path)
+    except Exception:
+        raise Exception("INVALID_PDF: Please upload a valid PDF file.")
+
+    if pdf.is_encrypted:
+        pdf.close()
+        raise Exception("ENCRYPTED_PDF: This PDF is password-protected. Please unlock it before extracting pages.")
+
+    total_pages = len(pdf)
+    if total_pages == 0:
+        pdf.close()
+        raise Exception("INVALID_PDF: Please upload a valid PDF file.")
 
     output_path = get_output_path(original_name, 'pdf', suffix='_extracted')
 
-    pdf = fitz.open(input_path)
-    total_pages = len(pdf)
-
     # Parse pages to extract (1-indexed input → 0-indexed)
     extract_list = []
-    for part in pages_to_extract.split(','):
-        part = part.strip()
+    parts = [p.strip() for p in pages_to_extract.split(',') if p.strip()]
+    
+    if not parts:
+        pdf.close()
+        raise Exception("INVALID_RANGE: Select at least one page to extract.")
+        
+    for part in parts:
         if '-' in part:
-            start, end = part.split('-', 1)
-            for p in range(int(start.strip()), int(end.strip()) + 1):
-                if 1 <= p <= total_pages:
-                    extract_list.append(p - 1)
-        else:
-            p = int(part.strip())
-            if 1 <= p <= total_pages:
+            try:
+                start_str, end_str = part.split('-', 1)
+                start = int(start_str.strip())
+                end = int(end_str.strip())
+            except ValueError:
+                pdf.close()
+                raise Exception(f"INVALID_RANGE: Invalid format '{part}'.")
+                
+            if start > end:
+                pdf.close()
+                raise Exception(f"INVALID_RANGE: Start page cannot be greater than end page '{part}'.")
+            
+            if start < 1 or end > total_pages:
+                pdf.close()
+                raise Exception(f"INVALID_RANGE: This PDF contains {total_pages} pages. Enter pages between 1 and {total_pages}.")
+                
+            for p in range(start, end + 1):
                 extract_list.append(p - 1)
+        else:
+            try:
+                p = int(part.strip())
+            except ValueError:
+                pdf.close()
+                raise Exception(f"INVALID_RANGE: Invalid page number '{part}'.")
+                
+            if p < 1 or p > total_pages:
+                pdf.close()
+                raise Exception(f"INVALID_RANGE: This PDF contains {total_pages} pages. Enter pages between 1 and {total_pages}.")
+                
+            extract_list.append(p - 1)
 
     if not extract_list:
-        raise Exception("No valid pages specified for extraction.")
+        pdf.close()
+        raise Exception("INVALID_RANGE: Select at least one page to extract.")
 
     # Remove duplicates while preserving order
     seen = set()
@@ -1867,9 +1986,19 @@ def extract_pdf_pages(input_path, original_name, pages_to_extract):
     for page_idx in ordered:
         new_pdf.insert_pdf(pdf, from_page=page_idx, to_page=page_idx)
 
+    # Validate output
+    if len(new_pdf) == 0:
+        new_pdf.close()
+        pdf.close()
+        raise Exception("Failed to generate PDF with extracted pages.")
+
     new_pdf.save(output_path)
     new_pdf.close()
     pdf.close()
+    
+    if not os.path.exists(output_path) or os.path.getsize(output_path) == 0:
+        raise Exception("Failed to generate valid PDF file.")
+        
     return output_path
 
 

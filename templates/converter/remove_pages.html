@@ -2,195 +2,1061 @@
 {% load static %}
 
 {% block tool_content %}
-<div class="rounded-2xl bg-white border border-surface-100 p-4 sm:p-5 shadow-mega">
-    <div class="space-y-4">
-        <!-- Drag & Drop Zone -->
-        <div id="drop-zone" class="relative rounded-2xl border-2 border-dashed border-brand-100 bg-brand-50/10 hover:bg-brand-50/30 hover:border-brand-400 transition-all duration-300 p-10 sm:p-14 text-center cursor-pointer group">
-            
-            <!-- Default State -->
-            <div id="upload-default" class="space-y-4">
-                <div class="w-14 h-14 rounded-2xl bg-surface-50 border border-surface-100 flex items-center justify-center mx-auto group-hover:bg-brand-50 group-hover:border-brand-200 group-hover:scale-105 transition-all duration-300">
-                    <i data-lucide="file-minus" class="w-8 h-8 text-surface-300 group-hover:text-brand-500 transition-colors"></i>
-                </div>
-                <div>
-                    <p class="text-base font-semibold text-surface-700 mb-1">
-                        Drop PDF to remove pages, or <span class="text-brand-600 underline underline-offset-4 decoration-brand-200">browse</span>
-                    </p>
-                    <p class="text-xs text-surface-400">Max 50MB&nbsp;&nbsp;•&nbsp;&nbsp;Accepted: .pdf</p>
-                </div>
-            </div>
 
-            <!-- File Selected State -->
-            <div id="file-selected" class="hidden">
-                <div class="flex items-center justify-center gap-6">
-                    <div class="relative">
-                        <div class="w-14 h-14 rounded-2xl bg-brand-50 border border-brand-100 flex items-center justify-center flex-shrink-0">
-                            <i data-lucide="file-check" class="w-8 h-8 text-brand-600"></i>
-                        </div>
-                    </div>
-                    <div class="text-left min-w-0">
-                        <p id="file-name" class="text-surface-800 font-bold text-base truncate max-w-[180px]"></p>
-                        <p id="file-size" class="text-xs text-surface-400 mt-0.5 font-medium"></p>
-                    </div>
-                    <button id="remove-file-btn" class="p-2.5 rounded-xl hover:bg-red-50 text-surface-300 hover:text-red-500 transition-all flex-shrink-0" title="Remove file">
-                        <i data-lucide="trash-2" class="w-5 h-5"></i>
-                    </button>
-                </div>
-            </div>
+<style>
+/* =========================================================
+   CLEAN CONVERTER STYLES
+   ========================================================= */
 
+.tool-heading {
+    font-size: clamp(2rem, 5vw + 1rem, 3.5rem);
+    line-height: 1.1;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    color: #1e1b4b; /* Deep navy/purple dark */
+}
+
+/* Purple button */
+.purple-btn {
+    background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+    color: white;
+    box-shadow: 0 4px 14px rgba(124, 58, 237, 0.3);
+    transition: all 0.2s ease;
+}
+.purple-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(124, 58, 237, 0.4);
+}
+.purple-btn:active {
+    transform: translateY(0);
+}
+.purple-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* Central Area */
+.hero-dropzone {
+    width: 100%;
+    transition: all 0.2s ease;
+    border: 2px dashed transparent;
+}
+
+.hero-dropzone.drag-active {
+    background: #faf5ff;
+    border-color: #a855f7;
+}
+
+/* Progress Fill */
+.progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #7c3aed, #a855f7);
+    border-radius: 999px;
+    transition: width 0.4s ease;
+}
+
+.selected-file-box {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    border-radius: 16px;
+    background: white;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    border: 1px solid #f3e8ff;
+    width: 100%;
+    max-width: 440px;
+}
+</style>
+
+<!-- =========================================================
+     PAGE HEADER & CONVERTER
+     ========================================================= -->
+<section id="hero-dropzone" class="hero-dropzone text-center pt-10 pb-10 px-4 w-full">
+
+    <!-- Clean Title -->
+    <h1 class="tool-heading mb-4 text-center">
+        <span class="text-surface-900">Remove Pages </span>
+        <span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-700 to-purple-500">from PDF</span>
+    </h1>
+    <p class="text-[16px] md:text-[17px] leading-relaxed text-surface-500 max-w-[740px] mx-auto text-center font-medium mb-8 px-4">
+        Remove unwanted pages from your PDF while keeping the remaining pages in their original order and quality.
+    </p>
+
+    <!-- Central Converter Interaction Area -->
+    <div class="flex flex-col items-center w-full max-w-[600px] mx-auto">
+        
+        <!-- =====================================================
+             STATE: IDLE (SELECT FILE)
+             ===================================================== -->
+        <div id="state-idle" class="flex flex-col items-center w-full">
+            <button type="button" id="select-file-btn" class="purple-btn px-10 py-4 rounded-2xl text-white font-bold text-[15px] tracking-wide flex items-center justify-center gap-3 w-full sm:w-auto">
+                <i data-lucide="upload" class="w-5 h-5"></i>
+                SELECT PDF
+            </button>
+            <p id="drop-text" class="text-surface-500 text-[15px] mt-3 font-medium">Drop your PDF file here</p>
+            <p class="text-surface-400 text-xs mt-1">PDF files supported</p>
             <input type="file" id="file-input" class="hidden" accept=".pdf">
         </div>
 
-        <!-- Removal Controls (Initially Hidden) -->
-        <div id="initial-upload-area" class="hidden space-y-4 pt-4 border-t border-surface-50 animate-fade-in-up">
-            <h3 class="text-sm font-black text-surface-400 uppercase tracking-widest text-center">Extraction Settings</h3>
-            
-            <div class="space-y-3">
-                <!-- Page Removal Input -->
-                <div class="space-y-2">
-                    <label class="text-[11px] font-black text-surface-500 uppercase tracking-wider ml-1">Pages to Remove</label>
-                    <div class="relative group">
-                        <input type="text" id="pages-to-remove" placeholder="e.g. 1, 3, 5-7" 
-                            class="w-full px-6 py-3 rounded-2xl bg-surface-50 border-2 border-surface-100 focus:bg-white focus:border-brand-500 transition-all text-sm font-bold text-surface-900">
-                        <i data-lucide="scissors" class="absolute right-5 top-1/2 -translate-y-1/2 w-5 h-5 text-surface-200 group-focus-within:text-brand-500 transition-colors"></i>
+        <!-- =====================================================
+             STATE: FILE SELECTED + PAGE INPUT
+             ===================================================== -->
+        <div id="state-selected" class="hidden flex flex-col items-center w-full">
+            <div class="selected-file-box mb-6 relative mx-auto">
+                <div class="w-10 h-10 bg-purple-50 rounded-lg flex items-center justify-center flex-shrink-0 text-purple-600">
+                    <i data-lucide="file-text" class="w-5 h-5"></i>
+                </div>
+                <div class="flex-1 min-w-0 text-left pr-8">
+                    <p id="file-name" class="text-surface-900 font-bold text-[14px] truncate"></p>
+                    <div class="flex items-center gap-2 mt-0.5">
+                        <span id="file-size" class="text-surface-500 text-[12px]"></span>
+                        <span class="text-surface-300 text-[10px]">•</span>
+                        <span id="file-page-count" class="text-surface-900 text-[12px] font-bold"></span>
                     </div>
-                    <p class="px-1 text-[10px] text-surface-400 font-medium leading-relaxed italic">
-                        The pages you list here will be permanently deleted. Use commas for individual pages and dashes for ranges.
-                    </p>
+                </div>
+                <button type="button" id="remove-file-btn" class="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center rounded-lg text-surface-400 hover:text-red-500 hover:bg-red-50 transition-colors" title="Remove file">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+
+            <!-- Page Summary -->
+            <div class="w-full max-w-[440px] mx-auto grid grid-cols-3 gap-2 bg-surface-50 p-4 rounded-2xl mb-6 border border-surface-200">
+                <div class="text-center">
+                    <div class="text-[10px] font-bold text-surface-500 uppercase tracking-widest mb-1">TOTAL PAGES</div>
+                    <div id="summary-total" class="text-2xl font-black text-surface-900">0</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-[10px] font-bold text-purple-500 uppercase tracking-widest mb-1">TO REMOVE</div>
+                    <div id="summary-remove" class="text-2xl font-black text-purple-600">0</div>
+                </div>
+                <div class="text-center">
+                    <div class="text-[10px] font-bold text-green-500 uppercase tracking-widest mb-1">REMAINING</div>
+                    <div id="summary-remain" class="text-2xl font-black text-green-600">0</div>
                 </div>
             </div>
 
-            <button id="convert-btn" disabled 
-                class="w-full py-3 rounded-2xl bg-gradient-to-r {{ tool.gradient }} text-white font-black text-base uppercase tracking-widest shadow-xl shadow-brand-500/20 hover:shadow-brand-500/40 hover:-translate-y-1 active:scale-95 transition-all flex items-center justify-center gap-3">
-                <i data-lucide="file-minus" class="w-5 h-5"></i>
-                Remove Selected Pages
+            <!-- Page Input -->
+            <div class="w-full max-w-[440px] mx-auto text-left mb-6">
+                <label class="block text-[11px] font-bold text-surface-500 uppercase tracking-widest mb-2 pl-1">PAGES TO REMOVE</label>
+                <div class="relative group mb-1">
+                    <input type="text" id="pages-input" placeholder="e.g. 2, 5, 8-10" 
+                        class="w-full px-5 py-3.5 rounded-2xl bg-white border border-surface-300 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-100 transition-all text-[15px] font-medium text-surface-900 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+                </div>
+                <div class="flex justify-between items-center px-1">
+                    <p class="text-xs text-surface-500">Enter individual pages or ranges.</p>
+                    <p class="text-xs text-surface-500 font-medium" id="valid-pages-hint">Valid pages: 1–?</p>
+                </div>
+                <div id="input-error" class="hidden mt-2 text-xs font-bold text-red-500 bg-red-50 px-3 py-2 rounded-lg"></div>
+                
+                <!-- Visual Page Chips -->
+                <div id="page-chips-container" class="mt-4 flex flex-wrap gap-2 max-h-[120px] overflow-y-auto p-1">
+                    <!-- Chips inserted by JS -->
+                </div>
+            </div>
+            
+            <button type="button" id="convert-btn" class="purple-btn px-10 py-4 rounded-2xl text-white font-bold text-[15px] tracking-wide flex items-center justify-center gap-3 w-full sm:w-auto mx-auto mt-2">
+                <i data-lucide="scissors" class="w-5 h-5"></i>
+                REMOVE PAGES
             </button>
         </div>
 
-        <!-- ═══════════════ PROGRESS STATE ═══════════════ -->
-        <div id="progress-section" class="hidden mt-4">
-            <div class="flex items-center gap-5 py-4 px-5 rounded-2xl bg-surface-50 border border-surface-100">
-                <div class="relative flex-shrink-0">
-                    <div class="w-9 h-9 rounded-full border-[3px] border-surface-200 border-t-brand-500 animate-spin"></div>
-                </div>
-                <div>
-                    <p class="text-surface-800 font-black text-base">Modifying PDF...</p>
-                    <p class="text-xs text-surface-400 mt-1">Permanently erasing the pages you selected.</p>
-                </div>
+        <!-- =====================================================
+             STATE: PROCESSING
+             ===================================================== -->
+        <div id="state-converting" class="hidden flex flex-col items-center w-full max-w-[320px]">
+            <div class="flex items-center justify-center gap-2 mb-4 text-purple-600 font-bold text-[15px]">
+                <i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i>
+                Removing pages...
+            </div>
+            
+            <div class="w-full h-2 rounded-full bg-purple-100 overflow-hidden mb-2">
+                <div id="progress-bar" class="progress-fill"></div>
+            </div>
+            
+            <div class="flex justify-between items-center w-full px-1">
+                <p id="progress-status" class="text-surface-500 text-[13px] font-medium">Preparing your new PDF...</p>
             </div>
         </div>
 
-        <!-- ═══════════════ SUCCESS STATE ═══════════════ -->
-        <div id="success-section" class="hidden mt-4">
-            <div class="text-center py-4 px-5 rounded-2xl bg-emerald-50/50 border border-emerald-100">
-                <div class="w-14 h-14 rounded-xl bg-emerald-100 flex items-center justify-center mx-auto mb-2 animate-success-pop shadow-inner">
-                    <i data-lucide="check" class="w-8 h-8 text-emerald-600"></i>
+        <!-- =====================================================
+             STATE: SUCCESS
+             ===================================================== -->
+        <div id="state-success" class="hidden flex flex-col items-center w-full">
+            <div class="w-12 h-12 bg-green-50 text-green-600 rounded-full flex items-center justify-center mb-4 mx-auto">
+                <i data-lucide="check" class="w-6 h-6"></i>
+            </div>
+            <h3 class="text-xl font-black text-surface-900 mb-1">Your PDF is ready</h3>
+            <p id="success-message" class="text-surface-500 text-[15px] mb-6">Pages removed successfully.</p>
+            
+            <div class="w-full max-w-[320px] bg-surface-50 border border-surface-200 rounded-xl p-4 mb-6 text-sm">
+                <div class="flex justify-between mb-2">
+                    <span class="text-surface-500">Original</span>
+                    <span class="font-bold text-surface-900" id="succ-original">0 pages</span>
                 </div>
-                <h3 class="text-lg font-black text-surface-900 mb-1">Refined!</h3>
-                <p class="text-surface-500 text-sm mb-4">Your PDF has been trimmed of the unwanted pages.</p>
-                <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                    <a id="download-btn" href="#" download
-                        class="inline-flex items-center justify-center gap-2.5 px-10 py-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-black text-sm hover:from-emerald-400 hover:to-emerald-500 transition-all shadow-xl shadow-emerald-500/20">
-                        <i data-lucide="download" class="w-5 h-5"></i> Download File
-                    </a>
-                    <button onclick="window.location.reload()"
-                        class="inline-flex items-center justify-center gap-2.5 px-10 py-4 rounded-2xl bg-white border border-surface-200 text-surface-600 font-bold text-sm hover:bg-surface-50 transition-all shadow-sm">
-                        <i data-lucide="refresh-cw" class="w-4 h-4"></i> Start Over
-                    </button>
+                <div class="flex justify-between mb-2">
+                    <span class="text-purple-600">Removed</span>
+                    <span class="font-bold text-purple-700" id="succ-removed">0 pages</span>
                 </div>
+                <div class="flex justify-between pt-2 border-t border-surface-200">
+                    <span class="text-green-600">Remaining</span>
+                    <span class="font-bold text-green-700" id="succ-remaining">0 pages</span>
+                </div>
+            </div>
+
+            <a id="download-btn" href="#" class="purple-btn px-10 py-4 rounded-2xl text-white font-bold text-[15px] tracking-wide flex items-center justify-center gap-3 w-full sm:w-auto mb-4">
+                <i data-lucide="download" class="w-5 h-5"></i>
+                DOWNLOAD PDF
+            </a>
+            
+            <button type="button" id="convert-another-btn" class="text-purple-600 font-semibold text-[14px] hover:text-purple-800 transition-colors">
+                Remove pages from another PDF
+            </button>
+        </div>
+
+        <!-- =====================================================
+             STATE: ERROR
+             ===================================================== -->
+        <div id="state-error" class="hidden flex flex-col items-center w-full">
+            <div class="w-12 h-12 bg-red-50 text-red-600 rounded-full flex items-center justify-center mb-4 mx-auto">
+                <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+            </div>
+            <h3 class="text-lg font-black text-surface-900 mb-1">Processing failed</h3>
+            <p id="error-message" class="text-surface-500 text-[14px] mb-6">We couldn't process this file.</p>
+            
+            <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto justify-center">
+                <button type="button" id="retry-btn" class="purple-btn px-8 py-3.5 rounded-xl text-white font-bold text-[14px] tracking-wide flex items-center justify-center gap-2">
+                    TRY AGAIN
+                </button>
+                <button type="button" id="choose-another-btn" class="bg-surface-100 hover:bg-surface-200 text-surface-700 font-bold text-[14px] px-8 py-3.5 rounded-xl transition-colors flex items-center justify-center gap-2">
+                    Choose another file
+                </button>
             </div>
         </div>
 
-        <!-- ═══════════════ ERROR STATE ═══════════════ -->
-        <div id="error-section" class="hidden mt-4">
-            <div class="p-5 rounded-2xl bg-red-50 border border-red-100 flex items-start gap-4 animate-shake">
-                <div class="w-9 h-9 rounded-xl bg-red-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <i data-lucide="alert-octagon" class="w-6 h-6 text-red-500"></i>
+    </div>
+
+</section>
+
+
+<!-- =========================================================
+     PREMIUM CONTENT SECTIONS
+     ========================================================= -->
+<div class="mt-12 sm:mt-16 border-t border-surface-100 pt-16 sm:pt-24 pb-20 relative">
+    
+    <!-- Decorative background elements -->
+    <div class="absolute top-40 left-0 w-[500px] h-[500px] bg-purple-100/40 rounded-full blur-[120px] -z-10 pointer-events-none"></div>
+    <div class="absolute top-[800px] right-0 w-[600px] h-[600px] bg-purple-50/60 rounded-full blur-[100px] -z-10 pointer-events-none"></div>
+
+    <!-- 01. PRECISE PAGE REMOVAL -->
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mb-12 md:mb-16">
+        <div class="grid md:grid-cols-[1fr_1fr] items-center gap-10 md:gap-16">
+            <div class="order-2 md:order-1 pr-0 md:pr-4">
+                <div class="flex items-center gap-2 text-purple-600 font-bold tracking-widest text-[12px] uppercase mb-4">
+                    <i data-lucide="scissors" class="w-3.5 h-3.5"></i> Precise Page Removal
                 </div>
-                <div class="pt-0.5">
-                    <h4 class="font-black text-red-700 text-sm uppercase tracking-wider mb-1">Deletion Failed</h4>
-                    <p id="error-message" class="text-xs text-red-500 leading-relaxed font-bold"></p>
+                <h3 class="text-2xl md:text-[2rem] font-bold text-surface-900 mb-5 leading-tight tracking-tight">Remove Unwanted Pages Cleanly</h3>
+                <p class="text-surface-500 text-[17px] leading-relaxed mb-8">
+                    Easily remove one or multiple pages from your PDF document without affecting the quality of the remaining content. You have complete control over exactly which pages to delete.
+                </p>
+                <ul class="space-y-4">
+                    <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                        <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                        Individual page removal
+                    </li>
+                    <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                        <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                        Page-range support
+                    </li>
+                    <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                        <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                        Original page order retained
+                    </li>
+                    <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                        <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                        Ready for direct download
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="order-1 md:order-2">
+                <div class="relative bg-purple-50/50 rounded-[28px] p-8 py-14 flex items-center justify-center border border-purple-100/50 shadow-[inset_0_0_0_1px_rgba(255,255,255,1),0_8px_30px_-12px_rgba(147,51,234,0.1)] group transition-transform duration-300 hover:-translate-y-1">
+                    <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(147,51,234,0.04)_0%,transparent_70%)] rounded-[28px]"></div>
+                    <div class="flex items-center gap-4 relative z-10 w-full justify-center">
+                        <div class="w-[90px] h-[120px] bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-surface-300 flex flex-col p-3 relative z-10">
+                            <div class="text-xs font-bold text-surface-400 text-center mb-2">PAGE 1</div>
+                            <div class="space-y-2 mt-auto"><div class="h-1.5 bg-surface-200 rounded"></div><div class="h-1.5 bg-surface-200 rounded w-4/5"></div></div>
+                        </div>
+                        <div class="w-[90px] h-[120px] bg-red-50 rounded-xl shadow-[0_8px_30px_rgb(239,68,68,0.2)] border-2 border-red-400 flex flex-col p-3 relative z-10 scale-95 opacity-70">
+                            <div class="absolute -top-3 -right-3 w-8 h-8 bg-red-500 rounded-full flex items-center justify-center text-white"><i data-lucide="x" class="w-5 h-5"></i></div>
+                            <div class="text-xs font-bold text-red-400 text-center mb-2">PAGE 2</div>
+                            <div class="space-y-2 mt-auto"><div class="h-1.5 bg-red-200 rounded"></div><div class="h-1.5 bg-red-200 rounded w-4/5"></div></div>
+                        </div>
+                        <div class="w-[90px] h-[120px] bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-surface-300 flex flex-col p-3 relative z-10">
+                            <div class="text-xs font-bold text-surface-400 text-center mb-2">PAGE 3</div>
+                            <div class="space-y-2 mt-auto"><div class="h-1.5 bg-surface-200 rounded"></div><div class="h-1.5 bg-surface-200 rounded w-4/5"></div></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 02. DOCUMENT STRUCTURE -->
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mb-12 md:mb-16">
+        <div class="grid md:grid-cols-[1fr_1fr] items-center gap-10 md:gap-16">
+            <div class="order-1 md:order-1">
+                <div class="relative bg-surface-50/60 rounded-[28px] p-8 py-14 flex flex-col items-center justify-center border border-surface-200/50 shadow-[inset_0_0_0_1px_rgba(255,255,255,1)] group transition-transform duration-300 hover:-translate-y-1 overflow-hidden">
+                    <div class="flex gap-2 items-center justify-center mb-8">
+                        <div class="w-10 h-12 bg-white border border-surface-300 rounded shadow-sm flex items-center justify-center text-xs font-bold">1</div>
+                        <i data-lucide="arrow-right" class="w-4 h-4 text-surface-400"></i>
+                        <div class="w-10 h-12 bg-red-50 border border-red-300 rounded shadow-sm flex items-center justify-center text-xs font-bold text-red-500 line-through">2</div>
+                        <i data-lucide="arrow-right" class="w-4 h-4 text-surface-400"></i>
+                        <div class="w-10 h-12 bg-white border border-surface-300 rounded shadow-sm flex items-center justify-center text-xs font-bold">3</div>
+                        <i data-lucide="arrow-right" class="w-4 h-4 text-surface-400"></i>
+                        <div class="w-10 h-12 bg-white border border-surface-300 rounded shadow-sm flex items-center justify-center text-xs font-bold">4</div>
+                    </div>
+                    <div class="text-surface-400 mb-2"><i data-lucide="chevrons-down" class="w-6 h-6"></i></div>
+                    <div class="flex gap-2 items-center justify-center">
+                        <div class="w-10 h-12 bg-white border border-surface-300 rounded shadow-sm flex items-center justify-center text-xs font-bold">1</div>
+                        <i data-lucide="arrow-right" class="w-4 h-4 text-surface-400"></i>
+                        <div class="w-10 h-12 bg-white border border-surface-300 rounded shadow-sm flex items-center justify-center text-xs font-bold">3</div>
+                        <i data-lucide="arrow-right" class="w-4 h-4 text-surface-400"></i>
+                        <div class="w-10 h-12 bg-white border border-surface-300 rounded shadow-sm flex items-center justify-center text-xs font-bold">4</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="order-2 md:order-2 pl-0 md:pl-4">
+                <div class="flex items-center gap-2 text-purple-600 font-bold tracking-widest text-[12px] uppercase mb-4">
+                    <i data-lucide="layers" class="w-3.5 h-3.5"></i> Document Structure
+                </div>
+                <h3 class="text-2xl md:text-[2rem] font-bold text-surface-900 mb-5 leading-tight tracking-tight">Keep the Remaining Pages in Order</h3>
+                <p class="text-surface-500 text-[17px] leading-relaxed mb-8">
+                    Your remaining pages are perfectly stitched back together. There is no disruption to the original sequence or any structural changes other than the removal of the targeted pages.
+                </p>
+                <ul class="space-y-4">
+                    <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                        <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                        Original sequence preserved
+                    </li>
+                    <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                        <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                        Portrait and landscape pages retained
+                    </li>
+                    <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                        <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                        Page dimensions maintained
+                    </li>
+                    <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                        <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                        No unnecessary reordering
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- 03. FLEXIBLE SELECTION -->
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mb-12 md:mb-16">
+        <div class="grid md:grid-cols-[1fr_1fr] items-center gap-10 md:gap-16">
+            <div class="order-2 md:order-1 pr-0 md:pr-4">
+                <div class="flex items-center gap-2 text-purple-600 font-bold tracking-widest text-[12px] uppercase mb-4">
+                    <i data-lucide="check-square" class="w-3.5 h-3.5"></i> Flexible Selection
+                </div>
+                <h3 class="text-2xl md:text-[2rem] font-bold text-surface-900 mb-5 leading-tight tracking-tight">Remove One Page or a Whole Range</h3>
+                <p class="text-surface-500 text-[17px] leading-relaxed mb-6">
+                    Our input supports a variety of formats so you can be as precise as you need. Combine single pages and ranges using commas.
+                </p>
+                <div class="space-y-4">
+                    <div class="bg-surface-50 p-4 rounded-xl border border-surface-200">
+                        <div class="text-[11px] font-bold text-surface-500 uppercase tracking-widest mb-1">Single page</div>
+                        <div class="font-mono text-purple-700 font-bold">3</div>
+                    </div>
+                    <div class="bg-surface-50 p-4 rounded-xl border border-surface-200">
+                        <div class="text-[11px] font-bold text-surface-500 uppercase tracking-widest mb-1">Multiple pages</div>
+                        <div class="font-mono text-purple-700 font-bold">2, 5, 9</div>
+                    </div>
+                    <div class="bg-surface-50 p-4 rounded-xl border border-surface-200">
+                        <div class="text-[11px] font-bold text-surface-500 uppercase tracking-widest mb-1">Range</div>
+                        <div class="font-mono text-purple-700 font-bold">4-8</div>
+                    </div>
+                    <div class="bg-purple-50 p-4 rounded-xl border border-purple-200 shadow-sm">
+                        <div class="text-[11px] font-bold text-purple-600 uppercase tracking-widest mb-1">Combined</div>
+                        <div class="font-mono text-purple-700 font-bold text-lg">1, 3, 7-10</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="order-1 md:order-2">
+                <div class="relative bg-purple-50/40 rounded-[28px] p-8 py-14 flex items-center justify-center border border-purple-100/50 shadow-[inset_0_0_0_1px_rgba(255,255,255,1)] group transition-transform duration-300 hover:-translate-y-1">
+                    <div class="bg-white p-6 rounded-2xl shadow-[0_12px_40px_rgb(0,0,0,0.06)] border border-surface-200 w-full max-w-[320px]">
+                        <div class="text-[11px] font-bold text-surface-500 uppercase tracking-widest mb-3">SELECTION PREVIEW</div>
+                        <div class="flex flex-wrap gap-2">
+                            <div class="w-8 h-10 bg-red-100 border border-red-300 rounded flex items-center justify-center text-xs font-bold text-red-600">1</div>
+                            <div class="w-8 h-10 bg-surface-50 border border-surface-200 rounded flex items-center justify-center text-xs font-bold text-surface-400">2</div>
+                            <div class="w-8 h-10 bg-red-100 border border-red-300 rounded flex items-center justify-center text-xs font-bold text-red-600">3</div>
+                            <div class="w-8 h-10 bg-surface-50 border border-surface-200 rounded flex items-center justify-center text-xs font-bold text-surface-400">4</div>
+                            <div class="w-8 h-10 bg-surface-50 border border-surface-200 rounded flex items-center justify-center text-xs font-bold text-surface-400">5</div>
+                            <div class="w-8 h-10 bg-surface-50 border border-surface-200 rounded flex items-center justify-center text-xs font-bold text-surface-400">6</div>
+                            <div class="w-8 h-10 bg-red-100 border border-red-300 rounded flex items-center justify-center text-xs font-bold text-red-600">7</div>
+                            <div class="w-8 h-10 bg-red-100 border border-red-300 rounded flex items-center justify-center text-xs font-bold text-red-600">8</div>
+                            <div class="w-8 h-10 bg-red-100 border border-red-300 rounded flex items-center justify-center text-xs font-bold text-red-600">9</div>
+                            <div class="w-8 h-10 bg-red-100 border border-red-300 rounded flex items-center justify-center text-xs font-bold text-red-600">10</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 04. WHAT SCANPDF PRESERVES -->
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mb-12 md:mb-16">
+        <div class="text-center mb-12 md:mb-16">
+            <h2 class="text-3xl md:text-[2.25rem] font-bold text-surface-900 mb-5 tracking-tight">What ScanPDF Preserves</h2>
+            <p class="text-[17px] text-surface-500 max-w-2xl mx-auto leading-relaxed">
+                Removing pages should change only the pages you choose to remove. The remaining PDF stays organized and ready to use.
+            </p>
+        </div>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="bg-white border border-surface-200/80 rounded-2xl p-6 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300">
+                <div class="w-12 h-12 rounded-xl bg-purple-50 border border-purple-100/60 flex items-center justify-center mb-5 text-[22px] font-bold text-purple-600">
+                    <i data-lucide="arrow-down-up" class="w-5 h-5"></i>
+                </div>
+                <h4 class="text-[17px] font-bold text-surface-900 mb-2">Page Order</h4>
+                <p class="text-surface-600 text-[14px]">Remaining pages stay in their original sequence.</p>
+            </div>
+            
+            <div class="bg-white border border-surface-200/80 rounded-2xl p-6 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300">
+                <div class="w-12 h-12 rounded-xl bg-blue-50 border border-blue-100/60 flex items-center justify-center mb-5 text-[22px] font-bold text-blue-600">
+                    <i data-lucide="shield-check" class="w-5 h-5"></i>
+                </div>
+                <h4 class="text-[17px] font-bold text-surface-900 mb-2">Document Quality</h4>
+                <p class="text-surface-600 text-[14px]">Existing PDF content is preserved without unnecessary rendering.</p>
+            </div>
+            
+            <div class="bg-white border border-surface-200/80 rounded-2xl p-6 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300">
+                <div class="w-12 h-12 rounded-xl bg-green-50 border border-green-100/60 flex items-center justify-center mb-5 text-[22px] font-bold text-green-600">
+                    <i data-lucide="maximize" class="w-5 h-5"></i>
+                </div>
+                <h4 class="text-[17px] font-bold text-surface-900 mb-2">Page Dimensions</h4>
+                <p class="text-surface-600 text-[14px]">Different page sizes and orientations remain intact where supported.</p>
+            </div>
+            
+            <div class="bg-white border border-surface-200/80 rounded-2xl p-6 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300">
+                <div class="w-12 h-12 rounded-xl bg-orange-50 border border-orange-100/60 flex items-center justify-center mb-5 text-[22px] font-bold text-orange-500">
+                    <i data-lucide="file-text" class="w-5 h-5"></i>
+                </div>
+                <h4 class="text-[17px] font-bold text-surface-900 mb-2">Remaining Content</h4>
+                <p class="text-surface-600 text-[14px]">Text, images, and document elements on retained pages remain available.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 05. HOW TO REMOVE PAGES -->
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mb-12 md:mb-16">
+        <div class="bg-gradient-to-br from-purple-50/70 to-white rounded-[32px] border border-purple-100/60 p-8 md:p-14 shadow-sm relative overflow-hidden">
+            <div class="text-center md:text-left mb-12 relative z-10">
+                <h2 class="text-3xl md:text-[2.25rem] font-bold text-surface-900 mb-4 tracking-tight">How to Remove Pages from a PDF</h2>
+            </div>
+            
+            <div class="grid lg:grid-cols-[50%_50%] gap-12 lg:gap-16 items-center relative z-10">
+                <div class="relative w-full">
+                    <div class="space-y-8 relative">
+                        <div class="flex gap-5">
+                            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-sm">01</div>
+                            <div>
+                                <h4 class="text-[17px] font-bold text-surface-900 mb-1.5">Select Your PDF</h4>
+                                <p class="text-surface-500 text-[15px] leading-relaxed">Choose the PDF file you want to edit.</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-5">
+                            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-sm">02</div>
+                            <div>
+                                <h4 class="text-[17px] font-bold text-surface-900 mb-1.5">Check Total Pages</h4>
+                                <p class="text-surface-500 text-[15px] leading-relaxed">The tool will automatically display the total page count.</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-5">
+                            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-sm">03</div>
+                            <div>
+                                <h4 class="text-[17px] font-bold text-surface-900 mb-1.5">Choose Pages to Remove</h4>
+                                <p class="text-surface-500 text-[15px] leading-relaxed">Type the specific pages or ranges you want deleted.</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-5">
+                            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-sm">04</div>
+                            <div>
+                                <h4 class="text-[17px] font-bold text-surface-900 mb-1.5">Remove Pages</h4>
+                                <p class="text-surface-500 text-[15px] leading-relaxed">Click the button to process and cleanly extract the remaining pages.</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-5">
+                            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-sm">05</div>
+                            <div>
+                                <h4 class="text-[17px] font-bold text-surface-900 mb-1.5">Download Your PDF</h4>
+                                <p class="text-surface-500 text-[15px] leading-relaxed">Save your new, shorter document immediately.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex justify-center lg:justify-end w-full">
+                    <div class="bg-white p-7 rounded-[24px] shadow-[0_12px_40px_rgb(0,0,0,0.06)] border border-surface-200/60 w-full max-w-[400px]">
+                        <div class="font-bold text-surface-900 text-[15px] text-center mb-6">PDF Page Remover</div>
+                        
+                        <div class="bg-white border border-surface-200/80 rounded-lg p-3.5 flex items-center justify-between mb-5 shadow-sm">
+                            <div class="flex items-center gap-3">
+                                <div class="w-9 h-9 rounded-md bg-purple-50 flex items-center justify-center">
+                                    <i data-lucide="file-text" class="w-4 h-4 text-purple-600"></i>
+                                </div>
+                                <div>
+                                    <div class="text-[13px] font-bold text-surface-900">document.pdf</div>
+                                    <div class="text-[11px] text-surface-500 mt-0.5">18 Pages</div>
+                                </div>
+                            </div>
+                            <i data-lucide="check-circle-2" class="w-4 h-4 text-green-500"></i>
+                        </div>
+                        
+                        <div class="mb-5 bg-surface-50 p-3 rounded-lg border border-surface-200">
+                            <div class="text-[11px] font-bold text-surface-500 uppercase tracking-widest mb-1">REMOVING</div>
+                            <div class="font-bold text-purple-700 text-sm">Pages 2, 5, 8-10</div>
+                        </div>
+                        
+                        <div class="w-full bg-purple-600 text-white rounded-xl py-3.5 text-center font-bold text-[14px] shadow-sm">
+                            DOWNLOAD PDF
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 06. DESIGNED FOR DIFFERENT PDFs -->
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mb-12 md:mb-16">
+        <div class="text-center mb-12 md:mb-16">
+            <h2 class="text-3xl md:text-[2.25rem] font-bold text-surface-900 mb-5 tracking-tight">Designed for Different PDFs</h2>
+        </div>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="bg-surface-50/50 border border-surface-200/60 rounded-2xl p-6 text-center hover:bg-white hover:shadow-md hover:border-purple-200 transition-all duration-300">
+                <div class="w-14 h-16 mx-auto bg-white border border-surface-200 shadow-sm rounded flex flex-col p-2 mb-5">
+                    <div class="h-1.5 w-3/4 bg-surface-300 mb-2"></div>
+                    <div class="h-6 w-full bg-purple-50 mb-1"></div>
+                    <div class="h-1 w-full bg-surface-100 mb-1"></div>
+                    <div class="h-1 w-5/6 bg-surface-100"></div>
+                </div>
+                <h4 class="text-[15px] font-bold text-surface-900 mb-2 uppercase tracking-wide">REPORTS</h4>
+                <p class="text-surface-500 text-[14px] leading-relaxed">Remove outdated or unnecessary report pages.</p>
+            </div>
+            
+            <div class="bg-surface-50/50 border border-surface-200/60 rounded-2xl p-6 text-center hover:bg-white hover:shadow-md hover:border-purple-200 transition-all duration-300">
+                <div class="w-14 h-16 mx-auto bg-white border border-surface-200 shadow-sm rounded flex flex-col p-2 mb-5">
+                    <div class="h-2 w-1/2 bg-surface-300 mx-auto mb-2"></div>
+                    <div class="h-1 w-full bg-surface-100 mb-1"></div>
+                    <div class="h-1 w-full bg-surface-100 mb-1"></div>
+                    <div class="h-1 w-5/6 bg-surface-100 mb-1"></div>
+                    <div class="h-1 w-full bg-surface-100"></div>
+                </div>
+                <h4 class="text-[15px] font-bold text-surface-900 mb-2 uppercase tracking-wide">ASSIGNMENTS</h4>
+                <p class="text-surface-500 text-[14px] leading-relaxed">Remove draft or extra pages before submission.</p>
+            </div>
+            
+            <div class="bg-surface-50/50 border border-surface-200/60 rounded-2xl p-6 text-center hover:bg-white hover:shadow-md hover:border-purple-200 transition-all duration-300">
+                <div class="w-14 h-16 mx-auto bg-white border border-surface-200 shadow-sm rounded flex flex-col p-2 mb-5">
+                    <div class="h-1.5 w-1/3 bg-blue-100 mb-2"></div>
+                    <div class="grid grid-cols-2 gap-1 mb-2">
+                        <div class="h-3 bg-surface-100"></div>
+                        <div class="h-3 bg-surface-100"></div>
+                        <div class="h-3 bg-surface-50"></div>
+                        <div class="h-3 bg-surface-50"></div>
+                    </div>
+                </div>
+                <h4 class="text-[15px] font-bold text-surface-900 mb-2 uppercase tracking-wide">BUSINESS DOCUMENTS</h4>
+                <p class="text-surface-500 text-[14px] leading-relaxed">Clean proposals, records, and presentations.</p>
+            </div>
+            
+            <div class="bg-surface-50/50 border border-surface-200/60 rounded-2xl p-6 text-center hover:bg-white hover:shadow-md hover:border-purple-200 transition-all duration-300">
+                <div class="w-14 h-16 mx-auto bg-white border border-surface-200 shadow-sm rounded flex flex-col p-2 mb-5">
+                    <div class="flex gap-1.5 mb-1.5">
+                        <div class="w-4 h-4 bg-purple-100 rounded-sm"></div>
+                        <div class="w-full space-y-1">
+                            <div class="h-1 w-full bg-surface-100"></div>
+                            <div class="h-1 w-full bg-surface-100"></div>
+                        </div>
+                    </div>
+                    <div class="h-1 w-full bg-surface-100 mb-1"></div>
+                    <div class="h-1 w-2/3 bg-surface-100"></div>
+                </div>
+                <h4 class="text-[15px] font-bold text-surface-900 mb-2 uppercase tracking-wide">SCANNED PDFs</h4>
+                <p class="text-surface-500 text-[14px] leading-relaxed">Remove unwanted scanned pages where the existing PDF engine supports the document.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 07. WHY USE SCANPDF TO REMOVE PDF PAGES -->
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mb-12 md:mb-16">
+        <div class="text-center mb-12 md:mb-16">
+            <h2 class="text-3xl md:text-[2.25rem] font-bold text-surface-900 mb-5 tracking-tight">Why Use ScanPDF to Remove PDF Pages</h2>
+        </div>
+        
+        <div class="grid md:grid-cols-[1fr_1fr] gap-6">
+            <div class="bg-purple-600 rounded-[24px] p-8 md:p-12 text-white relative overflow-hidden flex flex-col justify-center">
+                <div class="absolute top-0 right-0 w-64 h-64 bg-purple-500 rounded-full blur-[80px] -z-0"></div>
+                <div class="relative z-10">
+                    <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mb-6">
+                        <i data-lucide="scissors" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4">PRECISE PAGE CONTROL</h3>
+                    <p class="text-purple-100 text-[17px] leading-relaxed">
+                        Choose exactly which pages should be removed while keeping the rest of your document organized.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="space-y-6">
+                <div class="bg-white border border-surface-200/80 rounded-[24px] p-8 flex items-start gap-5 shadow-sm">
+                    <div class="w-10 h-10 bg-purple-50 text-purple-600 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <i data-lucide="file-digit" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-[17px] font-bold text-surface-900 mb-2">REAL PAGE COUNT</h4>
+                        <p class="text-surface-500 text-[15px] leading-relaxed">See how many pages your PDF contains before editing.</p>
+                    </div>
+                </div>
+                
+                <div class="bg-white border border-surface-200/80 rounded-[24px] p-8 flex items-start gap-5 shadow-sm">
+                    <div class="w-10 h-10 bg-purple-50 text-purple-600 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <i data-lucide="eye" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-[17px] font-bold text-surface-900 mb-2">CLEAR SELECTION</h4>
+                        <p class="text-surface-500 text-[15px] leading-relaxed">Review how many pages will be removed and how many will remain.</p>
+                    </div>
+                </div>
+                
+                <div class="bg-white border border-surface-200/80 rounded-[24px] p-8 flex items-start gap-5 shadow-sm">
+                    <div class="w-10 h-10 bg-purple-50 text-purple-600 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <i data-lucide="download" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-[17px] font-bold text-surface-900 mb-2">DIRECT PDF DOWNLOAD</h4>
+                        <p class="text-surface-500 text-[15px] leading-relaxed">Download the processed PDF after successful completion.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 08. FINAL TIPS PANEL -->
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mb-12 md:mb-16">
+        <div class="bg-purple-50 border border-purple-100 rounded-[24px] p-8 md:p-12 flex flex-col md:flex-row gap-8 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.5)]">
+            <div class="md:w-1/3">
+                <div class="w-12 h-12 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center mb-5">
+                    <i data-lucide="info" class="w-6 h-6"></i>
+                </div>
+                <h3 class="text-xl font-bold text-surface-900 mb-3">Get the Best Remove-Pages Result</h3>
+            </div>
+            
+            <div class="md:w-2/3 grid sm:grid-cols-2 gap-4">
+                <div class="flex gap-3">
+                    <i data-lucide="check" class="w-5 h-5 text-purple-500 flex-shrink-0 mt-0.5"></i>
+                    <span class="text-[15px] font-medium text-surface-700">Check the displayed page count first</span>
+                </div>
+                <div class="flex gap-3">
+                    <i data-lucide="check" class="w-5 h-5 text-purple-500 flex-shrink-0 mt-0.5"></i>
+                    <span class="text-[15px] font-medium text-surface-700">Use commas for separate pages</span>
+                </div>
+                <div class="flex gap-3">
+                    <i data-lucide="check" class="w-5 h-5 text-purple-500 flex-shrink-0 mt-0.5"></i>
+                    <span class="text-[15px] font-medium text-surface-700">Use hyphens for page ranges</span>
+                </div>
+                <div class="flex gap-3">
+                    <i data-lucide="check" class="w-5 h-5 text-purple-500 flex-shrink-0 mt-0.5"></i>
+                    <span class="text-[15px] font-medium text-surface-700">Keep at least one page</span>
+                </div>
+                <div class="flex gap-3">
+                    <i data-lucide="check" class="w-5 h-5 text-purple-500 flex-shrink-0 mt-0.5"></i>
+                    <span class="text-[15px] font-medium text-surface-700">Review the selected pages before processing</span>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
+{% if seo_h1 %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "{{ seo_h1|escapejs }}",
+  "url": "{{ request.build_absolute_uri }}",
+  "description": "{{ seo_description|escapejs }}",
+  "applicationCategory": "UtilityApplication",
+  "operatingSystem": "All"
+}
+</script>
+{% endif %}
+
 {% endblock %}
+
 
 {% block extra_scripts %}
 <script>
-    const CONVERT_URL = '{% url "converter:convert_file" "remove-pages" %}';
-    const CSRF_TOKEN = '{{ csrf_token }}';
+/* =========================================================
+   DJANGO VALUES
+   ========================================================= */
+const CONVERT_URL = '{% url "converter:convert_file" "remove-pages" %}';
+const CSRF_TOKEN = '{{ csrf_token }}';
 
-    const dropZone = document.getElementById('drop-zone'), fileInput = document.getElementById('file-input');
-    const uploadDefault = document.getElementById('upload-default'), fileSelected = document.getElementById('file-selected'), fileName = document.getElementById('file-name'), fileSize = document.getElementById('file-size');
-    const pagesToRemove = document.getElementById('pages-to-remove'), convertBtn = document.getElementById('convert-btn');
-    const progressSection = document.getElementById('progress-section'), successSection = document.getElementById('success-section'), errorSection = document.getElementById('error-section'), errorMessage = document.getElementById('error-message'), downloadBtn = document.getElementById('download-btn'), initialUploadArea = document.getElementById('initial-upload-area');
+/* =========================================================
+   ELEMENTS
+   ========================================================= */
+const dropZone = document.getElementById('hero-dropzone');
+const fileInput = document.getElementById('file-input');
 
-    let selectedFile = null;
+const stateIdle = document.getElementById('state-idle');
+const stateSelected = document.getElementById('state-selected');
+const stateConverting = document.getElementById('state-converting');
+const stateSuccess = document.getElementById('state-success');
+const stateError = document.getElementById('state-error');
 
-    dropZone.onclick = e => { if (e.target.closest('#remove-file-btn')) return; fileInput.click(); };
-    dropZone.ondragover = e => { e.preventDefault(); dropZone.classList.add('border-brand-400', 'bg-brand-50/40'); };
-    dropZone.ondragleave = () => { dropZone.classList.remove('border-brand-400', 'bg-brand-50/40'); };
-    dropZone.ondrop = e => { 
-        e.preventDefault(); 
-        dropZone.classList.remove('border-brand-400', 'bg-brand-50/40'); 
-        if (e.dataTransfer.files.length > 0) handleFile(e.dataTransfer.files[0]); 
-    };
-    fileInput.onchange = e => { if (e.target.files.length > 0) handleFile(e.target.files[0]); };
+const selectFileBtn = document.getElementById('select-file-btn');
+const removeFileBtn = document.getElementById('remove-file-btn');
+const convertBtn = document.getElementById('convert-btn');
 
-    function handleFile(file) {
-        if (!file.name.toLowerCase().endsWith('.pdf')) { showError('Only PDF files are accepted.'); return; }
-        if (file.size > 52428800) { showError('File exceeds the 50MB limit.'); return; }
-        selectedFile = file;
-        fileName.textContent = file.name;
-        fileSize.textContent = (file.size / 1024 / 1024).toFixed(2) + ' MB';
-        
-        uploadDefault.classList.add('hidden');
-        fileSelected.classList.remove('hidden');
-        initialUploadArea.classList.remove('hidden');
-        convertBtn.disabled = false;
-        errorSection.classList.add('hidden');
-        lucide.createIcons();
+const fileName = document.getElementById('file-name');
+const fileSize = document.getElementById('file-size');
+const filePageCount = document.getElementById('file-page-count');
+
+const pagesInput = document.getElementById('pages-input');
+const inputError = document.getElementById('input-error');
+const validPagesHint = document.getElementById('valid-pages-hint');
+
+const summaryTotal = document.getElementById('summary-total');
+const summaryRemove = document.getElementById('summary-remove');
+const summaryRemain = document.getElementById('summary-remain');
+
+const pageChipsContainer = document.getElementById('page-chips-container');
+
+const progressBar = document.getElementById('progress-bar');
+const progressStatus = document.getElementById('progress-status');
+
+const downloadBtn = document.getElementById('download-btn');
+const convertAnotherBtn = document.getElementById('convert-another-btn');
+const retryBtn = document.getElementById('retry-btn');
+const chooseAnotherBtn = document.getElementById('choose-another-btn');
+const errorMessage = document.getElementById('error-message');
+
+const succOriginal = document.getElementById('succ-original');
+const succRemoved = document.getElementById('succ-removed');
+const succRemaining = document.getElementById('succ-remaining');
+
+let selectedFile = null;
+let totalPagesCount = 0;
+let parsedRemovedSet = new Set();
+
+/* =========================================================
+   DRAG & DROP
+   ========================================================= */
+['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+    dropZone.addEventListener(eventName, preventDefaults, false);
+});
+function preventDefaults(e) { e.preventDefault(); e.stopPropagation(); }
+
+['dragenter', 'dragover'].forEach(eventName => {
+    dropZone.addEventListener(eventName, () => {
+        if (!selectedFile) dropZone.classList.add('drag-active');
+    }, false);
+});
+['dragleave', 'drop'].forEach(eventName => {
+    dropZone.addEventListener(eventName, () => dropZone.classList.remove('drag-active'), false);
+});
+
+dropZone.addEventListener('drop', e => {
+    if (selectedFile) return;
+    const dt = e.dataTransfer;
+    if (dt.files && dt.files.length > 0) handleFile(dt.files[0]);
+}, false);
+
+selectFileBtn.addEventListener('click', () => fileInput.click());
+fileInput.addEventListener('change', function() {
+    if (this.files && this.files.length > 0) handleFile(this.files[0]);
+});
+
+function switchState(stateEl) {
+    [stateIdle, stateSelected, stateConverting, stateSuccess, stateError].forEach(el => el.classList.add('hidden'));
+    stateEl.classList.remove('hidden');
+    lucide.createIcons();
+}
+
+function formatBytes(bytes, decimals = 2) {
+    if (!+bytes) return '0 Bytes';
+    const k = 1024;
+    const dm = decimals < 0 ? 0 : decimals;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
+}
+
+async function handleFile(file) {
+    if (!file.name.toLowerCase().endsWith('.pdf')) {
+        showError('Please select a valid PDF file.');
+        return;
+    }
+    
+    // 50MB limit
+    if (file.size > 50 * 1024 * 1024) {
+        showError('File is too large (max 50MB).');
+        return;
     }
 
-    document.getElementById('remove-file-btn').onclick = e => { 
-        e.stopPropagation(); 
-        selectedFile = null; fileInput.value = ''; pagesToRemove.value = '';
-        uploadDefault.classList.remove('hidden'); fileSelected.classList.add('hidden');
-        initialUploadArea.classList.add('hidden');
-        convertBtn.disabled = true;
-        lucide.createIcons();
-    };
+    selectedFile = file;
+    fileName.textContent = file.name;
+    fileSize.textContent = formatBytes(file.size);
+    filePageCount.textContent = 'Analyzing...';
+    
+    pagesInput.value = '';
+    inputError.classList.add('hidden');
+    parsedRemovedSet.clear();
+    updateSummary();
+    renderChips();
 
-    convertBtn.onclick = async () => {
-        if (!selectedFile) return;
-        const pages = pagesToRemove.value.trim();
-        if (!pages) { showError('Please enter the page numbers to remove.'); return; }
+    switchState(stateSelected);
+    convertBtn.disabled = true;
 
-        convertBtn.classList.add('hidden');
-        progressSection.classList.remove('hidden');
+    // Analyze PDF for page count
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('action', 'analyze');
+    formData.append('csrfmiddlewaretoken', CSRF_TOKEN);
+
+    try {
+        const response = await fetch(CONVERT_URL, {
+            method: 'POST',
+            body: formData
+        });
         
-        const formData = new FormData();
-        formData.append('file', selectedFile);
-        formData.append('pages_to_remove', pages);
-        formData.append('csrfmiddlewaretoken', CSRF_TOKEN);
-
-        try {
-            const response = await fetch(CONVERT_URL, { method: 'POST', body: formData });
-            if (!response.ok) { const data = await response.json(); throw new Error(data.error || 'Failed to remove pages.'); }
-            const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
-            downloadBtn.href = url; downloadBtn.download = fileName.textContent.split('.')[0] + '_trimmed.pdf';
-            progressSection.classList.add('hidden'); successSection.classList.remove('hidden');
-        } catch (err) { 
-            showError(err.message); 
-            progressSection.classList.add('hidden'); 
-            convertBtn.classList.remove('hidden'); 
+        const data = await response.json();
+        
+        if (!response.ok) {
+            throw new Error(data.error || 'Failed to analyze PDF.');
         }
-        lucide.createIcons();
-    };
 
-    function showError(msg) { errorMessage.textContent = msg; errorSection.classList.remove('hidden'); lucide.createIcons(); }
+        totalPagesCount = parseInt(data.total_pages) || 0;
+        filePageCount.textContent = totalPagesCount + ' pages';
+        validPagesHint.textContent = 'Valid pages: 1–' + totalPagesCount;
+        updateSummary();
+        renderChips();
+        convertBtn.disabled = false;
+        
+    } catch (err) {
+        showError(err.message || 'Could not read PDF page count.');
+    }
+}
+
+removeFileBtn.addEventListener('click', resetFlow);
+convertAnotherBtn.addEventListener('click', resetFlow);
+chooseAnotherBtn.addEventListener('click', resetFlow);
+
+function resetFlow() {
+    selectedFile = null;
+    fileInput.value = '';
+    totalPagesCount = 0;
+    parsedRemovedSet.clear();
+    if(downloadBtn.href && downloadBtn.href !== '#') {
+        URL.revokeObjectURL(downloadBtn.href);
+        downloadBtn.href = '#';
+    }
+    switchState(stateIdle);
+}
+
+function showError(msg) {
+    errorMessage.textContent = msg;
+    switchState(stateError);
+}
+
+/* =========================================================
+   INPUT VALIDATION & CHIPS
+   ========================================================= */
+pagesInput.addEventListener('input', () => {
+    inputError.classList.add('hidden');
+    parseInput();
+    updateSummary();
+    renderChips();
+});
+
+function parseInput() {
+    parsedRemovedSet.clear();
+    if (!totalPagesCount) return;
+    
+    const val = pagesInput.value.trim();
+    if (!val) return;
+    
+    const parts = val.split(',');
+    
+    for (const part of parts) {
+        const p = part.trim();
+        if (!p) continue;
+        
+        if (p.includes('-')) {
+            const range = p.split('-');
+            if (range.length === 2) {
+                const s = parseInt(range[0].trim());
+                const e = parseInt(range[1].trim());
+                if (!isNaN(s) && !isNaN(e) && s <= e && s >= 1 && e <= totalPagesCount) {
+                    for (let i = s; i <= e; i++) parsedRemovedSet.add(i);
+                }
+            }
+        } else {
+            const num = parseInt(p);
+            if (!isNaN(num) && num >= 1 && num <= totalPagesCount) {
+                parsedRemovedSet.add(num);
+            }
+        }
+    }
+}
+
+function updateSummary() {
+    summaryTotal.textContent = totalPagesCount;
+    const toRemove = parsedRemovedSet.size;
+    summaryRemove.textContent = toRemove;
+    summaryRemain.textContent = Math.max(0, totalPagesCount - toRemove);
+}
+
+function togglePage(pageNum) {
+    if (parsedRemovedSet.has(pageNum)) {
+        parsedRemovedSet.delete(pageNum);
+    } else {
+        parsedRemovedSet.add(pageNum);
+    }
+    
+    // Update input box text
+    let arr = Array.from(parsedRemovedSet).sort((a,b)=>a-b);
+    pagesInput.value = arr.join(', ');
+    
+    inputError.classList.add('hidden');
+    updateSummary();
+    renderChips();
+}
+
+function renderChips() {
+    pageChipsContainer.innerHTML = '';
+    if (!totalPagesCount || totalPagesCount > 100) return; // don't render for huge PDFs to save DOM
+    
+    for (let i = 1; i <= totalPagesCount; i++) {
+        const chip = document.createElement('div');
+        const isRemoved = parsedRemovedSet.has(i);
+        
+        chip.className = `w-10 h-12 rounded flex items-center justify-center text-xs font-bold cursor-pointer transition-colors border ${
+            isRemoved ? 'bg-red-50 border-red-300 text-red-600' : 'bg-surface-50 border-surface-200 text-surface-500 hover:bg-surface-100'
+        }`;
+        chip.textContent = i;
+        
+        if (isRemoved) {
+            // Add a small X icon
+            const xIcon = document.createElement('div');
+            xIcon.className = 'absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full text-white flex items-center justify-center';
+            xIcon.style.fontSize = '8px';
+            xIcon.textContent = '✕';
+            chip.classList.add('relative');
+            chip.appendChild(xIcon);
+        }
+        
+        chip.onclick = () => togglePage(i);
+        pageChipsContainer.appendChild(chip);
+    }
+}
+
+/* =========================================================
+   CONVERSION
+   ========================================================= */
+convertBtn.addEventListener('click', async () => {
+    if (!selectedFile || !totalPagesCount) return;
+    
+    const val = pagesInput.value.trim();
+    if (!val) {
+        inputError.textContent = 'Enter at least one page to remove.';
+        inputError.classList.remove('hidden');
+        return;
+    }
+    
+    if (parsedRemovedSet.size === 0) {
+        inputError.textContent = 'No valid pages selected for removal.';
+        inputError.classList.remove('hidden');
+        return;
+    }
+    
+    if (parsedRemovedSet.size >= totalPagesCount) {
+        inputError.textContent = 'You cannot remove every page. At least one page must remain.';
+        inputError.classList.remove('hidden');
+        return;
+    }
+    
+    switchState(stateConverting);
+    progressBar.style.width = '15%';
+    
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+    formData.append('pages_to_remove', pagesInput.value);
+    formData.append('csrfmiddlewaretoken', CSRF_TOKEN);
+    
+    try {
+        const response = await fetch(CONVERT_URL, {
+            method: 'POST',
+            body: formData
+        });
+        
+        progressBar.style.width = '80%';
+        
+        if (!response.ok) {
+            const data = await response.json().catch(() => ({}));
+            throw new Error(data.error || 'Server error during processing.');
+        }
+        
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        
+        progressBar.style.width = '100%';
+        
+        // Prepare Success State
+        const removedCount = parsedRemovedSet.size;
+        succOriginal.textContent = totalPagesCount + (totalPagesCount === 1 ? ' page' : ' pages');
+        succRemoved.textContent = removedCount + (removedCount === 1 ? ' page' : ' pages');
+        const remain = totalPagesCount - removedCount;
+        succRemaining.textContent = remain + (remain === 1 ? ' page' : ' pages');
+        
+        downloadBtn.href = url;
+        const originalName = selectedFile.name;
+        const baseName = originalName.substring(0, originalName.lastIndexOf('.')) || originalName;
+        downloadBtn.download = `${baseName}_trimmed.pdf`;
+        
+        setTimeout(() => switchState(stateSuccess), 500);
+        
+    } catch (err) {
+        progressBar.style.width = '100%';
+        progressBar.classList.replace('from-purple-700', 'from-red-500');
+        progressBar.classList.replace('to-purple-500', 'to-red-500');
+        
+        setTimeout(() => {
+            errorMessage.textContent = err.message || 'An error occurred during removal.';
+            switchState(stateError);
+        }, 500);
+    }
+});
+
+retryBtn.addEventListener('click', () => {
+    progressBar.style.width = '0%';
+    progressBar.classList.replace('from-red-500', 'from-purple-700');
+    progressBar.classList.replace('to-red-500', 'to-purple-500');
+    switchState(stateSelected);
+});
+
+// Initialize icons on load
+lucide.createIcons();
 </script>
 {% endblock %}
