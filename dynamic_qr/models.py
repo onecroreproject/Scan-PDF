@@ -5,10 +5,34 @@ from django.db import models
 from django.contrib.auth.models import User
 
 
+import secrets
+
 def generate_short_code():
     """Generate a random 8-character short code for QR redirect URLs."""
     chars = string.ascii_letters + string.digits
-    return ''.join(random.choices(chars, k=8))
+    return ''.join(secrets.choice(chars) for _ in range(8))
+
+
+class ShortURLIdentifier(models.Model):
+    """
+    Unified public identifier registry for Short URLs and QR Codes.
+    Provides database-enforced global uniqueness across generated codes and custom aliases.
+    """
+    KIND_CHOICES = [
+        ('generated', 'Generated Short Code'),
+        ('alias', 'Custom Alias'),
+    ]
+
+    value = models.CharField(max_length=50, unique=True, primary_key=True)
+    qr = models.ForeignKey('DynamicQRCode', on_delete=models.CASCADE, related_name='identifiers')
+    kind = models.CharField(max_length=15, choices=KIND_CHOICES)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('qr', 'kind')
+
+    def __str__(self):
+        return f"{self.value} ({self.kind} for {self.qr_id})"
 
 
 class DynamicQRCode(models.Model):

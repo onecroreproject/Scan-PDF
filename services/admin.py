@@ -5,7 +5,7 @@ from django.utils import timezone
 from django.db.models import Sum, Q
 from django.contrib.auth.models import User
 from django.contrib.auth.admin import UserAdmin
-from .models import Plan, Subscription, Payment, ActivityLog, ContactEnquiry
+from .models import Plan, Subscription, Payment, ActivityLog, ContactEnquiry, Feature, PlanFeature, UsageOverride, UsageRecord
 from dynamic_qr.models import DynamicQRCode
 import csv
 import datetime
@@ -84,6 +84,43 @@ export_as_csv.short_description = "Export Selected Records to CSV"
 class PlanAdmin(admin.ModelAdmin):
     list_display = ('name', 'code', 'monthly_price', 'yearly_price', 'max_dynamic_qrs', 'max_short_urls', 'created_at')
     search_fields = ('name', 'code')
+    actions = [export_as_csv]
+
+    def has_delete_permission(self, request, obj=None):
+        return request.user.is_superuser
+
+    def has_change_permission(self, request, obj=None):
+        return request.user.is_superuser
+
+@admin.register(Feature)
+class FeatureAdmin(admin.ModelAdmin):
+    list_display = ('name', 'key', 'type', 'section', 'is_active', 'display_order')
+    search_fields = ('name', 'key', 'section')
+    list_filter = ('type', 'section', 'is_active')
+    actions = [export_as_csv]
+
+    def get_readonly_fields(self, request, obj=None):
+        if obj:
+            return self.readonly_fields + ('key',)
+        return self.readonly_fields
+
+    def has_delete_permission(self, request, obj=None):
+        if obj and obj.key in [
+            'short_url', 'header', 'qr_code', 'password_protection', 
+            'link_expiry', 'gps_tracking', 'analytics', 'custom_alias', 
+            'csv_export', 'pdf_report', 'shorturl_utm', 'shorturl_cloaking'
+        ]:
+            return False
+        return request.user.is_superuser
+
+    def has_change_permission(self, request, obj=None):
+        return request.user.is_superuser
+
+@admin.register(PlanFeature)
+class PlanFeatureAdmin(admin.ModelAdmin):
+    list_display = ('plan', 'feature', 'enabled', 'monthly_limit', 'yearly_limit', 'is_unlimited', 'history_days')
+    search_fields = ('plan__name', 'feature__name', 'feature__key')
+    list_filter = ('plan', 'feature__section', 'enabled', 'is_unlimited')
     actions = [export_as_csv]
 
     def has_delete_permission(self, request, obj=None):
@@ -404,3 +441,42 @@ class CustomUserAdmin(UserAdmin):
         return mark_safe(html)
     
     profile_summary_panel.short_description = "User SaaS Profile Analytics Overview"
+@admin.register(UsageOverride)
+class UsageOverrideAdmin(admin.ModelAdmin):
+    list_display = ('user', 'feature_key', 'additional_allowance', 'override_limit', 'expires_at', 'is_active', 'created_at')
+    search_fields = ('user__username', 'feature_key')
+    list_filter = ('feature_key',)
+    
+    def is_active(self, obj):
+        if obj.expires_at and obj.expires_at <= timezone.now():
+            return False
+        return True
+    is_active.boolean = True
+    is_active.short_description = "Active"
+
+    def get_readonly_fields(self, request, obj=None):
+        if obj:
+            return ('user', 'feature_key', 'created_by')
+        return ('created_by',)
+
+    def save_model(self, request, obj, form, change):
+        if not obj.pk:
+            obj.created_by = request.user
+        super().save_model(request, obj, form, change)
+
+
+@admin.register(UsageRecord)
+class UsageRecordAdmin(admin.ModelAdmin):
+    list_display = ('user', 'feature_key', 'current_usage', 'period_start', 'period_end')
+    search_fields = ('user__username', 'feature_key')
+    list_filter = ('feature_key',)
+    
+    # Strictly read-only to prevent bypassing quotas via Admin CRUD
+    def get_readonly_fields(self, request, obj=None):
+        return [f.name for f in self.model._meta.fields]
+
+    def has_add_permission(self, request):
+        return False
+
+    def has_delete_permission(self, request, obj=None):
+        return request.user.is_superuser

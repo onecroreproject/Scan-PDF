@@ -48,6 +48,7 @@ class Plan(models.Model):
 # ─────────────────────────────────────────────────────────────────────────────
 
 FEATURE_CODES = [
+    'short_url',
     'header',
     'qr_code',
     'password_protection',
@@ -142,6 +143,15 @@ class PlanFeature(models.Model):
         m_limit = self.monthly_limit if self.monthly_limit is not None else 0
         y_limit = self.yearly_limit if self.yearly_limit is not None else 0
         return f"{m_limit}/mo · {y_limit}/yr"
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        if self.monthly_limit is not None and self.monthly_limit < 0:
+            raise ValidationError({'monthly_limit': 'Cannot be negative.'})
+        if self.yearly_limit is not None and self.yearly_limit < 0:
+            raise ValidationError({'yearly_limit': 'Cannot be negative.'})
+        if self.history_days is not None and self.history_days < 0:
+            raise ValidationError({'history_days': 'Cannot be negative.'})
 
 
 class Subscription(models.Model):
@@ -291,6 +301,15 @@ class UsageOverride(models.Model):
 
     def __str__(self):
         return f"Override for {self.user.username} on {self.feature_key}"
+
+    def clean(self):
+        from django.core.exceptions import ValidationError
+        if self.override_limit is not None and self.override_limit < 0:
+            raise ValidationError({'override_limit': 'Cannot be negative.'})
+        # additional_allowance technically could be negative if an admin wants to PENALIZE a user's limit.
+        # But for safety, we'll enforce non-negative unless specifically requested.
+        if self.additional_allowance < 0:
+            raise ValidationError({'additional_allowance': 'Cannot be negative.'})
 
 
 # ─────────────────────────────────────────────────────────────────────────────

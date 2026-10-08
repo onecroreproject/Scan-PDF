@@ -532,11 +532,12 @@
                         {% if request.user.subscriptions.first.plan.code in "pro,business_plus" or request.user.is_superuser %}
                         <div class="mt-2">
                             <label class="text-[10px] font-bold text-slate-500 mb-1 block">Custom JavaScript (e.g. Analytics pixel)</label>
-                            <textarea name="cloaked_custom_js" id="form-cloaked-js" class="form-input-custom !bg-white !py-2 !text-sm font-mono text-xs" rows="3" placeholder="console.log('Tracked!');"></textarea>
+                            <textarea name="cloaked_custom_js" id="form-cloaked-js" class="form-input-custom !bg-slate-100 !py-2 !text-sm font-mono text-xs text-slate-400" rows="2" placeholder="Custom JS has been disabled for security reasons." disabled></textarea>
+                            <p class="text-[10px] text-red-500 font-bold mt-1">This feature has been permanently disabled for security and isolation reasons.</p>
                         </div>
                         {% else %}
                         <div class="mt-2 p-2 bg-slate-100 rounded text-xs text-slate-500">
-                            Custom JS injection requires Pro or Business plan.
+                            Custom JS injection is disabled on all plans.
                         </div>
                         {% endif %}
                     </div>

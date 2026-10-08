@@ -208,6 +208,115 @@ def is_private_address(value):
     except ValueError:
         return False
 
+def get_client_ip(request):
+    """
+    Securely determines the client's real IP address.
+    Only processes X-Forwarded-For if the immediate upstream (REMOTE_ADDR) is a trusted proxy.
+    Walks the chain backwards and discards trusted proxies until it hits the first untrusted IP.
+    """
+    from django.conf import settings
+    import ipaddress
+
+    # Allow configuration via settings, default to empty (trust no one)
+    trusted_proxies_cfg = getattr(settings, 'TRUSTED_PROXY_IPS', [])
+    trusted_networks = []
+    
+    for proxy in trusted_proxies_cfg:
+        try:
+            # Handle both single IPs and CIDR networks
+            if '/' in proxy:
+                trusted_networks.append(ipaddress.ip_network(proxy, strict=False))
+            else:
+                trusted_networks.append(ipaddress.ip_network(f"{proxy}/32" if ':' not in proxy else f"{proxy}/128", strict=False))
+        except ValueError:
+            pass # Ignore malformed config safely
+
+    def is_trusted(ip_str):
+        try:
+            ip_obj = ipaddress.ip_address(ip_str.strip())
+            return any(ip_obj in net for net in trusted_networks)
+        except ValueError:
+            return False
+
+    remote_addr = request.META.get('REMOTE_ADDR', '').strip()
+    if not remote_addr:
+        return '0.0.0.0' # Fallback safely if impossible
+        
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR', '')
+
+    # Default to safe behavior
+    if not x_forwarded_for or not is_trusted(remote_addr):
+        return remote_addr
+
+    # Parse X-Forwarded-For: client, proxy1, proxy2
+    chain = [ip.strip() for ip in x_forwarded_for.split(',')]
+    
+    # We read from right (closest proxy) to left (client)
+    # The immediate upstream is remote_addr (already verified as trusted)
+    # The last element in the chain is proxy2.
+    # We walk backwards. The first IP that is NOT a trusted proxy is the real client.
+    for ip_str in reversed(chain):
+        if not is_trusted(ip_str):
+            # Must validate it's a real IP address before returning it
+            try:
+                ipaddress.ip_address(ip_str)
+                return ip_str
+            except ValueError:
+                break # Malformed IP in chain, fall back to last known safe
+
+    return remote_addr
+
+
+def get_visitor_id(request, qr, client_ip=None):
+    """Generates a stable, privacy-preserving visitor identifier using HMAC."""
+    from django.conf import settings
+    import hmac
+    
+    if not client_ip:
+        client_ip = get_client_ip(request)
+    ua = request.META.get('HTTP_USER_AGENT', '').lower()
+    ip_base = client_ip.rsplit('.', 1)[0] if '.' in client_ip else client_ip
+    visitor_string = f"{ip_base}_{ua}_{qr.id}"
+    
+    secret = getattr(settings, 'SECRET_KEY', 'fallback-secret').encode('utf-8')
+    return hmac.new(secret, visitor_string.encode('utf-8'), hashlib.sha256).hexdigest()[:32]
+
+
+def is_duplicate_request(visitor_id, window_seconds=5):
+    """
+    Redis-backed atomic dedupe for Short URL analytics success scans.
+    Returns True if the request is a duplicate within the window.
+    """
+    from django.core.cache import cache
+    # I-CHECK 4, 5: Removed raw IP, visitor_id already hashes IP/UA/QR.
+    raw_key = f"shorturl:success:{visitor_id}"
+    key_hash = hashlib.sha256(raw_key.encode('utf-8')).hexdigest()
+    cache_key = f"shorturl:success:{key_hash}"
+    
+    try:
+        return not cache.add(cache_key, 1, timeout=window_seconds)
+    except Exception as e:
+        logger.warning(f"Analytics dedupe cache failed, failing open: {e}")
+        return False
+
+
+def should_record_failure_event(visitor_id, event_type, window_seconds=60):
+    """
+    Redis-backed atomic dedupe for Short URL failure events (e.g. disabled, expired, password_failed).
+    Returns True if we SHOULD record the event (i.e. it is NOT a duplicate within the window).
+    """
+    from django.core.cache import cache
+    raw_key = f"shorturl:failure:{event_type}:{visitor_id}"
+    key_hash = hashlib.sha256(raw_key.encode('utf-8')).hexdigest()
+    cache_key = f"shorturl:failure:{key_hash}"
+    
+    try:
+        return cache.add(cache_key, 1, timeout=window_seconds)
+    except Exception as e:
+        logger.warning(f"Failure analytics dedupe cache failed, failing open: {e}")
+        return True
+
+
 def record_short_url_event(qr, request, result, status, visitor_id=None, utm_data=None, was_cloaked=False):
     """
     Centralized analytics recording pipeline.
@@ -235,12 +344,8 @@ def record_short_url_event(qr, request, result, status, visitor_id=None, utm_dat
         # Re-classify successful requests from bots as bot_request
         result = 'bot_request'
         
-    # 2. Extract Real IP
-    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
-    if x_forwarded_for:
-        ip = x_forwarded_for.split(',')[0].strip()
-    else:
-        ip = request.META.get('REMOTE_ADDR', '')
+    # 2. Extract Real IP using secure helper
+    ip = get_client_ip(request)
 
     # 3. Handle Traffic Source & QR tracking
     is_qr_scan = request.GET.get('source') == 'qr'
@@ -253,9 +358,7 @@ def record_short_url_event(qr, request, result, status, visitor_id=None, utm_dat
 
     # 4. Generate stable visitor ID if not provided
     if not visitor_id:
-        ip_base = ip.rsplit('.', 1)[0] if '.' in ip else ip
-        visitor_string = f"{ip_base}_{ua}_{qr.id}"
-        visitor_id = hashlib.sha256(visitor_string.encode('utf-8')).hexdigest()[:32]
+        visitor_id = get_visitor_id(request, qr, ip)
 
     # 5. Extract Tech Specs
     browser = 'Other'
@@ -282,29 +385,7 @@ def record_short_url_event(qr, request, result, status, visitor_id=None, utm_dat
     # 6. Extract Geolocations
     country, country_code, region, city = 'Unknown', 'XX', 'Unknown', 'Unknown'
     lat, lon = None, None
-    
-    # We only process Geo IP if it's not a bot to save external API limits
-    if ip and not is_bot:
-        is_private = is_private_address(ip)
-        if not is_private:
-            try:
-                headers = {'User-Agent': 'ScanPDF/1.0'}
-                req = Request(f'http://ip-api.com/json/{ip}?fields=status,country,countryCode,regionName,city,lat,lon', headers=headers)
-                with urlopen(req, timeout=4) as resp:
-                    geo_data = json.loads(resp.read().decode())
-                    if geo_data.get('status') == 'success':
-                        country = geo_data.get('country', 'Unknown')
-                        country_code = geo_data.get('countryCode', 'XX')
-                        region = geo_data.get('regionName', 'Unknown')
-                        city = geo_data.get('city', 'Unknown')
-                        lat = geo_data.get('lat')
-                        lon = geo_data.get('lon')
-            except Exception:
-                pass
-        else:
-            country, country_code, region, city = 'Unknown', 'XX', 'Unknown', 'Unknown'
-
-    location_source = 'local' if is_private_address(ip) else ('ip' if country != 'Unknown' else 'unknown')
+    location_source = 'local' if is_private_address(ip) else 'unknown'
 
     # If this request came through the GPS allow flow, override lat/lon
     # We pass gps_lat and gps_lon in request.session if it's authorized
@@ -313,11 +394,12 @@ def record_short_url_event(qr, request, result, status, visitor_id=None, utm_dat
     if gps_lat and gps_lon:
         lat = float(gps_lat)
         lon = float(gps_lon)
+        location_source = 'gps'
 
     # 7. Record analytics and the cached successful-click counter together.
     try:
         with transaction.atomic():
-            QRAnalytics.objects.create(
+            event = QRAnalytics.objects.create(
                 qr_code=qr,
                 ip_address=ip,
                 user_agent=ua[:500],
@@ -355,8 +437,19 @@ def record_short_url_event(qr, request, result, status, visitor_id=None, utm_dat
             )
             if result == 'redirect_success':
                 type(qr).objects.filter(pk=qr.pk).update(scan_count=F('scan_count') + 1)
+                
+            # J23, J24: Enqueue async GeoIP lookup after commit
+            if ip and not is_bot and location_source == 'unknown':
+                transaction.on_commit(lambda e_id=event.id, cip=ip: _enqueue_geoip(e_id, cip))
     except Exception:
         logger.exception("Unable to record short URL event for %s", qr.pk)
+
+def _enqueue_geoip(event_id, ip_address):
+    try:
+        from .tasks import enrich_location
+        enrich_location.delay(event_id, ip_address)
+    except Exception as e:
+        logger.warning(f"Failed to enqueue GeoIP task for event {event_id}: {e}")
 
 
 def update_pending_gps_event(request, qr, permission, latitude=None, longitude=None, accuracy=None):
@@ -385,26 +478,8 @@ def update_pending_gps_event(request, qr, permission, latitude=None, longitude=N
             longitude=longitude,
         )
 
-        # ── Reverse-geocode GPS coordinates to country/city ──────────────────
-        # Enriches the SAME click record — no new row is created.
-        # Any failure is silently swallowed; coordinates are always saved.
-        try:
-            geo = reverse_geocode_coords(latitude, longitude)
-            if geo:
-                if geo.get('country', '').strip():
-                    updates['country'] = geo['country'].strip()
-                if geo.get('city', '').strip():
-                    updates['city'] = geo['city'].strip()
-                if geo.get('region', '').strip():
-                    updates['region'] = geo['region'].strip()
-                if geo.get('country_code', '').strip():
-                    updates['country_code'] = geo['country_code'].strip().upper()
-        except Exception:
-            logger.warning(
-                "GPS reverse geocode failed for qr=%s lat=%s lon=%s",
-                qr.pk, latitude, longitude,
-            )
-        # ────────────────────────────────────────────────────────────────────
+        # J16, J18: Reverse-geocode GPS coordinates to country/city ASYNCHRONOUSLY
+        # Enqueue the Celery task after the atomic commit block.
 
     elif permission in ('denied', 'unavailable', 'timeout'):
         updates.update(redirect_result='gps_denied', http_status=403)
@@ -420,7 +495,15 @@ def update_pending_gps_event(request, qr, permission, latitude=None, longitude=N
         event.save(update_fields=list(updates))
         if permission == 'granted':
             type(qr).objects.filter(pk=qr.pk).update(scan_count=F('scan_count') + 1)
+            transaction.on_commit(lambda e_id=event.id, lat=latitude, lon=longitude: _enqueue_reverse_geocode(e_id, lat, lon))
     request.session.pop(f'qr_pending_event_{qr.id}', None)
     request.session[f'qr_gps_auth_{qr.id}'] = permission == 'granted'
     return event
+
+def _enqueue_reverse_geocode(event_id, latitude, longitude):
+    try:
+        from .tasks import reverse_geocode_gps
+        reverse_geocode_gps.delay(event_id, latitude, longitude)
+    except Exception as e:
+        logger.warning(f"Failed to enqueue reverse geocode task for event {event_id}: {e}")
 
