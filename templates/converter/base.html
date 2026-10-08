@@ -566,8 +566,12 @@
                                     {% endfor %}
                                 </div>
                             </div>
+                            {% endfor %}
                         </div>
+                    </div>
+                </div>
 
+                {% comment %}
                         <!-- Image Editor Link -->
                         <div class="relative group">
                             <!-- Invisible Hover Bridge -->
@@ -1082,12 +1086,7 @@
                                     </a>
                                 </div>
                             </div>
-               {% endfor %}
-
-                        </div>
-                    </div>
-                </div>
-
+               {% endcomment %}
                 <!-- Image Tools Accordion -->
                 <div class="accordion-item rounded-xl overflow-hidden border border-surface-100 mb-2">
                     <button class="accordion-btn flex items-center justify-between w-full p-4 bg-white hover:bg-surface-50 transition-colors text-left" aria-expanded="false">
@@ -1150,6 +1149,17 @@
                             {% endfor %}
                         </div>
                     </div>
+                </div>
+
+                <!-- Invoices Link -->
+                <div class="rounded-xl overflow-hidden border border-surface-100 mb-2">
+                    <a href="https://invoice.scanpdf.co.in/" target="_blank" rel="noopener noreferrer" class="flex items-center justify-between w-full p-4 bg-white hover:bg-surface-50 transition-colors text-left">
+                        <div class="flex items-center gap-3">
+                            <i data-lucide="file-spreadsheet" class="w-5 h-5 text-brand-600"></i>
+                            <span class="font-bold text-sm text-surface-800">Invoices</span>
+                        </div>
+                        <i data-lucide="external-link" class="w-4 h-4 text-surface-400"></i>
+                    </a>
                 </div>
 
             </div>
@@ -1296,7 +1306,7 @@
     {{ all_tools_metadata|json_script:"tools-data" }}
 
     <!-- Core JS -->
-    <script src="{% static 'js/main.js' %}?v=1.1.0"></script>
+    <script src="{% static 'js/main.js' %}?v=1.1.1"></script>
     <script>
             // Reveal only after full refresh pipeline completes.
             (function revealPageWhenReady() {
@@ -1436,6 +1446,38 @@
                 mobileServicesIcon.style.transform = isExpanded ? '' : 'rotate(90deg)';
             });
         }
+
+        // Mobile accordion drawers (One-open-at-a-time)
+        const accordions = document.querySelectorAll('.accordion-btn');
+        accordions.forEach((button) => {
+            const content = button.nextElementSibling;
+            if (!content) return;
+
+            button.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const isExpanded = button.getAttribute('aria-expanded') === 'true';
+
+                // Close all other accordions first
+                accordions.forEach(otherBtn => {
+                    if (otherBtn !== button && otherBtn.getAttribute('aria-expanded') === 'true') {
+                        otherBtn.setAttribute('aria-expanded', 'false');
+                        const otherContent = otherBtn.nextElementSibling;
+                        if (otherContent) otherContent.classList.add('hidden');
+                        const otherChevron = otherBtn.querySelector('[data-lucide="chevron-down"], [data-lucide="chevron-right"]');
+                        if (otherChevron) otherChevron.style.transform = '';
+                    }
+                });
+
+                // Toggle the clicked one
+                button.setAttribute('aria-expanded', String(!isExpanded));
+                content.classList.toggle('hidden', isExpanded);
+
+                const chevron = button.querySelector('[data-lucide="chevron-down"], [data-lucide="chevron-right"]');
+                if (chevron) {
+                    chevron.style.transform = isExpanded ? '' : 'rotate(180deg)';
+                }
+            });
+        });
 
         // Close on click outside
         document.addEventListener('click', (e) => {

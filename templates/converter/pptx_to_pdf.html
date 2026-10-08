@@ -946,25 +946,20 @@ convertBtn.addEventListener('click', async () => {
    PROGRESS
    ========================================================= */
 function startProgress() {
-    let progress = 0;
-    progressBar.style.width = '0%';
-    progressPercent.textContent = '0%';
-    progressStatus.textContent = 'Preparing presentation...';
+    // Indeterminate processing state per requirements
+    progressBar.style.width = '100%';
+    progressBar.classList.add('animate-pulse');
+    progressPercent.textContent = '';
+    progressStatus.textContent = 'Converting presentation...';
     
     progressInterval = setInterval(() => {
-        if (progress < 95) {
-            progress += Math.random() * 4;
-            if (progress > 95) progress = 95;
-            
-            let p = Math.floor(progress);
-            progressBar.style.width = p + '%';
-            progressPercent.textContent = p + '%';
-            
-            if (p > 20) progressStatus.textContent = 'Processing slides...';
-            if (p > 40) progressStatus.textContent = 'Creating PDF...';
-            if (p > 75) progressStatus.textContent = 'Finalizing PDF...';
+        const dots = progressStatus.textContent.match(/\./g);
+        if (dots && dots.length >= 3) {
+            progressStatus.textContent = 'Converting presentation.';
+        } else {
+            progressStatus.textContent += '.';
         }
-    }, 400);
+    }, 500);
 }
 
 function stopProgress() {
@@ -972,6 +967,7 @@ function stopProgress() {
         clearInterval(progressInterval);
         progressInterval = null;
     }
+    progressBar.classList.remove('animate-pulse');
 }
 
 function finishProgressAndShowSuccess() {

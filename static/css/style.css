@@ -392,7 +392,8 @@ a, button {
     }
 
     /* Ensure mobile menu links are comfortably tappable */
-    #mobile-menu a {
+    #mobile-drawer a,
+    #mobile-drawer button {
         min-height: 44px;
     }
 }
