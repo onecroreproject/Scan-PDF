@@ -495,9 +495,17 @@
                                 </div>
                             </div>
 
-                            {% if request.user.is_authenticated and request.session.is_dqr_user %}
-                            <a href="#" onclick="event.preventDefault(); document.getElementById('navbar-logout-form').submit();" class="flex items-center gap-3 px-4 py-2 text-sm font-bold text-surface-700 hover:text-red-500 hover:bg-red-50 transition-all">
+                            {% if request.user.is_authenticated %}
+                            <form id="navbar-logout-form-desktop" action="{% url 'dynamic_qr:logout' %}" method="POST" style="display:none;">{% csrf_token %}</form>
+                            <a href="#" onclick="event.preventDefault(); document.getElementById('navbar-logout-form-desktop').submit();" class="flex items-center gap-3 px-4 py-2 text-sm font-bold text-surface-700 hover:text-red-500 hover:bg-red-50 transition-all">
                                 <i data-lucide="log-out" class="w-4 h-4"></i> Logout
+                            </a>
+                            {% else %}
+                            <a href="{% url 'dynamic_qr:login' %}" class="flex items-center gap-3 px-4 py-2 text-sm font-bold text-surface-700 hover:text-brand-600 hover:bg-brand-50 transition-all">
+                                <i data-lucide="log-in" class="w-4 h-4"></i> Login
+                            </a>
+                            <a href="{% url 'dynamic_qr:register' %}" class="flex items-center gap-3 px-4 py-2 text-sm font-bold text-surface-700 hover:text-brand-600 hover:bg-brand-50 transition-all">
+                                <i data-lucide="user-plus" class="w-4 h-4"></i> Sign Up
                             </a>
                             {% endif %}
                         </div>
@@ -1170,8 +1178,12 @@
                     </div>
                 </div>
 
-                {% if request.user.is_authenticated and request.session.is_dqr_user %}
-                <a href="#" onclick="event.preventDefault(); document.getElementById('navbar-logout-form').submit();" class="flex items-center gap-3 px-3 py-2 rounded-lg text-red-600 hover:bg-red-50 transition-colors font-bold text-sm"><i data-lucide="log-out" class="w-4 h-4"></i> Logout</a>
+                {% if request.user.is_authenticated %}
+                <form id="navbar-logout-form-mobile" action="{% url 'dynamic_qr:logout' %}" method="POST" style="display:none;">{% csrf_token %}</form>
+                <a href="#" onclick="event.preventDefault(); document.getElementById('navbar-logout-form-mobile').submit();" class="flex items-center gap-3 px-3 py-2 rounded-lg text-red-600 hover:bg-red-50 transition-colors font-bold text-sm"><i data-lucide="log-out" class="w-4 h-4"></i> Logout</a>
+                {% else %}
+                <a href="{% url 'dynamic_qr:login' %}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-surface-700 hover:bg-white transition-colors font-bold text-sm"><i data-lucide="log-in" class="w-4 h-4"></i> Login</a>
+                <a href="{% url 'dynamic_qr:register' %}" class="flex items-center gap-3 px-3 py-2 rounded-lg text-surface-700 hover:bg-white transition-colors font-bold text-sm"><i data-lucide="user-plus" class="w-4 h-4"></i> Sign Up</a>
                 {% endif %}
             </div>
         </div>

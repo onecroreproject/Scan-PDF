@@ -908,7 +908,7 @@ def get_media_info(url):
                     if not any(img['url'] == item['url'] for img in image_items):
                         image_items.append(item)
                 elif item['type'] == 'video':
-                    if 'm3u8' in item.get('format', ''):
+                    if 'm3u8' in item.get('format', '').lower() and platform != 'facebook' and platform != 'threads':
                         continue
                     q = item['quality']
                     if q not in unique_video_items:
@@ -935,6 +935,21 @@ def get_media_info(url):
                 return h if h is not None else 0
             
             video_formats.sort(key=get_height, reverse=True)
+
+            # Threads proxy fix and format ID logging
+            if platform == 'threads':
+                for vf in video_formats:
+                    # Threads preview fix: do not use manifest/m3u8 directly in UI if possible
+                    if vf.get('url') and 'manifest' in vf.get('url', '').lower():
+                        pass
+                logger.info(f"Threads selected format_id: {video_formats[0]['id'] if video_formats else 'None'}")
+                logger.info(f"Threads selected height: {video_formats[0]['height'] if video_formats else 'None'}")
+                logger.info(f"Threads selected ext: {video_formats[0]['format'] if video_formats else 'None'}")
+                logger.info(f"Threads preview source type: yt-dlp")
+
+            # Facebook long video log
+            if platform == 'facebook':
+                logger.info(f"Facebook video/audio format IDs used: {[vf['id'] for vf in video_formats]}")
 
             audio_info = {
                 'available': has_any_audio,
@@ -1200,7 +1215,11 @@ def download_media_to_temp(url, format_id, download_type="video", audio_quality=
             logger.error("YOUTUBE MP3 DIAGNOSTICS: ffmpeg not found.")
             raise ValueError("MP3 conversion requires FFmpeg on the server.")
             
-        ydl_opts['format'] = 'bestaudio/best'
+        if platform == 'threads':
+            ydl_opts['format'] = 'best'
+        else:
+            ydl_opts['format'] = 'bestaudio/best'
+            
         logger.info(f"YOUTUBE MP3 DIAGNOSTICS: Selected format/audio source: {ydl_opts['format']}")
         ydl_opts['postprocessors'] = [{
             'key': 'FFmpegExtractAudio',
@@ -1212,7 +1231,10 @@ def download_media_to_temp(url, format_id, download_type="video", audio_quality=
             ydl_opts['ffmpeg_location'] = ffmpeg_loc
             logger.info("YOUTUBE MP3 DIAGNOSTICS: ffmpeg_location configured for yt-dlp.")
     else:
-        target_format = f"{format_id}+bestaudio/bestaudio+{format_id}/{format_id}/best" if format_id and format_id != 'default' else 'bestvideo+bestaudio/best'
+        if platform == 'facebook':
+            target_format = f"{format_id}+bestaudio/best" if format_id and format_id != 'default' else 'bestvideo+bestaudio/best'
+        else:
+            target_format = f"{format_id}+bestaudio/bestaudio+{format_id}/{format_id}/best" if format_id and format_id != 'default' else 'bestvideo+bestaudio/best'
         
         if not is_ffmpeg_available():
             if '+' in target_format or 'bestvideo' in target_format:
