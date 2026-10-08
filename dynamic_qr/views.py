@@ -126,39 +126,9 @@ def _is_recursive_cloak_target(request, qr, target_url):
     return target_path in short_paths and target_host == current_host
 
 
-def _frame_block_reason(request, target_url):
-    """Inspect destination framing headers without proxying or altering them."""
-    if not target_url or urlsplit(target_url).scheme not in ('http', 'https'):
-        return None
+# Server-side HEAD probe _frame_block_reason has been removed for SSRF safety.
+# Client-side fallback detection is now strictly relied upon.
 
-    try:
-        probe = requests.head(target_url, allow_redirects=True, timeout=2)
-    except requests.RequestException:
-        return None
-
-    final_url = probe.url or target_url
-    final_parts = urlsplit(final_url)
-    wrapper_parts = urlsplit(request.build_absolute_uri('/'))
-    same_origin = (
-        final_parts.scheme.lower(), final_parts.netloc.lower()
-    ) == (
-        wrapper_parts.scheme.lower(), wrapper_parts.netloc.lower()
-    )
-
-    x_frame_options = (probe.headers.get('X-Frame-Options') or '').strip().lower()
-    if x_frame_options == 'deny' or (x_frame_options == 'sameorigin' and not same_origin):
-        return 'This destination does not support cloaked viewing.'
-
-    content_security_policy = (probe.headers.get('Content-Security-Policy') or '').lower()
-    for directive in content_security_policy.split(';'):
-        directive = directive.strip()
-        if not directive.startswith('frame-ancestors'):
-            continue
-        sources = directive.split()[1:]
-        if "'none'" in sources or ("'self'" in sources and not same_origin):
-            return 'This destination does not support cloaked viewing.'
-
-    return None
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -778,7 +748,7 @@ def dqr_short_url_view(request):
         
         # Convenience flags for template backward compat
         total_short_urls = DynamicQRCode.objects.filter(user=request.user, qr_type='custom-url').count()
-        short_url_status = feature_statuses.get('qr_code', {})
+        short_url_status = feature_statuses.get('short_url', {})
 
         return render(request, 'dynamic_qr/short_url.html', {
             'short_urls': short_urls,
@@ -803,15 +773,13 @@ def dqr_short_url_view(request):
             'has_csv_export': feature_statuses.get('csv_export', {}).get('enabled', False),
             'has_pdf_report': feature_statuses.get('pdf_report', {}).get('enabled', False),
             # Header stats
-            # Header stats (from usage record, not active records)
             'used_headers_count': feature_statuses.get('header', {}).get('used', 0),
             'header_limit': feature_statuses.get('header', {}).get('limit'),
             'header_unlimited': feature_statuses.get('header', {}).get('unlimited', False),
-            # Short URL creation itself has no optional-feature quota. QR usage is
-            # reported separately and is consumed only when QR is enabled.
+            # Base short URL quota
             'usage_current': short_url_status.get('used', 0),
             'usage_limit': short_url_status.get('limit'),
-            'can_create_more': True,
+            'can_create_more': not short_url_status.get('limit_reached', False),
         })
     
     try:
@@ -827,10 +795,18 @@ def dqr_short_url_view(request):
         
         if not destination_url:
             return JsonResponse({'error': 'URL is required.'}, status=400)
-        
-        if not destination_url.startswith(('http://', 'https://')):
+            
+        if not destination_url.startswith(('http://', 'https://', 'mailto:', 'tel:', 'sms:', 'geo:', 'wifi:')):
             destination_url = 'https://' + destination_url
+            
+        from .validators import validate_redirect_target, validate_header
+        from django.core.exceptions import ValidationError
         
+        try:
+            validate_redirect_target(destination_url)
+        except ValidationError as e:
+            return JsonResponse({'error': str(e)}, status=400)
+            
         qr_data = {'destination_url': destination_url}
         
         custom_alias = request.POST.get('custom_alias', '').strip()
@@ -904,9 +880,10 @@ def dqr_short_url_view(request):
             header_value = request.POST.get('header', '').strip()
             
             if header_value:
-                import re
-                if not re.match(r'^[A-Za-z0-9_-]{1,30}$', header_value):
-                    return JsonResponse({'error': 'Header must be 1-30 characters (A-Z, 0-9, -, _).'}, status=400)
+                try:
+                    validate_header(header_value)
+                except ValidationError as e:
+                    return JsonResponse({'error': str(e)}, status=400)
                 
                 if header_value.lower() in DynamicQRCode.RESERVED_PATHS:
                     return JsonResponse({'error': f'The header "{header_value}" is a reserved system path and cannot be used.'}, status=400)
@@ -1027,6 +1004,7 @@ def dqr_short_url_view(request):
                 return JsonResponse({'error': 'A password is required when protection is enabled.'}, status=400)
                 
             new_state = {
+                'short_url': True,
                 'header': header_enabled and bool(header_value),
                 'qr_code': qr_enabled,
                 'password_protection': password_enabled and bool(password),
@@ -1113,11 +1091,76 @@ def dqr_short_url_view(request):
                 if logo:
                     qr.logo = logo
 
-            if regenerate:
-                from .models import generate_short_code
-                qr.short_code = generate_short_code()
+            from django.db import IntegrityError
+            from django.db.models import Q
+            from .models import ShortURLIdentifier
+            
+            def is_collision_precheck(code):
+                if not code: return False
+                return ShortURLIdentifier.objects.exclude(qr_id=qr_id).filter(value=code).exists()
+
+            saved = False
+            for attempt in range(10):
+                if regenerate or (not qr_id and attempt > 0):
+                    from .models import generate_short_code
+                    qr.short_code = generate_short_code()
                 
-            qr.save()
+                # Friendly pre-check
+                if is_collision_precheck(qr.short_code):
+                    continue
+                
+                if custom_alias and is_collision_precheck(custom_alias):
+                    transaction.set_rollback(True)
+                    return JsonResponse({'error': 'Custom alias is already in use.'}, status=400)
+                    
+                try:
+                    with transaction.atomic():
+                        qr.save()
+                        
+                        # 1. Authoritative DB lock on Generated Code
+                        try:
+                            with transaction.atomic():
+                                # get_or_create safely ignores if it already exists (e.g. during an edit without regenerate)
+                                ShortURLIdentifier.objects.get_or_create(
+                                    qr=qr, kind='generated', defaults={'value': qr.short_code}
+                                )
+                        except IntegrityError:
+                            raise IntegrityError("GENERATED_COLLISION")
+                            
+                        # 2. Authoritative DB lock on Custom Alias
+                        existing_alias = ShortURLIdentifier.objects.filter(qr=qr, kind='alias').first()
+                        if not custom_alias:
+                            if existing_alias:
+                                existing_alias.delete()
+                        else:
+                            if existing_alias and existing_alias.value == custom_alias:
+                                pass # No change
+                            else:
+                                try:
+                                    with transaction.atomic():
+                                        ShortURLIdentifier.objects.create(value=custom_alias, qr=qr, kind='alias')
+                                except IntegrityError:
+                                    raise IntegrityError("ALIAS_COLLISION")
+                                
+                                # Release old alias safely only after claiming new one
+                                if existing_alias:
+                                    existing_alias.delete()
+                                    
+                    saved = True
+                    break
+                except IntegrityError as e:
+                    if str(e) == "ALIAS_COLLISION":
+                        transaction.set_rollback(True)
+                        return JsonResponse({'error': 'Custom alias conflicts with an existing short code or alias.'}, status=400)
+                        
+                    # Otherwise we retry for GENERATED_COLLISION or genuine DB errors bubble up
+                    if attempt == 9:
+                        transaction.set_rollback(True)
+                        return JsonResponse({'error': 'Failed to generate a unique short code. Please try again.'}, status=500)
+            
+            if not saved:
+                transaction.set_rollback(True)
+                return JsonResponse({'error': 'Could not save QR code due to database conflict.'}, status=500)
             
             # --- Permanent Logo Persistence (Preset caching) ---
             if not qr.logo and qr.design_options and qr.design_options.get('logo_preset'):
@@ -2301,9 +2344,31 @@ def dqr_redirect_view(request, short_code):
     """
     from django.db.models import Q
     from django.contrib.auth.hashers import check_password
+    from django.http import Http404, HttpResponseServerError, HttpResponse
+    from django.core.exceptions import MultipleObjectsReturned
     from .utils import record_short_url_event, update_pending_gps_event
+    from .security import get_security_client_key, RedirectAbuseLimiter, PasswordAttemptLimiter
+    from .models import ShortURLIdentifier
 
-    qr = get_object_or_404(DynamicQRCode, Q(short_code=short_code) | Q(custom_alias=short_code))
+    client_key = get_security_client_key(request, 'global_redir')
+    if RedirectAbuseLimiter.is_rate_limited(client_key):
+        response = HttpResponse("Too Many Requests", status=429)
+        response['Retry-After'] = str(RedirectAbuseLimiter.WINDOW_SECONDS)
+        return response
+
+    try:
+        identifier = ShortURLIdentifier.objects.select_related("qr").get(value=short_code)
+        qr = identifier.qr
+    except ShortURLIdentifier.DoesNotExist:
+        # H18 Legacy Fallback: During deployment rolling restart, in case registry isn't fully 
+        # populated or new workers haven't restarted, fallback to old DB columns temporarily.
+        try:
+            qr = DynamicQRCode.objects.get(Q(short_code=short_code) | Q(custom_alias=short_code))
+        except DynamicQRCode.DoesNotExist:
+            raise Http404("No QR code found matching the query")
+        except MultipleObjectsReturned:
+            logger.error(f"Ambiguous identifier '{short_code}': Multiple QR codes match this short code or custom alias.")
+            return HttpResponseServerError("Internal consistency error: ambiguous short URL identifier.")
 
     utm_data = {
         'utm_source': request.GET.get('utm_source'),
@@ -2313,14 +2378,22 @@ def dqr_redirect_view(request, short_code):
         'utm_content': request.GET.get('utm_content'),
     }
 
+    from .utils import should_record_failure_event, is_duplicate_request, get_client_ip, get_visitor_id
+    from django.conf import settings
+    c_ip = get_client_ip(request)
+    v_id = get_visitor_id(request, qr, c_ip)
+    fail_ttl = getattr(settings, 'SHORT_URL_FAILURE_DEDUPE_SECONDS', 60)
+
     # 1. Disabled Check
     if not qr.is_active:
-        record_short_url_event(qr, request, result='disabled', status=403, utm_data=utm_data)
+        if should_record_failure_event(v_id, 'disabled', fail_ttl):
+            record_short_url_event(qr, request, result='disabled', status=403, utm_data=utm_data, visitor_id=v_id)
         return render(request, 'dynamic_qr/qr_disabled.html', {'qr': qr})
         
     # 2. Expiry Check
     if qr.expiry_date and timezone.now() > qr.expiry_date:
-        record_short_url_event(qr, request, result='expired', status=403, utm_data=utm_data)
+        if should_record_failure_event(v_id, 'expired', fail_ttl):
+            record_short_url_event(qr, request, result='expired', status=403, utm_data=utm_data, visitor_id=v_id)
         return render(request, 'dynamic_qr/qr_disabled.html', {'qr': qr, 'expired': True})
         
     # 3. GPS Tracking Flow
@@ -2363,16 +2436,23 @@ def dqr_redirect_view(request, short_code):
                 if is_json_request:
                     return JsonResponse({'success': True, 'redirect_url': _build_short_url_target(qr)})
                 return JsonResponse({'success': True, 'redirect_url': _build_short_url_target(qr)})
+                
             # The pending event already represents this visit. Prevent the
-            # redirecting GET from recording a second successful event.
-            request.session[f'qr_last_hit_{qr.id}'] = timezone.now().timestamp()
+            # redirecting GET from recording a second successful event by populating the dedupe cache.
+            dedupe_window = getattr(settings, 'SHORT_URL_DEDUPE_SECONDS', 5)
+            # Actually, `is_duplicate_request` now only takes `v_id` and `window_seconds`.
+            is_duplicate_request(v_id, dedupe_window)
+            
             if is_json_request:
                 return JsonResponse({'success': True, 'redirect_url': _build_short_url_target(qr)})
             return redirect(request.path)
+            
         if not request.session.get(f'qr_pending_event_{qr.id}'):
-            record_short_url_event(qr, request, result='gps_required', status=401, utm_data=utm_data)
+            if should_record_failure_event(v_id, 'gps_required', fail_ttl):
+                record_short_url_event(qr, request, result='gps_required', status=401, utm_data=utm_data, visitor_id=v_id)
             from .models import QRAnalytics
-            pending = QRAnalytics.objects.filter(qr_code=qr, redirect_result='gps_required').first()
+            # Use visitor_id to prevent races across users hitting same QR simultaneously
+            pending = QRAnalytics.objects.filter(qr_code=qr, redirect_result='gps_required', visitor_id=v_id).order_by('-timestamp').first()
             if pending:
                 pending.gps_permission = 'pending'
                 pending.save(update_fields=['gps_permission'])
@@ -2384,25 +2464,40 @@ def dqr_redirect_view(request, short_code):
 
     # 4. Password Protection Check
     if qr.password and not request.session.get(f'qr_auth_{qr.id}'):
+        pwd_client_key = get_security_client_key(request, str(qr.id))
+        
+        if PasswordAttemptLimiter.is_locked(qr.id, pwd_client_key):
+            response = HttpResponse("Too many failed attempts. Please try again later.", status=429)
+            response['Retry-After'] = str(PasswordAttemptLimiter.LOCKOUT_SECONDS)
+            return response
+            
         if request.method == 'POST':
             pw = request.POST.get('password', '')
             if check_password(pw, qr.password):
+                PasswordAttemptLimiter.clear_failures(qr.id, pwd_client_key)
                 request.session[f'qr_auth_{qr.id}'] = True
                 return redirect(request.path)
             else:
-                record_short_url_event(qr, request, result='password_failed', status=401, utm_data=utm_data)
-                return render(request, 'dynamic_qr/qr_password.html', {'qr': qr, 'error': 'Incorrect password. Please try again.'})
-        record_short_url_event(qr, request, result='password_required', status=401, utm_data=utm_data)
+                PasswordAttemptLimiter.record_failure(qr.id, pwd_client_key)
+                if should_record_failure_event(v_id, 'password_failed', fail_ttl):
+                    record_short_url_event(qr, request, result='password_failed', status=401, utm_data=utm_data, visitor_id=v_id)
+                return render(request, 'dynamic_qr/qr_password.html', {'qr': qr, 'error': 'Invalid password.'})
+        
+        if should_record_failure_event(v_id, 'password_required', fail_ttl):
+            record_short_url_event(qr, request, result='password_required', status=401, utm_data=utm_data, visitor_id=v_id)
         return render(request, 'dynamic_qr/qr_password.html', {'qr': qr})
 
     # 5. Success Logic & Logging
-    now_ts = timezone.now().timestamp()
-    last_ts = request.session.get(f'qr_last_hit_{qr.id}', 0)
+    dedupe_window = getattr(settings, 'SHORT_URL_DEDUPE_SECONDS', 5)
     
-    # De-duplicate hits within 5 seconds for the same session
-    if (now_ts - last_ts) >= 5:
-        request.session[f'qr_last_hit_{qr.id}'] = now_ts
-        record_short_url_event(qr, request, result='redirect_success', status=302, utm_data=utm_data, was_cloaked=qr.cloaking_enabled)
+    # De-duplicate hits within window using shared cache
+    if not is_duplicate_request(v_id, window_seconds=dedupe_window):
+        # I38: Match HTTP status to response type. Cloaked pages return 200 OK HTML.
+        success_status = 200 if qr.cloaking_enabled else 302
+        record_short_url_event(
+            qr, request, result='redirect_success', status=success_status, 
+            visitor_id=v_id, utm_data=utm_data, was_cloaked=qr.cloaking_enabled
+        )
 
     def _no_cache(response):
         # Prevent stale scan results after edits on the same short code.
@@ -2438,6 +2533,15 @@ def dqr_redirect_view(request, short_code):
     if target_url and qr.qr_type in redirect_types:
         target_url = _build_short_url_target(qr, target_url)
 
+        from urllib.parse import urlparse
+        parsed_target = urlparse(target_url)
+        scheme = parsed_target.scheme.lower()
+        
+        # E-CHECK 1: REJECT dangerous/unsupported schemes completely.
+        # They must not be iframe rendered, 302 redirected, or executed.
+        if scheme in ('javascript', 'data', 'file', 'vbscript', 'about'):
+            return _no_cache(HttpResponseBadRequest("Invalid, unsupported, or dangerous destination URL scheme."))
+
         if qr.cloaking_enabled:
             if _is_recursive_cloak_target(request, qr, target_url):
                 logger.error('Blocked recursive cloaking target for QR %s: %s', qr.pk, target_url)
@@ -2448,13 +2552,25 @@ def dqr_redirect_view(request, short_code):
                     'fallback_reason': 'The cloaked destination points back to this short URL.',
                 }))
 
-            frame_block_reason = _frame_block_reason(request, target_url)
+            # E8: Frame Target Policy - never cloak non-HTTP(S) schemes.
+            # Safe non-HTTP(S) schemes gracefully fallback to standard 302 redirect.
+            if scheme not in ('http', 'https'):
+                # We already blocked dangerous schemes above, so this redirect is safe.
+                return _no_cache(HttpResponseRedirect(target_url))
+                
             response = render(request, 'dynamic_qr/cloaked_redirect.html', {
                 'qr': qr,
                 'target_url': target_url,
-                'cloaking_blocked': bool(frame_block_reason),
-                'fallback_reason': frame_block_reason,
+                'cloaking_blocked': False, # SSRF probe removed. Relying strictly on client-side JS fallback.
+                'fallback_reason': None,
             })
+            
+            # E20 & E7 & E6: Security Headers for Cloaking Response
+            # Isolate the iframe and protect the parent application
+            response['Content-Security-Policy'] = "default-src 'none'; frame-src *; style-src 'unsafe-inline'; script-src 'unsafe-inline';"
+            response['Referrer-Policy'] = "no-referrer"
+            response['X-Content-Type-Options'] = "nosniff"
+            
             return _no_cache(response)
         
         return _no_cache(HttpResponseRedirect(target_url))
@@ -2800,10 +2916,23 @@ def dqr_redirect_with_header_view(request, header, short_code):
     Checks if the header matches the one in DB, then passes to dqr_redirect_view.
     """
     from django.db.models import Q
-    from django.http import Http404
+    from django.http import Http404, HttpResponseServerError
+    from django.core.exceptions import MultipleObjectsReturned
+    
+    from .models import ShortURLIdentifier
     
     # 1. Fetch QR code by short code (since it's globally unique)
-    qr = get_object_or_404(DynamicQRCode, Q(short_code=short_code) | Q(custom_alias=short_code))
+    try:
+        identifier = ShortURLIdentifier.objects.select_related("qr").get(value=short_code)
+        qr = identifier.qr
+    except ShortURLIdentifier.DoesNotExist:
+        try:
+            qr = DynamicQRCode.objects.get(Q(short_code=short_code) | Q(custom_alias=short_code))
+        except DynamicQRCode.DoesNotExist:
+            raise Http404("Short URL does not exist.")
+        except MultipleObjectsReturned:
+            logger.error(f"Ambiguous identifier '{short_code}': Multiple QR codes match this short code or custom alias.")
+            return HttpResponseServerError("Internal consistency error: ambiguous short URL identifier.")
     
     # 2. Verify that the requested header exactly matches the QR code's header
     if not qr.header or qr.header != header:

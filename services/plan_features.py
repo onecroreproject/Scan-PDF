@@ -52,27 +52,18 @@ def _get_billing_period(subscription):
     """Returns (period_start, period_end) for the current billing cycle."""
     now = timezone.now()
     start_date = subscription.start_date
+    from dateutil.relativedelta import relativedelta
 
     if subscription.billing_cycle == 'yearly':
-        years_diff = now.year - start_date.year
-        if (now.month, now.day) < (start_date.month, start_date.day):
-            years_diff -= 1
-        try:
-            period_start = start_date.replace(year=start_date.year + years_diff)
-        except ValueError:
-            # Handle Feb 29 leap year edge case
-            period_start = start_date.replace(year=start_date.year + years_diff, day=28)
-        try:
-            period_end = period_start.replace(year=period_start.year + 1)
-        except ValueError:
-            period_end = period_start.replace(year=period_start.year + 1, day=28)
+        years_diff = relativedelta(now, start_date).years
+        period_start = start_date + relativedelta(years=years_diff)
+        period_end = period_start + relativedelta(years=1)
     else:
-        # Monthly: approximate 30-day rolling periods from subscription start
-        months_diff = (now.year - start_date.year) * 12 + (now.month - start_date.month)
-        if now.day < start_date.day:
-            months_diff -= 1
-        period_start = start_date + datetime.timedelta(days=30 * months_diff)
-        period_end = period_start + datetime.timedelta(days=30)
+        # Monthly: calculate exact month boundary using relativedelta
+        diff = relativedelta(now, start_date)
+        months_diff = diff.years * 12 + diff.months
+        period_start = start_date + relativedelta(months=months_diff)
+        period_end = period_start + relativedelta(months=1)
 
     return period_start, period_end
 
@@ -97,19 +88,24 @@ def _get_current_usage(user, feature_key, subscription):
 
 
 def _get_effective_limit(user, feature_key, base_limit):
-    """Applies UsageOverride to base_limit and returns effective limit."""
-    override = UsageOverride.objects.filter(
+    """Applies UsageOverride to base_limit and returns effective limit.
+    Handles multiple overrides deterministically:
+    - Absolute limits (override_limit) take precedence, using the MAXIMUM value.
+    - If no absolute limits exist, sums all active additional allowances.
+    """
+    overrides = UsageOverride.objects.filter(
         user=user,
         feature_key=feature_key,
     ).filter(
         django_models.Q(expires_at__isnull=True) | django_models.Q(expires_at__gt=timezone.now())
-    ).first()
+    )
 
-    if override:
-        if override.override_limit is not None:
-            return override.override_limit
-        return base_limit + override.additional_allowance
-    return base_limit
+    absolute_limits = [o.override_limit for o in overrides if o.override_limit is not None]
+    if absolute_limits:
+        return max(absolute_limits)
+
+    total_additional = sum(o.additional_allowance for o in overrides)
+    return base_limit + total_additional
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -137,9 +133,9 @@ def get_plan_feature(user, feature_code):
 
 
 def has_feature(user, feature_code):
-    """Returns True if the user's plan has the feature enabled."""
+    """Returns True if the user's plan has the feature enabled and the core feature is active."""
     pf = get_plan_feature(user, feature_code)
-    return bool(pf and pf.enabled)
+    return bool(pf and pf.enabled and pf.feature.is_active)
 
 
 def get_feature_limit(user, feature_code):
@@ -148,7 +144,7 @@ def get_feature_limit(user, feature_code):
     Returns None for analytics feature (use history_days instead).
     """
     pf = get_plan_feature(user, feature_code)
-    if not pf or not pf.enabled:
+    if not pf or not pf.enabled or not pf.feature.is_active:
         return 0
     if pf.is_unlimited:
         return None  # None = unlimited
@@ -168,7 +164,7 @@ def get_feature_usage(user, feature_code):
 def get_feature_remaining(user, feature_code):
     """Returns remaining usage (None if unlimited, 0 if disabled)."""
     pf = get_plan_feature(user, feature_code)
-    if not pf or not pf.enabled:
+    if not pf or not pf.enabled or not pf.feature.is_active:
         return 0
     if pf.is_unlimited:
         return None
@@ -180,7 +176,7 @@ def get_feature_remaining(user, feature_code):
 def can_use_feature(user, feature_code):
     """Returns True if the user can use the feature right now (enabled + not at limit)."""
     pf = get_plan_feature(user, feature_code)
-    if not pf or not pf.enabled:
+    if not pf or not pf.enabled or not pf.feature.is_active:
         return False
     if pf.is_unlimited:
         return True
@@ -402,6 +398,7 @@ def check_and_increment_short_url_features(user, new_state, existing_qr=None):
             'custom_alias': bool,
             'shorturl_utm': bool,
             'shorturl_cloaking': bool,
+            'short_url': bool, # True on creation/edit requests
         }
 
     existing_qr: DynamicQRCode instance (None for new creation)
@@ -428,6 +425,7 @@ def check_and_increment_short_url_features(user, new_state, existing_qr=None):
             'custom_alias': lambda qr: bool(qr and qr.custom_alias),
             'shorturl_utm': lambda qr: bool(qr and qr.utm_enabled),
             'shorturl_cloaking': lambda qr: bool(qr and qr.cloaking_enabled),
+            'short_url': lambda qr: qr is not None,  # Base quota: only consumed on initial creation
         }
         feature_display_names = {
             'header': 'Custom Header',
@@ -438,6 +436,7 @@ def check_and_increment_short_url_features(user, new_state, existing_qr=None):
             'custom_alias': 'Custom Alias',
             'shorturl_utm': 'UTM Parameters',
             'shorturl_cloaking': 'URL Cloaking',
+            'short_url': 'Short URLs',
         }
 
         for code, is_active_now in new_state.items():

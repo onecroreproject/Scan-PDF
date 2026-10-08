@@ -163,3 +163,12 @@ class ShortURLFeatureQuotaTests(TestCase):
         )
         self.assertFalse(ok)
         self.assertEqual(error_code, 'feature_limit_reached')
+
+    def test_migration_seeds_features(self):
+        # We expect the migration to have seeded the features
+        self.assertTrue(Feature.objects.filter(key='header').exists())
+        self.assertTrue(Feature.objects.filter(key='custom_alias').exists())
+        
+        # Verify PlanFeature records are created
+        plan = Plan.objects.get(code='free')
+        self.assertTrue(PlanFeature.objects.filter(plan=plan, feature__key='header').exists())

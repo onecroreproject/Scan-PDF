@@ -149,6 +149,44 @@ DATA_UPLOAD_MAX_MEMORY_SIZE = 524288000  # 500 MB
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 10000
 
 # ═══════════════════════════════════════════════════════════════
+# CACHE CONFIGURATION
+# ═══════════════════════════════════════════════════════════════
+REDIS_CACHE_URL = os.environ.get('REDIS_CACHE_URL', 'redis://localhost:6379/1')
+USE_REDIS_CACHE = os.environ.get('USE_REDIS_CACHE', 'True').lower() == 'true'
+
+if USE_REDIS_CACHE:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django_redis.cache.RedisCache',
+            'LOCATION': REDIS_CACHE_URL,
+            'OPTIONS': {
+                'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+                'IGNORE_EXCEPTIONS': True, # Fail-open for general cache usage
+            }
+        },
+        'security': {
+            'BACKEND': 'django_redis.cache.RedisCache',
+            'LOCATION': REDIS_CACHE_URL,
+            'OPTIONS': {
+                'CLIENT_CLASS': 'django_redis.client.DefaultClient',
+                'IGNORE_EXCEPTIONS': False, # Fail-closed for security operations
+            }
+        }
+    }
+else:
+    # Development fallback
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': 'scanpdf-local-cache',
+        },
+        'security': {
+            'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+            'LOCATION': 'scanpdf-security-cache',
+        }
+    }
+
+# ═══════════════════════════════════════════════════════════════
 # CELERY CONFIGURATION
 # ═══════════════════════════════════════════════════════════════
 CELERY_BROKER_URL = os.environ.get('CELERY_BROKER_URL', 'redis://localhost:6379/0')

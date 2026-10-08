@@ -2,7 +2,7 @@ import json
 import os
 import logging
 from django.shortcuts import render
-from django.http import JsonResponse, StreamingHttpResponse, Http404
+from django.http import JsonResponse, StreamingHttpResponse, Http404, HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from media_tools.services.downloader_service import get_media_info, download_media_to_temp
 
@@ -70,7 +70,45 @@ def sanitize_filename(name):
     return clean[:200]
 
 def api_downloader_download(request):
-    """API endpoint to stream media download and clean up temp file."""
+    """API endpoint to prepare download (POST) or stream file (GET)."""
+    if request.method == "GET":
+        file_id = request.GET.get("file_id")
+        filename = request.GET.get("filename", "download")
+        
+        if not file_id or not re.match(r'^dl_[a-f0-9]+\.[a-zA-Z0-9]+$', file_id):
+            return HttpResponse("Invalid file ID", status=400)
+            
+        import tempfile
+        filepath = os.path.join(tempfile.gettempdir(), file_id)
+        if not os.path.exists(filepath):
+            return HttpResponse("File expired or not found", status=404)
+            
+        def file_iterator(path, chunk_size=8192):
+            try:
+                with open(path, 'rb') as f:
+                    while True:
+                        chunk = f.read(chunk_size)
+                        if not chunk:
+                            break
+                        yield chunk
+            finally:
+                try:
+                    if os.path.exists(path):
+                        os.remove(path)
+                except Exception as e:
+                    logger.error(f"Failed to delete temp file {path}: {str(e)}")
+
+        file_size = os.path.getsize(filepath)
+        content_type = "audio/mpeg" if filename.lower().endswith(".mp3") else "application/octet-stream"
+        
+        logger.info(f"YOUTUBE MP3 DIAGNOSTICS: Starting response. Content-Type: {content_type}, Size: {file_size}")
+
+        response = StreamingHttpResponse(file_iterator(filepath), content_type=content_type)
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+        response['Content-Length'] = str(file_size)
+        response['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
+        return response
+
     if request.method != "POST":
         return JsonResponse({"success": False, "message": "Method not allowed"}, status=405)
         
@@ -93,7 +131,7 @@ def api_downloader_download(request):
         if download_type == "image" and media_url:
             from urllib.parse import urlparse
             hostname = urlparse(media_url).hostname or ""
-            if not (hostname.endswith('.cdninstagram.com') or hostname.endswith('.fbcdn.net') or hostname.endswith('.threads.net')):
+            if not (hostname.endswith('.cdninstagram.com') or hostname.endswith('.fbcdn.net') or hostname.endswith('.threads.net') or hostname.endswith('.twimg.com')):
                 return JsonResponse({"success": False, "message": "Invalid media URL host."}, status=400)
                 
             import urllib.request
@@ -118,7 +156,6 @@ def api_downloader_download(request):
                     out_io = io.BytesIO()
                     if image_format == "jpg":
                         if img.mode in ("RGBA", "P", "LA"):
-                            # Handle transparency correctly by pasting on white background
                             bg = Image.new("RGB", img.size, (255, 255, 255))
                             if img.mode in ("RGBA", "LA"):
                                 bg.paste(img, mask=img.split()[-1])
@@ -143,39 +180,34 @@ def api_downloader_download(request):
                 if "png" in content_type: ext = "png"
                 elif "webp" in content_type: ext = "webp"
 
-            content_length = str(len(image_data))
-
-            def stream_generator():
-                yield image_data
-
-            response = StreamingHttpResponse(stream_generator(), content_type=content_type)
-            response['Content-Disposition'] = f'attachment; filename="threads-image.{ext}"'
-            response['Content-Length'] = content_length
-            return response
+            import tempfile, uuid
+            temp_dir = tempfile.gettempdir()
+            file_id = f"dl_{uuid.uuid4().hex}.{ext}"
+            filepath = os.path.join(temp_dir, file_id)
+            with open(filepath, 'wb') as f:
+                f.write(image_data)
+                
+            prefix = "media"
+            if 'twimg.com' in hostname: prefix = "twitter"
+            elif 'cdninstagram.com' in hostname: prefix = "instagram"
+            elif 'fbcdn.net' in hostname: prefix = "facebook"
+            elif 'threads.net' in hostname: prefix = "threads"
+                
+            return JsonResponse({
+                "success": True, 
+                "file_id": file_id,
+                "filename": f"{prefix}-image.{ext}"
+            })
             
         filepath, filename = download_media_to_temp(url, format_id, download_type, audio_quality)
         safe_filename = sanitize_filename(filename) or f"downloaded_media.{'mp3' if download_type == 'audio' else 'mp4'}"
         
-        # Stream the file and delete it after
-        def file_iterator(path, chunk_size=8192):
-            try:
-                with open(path, 'rb') as f:
-                    while True:
-                        chunk = f.read(chunk_size)
-                        if not chunk:
-                            break
-                        yield chunk
-            finally:
-                try:
-                    if os.path.exists(path):
-                        os.remove(path)
-                except Exception as e:
-                    logger.error(f"Failed to delete temp file {path}: {str(e)}")
-
-        response = StreamingHttpResponse(file_iterator(filepath), content_type="application/octet-stream")
-        response['Content-Disposition'] = f'attachment; filename="{safe_filename}"'
-        response['Cache-Control'] = 'no-store, no-cache, must-revalidate, max-age=0'
-        return response
+        file_id = os.path.basename(filepath)
+        return JsonResponse({
+            "success": True, 
+            "file_id": file_id,
+            "filename": safe_filename
+        })
         
     except ValueError as e:
         if filepath and os.path.exists(filepath):
