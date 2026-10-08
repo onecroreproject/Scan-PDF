@@ -1556,6 +1556,7 @@ def convert_pdf_to_excel(input_path, original_name):
 # ═══════════════════════════════════════════════════════════════
 def merge_pdfs(input_paths, original_name):
     """Merge multiple PDF files into a single PDF."""
+    import os
     try:
         import pymupdf as fitz
     except ImportError:
@@ -1569,9 +1570,33 @@ def merge_pdfs(input_paths, original_name):
 
     merged = fitz.open()
     for path in input_paths:
-        pdf = fitz.open(path)
-        merged.insert_pdf(pdf)
+        if os.path.getsize(path) == 0:
+            merged.close()
+            raise Exception("INVALID_PDF: One of the selected files is empty.")
+            
+        try:
+            pdf = fitz.open(path)
+        except Exception:
+            merged.close()
+            raise Exception("INVALID_PDF: One of the selected files is corrupted or not a valid PDF.")
+            
+        if pdf.is_encrypted:
+            pdf.close()
+            merged.close()
+            raise Exception("ENCRYPTED_PDF: One of the selected files is password-protected. Please unlock it before merging.")
+            
+        try:
+            merged.insert_pdf(pdf)
+        except Exception as e:
+            pdf.close()
+            merged.close()
+            raise Exception(f"MERGE_FAILED: Could not merge one of the files. Error: {str(e)}")
+            
         pdf.close()
+
+    if len(merged) == 0:
+        merged.close()
+        raise Exception("MERGE_FAILED: The resulting PDF has no pages.")
 
     merged.save(output_path)
     merged.close()
@@ -1583,6 +1608,7 @@ def merge_pdfs(input_paths, original_name):
 # ═══════════════════════════════════════════════════════════════
 def split_pdf(input_path, original_name, split_mode='each', page_ranges=None):
     """Split a PDF into individual pages or custom ranges. Returns a zip."""
+    import os
     try:
         import pymupdf as fitz
     except ImportError:
@@ -1591,30 +1617,63 @@ def split_pdf(input_path, original_name, split_mode='each', page_ranges=None):
         fitz.open = fitz.Document
     import zipfile
 
+    if os.path.getsize(input_path) == 0:
+        raise Exception("INVALID_PDF: The uploaded file is empty.")
+
+    try:
+        pdf = fitz.open(input_path)
+    except Exception:
+        raise Exception("INVALID_PDF: The uploaded file is corrupted or not a valid PDF.")
+
+    if pdf.is_encrypted:
+        pdf.close()
+        raise Exception("ENCRYPTED_PDF: This PDF is password-protected. Please unlock it before splitting.")
+
+    total_pages = len(pdf)
+    if total_pages == 0:
+        pdf.close()
+        raise Exception("INVALID_PDF: The PDF has no pages.")
+
     _, output_dir = ensure_media_dirs()
     base_name = Path(original_name).stem
     zip_path = get_output_path(original_name, 'zip', suffix='_split')
 
-    pdf = fitz.open(input_path)
-    total_pages = len(pdf)
-
     with zipfile.ZipFile(zip_path, 'w', zipfile.ZIP_DEFLATED) as zipf:
         if split_mode == 'ranges' and page_ranges:
-            # Parse ranges like "1-3,5,7-9"
-            for part in page_ranges.split(','):
-                part = part.strip()
+            parts = [p.strip() for p in page_ranges.split(',') if p.strip()]
+            if not parts:
+                pdf.close()
+                raise Exception("INVALID_RANGE: Please specify at least one page or range.")
+
+            for part in parts:
                 if '-' in part:
-                    start, end = part.split('-', 1)
-                    start = max(1, int(start.strip()))
-                    end = min(total_pages, int(end.strip()))
+                    try:
+                        start_str, end_str = part.split('-', 1)
+                        start = int(start_str.strip())
+                        end = int(end_str.strip())
+                    except ValueError:
+                        pdf.close()
+                        raise Exception(f"INVALID_RANGE: Invalid format '{part}'.")
+                    
+                    if start > end:
+                        pdf.close()
+                        raise Exception(f"INVALID_RANGE: Start page cannot be greater than end page '{part}'.")
                 else:
-                    start = end = max(1, min(int(part.strip()), total_pages))
+                    try:
+                        start = end = int(part)
+                    except ValueError:
+                        pdf.close()
+                        raise Exception(f"INVALID_RANGE: Invalid page number '{part}'.")
+
+                if start < 1 or end > total_pages:
+                    pdf.close()
+                    raise Exception(f"PAGE_OUT_OF_RANGE: Range '{part}' is out of bounds (1-{total_pages}).")
 
                 out_pdf = fitz.open()
                 for p in range(start - 1, end):
                     out_pdf.insert_pdf(pdf, from_page=p, to_page=p)
 
-                fname = f"{base_name}_pages_{start}-{end}.pdf"
+                fname = f"{base_name}_pages_{start}-{end}.pdf" if start != end else f"{base_name}_page_{start}.pdf"
                 tmp_path = os.path.join(output_dir, fname)
                 out_pdf.save(tmp_path)
                 out_pdf.close()
@@ -1624,7 +1683,6 @@ def split_pdf(input_path, original_name, split_mode='each', page_ranges=None):
                 except OSError:
                     pass
         else:
-            # Split each page
             for i in range(total_pages):
                 out_pdf = fitz.open()
                 out_pdf.insert_pdf(pdf, from_page=i, to_page=i)

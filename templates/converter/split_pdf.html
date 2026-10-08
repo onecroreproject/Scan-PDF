@@ -2,2015 +2,827 @@
 {% load static %}
 
 {% block tool_content %}
-
 <style>
-
 /* =========================================================
-   PAGE HEADING
+   CLEAN CONVERTER STYLES
    ========================================================= */
 
 .tool-heading {
-    font-size: 3.5rem;
-    line-height: 0.95;
+    font-size: clamp(2rem, 5vw + 1rem, 3.5rem);
+    line-height: 1.1;
     font-weight: 900;
-    letter-spacing: -0.04em;
+    letter-spacing: -0.02em;
+    color: #1e1b4b;
 }
 
-.gradient-text {
-    background: linear-gradient(
-        135deg,
-        #7c3aed,
-        #a855f7,
-        #ec4899
-    );
-
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-
-/* =========================================================
-   PURPLE BUTTON
-   ========================================================= */
-
+/* Purple button */
 .purple-btn {
-    background: linear-gradient(
-        135deg,
-        #6d28d9 0%,
-        #7c3aed 45%,
-        #a855f7 100%
-    );
-
+    background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
     color: white;
-
-    box-shadow:
-        0 8px 25px rgba(124, 58, 237, 0.25);
-
-    transition:
-        all 0.25s ease;
+    box-shadow: 0 4px 14px rgba(124, 58, 237, 0.3);
+    transition: all 0.2s ease;
 }
-
 .purple-btn:hover {
     transform: translateY(-2px);
-
-    box-shadow:
-        0 12px 30px rgba(124, 58, 237, 0.38);
+    box-shadow: 0 6px 20px rgba(124, 58, 237, 0.4);
 }
-
 .purple-btn:active {
     transform: translateY(0);
 }
-
 .purple-btn:disabled {
-    opacity: 0.45;
+    opacity: 0.6;
     cursor: not-allowed;
     transform: none;
-
     box-shadow: none;
 }
 
-
-/* =========================================================
-   SELECT FILE AREA
-   ========================================================= */
-
-.select-file-area {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-
-    padding: 2rem;
-
-    border: 2px dashed transparent;
-    border-radius: 20px;
-
-    transition: all 0.25s ease;
-}
-
-.select-file-area.drag-active {
-    border-color: #7c3aed;
-    background: #faf5ff;
-}
-
-
-/* =========================================================
-   SELECTED FILE CARD
-   ========================================================= */
-
-.selected-file-card {
+/* Central Area */
+.hero-dropzone {
     width: 100%;
-    max-width: 620px;
-
-    margin-top: 1.25rem;
-
-    padding: 1rem;
-
-    border-radius: 1rem;
-
-    background: #ddd6fe;
-
-    border: 1px solid #ddd6fe;
+    transition: all 0.2s ease;
+    border: 2px dashed transparent;
 }
 
-.remove-file-btn {
-    width: 38px;
-    height: 38px;
+.hero-dropzone.drag-active {
+    background: #faf5ff;
+    border-color: #a855f7;
+}
 
-    border-radius: 10px;
+/* Progress Fill */
+.progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #7c3aed, #a855f7);
+    border-radius: 999px;
+    transition: width 0.4s ease;
+}
 
-    border: 1px solid #ddd6fe;
-
-    background: #f5f3ff;
-
-    color: #7c3aed;
-
+.selected-file-box {
     display: flex;
     align-items: center;
-    justify-content: center;
-
-    cursor: pointer;
-
-    transition: all 0.2s ease;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    border-radius: 16px;
+    background: white;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    border: 1px solid #f3e8ff;
+    width: 100%;
+    max-width: 450px;
+    margin-bottom: 1.5rem;
 }
 
-.remove-file-btn:hover {
-    background: #7c3aed;
-    color: white;
-}
-
-
-/* =========================================================
-   SPLIT OPTIONS
-   ========================================================= */
-
-#split-options {
-    padding-top: 1.5rem;
-
-    border-top: 1px solid #f1f5f9;
-}
-
-#split-options h3 {
-    color: #7c3aed;
-}
-
+/* Split Options */
 .split-option-card {
     border-color: #e5e7eb;
     background: #fafafa;
-
     transition: all 0.25s ease;
 }
-
 .split-option-card:hover {
     border-color: #c4b5fd;
     background: #faf5ff;
 }
-
 .split-option-radio:checked + .split-option-card {
     border-color: #7c3aed;
     background: #faf5ff;
-
-    box-shadow:
-        0 8px 25px rgba(124, 58, 237, 0.10);
+    box-shadow: 0 8px 25px rgba(124, 58, 237, 0.10);
 }
-
 .split-option-radio:checked + .split-option-card i {
     color: #7c3aed;
 }
 
-
-/* =========================================================
-   RANGE INPUT
-   ========================================================= */
-
-#page-ranges {
-    border-color: #e5e7eb;
-}
-
+/* Range Input */
 #page-ranges:focus {
     border-color: #7c3aed;
-
-    box-shadow:
-        0 0 0 4px rgba(124, 58, 237, 0.06);
+    box-shadow: 0 0 0 4px rgba(124, 58, 237, 0.06);
 }
-
-
-/* =========================================================
-   PROGRESS
-   ========================================================= */
-
-.progress-card {
-    background: #fafafa;
-
-    border: 1px solid #f1f5f9;
-
-    border-radius: 1rem;
-
-    padding: 1rem 1.5rem;
-}
-
-.progress-spinner {
-    width: 32px;
-    height: 32px;
-
-    border-radius: 50%;
-
-    border: 3px solid #e2e8f0;
-
-    border-top-color: #7c3aed;
-
-    animation: spin 0.8s linear infinite;
-}
-
-.progress-fill {
-    height: 100%;
-
-    width: 0%;
-
-    background: linear-gradient(
-        90deg,
-        #6d28d9,
-        #7c3aed,
-        #a855f7,
-        #ec4899
-    );
-
-    border-radius: 999px;
-
-    transition: width 0.4s ease;
-}
-
-@keyframes spin {
-
-    to {
-        transform: rotate(360deg);
-    }
-
-}
-
-
-/* =========================================================
-   SUCCESS CARD
-   ========================================================= */
-
-.success-card {
-    text-align: center;
-
-    padding: 1.5rem;
-
-    border-radius: 1rem;
-
-    background: #faf5ff;
-
-    border: 1px solid #e9d5ff;
-}
-
-.success-icon {
-    width: 64px;
-    height: 64px;
-
-    border-radius: 1rem;
-
-    background: #ede9fe;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    margin: 0 auto 1rem;
-}
-
-.success-icon i {
-    color: #7c3aed;
-}
-
-
-/* =========================================================
-   DOWNLOAD BUTTON
-   ========================================================= */
-
-.download-btn {
-    background: linear-gradient(
-        135deg,
-        #16a34a,
-        #22c55e
-    );
-
-    color: #ffffff;
-
-    box-shadow:
-        0 4px 12px rgba(34, 197, 94, 0.25);
-
-    transition: all 0.25s ease;
-}
-
-.download-btn:hover {
-    transform: translateY(-2px);
-
-    box-shadow:
-        0 8px 20px rgba(34, 197, 94, 0.32);
-}
-
-.download-btn:active {
-    transform: translateY(0);
-}
-
-
-/* =========================================================
-   ERROR
-   ========================================================= */
-
-.error-card {
-    padding: 1.25rem;
-
-    border-radius: 1rem;
-
-    background: #fef2f2;
-
-    border: 1px solid #fee2e2;
-}
-
-
-/* =========================================================
-   MOBILE
-   ========================================================= */
-
-@media (max-width: 768px) {
-
-    .tool-heading {
-        font-size: 3rem;
-    }
-
-}
-
-@media (max-width: 480px) {
-
-    .tool-heading {
-        font-size: 2.6rem;
-    }
-
-    .select-file-area {
-        padding: 1.5rem 1rem;
-    }
-
-}
-
 </style>
 
-
 <!-- =========================================================
-     PAGE HEADER
+     PAGE HEADER & CONVERTER
      ========================================================= -->
+<section id="hero-dropzone" class="hero-dropzone text-center pt-10 pb-10 px-4 w-full">
 
-<section class="text-center mb-8 sm:mb-10">
-
-    <h1 class="tool-heading text-surface-900 mb-3">
-
-        <span class="block">
-            {{ s1 }}
-        </span>
-
-        <span class="block gradient-text">
-            {{ highlight }}
-        </span>
-
+    <h1 class="tool-heading mb-4 text-center">
+        <span class="text-surface-900">Split PDF </span>
+        <span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-700 to-purple-500">Online</span>
     </h1>
-
-
-    <!-- SEO INTRO -->
-
-    <p class="max-w-3xl mx-auto text-sm sm:text-base lg:text-lg text-surface-500 leading-relaxed">
-
-        {{ seo_intro }}
-
+    <p class="text-[16px] md:text-[17px] leading-relaxed text-surface-500 max-w-[740px] mx-auto text-center font-medium mb-8 px-4">
+        Extract selected pages or split your PDF into smaller documents while keeping the original page quality.
     </p>
 
+    <!-- Central Converter Interaction Area -->
+    <div class="flex flex-col items-center w-full max-w-[600px] mx-auto">
+        
+        <!-- =====================================================
+             STATE: IDLE (SELECT FILE)
+             ===================================================== -->
+        <div id="state-idle" class="flex flex-col items-center w-full">
+            <button type="button" id="select-file-btn" class="purple-btn px-10 py-4 rounded-2xl text-white font-bold text-[15px] tracking-wide flex items-center justify-center gap-3 w-full sm:w-auto">
+                <i data-lucide="upload" class="w-5 h-5"></i>
+                SELECT PDF
+            </button>
+            <p id="drop-text" class="text-surface-500 text-[15px] mt-3 font-medium">Drop your PDF file here</p>
+            <input type="file" id="file-input" class="hidden" accept=".pdf">
+        </div>
 
-    <!-- SEO KEYWORDS -->
+        <!-- =====================================================
+             STATE: FILE SELECTED & SPLIT OPTIONS
+             ===================================================== -->
+        <div id="state-selected" class="hidden flex flex-col items-center w-full animate-fade-in-up">
+            
+            <div class="selected-file-box relative">
+                <div class="w-10 h-10 bg-purple-50 rounded-lg flex items-center justify-center flex-shrink-0 text-purple-600">
+                    <i data-lucide="file-check-2" class="w-5 h-5"></i>
+                </div>
+                <div class="flex-1 min-w-0 text-left pr-8">
+                    <p id="file-name" class="text-surface-900 font-bold text-[14px] truncate"></p>
+                    <div class="flex items-center gap-2 mt-0.5">
+                        <span id="file-size" class="text-surface-500 text-[12px]"></span>
+                        <span class="text-surface-300 text-[10px]">•</span>
+                        <span class="text-green-600 text-[12px] font-semibold flex items-center gap-1"><i data-lucide="check" class="w-3 h-3"></i> Ready</span>
+                    </div>
+                </div>
+                <button type="button" id="remove-file-btn" class="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center rounded-lg text-surface-400 hover:text-red-500 hover:bg-red-50 transition-colors" title="Remove file">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+            
+            <div class="w-full max-w-[500px]">
+                <p class="text-[12px] font-bold text-surface-400 uppercase tracking-widest mb-3 text-center">Split Method</p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-5">
+                    <!-- Custom Ranges -->
+                    <label class="cursor-pointer">
+                        <input type="radio" name="split_mode" value="ranges" checked class="hidden split-option-radio">
+                        <div class="split-option-card p-4 rounded-2xl border-2 text-center h-full">
+                            <div class="w-8 h-8 rounded-xl bg-white border border-surface-100 flex items-center justify-center mx-auto mb-2">
+                                <i data-lucide="scissors" class="w-4 h-4 text-surface-400"></i>
+                            </div>
+                            <p class="text-sm font-bold text-surface-700">Extract Pages</p>
+                            <p class="text-[11px] text-surface-400 mt-1">e.g. 1-3, 5, 7-9</p>
+                        </div>
+                    </label>
 
-    {% if seo_keywords %}
+                    <!-- Every Page -->
+                    <label class="cursor-pointer">
+                        <input type="radio" name="split_mode" value="each" class="hidden split-option-radio">
+                        <div class="split-option-card p-4 rounded-2xl border-2 text-center h-full">
+                            <div class="w-8 h-8 rounded-xl bg-white border border-surface-100 flex items-center justify-center mx-auto mb-2">
+                                <i data-lucide="layers" class="w-4 h-4 text-surface-400"></i>
+                            </div>
+                            <p class="text-sm font-bold text-surface-700">Split Every Page</p>
+                            <p class="text-[11px] text-surface-400 mt-1">Extract all pages to ZIP</p>
+                        </div>
+                    </label>
+                </div>
 
-    <p class="max-w-3xl mx-auto mt-2 text-xs sm:text-sm text-surface-400 leading-relaxed">
+                <!-- Range Input -->
+                <div id="ranges-input-wrap" class="w-full mb-6">
+                    <div class="relative group">
+                        <input type="text" id="page-ranges" placeholder="1-3, 5, 8-10" class="w-full px-5 py-4 rounded-xl border border-surface-200 bg-surface-50 focus:bg-white outline-none transition-all text-sm font-bold text-surface-900 placeholder:text-surface-400 shadow-sm">
+                        <i data-lucide="hash" class="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-surface-300"></i>
+                    </div>
+                    <p class="text-[11px] text-surface-500 mt-2 text-center">Use commas for individual pages and hyphens for ranges.</p>
+                </div>
+            </div>
+            
+            <button type="button" id="convert-btn" class="purple-btn px-10 py-4 rounded-2xl text-white font-bold text-[15px] tracking-wide flex items-center justify-center gap-3 w-full sm:w-auto">
+                <i data-lucide="split" class="w-5 h-5"></i>
+                SPLIT PDF
+            </button>
+        </div>
 
-        {{ seo_keywords }}
+        <!-- =====================================================
+             STATE: CONVERTING
+             ===================================================== -->
+        <div id="state-converting" class="hidden flex flex-col items-center w-full max-w-[320px]">
+            <div class="flex items-center justify-center gap-2 mb-4 text-purple-600 font-bold text-[15px]">
+                <i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i>
+                Splitting PDF...
+            </div>
+            
+            <div class="w-full h-2 rounded-full bg-purple-100 overflow-hidden mb-2">
+                <div id="progress-bar" class="progress-fill w-full opacity-50"></div>
+            </div>
+            
+            <div class="flex justify-center items-center w-full px-1">
+                <p id="progress-status" class="text-surface-500 text-[13px] font-medium">Processing page extraction...</p>
+            </div>
+        </div>
 
-    </p>
+        <!-- =====================================================
+             STATE: SUCCESS
+             ===================================================== -->
+        <div id="state-success" class="hidden flex flex-col items-center w-full">
+            <div class="w-12 h-12 bg-green-50 text-green-600 rounded-full flex items-center justify-center mb-4 mx-auto">
+                <i data-lucide="check" class="w-6 h-6"></i>
+            </div>
+            <h3 class="text-xl font-black text-surface-900 mb-1">PDF Split Successfully</h3>
+            <p class="text-surface-500 text-[15px] mb-6">Your extracted document is ready.</p>
+            
+            <a id="download-btn" href="#" class="purple-btn px-10 py-4 rounded-2xl text-white font-bold text-[15px] tracking-wide flex items-center justify-center gap-3 w-full sm:w-auto mb-4">
+                <i data-lucide="download" class="w-5 h-5"></i>
+                DOWNLOAD RESULT
+            </a>
+            
+            <button type="button" id="convert-another-btn" class="text-purple-600 font-semibold text-[14px] hover:text-purple-800 transition-colors">
+                SPLIT ANOTHER PDF
+            </button>
+        </div>
 
-    {% endif %}
+        <!-- =====================================================
+             STATE: ERROR
+             ===================================================== -->
+        <div id="state-error" class="hidden flex flex-col items-center w-full">
+            <div class="w-12 h-12 bg-red-50 text-red-600 rounded-full flex items-center justify-center mb-4 mx-auto">
+                <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+            </div>
+            <h3 class="text-lg font-black text-surface-900 mb-1">Split failed</h3>
+            <p id="error-message" class="text-surface-500 text-[14px] mb-6 whitespace-pre-wrap">We couldn't split this file.</p>
+            
+            <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto justify-center">
+                <button type="button" id="retry-btn" class="purple-btn px-8 py-3.5 rounded-xl text-white font-bold text-[14px] tracking-wide flex items-center justify-center gap-2">
+                    TRY AGAIN
+                </button>
+            </div>
+        </div>
+
+    </div>
 
 </section>
 
 
-
 <!-- =========================================================
-     MAIN CARD
+     PREMIUM INSTRUCTIONS
      ========================================================= -->
-
-<div class="rounded-2xl bg-white border border-surface-100 p-4 sm:p-6 shadow-mega">
-
-
-    <!-- =====================================================
-         SELECT FILE AREA
-         ===================================================== -->
-
-    <div
-        id="select-file-area"
-        class="select-file-area"
-    >
+<div class="mt-12 sm:mt-16 border-t border-surface-100 pt-16 sm:pt-24 pb-20 relative">
+    
+    <!-- Decorative background elements -->
+    <div class="absolute top-40 left-0 w-[500px] h-[500px] bg-purple-100/40 rounded-full blur-[120px] -z-10 pointer-events-none"></div>
+    <div class="absolute top-[800px] right-0 w-[600px] h-[600px] bg-purple-50/60 rounded-full blur-[100px] -z-10 pointer-events-none"></div>
 
 
-        <!-- Select File Button -->
-
-        <button
-            type="button"
-            id="select-file-btn"
-            class="purple-btn px-8 py-3 rounded-2xl text-white font-black text-sm sm:text-base uppercase tracking-widest flex items-center justify-center gap-3"
-        >
-
-            <i
-                data-lucide="upload"
-                class="w-5 h-5"
-            ></i>
-
-            Select File
-
-        </button>
-
-
-        <!-- File Information -->
-
-        <p class="text-xs text-surface-400 mt-3">
-
-            Max 50MB
-            &nbsp;&nbsp;•&nbsp;&nbsp;
-            Accepted:
-
-            <span class="text-surface-500 font-medium">
-                .pdf
-            </span>
-
-        </p>
-
-
-        <!-- =================================================
-             SELECTED FILE
-             ================================================= -->
-
-        <div
-            id="file-selected"
-            class="hidden selected-file-card"
-        >
-
-            <div class="flex items-center gap-4">
-
-
-                <!-- File Icon -->
-
-                <div
-                    class="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center flex-shrink-0"
-                >
-
-                    <i
-                        data-lucide="file-check-2"
-                        class="w-6 h-6 text-purple-600"
-                    ></i>
-
+    <!-- 01. SECTION: EXTRACT THE PAGES YOU NEED -->
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mb-12 md:mb-16">
+        <div class="grid md:grid-cols-[1fr_1fr] items-center gap-10 md:gap-16">
+            <div class="order-2 md:order-1 pr-0 md:pr-4">
+                <div class="flex items-center gap-2 text-purple-600 font-bold tracking-widest text-[12px] uppercase mb-4">
+                    <i data-lucide="scissors" class="w-3.5 h-3.5"></i> EXTRACT PAGES
                 </div>
-
-
-                <!-- File Details -->
-
-                <div class="text-left min-w-0 flex-1">
-
-                    <p
-                        id="file-name"
-                        class="text-surface-800 font-bold text-sm truncate"
-                    ></p>
-
-                    <p
-                        id="file-size"
-                        class="text-xs text-surface-400 mt-1"
-                    ></p>
-
-                </div>
-
-
-                <!-- Remove -->
-
-                <button
-                    type="button"
-                    id="remove-file-btn"
-                    class="remove-file-btn"
-                    title="Remove file"
-                >
-
-                    <i
-                        data-lucide="x"
-                        class="w-5 h-5"
-                    ></i>
-
-                </button>
-
-            </div>
-
-        </div>
-
-
-        <!-- Hidden File Input -->
-
-        <input
-            type="file"
-            id="file-input"
-            class="hidden"
-            accept=".pdf"
-        >
-
-    </div>
-
-
-
-    <!-- =====================================================
-         SPLIT OPTIONS
-         ===================================================== -->
-
-    <div
-        id="split-options"
-        class="hidden mt-3 flex flex-col items-center gap-3 animate-fade-in-up"
-    >
-
-
-        <span
-            class="text-[11px] font-black text-surface-400 uppercase tracking-widest"
-        >
-
-            Split Method
-
-        </span>
-
-
-        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 w-full max-w-2xl">
-
-
-            <!-- EVERY PAGE -->
-
-            <label class="cursor-pointer">
-
-                <input
-                    type="radio"
-                    name="split_mode"
-                    value="each"
-                    checked
-                    class="hidden split-option-radio"
-                >
-
-                <div
-                    class="split-option-card p-4 rounded-2xl border-2 text-center"
-                >
-
-                    <div
-                        class="w-8 h-8 rounded-xl bg-white border border-surface-100 flex items-center justify-center mx-auto mb-2"
-                    >
-
-                        <i
-                            data-lucide="layers"
-                            class="w-5 h-5 text-surface-400"
-                        ></i>
-
-                    </div>
-
-
-                    <p class="text-sm font-bold text-surface-700">
-
-                        Every Page
-
-                    </p>
-
-
-                    <p class="text-[11px] text-surface-400 mt-1">
-
-                        Split into individual pages
-
-                    </p>
-
-                </div>
-
-            </label>
-
-
-            <!-- CUSTOM RANGES -->
-
-            <label class="cursor-pointer">
-
-                <input
-                    type="radio"
-                    name="split_mode"
-                    value="ranges"
-                    class="hidden split-option-radio"
-                >
-
-                <div
-                    class="split-option-card p-4 rounded-2xl border-2 text-center"
-                >
-
-                    <div
-                        class="w-8 h-8 rounded-xl bg-white border border-surface-100 flex items-center justify-center mx-auto mb-2"
-                    >
-
-                        <i
-                            data-lucide="scissors"
-                            class="w-5 h-5 text-surface-400"
-                        ></i>
-
-                    </div>
-
-
-                    <p class="text-sm font-bold text-surface-700">
-
-                        Custom Ranges
-
-                    </p>
-
-
-                    <p class="text-[11px] text-surface-400 mt-1">
-
-                        e.g. 1-3, 5, 7-9
-
-                    </p>
-
-                </div>
-
-            </label>
-
-
-        </div>
-
-
-
-        <!-- =================================================
-             RANGE INPUT
-             ================================================= -->
-
-        <div
-            id="ranges-input-wrap"
-            class="hidden w-full max-w-2xl animate-fade-in-up"
-        >
-
-            <div class="relative group">
-
-                <input
-                    type="text"
-                    id="page-ranges"
-                    placeholder="e.g. 1-3, 5, 7-9"
-                    class="w-full px-5 py-4 rounded-xl border bg-surface-50 focus:bg-white outline-none transition-all text-sm font-bold text-surface-900 placeholder:text-surface-400"
-                >
-
-                <i
-                    data-lucide="hash"
-                    class="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-surface-300"
-                ></i>
-
-            </div>
-
-
-            <p class="text-[10px] text-surface-400 mt-2 ml-1">
-
-                Separate ranges with commas.
-                Use dashes for page ranges.
-
-            </p>
-
-        </div>
-
-
-
-        <!-- =================================================
-             CONVERT BUTTON
-             ================================================= -->
-
-        <div class="text-center">
-
-            <button
-                type="button"
-                id="convert-btn"
-                disabled
-                class="purple-btn w-auto mx-auto px-8 py-3 mt-2 sm:py-4 rounded-2xl text-white font-black text-sm sm:text-base uppercase tracking-widest flex items-center justify-center gap-3"
-            >
-
-                <i
-                    data-lucide="split"
-                    class="w-5 h-5"
-                ></i>
-
-                Split PDF
-
-            </button>
-
-        </div>
-
-    </div>
-
-
-
-    <!-- =====================================================
-         PROGRESS STATE
-         ===================================================== -->
-
-    <div
-        id="progress-section"
-        class="hidden mt-4"
-    >
-
-
-        <div class="progress-card flex items-center gap-4">
-
-
-            <!-- Spinner -->
-
-            <div class="relative flex-shrink-0">
-
-                <div class="progress-spinner"></div>
-
-            </div>
-
-
-            <!-- Text -->
-
-            <div class="min-w-0">
-
-                <p class="text-surface-800 font-bold text-base">
-
-                    Splitting your PDF…
-
+                <h3 class="text-2xl md:text-[2rem] font-bold text-surface-900 mb-5 leading-tight tracking-tight">Extract the Pages You Need</h3>
+                <p class="text-surface-500 text-[17px] leading-relaxed mb-8">
+                    Choose specific pages from a larger PDF and create a smaller document containing only the pages you need. No more bulky files.
                 </p>
+            </div>
+            
+            <div class="order-1 md:order-2">
+                <div class="relative bg-purple-50/50 rounded-[28px] p-8 py-14 flex items-center justify-center border border-purple-100/50 shadow-[inset_0_0_0_1px_rgba(255,255,255,1),0_8px_30px_-12px_rgba(147,51,234,0.1)] group transition-transform duration-300 hover:-translate-y-1">
+                    <div class="flex items-center gap-6 relative z-10 w-full justify-center">
+                        <div class="w-[100px] h-[140px] bg-white rounded-xl shadow-lg border-2 border-purple-300 flex items-center justify-center relative z-10 flex-col gap-2">
+                            <span class="w-6 h-6 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center text-xs font-bold">1-6</span>
+                        </div>
+                        <div class="flex flex-col items-center justify-center w-10 h-10 bg-white rounded-full shadow-lg text-purple-700 z-20 border border-purple-200 font-bold">
+                            <i data-lucide="arrow-right" class="w-6 h-6"></i>
+                        </div>
+                        <div class="flex gap-2">
+                            <div class="w-[60px] h-[80px] bg-white rounded-xl shadow border border-purple-400 flex items-center justify-center relative z-10">
+                                <span class="text-xs font-bold text-purple-600">2</span>
+                            </div>
+                            <div class="w-[60px] h-[80px] bg-white rounded-xl shadow border border-purple-400 flex items-center justify-center relative z-10">
+                                <span class="text-xs font-bold text-purple-600">3</span>
+                            </div>
+                            <div class="w-[60px] h-[80px] bg-white rounded-xl shadow border border-purple-400 flex items-center justify-center relative z-10">
+                                <span class="text-xs font-bold text-purple-600">5</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-                <p class="text-xs text-surface-400 mt-1">
-
-                    Processing page extraction
-
+    <!-- 02. SECTION: PAGE PRESERVATION -->
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mb-12 md:mb-16">
+        <div class="grid md:grid-cols-[1fr_1fr] items-center gap-10 md:gap-16">
+            <div class="order-1 md:order-1">
+                <div class="relative bg-surface-50/60 rounded-[28px] p-8 py-14 flex items-center justify-center border border-surface-200/50 shadow-[inset_0_0_0_1px_rgba(255,255,255,1)] group transition-transform duration-300 hover:-translate-y-1 overflow-hidden">
+                    <div class="flex gap-6 relative z-10 items-center justify-center w-full">
+                        <div class="w-[90px] h-[130px] bg-white rounded-lg shadow border border-purple-300 p-2 flex flex-col">
+                            <div class="mt-auto flex justify-center"><span class="text-[9px] font-bold text-purple-700 uppercase">A4</span></div>
+                        </div>
+                        <div class="w-[110px] h-[90px] bg-white rounded-lg shadow border border-blue-300 p-2 flex flex-col">
+                            <div class="mt-auto flex justify-center"><span class="text-[9px] font-bold text-blue-700 uppercase">Letter</span></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="order-2 md:order-2 pl-0 md:pl-4">
+                <div class="flex items-center gap-2 text-purple-600 font-bold tracking-widest text-[12px] uppercase mb-4">
+                    <i data-lucide="shield-check" class="w-3.5 h-3.5"></i> PAGE PRESERVATION
+                </div>
+                <h3 class="text-2xl md:text-[2rem] font-bold text-surface-900 mb-5 leading-tight tracking-tight">Keep Original PDF Pages Intact</h3>
+                <p class="text-surface-500 text-[17px] leading-relaxed mb-8">
+                    ScanPDF preserves your original document structure and quality without unnecessary image rasterization.
                 </p>
-
+                <ul class="space-y-4">
+                    <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                        <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                        Original page dimensions
+                    </li>
+                    <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                        <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                        Portrait and landscape orientation
+                    </li>
+                    <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                        <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                        Text and graphics
+                    </li>
+                    <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                        <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                        Embedded images
+                    </li>
+                </ul>
             </div>
-
         </div>
-
-
-        <!-- Progress Bar -->
-
-        <div
-            class="w-full h-2 rounded-full bg-surface-100 overflow-hidden mt-4"
-        >
-
-            <div
-                id="progress-bar"
-                class="progress-fill"
-            ></div>
-
-        </div>
-
-
-        <!-- Percentage -->
-
-        <p
-            id="progress-percent"
-            class="text-center text-xs font-bold text-violet-600 mt-2"
-        >
-
-            0%
-
-        </p>
-
-
     </div>
 
-
-
-    <!-- =====================================================
-         SUCCESS STATE
-         ===================================================== -->
-
-    <div
-        id="success-section"
-        class="hidden mt-4"
-    >
-
-
-        <div class="success-card">
-
-
-            <!-- Success Icon -->
-
-            <div class="success-icon">
-
-                <i
-                    data-lucide="check-circle-2"
-                    class="w-8 h-8"
-                ></i>
-
+    <!-- 03. SECTION: PRECISE PAGE SELECTION -->
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mb-12 md:mb-16">
+        <div class="grid md:grid-cols-[1fr_1fr] items-center gap-10 md:gap-16">
+            <div class="order-2 md:order-1 pr-0 md:pr-4">
+                <div class="flex items-center gap-2 text-purple-600 font-bold tracking-widest text-[12px] uppercase mb-4">
+                    <i data-lucide="list-ordered" class="w-3.5 h-3.5"></i> PAGE SELECTION
+                </div>
+                <h3 class="text-2xl md:text-[2rem] font-bold text-surface-900 mb-5 leading-tight tracking-tight">Choose Individual Pages or Ranges</h3>
+                <p class="text-surface-500 text-[17px] leading-relaxed mb-8">
+                    Use our flexible syntax to extract exactly what you need. Type <span class="font-bold text-surface-800 bg-surface-100 px-2 py-1 rounded">1-3, 5, 8-10</span> to extract pages 1, 2, 3, 5, 8, 9, and 10.
+                </p>
             </div>
+            
+            <div class="order-1 md:order-2">
+                <div class="relative bg-purple-50/50 rounded-[28px] p-8 py-14 flex items-center justify-center border border-purple-100/50 shadow-[inset_0_0_0_1px_rgba(255,255,255,1),0_8px_30px_-12px_rgba(147,51,234,0.1)] group transition-transform duration-300 hover:-translate-y-1">
+                    <div class="flex items-center gap-6 relative z-10 w-full justify-center">
+                        <div class="bg-white px-5 py-3 rounded-lg shadow border border-purple-300 font-mono text-purple-700 font-bold tracking-wider">
+                            1-3, 5, 8-10
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-
-            <!-- Title -->
-
-            <h3
-                class="text-lg font-black text-surface-900 mb-1"
-            >
-
-                Split Complete!
-
-            </h3>
-
-
-            <p
-                class="text-surface-500 text-sm mb-6"
-            >
-
-                Your split files are ready as a ZIP archive.
-
+    <!-- 04. WHAT SCANPDF PRESERVES -->
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mb-12 md:mb-16">
+        <div class="text-center mb-12 md:mb-16">
+            <h2 class="text-3xl md:text-[2.25rem] font-bold text-surface-900 mb-5 tracking-tight">What ScanPDF Preserves</h2>
+            <p class="text-[17px] text-surface-500 max-w-2xl mx-auto leading-relaxed">
+                Our extraction engine isolates your required pages while maintaining their structure and formatting.
             </p>
-
-
-
-            <!-- Buttons -->
-
-            <div
-                class="flex flex-col sm:flex-row gap-3 justify-center"
-            >
-
-
-                <!-- DOWNLOAD -->
-
-                <a
-                    id="download-btn"
-                    href="#"
-                    class="download-btn inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-2xl text-white font-black text-sm"
-                >
-
-                    <i
-                        data-lucide="download"
-                        class="w-5 h-5"
-                    ></i>
-
-                    Download ZIP
-
-                </a>
-
-
-                <!-- SPLIT ANOTHER -->
-
-                <button
-                    type="button"
-                    id="convert-another-btn"
-                    class="purple-btn inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-2xl text-white font-black text-sm"
-                >
-
-                    <i
-                        data-lucide="refresh-cw"
-                        class="w-4 h-4"
-                    ></i>
-
-                    Split Another
-
-                </button>
-
-
-            </div>
-
-
         </div>
-
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="bg-white border border-surface-200/80 rounded-2xl p-6 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300">
+                <div class="w-12 h-12 rounded-xl bg-purple-50 border border-purple-100/60 flex items-center justify-center mb-5 font-bold text-purple-600">
+                    <i data-lucide="file-type" class="w-5 h-5"></i>
+                </div>
+                <h4 class="text-[17px] font-bold text-surface-900 mb-4">Page Content</h4>
+                <ul class="space-y-3">
+                    <li class="text-surface-600 text-[14px] flex items-center gap-2.5"><i data-lucide="check" class="w-3.5 h-3.5 text-purple-500"></i> Text</li>
+                    <li class="text-surface-600 text-[14px] flex items-center gap-2.5"><i data-lucide="check" class="w-3.5 h-3.5 text-purple-500"></i> Images</li>
+                    <li class="text-surface-600 text-[14px] flex items-center gap-2.5"><i data-lucide="check" class="w-3.5 h-3.5 text-purple-500"></i> Graphics</li>
+                </ul>
+            </div>
+            
+            <div class="bg-white border border-surface-200/80 rounded-2xl p-6 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300">
+                <div class="w-12 h-12 rounded-xl bg-blue-50 border border-blue-100/60 flex items-center justify-center mb-5 font-bold text-blue-600">
+                    <i data-lucide="layout" class="w-5 h-5"></i>
+                </div>
+                <h4 class="text-[17px] font-bold text-surface-900 mb-4">Page Layout</h4>
+                <ul class="space-y-3">
+                    <li class="text-surface-600 text-[14px] flex items-center gap-2.5"><i data-lucide="check" class="w-3.5 h-3.5 text-blue-500"></i> Page dimensions</li>
+                    <li class="text-surface-600 text-[14px] flex items-center gap-2.5"><i data-lucide="check" class="w-3.5 h-3.5 text-blue-500"></i> Portrait / landscape</li>
+                    <li class="text-surface-600 text-[14px] flex items-center gap-2.5"><i data-lucide="check" class="w-3.5 h-3.5 text-blue-500"></i> Original positioning</li>
+                </ul>
+            </div>
+            
+            <div class="bg-white border border-surface-200/80 rounded-2xl p-6 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300">
+                <div class="w-12 h-12 rounded-xl bg-green-50 border border-green-100/60 flex items-center justify-center mb-5 font-bold text-green-600">
+                    <i data-lucide="list-ordered" class="w-5 h-5"></i>
+                </div>
+                <h4 class="text-[17px] font-bold text-surface-900 mb-4">Page Order</h4>
+                <ul class="space-y-3">
+                    <li class="text-surface-600 text-[14px] flex items-center gap-2.5"><i data-lucide="check" class="w-3.5 h-3.5 text-green-500"></i> Selected sequence</li>
+                    <li class="text-surface-600 text-[14px] flex items-center gap-2.5"><i data-lucide="check" class="w-3.5 h-3.5 text-green-500"></i> Multi-page output</li>
+                    <li class="text-surface-600 text-[14px] flex items-center gap-2.5"><i data-lucide="check" class="w-3.5 h-3.5 text-green-500"></i> Range order</li>
+                </ul>
+            </div>
+            
+            <div class="bg-white border border-surface-200/80 rounded-2xl p-6 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300">
+                <div class="w-12 h-12 rounded-xl bg-orange-50 border border-orange-100/60 flex items-center justify-center mb-5 font-bold text-orange-500">
+                    <i data-lucide="award" class="w-5 h-5"></i>
+                </div>
+                <h4 class="text-[17px] font-bold text-surface-900 mb-4">PDF Structure</h4>
+                <ul class="space-y-3">
+                    <li class="text-surface-600 text-[14px] flex items-center gap-2.5"><i data-lucide="check" class="w-3.5 h-3.5 text-orange-500"></i> Original PDF pages</li>
+                    <li class="text-surface-600 text-[14px] flex items-center gap-2.5"><i data-lucide="check" class="w-3.5 h-3.5 text-orange-500"></i> No unnecessary image conversion</li>
+                    <li class="text-surface-600 text-[14px] flex items-center gap-2.5"><i data-lucide="check" class="w-3.5 h-3.5 text-orange-500"></i> Quality retention</li>
+                </ul>
+            </div>
+        </div>
     </div>
 
-
-
-    <!-- =====================================================
-         ERROR STATE
-         ===================================================== -->
-
-    <div
-        id="error-section"
-        class="hidden mt-4"
-    >
-
-
-        <div class="error-card flex items-start gap-4">
-
-
-            <!-- Icon -->
-
-            <div
-                class="w-9 h-9 rounded-xl bg-red-100 flex items-center justify-center flex-shrink-0"
-            >
-
-                <i
-                    data-lucide="alert-triangle"
-                    class="w-5 h-5 text-red-500"
-                ></i>
-
+    <!-- 05. HOW TO SPLIT PDF -->
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mb-12 md:mb-16">
+        <div class="bg-gradient-to-br from-purple-50/70 to-white rounded-[32px] border border-purple-100/60 p-8 md:p-14 shadow-sm relative overflow-hidden">
+            <div class="text-center md:text-left mb-12 relative z-10">
+                <h2 class="text-3xl md:text-[2.25rem] font-bold text-surface-900 mb-4 tracking-tight">How to Split a PDF</h2>
             </div>
-
-
-            <!-- Error -->
-
-            <div class="min-w-0 pt-1">
-
-                <h4
-                    class="font-black text-red-700 text-sm uppercase tracking-wider mb-1"
-                >
-
-                    Split Failed
-
-                </h4>
-
-
-                <p
-                    id="error-message"
-                    class="text-xs text-red-500 leading-relaxed font-semibold"
-                ></p>
-
+            
+            <div class="grid lg:grid-cols-[50%_50%] gap-12 lg:gap-16 items-center relative z-10">
+                <div class="relative w-full">
+                    <div class="space-y-8 relative">
+                        <div class="flex gap-5">
+                            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-sm">01</div>
+                            <div>
+                                <h4 class="text-[17px] font-bold text-surface-900 mb-1.5">Select Your PDF</h4>
+                                <p class="text-surface-500 text-[15px] leading-relaxed">Upload the PDF you want to split.</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-5">
+                            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-sm">02</div>
+                            <div>
+                                <h4 class="text-[17px] font-bold text-surface-900 mb-1.5">Choose the Pages</h4>
+                                <p class="text-surface-500 text-[15px] leading-relaxed">Enter the page numbers or ranges you want.</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-5">
+                            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-sm">03</div>
+                            <div>
+                                <h4 class="text-[17px] font-bold text-surface-900 mb-1.5">Split the PDF</h4>
+                                <p class="text-surface-500 text-[15px] leading-relaxed">Click SPLIT PDF to process the selected pages.</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-5">
+                            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-sm">04</div>
+                            <div>
+                                <h4 class="text-[17px] font-bold text-surface-900 mb-1.5">Download the Result</h4>
+                                <p class="text-surface-500 text-[15px] leading-relaxed">Download your newly created PDF file.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex justify-center lg:justify-end w-full">
+                    <div class="bg-white p-7 rounded-[24px] shadow-[0_12px_40px_rgb(0,0,0,0.06)] border border-surface-200/60 w-full max-w-[400px]">
+                        <div class="font-bold text-surface-900 text-[15px] text-center mb-6">Split PDF Tool</div>
+                        <div class="bg-white border border-surface-200/80 rounded-lg p-3.5 flex flex-col gap-2 mb-5 shadow-sm">
+                            <div class="flex items-center gap-3 border-b border-surface-100 pb-2">
+                                <div class="w-8 h-8 rounded-md bg-purple-50 flex items-center justify-center"><i data-lucide="file" class="w-4 h-4 text-purple-600"></i></div>
+                                <div class="text-[13px] font-bold text-surface-900">document.pdf</div>
+                            </div>
+                            <div class="text-xs font-mono text-purple-700 font-bold p-1">1-3, 5, 8-10</div>
+                        </div>
+                        <div class="w-full bg-purple-600 text-white rounded-xl py-3.5 text-center font-bold text-[14px] shadow-sm">
+                            SPLIT PDF
+                        </div>
+                    </div>
+                </div>
             </div>
-
         </div>
-
     </div>
 
+    <!-- 06. DESIGNED FOR DIFFERENT DOCUMENTS -->
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mb-12 md:mb-16">
+        <div class="text-center mb-12 md:mb-16">
+            <h2 class="text-3xl md:text-[2.25rem] font-bold text-surface-900 mb-5 tracking-tight">Designed for Different PDF Documents</h2>
+        </div>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="bg-surface-50/50 border border-surface-200/60 rounded-2xl p-6 text-center hover:bg-white hover:shadow-md hover:border-purple-200 transition-all duration-300">
+                <h4 class="text-[15px] font-bold text-surface-900 mb-2 uppercase tracking-wide">REPORTS</h4>
+                <p class="text-surface-500 text-[14px] leading-relaxed">Extract relevant sections from large reports.</p>
+            </div>
+            <div class="bg-surface-50/50 border border-surface-200/60 rounded-2xl p-6 text-center hover:bg-white hover:shadow-md hover:border-purple-200 transition-all duration-300">
+                <h4 class="text-[15px] font-bold text-surface-900 mb-2 uppercase tracking-wide">STUDY MATERIALS</h4>
+                <p class="text-surface-500 text-[14px] leading-relaxed">Separate chapters, notes or reference pages.</p>
+            </div>
+            <div class="bg-surface-50/50 border border-surface-200/60 rounded-2xl p-6 text-center hover:bg-white hover:shadow-md hover:border-purple-200 transition-all duration-300">
+                <h4 class="text-[15px] font-bold text-surface-900 mb-2 uppercase tracking-wide">SCANNED DOCUMENTS</h4>
+                <p class="text-surface-500 text-[14px] leading-relaxed">Create smaller PDFs from multi-page scans.</p>
+            </div>
+            <div class="bg-surface-50/50 border border-surface-200/60 rounded-2xl p-6 text-center hover:bg-white hover:shadow-md hover:border-purple-200 transition-all duration-300">
+                <h4 class="text-[15px] font-bold text-surface-900 mb-2 uppercase tracking-wide">BUSINESS DOCUMENTS</h4>
+                <p class="text-surface-500 text-[14px] leading-relaxed">Separate forms, invoices or selected document pages.</p>
+            </div>
+        </div>
+    </div>
 
+    <!-- 07. WHY USE SCANPDF SPLIT PDF -->
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mb-12 md:mb-16">
+        <div class="text-center mb-12 md:mb-16">
+            <h2 class="text-3xl md:text-[2.25rem] font-bold text-surface-900 mb-5 tracking-tight">Why Use ScanPDF Split PDF</h2>
+        </div>
+        
+        <div class="grid md:grid-cols-[1fr_1fr] gap-6">
+            <div class="bg-purple-600 rounded-[24px] p-8 md:p-12 text-white relative overflow-hidden flex flex-col justify-center">
+                <div class="absolute top-0 right-0 w-64 h-64 bg-purple-500 rounded-full blur-[80px] -z-0"></div>
+                <div class="relative z-10">
+                    <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mb-6">
+                        <i data-lucide="zap" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4">Simple Split Flow</h3>
+                    <p class="text-purple-100 text-[17px] leading-relaxed">
+                        Upload, choose pages, split and download.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="space-y-6">
+                <div class="bg-white border border-surface-200/80 rounded-[24px] p-8 flex items-start gap-5 shadow-sm">
+                    <div class="w-10 h-10 bg-purple-50 text-purple-600 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <i data-lucide="scissors" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-[17px] font-bold text-surface-900 mb-2">Precise Page Selection</h4>
+                        <p class="text-surface-500 text-[15px] leading-relaxed">Select the exact pages or ranges you need.</p>
+                    </div>
+                </div>
+                <div class="bg-white border border-surface-200/80 rounded-[24px] p-8 flex items-start gap-5 shadow-sm">
+                    <div class="w-10 h-10 bg-purple-50 text-purple-600 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <i data-lucide="layers" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-[17px] font-bold text-surface-900 mb-2">Page-Aware Processing</h4>
+                        <p class="text-surface-500 text-[15px] leading-relaxed">Selected pages remain in the intended sequence.</p>
+                    </div>
+                </div>
+                <div class="bg-white border border-surface-200/80 rounded-[24px] p-8 flex items-start gap-5 shadow-sm">
+                    <div class="w-10 h-10 bg-purple-50 text-purple-600 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <i data-lucide="download" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-[17px] font-bold text-surface-900 mb-2">Direct PDF Download</h4>
+                        <p class="text-surface-500 text-[15px] leading-relaxed">Download the completed PDF after processing.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 08. BEST RESULTS -->
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mb-12 md:mb-16">
+        <div class="bg-purple-50 border border-purple-100 rounded-[24px] p-8 md:p-12 flex flex-col md:flex-row gap-8 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.5)]">
+            <div class="md:w-1/3">
+                <div class="w-12 h-12 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center mb-5">
+                    <i data-lucide="info" class="w-6 h-6"></i>
+                </div>
+                <h3 class="text-xl font-bold text-surface-900 mb-3">Get the Best Split Result</h3>
+            </div>
+            
+            <div class="md:w-2/3 grid sm:grid-cols-2 gap-4">
+                <div class="flex gap-3">
+                    <i data-lucide="check" class="w-5 h-5 text-purple-500 flex-shrink-0 mt-0.5"></i>
+                    <span class="text-[15px] font-medium text-surface-700">Use a valid PDF</span>
+                </div>
+                <div class="flex gap-3">
+                    <i data-lucide="check" class="w-5 h-5 text-purple-500 flex-shrink-0 mt-0.5"></i>
+                    <span class="text-[15px] font-medium text-surface-700">Unlock password-protected PDFs first</span>
+                </div>
+                <div class="flex gap-3">
+                    <i data-lucide="check" class="w-5 h-5 text-purple-500 flex-shrink-0 mt-0.5"></i>
+                    <span class="text-[15px] font-medium text-surface-700">Check the total page count</span>
+                </div>
+                <div class="flex gap-3">
+                    <i data-lucide="check" class="w-5 h-5 text-purple-500 flex-shrink-0 mt-0.5"></i>
+                    <span class="text-[15px] font-medium text-surface-700">Enter page ranges carefully</span>
+                </div>
+                <div class="flex gap-3">
+                    <i data-lucide="check" class="w-5 h-5 text-purple-500 flex-shrink-0 mt-0.5"></i>
+                    <span class="text-[15px] font-medium text-surface-700">Review the downloaded PDF</span>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
-
+{% if seo_h1 %}
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "{{ seo_h1|escapejs }}",
+  "url": "{{ request.build_absolute_uri }}",
+  "description": "{{ seo_description|escapejs }}",
+  "applicationCategory": "UtilityApplication",
+  "operatingSystem": "All"
+}
+</script>
+{% endif %}
 {% endblock %}
 
-
 {% block extra_scripts %}
-
 <script>
+const CONVERT_URL = '{% url "converter:convert_file" tool_slug %}';
+const CSRF_TOKEN = '{{ csrf_token }}';
 
-/* =========================================================
-   DJANGO VALUES
-   ========================================================= */
+const heroDropzone = document.getElementById('hero-dropzone');
+const stateIdle = document.getElementById('state-idle');
+const stateSelected = document.getElementById('state-selected');
+const stateConverting = document.getElementById('state-converting');
+const stateSuccess = document.getElementById('state-success');
+const stateError = document.getElementById('state-error');
 
-const CONVERT_URL =
-    '{% url "converter:convert_file" tool_slug %}';
+const selectFileBtn = document.getElementById('select-file-btn');
+const fileInput = document.getElementById('file-input');
 
-const CSRF_TOKEN =
-    '{{ csrf_token }}';
+const fileName = document.getElementById('file-name');
+const fileSize = document.getElementById('file-size');
+const removeFileBtn = document.getElementById('remove-file-btn');
 
+const convertBtn = document.getElementById('convert-btn');
+const progressBar = document.getElementById('progress-bar');
+const downloadBtn = document.getElementById('download-btn');
+const convertAnotherBtn = document.getElementById('convert-another-btn');
+const retryBtn = document.getElementById('retry-btn');
+const errorMessage = document.getElementById('error-message');
 
-/* =========================================================
-   ELEMENTS
-   ========================================================= */
-
-const selectFileArea =
-    document.getElementById('select-file-area');
-
-const selectFileBtn =
-    document.getElementById('select-file-btn');
-
-const fileInput =
-    document.getElementById('file-input');
-
-const fileSelected =
-    document.getElementById('file-selected');
-
-const fileName =
-    document.getElementById('file-name');
-
-const fileSize =
-    document.getElementById('file-size');
-
-const removeFileBtn =
-    document.getElementById('remove-file-btn');
-
-const splitOptions =
-    document.getElementById('split-options');
-
-const rangesInputWrap =
-    document.getElementById('ranges-input-wrap');
-
-const pageRanges =
-    document.getElementById('page-ranges');
-
-const convertBtn =
-    document.getElementById('convert-btn');
-
-const progressSection =
-    document.getElementById('progress-section');
-
-const progressBar =
-    document.getElementById('progress-bar');
-
-const progressPercent =
-    document.getElementById('progress-percent');
-
-const successSection =
-    document.getElementById('success-section');
-
-const errorSection =
-    document.getElementById('error-section');
-
-const errorMessage =
-    document.getElementById('error-message');
-
-const downloadBtn =
-    document.getElementById('download-btn');
-
-const convertAnotherBtn =
-    document.getElementById('convert-another-btn');
-
-
-/* =========================================================
-   VARIABLES
-   ========================================================= */
+const pageRangesInput = document.getElementById('page-ranges');
+const rangesInputWrap = document.getElementById('ranges-input-wrap');
+const splitOptionRadios = document.querySelectorAll('.split-option-radio');
 
 let selectedFile = null;
 
-let progressInterval = null;
-
-
-/* =========================================================
-   SELECT FILE BUTTON
-   ========================================================= */
-
-selectFileBtn.addEventListener(
-    'click',
-    function (event) {
-
-        event.stopPropagation();
-
-        fileInput.click();
-
-    }
-);
-
-
-/* =========================================================
-   FILE INPUT CHANGE
-   ========================================================= */
-
-fileInput.addEventListener(
-    'change',
-    function (event) {
-
-        if (
-            event.target.files &&
-            event.target.files.length > 0
-        ) {
-
-            handleFile(
-                event.target.files[0]
-            );
-
+// Split options toggle
+splitOptionRadios.forEach(radio => {
+    radio.addEventListener('change', () => {
+        if (radio.value === 'ranges') {
+            rangesInputWrap.classList.remove('hidden');
+        } else {
+            rangesInputWrap.classList.add('hidden');
         }
+        validateForm();
+    });
+});
 
+pageRangesInput.addEventListener('input', validateForm);
+
+// Events
+selectFileBtn.addEventListener('click', () => fileInput.click());
+
+fileInput.addEventListener('change', (e) => {
+    if (e.target.files.length > 0) {
+        handleFile(e.target.files[0]);
     }
-);
+    fileInput.value = '';
+});
 
+// Drag and drop
+['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+    heroDropzone.addEventListener(eventName, preventDefaults, false);
+});
+function preventDefaults(e) {
+    e.preventDefault();
+    e.stopPropagation();
+}
 
-/* =========================================================
-   DRAG OVER
-   ========================================================= */
+['dragenter', 'dragover'].forEach(eventName => {
+    heroDropzone.addEventListener(eventName, () => heroDropzone.classList.add('drag-active'), false);
+});
 
-selectFileArea.addEventListener(
-    'dragover',
-    function (event) {
+['dragleave', 'drop'].forEach(eventName => {
+    heroDropzone.addEventListener(eventName, () => heroDropzone.classList.remove('drag-active'), false);
+});
 
-        event.preventDefault();
-
-        selectFileArea.classList.add(
-            'drag-active'
-        );
-
+heroDropzone.addEventListener('drop', (e) => {
+    if (e.dataTransfer.files.length > 0) {
+        handleFile(e.dataTransfer.files[0]);
     }
-);
-
-
-/* =========================================================
-   DRAG LEAVE
-   ========================================================= */
-
-selectFileArea.addEventListener(
-    'dragleave',
-    function () {
-
-        selectFileArea.classList.remove(
-            'drag-active'
-        );
-
-    }
-);
-
-
-/* =========================================================
-   DROP FILE
-   ========================================================= */
-
-selectFileArea.addEventListener(
-    'drop',
-    function (event) {
-
-        event.preventDefault();
-
-        selectFileArea.classList.remove(
-            'drag-active'
-        );
-
-
-        if (
-            event.dataTransfer.files &&
-            event.dataTransfer.files.length > 0
-        ) {
-
-            handleFile(
-                event.dataTransfer.files[0]
-            );
-
-        }
-
-    }
-);
-
-
-/* =========================================================
-   HANDLE FILE
-   ========================================================= */
+});
 
 function handleFile(file) {
-
-
-    /* ---------------------------------------------
-       Validate PDF
-    --------------------------------------------- */
-
-    if (
-        !file.name
-            .toLowerCase()
-            .endsWith('.pdf')
-    ) {
-
-        showError(
-            'Only PDF files are accepted.'
-        );
-
+    if (!file.name.toLowerCase().endsWith('.pdf')) {
+        showError(`"${file.name}" is not a PDF file.`);
         return;
-
     }
-
-
-    /* ---------------------------------------------
-       Validate 50MB
-    --------------------------------------------- */
-
-    if (
-        file.size > 52428800
-    ) {
-
-        showError(
-            'File exceeds the 50MB limit.'
-        );
-
-        return;
-
-    }
-
-
-    /* ---------------------------------------------
-       Store file
-    --------------------------------------------- */
-
     selectedFile = file;
-
-
-    /* ---------------------------------------------
-       File information
-    --------------------------------------------- */
-
-    fileName.textContent =
-        file.name;
-
-    fileSize.textContent =
-        formatFileSize(file.size);
-
-
-    /* ---------------------------------------------
-       Show selected file
-    --------------------------------------------- */
-
-    fileSelected.classList.remove(
-        'hidden'
-    );
-
-
-    /* ---------------------------------------------
-       Show split options
-    --------------------------------------------- */
-
-    splitOptions.classList.remove(
-        'hidden'
-    );
-
-
-    /* ---------------------------------------------
-       Enable convert
-    --------------------------------------------- */
-
-    convertBtn.disabled = false;
-
-
-    /* ---------------------------------------------
-       Hide error
-    --------------------------------------------- */
-
-    errorSection.classList.add(
-        'hidden'
-    );
-
-
-    /* ---------------------------------------------
-       Refresh icons
-    --------------------------------------------- */
-
-    if (
-        typeof lucide !== 'undefined'
-    ) {
-
-        lucide.createIcons();
-
-    }
-
+    updateUI();
 }
 
+function updateUI() {
+    if (!selectedFile) {
+        stateIdle.classList.remove('hidden');
+        stateSelected.classList.add('hidden');
+        convertBtn.disabled = true;
+        return;
+    }
 
-/* =========================================================
-   FORMAT FILE SIZE
-   ========================================================= */
+    stateIdle.classList.add('hidden');
+    stateSelected.classList.remove('hidden');
+    
+    fileName.textContent = selectedFile.name;
+    fileSize.textContent = formatFileSize(selectedFile.size);
+    
+    if (typeof lucide !== 'undefined') lucide.createIcons();
+    
+    validateForm();
+}
+
+removeFileBtn.addEventListener('click', () => {
+    selectedFile = null;
+    updateUI();
+});
+
+function validateForm() {
+    let isValid = !!selectedFile;
+    const mode = document.querySelector('.split-option-radio:checked').value;
+    
+    if (mode === 'ranges') {
+        isValid = isValid && pageRangesInput.value.trim() !== '';
+    }
+    
+    convertBtn.disabled = !isValid;
+}
 
 function formatFileSize(bytes) {
-
-    if (
-        bytes === 0
-    ) {
-
-        return '0 Bytes';
-
-    }
-
-
-    const k = 1024;
-
-    const sizes = [
-        'Bytes',
-        'KB',
-        'MB',
-        'GB'
-    ];
-
-
-    const index =
-        Math.floor(
-            Math.log(bytes) /
-            Math.log(k)
-        );
-
-
-    return (
-        parseFloat(
-            (
-                bytes /
-                Math.pow(k, index)
-            ).toFixed(2)
-        )
-        +
-        ' '
-        +
-        sizes[index]
-    );
-
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024, sizes = ['Bytes', 'KB', 'MB', 'GB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
 }
 
-
-/* =========================================================
-   REMOVE FILE
-   ========================================================= */
-
-removeFileBtn.addEventListener(
-    'click',
-    function (event) {
-
-        event.stopPropagation();
-
-        resetUpload();
-
-    }
-);
-
-
-/* =========================================================
-   SPLIT MODE
-   ========================================================= */
-
-document
-    .querySelectorAll(
-        'input[name="split_mode"]'
-    )
-    .forEach(
-        function (radio) {
-
-            radio.addEventListener(
-                'change',
-                function () {
-
-                    if (
-                        radio.value ===
-                        'ranges'
-                    ) {
-
-                        rangesInputWrap.classList.remove(
-                            'hidden'
-                        );
-
-                    } else {
-
-                        rangesInputWrap.classList.add(
-                            'hidden'
-                        );
-
-                    }
-
-
-                    if (
-                        typeof lucide !== 'undefined'
-                    ) {
-
-                        lucide.createIcons();
-
-                    }
-
-                }
-            );
-
-        }
-    );
-
-
-/* =========================================================
-   CONVERT BUTTON
-   ========================================================= */
-
-convertBtn.addEventListener(
-    'click',
-    async function () {
-
-
-        /* ---------------------------------------------
-           Safety check
-        --------------------------------------------- */
-
-        if (!selectedFile) {
-
-            return;
-
-        }
-
-
-        /* ---------------------------------------------
-           Hide button
-        --------------------------------------------- */
-
-        convertBtn.classList.add(
-            'hidden'
-        );
-
-
-        /* ---------------------------------------------
-           Hide states
-        --------------------------------------------- */
-
-        successSection.classList.add(
-            'hidden'
-        );
-
-        errorSection.classList.add(
-            'hidden'
-        );
-
-
-        /* ---------------------------------------------
-           Show progress
-        --------------------------------------------- */
-
-        progressSection.classList.remove(
-            'hidden'
-        );
-
-
-        /* ---------------------------------------------
-           Start progress
-        --------------------------------------------- */
-
-        startProgress();
-
-
-        /* ---------------------------------------------
-           FormData
-        --------------------------------------------- */
-
-        const formData =
-            new FormData();
-
-
-        formData.append(
-            'file',
-            selectedFile
-        );
-
-
-        formData.append(
-            'csrfmiddlewaretoken',
-            CSRF_TOKEN
-        );
-
-
-        /* ---------------------------------------------
-           Split mode
-        --------------------------------------------- */
-
-        const selectedMode =
-            document.querySelector(
-                'input[name="split_mode"]:checked'
-            );
-
-
-        const mode =
-            selectedMode
-                ? selectedMode.value
-                : 'each';
-
-
-        formData.append(
-            'split_mode',
-            mode
-        );
-
-
-        /* ---------------------------------------------
-           Custom ranges
-        --------------------------------------------- */
-
-        if (
-            mode === 'ranges'
-        ) {
-
-            formData.append(
-                'page_ranges',
-                pageRanges.value
-            );
-
-        }
-
-
-        /* ---------------------------------------------
-           Send request
-        --------------------------------------------- */
-
-        try {
-
-            const response =
-                await fetch(
-                    CONVERT_URL,
-                    {
-                        method: 'POST',
-                        body: formData
-                    }
-                );
-
-
-            /* -----------------------------------------
-               Check response
-            ----------------------------------------- */
-
-            if (!response.ok) {
-
-                let message =
-                    'Split failed.';
-
-
-                try {
-
-                    const data =
-                        await response.json();
-
-                    message =
-                        data.error ||
-                        message;
-
-                } catch (error) {
-
-                    /* Ignore JSON error */
-
-                }
-
-
-                throw new Error(
-                    message
-                );
-
-            }
-
-
-            /* -----------------------------------------
-               Stop progress
-            ----------------------------------------- */
-
-            stopProgress();
-
-
-            /* -----------------------------------------
-               Output filename
-            ----------------------------------------- */
-
-            const disposition =
-                response.headers.get(
-                    'Content-Disposition'
-                );
-
-
-            let outputFilename =
-                'split.zip';
-
-
-            if (disposition) {
-
-                const match =
-                    disposition.match(
-                        /filename="(.+?)"/
-                    );
-
-
-                if (match) {
-
-                    outputFilename =
-                        match[1];
-
-                }
-
-            }
-
-
-            /* -----------------------------------------
-               Get ZIP blob
-            ----------------------------------------- */
-
-            const blob =
-                await response.blob();
-
-
-            /* -----------------------------------------
-               Create download URL
-            ----------------------------------------- */
-
-            const url =
-                window.URL.createObjectURL(
-                    blob
-                );
-
-
-            /* -----------------------------------------
-               Configure download
-            ----------------------------------------- */
-
-            downloadBtn.href =
-                url;
-
-            downloadBtn.download =
-                outputFilename;
-
-
-            /* -----------------------------------------
-               Hide progress
-            ----------------------------------------- */
-
-            progressSection.classList.add(
-                'hidden'
-            );
-
-
-            /* -----------------------------------------
-               Hide select area
-            ----------------------------------------- */
-
-            selectFileArea.classList.add(
-                'hidden'
-            );
-
-
-            /* -----------------------------------------
-               Hide split options
-            ----------------------------------------- */
-
-            splitOptions.classList.add(
-                'hidden'
-            );
-
-
-            /* -----------------------------------------
-               Show success
-            ----------------------------------------- */
-
-            successSection.classList.remove(
-                'hidden'
-            );
-
-
-            /* -----------------------------------------
-               Refresh icons
-            ----------------------------------------- */
-
-            if (
-                typeof lucide !== 'undefined'
-            ) {
-
-                lucide.createIcons();
-
-            }
-
-        } catch (error) {
-
-
-            /* -----------------------------------------
-               Stop progress
-            ----------------------------------------- */
-
-            stopProgress();
-
-
-            /* -----------------------------------------
-               Hide progress
-            ----------------------------------------- */
-
-            progressSection.classList.add(
-                'hidden'
-            );
-
-
-            /* -----------------------------------------
-               Show convert button
-            ----------------------------------------- */
-
-            convertBtn.classList.remove(
-                'hidden'
-            );
-
-
-            /* -----------------------------------------
-               Show error
-            ----------------------------------------- */
-
-            showError(
-                error.message
-            );
-
-        }
-
-    }
-);
-
-
-/* =========================================================
-   CONVERT ANOTHER
-   ========================================================= */
-
-convertAnotherBtn.addEventListener(
-    'click',
-    function () {
-
-        resetUpload();
-
-    }
-);
-
-
-/* =========================================================
-   RESET UPLOAD
-   ========================================================= */
-
-function resetUpload() {
-
-
-    /* ---------------------------------------------
-       Clear selected file
-    --------------------------------------------- */
-
+convertAnotherBtn.addEventListener('click', () => {
     selectedFile = null;
+    stateSuccess.classList.add('hidden');
+    stateError.classList.add('hidden');
+    pageRangesInput.value = '';
+    updateUI();
+});
 
+retryBtn.addEventListener('click', () => {
+    stateError.classList.add('hidden');
+    stateSelected.classList.remove('hidden');
+});
 
-    /* ---------------------------------------------
-       Clear browser input
-    --------------------------------------------- */
+convertBtn.addEventListener('click', async () => {
+    if (!selectedFile || convertBtn.disabled) return;
 
-    fileInput.value = '';
+    stateSelected.classList.add('hidden');
+    stateConverting.classList.remove('hidden');
+    stateError.classList.add('hidden');
 
-
-    /* ---------------------------------------------
-       Show select area
-    --------------------------------------------- */
-
-    selectFileArea.classList.remove(
-        'hidden'
-    );
-
-
-    /* ---------------------------------------------
-       Hide selected file
-    --------------------------------------------- */
-
-    fileSelected.classList.add(
-        'hidden'
-    );
-
-
-    /* ---------------------------------------------
-       Hide split options
-    --------------------------------------------- */
-
-    splitOptions.classList.add(
-        'hidden'
-    );
-
-
-    /* ---------------------------------------------
-       Reset ranges
-    --------------------------------------------- */
-
-    rangesInputWrap.classList.add(
-        'hidden'
-    );
-
-
-    pageRanges.value = '';
-
-
-    /* ---------------------------------------------
-       Reset split mode
-    --------------------------------------------- */
-
-    const defaultMode =
-        document.querySelector(
-            'input[name="split_mode"][value="each"]'
-        );
-
-
-    if (defaultMode) {
-
-        defaultMode.checked = true;
-
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+    formData.append('csrfmiddlewaretoken', CSRF_TOKEN);
+    
+    const mode = document.querySelector('.split-option-radio:checked').value;
+    formData.append('split_mode', mode);
+    
+    if (mode === 'ranges') {
+        formData.append('page_ranges', pageRangesInput.value.trim());
     }
 
+    try {
+        const response = await fetch(CONVERT_URL, {
+            method: 'POST',
+            body: formData
+        });
 
-    /* ---------------------------------------------
-       Enable/disable button
-    --------------------------------------------- */
+        if (!response.ok) {
+            const data = await response.json();
+            throw new Error(data.error || 'Split failed.');
+        }
 
-    convertBtn.disabled = true;
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const disposition = response.headers.get('Content-Disposition');
+        let outputFilename = 'split_file.zip';
+        
+        if (disposition) {
+            const match = disposition.match(/filename="(.+?)"/);
+            if (match) outputFilename = match[1];
+        }
 
+        downloadBtn.href = url;
+        downloadBtn.download = outputFilename;
 
-    /* ---------------------------------------------
-       Show convert button
-    --------------------------------------------- */
-
-    convertBtn.classList.remove(
-        'hidden'
-    );
-
-
-    /* ---------------------------------------------
-       Hide progress
-    --------------------------------------------- */
-
-    progressSection.classList.add(
-        'hidden'
-    );
-
-
-    /* ---------------------------------------------
-       Hide success
-    --------------------------------------------- */
-
-    successSection.classList.add(
-        'hidden'
-    );
-
-
-    /* ---------------------------------------------
-       Hide error
-    --------------------------------------------- */
-
-    errorSection.classList.add(
-        'hidden'
-    );
-
-
-    /* ---------------------------------------------
-       Stop progress
-    --------------------------------------------- */
-
-    if (
-        progressInterval
-    ) {
-
-        clearInterval(
-            progressInterval
-        );
-
-        progressInterval = null;
-
+        stateConverting.classList.add('hidden');
+        stateSuccess.classList.remove('hidden');
+        if (typeof lucide !== 'undefined') lucide.createIcons();
+    } catch (err) {
+        showError(err.message);
+        stateConverting.classList.add('hidden');
     }
+});
 
-
-    /* ---------------------------------------------
-       Reset progress
-    --------------------------------------------- */
-
-    if (
-        progressBar
-    ) {
-
-        progressBar.style.width =
-            '0%';
-
-    }
-
-
-    if (
-        progressPercent
-    ) {
-
-        progressPercent.textContent =
-            '0%';
-
-    }
-
-
-    /* ---------------------------------------------
-       Refresh icons
-    --------------------------------------------- */
-
-    if (
-        typeof lucide !== 'undefined'
-    ) {
-
-        lucide.createIcons();
-
-    }
-
+function showError(msg) {
+    errorMessage.textContent = msg;
+    stateError.classList.remove('hidden');
+    stateSelected.classList.add('hidden');
+    stateIdle.classList.add('hidden');
+    stateConverting.classList.add('hidden');
+    if (typeof lucide !== 'undefined') lucide.createIcons();
 }
 
-
-/* =========================================================
-   START PROGRESS
-   ========================================================= */
-
-function startProgress() {
-
-    let progress = 0;
-
-
-    progressBar.style.width =
-        '0%';
-
-
-    progressPercent.textContent =
-        '0%';
-
-
-    progressInterval =
-        setInterval(
-            function () {
-
-
-                /*
-                 * Keep simulated progress
-                 * below 90%.
-                 */
-
-                if (
-                    progress < 90
-                ) {
-
-                    progress +=
-                        Math.random() * 5;
-
-
-                    if (
-                        progress > 90
-                    ) {
-
-                        progress = 90;
-
-                    }
-
-
-                    progress =
-                        Math.floor(
-                            progress
-                        );
-
-
-                    progressBar.style.width =
-                        progress + '%';
-
-
-                    progressPercent.textContent =
-                        progress + '%';
-
-                }
-
-            },
-            500
-        );
-
-}
-
-
-/* =========================================================
-   STOP PROGRESS
-   ========================================================= */
-
-function stopProgress() {
-
-
-    if (
-        progressInterval
-    ) {
-
-        clearInterval(
-            progressInterval
-        );
-
-        progressInterval = null;
-
-    }
-
-
-    if (
-        progressBar
-    ) {
-
-        progressBar.style.width =
-            '100%';
-
-    }
-
-
-    if (
-        progressPercent
-    ) {
-
-        progressPercent.textContent =
-            '100%';
-
-    }
-
-}
-
-
-/* =========================================================
-   SHOW ERROR
-   ========================================================= */
-
-function showError(message) {
-
-    errorMessage.textContent =
-        message;
-
-
-    errorSection.classList.remove(
-        'hidden'
-    );
-
-
-    if (
-        typeof lucide !== 'undefined'
-    ) {
-
-        lucide.createIcons();
-
-    }
-
-}
-
-
-/* =========================================================
-   INITIAL LUCIDE ICONS
-   ========================================================= */
-
-if (
-    typeof lucide !== 'undefined'
-) {
-
-    lucide.createIcons();
-
-}
-
+if (typeof lucide !== 'undefined') lucide.createIcons();
 </script>
-
 {% endblock %}
