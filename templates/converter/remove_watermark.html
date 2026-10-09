@@ -4,1730 +4,733 @@
 {% block tool_content %}
 
 <style>
-
 /* =========================================================
-   PAGE HEADING
+   CLEAN CONVERTER STYLES
    ========================================================= */
 
 .tool-heading {
-    font-size: clamp(1.75rem, 5vw + 0.75rem, 3.5rem);
-    line-height: 0.95;
+    font-size: clamp(2rem, 5vw + 1rem, 3.5rem);
+    line-height: 1.1;
     font-weight: 900;
-    letter-spacing: -0.04em;
+    letter-spacing: -0.02em;
+    color: #1e1b4b; /* Deep navy/purple dark */
 }
 
-.gradient-text {
-    background: linear-gradient(
-        135deg,
-        #7c3aed,
-        #a855f7,
-        #ec4899
-    );
-
-    -webkit-background-cliAp: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-
-/* =========================================================
-   PURPLE BUTTON
-   ========================================================= */
-
+/* Purple button */
 .purple-btn {
-    background: linear-gradient(
-        135deg,
-        #6d28d9 0%,
-        #7c3aed 45%,
-        #a855f7 100%
-    );
-
+    background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
     color: white;
-
-    box-shadow:
-        0 8px 25px rgba(124, 58, 237, 0.25);
-
-    transition:
-        all 0.25s ease;
+    box-shadow: 0 4px 14px rgba(124, 58, 237, 0.3);
+    transition: all 0.2s ease;
 }
-
 .purple-btn:hover {
     transform: translateY(-2px);
-
-    box-shadow:
-        0 12px 30px rgba(124, 58, 237, 0.38);
+    box-shadow: 0 6px 20px rgba(124, 58, 237, 0.4);
 }
-
 .purple-btn:active {
     transform: translateY(0);
 }
-
 .purple-btn:disabled {
-    opacity: 0.45;
+    opacity: 0.6;
     cursor: not-allowed;
     transform: none;
-
     box-shadow: none;
 }
 
-
-/* =========================================================
-   SELECT FILE AREA
-   ========================================================= */
-
-.select-file-area {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-
-    padding: 1.5rem 1rem;
-}
-
-
-/* =========================================================
-   SELECTED FILE CARD
-   ========================================================= */
-
-.selected-file-card {
+/* Central Area */
+.hero-dropzone {
     width: 100%;
-    max-width: 620px;
-
-    margin-top: 1.25rem;
-
-    padding: 1rem;
-
-    border-radius: 1rem;
-
-    background: #ddd6fe;
-
-    border: 1px solid #ddd6fe;
-}
-
-.remove-file-btn {
-    width: 38px;
-    height: 38px;
-
-    border-radius: 10px;
-
-    border: 1px solid #ddd6fe;
-
-    background: #f5f3ff;
-
-    color: #7c3aed;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    cursor: pointer;
-
     transition: all 0.2s ease;
+    border: 2px dashed transparent;
 }
 
-.remove-file-btn:hover {
-    background: #7c3aed;
-    color: white;
+.hero-dropzone.drag-active {
+    background: #faf5ff;
+    border-color: #a855f7;
 }
 
-
-/* =========================================================
-   PROGRESS
-   ========================================================= */
-
-.progress-card {
-    background: #fafafa;
-
-    border: 1px solid #f1f5f9;
-
-    border-radius: 1rem;
-
-    padding: 1rem 1.5rem;
-}
-
-.progress-spinner {
-    width: 32px;
-    height: 32px;
-
-    border-radius: 50%;
-
-    border: 3px solid #e2e8f0;
-
-    border-top-color: #7c3aed;
-
-    animation: spin 0.8s linear infinite;
-}
-
+/* Progress Fill */
 .progress-fill {
     height: 100%;
-
     width: 0%;
-
-    background: linear-gradient(
-        90deg,
-        #6d28d9,
-        #7c3aed,
-        #a855f7,
-        #ec4899
-    );
-
+    background: linear-gradient(90deg, #7c3aed, #a855f7);
     border-radius: 999px;
-
     transition: width 0.4s ease;
 }
 
-@keyframes spin {
-
-    to {
-        transform: rotate(360deg);
-    }
-
-}
-
-
-/* =========================================================
-   SUCCESS CARD
-   ========================================================= */
-
-.success-card {
-    text-align: center;
-
-    padding: 1.5rem;
-
-    border-radius: 1rem;
-
-    background: #faf5ff;
-
-    border: 1px solid #e9d5ff;
-}
-
-.success-icon {
-    width: 64px;
-    height: 64px;
-
-    border-radius: 1rem;
-
-    background: #ede9fe;
-
+.selected-file-box {
     display: flex;
     align-items: center;
-    justify-content: center;
-
-    margin: 0 auto 1rem;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    border-radius: 16px;
+    background: white;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    border: 1px solid #f3e8ff;
+    width: 100%;
+    max-width: 500px;
 }
-
-.success-icon i {
-    color: #7c3aed;
-}
-
-
-/* =========================================================
-   ERROR
-   ========================================================= */
-
-.error-card {
-    padding: 1.25rem;
-
-    border-radius: 1rem;
-
-    background: #fef2f2;
-
-    border: 1px solid #fee2e2;
-}
-
-
-/* =========================================================
-   MOBILE
-   ========================================================= */
-
-@media (max-width: 768px) {
-
-    .tool-heading {
-        font-size: clamp(1.75rem, 7vw, 3rem);
-    }
-
-}
-
-@media (max-width: 480px) {
-
-    .tool-heading {
-        font-size: clamp(1.625rem, 8vw, 2.6rem);
-    }
-
-}
-
-
-.select-file-area {
-    padding: 2rem;
-    border: 2px dashed transparent;
-    border-radius: 20px;
-    transition: all 0.25s ease;
-}
-
-.select-file-area.drag-active {
-    border-color: #7c3aed;
-    background: #faf5ff;
-}
-
 </style>
 
-
 <!-- =========================================================
-     PAGE HEADER
+     PAGE HEADER & CONVERTER
      ========================================================= -->
+<section id="hero-dropzone" class="hero-dropzone text-center pt-10 pb-10 px-4 w-full">
 
-<section class="text-center mb-8 sm:mb-10">
-
-    <h1 class="tool-heading text-surface-900 mb-3">
-
-        <span class="block">
-            {{ s1 }}
-        </span>
-
-        <span class="block gradient-text">
-            {{ highlight }}
-        </span>
-
+    <!-- Clean Title -->
+    <h1 class="tool-heading mb-4 text-center">
+        <span class="text-surface-900">Remove </span>
+        <span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-700 to-purple-500">Watermark from PDF</span>
     </h1>
-
-
-    <!-- SEO Intro -->
-
-    <p class="max-w-3xl mx-auto text-sm sm:text-base lg:text-lg text-surface-500 leading-relaxed">
-
-        {{ seo_intro }}
-
+    <p class="text-[16px] md:text-[17px] leading-relaxed text-surface-500 max-w-[740px] mx-auto text-center font-medium mb-8 px-4">
+        Automatically detect and remove distracting watermarks, stamps, and overlays from your PDF documents while keeping the original content untouched.
     </p>
 
+    <!-- Central Converter Interaction Area -->
+    <div class="flex flex-col items-center w-full max-w-[800px] mx-auto">
+        
+        <!-- =====================================================
+             STATE: IDLE (SELECT FILE)
+             ===================================================== -->
+        <div id="state-idle" class="flex flex-col items-center w-full">
+            <button type="button" id="select-file-btn" class="purple-btn px-10 py-4 rounded-2xl text-white font-bold text-[15px] tracking-wide flex items-center justify-center gap-3 w-full sm:w-auto">
+                <i data-lucide="upload" class="w-5 h-5"></i>
+                SELECT FILE
+            </button>
+            <p id="drop-text" class="text-surface-500 text-[15px] mt-3 font-medium">Drop your PDF file here</p>
+            <input type="file" id="file-input" class="hidden" accept=".pdf,application/pdf">
+        </div>
 
-    <!-- SEO Keywords -->
+        <!-- =====================================================
+             STATE: FILE SELECTED
+             ===================================================== -->
+        <div id="state-selected" class="hidden flex flex-col items-center w-full">
+            <div class="selected-file-box mb-6 relative">
+                <div class="w-10 h-10 bg-purple-50 rounded-lg flex items-center justify-center flex-shrink-0 text-purple-600">
+                    <i data-lucide="file-text" class="w-5 h-5"></i>
+                </div>
+                <div class="flex-1 min-w-0 text-left pr-8">
+                    <p id="file-name" class="text-surface-900 font-bold text-[14px] truncate"></p>
+                    <div class="flex items-center gap-2 mt-0.5">
+                        <span id="file-size" class="text-surface-500 text-[12px]"></span>
+                        <span class="text-surface-300 text-[10px]">•</span>
+                        <span class="text-green-600 text-[12px] font-semibold flex items-center gap-1"><i data-lucide="check" class="w-3 h-3"></i> Ready</span>
+                    </div>
+                </div>
+                <button type="button" id="remove-file-btn" class="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center rounded-lg text-surface-400 hover:text-red-500 hover:bg-red-50 transition-colors" title="Remove file">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+            
+            <button type="button" id="convert-btn" class="purple-btn px-10 py-4 rounded-2xl text-white font-bold text-[15px] tracking-wide flex items-center justify-center gap-3 w-full sm:w-auto">
+                <i data-lucide="eraser" class="w-5 h-5"></i>
+                REMOVE WATERMARK
+            </button>
+        </div>
 
-    {% if seo_keywords %}
+        <!-- =====================================================
+             STATE: CONVERTING
+             ===================================================== -->
+        <div id="state-converting" class="hidden flex flex-col items-center w-full max-w-[320px]">
+            <div class="flex items-center justify-center gap-2 mb-4 text-purple-600 font-bold text-[15px]">
+                <i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i>
+                Removing Watermarks...
+            </div>
+            
+            <div class="w-full h-2 rounded-full bg-purple-100 overflow-hidden mb-2">
+                <div id="progress-bar" class="progress-fill w-[100%]"></div>
+            </div>
+            
+            <div class="flex justify-between items-center w-full px-1">
+                <p id="progress-status" class="text-surface-500 text-[13px] font-medium">Scanning document...</p>
+            </div>
+        </div>
 
-    <p class="max-w-3xl mx-auto mt-2 text-xs sm:text-sm text-surface-400 leading-relaxed">
+        <!-- =====================================================
+             STATE: SUCCESS
+             ===================================================== -->
+        <div id="state-success" class="hidden flex flex-col items-center w-full">
+            <div class="w-12 h-12 bg-green-50 text-green-600 rounded-full flex items-center justify-center mb-4 mx-auto">
+                <i data-lucide="check" class="w-6 h-6"></i>
+            </div>
+            <h3 class="text-xl font-black text-surface-900 mb-1">Watermarks Removed</h3>
+            <p class="text-surface-500 text-[15px] mb-6">Your clean PDF is ready.</p>
+            
+            <a id="download-btn" href="#" class="purple-btn px-10 py-4 rounded-2xl text-white font-bold text-[15px] tracking-wide flex items-center justify-center gap-3 w-full sm:w-auto mb-4">
+                <i data-lucide="download" class="w-5 h-5"></i>
+                DOWNLOAD PDF
+            </a>
+            
+            <button type="button" id="convert-another-btn" class="text-purple-600 font-semibold text-[14px] hover:text-purple-800 transition-colors">
+                Clean another file
+            </button>
+        </div>
 
-        {{ seo_keywords }}
+        <!-- =====================================================
+             STATE: ERROR
+             ===================================================== -->
+        <div id="state-error" class="hidden flex flex-col items-center w-full">
+            <div class="w-12 h-12 bg-red-50 text-red-600 rounded-full flex items-center justify-center mb-4 mx-auto">
+                <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+            </div>
+            <h3 class="text-lg font-black text-surface-900 mb-1">Processing failed</h3>
+            <p id="error-message" class="text-surface-500 text-[14px] mb-6">We couldn't remove watermarks from this file.</p>
+            
+            <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto justify-center">
+                <button type="button" id="retry-btn" class="purple-btn px-8 py-3.5 rounded-xl text-white font-bold text-[14px] tracking-wide flex items-center justify-center gap-2">
+                    TRY AGAIN
+                </button>
+                <button type="button" id="choose-another-btn" class="bg-surface-100 hover:bg-surface-200 text-surface-700 font-bold text-[14px] px-8 py-3.5 rounded-xl transition-colors flex items-center justify-center gap-2">
+                    Choose another file
+                </button>
+            </div>
+        </div>
 
-    </p>
-
-    {% endif %}
+    </div>
 
 </section>
-
-
-
 <!-- =========================================================
-     MAIN CARD
+     LOWER CONTENT
      ========================================================= -->
 
-<!-- =========================================================
-     MAIN CARD
-     ========================================================= -->
+<div class="converter-content-container pb-20">
 
-<div class="rounded-2xl bg-[#faf5ff]  p-4 sm:p-6 ">
-
-
-    <!-- =====================================================
-         SELECT FILE
-         ===================================================== -->
-<div id="select-file-area" class="select-file-area">
-
-
-        <!-- Select File Button -->
-
-        <button
-            type="button"
-            id="select-file-btn"
-            class="purple-btn px-8 py-3 rounded-2xl text-white font-black text-sm sm:text-base uppercase tracking-widest flex items-center justify-center gap-3">
-
-            <i
-                data-lucide="upload"
-                class="w-5 h-5">
-            </i>
-
-            Select File
-
-        </button>
-
-
-        <!-- File Information -->
-
-        <p class="text-xs text-surface-400 mt-3">
-
-            Max 50MB
-            &nbsp;&nbsp;•&nbsp;&nbsp;
-            Accepted:
-
-            <span class="text-surface-500 font-medium">
-                {{ tool.accept }}
-            </span>
-
-        </p>
-
-
-        <!-- =================================================
-             SELECTED FILE
-             ================================================= -->
-
-        <div
-            id="file-selected"
-            class="hidden selected-file-card">
-
-            <div class="flex items-center gap-4">
-
-
-                <!-- File Icon -->
-
-                <div
-                    class="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center flex-shrink-0">
-
-                    <i
-                        data-lucide="file-check-2"
-                        class="w-6 h-6 text-purple-600">
-                    </i>
-
+    <!-- 02. SECTION 1: Remove Supported PDF Watermarks -->
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mb-12 md:mb-16">
+        <div class="grid md:grid-cols-[1fr_1fr] items-center gap-10 md:gap-16">
+            <div class="order-2 md:order-1 pr-0 md:pr-4">
+                <div class="flex items-center gap-2 text-purple-600 font-bold tracking-widest text-[12px] uppercase mb-4">
+                    <i data-lucide="eraser" class="w-3.5 h-3.5"></i> Clean Documents
                 </div>
-
-
-                <!-- File Details -->
-
-                <div class="text-left min-w-0 flex-1">
-
-                    <p
-                        id="file-name"
-                        class="text-surface-800 font-bold text-sm truncate">
-                    </p>
-
-                    <p
-                        id="file-size"
-                        class="text-xs text-surface-400 mt-1">
-                    </p>
-
+                <h3 class="text-2xl md:text-[2rem] font-bold text-surface-900 mb-5 leading-tight tracking-tight">Remove Supported PDF Watermarks</h3>
+                <p class="text-surface-500 text-[17px] leading-relaxed mb-8">
+                    ScanPDF analyzes your PDF to detect and remove common overlay text and annotation-based watermarks, giving you a clean document ready for reading or presentation.
+                </p>
+                <ul class="space-y-4">
+                    <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                        <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                        Clears standard transparent text overlays
+                    </li>
+                    <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                        <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                        Removes annotation-based stamps
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="order-1 md:order-2 relative">
+                <div class="bg-gradient-to-br from-purple-50 to-white rounded-[28px] p-8 md:p-12 border border-purple-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative">
+                    <div class="bg-white rounded-xl shadow-lg border border-surface-200 p-6 relative z-10 flex items-center justify-center aspect-[4/3]">
+                         <div class="relative w-full h-full bg-surface-50 border border-surface-200 rounded p-4 flex flex-col justify-between overflow-hidden">
+                             <div class="h-2 bg-surface-200 rounded w-3/4 mb-2"></div>
+                             <div class="h-2 bg-surface-200 rounded w-full mb-2"></div>
+                             <div class="h-2 bg-surface-200 rounded w-5/6"></div>
+                             <!-- Watermark being erased (opacity fading) -->
+                             <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                 <span class="text-4xl font-black text-purple-600/10 -rotate-45 tracking-widest uppercase line-through">DRAFT</span>
+                             </div>
+                         </div>
+                    </div>
                 </div>
-
-
-                <!-- Remove -->
-
-                <button
-                    type="button"
-                    id="remove-file-btn"
-                    class="remove-file-btn"
-                    title="Remove file">
-
-                    <i
-                        data-lucide="x"
-                        class="w-5 h-5">
-                    </i>
-
-                </button>
-
             </div>
-
         </div>
-
-
-        <!-- Hidden File Input -->
-
-        <input
-            type="file"
-            id="file-input"
-            class="hidden"
-            accept="{{ tool.accept }}">
-
-
     </div>
 
-
-
-    <!-- =====================================================
-         PDF TO IMAGE FORMAT
-         ===================================================== -->
-
-    {% if tool_slug == 'pdf-to-image' %}
-
-    <div
-        class="mt-3 flex flex-col items-center gap-3 py-4 border-t border-surface-50 animate-fade-in-up">
-
-
-        <span
-            class="text-[11px] font-black text-surface-400 uppercase tracking-widest">
-
-            Select Format
-
-        </span>
-
-
-        <div class="flex gap-2">
-
-
-            <!-- PNG -->
-
-            <label class="cursor-pointer">
-
-                <input
-                    type="radio"
-                    name="image_format"
-                    value="png"
-                    checked
-                    class="hidden peer">
-
-                <span
-                    class="px-6 py-2.5 rounded-xl text-sm font-bold border border-surface-200
-                    peer-checked:border-violet-500
-                    peer-checked:bg-violet-50
-                    peer-checked:text-violet-700
-                    text-surface-400
-                    hover:bg-surface-50
-                    transition-all
-                    block">
-
-                    PNG
-
-                </span>
-
-            </label>
-
-
-            <!-- JPG -->
-
-            <label class="cursor-pointer">
-
-                <input
-                    type="radio"
-                    name="image_format"
-                    value="jpg"
-                    class="hidden peer">
-
-                <span
-                    class="px-6 py-2.5 rounded-xl text-sm font-bold border border-surface-200
-                    peer-checked:border-violet-500
-                    peer-checked:bg-violet-50
-                    peer-checked:text-violet-700
-                    text-surface-400
-                    hover:bg-surface-50
-                    transition-all
-                    block">
-
-                    JPG
-
-                </span>
-
-            </label>
-
-
-        </div>
-
-    </div>
-
-    {% endif %}
-
-
-
-    <!-- =====================================================
-         CONVERT BUTTON
-         ===================================================== -->
-
-    <div class="text-center">
-
-        <button
-            id="convert-btn"
-            disabled
-            class="purple-btn w-auto mx-auto px-8 py-3 mt-5 sm:py-4 rounded-2xl text-white font-black text-sm sm:text-base uppercase tracking-widest flex items-center justify-center gap-3">
-
-            <i
-                data-lucide="sparkles"
-                class="w-5 h-5">
-            </i>
-
-            Convert Now
-
-        </button>
-
-    </div>
-
-
-
-    <!-- =====================================================
-         PROGRESS STATE
-         ===================================================== -->
-
-    <div
-        id="progress-section"
-        class="hidden mt-4">
-
-
-        <div class="progress-card flex items-center gap-4">
-
-
-            <!-- Spinner -->
-
-            <div class="relative flex-shrink-0">
-
-                <div class="progress-spinner"></div>
-
+    <!-- 03. SECTION 2: Preserve Important Page Content -->
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mb-12 md:mb-16">
+        <div class="grid md:grid-cols-[1fr_1fr] items-center gap-10 md:gap-16">
+            <div class="order-1 md:order-1 relative">
+                <div class="bg-gradient-to-br from-blue-50 to-white rounded-[28px] p-8 md:p-12 border border-blue-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+                    <div class="bg-white rounded-xl shadow-lg border border-surface-200 p-6 relative z-10">
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between border-b border-surface-100 pb-3">
+                                <span class="text-surface-600 font-medium text-sm">Text Layer</span>
+                                <span class="text-green-600 font-bold text-sm">Preserved</span>
+                            </div>
+                            <div class="flex items-center justify-between border-b border-surface-100 pb-3">
+                                <span class="text-surface-600 font-medium text-sm">Images</span>
+                                <span class="text-green-600 font-bold text-sm">Preserved</span>
+                            </div>
+                            <div class="flex items-center justify-between border-b border-surface-100 pb-3">
+                                <span class="text-surface-600 font-medium text-sm">Structure</span>
+                                <span class="text-green-600 font-bold text-sm">Preserved</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-surface-600 font-medium text-sm">Watermarks</span>
+                                <span class="text-red-600 font-bold text-sm">Removed</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-
-
-            <!-- Text -->
-
-            <div class="min-w-0">
-
-                <p class="text-surface-800 font-bold text-base">
-
-                    Converting your file…
-
+            
+            <div class="order-2 md:order-2 pl-0 md:pl-4">
+                <div class="flex items-center gap-2 text-purple-600 font-bold tracking-widest text-[12px] uppercase mb-4">
+                    <i data-lucide="shield-check" class="w-3.5 h-3.5"></i> Safe Removal
+                </div>
+                <h3 class="text-2xl md:text-[2rem] font-bold text-surface-900 mb-5 leading-tight tracking-tight">Preserve Important Page Content</h3>
+                <p class="text-surface-500 text-[17px] leading-relaxed mb-8">
+                    ScanPDF's removal algorithm carefully targets only watermark-specific elements. Your actual document text, embedded images, and page structure remain untouched.
                 </p>
-
-                <p class="text-xs text-surface-400 mt-1">
-
-                    This may take a moment
-
-                </p>
-
+                <ul class="space-y-4">
+                    <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                        <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                        Does not delete native paragraphs
+                    </li>
+                    <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                        <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                        Safely repacks the PDF structure
+                    </li>
+                    <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                        <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                        Avoids rasterizing your document
+                    </li>
+                </ul>
             </div>
-
-
         </div>
-
-
-        <!-- Progress Bar -->
-
-        <div
-            class="w-full h-2 rounded-full bg-surface-100 overflow-hidden mt-4">
-
-            <div
-                id="progress-bar"
-                class="progress-fill">
-            </div>
-
-        </div>
-
-
-        <!-- Percentage -->
-
-        <p
-            id="progress-percent"
-            class="text-center text-xs font-bold text-violet-600 mt-2">
-
-            0%
-
-        </p>
-
-
     </div>
 
-
-
-    <!-- =====================================================
-         SUCCESS STATE
-         ===================================================== -->
-
-    <div
-        id="success-section"
-        class="hidden mt-4">
-
-
-        <div class="success-card">
-
-
-            <!-- Success Icon -->
-
-            <div class="success-icon">
-
-                <i
-                    data-lucide="check-circle-2"
-                    class="w-8 h-8">
-                </i>
-
+    <!-- 04. SECTION 3: Understand Watermark Limitations -->
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mb-12 md:mb-16">
+        <div class="grid md:grid-cols-[1fr_1fr] items-center gap-10 md:gap-16">
+            <div class="order-2 md:order-1 pr-0 md:pr-4">
+                <div class="flex items-center gap-2 text-purple-600 font-bold tracking-widest text-[12px] uppercase mb-4">
+                    <i data-lucide="info" class="w-3.5 h-3.5"></i> Limitations
+                </div>
+                <h3 class="text-2xl md:text-[2rem] font-bold text-surface-900 mb-5 leading-tight tracking-tight">Understand Watermark Limitations</h3>
+                <p class="text-surface-500 text-[17px] leading-relaxed mb-8">
+                    Not all watermarks can be removed. If a watermark is permanently burned into a scanned image or flattened as a single background layer, no software can remove it without destroying the page.
+                </p>
+                <ul class="space-y-4">
+                    <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                        <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                        Works on digital PDF overlay watermarks
+                    </li>
+                    <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                        <div class="w-5 h-5 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0"><i data-lucide="x" class="w-3.5 h-3.5 text-red-600"></i></div>
+                        Cannot remove watermarks baked into scans
+                    </li>
+                    <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                        <div class="w-5 h-5 rounded-full bg-red-100 flex items-center justify-center flex-shrink-0"><i data-lucide="x" class="w-3.5 h-3.5 text-red-600"></i></div>
+                        Cannot remove flattened raster graphics
+                    </li>
+                </ul>
             </div>
+            
+            <div class="order-1 md:order-2">
+                <div class="relative bg-red-50/40 rounded-[28px] p-8 py-14 flex items-center justify-center border border-red-100/50 shadow-[inset_0_0_0_1px_rgba(255,255,255,1)]">
+                    <div class="flex gap-6 relative z-10 items-end justify-center w-full">
+                        <div class="w-[140px] h-[180px] bg-white rounded-lg shadow-[0_8px_24px_rgb(0,0,0,0.12)] border border-surface-300 flex flex-col relative z-10 overflow-hidden">
+                            <!-- Simulating a scanned document where text and watermark are one image -->
+                            <div class="absolute inset-0 bg-surface-200 opacity-30 flex items-center justify-center">
+                                <span class="text-3xl font-black text-surface-600/50 -rotate-45">SCANNED</span>
+                            </div>
+                            <div class="p-4 relative z-10 opacity-70">
+                                <div class="h-2 bg-surface-400 rounded w-full mb-3"></div>
+                                <div class="h-2 bg-surface-400 rounded w-full mb-3"></div>
+                                <div class="h-2 bg-surface-400 rounded w-3/4 mb-3"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-
-            <!-- Title -->
-
-            <h3
-                class="text-lg font-black text-surface-900 mb-1">
-
-                Conversion Complete!
-
-            </h3>
-
-
-            <p
-                class="text-surface-500 text-sm mb-6">
-
-                Your file is ready to download.
-
+    <!-- 05. WHAT THE TOOL CHECKS -->
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mb-12 md:mb-16">
+        <div class="text-center mb-12 md:mb-16">
+            <h2 class="text-3xl md:text-[2.25rem] font-bold text-surface-900 mb-5 tracking-tight">What the Tool Checks</h2>
+            <p class="text-[17px] text-surface-500 max-w-2xl mx-auto leading-relaxed">
+                Our backend algorithm sweeps your document for the most common digital watermark patterns.
             </p>
-
-
-
-            <!-- Buttons -->
-
-            <div
-                class="flex flex-col sm:flex-row gap-3 justify-center">
-
-
-                <!-- Download -->
-
-             <a
-    id="download-btn"
-    href="#"
-    class="purple-btn inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-2xl text-white font-black text-sm" style="  background: linear-gradient(135deg, #16a34a, #22c55e);
-    color: #ffffff;
-
-    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.25);">
-
-    <i data-lucide="download" class="w-5 h-5"></i>
-    Download File
-
-</a>
-
-
-                <!-- Convert Another -->
-
-       <button
-    type="button"
-    id="convert-another-btn"
-    class="purple-btn inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-2xl text-white font-black text-sm">
-
-    <i data-lucide="refresh-cw" class="w-4 h-4"></i>
-    Convert Another
-
-</button>
-
-
-            </div>
-
-
         </div>
-
-    </div>
-
-
-
-    <!-- =====================================================
-         ERROR STATE
-         ===================================================== -->
-
-    <div
-        id="error-section"
-        class="hidden mt-4">
-
-
-        <div
-            class="error-card flex items-start gap-4">
-
-
-            <!-- Icon -->
-
-            <div
-                class="w-9 h-9 rounded-xl bg-red-100 flex items-center justify-center flex-shrink-0">
-
-                <i
-                    data-lucide="alert-triangle"
-                    class="w-5 h-5 text-red-500">
-                </i>
-
-            </div>
-
-
-            <!-- Error -->
-
-            <div class="min-w-0 pt-1">
-
-                <h4
-                    class="font-black text-red-700 text-sm uppercase tracking-wider mb-1">
-
-                    Conversion Failed
-
-                </h4>
-
-                <p
-                    id="error-message"
-                    class="text-xs text-red-500 leading-relaxed font-semibold">
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <!-- Transparent Overlays -->
+            <div class="bg-white border border-surface-200/80 rounded-2xl p-6 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300">
+                <div class="w-12 h-12 rounded-xl bg-purple-50 border border-purple-100/60 flex items-center justify-center mb-5 text-[22px] font-serif font-bold text-purple-600">
+                    Aa
+                </div>
+                <h4 class="text-[17px] font-bold text-surface-900 mb-4">Transparent Overlays</h4>
+                <p class="text-surface-600 text-[14px] leading-relaxed">
+                    Detects text blocks that use ExtGState transparency effects typical of digital watermarks.
                 </p>
-
             </div>
-
-
+            
+            <!-- Annotations -->
+            <div class="bg-white border border-surface-200/80 rounded-2xl p-6 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300">
+                <div class="w-12 h-12 rounded-xl bg-blue-50 border border-blue-100/60 flex items-center justify-center mb-5 text-[22px] font-bold text-blue-600">
+                    <i data-lucide="message-square" class="w-5 h-5"></i>
+                </div>
+                <h4 class="text-[17px] font-bold text-surface-900 mb-4">Annotations</h4>
+                <p class="text-surface-600 text-[14px] leading-relaxed">
+                    Identifies and safely removes watermark stamps applied as PDF annotations.
+                </p>
+            </div>
+            
+            <!-- Structural Safety -->
+            <div class="bg-white border border-surface-200/80 rounded-2xl p-6 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300">
+                <div class="w-12 h-12 rounded-xl bg-green-50 border border-green-100/60 flex items-center justify-center mb-5 text-[22px] font-bold text-green-600">
+                    <i data-lucide="shield" class="w-5 h-5"></i>
+                </div>
+                <h4 class="text-[17px] font-bold text-surface-900 mb-4">Structural Safety</h4>
+                <p class="text-surface-600 text-[14px] leading-relaxed">
+                    Skips embedded base images to ensure your core document graphics are not accidentally deleted.
+                </p>
+            </div>
+            
+            <!-- Multi-Page Sweeps -->
+            <div class="bg-white border border-surface-200/80 rounded-2xl p-6 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300">
+                <div class="w-12 h-12 rounded-xl bg-orange-50 border border-orange-100/60 flex items-center justify-center mb-5 text-[22px] font-bold text-orange-500">
+                    <i data-lucide="layers" class="w-5 h-5"></i>
+                </div>
+                <h4 class="text-[17px] font-bold text-surface-900 mb-4">Multi-Page Sweeps</h4>
+                <p class="text-surface-600 text-[14px] leading-relaxed">
+                    Applies the detection and removal algorithms consistently across every single page of your PDF.
+                </p>
+            </div>
         </div>
-
     </div>
 
+    <!-- 06. HOW TO REMOVE WATERMARK -->
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mb-12 md:mb-16">
+        <div class="bg-gradient-to-br from-purple-50/70 to-white rounded-[32px] border border-purple-100/60 p-8 md:p-14 shadow-sm relative overflow-hidden">
+            <div class="text-center md:text-left mb-12 relative z-10">
+                <h2 class="text-3xl md:text-[2.25rem] font-bold text-surface-900 mb-4 tracking-tight">How to Remove a Watermark from PDF</h2>
+            </div>
+            
+            <div class="grid lg:grid-cols-[50%_50%] gap-12 lg:gap-16 items-center relative z-10">
+                <div class="relative w-full">
+                    <div class="space-y-8 relative">
+                        <div class="flex gap-5">
+                            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-sm">01</div>
+                            <div>
+                                <h4 class="text-[17px] font-bold text-surface-900 mb-1.5">Select Your PDF</h4>
+                                <p class="text-surface-500 text-[15px] leading-relaxed">Upload the watermarked document.</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-5">
+                            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-sm">02</div>
+                            <div>
+                                <h4 class="text-[17px] font-bold text-surface-900 mb-1.5">Start Removal</h4>
+                                <p class="text-surface-500 text-[15px] leading-relaxed">Click the button to begin the cleaning process.</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-5">
+                            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-sm">03</div>
+                            <div>
+                                <h4 class="text-[17px] font-bold text-surface-900 mb-1.5">Process Supported Watermarks</h4>
+                                <p class="text-surface-500 text-[15px] leading-relaxed">Our backend detects and strips out supported overlay types.</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-5">
+                            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-sm">04</div>
+                            <div>
+                                <h4 class="text-[17px] font-bold text-surface-900 mb-1.5">Download Result</h4>
+                                <p class="text-surface-500 text-[15px] leading-relaxed">Download your newly cleaned PDF file instantly.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex justify-center lg:justify-end w-full">
+                    <div class="bg-white p-7 rounded-[24px] shadow-[0_12px_40px_rgb(0,0,0,0.06)] border border-surface-200/60 w-full max-w-[400px]">
+                        <div class="font-bold text-surface-900 text-[15px] text-center mb-6">Remove Watermark</div>
+                        <div class="bg-white border border-surface-200/80 rounded-lg p-3.5 flex items-center justify-between mb-5 shadow-sm">
+                            <div class="flex items-center gap-3">
+                                <div class="w-9 h-9 rounded-md bg-purple-50 flex items-center justify-center">
+                                    <i data-lucide="file-text" class="w-4 h-4 text-purple-600"></i>
+                                </div>
+                                <div>
+                                    <div class="text-[13px] font-bold text-surface-900">watermarked_file.pdf</div>
+                                    <div class="text-[11px] text-surface-500 mt-0.5">Ready</div>
+                                </div>
+                            </div>
+                            <i data-lucide="check-circle-2" class="w-4 h-4 text-green-500"></i>
+                        </div>
+                        <div class="mb-5">
+                            <div class="flex justify-between text-[11px] font-bold text-surface-700 mb-2">
+                                <span>Removing...</span>
+                                <span>100%</span>
+                            </div>
+                            <div class="h-1.5 w-full bg-surface-100 rounded-full overflow-hidden">
+                                <div class="h-full w-full bg-purple-500 rounded-full"></div>
+                            </div>
+                        </div>
+                        <div class="w-full bg-purple-600 text-white rounded-xl py-3.5 text-center font-bold text-[14px] shadow-sm">
+                            DOWNLOAD PDF
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
+    <!-- 07. DESIGNED FOR DIFFERENT DOCUMENTS -->
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mb-12 md:mb-16">
+        <div class="text-center mb-12 md:mb-16">
+            <h2 class="text-3xl md:text-[2.25rem] font-bold text-surface-900 mb-5 tracking-tight">Designed for Different Documents</h2>
+            <p class="text-[17px] text-surface-500 max-w-[700px] mx-auto leading-relaxed">
+                Clear away distractions from your important files.
+            </p>
+        </div>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="bg-surface-50/50 border border-surface-200/60 rounded-2xl p-6 text-center hover:bg-white hover:shadow-md hover:border-purple-200 transition-all duration-300">
+                <div class="w-14 h-16 mx-auto bg-white border border-surface-200 shadow-sm rounded flex flex-col p-2 mb-5">
+                    <div class="h-1.5 w-3/4 bg-surface-300 mb-2"></div>
+                    <div class="h-6 w-full bg-purple-50 mb-1"></div>
+                    <div class="h-1 w-full bg-surface-100 mb-1"></div>
+                    <div class="h-1 w-5/6 bg-surface-100"></div>
+                </div>
+                <h4 class="text-[15px] font-bold text-surface-900 mb-2 uppercase tracking-wide">Digital PDFs</h4>
+                <p class="text-surface-500 text-[14px] leading-relaxed">Documents created digitally with overlay text</p>
+            </div>
+            
+            <div class="bg-surface-50/50 border border-surface-200/60 rounded-2xl p-6 text-center hover:bg-white hover:shadow-md hover:border-purple-200 transition-all duration-300">
+                <div class="w-14 h-16 mx-auto bg-white border border-surface-200 shadow-sm rounded flex flex-col p-2 mb-5">
+                    <div class="h-2 w-1/2 bg-surface-300 mx-auto mb-2"></div>
+                    <div class="h-1 w-full bg-surface-100 mb-1"></div>
+                    <div class="h-1 w-full bg-surface-100 mb-1"></div>
+                    <div class="h-1 w-5/6 bg-surface-100 mb-1"></div>
+                    <div class="h-1 w-full bg-surface-100"></div>
+                </div>
+                <h4 class="text-[15px] font-bold text-surface-900 mb-2 uppercase tracking-wide">Shared Documents</h4>
+                <p class="text-surface-500 text-[14px] leading-relaxed">Files you need to clean up for personal reading</p>
+            </div>
+            
+            <div class="bg-surface-50/50 border border-surface-200/60 rounded-2xl p-6 text-center hover:bg-white hover:shadow-md hover:border-purple-200 transition-all duration-300">
+                <div class="w-14 h-16 mx-auto bg-white border border-surface-200 shadow-sm rounded flex flex-col p-2 mb-5">
+                    <div class="h-1.5 w-1/3 bg-blue-100 mb-2"></div>
+                    <div class="grid grid-cols-2 gap-1 mb-2">
+                        <div class="h-3 bg-surface-100"></div>
+                        <div class="h-3 bg-surface-100"></div>
+                        <div class="h-3 bg-surface-50"></div>
+                        <div class="h-3 bg-surface-50"></div>
+                    </div>
+                </div>
+                <h4 class="text-[15px] font-bold text-surface-900 mb-2 uppercase tracking-wide">Generated PDFs</h4>
+                <p class="text-surface-500 text-[14px] leading-relaxed">System generated files with stamp annotations</p>
+            </div>
+            
+            <div class="bg-surface-50/50 border border-surface-200/60 rounded-2xl p-6 text-center hover:bg-white hover:shadow-md hover:border-purple-200 transition-all duration-300">
+                <div class="w-14 h-16 mx-auto bg-white border border-surface-200 shadow-sm rounded flex flex-col p-2 mb-5">
+                    <div class="flex gap-1.5 mb-1.5">
+                        <div class="w-4 h-4 bg-purple-100 rounded-sm"></div>
+                        <div class="w-full space-y-1">
+                            <div class="h-1 w-full bg-surface-100"></div>
+                            <div class="h-1 w-full bg-surface-100"></div>
+                        </div>
+                    </div>
+                    <div class="h-1 w-full bg-surface-100 mb-1"></div>
+                    <div class="h-1 w-2/3 bg-surface-100"></div>
+                </div>
+                <h4 class="text-[15px] font-bold text-surface-900 mb-2 uppercase tracking-wide">Supported Watermarked Files</h4>
+                <p class="text-surface-500 text-[14px] leading-relaxed">Any PDF matching supported removal patterns</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 08. WHY USE SCANPDF -->
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mb-12 md:mb-16">
+        <div class="text-center mb-12 md:mb-16">
+            <h2 class="text-3xl md:text-[2.25rem] font-bold text-surface-900 mb-5 tracking-tight">Why Use ScanPDF Remove Watermark</h2>
+        </div>
+        
+        <div class="grid md:grid-cols-[1fr_1fr] gap-6">
+            <div class="bg-purple-600 rounded-[24px] p-8 md:p-12 text-white relative overflow-hidden flex flex-col justify-center">
+                <div class="absolute top-0 right-0 w-64 h-64 bg-purple-500 rounded-full blur-[80px] -z-0"></div>
+                <div class="relative z-10">
+                    <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mb-6">
+                        <i data-lucide="zap" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4">Fast and Private</h3>
+                    <p class="text-purple-100 text-[17px] leading-relaxed">
+                        Easily clean up documents online without installing software.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="space-y-6">
+                <div class="bg-white border border-surface-200/80 rounded-[24px] p-8 flex items-start gap-5 shadow-sm">
+                    <div class="w-10 h-10 bg-purple-50 text-purple-600 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <i data-lucide="shield" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-[17px] font-bold text-surface-900 mb-2">Content Protection</h4>
+                        <p class="text-surface-500 text-[15px] leading-relaxed">Removes the watermark while carefully preserving your actual document content.</p>
+                    </div>
+                </div>
+                
+                <div class="bg-white border border-surface-200/80 rounded-[24px] p-8 flex items-start gap-5 shadow-sm">
+                    <div class="w-10 h-10 bg-purple-50 text-purple-600 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <i data-lucide="layers" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-[17px] font-bold text-surface-900 mb-2">Automated Processing</h4>
+                        <p class="text-surface-500 text-[15px] leading-relaxed">Simply upload and wait—the backend does the complex PDF structure sweeping for you.</p>
+                    </div>
+                </div>
+                
+                <div class="bg-white border border-surface-200/80 rounded-[24px] p-8 flex items-start gap-5 shadow-sm">
+                    <div class="w-10 h-10 bg-purple-50 text-purple-600 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <i data-lucide="download" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-[17px] font-bold text-surface-900 mb-2">Direct PDF Download</h4>
+                        <p class="text-surface-500 text-[15px] leading-relaxed">Get your cleaned document instantly when the process completes.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 09. BEST RESULTS -->
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mb-12 md:mb-16">
+        <div class="bg-purple-50 border border-purple-100 rounded-[24px] p-8 md:p-12 flex flex-col md:flex-row gap-8 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.5)]">
+            <div class="md:w-1/3">
+                <div class="w-12 h-12 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center mb-5">
+                    <i data-lucide="info" class="w-6 h-6"></i>
+                </div>
+                <h3 class="text-xl font-bold text-surface-900 mb-3">Get the Best Removal Result</h3>
+                <p class="text-surface-600 text-[15px] leading-relaxed">
+                    Set realistic expectations—the success of this tool relies heavily on how the document was originally created.
+                </p>
+            </div>
+            
+            <div class="md:w-2/3 grid sm:grid-cols-2 gap-4">
+                <div class="flex gap-3">
+                    <i data-lucide="check" class="w-5 h-5 text-purple-500 flex-shrink-0 mt-0.5"></i>
+                    <span class="text-[15px] font-medium text-surface-700">Digital PDFs yield the best results</span>
+                </div>
+                <div class="flex gap-3">
+                    <i data-lucide="check" class="w-5 h-5 text-purple-500 flex-shrink-0 mt-0.5"></i>
+                    <span class="text-[15px] font-medium text-surface-700">Will not work on flattened images</span>
+                </div>
+                <div class="flex gap-3">
+                    <i data-lucide="check" class="w-5 h-5 text-purple-500 flex-shrink-0 mt-0.5"></i>
+                    <span class="text-[15px] font-medium text-surface-700">Will not work on physical scans</span>
+                </div>
+                <div class="flex gap-3">
+                    <i data-lucide="check" class="w-5 h-5 text-purple-500 flex-shrink-0 mt-0.5"></i>
+                    <span class="text-[15px] font-medium text-surface-700">Check the document after removal</span>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 {% endblock %}
 
-
 {% block extra_scripts %}
-
 <script>
+    const CONVERT_URL = '{% url "converter:convert_file" "remove-watermark" %}';
+    const CSRF_TOKEN = '{{ csrf_token }}';
 
-/* =========================================================
-   DJANGO VALUES
-   ========================================================= */
+    // State Elements
+    const dropZone = document.getElementById('hero-dropzone');
+    const fileInput = document.getElementById('file-input');
+    const selectFileBtn = document.getElementById('select-file-btn');
+    const removeFileBtn = document.getElementById('remove-file-btn');
+    const convertBtn = document.getElementById('convert-btn');
+    const downloadBtn = document.getElementById('download-btn');
+    const convertAnotherBtn = document.getElementById('convert-another-btn');
+    const retryBtn = document.getElementById('retry-btn');
+    const chooseAnotherBtn = document.getElementById('choose-another-btn');
+    
+    const stateIdle = document.getElementById('state-idle');
+    const stateSelected = document.getElementById('state-selected');
+    const stateConverting = document.getElementById('state-converting');
+    const stateSuccess = document.getElementById('state-success');
+    const stateError = document.getElementById('state-error');
+    
+    const fileName = document.getElementById('file-name');
+    const fileSize = document.getElementById('file-size');
+    const errorMessage = document.getElementById('error-message');
 
-const TOOL_SLUG = '{{ tool_slug }}';
+    let selectedFile = null;
 
-const CONVERT_URL =
-    '{% url "converter:convert_file" tool_slug %}';
-
-const CSRF_TOKEN =
-    '{{ csrf_token }}';
-
-
-/* =========================================================
-   ELEMENTS
-   ========================================================= */
-
-const selectFileArea =
-    document.getElementById('select-file-area');
-
-const selectFileBtn =
-    document.getElementById('select-file-btn');
-
-const fileInput =
-    document.getElementById('file-input');
-
-const fileSelected =
-    document.getElementById('file-selected');
-
-const fileName =
-    document.getElementById('file-name');
-
-const fileSize =
-    document.getElementById('file-size');
-
-const removeFileBtn =
-    document.getElementById('remove-file-btn');
-
-const convertBtn =
-    document.getElementById('convert-btn');
-
-const progressSection =
-    document.getElementById('progress-section');
-
-const progressBar =
-    document.getElementById('progress-bar');
-
-const progressPercent =
-    document.getElementById('progress-percent');
-
-const successSection =
-    document.getElementById('success-section');
-
-const errorSection =
-    document.getElementById('error-section');
-
-const errorMessage =
-    document.getElementById('error-message');
-
-const downloadBtn =
-    document.getElementById('download-btn');
-
-const convertAnotherBtn =
-    document.getElementById('convert-another-btn');
-
-
-/* =========================================================
-   VARIABLES
-   ========================================================= */
-
-let selectedFile = null;
-
-let progressInterval = null;
-
-
-/* =========================================================
-   SELECT FILE BUTTON
-   ========================================================= */
-
-selectFileBtn.addEventListener('click', function () {
-
-    fileInput.click();
-
-});
-
-
-/* =========================================================
-   FILE INPUT CHANGE
-   ========================================================= */
-
-fileInput.addEventListener('change', function (event) {
-
-    if (
-        event.target.files &&
-        event.target.files.length > 0
-    ) {
-
-        handleFile(
-            event.target.files[0]
-        );
-
+    function formatBytes(bytes, decimals = 2) {
+        if (!+bytes) return '0 Bytes';
+        const k = 1024, dm = decimals < 0 ? 0 : decimals;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
     }
 
-});
-
-
-/* =========================================================
-   DRAG OVER
-   ========================================================= */
-
-selectFileArea.addEventListener(
-    'dragover',
-    function (event) {
-
-        event.preventDefault();
-
-        selectFileArea.classList.add(
-            'drag-active'
-        );
-
-    }
-);
-
-
-/* =========================================================
-   DRAG LEAVE
-   ========================================================= */
-
-selectFileArea.addEventListener(
-    'dragleave',
-    function () {
-
-        selectFileArea.classList.remove(
-            'drag-active'
-        );
-
-    }
-);
-
-
-/* =========================================================
-   DROP FILE
-   ========================================================= */
-
-selectFileArea.addEventListener(
-    'drop',
-    function (event) {
-
-        event.preventDefault();
-
-        selectFileArea.classList.remove(
-            'drag-active'
-        );
-
-
-        if (
-            event.dataTransfer.files &&
-            event.dataTransfer.files.length > 0
-        ) {
-
-            handleFile(
-                event.dataTransfer.files[0]
-            );
-
-        }
-
-    }
-);
-
-
-/* =========================================================
-   HANDLE FILE
-   ========================================================= */
-
-function handleFile(file) {
-
-    /* ---------------------------------------------
-       Accepted file types
-    --------------------------------------------- */
-
-    const accept =
-        '{{ tool.accept }}'
-        .split(',')
-        .map(function (item) {
-
-            return item
-                .trim()
-                .toLowerCase();
-
-        });
-
-
-    /* ---------------------------------------------
-       Get extension
-    --------------------------------------------- */
-
-    const extension =
-        '.' +
-        file.name
-            .split('.')
-            .pop()
-            .toLowerCase();
-
-
-    /* ---------------------------------------------
-       Validate file type
-    --------------------------------------------- */
-
-    if (
-        !accept.includes(extension)
-    ) {
-
-        showError(
-            'Invalid file type. Accepted: ' +
-            accept.join(', ')
-        );
-
-        return;
-
-    }
-
-
-    /* ---------------------------------------------
-       Validate file size
-       50 MB
-    --------------------------------------------- */
-
-    if (
-        file.size > 52428800
-    ) {
-
-        showError(
-            'File exceeds the 50MB limit.'
-        );
-
-        return;
-
-    }
-
-
-    /* ---------------------------------------------
-       Store file
-    --------------------------------------------- */
-
-    selectedFile = file;
-
-
-    /* ---------------------------------------------
-       Show file name
-    --------------------------------------------- */
-
-    fileName.textContent =
-        file.name;
-
-
-    /* ---------------------------------------------
-       Show file size
-    --------------------------------------------- */
-
-    fileSize.textContent =
-        formatFileSize(file.size);
-
-
-    /* ---------------------------------------------
-       Show selected file card
-    --------------------------------------------- */
-
-    fileSelected.classList.remove(
-        'hidden'
-    );
-
-
-    /* ---------------------------------------------
-       Enable Convert button
-    --------------------------------------------- */
-
-    convertBtn.disabled = false;
-
-
-    /* ---------------------------------------------
-       Hide error
-    --------------------------------------------- */
-
-    errorSection.classList.add(
-        'hidden'
-    );
-
-
-    /* ---------------------------------------------
-       Refresh icons
-    --------------------------------------------- */
-
-    if (
-        typeof lucide !== 'undefined'
-    ) {
-
+    function setState(state) {
+        [stateIdle, stateSelected, stateConverting, stateSuccess, stateError].forEach(el => el.classList.add('hidden'));
+        state.classList.remove('hidden');
         lucide.createIcons();
-
     }
 
-}
+    // Event Listeners
+    selectFileBtn.onclick = () => fileInput.click();
+    fileInput.onchange = e => { if (e.target.files.length) handleFile(e.target.files[0]); };
 
+    dropZone.ondragover = e => { e.preventDefault(); dropZone.classList.add('drag-active'); };
+    dropZone.ondragleave = () => { dropZone.classList.remove('drag-active'); };
+    dropZone.ondrop = e => { 
+        e.preventDefault(); 
+        dropZone.classList.remove('drag-active'); 
+        if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]); 
+    };
 
-/* =========================================================
-   FORMAT FILE SIZE
-   ========================================================= */
-
-function formatFileSize(bytes) {
-
-    if (bytes === 0) {
-
-        return '0 Bytes';
-
+    function handleFile(file) {
+        if (!file.name.toLowerCase().endsWith('.pdf')) { showError('Only PDF files are accepted.'); return; }
+        if (file.size > 52428800) { showError('File exceeds 50MB limit.'); return; }
+        selectedFile = file;
+        fileName.textContent = file.name;
+        fileSize.textContent = formatBytes(file.size);
+        setState(stateSelected);
     }
 
+    removeFileBtn.onclick = resetState;
+    convertAnotherBtn.onclick = resetState;
+    chooseAnotherBtn.onclick = resetState;
+    retryBtn.onclick = () => setState(stateSelected);
 
-    const k = 1024;
-
-    const sizes = [
-        'Bytes',
-        'KB',
-        'MB',
-        'GB'
-    ];
-
-
-    const index =
-        Math.floor(
-            Math.log(bytes) /
-            Math.log(k)
-        );
-
-
-    return (
-        parseFloat(
-            (
-                bytes /
-                Math.pow(k, index)
-            ).toFixed(2)
-        )
-        +
-        ' '
-        +
-        sizes[index]
-    );
-
-}
-
-
-/* =========================================================
-   REMOVE FILE
-   ========================================================= */
-
-removeFileBtn.addEventListener(
-    'click',
-    function (event) {
-
-        event.stopPropagation();
-
-        resetUpload();
-
+    function resetState() {
+        selectedFile = null;
+        fileInput.value = '';
+        setState(stateIdle);
     }
-);
 
+    function showError(msg) { 
+        errorMessage.textContent = msg; 
+        setState(stateError); 
+    }
 
-/* =========================================================
-   CONVERT BUTTON
-   ========================================================= */
-
-convertBtn.addEventListener(
-    'click',
-    async function () {
-
-
-        /* ---------------------------------------------
-           Safety check
-        --------------------------------------------- */
-
-        if (!selectedFile) {
-
-            return;
-
-        }
-
-
-        /* ---------------------------------------------
-           Hide Convert button
-        --------------------------------------------- */
-
-        convertBtn.classList.add(
-            'hidden'
-        );
-
-
-        /* ---------------------------------------------
-           Hide success
-        --------------------------------------------- */
-
-        successSection.classList.add(
-            'hidden'
-        );
-
-
-        /* ---------------------------------------------
-           Hide error
-        --------------------------------------------- */
-
-        errorSection.classList.add(
-            'hidden'
-        );
-
-
-        /* ---------------------------------------------
-           Show loading
-        --------------------------------------------- */
-
-        progressSection.classList.remove(
-            'hidden'
-        );
-
-
-        /* ---------------------------------------------
-           Start progress
-        --------------------------------------------- */
-
-        startProgress();
-
-
-        /* ---------------------------------------------
-           Create FormData
-        --------------------------------------------- */
-
-        const formData =
-            new FormData();
-
-
-        formData.append(
-            'file',
-            selectedFile
-        );
-
-
-        formData.append(
-            'csrfmiddlewaretoken',
-            CSRF_TOKEN
-        );
-
-
-        /* ---------------------------------------------
-           PDF to Image
-        --------------------------------------------- */
-
-        if (
-            TOOL_SLUG ===
-            'pdf-to-image'
-        ) {
-
-            const format =
-                document.querySelector(
-                    'input[name="image_format"]:checked'
-                );
-
-
-            if (format) {
-
-                formData.append(
-                    'image_format',
-                    format.value
-                );
-
-            }
-
-        }
-
-
-        /* ---------------------------------------------
-           Send request
-        --------------------------------------------- */
+    convertBtn.onclick = async () => {
+        if (!selectedFile) return;
+        setState(stateConverting);
+        
+        const formData = new FormData();
+        formData.append('file', selectedFile);
+        formData.append('csrfmiddlewaretoken', CSRF_TOKEN);
 
         try {
-
-            const response =
-                await fetch(
-                    CONVERT_URL,
-                    {
-                        method: 'POST',
-                        body: formData
-                    }
-                );
-
-
-            /* -----------------------------------------
-               Check response
-            ----------------------------------------- */
-
-            if (!response.ok) {
-
-                let message =
-                    'Conversion failed.';
-
-
-                try {
-
-                    const data =
-                        await response.json();
-
-                    message =
-                        data.error ||
-                        message;
-
-                } catch (error) {
-
-                    /* Ignore JSON error */
-
-                }
-
-
-                throw new Error(
-                    message
-                );
-
+            const response = await fetch(CONVERT_URL, { method: 'POST', body: formData });
+            if (!response.ok) { 
+                const d = await response.json(); 
+                throw new Error(d.error || 'Failed to remove watermark.'); 
             }
-
-
-            /* -----------------------------------------
-               Stop progress
-            ----------------------------------------- */
-
-            stopProgress();
-
-
-            /* -----------------------------------------
-               Get output filename
-            ----------------------------------------- */
-
-            const disposition =
-                response.headers.get(
-                    'Content-Disposition'
-                );
-
-
-            let outputFilename =
-                'converted_file';
-
-
-            if (disposition) {
-
-                const match =
-                    disposition.match(
-                        /filename="(.+?)"/
-                    );
-
-
-                if (match) {
-
-                    outputFilename =
-                        match[1];
-
-                }
-
-            }
-
-
-            /* -----------------------------------------
-               Get converted file
-            ----------------------------------------- */
-
-            const blob =
-                await response.blob();
-
-
-            /* -----------------------------------------
-               Create download URL
-            ----------------------------------------- */
-
-            const url =
-                window.URL.createObjectURL(
-                    blob
-                );
-
-
-            /* -----------------------------------------
-               Set download button
-            ----------------------------------------- */
-
-            downloadBtn.href =
-                url;
-
-            downloadBtn.download =
-                outputFilename;
-
-
-            /* -----------------------------------------
-               HIDE SELECT FILE AREA
-               
-               This happens after successful
-               conversion.
-            ----------------------------------------- */
-
-            selectFileArea.classList.add(
-                'hidden'
-            );
-
-
-            /* -----------------------------------------
-               Hide progress
-            ----------------------------------------- */
-
-            progressSection.classList.add(
-                'hidden'
-            );
-
-
-            /* -----------------------------------------
-               Show success
-            ----------------------------------------- */
-
-            successSection.classList.remove(
-                'hidden'
-            );
-
-
-            /* -----------------------------------------
-               Refresh icons
-            ----------------------------------------- */
-
-            if (
-                typeof lucide !== 'undefined'
-            ) {
-
-                lucide.createIcons();
-
-            }
-
-
-        } catch (error) {
-
-
-            /* -----------------------------------------
-               Stop progress
-            ----------------------------------------- */
-
-            stopProgress();
-
-
-            /* -----------------------------------------
-               Hide progress
-            ----------------------------------------- */
-
-            progressSection.classList.add(
-                'hidden'
-            );
-
-
-            /* -----------------------------------------
-               Show Convert button again
-            ----------------------------------------- */
-
-            convertBtn.classList.remove(
-                'hidden'
-            );
-
-
-            /* -----------------------------------------
-               Show error
-            ----------------------------------------- */
-
-            showError(
-                error.message
-            );
-
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            downloadBtn.href = url; 
+            downloadBtn.download = fileName.textContent.split('.').slice(0, -1).join('.') + '_clean.pdf';
+            setState(stateSuccess);
+        } catch (err) {
+            showError(err.message);
         }
-
-    }
-);
-
-
-/* =========================================================
-   CONVERT ANOTHER
-   ========================================================= */
-
-convertAnotherBtn.addEventListener(
-    'click',
-    function () {
-
-        resetUpload();
-
-    }
-);
-
-
-/* =========================================================
-   RESET UPLOAD
-   ========================================================= */
-
-function resetUpload() {
-
-
-    /* ---------------------------------------------
-       Clear selected file
-    --------------------------------------------- */
-
-    selectedFile = null;
-
-
-    /* ---------------------------------------------
-       Clear browser input
-    --------------------------------------------- */
-
-    fileInput.value = '';
-
-
-    /* ---------------------------------------------
-       SHOW SELECT FILE AREA AGAIN
-    --------------------------------------------- */
-
-    selectFileArea.classList.remove(
-        'hidden'
-    );
-
-
-    /* ---------------------------------------------
-       Hide selected file
-    --------------------------------------------- */
-
-    fileSelected.classList.add(
-        'hidden'
-    );
-
-
-    /* ---------------------------------------------
-       Disable Convert button
-    --------------------------------------------- */
-
-    convertBtn.disabled = true;
-
-
-    /* ---------------------------------------------
-       Show Convert button
-    --------------------------------------------- */
-
-    convertBtn.classList.remove(
-        'hidden'
-    );
-
-
-    /* ---------------------------------------------
-       Hide progress
-    --------------------------------------------- */
-
-    progressSection.classList.add(
-        'hidden'
-    );
-
-
-    /* ---------------------------------------------
-       Hide success
-    --------------------------------------------- */
-
-    successSection.classList.add(
-        'hidden'
-    );
-
-
-    /* ---------------------------------------------
-       Hide error
-    --------------------------------------------- */
-
-    errorSection.classList.add(
-        'hidden'
-    );
-
-
-    /* ---------------------------------------------
-       Stop progress
-    --------------------------------------------- */
-
-    if (progressInterval) {
-
-        clearInterval(
-            progressInterval
-        );
-
-        progressInterval = null;
-
-    }
-
-
-    /* ---------------------------------------------
-       Reset progress bar
-    --------------------------------------------- */
-
-    if (progressBar) {
-
-        progressBar.style.width =
-            '0%';
-
-    }
-
-
-    if (progressPercent) {
-
-        progressPercent.textContent =
-            '0%';
-
-    }
-
-
-    /* ---------------------------------------------
-       Refresh icons
-    --------------------------------------------- */
-
-    if (
-        typeof lucide !== 'undefined'
-    ) {
-
-        lucide.createIcons();
-
-    }
-
-}
-
-
-/* =========================================================
-   START PROGRESS
-   ========================================================= */
-
-function startProgress() {
-
-    let progress = 0;
-
-
-    progressBar.style.width =
-        '0%';
-
-
-    progressPercent.textContent =
-        '0%';
-
-
-    progressInterval =
-        setInterval(
-            function () {
-
-
-                /*
-                 * Keep at 90%.
-                 * Actual completion happens
-                 * when backend response arrives.
-                 */
-
-                if (
-                    progress < 90
-                ) {
-
-                    progress +=
-                        Math.random() * 5;
-
-
-                    if (
-                        progress > 90
-                    ) {
-
-                        progress = 90;
-
-                    }
-
-
-                    progress =
-                        Math.floor(
-                            progress
-                        );
-
-
-                    progressBar.style.width =
-                        progress + '%';
-
-
-                    progressPercent.textContent =
-                        progress + '%';
-
-                }
-
-            },
-            500
-        );
-
-}
-
-
-/* =========================================================
-   STOP PROGRESS
-   ========================================================= */
-
-function stopProgress() {
-
-
-    if (progressInterval) {
-
-        clearInterval(
-            progressInterval
-        );
-
-        progressInterval = null;
-
-    }
-
-
-    if (progressBar) {
-
-        progressBar.style.width =
-            '100%';
-
-    }
-
-
-    if (progressPercent) {
-
-        progressPercent.textContent =
-            '100%';
-
-    }
-
-}
-
-
-/* =========================================================
-   SHOW ERROR
-   ========================================================= */
-
-function showError(message) {
-
-    errorMessage.textContent =
-        message;
-
-
-    errorSection.classList.remove(
-        'hidden'
-    );
-
-
-    if (
-        typeof lucide !== 'undefined'
-    ) {
-
-        lucide.createIcons();
-
-    }
-
-}
-
-
-/* =========================================================
-   INITIAL LUCIDE ICONS
-   ========================================================= */
-
-if (
-    typeof lucide !== 'undefined'
-) {
-
-    lucide.createIcons();
-
-}
-
+    };
+    
+    // Init icons
+    document.addEventListener("DOMContentLoaded", () => {
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    });
 </script>
-
 {% endblock %}
