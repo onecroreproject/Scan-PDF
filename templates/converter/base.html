@@ -110,7 +110,7 @@
     <!-- Lucide Icons (Pinned to v0.263.0 for Brand Icon Support) -->
     <script src="https://unpkg.com/lucide@0.263.0/dist/umd/lucide.min.js"></script>
 
-    <link rel="stylesheet" href="{% static 'css/style.css' %}?v=1.1.2">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
 
     <style>
         /* Prevent refresh-time layout flash until page is fully ready */
@@ -1306,7 +1306,7 @@
     {{ all_tools_metadata|json_script:"tools-data" }}
 
     <!-- Core JS -->
-    <script src="{% static 'js/main.js' %}?v=1.1.1"></script>
+    <script src="{% static 'js/main.js' %}"></script>
     <script>
             // Reveal only after full refresh pipeline completes.
             (function revealPageWhenReady() {
