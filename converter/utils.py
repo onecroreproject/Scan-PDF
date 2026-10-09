@@ -2391,17 +2391,8 @@ def rotate_pdf(input_path, original_name, rotation_angle=90, page_selection='all
 # 18. ADD WATERMARK TO PDF
 # ═══════════════════════════════════════════════════════════════
 def add_watermark(input_path, original_name, watermark_text='CONFIDENTIAL',
-                  opacity=0.15, font_size=60, rotation=45, color='#888888'):
-    """Add a text watermark ON TOP of the existing content of every page.
-
-    The watermark is inserted as an overlay with configurable opacity
-    so it appears over text but remains semi-transparent.
-
-    watermark_text: the text to display as watermark
-    opacity: 0.0 (invisible) to 1.0 (fully opaque)
-    font_size: size of the watermark text
-    rotation: angle of the watermark text in degrees
-    color: hex color string for the watermark
+                  opacity=0.15, font_size=60, rotation=45, color='#888888', position='center', pages='all'):
+    """Add a text watermark ON TOP of the existing content of specified pages.
     """
     try:
         import pymupdf as fitz
@@ -2431,20 +2422,72 @@ def add_watermark(input_path, original_name, watermark_text='CONFIDENTIAL',
     except Exception as e:
         raise Exception(f"Add watermark failed: unable to open PDF – {str(e)}")
 
-    for page in pdf:
+    total_pages = len(pdf)
+    
+    # Parse pages argument
+    target_pages = set()
+    if not pages or pages.strip().lower() == 'all':
+        target_pages = set(range(total_pages))
+    else:
+        for part in pages.split(','):
+            part = part.strip()
+            if not part: continue
+            if '-' in part:
+                parts = part.split('-')
+                if len(parts) == 2:
+                    try:
+                        start = max(0, int(parts[0]) - 1)
+                        end = min(total_pages - 1, int(parts[1]) - 1)
+                        if start <= end:
+                            target_pages.update(range(start, end + 1))
+                    except ValueError:
+                        pass
+            else:
+                try:
+                    p = int(part) - 1
+                    if 0 <= p < total_pages:
+                        target_pages.add(p)
+                except ValueError:
+                    pass
+    if not target_pages:
+        target_pages = set(range(total_pages))
+
+    for page_num in range(total_pages):
+        if page_num not in target_pages:
+            continue
+            
+        page = pdf[page_num]
         rect = page.rect
-        cx = rect.width / 2
-        cy = rect.height / 2
+        
+        # Estimate text dimensions
+        # fitz.get_text_length is available in newer PyMuPDF, but a rough estimate is safer for old versions
+        text_width_est = len(watermark_text) * font_size * 0.5
+        text_height_est = font_size
+        
+        # Determine base X, Y based on position
+        pos = position.lower()
+        margin = 30
+        if 'left' in pos:
+            cx = margin + text_width_est / 2
+        elif 'right' in pos:
+            cx = rect.width - margin - text_width_est / 2
+        else: # center
+            cx = rect.width / 2
+            
+        if 'top' in pos:
+            cy = margin + text_height_est / 2
+        elif 'bottom' in pos:
+            cy = rect.height - margin - text_height_est / 2
+        else: # center
+            cy = rect.height / 2
 
         # === Insert watermark ON TOP of content using overlay=True ===
         text_point = fitz.Point(cx, cy)
 
-        # Build rotation morph around center of page
+        # Build rotation morph around center of the text
         morph = (text_point, fitz.Matrix(rotation))
 
-        # Estimate horizontal offset to roughly center the text
-        text_width_est = len(watermark_text) * font_size * 0.3
-        insert_point = fitz.Point(cx - text_width_est / 2, cy)
+        insert_point = fitz.Point(cx - text_width_est / 2, cy + text_height_est / 3)
 
         try:
             page.insert_text(
@@ -2713,7 +2756,7 @@ def remove_watermark(input_path, original_name):
 # ═══════════════════════════════════════════════════════════════
 def crop_pdf(input_path, original_name, crop_mode='auto',
              top=0, bottom=0, left=0, right=0,
-             crop_x=0, crop_y=0, crop_w=0, crop_h=0):
+             crop_x=0, crop_y=0, crop_w=0, crop_h=0, pages='all'):
     """Crop pages of a PDF.
 
     crop_mode:
@@ -2734,8 +2777,41 @@ def crop_pdf(input_path, original_name, crop_mode='auto',
     output_path = get_output_path(original_name, 'pdf', suffix='_cropped')
 
     pdf = fitz.open(input_path)
+    total_pages = len(pdf)
 
-    for page in pdf:
+    # Parse pages argument
+    target_pages = set()
+    if not pages or pages.strip().lower() == 'all':
+        target_pages = set(range(total_pages))
+    else:
+        for part in pages.split(','):
+            part = part.strip()
+            if not part: continue
+            if '-' in part:
+                parts = part.split('-')
+                if len(parts) == 2:
+                    try:
+                        start = max(0, int(parts[0]) - 1)
+                        end = min(total_pages - 1, int(parts[1]) - 1)
+                        if start <= end:
+                            target_pages.update(range(start, end + 1))
+                    except ValueError:
+                        pass
+            else:
+                try:
+                    p = int(part) - 1
+                    if 0 <= p < total_pages:
+                        target_pages.add(p)
+                except ValueError:
+                    pass
+    if not target_pages:
+        target_pages = set(range(total_pages))
+
+    for page_num in range(total_pages):
+        if page_num not in target_pages:
+            continue
+            
+        page = pdf[page_num]
         rect = page.rect
 
         if crop_mode == 'visual':

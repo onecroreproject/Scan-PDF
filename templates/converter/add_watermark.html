@@ -2,154 +2,677 @@
 {% load static %}
 
 {% block tool_content %}
-<div class="rounded-2xl bg-white border border-surface-100 p-4 sm:p-5 shadow-mega">
-    <div class="space-y-4">
-        <!-- Drag & Drop Zone -->
-        <div id="drop-zone" class="relative rounded-2xl border-2 border-dashed border-brand-100 bg-brand-50/10 hover:bg-brand-50/30 hover:border-brand-400 transition-all duration-300 p-10 sm:p-14 text-center cursor-pointer group">
-            
-            <!-- Default State -->
-            <div id="upload-default" class="space-y-4">
-                <div class="w-14 h-14 rounded-2xl bg-surface-50 border border-surface-100 flex items-center justify-center mx-auto group-hover:bg-brand-50 group-hover:border-brand-200 group-hover:scale-105 transition-all duration-300">
-                    <i data-lucide="stamp" class="w-8 h-8 text-surface-300 group-hover:text-brand-500 transition-colors"></i>
-                </div>
-                <div>
-                    <p class="text-base font-semibold text-surface-700 mb-1">
-                        Drop PDF to watermark, or <span class="text-brand-600 underline underline-offset-4 decoration-brand-200">browse</span>
-                    </p>
-                    <p class="text-xs text-surface-400">Max 50MB&nbsp;&nbsp;•&nbsp;&nbsp;Accepted: .pdf</p>
-                </div>
-            </div>
 
-            <!-- File Selected State -->
-            <div id="file-selected" class="hidden">
-                <div class="flex items-center justify-center gap-6">
-                    <div class="relative">
-                        <div class="w-14 h-14 rounded-2xl bg-brand-50 border border-brand-100 flex items-center justify-center flex-shrink-0">
-                            <i data-lucide="file-check" class="w-8 h-8 text-brand-600"></i>
-                        </div>
-                    </div>
-                    <div class="text-left min-w-0">
-                        <p id="file-name" class="text-surface-800 font-bold text-base truncate max-w-[180px]"></p>
-                        <p id="file-size" class="text-xs text-surface-400 mt-0.5 font-medium"></p>
-                    </div>
-                    <button id="remove-file-btn" class="p-2.5 rounded-xl hover:bg-red-50 text-surface-300 hover:text-red-500 transition-all flex-shrink-0" title="Remove file">
-                        <i data-lucide="trash-2" class="w-5 h-5"></i>
-                    </button>
-                </div>
-            </div>
+<style>
+/* =========================================================
+   CLEAN CONVERTER STYLES
+   ========================================================= */
 
-            <input type="file" id="file-input" class="hidden" accept=".pdf">
+.tool-heading {
+    font-size: clamp(2rem, 5vw + 1rem, 3.5rem);
+    line-height: 1.1;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    color: #1e1b4b; /* Deep navy/purple dark */
+}
+
+/* Purple button */
+.purple-btn {
+    background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+    color: white;
+    box-shadow: 0 4px 14px rgba(124, 58, 237, 0.3);
+    transition: all 0.2s ease;
+}
+.purple-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(124, 58, 237, 0.4);
+}
+.purple-btn:active {
+    transform: translateY(0);
+}
+.purple-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* Central Area */
+.hero-dropzone {
+    width: 100%;
+    transition: all 0.2s ease;
+    border: 2px dashed transparent;
+}
+
+.hero-dropzone.drag-active {
+    background: #faf5ff;
+    border-color: #a855f7;
+}
+
+/* Progress Fill */
+.progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #7c3aed, #a855f7);
+    border-radius: 999px;
+    transition: width 0.4s ease;
+}
+
+.selected-file-box {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    border-radius: 16px;
+    background: white;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    border: 1px solid #f3e8ff;
+    width: 100%;
+    max-width: 500px;
+}
+</style>
+
+<!-- =========================================================
+     PAGE HEADER & CONVERTER
+     ========================================================= -->
+<section id="hero-dropzone" class="hero-dropzone text-center pt-10 pb-10 px-4 w-full">
+
+    <!-- Clean Title -->
+    <h1 class="tool-heading mb-4 text-center">
+        <span class="text-surface-900">Add </span>
+        <span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-700 to-purple-500">Watermark to PDF</span>
+    </h1>
+    <p class="text-[16px] md:text-[17px] leading-relaxed text-surface-500 max-w-[740px] mx-auto text-center font-medium mb-8 px-4">
+        Stamp your documents with a custom text watermark. Adjust opacity, rotation, and choose exactly which pages to protect before sharing.
+    </p>
+
+    <!-- Central Converter Interaction Area -->
+    <div class="flex flex-col items-center w-full max-w-[800px] mx-auto">
+        
+        <!-- =====================================================
+             STATE: IDLE (SELECT FILE)
+             ===================================================== -->
+        <div id="state-idle" class="flex flex-col items-center w-full">
+            <button type="button" id="select-file-btn" class="purple-btn px-10 py-4 rounded-2xl text-white font-bold text-[15px] tracking-wide flex items-center justify-center gap-3 w-full sm:w-auto">
+                <i data-lucide="upload" class="w-5 h-5"></i>
+                SELECT FILE
+            </button>
+            <p id="drop-text" class="text-surface-500 text-[15px] mt-3 font-medium">Drop your PDF file here</p>
+            <input type="file" id="file-input" class="hidden" accept=".pdf,application/pdf">
         </div>
 
-        <!-- Watermark Options (Initially Hidden) -->
-        <div id="initial-upload-area" class="hidden space-y-4 pt-4 border-t border-surface-50 animate-fade-in-up">
-            <h3 class="text-sm font-black text-surface-400 uppercase tracking-widest text-center">Watermark Settings</h3>
-            
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Text Input -->
-                <div class="md:col-span-2 space-y-2">
-                    <label class="text-[11px] font-black text-surface-500 uppercase tracking-wider ml-1">Watermark Text</label>
-                    <div class="relative group">
-                        <input type="text" id="watermark-text" value="CONFIDENTIAL" 
-                            class="w-full px-5 py-4 rounded-xl bg-surface-50 border border-surface-100 focus:bg-white focus:border-brand-500 transition-all text-sm font-bold text-surface-900">
-                        <i data-lucide="type" class="absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 text-surface-300"></i>
+        <!-- =====================================================
+             STATE: FILE SELECTED & CONTROLS
+             ===================================================== -->
+        <div id="state-selected" class="hidden flex flex-col items-center w-full">
+            <div class="selected-file-box mb-6 relative">
+                <div class="w-10 h-10 bg-purple-50 rounded-lg flex items-center justify-center flex-shrink-0 text-purple-600">
+                    <i data-lucide="file-text" class="w-5 h-5"></i>
+                </div>
+                <div class="flex-1 min-w-0 text-left pr-8">
+                    <p id="file-name" class="text-surface-900 font-bold text-[14px] truncate"></p>
+                    <div class="flex items-center gap-2 mt-0.5">
+                        <span id="file-size" class="text-surface-500 text-[12px]"></span>
+                        <span class="text-surface-300 text-[10px]">•</span>
+                        <span class="text-green-600 text-[12px] font-semibold flex items-center gap-1"><i data-lucide="check" class="w-3 h-3"></i> Ready</span>
                     </div>
                 </div>
+                <button type="button" id="remove-file-btn" class="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center rounded-lg text-surface-400 hover:text-red-500 hover:bg-red-50 transition-colors" title="Remove file">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+            
+            <div class="w-full bg-white rounded-2xl border border-surface-200 p-6 shadow-sm mb-6 text-left">
+                <h3 class="text-[15px] font-bold text-surface-900 mb-4 flex items-center gap-2">
+                    <i data-lucide="settings-2" class="w-4 h-4 text-purple-600"></i> Watermark Settings
+                </h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    <div class="md:col-span-2">
+                        <label class="block text-[12px] font-bold text-surface-600 uppercase tracking-wider mb-2">Watermark Text</label>
+                        <input type="text" id="watermark-text" value="CONFIDENTIAL" class="w-full px-4 py-3 rounded-xl bg-surface-50 border border-surface-200 focus:bg-white focus:border-purple-500 focus:ring-2 focus:ring-purple-200 transition-all text-[15px] font-medium text-surface-900">
+                    </div>
 
-                <!-- Font Size -->
-                <div class="space-y-2">
-                    <label class="text-[11px] font-black text-surface-500 uppercase tracking-wider ml-1">Font Size ({{ font_size|default:"50" }}px)</label>
-                    <input type="number" id="font-size" value="50" min="10" max="200" 
-                        class="w-full px-5 py-3.5 rounded-xl bg-surface-50 border border-surface-100 focus:bg-white focus:border-brand-500 transition-all text-sm font-bold text-surface-900">
-                </div>
+                    <div>
+                        <label class="block text-[12px] font-bold text-surface-600 uppercase tracking-wider mb-2">Opacity (<span id="opacity-val">30%</span>)</label>
+                        <input type="range" id="opacity-range" min="5" max="100" value="30" class="w-full h-2 bg-surface-200 rounded-lg appearance-none cursor-pointer accent-purple-600 mt-3">
+                    </div>
 
-                <!-- Rotation -->
-                <div class="space-y-2">
-                    <label class="text-[11px] font-black text-surface-500 uppercase tracking-wider ml-1">Rotation (Degrees)</label>
-                    <select id="rotation" class="w-full px-5 py-3.5 rounded-xl bg-surface-50 border border-surface-100 focus:bg-white focus:border-brand-500 transition-all text-sm font-bold text-surface-900 appearance-none cursor-pointer">
-                        <option value="45">Diagonal (45°)</option>
-                        <option value="0">Horizontal (0°)</option>
-                        <option value="90">Vertical (90°)</option>
-                        <option value="315">Reverse Diagonal (315°)</option>
-                    </select>
-                </div>
+                    <div>
+                        <label class="block text-[12px] font-bold text-surface-600 uppercase tracking-wider mb-2">Rotation</label>
+                        <select id="rotation" class="w-full px-4 py-3 rounded-xl bg-surface-50 border border-surface-200 focus:bg-white focus:border-purple-500 transition-all text-[15px] font-medium text-surface-900">
+                            <option value="45">Diagonal (45°)</option>
+                            <option value="0">Horizontal (0°)</option>
+                            <option value="90">Vertical (90°)</option>
+                            <option value="315">Reverse Diagonal (315°)</option>
+                        </select>
+                    </div>
 
-                <!-- Opacity -->
-                <div class="space-y-3">
-                    <label class="flex justify-between text-[11px] font-black text-surface-500 uppercase tracking-wider ml-1">
-                        Opacity <span id="opacity-val" class="text-brand-600">30%</span>
-                    </label>
-                    <input type="range" id="opacity-range" min="5" max="100" value="30" class="w-full h-2 bg-surface-100 rounded-lg appearance-none cursor-pointer accent-brand-600">
-                </div>
+                    <div>
+                        <label class="block text-[12px] font-bold text-surface-600 uppercase tracking-wider mb-2">Position</label>
+                        <select id="position" class="w-full px-4 py-3 rounded-xl bg-surface-50 border border-surface-200 focus:bg-white focus:border-purple-500 transition-all text-[15px] font-medium text-surface-900">
+                            <option value="center">Center</option>
+                            <option value="top">Top Center</option>
+                            <option value="bottom">Bottom Center</option>
+                            <option value="top-left">Top Left</option>
+                            <option value="top-right">Top Right</option>
+                            <option value="bottom-left">Bottom Left</option>
+                            <option value="bottom-right">Bottom Right</option>
+                        </select>
+                    </div>
 
-                <!-- Color -->
-                <div class="space-y-2">
-                    <label class="text-[11px] font-black text-surface-500 uppercase tracking-wider ml-1">Color</label>
-                    <div class="flex items-center gap-3">
-                        <div class="relative w-full h-[46px] rounded-xl overflow-hidden border border-surface-100 bg-surface-50 flex items-center px-4">
-                            <input type="color" id="watermark-color" value="#8b8b8b" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer">
-                            <div id="color-preview" class="w-6 h-6 rounded-md shadow-sm border border-white" style="background-color: #8b8b8b;"></div>
-                            <span id="color-hex" class="ml-3 text-xs font-mono font-bold text-surface-600">#8B8B8B</span>
+                    <div>
+                        <label class="block text-[12px] font-bold text-surface-600 uppercase tracking-wider mb-2">Font Size</label>
+                        <input type="number" id="font-size" value="60" min="10" max="200" class="w-full px-4 py-3 rounded-xl bg-surface-50 border border-surface-200 focus:bg-white focus:border-purple-500 transition-all text-[15px] font-medium text-surface-900">
+                    </div>
+
+                    <div>
+                        <label class="block text-[12px] font-bold text-surface-600 uppercase tracking-wider mb-2">Color</label>
+                        <div class="flex items-center gap-3 w-full px-4 py-2.5 rounded-xl bg-surface-50 border border-surface-200">
+                            <input type="color" id="watermark-color" value="#888888" class="w-8 h-8 rounded cursor-pointer p-0 border-0 bg-transparent">
+                            <span id="color-hex" class="text-[14px] font-mono font-bold text-surface-600">#888888</span>
                         </div>
+                    </div>
+
+                    <div>
+                        <label class="block text-[12px] font-bold text-surface-600 uppercase tracking-wider mb-2">Pages to Watermark</label>
+                        <input type="text" id="pages" placeholder="e.g. all, 1, 3-5" value="all" class="w-full px-4 py-3 rounded-xl bg-surface-50 border border-surface-200 focus:bg-white focus:border-purple-500 transition-all text-[15px] font-medium text-surface-900">
                     </div>
                 </div>
             </div>
-
-            <button id="convert-btn" disabled 
-                class="w-full py-3 rounded-2xl bg-gradient-to-r {{ tool.gradient }} text-white font-black text-base uppercase tracking-widest shadow-xl shadow-brand-500/20 hover:shadow-brand-500/40 hover:-translate-y-1 active:scale-95 transition-all flex items-center justify-center gap-3">
+            
+            <button type="button" id="convert-btn" class="purple-btn px-10 py-4 rounded-2xl text-white font-bold text-[15px] tracking-wide flex items-center justify-center gap-3 w-full sm:w-auto">
                 <i data-lucide="stamp" class="w-5 h-5"></i>
-                Apply Watermark
+                APPLY WATERMARK
             </button>
         </div>
 
-        <!-- ═══════════════ PROGRESS STATE ═══════════════ -->
-        <div id="progress-section" class="hidden mt-4">
-            <div class="flex items-center gap-5 py-4 px-5 rounded-2xl bg-surface-50 border border-surface-100">
-                <div class="relative flex-shrink-0">
-                    <div class="w-9 h-9 rounded-full border-[3px] border-surface-200 border-t-brand-500 animate-spin"></div>
-                </div>
-                <div>
-                    <p class="text-surface-800 font-black text-base">Protecting PDF...</p>
-                    <p class="text-xs text-surface-400 mt-1">Stamping requested watermark on all pages.</p>
-                </div>
+        <!-- =====================================================
+             STATE: CONVERTING
+             ===================================================== -->
+        <div id="state-converting" class="hidden flex flex-col items-center w-full max-w-[320px]">
+            <div class="flex items-center justify-center gap-2 mb-4 text-purple-600 font-bold text-[15px]">
+                <i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i>
+                Applying Watermark...
+            </div>
+            
+            <div class="w-full h-2 rounded-full bg-purple-100 overflow-hidden mb-2">
+                <div id="progress-bar" class="progress-fill w-[100%]"></div>
+            </div>
+            
+            <div class="flex justify-between items-center w-full px-1">
+                <p id="progress-status" class="text-surface-500 text-[13px] font-medium">Processing document...</p>
             </div>
         </div>
 
-        <!-- ═══════════════ SUCCESS STATE ═══════════════ -->
-        <div id="success-section" class="hidden mt-4">
-            <div class="text-center py-4 px-5 rounded-2xl bg-emerald-50/50 border border-emerald-100">
-                <div class="w-14 h-14 rounded-xl bg-emerald-100 flex items-center justify-center mx-auto mb-2 animate-success-pop shadow-inner">
-                    <i data-lucide="check" class="w-8 h-8 text-emerald-600"></i>
-                </div>
-                <h3 class="text-lg font-black text-surface-900 mb-1">Watermark Applied!</h3>
-                <p class="text-surface-500 text-sm mb-4">Your PDF has been stamped and is ready for download.</p>
-                <div class="flex flex-col sm:flex-row gap-4 justify-center">
-                    <a id="download-btn" href="#" download
-                        class="inline-flex items-center justify-center gap-2.5 px-10 py-4 rounded-2xl bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-black text-sm hover:from-emerald-400 hover:to-emerald-500 transition-all shadow-xl shadow-emerald-500/20">
-                        <i data-lucide="download" class="w-5 h-5"></i> Download File
-                    </a>
-                    <button onclick="window.location.reload()"
-                        class="inline-flex items-center justify-center gap-2.5 px-10 py-4 rounded-2xl bg-white border border-surface-200 text-surface-600 font-bold text-sm hover:bg-surface-50 transition-all shadow-sm">
-                        <i data-lucide="refresh-cw" class="w-4 h-4"></i> Start Over
-                    </button>
-                </div>
+        <!-- =====================================================
+             STATE: SUCCESS
+             ===================================================== -->
+        <div id="state-success" class="hidden flex flex-col items-center w-full">
+            <div class="w-12 h-12 bg-green-50 text-green-600 rounded-full flex items-center justify-center mb-4 mx-auto">
+                <i data-lucide="check" class="w-6 h-6"></i>
+            </div>
+            <h3 class="text-xl font-black text-surface-900 mb-1">Watermark Applied</h3>
+            <p class="text-surface-500 text-[15px] mb-6">Your protected PDF is ready.</p>
+            
+            <a id="download-btn" href="#" class="purple-btn px-10 py-4 rounded-2xl text-white font-bold text-[15px] tracking-wide flex items-center justify-center gap-3 w-full sm:w-auto mb-4">
+                <i data-lucide="download" class="w-5 h-5"></i>
+                DOWNLOAD PDF
+            </a>
+            
+            <button type="button" id="convert-another-btn" class="text-purple-600 font-semibold text-[14px] hover:text-purple-800 transition-colors">
+                Watermark another file
+            </button>
+        </div>
+
+        <!-- =====================================================
+             STATE: ERROR
+             ===================================================== -->
+        <div id="state-error" class="hidden flex flex-col items-center w-full">
+            <div class="w-12 h-12 bg-red-50 text-red-600 rounded-full flex items-center justify-center mb-4 mx-auto">
+                <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+            </div>
+            <h3 class="text-lg font-black text-surface-900 mb-1">Processing failed</h3>
+            <p id="error-message" class="text-surface-500 text-[14px] mb-6">We couldn't apply the watermark.</p>
+            
+            <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto justify-center">
+                <button type="button" id="retry-btn" class="purple-btn px-8 py-3.5 rounded-xl text-white font-bold text-[14px] tracking-wide flex items-center justify-center gap-2">
+                    TRY AGAIN
+                </button>
+                <button type="button" id="choose-another-btn" class="bg-surface-100 hover:bg-surface-200 text-surface-700 font-bold text-[14px] px-8 py-3.5 rounded-xl transition-colors flex items-center justify-center gap-2">
+                    Choose another file
+                </button>
             </div>
         </div>
 
-        <!-- ═══════════════ ERROR STATE ═══════════════ -->
-        <div id="error-section" class="hidden mt-4">
-            <div class="p-5 rounded-2xl bg-red-50 border border-red-100 flex items-start gap-4 animate-shake">
-                <div class="w-9 h-9 rounded-xl bg-red-100 flex items-center justify-center flex-shrink-0 mt-0.5">
-                    <i data-lucide="alert-octagon" class="w-6 h-6 text-red-500"></i>
+    </div>
+
+</section>
+<!-- =========================================================
+     LOWER CONTENT
+     ========================================================= -->
+
+<div class="converter-content-container pb-20">
+
+    <!-- 02. SECTION 1: Add a Clear Identity -->
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mb-12 md:mb-16">
+        <div class="grid md:grid-cols-[1fr_1fr] items-center gap-10 md:gap-16">
+            <div class="order-2 md:order-1 pr-0 md:pr-4">
+                <div class="flex items-center gap-2 text-purple-600 font-bold tracking-widest text-[12px] uppercase mb-4">
+                    <i data-lucide="stamp" class="w-3.5 h-3.5"></i> Add Watermark
                 </div>
-                <div class="pt-0.5">
-                    <h4 class="font-black text-red-700 text-sm uppercase tracking-wider mb-1">Stamping Failed</h4>
-                    <p id="error-message" class="text-xs text-red-500 leading-relaxed font-bold"></p>
+                <h3 class="text-2xl md:text-[2rem] font-bold text-surface-900 mb-5 leading-tight tracking-tight">Add a Clear Identity to Your PDF</h3>
+                <p class="text-surface-500 text-[17px] leading-relaxed mb-8">
+                    Quickly stamp your documents with custom text to indicate status, ownership, or confidentiality. ScanPDF makes it easy to add professional watermarks without degrading document quality.
+                </p>
+                <ul class="space-y-4">
+                    <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                        <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                        Mark documents as Draft or Confidential
+                    </li>
+                    <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                        <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                        Protect your intellectual property
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="order-1 md:order-2 relative">
+                <div class="bg-gradient-to-br from-purple-50 to-white rounded-[28px] p-8 md:p-12 border border-purple-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative">
+                    <div class="absolute inset-0 bg-[url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjAiIGhlaWdodD0iMjAiIHhtbG5zPSJodHRwOi8vd3d3LnczLm9yZy8yMDAwL3N2ZyI+PGNpcmNsZSBjeD0iMiIgY3k9IjIiIHI9IjEiIGZpbGw9IiNlMGU3ZmYiLz48L3N2Zz4=')] opacity-50 rounded-[28px]"></div>
+                    <div class="bg-white rounded-xl shadow-lg border border-surface-200 p-6 relative z-10 flex items-center justify-center aspect-[4/3]">
+                         <div class="relative w-full h-full bg-surface-50 border border-surface-200 rounded p-4 flex flex-col justify-between overflow-hidden">
+                             <div class="h-2 bg-surface-200 rounded w-3/4 mb-2"></div>
+                             <div class="h-2 bg-surface-200 rounded w-full mb-2"></div>
+                             <div class="h-2 bg-surface-200 rounded w-5/6"></div>
+                             <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                 <span class="text-4xl font-black text-purple-600/30 -rotate-45 tracking-widest uppercase">CONFIDENTIAL</span>
+                             </div>
+                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 03. SECTION 2: Control How Your Watermark Appears -->
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mb-12 md:mb-16">
+        <div class="grid md:grid-cols-[1fr_1fr] items-center gap-10 md:gap-16">
+            <div class="order-1 md:order-1 relative">
+                <div class="bg-gradient-to-br from-blue-50 to-white rounded-[28px] p-8 md:p-12 border border-blue-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+                    <div class="bg-white rounded-xl shadow-lg border border-surface-200 p-6 relative z-10">
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between border-b border-surface-100 pb-3">
+                                <span class="text-surface-600 font-medium text-sm">Text</span>
+                                <span class="text-surface-900 font-bold text-sm">DRAFT</span>
+                            </div>
+                            <div class="flex items-center justify-between border-b border-surface-100 pb-3">
+                                <span class="text-surface-600 font-medium text-sm">Position</span>
+                                <span class="text-surface-900 font-bold text-sm">Center</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-surface-600 font-medium text-sm">Pages</span>
+                                <span class="text-surface-900 font-bold text-sm">1, 3-5</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="order-2 md:order-2 pl-0 md:pl-4">
+                <div class="flex items-center gap-2 text-purple-600 font-bold tracking-widest text-[12px] uppercase mb-4">
+                    <i data-lucide="settings" class="w-3.5 h-3.5"></i> Customization
+                </div>
+                <h3 class="text-2xl md:text-[2rem] font-bold text-surface-900 mb-5 leading-tight tracking-tight">Control How Your Watermark Appears</h3>
+                <p class="text-surface-500 text-[17px] leading-relaxed mb-8">
+                    ScanPDF gives you the tools to style and position your watermark precisely. Only apply the watermark where you actually need it.
+                </p>
+                <ul class="space-y-4">
+                    <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                        <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                        Set exact text and font size
+                    </li>
+                    <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                        <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                        Choose specific page ranges
+                    </li>
+                    <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                        <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                        Anchor exactly to corners or center
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- 04. SECTION 3: Keep Your Original Document Intact -->
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mb-12 md:mb-16">
+        <div class="grid md:grid-cols-[1fr_1fr] items-center gap-10 md:gap-16">
+            <div class="order-2 md:order-1 pr-0 md:pr-4">
+                <div class="flex items-center gap-2 text-purple-600 font-bold tracking-widest text-[12px] uppercase mb-4">
+                    <i data-lucide="shield" class="w-3.5 h-3.5"></i> Quality
+                </div>
+                <h3 class="text-2xl md:text-[2rem] font-bold text-surface-900 mb-5 leading-tight tracking-tight">Keep Your Original Document Intact</h3>
+                <p class="text-surface-500 text-[17px] leading-relaxed mb-8">
+                    Adding a watermark shouldn't ruin your PDF. Our process injects the watermark as a clean text layer without rasterizing or degrading your existing text, images, and vectors.
+                </p>
+                <ul class="space-y-4">
+                    <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                        <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                        Text remains fully selectable
+                    </li>
+                    <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                        <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                        Images stay crystal clear
+                    </li>
+                    <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                        <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                        Page sizes are preserved
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="order-1 md:order-2">
+                <div class="relative bg-purple-50/40 rounded-[28px] p-8 py-14 flex items-center justify-center border border-purple-100/50 shadow-[inset_0_0_0_1px_rgba(255,255,255,1)]">
+                    <div class="flex gap-6 relative z-10 items-end justify-center w-full">
+                        <div class="w-[140px] h-[180px] bg-white rounded-lg shadow-[0_8px_24px_rgb(0,0,0,0.12)] border border-surface-300 p-4 flex flex-col relative z-10">
+                            <div class="h-2 bg-surface-200 rounded w-full mb-3"></div>
+                            <div class="h-2 bg-surface-200 rounded w-full mb-3"></div>
+                            <div class="h-2 bg-surface-200 rounded w-3/4 mb-3"></div>
+                            <div class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                <span class="text-3xl font-black text-purple-600/30 -rotate-45">DRAFT</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 05. WHAT YOU CAN CONTROL -->
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mb-12 md:mb-16">
+        <div class="text-center mb-12 md:mb-16">
+            <h2 class="text-3xl md:text-[2.25rem] font-bold text-surface-900 mb-5 tracking-tight">What You Can Control</h2>
+            <p class="text-[17px] text-surface-500 max-w-2xl mx-auto leading-relaxed">
+                ScanPDF lets you adjust the watermark parameters to fit your exact requirements.
+            </p>
+        </div>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <!-- Text Content -->
+            <div class="bg-white border border-surface-200/80 rounded-2xl p-6 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300">
+                <div class="w-12 h-12 rounded-xl bg-purple-50 border border-purple-100/60 flex items-center justify-center mb-5 text-[22px] font-serif font-bold text-purple-600">
+                    Aa
+                </div>
+                <h4 class="text-[17px] font-bold text-surface-900 mb-4">Text Content</h4>
+                <p class="text-surface-600 text-[14px] leading-relaxed">
+                    Type exactly what you want your watermark to say, such as "Draft" or "Confidential".
+                </p>
+            </div>
+            
+            <!-- Page Range -->
+            <div class="bg-white border border-surface-200/80 rounded-2xl p-6 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300">
+                <div class="w-12 h-12 rounded-xl bg-blue-50 border border-blue-100/60 flex items-center justify-center mb-5 text-[22px] font-bold text-blue-600">
+                    <i data-lucide="layers" class="w-5 h-5"></i>
+                </div>
+                <h4 class="text-[17px] font-bold text-surface-900 mb-4">Page Range</h4>
+                <p class="text-surface-600 text-[14px] leading-relaxed">
+                    Apply the watermark to all pages or specify exact pages (like 1, 3-5).
+                </p>
+            </div>
+            
+            <!-- Exact Positioning -->
+            <div class="bg-white border border-surface-200/80 rounded-2xl p-6 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300">
+                <div class="w-12 h-12 rounded-xl bg-green-50 border border-green-100/60 flex items-center justify-center mb-5 text-[22px] font-bold text-green-600">
+                    <i data-lucide="layout" class="w-5 h-5"></i>
+                </div>
+                <h4 class="text-[17px] font-bold text-surface-900 mb-4">Exact Positioning</h4>
+                <p class="text-surface-600 text-[14px] leading-relaxed">
+                    Place the watermark securely in the center, or tuck it away in the corners.
+                </p>
+            </div>
+            
+            <!-- Appearance -->
+            <div class="bg-white border border-surface-200/80 rounded-2xl p-6 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300">
+                <div class="w-12 h-12 rounded-xl bg-orange-50 border border-orange-100/60 flex items-center justify-center mb-5 text-[22px] font-bold text-orange-500">
+                    <i data-lucide="settings" class="w-5 h-5"></i>
+                </div>
+                <h4 class="text-[17px] font-bold text-surface-900 mb-4">Appearance</h4>
+                <p class="text-surface-600 text-[14px] leading-relaxed">
+                    Adjust font size, opacity, rotation, and color to get the perfect visibility.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 06. HOW TO ADD WATERMARK TO PDF -->
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mb-12 md:mb-16">
+        <div class="bg-gradient-to-br from-purple-50/70 to-white rounded-[32px] border border-purple-100/60 p-8 md:p-14 shadow-sm relative overflow-hidden">
+            <div class="text-center md:text-left mb-12 relative z-10">
+                <h2 class="text-3xl md:text-[2.25rem] font-bold text-surface-900 mb-4 tracking-tight">How to Add a Watermark to PDF</h2>
+            </div>
+            
+            <div class="grid lg:grid-cols-[50%_50%] gap-12 lg:gap-16 items-center relative z-10">
+                <div class="relative w-full">
+                    <div class="space-y-8 relative">
+                        <div class="flex gap-5">
+                            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-sm">01</div>
+                            <div>
+                                <h4 class="text-[17px] font-bold text-surface-900 mb-1.5">Select Your PDF</h4>
+                                <p class="text-surface-500 text-[15px] leading-relaxed">Choose the document you want to stamp.</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-5">
+                            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-sm">02</div>
+                            <div>
+                                <h4 class="text-[17px] font-bold text-surface-900 mb-1.5">Enter Your Watermark</h4>
+                                <p class="text-surface-500 text-[15px] leading-relaxed">Type your text and configure appearance.</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-5">
+                            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-sm">03</div>
+                            <div>
+                                <h4 class="text-[17px] font-bold text-surface-900 mb-1.5">Choose Pages and Position</h4>
+                                <p class="text-surface-500 text-[15px] leading-relaxed">Decide exactly where the watermark should appear.</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-5">
+                            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-sm">04</div>
+                            <div>
+                                <h4 class="text-[17px] font-bold text-surface-900 mb-1.5">Add and Download</h4>
+                                <p class="text-surface-500 text-[15px] leading-relaxed">Process the file and download your final PDF.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex justify-center lg:justify-end w-full">
+                    <div class="bg-white p-7 rounded-[24px] shadow-[0_12px_40px_rgb(0,0,0,0.06)] border border-surface-200/60 w-full max-w-[400px]">
+                        <div class="font-bold text-surface-900 text-[15px] text-center mb-6">Add Watermark</div>
+                        <div class="bg-white border border-surface-200/80 rounded-lg p-3.5 flex items-center justify-between mb-5 shadow-sm">
+                            <div class="flex items-center gap-3">
+                                <div class="w-9 h-9 rounded-md bg-purple-50 flex items-center justify-center">
+                                    <i data-lucide="file-text" class="w-4 h-4 text-purple-600"></i>
+                                </div>
+                                <div>
+                                    <div class="text-[13px] font-bold text-surface-900">document.pdf</div>
+                                    <div class="text-[11px] text-surface-500 mt-0.5">Ready</div>
+                                </div>
+                            </div>
+                            <i data-lucide="check-circle-2" class="w-4 h-4 text-green-500"></i>
+                        </div>
+                        <div class="mb-5">
+                            <div class="flex justify-between text-[11px] font-bold text-surface-700 mb-2">
+                                <span>Applying...</span>
+                                <span>100%</span>
+                            </div>
+                            <div class="h-1.5 w-full bg-surface-100 rounded-full overflow-hidden">
+                                <div class="h-full w-full bg-purple-500 rounded-full"></div>
+                            </div>
+                        </div>
+                        <div class="w-full bg-purple-600 text-white rounded-xl py-3.5 text-center font-bold text-[14px] shadow-sm">
+                            DOWNLOAD PDF
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 07. DESIGNED FOR DIFFERENT DOCUMENTS -->
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mb-12 md:mb-16">
+        <div class="text-center mb-12 md:mb-16">
+            <h2 class="text-3xl md:text-[2.25rem] font-bold text-surface-900 mb-5 tracking-tight">Designed for Different Documents</h2>
+            <p class="text-[17px] text-surface-500 max-w-[700px] mx-auto leading-relaxed">
+                Add watermarks to various types of PDF documents quickly and securely.
+            </p>
+        </div>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="bg-surface-50/50 border border-surface-200/60 rounded-2xl p-6 text-center hover:bg-white hover:shadow-md hover:border-purple-200 transition-all duration-300">
+                <div class="w-14 h-16 mx-auto bg-white border border-surface-200 shadow-sm rounded flex flex-col p-2 mb-5">
+                    <div class="h-1.5 w-3/4 bg-surface-300 mb-2"></div>
+                    <div class="h-6 w-full bg-purple-50 mb-1"></div>
+                    <div class="h-1 w-full bg-surface-100 mb-1"></div>
+                    <div class="h-1 w-5/6 bg-surface-100"></div>
+                </div>
+                <h4 class="text-[15px] font-bold text-surface-900 mb-2 uppercase tracking-wide">Reports</h4>
+                <p class="text-surface-500 text-[14px] leading-relaxed">Internal and external business reports</p>
+            </div>
+            
+            <div class="bg-surface-50/50 border border-surface-200/60 rounded-2xl p-6 text-center hover:bg-white hover:shadow-md hover:border-purple-200 transition-all duration-300">
+                <div class="w-14 h-16 mx-auto bg-white border border-surface-200 shadow-sm rounded flex flex-col p-2 mb-5">
+                    <div class="h-2 w-1/2 bg-surface-300 mx-auto mb-2"></div>
+                    <div class="h-1 w-full bg-surface-100 mb-1"></div>
+                    <div class="h-1 w-full bg-surface-100 mb-1"></div>
+                    <div class="h-1 w-5/6 bg-surface-100 mb-1"></div>
+                    <div class="h-1 w-full bg-surface-100"></div>
+                </div>
+                <h4 class="text-[15px] font-bold text-surface-900 mb-2 uppercase tracking-wide">Drafts</h4>
+                <p class="text-surface-500 text-[14px] leading-relaxed">Documents still in the writing phase</p>
+            </div>
+            
+            <div class="bg-surface-50/50 border border-surface-200/60 rounded-2xl p-6 text-center hover:bg-white hover:shadow-md hover:border-purple-200 transition-all duration-300">
+                <div class="w-14 h-16 mx-auto bg-white border border-surface-200 shadow-sm rounded flex flex-col p-2 mb-5">
+                    <div class="h-1.5 w-1/3 bg-blue-100 mb-2"></div>
+                    <div class="grid grid-cols-2 gap-1 mb-2">
+                        <div class="h-3 bg-surface-100"></div>
+                        <div class="h-3 bg-surface-100"></div>
+                        <div class="h-3 bg-surface-50"></div>
+                        <div class="h-3 bg-surface-50"></div>
+                    </div>
+                </div>
+                <h4 class="text-[15px] font-bold text-surface-900 mb-2 uppercase tracking-wide">Business Documents</h4>
+                <p class="text-surface-500 text-[14px] leading-relaxed">Contracts and formal agreements</p>
+            </div>
+            
+            <div class="bg-surface-50/50 border border-surface-200/60 rounded-2xl p-6 text-center hover:bg-white hover:shadow-md hover:border-purple-200 transition-all duration-300">
+                <div class="w-14 h-16 mx-auto bg-white border border-surface-200 shadow-sm rounded flex flex-col p-2 mb-5">
+                    <div class="flex gap-1.5 mb-1.5">
+                        <div class="w-4 h-4 bg-purple-100 rounded-sm"></div>
+                        <div class="w-full space-y-1">
+                            <div class="h-1 w-full bg-surface-100"></div>
+                            <div class="h-1 w-full bg-surface-100"></div>
+                        </div>
+                    </div>
+                    <div class="h-1 w-full bg-surface-100 mb-1"></div>
+                    <div class="h-1 w-2/3 bg-surface-100"></div>
+                </div>
+                <h4 class="text-[15px] font-bold text-surface-900 mb-2 uppercase tracking-wide">Shared Files</h4>
+                <p class="text-surface-500 text-[14px] leading-relaxed">Files sent externally needing ownership tags</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 08. WHY USE SCANPDF -->
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mb-12 md:mb-16">
+        <div class="text-center mb-12 md:mb-16">
+            <h2 class="text-3xl md:text-[2.25rem] font-bold text-surface-900 mb-5 tracking-tight">Why Use ScanPDF Add Watermark</h2>
+        </div>
+        
+        <div class="grid md:grid-cols-[1fr_1fr] gap-6">
+            <div class="bg-purple-600 rounded-[24px] p-8 md:p-12 text-white relative overflow-hidden flex flex-col justify-center">
+                <div class="absolute top-0 right-0 w-64 h-64 bg-purple-500 rounded-full blur-[80px] -z-0"></div>
+                <div class="relative z-10">
+                    <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mb-6">
+                        <i data-lucide="zap" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4">Fast and Non-Destructive</h3>
+                    <p class="text-purple-100 text-[17px] leading-relaxed">
+                        Add text to your PDFs without ruining the visual quality of existing images or flattening selectable text.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="space-y-6">
+                <div class="bg-white border border-surface-200/80 rounded-[24px] p-8 flex items-start gap-5 shadow-sm">
+                    <div class="w-10 h-10 bg-purple-50 text-purple-600 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <i data-lucide="settings-2" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-[17px] font-bold text-surface-900 mb-2">Total Control</h4>
+                        <p class="text-surface-500 text-[15px] leading-relaxed">Position, size, and style exactly what you want the watermark to look like.</p>
+                    </div>
+                </div>
+                
+                <div class="bg-white border border-surface-200/80 rounded-[24px] p-8 flex items-start gap-5 shadow-sm">
+                    <div class="w-10 h-10 bg-purple-50 text-purple-600 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <i data-lucide="layers" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-[17px] font-bold text-surface-900 mb-2">Selective Application</h4>
+                        <p class="text-surface-500 text-[15px] leading-relaxed">Apply watermarks to every page or only the specific pages that need it.</p>
+                    </div>
+                </div>
+                
+                <div class="bg-white border border-surface-200/80 rounded-[24px] p-8 flex items-start gap-5 shadow-sm">
+                    <div class="w-10 h-10 bg-purple-50 text-purple-600 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <i data-lucide="download" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-[17px] font-bold text-surface-900 mb-2">Direct PDF Download</h4>
+                        <p class="text-surface-500 text-[15px] leading-relaxed">Instantly download your watermarked document directly to your device.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 09. BEST RESULTS -->
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mb-12 md:mb-16">
+        <div class="bg-purple-50 border border-purple-100 rounded-[24px] p-8 md:p-12 flex flex-col md:flex-row gap-8 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.5)]">
+            <div class="md:w-1/3">
+                <div class="w-12 h-12 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center mb-5">
+                    <i data-lucide="info" class="w-6 h-6"></i>
+                </div>
+                <h3 class="text-xl font-bold text-surface-900 mb-3">Get the Best Watermark Result</h3>
+                <p class="text-surface-600 text-[15px] leading-relaxed">
+                    Make sure your watermark communicates its intent without obstructing essential information.
+                </p>
+            </div>
+            
+            <div class="md:w-2/3 grid sm:grid-cols-2 gap-4">
+                <div class="flex gap-3">
+                    <i data-lucide="check" class="w-5 h-5 text-purple-500 flex-shrink-0 mt-0.5"></i>
+                    <span class="text-[15px] font-medium text-surface-700">Use semi-transparent opacity</span>
+                </div>
+                <div class="flex gap-3">
+                    <i data-lucide="check" class="w-5 h-5 text-purple-500 flex-shrink-0 mt-0.5"></i>
+                    <span class="text-[15px] font-medium text-surface-700">Keep text short and clear</span>
+                </div>
+                <div class="flex gap-3">
+                    <i data-lucide="check" class="w-5 h-5 text-purple-500 flex-shrink-0 mt-0.5"></i>
+                    <span class="text-[15px] font-medium text-surface-700">Test color contrast against your PDF</span>
+                </div>
+                <div class="flex gap-3">
+                    <i data-lucide="check" class="w-5 h-5 text-purple-500 flex-shrink-0 mt-0.5"></i>
+                    <span class="text-[15px] font-medium text-surface-700">Target only required pages</span>
                 </div>
             </div>
         </div>
     </div>
 </div>
+
 {% endblock %}
 
 {% block extra_scripts %}
@@ -157,12 +680,30 @@
     const CONVERT_URL = '{% url "converter:convert_file" "add-watermark" %}';
     const CSRF_TOKEN = '{{ csrf_token }}';
 
-    const dropZone = document.getElementById('drop-zone'), fileInput = document.getElementById('file-input'), uploadDefault = document.getElementById('upload-default'), fileSelected = document.getElementById('file-selected'), fileName = document.getElementById('file-name'), fileSize = document.getElementById('file-size'), removeFileBtn = document.getElementById('remove-file-btn'), convertBtn = document.getElementById('convert-btn'), progressSection = document.getElementById('progress-section'), successSection = document.getElementById('success-section'), errorSection = document.getElementById('error-section'), errorMessage = document.getElementById('error-message'), downloadBtn = document.getElementById('download-btn'), initialUploadArea = document.getElementById('initial-upload-area');
+    // State Elements
+    const dropZone = document.getElementById('hero-dropzone');
+    const fileInput = document.getElementById('file-input');
+    const selectFileBtn = document.getElementById('select-file-btn');
+    const removeFileBtn = document.getElementById('remove-file-btn');
+    const convertBtn = document.getElementById('convert-btn');
+    const downloadBtn = document.getElementById('download-btn');
+    const convertAnotherBtn = document.getElementById('convert-another-btn');
+    const retryBtn = document.getElementById('retry-btn');
+    const chooseAnotherBtn = document.getElementById('choose-another-btn');
+    
+    const stateIdle = document.getElementById('state-idle');
+    const stateSelected = document.getElementById('state-selected');
+    const stateConverting = document.getElementById('state-converting');
+    const stateSuccess = document.getElementById('state-success');
+    const stateError = document.getElementById('state-error');
+    
+    const fileName = document.getElementById('file-name');
+    const fileSize = document.getElementById('file-size');
+    const errorMessage = document.getElementById('error-message');
 
     // Controls sync
     document.getElementById('watermark-color').addEventListener('input', (e) => {
         document.getElementById('color-hex').textContent = e.target.value.toUpperCase();
-        document.getElementById('color-preview').style.backgroundColor = e.target.value;
     });
     document.getElementById('opacity-range').addEventListener('input', (e) => {
         document.getElementById('opacity-val').textContent = e.target.value + '%';
@@ -170,44 +711,60 @@
 
     let selectedFile = null;
 
-    dropZone.onclick = e => { if (!e.target.closest('#remove-file-btn')) fileInput.click(); };
-    dropZone.ondragover = e => { e.preventDefault(); dropZone.classList.add('border-brand-400', 'bg-brand-50/40'); };
-    dropZone.ondragleave = () => { dropZone.classList.remove('border-brand-400', 'bg-brand-50/40'); };
+    function formatBytes(bytes, decimals = 2) {
+        if (!+bytes) return '0 Bytes';
+        const k = 1024, dm = decimals < 0 ? 0 : decimals;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
+    }
+
+    function setState(state) {
+        [stateIdle, stateSelected, stateConverting, stateSuccess, stateError].forEach(el => el.classList.add('hidden'));
+        state.classList.remove('hidden');
+        lucide.createIcons();
+    }
+
+    // Event Listeners
+    selectFileBtn.onclick = () => fileInput.click();
+    fileInput.onchange = e => { if (e.target.files.length) handleFile(e.target.files[0]); };
+
+    dropZone.ondragover = e => { e.preventDefault(); dropZone.classList.add('drag-active'); };
+    dropZone.ondragleave = () => { dropZone.classList.remove('drag-active'); };
     dropZone.ondrop = e => { 
         e.preventDefault(); 
-        dropZone.classList.remove('border-brand-400', 'bg-brand-50/40'); 
+        dropZone.classList.remove('drag-active'); 
         if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]); 
     };
-
-    fileInput.onchange = e => { if (e.target.files.length) handleFile(e.target.files[0]); };
 
     function handleFile(file) {
         if (!file.name.toLowerCase().endsWith('.pdf')) { showError('Only PDF files are accepted.'); return; }
         if (file.size > 52428800) { showError('File exceeds 50MB limit.'); return; }
         selectedFile = file;
         fileName.textContent = file.name;
-        fileSize.textContent = (file.size / 1024 / 1024).toFixed(2) + ' MB';
-        uploadDefault.classList.add('hidden'); 
-        fileSelected.classList.remove('hidden');
-        initialUploadArea.classList.remove('hidden');
-        convertBtn.disabled = false; 
-        errorSection.classList.add('hidden');
-        lucide.createIcons();
+        fileSize.textContent = formatBytes(file.size);
+        setState(stateSelected);
     }
 
-    removeFileBtn.onclick = e => { 
-        e.stopPropagation(); 
-        selectedFile = null; fileInput.value = '';
-        uploadDefault.classList.remove('hidden'); fileSelected.classList.add('hidden');
-        initialUploadArea.classList.add('hidden');
-        convertBtn.disabled = true; 
-        lucide.createIcons();
-    };
+    removeFileBtn.onclick = resetState;
+    convertAnotherBtn.onclick = resetState;
+    chooseAnotherBtn.onclick = resetState;
+    retryBtn.onclick = () => setState(stateSelected);
+
+    function resetState() {
+        selectedFile = null;
+        fileInput.value = '';
+        setState(stateIdle);
+    }
+
+    function showError(msg) { 
+        errorMessage.textContent = msg; 
+        setState(stateError); 
+    }
 
     convertBtn.onclick = async () => {
         if (!selectedFile) return;
-        convertBtn.classList.add('hidden');
-        progressSection.classList.remove('hidden');
+        setState(stateConverting);
         
         const formData = new FormData();
         formData.append('file', selectedFile);
@@ -217,21 +774,30 @@
         formData.append('font_size', document.getElementById('font-size').value);
         formData.append('rotation', document.getElementById('rotation').value);
         formData.append('color', document.getElementById('watermark-color').value);
+        formData.append('position', document.getElementById('position').value);
+        formData.append('pages', document.getElementById('pages').value);
 
         try {
             const response = await fetch(CONVERT_URL, { method: 'POST', body: formData });
-            if (!response.ok) { const d = await response.json(); throw new Error(d.error || 'Failed to apply watermark.'); }
+            if (!response.ok) { 
+                const d = await response.json(); 
+                throw new Error(d.error || 'Failed to apply watermark.'); 
+            }
             const blob = await response.blob();
             const url = window.URL.createObjectURL(blob);
-            downloadBtn.href = url; downloadBtn.download = fileName.textContent.split('.')[0] + '_watermarked.pdf';
-            progressSection.classList.add('hidden'); successSection.classList.remove('hidden');
+            downloadBtn.href = url; 
+            downloadBtn.download = fileName.textContent.split('.').slice(0, -1).join('.') + '_watermarked.pdf';
+            setState(stateSuccess);
         } catch (err) {
             showError(err.message);
-            progressSection.classList.add('hidden'); convertBtn.classList.remove('hidden');
         }
-        lucide.createIcons();
     };
-
-    function showError(msg) { errorMessage.textContent = msg; errorSection.classList.remove('hidden'); lucide.createIcons(); }
+    
+    // Init icons
+    document.addEventListener("DOMContentLoaded", () => {
+        if (typeof lucide !== 'undefined') {
+            lucide.createIcons();
+        }
+    });
 </script>
 {% endblock %}

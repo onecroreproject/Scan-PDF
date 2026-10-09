@@ -37,6 +37,8 @@ def tools_processor(request):
                 'label': CATEGORY_LABELS.get(cat, cat.replace('-', ' ').title()),
                 'tools': []
             }
+        if slug == 'images-to-video':
+            continue
         pdf_tools_grouped[cat]['tools'].append({
             'title': data.get('title'),
             'icon': data.get('icon'),
@@ -46,6 +48,7 @@ def tools_processor(request):
         })
 
     image_tools_grouped = {}
+
     for slug, data in IMAGE_TOOLS.items():
         if data.get('is_coming_soon'):
             continue
@@ -63,6 +66,18 @@ def tools_processor(request):
             'is_coming_soon': data.get('is_coming_soon', False),
             'app_name': 'image_processor'
         })
+        
+    # Inject images-to-video exactly as the 3rd item in 'image-tools' (Image Editing)
+    if 'image-tools' in image_tools_grouped and 'images-to-video' in TOOLS:
+        tool_data = {
+            'title': TOOLS['images-to-video'].get('title'),
+            'icon': TOOLS['images-to-video'].get('icon'),
+            'slug': 'images-to-video',
+            'is_coming_soon': TOOLS['images-to-video'].get('is_coming_soon', False),
+            'app_name': 'converter'
+        }
+        # Insert at index 2 (which makes it the 3rd item)
+        image_tools_grouped['image-tools']['tools'].insert(2, tool_data)
 
     # Re-order the dicts
     ordered_pdf = {}
@@ -120,6 +135,7 @@ def tools_processor(request):
     # Video Tools and Link Tools for global navigation
     video_tools = [
         {'title': 'Converter', 'icon': 'video', 'url': reverse('converter:convert_page', args=['video-converter'])},
+        {'title': 'Image to Video', 'icon': 'video', 'url': reverse('converter:convert_page', args=['images-to-video'])},
         {'title': 'Trim Video', 'icon': 'scissors', 'url': reverse('media_tools:trim')},
         {'title': 'Merge Video', 'icon': 'combine', 'url': reverse('media_tools:merge')},
         {'title': 'Crop Video', 'icon': 'crop', 'url': reverse('media_tools:crop')},

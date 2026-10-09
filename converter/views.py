@@ -63,7 +63,7 @@ from .utils import (
     redact_pdf,
     merge_word_files,
 )
-from .utils_video import convert_video_format
+from .utils_video import convert_video_format, convert_images_to_video
 
 _CURRENCY_CACHE = {'base': None, 'rates': None, 'updated_at': 0}
 
@@ -1071,6 +1071,26 @@ TOOLS = {
         'highlight': 'Video Converter',
         'seo_intro': 'Convert video files between popular formats including MP4, AVI, MOV, MKV, WMV, FLV, and 3GP using an easy online video converter.',
     },
+
+    'images-to-video': {
+        'title': 'Images to Video',
+        'description': 'Turn up to 5 images into a polished MP4 video with custom timing and optional audio.',
+        'icon': 'video',
+        'accept': '.jpg,.jpeg,.png,.webp,.gif,.bmp,.tiff',
+        'allowed_extensions': ['.jpg', '.jpeg', '.png', '.webp', '.gif', '.bmp', '.tiff'],
+        'converter': convert_images_to_video,
+        'color': '#0ea5e9',
+        'gradient': 'from-sky-500 to-indigo-600',
+        'category': 'image-tools',
+
+        'seo_title': 'Images to Video Converter Online – Free Photo to MP4',
+        'seo_description': 'Convert up to 5 images into an MP4 video online. Add custom timing and background audio quickly.',
+        'seo_keywords': 'images to video, image to video, photos to video, pictures to video, mp4, photo video maker',
+        'seo_h1': 'Images to Video Converter',
+        's1': 'Images to',
+        'highlight': 'Video Converter',
+        'seo_intro': 'Turn up to 5 images into a polished MP4 video with custom timing and optional audio.',
+    },
 }
 
 
@@ -1178,6 +1198,8 @@ def convert_page(request, tool_slug):
         template = 'audio_processor/extract_audio.html'
     elif tool_slug == 'video-converter':
         template = 'converter/video_converter.html'
+    elif tool_slug == 'images-to-video':
+        template = 'converter/images_to_video.html'
     else:
         template = f"converter/{tool_slug.replace('-', '_')}.html"
 
@@ -1709,6 +1731,8 @@ def convert_file(request, tool_slug):
         font_size = request.POST.get('font_size', '60')
         rotation = request.POST.get('rotation', '45')
         color = request.POST.get('color', '#888888')
+        position = request.POST.get('position', 'center')
+        pages = request.POST.get('pages', 'all')
 
         if not watermark_text.strip():
             return JsonResponse({'error': 'Please enter watermark text.'}, status=400)
@@ -1722,6 +1746,8 @@ def convert_file(request, tool_slug):
                 font_size=font_size,
                 rotation=rotation,
                 color=color,
+                position=position,
+                pages=pages
             )
 
             try:
@@ -1748,6 +1774,7 @@ def convert_file(request, tool_slug):
         crop_y = request.POST.get('crop_y', '0')
         crop_w = request.POST.get('crop_w', '0')
         crop_h = request.POST.get('crop_h', '0')
+        pages = request.POST.get('pages', 'all')
 
         try:
             input_path = save_uploaded_file(uploaded_file)
@@ -1762,6 +1789,7 @@ def convert_file(request, tool_slug):
                 crop_y=crop_y,
                 crop_w=crop_w,
                 crop_h=crop_h,
+                pages=pages
             )
 
             try:
@@ -2272,6 +2300,76 @@ def convert_file(request, tool_slug):
             })
         except Exception as e:
             return JsonResponse({'error': f'Video conversion failed: {str(e)}'}, status=500)
+
+    # ── Images to Video ──
+    if tool_slug == 'images-to-video':
+        import json as _json
+        images = request.FILES.getlist('images[]')
+        audio = request.FILES.get('audio')
+        durations_json = request.POST.get('durations', '[]')
+        audio_start = request.POST.get('audio_start')
+        audio_end = request.POST.get('audio_end')
+        
+        try:
+            if audio_start:
+                audio_start = float(audio_start)
+            if audio_end:
+                audio_end = float(audio_end)
+        except ValueError:
+            return JsonResponse({'error': 'Invalid audio trim times.'}, status=400)
+        
+        if not images:
+            return JsonResponse({'error': 'Please select at least one image.'}, status=400)
+        
+        if len(images) > 50:
+            return JsonResponse({'error': 'You can use a maximum of 50 images.'}, status=400)
+            
+        try:
+            durations = _json.loads(durations_json)
+        except Exception:
+            return JsonResponse({'error': 'Invalid image duration.'}, status=400)
+            
+        if len(images) != len(durations):
+            return JsonResponse({'error': 'Duration count must match image count.'}, status=400)
+            
+        # validate durations
+        try:
+            durations = [float(d) for d in durations]
+            if any(d < 0.1 for d in durations):
+                return JsonResponse({'error': 'Please enter a valid image duration.'}, status=400)
+        except ValueError:
+            return JsonResponse({'error': 'Please enter a valid image duration.'}, status=400)
+
+        input_paths = []
+        audio_path = None
+        try:
+            for f in images:
+                ext = os.path.splitext(f.name)[1].lower()
+                if ext not in tool['allowed_extensions']:
+                    return JsonResponse({'error': f'One of the selected files is not a supported image.'}, status=400)
+                input_paths.append(save_uploaded_file(f))
+                
+            if audio:
+                audio_path = save_uploaded_file(audio)
+                
+            output_path = convert_images_to_video(input_paths, durations, audio_path, audio_start, audio_end)
+            
+            # Use base64 like video-converter
+            content_type = 'application/octet-stream'
+            from .utils import format_download_name
+            final_filename = format_download_name("images-to-video.mp4", output_path)
+
+            return create_cleanup_response(output_path, content_type='video/mp4', filename=final_filename)
+            
+        except Exception as e:
+            return JsonResponse({'error': f"We couldn't create the video. Please try again. {str(e)}"}, status=500)
+        finally:
+            for p in input_paths:
+                try: os.remove(p)
+                except OSError: pass
+            if audio_path:
+                try: os.remove(audio_path)
+                except OSError: pass
 
     # ── JPG to PNG (In-Memory Processing) ──
     if tool_slug == 'jpg-to-png':

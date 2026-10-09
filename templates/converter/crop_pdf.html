@@ -919,6 +919,23 @@
 
 
         <!-- =================================================
+             PAGES SELECTION
+             ================================================= -->
+             
+        <div class="mt-6 p-4 rounded-xl bg-surface-50 border border-surface-200">
+            <label class="block text-[11px] font-black text-center text-surface-500 uppercase mb-2 tracking-wider">
+                Pages to Crop
+            </label>
+            <input
+                type="text"
+                id="crop-pages"
+                value="all"
+                placeholder="e.g. all, 1, 3-5"
+                class="w-full max-w-[300px] mx-auto block text-center px-4 py-2.5 rounded-lg border border-surface-200 font-semibold text-surface-900 focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none transition-all">
+            <p class="text-[10px] text-surface-400 text-center mt-2">Leave as "all" to crop every page, or specify ranges.</p>
+        </div>
+
+        <!-- =================================================
              CROP BUTTON
              ================================================= -->
 
@@ -1128,6 +1145,385 @@
 
     </div>
 
+</div>
+
+<!-- =========================================================
+     LOWER CONTENT
+     ========================================================= -->
+
+<div class="converter-content-container pb-20">
+
+    <!-- 02. SECTION 1: Crop PDF Pages Precisely -->
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mb-12 md:mb-16 mt-8">
+        <div class="grid md:grid-cols-[1fr_1fr] items-center gap-10 md:gap-16">
+            <div class="order-2 md:order-1 pr-0 md:pr-4">
+                <div class="flex items-center gap-2 text-purple-600 font-bold tracking-widest text-[12px] uppercase mb-4">
+                    <i data-lucide="crop" class="w-3.5 h-3.5"></i> Trim Margins
+                </div>
+                <h3 class="text-2xl md:text-[2rem] font-bold text-surface-900 mb-5 leading-tight tracking-tight">Crop PDF Pages Precisely</h3>
+                <p class="text-surface-500 text-[17px] leading-relaxed mb-8">
+                    Remove white margins, header/footer text, or simply focus on the most important parts of a document. Our tool lets you trim the page box mathematically without losing document quality.
+                </p>
+                <ul class="space-y-4">
+                    <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                        <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                        Visually select the crop area
+                    </li>
+                    <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                        <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                        Does not rasterize vectors
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="order-1 md:order-2 relative">
+                <div class="bg-gradient-to-br from-purple-50 to-white rounded-[28px] p-8 md:p-12 border border-purple-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)] relative">
+                    <div class="bg-white rounded-xl shadow-lg border border-surface-200 p-6 relative z-10 flex items-center justify-center aspect-[4/3]">
+                         <div class="relative w-[180px] h-[220px] bg-surface-50 border border-surface-200 p-4">
+                             <div class="h-1 bg-surface-200 w-full mb-1"></div>
+                             <div class="h-1 bg-surface-200 w-full mb-1"></div>
+                             <!-- The Crop Box -->
+                             <div class="absolute inset-4 border-2 border-dashed border-purple-500 bg-purple-500/10">
+                                <div class="absolute -top-1 -left-1 w-2 h-2 bg-purple-600"></div>
+                                <div class="absolute -top-1 -right-1 w-2 h-2 bg-purple-600"></div>
+                                <div class="absolute -bottom-1 -left-1 w-2 h-2 bg-purple-600"></div>
+                                <div class="absolute -bottom-1 -right-1 w-2 h-2 bg-purple-600"></div>
+                             </div>
+                         </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 03. SECTION 2: Choose the Area You Want to Keep -->
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mb-12 md:mb-16">
+        <div class="grid md:grid-cols-[1fr_1fr] items-center gap-10 md:gap-16">
+            <div class="order-1 md:order-1 relative">
+                <div class="bg-gradient-to-br from-blue-50 to-white rounded-[28px] p-8 md:p-12 border border-blue-100 shadow-[0_8px_30px_rgb(0,0,0,0.04)]">
+                    <div class="bg-white rounded-xl shadow-lg border border-surface-200 p-6 relative z-10">
+                        <div class="space-y-4">
+                            <div class="flex items-center justify-between border-b border-surface-100 pb-3">
+                                <span class="text-surface-600 font-medium text-sm">Visual Crop</span>
+                                <span class="text-purple-600 font-bold text-sm">Active</span>
+                            </div>
+                            <div class="flex items-center justify-between border-b border-surface-100 pb-3">
+                                <span class="text-surface-600 font-medium text-sm">Target Pages</span>
+                                <span class="text-purple-600 font-bold text-sm">All Pages</span>
+                            </div>
+                            <div class="flex items-center justify-between">
+                                <span class="text-surface-600 font-medium text-sm">Resolution</span>
+                                <span class="text-green-600 font-bold text-sm">Preserved</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="order-2 md:order-2 pl-0 md:pl-4">
+                <div class="flex items-center gap-2 text-purple-600 font-bold tracking-widest text-[12px] uppercase mb-4">
+                    <i data-lucide="layout" class="w-3.5 h-3.5"></i> Customization
+                </div>
+                <h3 class="text-2xl md:text-[2rem] font-bold text-surface-900 mb-5 leading-tight tracking-tight">Choose the Area You Want to Keep</h3>
+                <p class="text-surface-500 text-[17px] leading-relaxed mb-8">
+                    Drag the crop boundaries exactly where you want them. You can apply this crop area to a single page or automatically apply it across the entire document.
+                </p>
+                <ul class="space-y-4">
+                    <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                        <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                        Interactive boundary box
+                    </li>
+                    <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                        <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                        Apply to specific pages or all pages
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- 05. CROP CONTROLS -->
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mb-12 md:mb-16">
+        <div class="text-center mb-12 md:mb-16">
+            <h2 class="text-3xl md:text-[2.25rem] font-bold text-surface-900 mb-5 tracking-tight">Crop Controls</h2>
+            <p class="text-[17px] text-surface-500 max-w-2xl mx-auto leading-relaxed">
+                Tools to help you get the exact layout you want.
+            </p>
+        </div>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <!-- Visual Drag -->
+            <div class="bg-white border border-surface-200/80 rounded-2xl p-6 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300">
+                <div class="w-12 h-12 rounded-xl bg-purple-50 border border-purple-100/60 flex items-center justify-center mb-5 text-[22px] font-serif font-bold text-purple-600">
+                    <i data-lucide="mouse-pointer-2" class="w-5 h-5"></i>
+                </div>
+                <h4 class="text-[17px] font-bold text-surface-900 mb-4">Visual Drag</h4>
+                <p class="text-surface-600 text-[14px] leading-relaxed">
+                    Click and drag a box over your PDF preview to quickly set the crop box.
+                </p>
+            </div>
+            
+            <!-- Page Range -->
+            <div class="bg-white border border-surface-200/80 rounded-2xl p-6 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300">
+                <div class="w-12 h-12 rounded-xl bg-blue-50 border border-blue-100/60 flex items-center justify-center mb-5 text-[22px] font-bold text-blue-600">
+                    <i data-lucide="layers" class="w-5 h-5"></i>
+                </div>
+                <h4 class="text-[17px] font-bold text-surface-900 mb-4">Page Range</h4>
+                <p class="text-surface-600 text-[14px] leading-relaxed">
+                    Select exactly which pages should have their margins cropped.
+                </p>
+            </div>
+            
+            <!-- Safe Operation -->
+            <div class="bg-white border border-surface-200/80 rounded-2xl p-6 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300">
+                <div class="w-12 h-12 rounded-xl bg-green-50 border border-green-100/60 flex items-center justify-center mb-5 text-[22px] font-bold text-green-600">
+                    <i data-lucide="shield-check" class="w-5 h-5"></i>
+                </div>
+                <h4 class="text-[17px] font-bold text-surface-900 mb-4">Safe Operation</h4>
+                <p class="text-surface-600 text-[14px] leading-relaxed">
+                    Modifies the CropBox metadata safely without re-rendering vector text.
+                </p>
+            </div>
+            
+            <!-- Instant Feedback -->
+            <div class="bg-white border border-surface-200/80 rounded-2xl p-6 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300">
+                <div class="w-12 h-12 rounded-xl bg-orange-50 border border-orange-100/60 flex items-center justify-center mb-5 text-[22px] font-bold text-orange-500">
+                    <i data-lucide="eye" class="w-5 h-5"></i>
+                </div>
+                <h4 class="text-[17px] font-bold text-surface-900 mb-4">Instant Feedback</h4>
+                <p class="text-surface-600 text-[14px] leading-relaxed">
+                    See exactly how the margins will look directly inside the browser.
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 06. HOW TO CROP A PDF -->
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mb-12 md:mb-16">
+        <div class="bg-gradient-to-br from-purple-50/70 to-white rounded-[32px] border border-purple-100/60 p-8 md:p-14 shadow-sm relative overflow-hidden">
+            <div class="text-center md:text-left mb-12 relative z-10">
+                <h2 class="text-3xl md:text-[2.25rem] font-bold text-surface-900 mb-4 tracking-tight">How to Crop a PDF</h2>
+            </div>
+            
+            <div class="grid lg:grid-cols-[50%_50%] gap-12 lg:gap-16 items-center relative z-10">
+                <div class="relative w-full">
+                    <div class="space-y-8 relative">
+                        <div class="flex gap-5">
+                            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-sm">01</div>
+                            <div>
+                                <h4 class="text-[17px] font-bold text-surface-900 mb-1.5">Select Your PDF</h4>
+                                <p class="text-surface-500 text-[15px] leading-relaxed">Upload the file you need to trim.</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-5">
+                            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-sm">02</div>
+                            <div>
+                                <h4 class="text-[17px] font-bold text-surface-900 mb-1.5">Choose the Crop Area</h4>
+                                <p class="text-surface-500 text-[15px] leading-relaxed">Draw a box around the content you want to keep.</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-5">
+                            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-sm">03</div>
+                            <div>
+                                <h4 class="text-[17px] font-bold text-surface-900 mb-1.5">Select Applicable Pages</h4>
+                                <p class="text-surface-500 text-[15px] leading-relaxed">Specify which pages should use this new crop box.</p>
+                            </div>
+                        </div>
+                        <div class="flex gap-5">
+                            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-sm">04</div>
+                            <div>
+                                <h4 class="text-[17px] font-bold text-surface-900 mb-1.5">Crop and Download</h4>
+                                <p class="text-surface-500 text-[15px] leading-relaxed">Process the file and download your trimmed document.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex justify-center lg:justify-end w-full">
+                    <div class="bg-white p-7 rounded-[24px] shadow-[0_12px_40px_rgb(0,0,0,0.06)] border border-surface-200/60 w-full max-w-[400px]">
+                        <div class="font-bold text-surface-900 text-[15px] text-center mb-6">Crop PDF</div>
+                        <div class="bg-white border border-surface-200/80 rounded-lg p-3.5 flex items-center justify-between mb-5 shadow-sm">
+                            <div class="flex items-center gap-3">
+                                <div class="w-9 h-9 rounded-md bg-purple-50 flex items-center justify-center">
+                                    <i data-lucide="file-text" class="w-4 h-4 text-purple-600"></i>
+                                </div>
+                                <div>
+                                    <div class="text-[13px] font-bold text-surface-900">document.pdf</div>
+                                    <div class="text-[11px] text-surface-500 mt-0.5">Ready</div>
+                                </div>
+                            </div>
+                            <i data-lucide="check-circle-2" class="w-4 h-4 text-green-500"></i>
+                        </div>
+                        <div class="mb-5">
+                            <div class="flex justify-between text-[11px] font-bold text-surface-700 mb-2">
+                                <span>Cropping...</span>
+                                <span>100%</span>
+                            </div>
+                            <div class="h-1.5 w-full bg-surface-100 rounded-full overflow-hidden">
+                                <div class="h-full w-full bg-purple-500 rounded-full"></div>
+                            </div>
+                        </div>
+                        <div class="w-full bg-purple-600 text-white rounded-xl py-3.5 text-center font-bold text-[14px] shadow-sm">
+                            DOWNLOAD PDF
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 07. DESIGNED FOR DIFFERENT DOCUMENTS -->
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mb-12 md:mb-16">
+        <div class="text-center mb-12 md:mb-16">
+            <h2 class="text-3xl md:text-[2.25rem] font-bold text-surface-900 mb-5 tracking-tight">Designed for Different Documents</h2>
+            <p class="text-[17px] text-surface-500 max-w-[700px] mx-auto leading-relaxed">
+                Remove unnecessary margins from any file type.
+            </p>
+        </div>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="bg-surface-50/50 border border-surface-200/60 rounded-2xl p-6 text-center hover:bg-white hover:shadow-md hover:border-purple-200 transition-all duration-300">
+                <div class="w-14 h-16 mx-auto bg-white border border-surface-200 shadow-sm rounded flex flex-col p-2 mb-5">
+                    <div class="h-1.5 w-3/4 bg-surface-300 mb-2"></div>
+                    <div class="h-6 w-full bg-purple-50 mb-1"></div>
+                    <div class="h-1 w-full bg-surface-100 mb-1"></div>
+                    <div class="h-1 w-5/6 bg-surface-100"></div>
+                </div>
+                <h4 class="text-[15px] font-bold text-surface-900 mb-2 uppercase tracking-wide">Scanned Documents</h4>
+                <p class="text-surface-500 text-[14px] leading-relaxed">Remove black borders from bad scans</p>
+            </div>
+            
+            <div class="bg-surface-50/50 border border-surface-200/60 rounded-2xl p-6 text-center hover:bg-white hover:shadow-md hover:border-purple-200 transition-all duration-300">
+                <div class="w-14 h-16 mx-auto bg-white border border-surface-200 shadow-sm rounded flex flex-col p-2 mb-5">
+                    <div class="h-2 w-1/2 bg-surface-300 mx-auto mb-2"></div>
+                    <div class="h-1 w-full bg-surface-100 mb-1"></div>
+                    <div class="h-1 w-full bg-surface-100 mb-1"></div>
+                    <div class="h-1 w-5/6 bg-surface-100 mb-1"></div>
+                    <div class="h-1 w-full bg-surface-100"></div>
+                </div>
+                <h4 class="text-[15px] font-bold text-surface-900 mb-2 uppercase tracking-wide">Reports</h4>
+                <p class="text-surface-500 text-[14px] leading-relaxed">Trim massive white margins</p>
+            </div>
+            
+            <div class="bg-surface-50/50 border border-surface-200/60 rounded-2xl p-6 text-center hover:bg-white hover:shadow-md hover:border-purple-200 transition-all duration-300">
+                <div class="w-14 h-16 mx-auto bg-white border border-surface-200 shadow-sm rounded flex flex-col p-2 mb-5">
+                    <div class="h-1.5 w-1/3 bg-blue-100 mb-2"></div>
+                    <div class="grid grid-cols-2 gap-1 mb-2">
+                        <div class="h-3 bg-surface-100"></div>
+                        <div class="h-3 bg-surface-100"></div>
+                        <div class="h-3 bg-surface-50"></div>
+                        <div class="h-3 bg-surface-50"></div>
+                    </div>
+                </div>
+                <h4 class="text-[15px] font-bold text-surface-900 mb-2 uppercase tracking-wide">Forms</h4>
+                <p class="text-surface-500 text-[14px] leading-relaxed">Focus on the input areas only</p>
+            </div>
+            
+            <div class="bg-surface-50/50 border border-surface-200/60 rounded-2xl p-6 text-center hover:bg-white hover:shadow-md hover:border-purple-200 transition-all duration-300">
+                <div class="w-14 h-16 mx-auto bg-white border border-surface-200 shadow-sm rounded flex flex-col p-2 mb-5">
+                    <div class="flex gap-1.5 mb-1.5">
+                        <div class="w-4 h-4 bg-purple-100 rounded-sm"></div>
+                        <div class="w-full space-y-1">
+                            <div class="h-1 w-full bg-surface-100"></div>
+                            <div class="h-1 w-full bg-surface-100"></div>
+                        </div>
+                    </div>
+                    <div class="h-1 w-full bg-surface-100 mb-1"></div>
+                    <div class="h-1 w-2/3 bg-surface-100"></div>
+                </div>
+                <h4 class="text-[15px] font-bold text-surface-900 mb-2 uppercase tracking-wide">Presentation Pages</h4>
+                <p class="text-surface-500 text-[14px] leading-relaxed">Make slides fit screen boundaries</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 08. WHY USE SCANPDF -->
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mb-12 md:mb-16">
+        <div class="text-center mb-12 md:mb-16">
+            <h2 class="text-3xl md:text-[2.25rem] font-bold text-surface-900 mb-5 tracking-tight">Why Use ScanPDF Crop PDF</h2>
+        </div>
+        
+        <div class="grid md:grid-cols-[1fr_1fr] gap-6">
+            <div class="bg-purple-600 rounded-[24px] p-8 md:p-12 text-white relative overflow-hidden flex flex-col justify-center">
+                <div class="absolute top-0 right-0 w-64 h-64 bg-purple-500 rounded-full blur-[80px] -z-0"></div>
+                <div class="relative z-10">
+                    <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mb-6">
+                        <i data-lucide="zap" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4">Accurate Geometry</h3>
+                    <p class="text-purple-100 text-[17px] leading-relaxed">
+                        Our tool mathematically maps your visual selection to the exact internal PDF CropBox boundaries.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="space-y-6">
+                <div class="bg-white border border-surface-200/80 rounded-[24px] p-8 flex items-start gap-5 shadow-sm">
+                    <div class="w-10 h-10 bg-purple-50 text-purple-600 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <i data-lucide="image" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-[17px] font-bold text-surface-900 mb-2">Resolution Unchanged</h4>
+                        <p class="text-surface-500 text-[15px] leading-relaxed">No rendering or pixelation. Your vector text and images remain in their original resolution.</p>
+                    </div>
+                </div>
+                
+                <div class="bg-white border border-surface-200/80 rounded-[24px] p-8 flex items-start gap-5 shadow-sm">
+                    <div class="w-10 h-10 bg-purple-50 text-purple-600 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <i data-lucide="layers" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-[17px] font-bold text-surface-900 mb-2">Selective Pages</h4>
+                        <p class="text-surface-500 text-[15px] leading-relaxed">Trim every page at once, or focus on a specific page that has unwanted margins.</p>
+                    </div>
+                </div>
+                
+                <div class="bg-white border border-surface-200/80 rounded-[24px] p-8 flex items-start gap-5 shadow-sm">
+                    <div class="w-10 h-10 bg-purple-50 text-purple-600 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <i data-lucide="download" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-[17px] font-bold text-surface-900 mb-2">Direct PDF Download</h4>
+                        <p class="text-surface-500 text-[15px] leading-relaxed">Your cropped PDF is ready immediately after the quick backend processing.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 09. BEST RESULTS -->
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mb-12 md:mb-16">
+        <div class="bg-purple-50 border border-purple-100 rounded-[24px] p-8 md:p-12 flex flex-col md:flex-row gap-8 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.5)]">
+            <div class="md:w-1/3">
+                <div class="w-12 h-12 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center mb-5">
+                    <i data-lucide="info" class="w-6 h-6"></i>
+                </div>
+                <h3 class="text-xl font-bold text-surface-900 mb-3">Get the Best Crop Result</h3>
+                <p class="text-surface-600 text-[15px] leading-relaxed">
+                    Make sure your box entirely contains the content you wish to preserve.
+                </p>
+            </div>
+            
+            <div class="md:w-2/3 grid sm:grid-cols-2 gap-4">
+                <div class="flex gap-3">
+                    <i data-lucide="check" class="w-5 h-5 text-purple-500 flex-shrink-0 mt-0.5"></i>
+                    <span class="text-[15px] font-medium text-surface-700">Leave a tiny margin for readability</span>
+                </div>
+                <div class="flex gap-3">
+                    <i data-lucide="check" class="w-5 h-5 text-purple-500 flex-shrink-0 mt-0.5"></i>
+                    <span class="text-[15px] font-medium text-surface-700">Check if all pages have the same layout</span>
+                </div>
+                <div class="flex gap-3">
+                    <i data-lucide="check" class="w-5 h-5 text-purple-500 flex-shrink-0 mt-0.5"></i>
+                    <span class="text-[15px] font-medium text-surface-700">Use "all" to apply uniform dimensions</span>
+                </div>
+                <div class="flex gap-3">
+                    <i data-lucide="check" class="w-5 h-5 text-purple-500 flex-shrink-0 mt-0.5"></i>
+                    <span class="text-[15px] font-medium text-surface-700">Crop preserves annotations/links inside bounds</span>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 {% endblock %}
@@ -2013,6 +2409,12 @@ convertBtn.addEventListener(
             );
 
         }
+
+        /* Pages */
+        formData.append(
+            'pages',
+            document.getElementById('crop-pages').value
+        );
 
 
         /* UI */
