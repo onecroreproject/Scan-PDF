@@ -16,7 +16,8 @@
             <p class="text-lg text-surface-500 max-w-2xl mx-auto font-medium">Download public accessible videos and images from Threads.</p>
         </div>
 
-        <div class="bg-white rounded-3xl shadow-elevated border border-surface-100 p-6 md:p-10 mb-6 relative overflow-hidden">
+        <!-- Main Card -->
+        <div class="bg-white rounded-3xl shadow-elevated border border-surface-100 p-4 sm:p-6 md:p-10 mb-8 relative overflow-hidden">
             <div id="form-container">
                 {% include 'media_tools/includes/downloader_form.html' with input_placeholder='Paste Threads URL' %}
                 {% include 'media_tools/includes/downloader_privacy.html' %}
@@ -24,6 +25,181 @@
             {% include 'media_tools/includes/downloader_results.html' %}
         </div>
         
+        <!-- Content Sections -->
+        <div class="mt-12 md:mt-16 space-y-16 md:space-y-24">
+            
+            <!-- SECTION 1: PLATFORM INTRO -->
+            <section class="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-12 items-center">
+                <div class="order-2 md:order-1">
+                    <h2 class="text-3xl md:text-4xl font-black text-surface-900 mb-4 md:mb-6 leading-tight">Download Media from Threads</h2>
+                    <p class="text-surface-600 font-medium text-base md:text-lg mb-6">ScanPDF provides a simple workflow for supported publicly accessible Threads post media. Retrieve available media easily.</p>
+                    <ul class="space-y-4">
+                        <li class="flex items-start gap-3">
+                            <div class="mt-1 w-6 h-6 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center shrink-0 shadow-sm">
+                                <i data-lucide="check" class="w-4 h-4"></i>
+                            </div>
+                            <span class="text-surface-700 font-semibold">Download supported videos</span>
+                        </li>
+                        <li class="flex items-start gap-3">
+                            <div class="mt-1 w-6 h-6 rounded-full bg-brand-100 text-brand-600 flex items-center justify-center shrink-0 shadow-sm">
+                                <i data-lucide="check" class="w-4 h-4"></i>
+                            </div>
+                            <span class="text-surface-700 font-semibold">Retrieve supported image posts</span>
+                        </li>
+                    </ul>
+                </div>
+                <div class="order-1 md:order-2 bg-gradient-to-br from-brand-50 to-white rounded-[2rem] p-8 md:p-12 flex items-center justify-center border border-brand-100 shadow-sm">
+                    <div class="w-32 h-32 md:w-48 md:h-48 bg-white rounded-3xl shadow-elevated flex items-center justify-center text-brand-500 transform rotate-3 hover:rotate-0 transition-transform duration-300">
+                        <i data-lucide="download-cloud" class="w-16 h-16 md:w-24 md:h-24 opacity-80"></i>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 2: HOW TO DOWNLOAD -->
+            <section>
+                <div class="text-center mb-10 md:mb-12">
+                    <h2 class="text-3xl font-black text-surface-900 mb-4">How to Download from Threads</h2>
+                    <p class="text-surface-500 font-medium max-w-2xl mx-auto text-base">Follow these four simple steps to process your media.</p>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div class="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-surface-100 relative overflow-hidden group hover:border-brand-300 transition-colors hover:shadow-md">
+                        <div class="absolute -right-4 -top-4 text-8xl font-black text-surface-50 opacity-50 group-hover:text-brand-50 transition-colors pointer-events-none">01</div>
+                        <div class="w-12 h-12 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center mb-5 relative z-10">
+                            <i data-lucide="copy" class="w-6 h-6"></i>
+                        </div>
+                        <h3 class="text-lg font-bold text-surface-900 mb-2 relative z-10">Copy the Link</h3>
+                        <p class="text-surface-600 text-sm font-medium relative z-10">Copy the URL of the supported public post or video.</p>
+                    </div>
+                    <div class="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-surface-100 relative overflow-hidden group hover:border-brand-300 transition-colors hover:shadow-md">
+                        <div class="absolute -right-4 -top-4 text-8xl font-black text-surface-50 opacity-50 group-hover:text-brand-50 transition-colors pointer-events-none">02</div>
+                        <div class="w-12 h-12 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center mb-5 relative z-10">
+                            <i data-lucide="clipboard-paste" class="w-6 h-6"></i>
+                        </div>
+                        <h3 class="text-lg font-bold text-surface-900 mb-2 relative z-10">Paste the URL</h3>
+                        <p class="text-surface-600 text-sm font-medium relative z-10">Paste it into the ScanPDF downloader field.</p>
+                    </div>
+                    <div class="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-surface-100 relative overflow-hidden group hover:border-brand-300 transition-colors hover:shadow-md">
+                        <div class="absolute -right-4 -top-4 text-8xl font-black text-surface-50 opacity-50 group-hover:text-brand-50 transition-colors pointer-events-none">03</div>
+                        <div class="w-12 h-12 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center mb-5 relative z-10">
+                            <i data-lucide="zap" class="w-6 h-6"></i>
+                        </div>
+                        <h3 class="text-lg font-bold text-surface-900 mb-2 relative z-10">Process Link</h3>
+                        <p class="text-surface-600 text-sm font-medium relative z-10">Use the existing downloader action to retrieve available media.</p>
+                    </div>
+                    <div class="bg-white rounded-2xl p-6 sm:p-8 shadow-sm border border-surface-100 relative overflow-hidden group hover:border-brand-300 transition-colors hover:shadow-md">
+                        <div class="absolute -right-4 -top-4 text-8xl font-black text-surface-50 opacity-50 group-hover:text-brand-50 transition-colors pointer-events-none">04</div>
+                        <div class="w-12 h-12 rounded-xl bg-brand-50 text-brand-600 flex items-center justify-center mb-5 relative z-10">
+                            <i data-lucide="download" class="w-6 h-6"></i>
+                        </div>
+                        <h3 class="text-lg font-bold text-surface-900 mb-2 relative z-10">Download</h3>
+                        <p class="text-surface-600 text-sm font-medium relative z-10">Choose from the download options actually returned by the tool.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 3: WHAT YOU CAN DOWNLOAD -->
+            <section>
+                <div class="mb-8 md:mb-10 text-center md:text-left">
+                    <h2 class="text-2xl md:text-3xl font-black text-surface-900 mb-2">Supported Content</h2>
+                    <p class="text-surface-500 font-medium">Media types you can retrieve using this tool.</p>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
+                    <div class="flex items-center gap-4 bg-white p-4 md:p-5 rounded-2xl border border-surface-100 shadow-sm hover:shadow-md transition-shadow">
+                        <div class="w-12 h-12 rounded-full bg-brand-50 text-brand-600 flex items-center justify-center shrink-0">
+                            <i data-lucide="video" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-surface-900 text-base">Public Videos</h3>
+                            <p class="text-sm text-surface-500 font-medium">Supported video posts</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4 bg-white p-4 md:p-5 rounded-2xl border border-surface-100 shadow-sm hover:shadow-md transition-shadow">
+                        <div class="w-12 h-12 rounded-full bg-brand-50 text-brand-600 flex items-center justify-center shrink-0">
+                            <i data-lucide="image" class="w-6 h-6"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-surface-900 text-base">Public Images</h3>
+                            <p class="text-sm text-surface-500 font-medium">Supported photo posts</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 4: DESIGNED FOR A SIMPLE WORKFLOW -->
+            <section class="bg-surface-100 rounded-[2rem] p-6 md:p-10 lg:p-12">
+                <div class="text-center mb-8 md:mb-10">
+                    <h2 class="text-2xl md:text-3xl font-black text-surface-900 mb-3">Designed for a Simple Workflow</h2>
+                    <p class="text-surface-600 font-medium text-sm md:text-base">Focusing on efficiency and clean layout.</p>
+                </div>
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
+                    <div class="bg-white rounded-2xl p-5 shadow-sm border border-surface-50 text-center">
+                        <i data-lucide="link" class="w-8 h-8 text-brand-500 mx-auto mb-3"></i>
+                        <h4 class="font-bold text-surface-900 mb-1">Paste a Link</h4>
+                        <p class="text-xs md:text-sm text-surface-500">Just drop your URL to begin.</p>
+                    </div>
+                    <div class="bg-white rounded-2xl p-5 shadow-sm border border-surface-50 text-center">
+                        <i data-lucide="cpu" class="w-8 h-8 text-brand-500 mx-auto mb-3"></i>
+                        <h4 class="font-bold text-surface-900 mb-1">Quick Processing</h4>
+                        <p class="text-xs md:text-sm text-surface-500">Efficient media retrieval.</p>
+                    </div>
+                    <div class="bg-white rounded-2xl p-5 shadow-sm border border-surface-50 text-center">
+                        <i data-lucide="check-circle-2" class="w-8 h-8 text-brand-500 mx-auto mb-3"></i>
+                        <h4 class="font-bold text-surface-900 mb-1">Clear Options</h4>
+                        <p class="text-xs md:text-sm text-surface-500">Straightforward download choices.</p>
+                    </div>
+                    <div class="bg-white rounded-2xl p-5 shadow-sm border border-surface-50 text-center">
+                        <i data-lucide="monitor-smartphone" class="w-8 h-8 text-brand-500 mx-auto mb-3"></i>
+                        <h4 class="font-bold text-surface-900 mb-1">Works Anywhere</h4>
+                        <p class="text-xs md:text-sm text-surface-500">Responsive across devices.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 5: WHY USE SCANPDF -->
+            <section>
+                <div class="mb-8 md:mb-10 text-center md:text-left">
+                    <h2 class="text-2xl md:text-3xl font-black text-surface-900">Why Use ScanPDF for Threads Downloads</h2>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-1 bg-brand-600 rounded-[2rem] p-8 md:p-10 text-white flex flex-col justify-center relative overflow-hidden shadow-elevated">
+                        <div class="absolute top-[-20%] right-[-20%] w-64 h-64 bg-white/10 rounded-full blur-3xl"></div>
+                        <i data-lucide="zap" class="w-10 h-10 text-brand-200 mb-5 relative z-10"></i>
+                        <h3 class="text-2xl font-black mb-3 relative z-10">Simple Link-Based Workflow</h3>
+                        <p class="text-brand-100 font-medium text-sm relative z-10">We focus on keeping the experience clean and easy to navigate for all users.</p>
+                    </div>
+                    <div class="lg:col-span-2 grid grid-cols-1 sm:grid-cols-2 gap-4 md:gap-6">
+                        <div class="bg-white p-6 rounded-2xl border border-surface-200 shadow-sm flex flex-col justify-center">
+                            <h4 class="font-bold text-surface-900 text-lg mb-2">Clean Interface</h4>
+                            <p class="text-sm text-surface-500 font-medium">A premium design that looks good and works well.</p>
+                        </div>
+                        <div class="bg-white p-6 rounded-2xl border border-surface-200 shadow-sm flex flex-col justify-center">
+                            <h4 class="font-bold text-surface-900 text-lg mb-2">Responsive Design</h4>
+                            <p class="text-sm text-surface-500 font-medium">Looks and feels excellent on your mobile devices.</p>
+                        </div>
+                        <div class="bg-white p-6 rounded-2xl border border-surface-200 shadow-sm flex flex-col justify-center sm:col-span-2">
+                            <h4 class="font-bold text-surface-900 text-lg mb-2">Direct Download Options</h4>
+                            <p class="text-sm text-surface-500 font-medium">Get straight to your media without unnecessary steps.</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- SECTION 6: IMPORTANT NOTES -->
+            <section class="bg-surface-50 rounded-2xl p-6 md:p-8 border border-surface-200 text-center md:text-left">
+                <div class="flex flex-col md:flex-row items-center md:items-start gap-4">
+                    <div class="w-10 h-10 rounded-full bg-surface-200 text-surface-600 flex items-center justify-center shrink-0">
+                        <i data-lucide="info" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h4 class="font-bold text-surface-900 text-lg mb-2">Important Information</h4>
+                        <p class="text-sm text-surface-600 font-medium leading-relaxed">
+                            Availability of media depends on whether the URL is publicly accessible and whether the platform exposes the media in a supported form. This tool cannot access private accounts, and changes made by the source platform may affect functionality.
+                        </p>
+                    </div>
+                </div>
+            </section>
+
+        </div>
     </div>
 </div>
 

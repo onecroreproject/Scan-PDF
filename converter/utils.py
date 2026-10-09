@@ -2142,8 +2142,17 @@ def _get_ocr_reader():
     global _EASYOCR_READER
     if _EASYOCR_READER is None:
         import easyocr
-        # Load only once into RAM
-        _EASYOCR_READER = easyocr.Reader(['en'], gpu=False)
+        import os
+        from django.conf import settings
+        
+        # Determine model cache location
+        # Use BASE_DIR/ocr_models for stable cache across requests
+        model_dir = os.path.join(settings.BASE_DIR, 'ocr_models')
+        os.makedirs(model_dir, exist_ok=True)
+        
+        # Load only once into RAM, explicitly disable GPU if it's CPU-only environment
+        # model_storage_directory ensures models are cached permanently and not redownloaded
+        _EASYOCR_READER = easyocr.Reader(['en'], gpu=False, model_storage_directory=model_dir)
     return _EASYOCR_READER
 
 def ocr_pdf(input_path, original_name):
@@ -2157,6 +2166,7 @@ def ocr_pdf(input_path, original_name):
     if not hasattr(fitz, 'open') and hasattr(fitz, 'Document'):
         fitz.open = fitz.Document
     import os
+    
     try:
         reader = _get_ocr_reader()
     except Exception as e:
@@ -2180,36 +2190,59 @@ def ocr_pdf(input_path, original_name):
         for page_idx in range(len(doc)):
             page = doc[page_idx]
             
+            # 1. Page Classification: If meaningful embedded text already exists, preserve it.
             if page.get_text().strip():
                 output_pdf.insert_pdf(doc, from_page=page_idx, to_page=page_idx)
                 continue
 
+            # 2. Render Scanned Page
+            # A zoom of 1.3 is sensible for OCR without exhausting memory
             zoom = 1.3
             mat = fitz.Matrix(zoom, zoom)
             pix = page.get_pixmap(matrix=mat)
+            
+            # 3. Text Recognition
+            # Pass image bytes to easyocr. readtext will extract coordinates in pixel space.
             results = reader.readtext(pix.tobytes("png"), paragraph=True)
 
+            # Create new page matching original visual size (respecting rotation)
             rect = page.rect
             new_page = output_pdf.new_page(width=rect.width, height=rect.height)
+            
+            # Draw the visual page
             new_page.insert_image(rect, stream=pix.tobytes("png"))
 
+            # 4. Coordinate Mapping
+            # Map from scaled image coordinates back to original page coordinates
             scale_x = rect.width / pix.width
             scale_y = rect.height / pix.height
             
             for (bbox, text) in results:
-                x_min = min(p[0] for p in bbox) * scale_x
-                y_min = min(p[1] for p in bbox) * scale_y
-                x_max = max(p[0] for p in bbox) * scale_x
-                y_max = max(p[1] for p in bbox) * scale_y
-                h = y_max - y_min
+                # bbox is [[x1, y1], [x2, y2], [x3, y3], [x4, y4]]
+                x_min = min(p[0] for p in bbox) * scale_x + rect.x0
+                y_min = min(p[1] for p in bbox) * scale_y + rect.y0
+                x_max = max(p[0] for p in bbox) * scale_x + rect.x0
+                y_max = max(p[1] for p in bbox) * scale_y + rect.y0
+                
+                h = max(y_max - y_min, 1) # Ensure height > 0
+                
+                # Strip characters that might break the default helv font, 
+                # or just use ASCII encoding to ensure PyMuPDF doesn't crash during insertion
+                safe_text = text.encode('ascii', 'ignore').decode('ascii')
+                
+                if not safe_text.strip():
+                    continue
+                    
+                # 5. Searchable Text Layer
                 try:
                     new_page.insert_text(
                         fitz.Point(x_min, y_min + h * 0.8),
-                        text,
+                        safe_text,
                         fontsize=max(h * 0.8, 1),
-                        render_mode=3 
+                        render_mode=3 # Invisible, searchable text
                     )
-                except:
+                except Exception as e:
+                    # Ignore minor insertion errors for specific problematic text bounds
                     continue
             pix = None
         doc.close()
@@ -2218,8 +2251,20 @@ def ocr_pdf(input_path, original_name):
         output_pdf.close()
         raise Exception("No valid pages were processed for OCR.")
 
+    # Validate output by writing to output_path and closing
     output_pdf.save(output_path, garbage=3, deflate=True)
     output_pdf.close()
+    
+    # 6. Output Validation
+    # Ensure generated file can be opened and has correct properties
+    try:
+        val_doc = fitz.open(output_path)
+        if len(val_doc) == 0:
+            raise Exception("Output PDF is empty.")
+        val_doc.close()
+    except Exception as e:
+        raise Exception(f"Validation failed on generated PDF: {e}")
+        
     return output_path
 
 def extract_all_text(input_path):
