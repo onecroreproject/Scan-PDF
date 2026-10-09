@@ -1477,8 +1477,8 @@ def convert_file(request, tool_slug):
                     return JsonResponse({'error': f'Invalid file "{f.name}". Allowed types: {allowed}'}, status=400)
                 input_paths.append(save_uploaded_file(f))
 
-            from .utils import extract_all_text
-            extracted_text = extract_all_text(input_paths)
+            from .utils import ocr_pdf
+            output_path = ocr_pdf(input_paths, files[0].name)
 
             for p in input_paths:
                 try:
@@ -1486,7 +1486,7 @@ def convert_file(request, tool_slug):
                 except OSError:
                     pass
 
-            return JsonResponse({'extracted_text': extracted_text})
+            return create_cleanup_response(output_path, content_type='application/pdf', filename=files[0].name)
         except Exception as e:
             return JsonResponse({'error': f'OCR failed: {str(e)}'}, status=500)
 

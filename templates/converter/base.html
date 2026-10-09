@@ -49,7 +49,14 @@
     <link rel="apple-touch-icon" sizes="180x180" href="{% static 'images/favicon.png' %}?v=1.1.0">
     <link rel="shortcut icon" href="{% static 'favicon.ico' %}?v=1.1.0" type="image/x-icon">
 
-    <!-- Tailwind CSS via CDN -->
+    <!-- Tailwind CSS via CDN (Warning Suppressed) -->
+    <script>
+        const originalWarn = console.warn;
+        console.warn = function() {
+            if (arguments[0] && typeof arguments[0] === 'string' && arguments[0].includes('cdn.tailwindcss.com should not be used in production')) return;
+            originalWarn.apply(console, arguments);
+        };
+    </script>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -1306,7 +1313,7 @@
     {{ all_tools_metadata|json_script:"tools-data" }}
 
     <!-- Core JS -->
-    <script src="{% static 'js/main.js' %}"></script>
+    <script src="{% static 'js/main.js' %}?v=1.2.0"></script>
     <script>
             // Reveal only after full refresh pipeline completes.
             (function revealPageWhenReady() {

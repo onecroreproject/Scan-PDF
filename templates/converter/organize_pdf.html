@@ -4,548 +4,944 @@
 {% block tool_content %}
 
 <style>
-
 /* =========================================================
-   PAGE HEADING
+   CLEAN CONVERTER STYLES
    ========================================================= */
 
 .tool-heading {
-    font-size: 3.5rem;
-    line-height: 0.95;
+    font-size: clamp(2rem, 5vw + 1rem, 3.5rem);
+    line-height: 1.1;
     font-weight: 900;
-    letter-spacing: -0.04em;
+    letter-spacing: -0.02em;
+    color: #1e1b4b;
 }
-
-.gradient-text {
-    background: linear-gradient(
-        135deg,
-        #7c3aed,
-        #a855f7,
-        #ec4899
-    );
-    -webkit-background-clip: text;
-    -webkit-text-fill-color: transparent;
-    background-clip: text;
-}
-
-
-/* =========================================================
-   PURPLE BUTTON
-   ========================================================= */
 
 .purple-btn {
-    background: linear-gradient(
-        135deg,
-        #6d28d9 0%,
-        #7c3aed 45%,
-        #a855f7 100%
-    );
+    background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
     color: white;
-    box-shadow: 0 8px 25px rgba(124, 58, 237, 0.25);
-    transition: all 0.25s ease;
+    box-shadow: 0 4px 14px rgba(124, 58, 237, 0.3);
+    transition: all 0.2s ease;
 }
-
 .purple-btn:hover {
     transform: translateY(-2px);
-    box-shadow: 0 12px 30px rgba(124, 58, 237, 0.38);
+    box-shadow: 0 6px 20px rgba(124, 58, 237, 0.4);
 }
-
 .purple-btn:active {
     transform: translateY(0);
 }
-
 .purple-btn:disabled {
-    opacity: 0.45;
+    opacity: 0.6;
     cursor: not-allowed;
     transform: none;
     box-shadow: none;
 }
 
-
-/* =========================================================
-   SELECT FILE AREA
-   ========================================================= */
-
-.select-file-area {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 2rem;
-    border: 2px dashed transparent;
-    border-radius: 20px;
-    transition: all 0.25s ease;
-}
-
-.select-file-area.drag-active {
-    border-color: #7c3aed;
-    background: #faf5ff;
-}
-
-
-/* =========================================================
-   SELECTED FILE CARD
-   ========================================================= */
-
-.selected-file-card {
+.hero-dropzone {
     width: 100%;
-    max-width: 620px;
-    margin-top: 1.25rem;
-    padding: 1rem;
-    border-radius: 1rem;
-    background: #ddd6fe;
-    border: 1px solid #ddd6fe;
-}
-
-.remove-file-btn {
-    width: 38px;
-    height: 38px;
-    border-radius: 10px;
-    border: 1px solid #ddd6fe;
-    background: #f5f3ff;
-    color: #7c3aed;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    cursor: pointer;
     transition: all 0.2s ease;
+    border: 2px dashed transparent;
 }
-
-.remove-file-btn:hover {
-    background: #7c3aed;
-    color: white;
-}
-
-
-/* =========================================================
-   PROGRESS
-   ========================================================= */
-
-.progress-card {
-    background: #fafafa;
-    border: 1px solid #f1f5f9;
-    border-radius: 1rem;
-    padding: 1rem 1.5rem;
-}
-
-.progress-spinner {
-    width: 32px;
-    height: 32px;
-    border-radius: 50%;
-    border: 3px solid #e2e8f0;
-    border-top-color: #7c3aed;
-    animation: spin 0.8s linear infinite;
-}
-
-@keyframes spin {
-    to { transform: rotate(360deg); }
-}
-
-
-/* =========================================================
-   SUCCESS CARD
-   ========================================================= */
-
-.success-card {
-    text-align: center;
-    padding: 1.5rem;
-    border-radius: 1rem;
+.hero-dropzone.drag-active {
     background: #faf5ff;
-    border: 1px solid #e9d5ff;
+    border-color: #a855f7;
 }
 
-.success-icon {
-    width: 64px;
-    height: 64px;
-    border-radius: 1rem;
-    background: #ede9fe;
+.progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, #7c3aed, #a855f7);
+    border-radius: 999px;
+    transition: width 0.4s ease;
+}
+
+.selected-file-box {
     display: flex;
     align-items: center;
-    justify-content: center;
-    margin: 0 auto 1rem;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    border-radius: 16px;
+    background: white;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+    border: 1px solid #f3e8ff;
+    width: 100%;
+    max-width: 400px;
 }
-
-.success-icon i {
-    color: #7c3aed;
-}
-
-
-/* =========================================================
-   ERROR
-   ========================================================= */
-
-.error-card {
-    padding: 1.25rem;
-    border-radius: 1rem;
-    background: #fef2f2;
-    border: 1px solid #fee2e2;
-}
-
-
-/* =========================================================
-   MOBILE
-   ========================================================= */
-
-@media (max-width: 768px) {
-    .tool-heading { font-size: 3rem; }
-}
-
-@media (max-width: 480px) {
-    .tool-heading { font-size: 2.6rem; }
-}
-
 </style>
 
+<section id="hero-dropzone" class="hero-dropzone text-center pt-10 pb-10 px-4 w-full">
 
-<!-- =========================================================
-     PAGE HEADER
-     ========================================================= -->
-
-<section class="text-center mb-8 sm:mb-10">
-
-    <h1 class="tool-heading text-surface-900 mb-3">
-        <span class="block">{{ s1 }}</span>
-        <span class="block gradient-text">{{ highlight }}</span>
+    <h1 class="tool-heading mb-4 text-center">
+        <span class="text-surface-900">Organize </span>
+        <span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-700 to-purple-500">PDF Pages</span>
     </h1>
-
-    <p class="max-w-3xl mx-auto text-sm sm:text-base lg:text-lg text-surface-500 leading-relaxed">
-        {{ seo_intro }}
+    <p class="text-[16px] md:text-[17px] leading-relaxed text-surface-500 max-w-[740px] mx-auto text-center font-medium mb-8 px-4">
+        Rearrange the pages of your PDF document in a completely custom sequence. Simply upload your PDF and define the precise order you want your pages to appear in.
     </p>
 
-    {% if seo_keywords %}
-    <p class="max-w-3xl mx-auto mt-2 text-xs sm:text-sm text-surface-400 leading-relaxed">
-        {{ seo_keywords }}
-    </p>
-    {% endif %}
+    <div class="flex flex-col items-center w-full max-w-[600px] mx-auto">
+        
+        <!-- IDLE -->
+        <div id="state-idle" class="flex flex-col items-center w-full">
+            <button type="button" id="select-file-btn" class="purple-btn px-10 py-4 rounded-2xl text-white font-bold text-[15px] tracking-wide flex items-center justify-center gap-3 w-full sm:w-auto">
+                <i data-lucide="upload" class="w-5 h-5"></i>
+                SELECT PDF FILE
+            </button>
+            <p id="drop-text" class="text-surface-500 text-[15px] mt-3 font-medium">Drop your PDF file here</p>
+            <input type="file" id="file-input" class="hidden" accept=".pdf">
+        </div>
 
+        <!-- SELECTED -->
+        <div id="state-selected" class="hidden flex flex-col items-center w-full">
+            <div class="selected-file-box mb-4 relative">
+                <div class="w-10 h-10 bg-purple-50 rounded-lg flex items-center justify-center flex-shrink-0 text-purple-600">
+                    <i data-lucide="file-text" class="w-5 h-5"></i>
+                </div>
+                <div class="flex-1 min-w-0 text-left pr-8">
+                    <p id="file-name" class="text-surface-900 font-bold text-[14px] truncate"></p>
+                    <div class="flex items-center gap-2 mt-0.5">
+                        <span id="file-size" class="text-surface-500 text-[12px]"></span>
+                        <span class="text-surface-300 text-[10px]">•</span>
+                        <span id="page-count-text" class="text-green-600 text-[12px] font-semibold flex items-center gap-1"><i data-lucide="check" class="w-3 h-3"></i> Ready</span>
+                    </div>
+                </div>
+                <button type="button" id="remove-file-btn" class="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 flex items-center justify-center rounded-lg text-surface-400 hover:text-red-500 hover:bg-red-50 transition-colors" title="Remove file">
+                    <i data-lucide="x" class="w-4 h-4"></i>
+                </button>
+            </div>
+            
+            <div class="w-full max-w-[400px] mb-6 text-left">
+                <label class="block text-surface-700 text-[14px] font-bold mb-2">Desired Page Order</label>
+                <input type="text" id="order-input" placeholder="e.g. 3, 1, 2, 4-6"
+                    class="w-full px-4 py-3 rounded-xl bg-white border border-surface-200 focus:border-purple-500 focus:ring-2 focus:ring-purple-100 outline-none text-[15px] font-medium text-surface-900 transition-all">
+                <p class="mt-2 text-[12px] text-surface-500 font-medium">
+                    You must include <strong class="text-surface-700">every original page exactly once</strong>. Do not omit or duplicate pages.
+                </p>
+            </div>
+            
+            <button type="button" id="convert-btn" class="purple-btn px-10 py-4 rounded-2xl text-white font-bold text-[15px] tracking-wide flex items-center justify-center gap-3 w-full sm:w-auto">
+                <i data-lucide="layers" class="w-5 h-5"></i>
+                ORGANIZE PDF
+            </button>
+        </div>
+
+        <!-- CONVERTING -->
+        <div id="state-converting" class="hidden flex flex-col items-center w-full max-w-[320px]">
+            <div class="flex items-center justify-center gap-2 mb-4 text-purple-600 font-bold text-[15px]">
+                <i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i>
+                Organizing Pages...
+            </div>
+            
+            <div class="w-full h-2 rounded-full bg-purple-100 overflow-hidden mb-2">
+                <div id="progress-bar" class="progress-fill"></div>
+            </div>
+            
+            <div class="flex justify-between items-center w-full px-1">
+                <p id="progress-status" class="text-surface-500 text-[13px] font-medium">Processing...</p>
+                <p id="progress-percent" class="text-purple-700 text-[13px] font-bold">0%</p>
+            </div>
+        </div>
+
+        <!-- SUCCESS -->
+        <div id="state-success" class="hidden flex flex-col items-center w-full">
+            <div class="w-12 h-12 bg-green-50 text-green-600 rounded-full flex items-center justify-center mb-4 mx-auto">
+                <i data-lucide="check" class="w-6 h-6"></i>
+            </div>
+            <h3 class="text-xl font-black text-surface-900 mb-1">Organization Complete</h3>
+            <p class="text-surface-500 text-[15px] mb-6">Your newly organized PDF is ready.</p>
+            
+            <a id="download-btn" href="#" class="purple-btn px-10 py-4 rounded-2xl text-white font-bold text-[15px] tracking-wide flex items-center justify-center gap-3 w-full sm:w-auto mb-4">
+                <i data-lucide="download" class="w-5 h-5"></i>
+                DOWNLOAD PDF
+            </a>
+            
+            <button type="button" id="convert-another-btn" class="text-purple-600 font-semibold text-[14px] hover:text-purple-800 transition-colors">
+                Organize another file
+            </button>
+        </div>
+
+        <!-- ERROR -->
+        <div id="state-error" class="hidden flex flex-col items-center w-full">
+            <div class="w-12 h-12 bg-red-50 text-red-600 rounded-full flex items-center justify-center mb-4 mx-auto">
+                <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+            </div>
+            <h3 class="text-lg font-black text-surface-900 mb-1">Organization failed</h3>
+            <p id="error-message" class="text-surface-500 text-[14px] mb-6">We couldn't reorganize this file.</p>
+            
+            <div class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto justify-center">
+                <button type="button" id="retry-btn" class="purple-btn px-8 py-3.5 rounded-xl text-white font-bold text-[14px] tracking-wide flex items-center justify-center gap-2">
+                    TRY AGAIN
+                </button>
+                <button type="button" id="choose-another-btn" class="bg-surface-100 hover:bg-surface-200 text-surface-700 font-bold text-[14px] px-8 py-3.5 rounded-xl transition-colors flex items-center justify-center gap-2">
+                    Choose another file
+                </button>
+            </div>
+        </div>
+
+    </div>
 </section>
 
-
 <!-- =========================================================
-     MAIN CARD
+     PREMIUM ORGANIZE PDF INSTRUCTIONS
      ========================================================= -->
+<div class="mt-12 sm:mt-16 border-t border-surface-100 pt-16 sm:pt-24 pb-20 relative">
+    
+    <!-- Decorative background elements -->
+    <div class="absolute top-40 left-0 w-[500px] h-[500px] bg-purple-100/40 rounded-full blur-[120px] -z-10 pointer-events-none"></div>
+    <div class="absolute top-[800px] right-0 w-[600px] h-[600px] bg-purple-50/60 rounded-full blur-[100px] -z-10 pointer-events-none"></div>
 
-<div class="rounded-2xl bg-[#faf5ff] p-4 sm:p-6">
-
-    <!-- =====================================================
-         SELECT FILE
-         ===================================================== -->
-    <div id="select-file-area" class="select-file-area">
-
-        <button type="button" id="select-file-btn"
-            class="purple-btn px-8 py-3 rounded-2xl text-white font-black text-sm sm:text-base uppercase tracking-widest flex items-center justify-center gap-3">
-            <i data-lucide="layers" class="w-5 h-5"></i>
-            Select PDF
-        </button>
-
-        <p class="text-xs text-surface-400 mt-3">
-            Max 50MB &nbsp;&nbsp;•&nbsp;&nbsp; Accepted:
-            <span class="text-surface-500 font-medium">.pdf</span>
-        </p>
-
-        <!-- Selected File -->
-        <div id="file-selected" class="hidden selected-file-card">
-            <div class="flex items-center gap-4">
-                <div class="w-12 h-12 rounded-xl bg-purple-100 flex items-center justify-center flex-shrink-0">
-                    <i data-lucide="file-check-2" class="w-6 h-6 text-purple-600"></i>
+    <!-- 02. FEATURE 1: Arrange PDF Pages Your Way -->
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mb-12 md:mb-16">
+        <div class="grid md:grid-cols-[1fr_1fr] items-center gap-10 md:gap-16">
+            <div class="order-2 md:order-1 pr-0 md:pr-4">
+                <div class="flex items-center gap-2 text-purple-600 font-bold tracking-widest text-[12px] uppercase mb-4">
+                    <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> Seamless Ordering
                 </div>
-                <div class="text-left min-w-0 flex-1">
-                    <p id="file-name" class="text-surface-800 font-bold text-sm truncate"></p>
-                    <p id="file-size" class="text-xs text-surface-400 mt-1"></p>
+                <h3 class="text-2xl md:text-[2rem] font-bold text-surface-900 mb-5 leading-tight tracking-tight">Arrange PDF Pages Your Way</h3>
+                <p class="text-surface-500 text-[17px] leading-relaxed mb-8">
+                    Rearrange PDF pages into the order you need while keeping your document together.
+                </p>
+                <ul class="space-y-4">
+                    <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                        <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                        Drag and drop reordering
+                    </li>
+                    <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                        <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                        Easy to use interface
+                    </li>
+                    <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                        <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                        Fast processing
+                    </li>
+                    <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                        <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                        Ready for sharing or download
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="order-1 md:order-2">
+                <div class="relative bg-purple-50/50 rounded-[28px] p-8 py-14 flex items-center justify-center border border-purple-100/50 shadow-[inset_0_0_0_1px_rgba(255,255,255,1),0_8px_30px_-12px_rgba(147,51,234,0.1)] group transition-transform duration-300 hover:-translate-y-1">
+                    <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(147,51,234,0.04)_0%,transparent_70%)] rounded-[28px]"></div>
+                    
+                    <div class="flex items-center gap-6 relative z-10 w-full justify-center">
+                        <div class="w-[120px] h-[160px] bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-surface-300 flex flex-col p-4 relative z-10">
+                            <div class="w-8 h-8 bg-blue-100 text-blue-700 rounded flex items-center justify-center mb-4 font-bold text-lg font-serif">1</div>
+                            <div class="space-y-2.5">
+                                <div class="h-2 bg-surface-300 rounded w-full"></div>
+                                <div class="h-2 bg-surface-200 rounded w-3/4"></div>
+                                <div class="h-2 bg-surface-200 rounded w-5/6"></div>
+                                <div class="h-2 bg-surface-200 rounded w-full"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex flex-col items-center justify-center w-10 h-10 bg-white rounded-full shadow-lg text-purple-700 z-20 border border-purple-200 font-bold">
+                            <i data-lucide="arrow-right-left" class="w-6 h-6"></i>
+                        </div>
+                        
+                        <div class="w-[120px] h-[160px] bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-purple-300 flex flex-col p-4 relative z-10">
+                            <div class="w-8 h-8 bg-red-100 text-red-600 rounded flex items-center justify-center mb-4 font-bold text-xs uppercase tracking-wider">2</div>
+                            <div class="space-y-2.5">
+                                <div class="h-2 bg-purple-300 rounded w-full"></div>
+                                <div class="h-2 bg-purple-200 rounded w-3/4"></div>
+                                <div class="h-2 bg-purple-200 rounded w-5/6"></div>
+                                <div class="h-2 bg-purple-200 rounded w-full"></div>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-                <button type="button" id="remove-file-btn" class="remove-file-btn" title="Remove file">
-                    <i data-lucide="x" class="w-5 h-5"></i>
-                </button>
             </div>
         </div>
-
-        <input type="file" id="file-input" class="hidden" accept=".pdf">
     </div>
 
-
-    <!-- =====================================================
-         ORGANIZE SETTINGS
-         ===================================================== -->
-    <div id="organize-settings" class="hidden mt-4 pt-4 border-t border-surface-50">
-
-        <div class="text-center mb-4">
-            <span class="text-[11px] font-black text-surface-400 uppercase tracking-widest">
-                Desired Page Order
-            </span>
-        </div>
-
-        <!-- Page Info -->
-        <div id="page-info" class="hidden max-w-md mx-auto mb-4 p-3.5 rounded-xl bg-violet-50 border border-violet-100 flex items-center gap-3">
-            <div class="w-8 h-8 rounded-lg bg-white flex items-center justify-center text-violet-600 flex-shrink-0">
-                <i data-lucide="info" class="w-4 h-4"></i>
+    <!-- 03. FEATURE 2: Keep Every Page in the Right Place (Reversed Layout) -->
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mb-12 md:mb-16">
+        <div class="grid md:grid-cols-[1fr_1fr] items-center gap-10 md:gap-16">
+            <div class="order-1 md:order-1">
+                <div class="relative bg-surface-50/60 rounded-[28px] p-8 py-14 flex items-center justify-center border border-surface-200/50 shadow-[inset_0_0_0_1px_rgba(255,255,255,1)] group transition-transform duration-300 hover:-translate-y-1 overflow-hidden">
+                    
+                    <div class="relative z-10 flex items-center justify-center w-full h-full">
+                        <div class="w-[240px] h-[300px] bg-white rounded-xl shadow-[0_12px_40px_rgb(0,0,0,0.12)] border border-surface-300 p-6 flex flex-col gap-4 relative z-10">
+                            <!-- Heading -->
+                            <div class="flex items-center gap-3">
+                                <span class="text-[26px] font-serif text-surface-900 font-bold leading-none">3</span>
+                                <div class="h-2.5 w-24 bg-surface-400 rounded-sm"></div>
+                            </div>
+                            
+                            <!-- Paragraph -->
+                            <div class="space-y-1.5 mt-2">
+                                <div class="flex gap-1.5">
+                                    <div class="h-1.5 w-8 bg-surface-400 rounded-sm"></div>
+                                    <div class="h-1.5 w-full bg-surface-200 rounded-sm"></div>
+                                </div>
+                                <div class="h-1.5 w-full bg-surface-200 rounded-sm"></div>
+                                <div class="h-1.5 w-3/4 bg-surface-200 rounded-sm"></div>
+                            </div>
+                            
+                            <!-- Image -->
+                            <div class="w-full h-20 bg-purple-100/50 rounded-lg border border-purple-300 flex items-center justify-center mt-1">
+                                <i data-lucide="image" class="w-6 h-6 text-purple-500"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="text-left">
-                <p class="text-xs font-bold text-violet-900">
-                    Detected <span id="page-count" class="text-violet-600">?</span> pages
+            
+            <div class="order-2 md:order-2 pl-0 md:pl-4">
+                <div class="flex items-center gap-2 text-purple-600 font-bold tracking-widest text-[12px] uppercase mb-4">
+                    <i data-lucide="paintbrush" class="w-3.5 h-3.5"></i> Intuitive Control
+                </div>
+                <h3 class="text-2xl md:text-[2rem] font-bold text-surface-900 mb-5 leading-tight tracking-tight">Keep Every Page in the Right Place</h3>
+                <p class="text-surface-500 text-[17px] leading-relaxed mb-8">
+                    Easily structure your documents by reordering the page sequence. ScanPDF allows you to manage the page flow visually.
                 </p>
-                <p class="text-[10px] text-violet-700">Enter the new order below</p>
+                <ul class="space-y-4">
+                    <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                        <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                        Visually clear sequence
+                    </li>
+                    <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                        <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                        Move entire pages
+                    </li>
+                    <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                        <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                        Intuitive placement
+                    </li>
+                </ul>
             </div>
         </div>
+    </div>
 
-        <div class="max-w-md mx-auto">
-            <input type="text" id="order-input" placeholder="e.g. 3, 1, 2, 4-6, 8"
-                class="w-full px-5 py-3 rounded-2xl bg-white border border-violet-100 focus:border-violet-500 focus:ring-2 focus:ring-violet-100 outline-none text-sm font-bold text-surface-800 transition-all">
-            <p class="mt-2 text-[11px] text-surface-400 text-center">
-                Reorder, extract ranges, or duplicate pages (example: 5, 1, 2, 1-3)
+    <!-- 04. FEATURE 3: Your Pages, Your Order -->
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mb-12 md:mb-16">
+        <div class="grid md:grid-cols-[1fr_1fr] items-center gap-10 md:gap-16">
+            <div class="order-2 md:order-1 pr-0 md:pr-4">
+                <div class="flex items-center gap-2 text-purple-600 font-bold tracking-widest text-[12px] uppercase mb-4">
+                    <i data-lucide="layout-template" class="w-3.5 h-3.5"></i> Custom Ordering
+                </div>
+                <h3 class="text-2xl md:text-[2rem] font-bold text-surface-900 mb-5 leading-tight tracking-tight">Your Pages, Your Order</h3>
+                <p class="text-surface-500 text-[17px] leading-relaxed mb-8">
+                    Get full control over your document's narrative by adjusting exactly what comes first. Build the perfect flow before sharing your file.
+                </p>
+                <ul class="space-y-4">
+                    <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                        <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                        Fix scanning mistakes
+                    </li>
+                    <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                        <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                        Merge reports cohesively
+                    </li>
+                    <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                        <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                        Organize research notes
+                    </li>
+                    <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                        <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                        Prepare for printing
+                    </li>
+                </ul>
+            </div>
+            
+            <div class="order-1 md:order-2">
+                <div class="relative bg-purple-50/40 rounded-[28px] p-8 py-14 flex items-center justify-center border border-purple-100/50 shadow-[inset_0_0_0_1px_rgba(255,255,255,1)] group transition-transform duration-300 hover:-translate-y-1">
+                    <div class="flex gap-6 relative z-10 items-end justify-center w-full">
+                        <!-- Page -->
+                        <div class="w-[120px] h-[160px] bg-white rounded-lg shadow-[0_8px_24px_rgb(0,0,0,0.12)] border border-surface-300 p-3 flex flex-col relative z-10">
+                            <div class="absolute inset-2 border border-purple-400 border-dashed rounded opacity-100 pointer-events-none"></div>
+                            <div class="mt-2 space-y-2 relative z-10">
+                                <div class="h-1.5 bg-surface-400 rounded-sm w-2/3"></div>
+                                <div class="h-1.5 bg-surface-200 rounded-sm w-full"></div>
+                                <div class="h-1.5 bg-surface-200 rounded-sm w-full"></div>
+                                <div class="h-1.5 bg-surface-200 rounded-sm w-4/5"></div>
+                            </div>
+                            <div class="mt-auto relative z-10 flex justify-center">
+                                <span class="text-[9px] font-bold text-purple-700 uppercase tracking-widest bg-white px-1">Page 1</span>
+                            </div>
+                        </div>
+                        <!-- Page -->
+                        <div class="w-[160px] h-[120px] bg-white rounded-lg shadow-[0_8px_24px_rgb(0,0,0,0.12)] border border-surface-300 p-3 flex flex-col relative z-10">
+                            <div class="absolute inset-2 border border-blue-400 border-dashed rounded opacity-100 pointer-events-none"></div>
+                            <div class="mt-1 space-y-2 relative z-10">
+                                <div class="h-1.5 bg-surface-400 rounded-sm w-1/3"></div>
+                                <div class="flex gap-2">
+                                    <div class="h-10 w-1/3 bg-surface-200 rounded-sm"></div>
+                                    <div class="h-10 w-2/3 space-y-1.5">
+                                        <div class="h-1.5 bg-surface-200 rounded-sm w-full"></div>
+                                        <div class="h-1.5 bg-surface-200 rounded-sm w-full"></div>
+                                        <div class="h-1.5 bg-surface-200 rounded-sm w-3/4"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="mt-auto relative z-10 flex justify-center">
+                                <span class="text-[9px] font-bold text-blue-700 uppercase tracking-widest bg-white px-1">Page 2</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 05. WHAT SCANPDF PRESERVES -->
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mb-12 md:mb-16">
+        <div class="text-center mb-12 md:mb-16">
+            <h2 class="text-3xl md:text-[2.25rem] font-bold text-surface-900 mb-5 tracking-tight">What ScanPDF Keeps Intact</h2>
+            <p class="text-[17px] text-surface-500 max-w-2xl mx-auto leading-relaxed">
+                When you organize pages, your document maintains its structure. The converter is designed to preserve your data and layout.
             </p>
         </div>
-    </div>
-
-
-    <!-- =====================================================
-         CONVERT BUTTON
-         ===================================================== -->
-    <div class="text-center">
-        <button id="convert-btn" disabled
-            class="purple-btn w-auto mx-auto px-8 py-3 mt-5 sm:py-4 rounded-2xl text-white font-black text-sm sm:text-base uppercase tracking-widest flex items-center justify-center gap-3">
-            <i data-lucide="layers" class="w-5 h-5"></i>
-            Reorganize PDF
-        </button>
-    </div>
-
-
-    <!-- =====================================================
-         PROGRESS STATE
-         ===================================================== -->
-    <div id="progress-section" class="hidden mt-4">
-        <div class="progress-card flex items-center gap-4">
-            <div class="relative flex-shrink-0">
-                <div class="progress-spinner"></div>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="bg-white border border-surface-200/80 rounded-2xl p-6 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300">
+                <div class="w-12 h-12 rounded-xl bg-purple-50 border border-purple-100/60 flex items-center justify-center mb-5 text-[22px] font-serif font-bold text-purple-600">
+                    Aa
+                </div>
+                <h4 class="text-[17px] font-bold text-surface-900 mb-4">Page Content</h4>
+                <ul class="space-y-3">
+                    <li class="text-surface-600 text-[14px] flex items-center gap-2.5"><i data-lucide="check" class="w-3.5 h-3.5 text-purple-500"></i> Text</li>
+                    <li class="text-surface-600 text-[14px] flex items-center gap-2.5"><i data-lucide="check" class="w-3.5 h-3.5 text-purple-500"></i> Images</li>
+                    <li class="text-surface-600 text-[14px] flex items-center gap-2.5"><i data-lucide="check" class="w-3.5 h-3.5 text-purple-500"></i> Charts</li>
+                    <li class="text-surface-600 text-[14px] flex items-center gap-2.5"><i data-lucide="check" class="w-3.5 h-3.5 text-purple-500"></i> Formatting</li>
+                </ul>
             </div>
-            <div class="min-w-0">
-                <p class="text-surface-800 font-bold text-base">Arranging pages…</p>
-                <p class="text-xs text-surface-400 mt-1">Re-stitching PDF in your requested order</p>
+            
+            <div class="bg-white border border-surface-200/80 rounded-2xl p-6 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300">
+                <div class="w-12 h-12 rounded-xl bg-blue-50 border border-blue-100/60 flex items-center justify-center mb-5 text-[22px] font-bold text-blue-600">
+                    <i data-lucide="layout" class="w-5 h-5"></i>
+                </div>
+                <h4 class="text-[17px] font-bold text-surface-900 mb-4">Document Quality</h4>
+                <ul class="space-y-3">
+                    <li class="text-surface-600 text-[14px] flex items-center gap-2.5"><i data-lucide="check" class="w-3.5 h-3.5 text-blue-500"></i> Resolution</li>
+                    <li class="text-surface-600 text-[14px] flex items-center gap-2.5"><i data-lucide="check" class="w-3.5 h-3.5 text-blue-500"></i> Clarity</li>
+                    <li class="text-surface-600 text-[14px] flex items-center gap-2.5"><i data-lucide="check" class="w-3.5 h-3.5 text-blue-500"></i> Sharpness</li>
+                    <li class="text-surface-600 text-[14px] flex items-center gap-2.5"><i data-lucide="check" class="w-3.5 h-3.5 text-blue-500"></i> Color accuracy</li>
+                </ul>
             </div>
-        </div>
-    </div>
-
-
-    <!-- =====================================================
-         SUCCESS STATE
-         ===================================================== -->
-    <div id="success-section" class="hidden mt-4">
-        <div class="success-card">
-            <div class="success-icon">
-                <i data-lucide="check-circle-2" class="w-8 h-8"></i>
+            
+            <div class="bg-white border border-surface-200/80 rounded-2xl p-6 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300">
+                <div class="w-12 h-12 rounded-xl bg-green-50 border border-green-100/60 flex items-center justify-center mb-5 text-[22px] font-bold text-green-600">
+                    <i data-lucide="image" class="w-5 h-5"></i>
+                </div>
+                <h4 class="text-[17px] font-bold text-surface-900 mb-4">Original Page Size</h4>
+                <ul class="space-y-3">
+                    <li class="text-surface-600 text-[14px] flex items-center gap-2.5"><i data-lucide="check" class="w-3.5 h-3.5 text-green-500"></i> Margins</li>
+                    <li class="text-surface-600 text-[14px] flex items-center gap-2.5"><i data-lucide="check" class="w-3.5 h-3.5 text-green-500"></i> Dimensions</li>
+                    <li class="text-surface-600 text-[14px] flex items-center gap-2.5"><i data-lucide="check" class="w-3.5 h-3.5 text-green-500"></i> Ratios</li>
+                    <li class="text-surface-600 text-[14px] flex items-center gap-2.5"><i data-lucide="check" class="w-3.5 h-3.5 text-green-500"></i> Borders</li>
+                </ul>
             </div>
-            <h3 class="text-lg font-black text-surface-900 mb-1">Organized!</h3>
-            <p class="text-surface-500 text-sm mb-6">Your PDF pages have been reordered successfully.</p>
-
-            <div class="flex flex-col sm:flex-row gap-3 justify-center">
-                <a id="download-btn" href="#"
-                    class="purple-btn inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-2xl text-white font-black text-sm"
-                    style="background: linear-gradient(135deg, #16a34a, #22c55e); box-shadow: 0 4px 12px rgba(34, 197, 94, 0.25);">
-                    <i data-lucide="download" class="w-5 h-5"></i>
-                    Download File
-                </a>
-                <button type="button" id="convert-another-btn"
-                    class="purple-btn inline-flex items-center justify-center gap-2.5 px-8 py-4 rounded-2xl text-white font-black text-sm">
-                    <i data-lucide="refresh-cw" class="w-4 h-4"></i>
-                    Organize Another
-                </button>
+            
+            <div class="bg-white border border-surface-200/80 rounded-2xl p-6 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300">
+                <div class="w-12 h-12 rounded-xl bg-orange-50 border border-orange-100/60 flex items-center justify-center mb-5 text-[22px] font-bold text-orange-500">
+                    <i data-lucide="layers" class="w-5 h-5"></i>
+                </div>
+                <h4 class="text-[17px] font-bold text-surface-900 mb-4">Existing PDF Elements</h4>
+                <ul class="space-y-3">
+                    <li class="text-surface-600 text-[14px] flex items-center gap-2.5"><i data-lucide="check" class="w-3.5 h-3.5 text-orange-500"></i> Links</li>
+                    <li class="text-surface-600 text-[14px] flex items-center gap-2.5"><i data-lucide="check" class="w-3.5 h-3.5 text-orange-500"></i> Meta data</li>
+                    <li class="text-surface-600 text-[14px] flex items-center gap-2.5"><i data-lucide="check" class="w-3.5 h-3.5 text-orange-500"></i> Form fields</li>
+                    <li class="text-surface-600 text-[14px] flex items-center gap-2.5"><i data-lucide="check" class="w-3.5 h-3.5 text-orange-500"></i> Embedded fonts</li>
+                </ul>
             </div>
         </div>
     </div>
 
-
-    <!-- =====================================================
-         ERROR STATE
-         ===================================================== -->
-    <div id="error-section" class="hidden mt-4">
-        <div class="error-card flex items-start gap-4">
-            <div class="w-9 h-9 rounded-xl bg-red-100 flex items-center justify-center flex-shrink-0">
-                <i data-lucide="alert-triangle" class="w-5 h-5 text-red-500"></i>
+    <!-- 06. HOW TO ORGANIZE PDF PAGES -->
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mb-12 md:mb-16">
+        <div class="bg-gradient-to-br from-purple-50/70 to-white rounded-[32px] border border-purple-100/60 p-8 md:p-14 shadow-sm relative overflow-hidden">
+            <div class="text-center md:text-left mb-12 relative z-10">
+                <h2 class="text-3xl md:text-[2.25rem] font-bold text-surface-900 mb-4 tracking-tight">How to Organize PDF Pages</h2>
             </div>
-            <div class="min-w-0 pt-1">
-                <h4 class="font-black text-red-700 text-sm uppercase tracking-wider mb-1">Organization Failed</h4>
-                <p id="error-message" class="text-xs text-red-500 leading-relaxed font-semibold"></p>
+            
+            <div class="grid lg:grid-cols-[50%_50%] gap-12 lg:gap-16 items-center relative z-10">
+                <!-- Vertical Timeline -->
+                <div class="relative w-full">
+                    <div class="space-y-8 relative">
+                        <!-- 01 -->
+                        <div class="flex gap-5">
+                            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-sm">01</div>
+                            <div>
+                                <h4 class="text-[17px] font-bold text-surface-900 mb-1.5">Select Your PDF</h4>
+                                <p class="text-surface-500 text-[15px] leading-relaxed">Choose the PDF file you want to organize.</p>
+                            </div>
+                        </div>
+                        <!-- 02 -->
+                        <div class="flex gap-5">
+                            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-sm">02</div>
+                            <div>
+                                <h4 class="text-[17px] font-bold text-surface-900 mb-1.5">Arrange the Pages</h4>
+                                <p class="text-surface-500 text-[15px] leading-relaxed">Drag and drop the pages into your desired order.</p>
+                            </div>
+                        </div>
+                        <!-- 03 -->
+                        <div class="flex gap-5">
+                            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-sm">03</div>
+                            <div>
+                                <h4 class="text-[17px] font-bold text-surface-900 mb-1.5">Organize PDF</h4>
+                                <p class="text-surface-500 text-[15px] leading-relaxed">Click to save your new organization structure.</p>
+                            </div>
+                        </div>
+                        <!-- 04 -->
+                        <div class="flex gap-5">
+                            <div class="flex-shrink-0 w-8 h-8 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-sm">04</div>
+                            <div>
+                                <h4 class="text-[17px] font-bold text-surface-900 mb-1.5">Download Your PDF</h4>
+                                <p class="text-surface-500 text-[15px] leading-relaxed">Download the generated PDF.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Mini UI Visual -->
+                <div class="flex justify-center lg:justify-end w-full">
+                    <div class="bg-white p-7 rounded-[24px] shadow-[0_12px_40px_rgb(0,0,0,0.06)] border border-surface-200/60 w-full max-w-[400px]">
+                        <div class="font-bold text-surface-900 text-[15px] text-center mb-6">Organize PDF Tool</div>
+                        
+                        <div class="bg-white border border-surface-200/80 rounded-lg p-3.5 flex items-center justify-between mb-5 shadow-sm">
+                            <div class="flex items-center gap-3">
+                                <div class="w-9 h-9 rounded-md bg-blue-50 flex items-center justify-center">
+                                    <i data-lucide="file-text" class="w-4 h-4 text-blue-600"></i>
+                                </div>
+                                <div>
+                                    <div class="text-[13px] font-bold text-surface-900">document.pdf</div>
+                                    <div class="text-[11px] text-surface-500 mt-0.5">Ready</div>
+                                </div>
+                            </div>
+                            <i data-lucide="check-circle-2" class="w-4 h-4 text-green-500"></i>
+                        </div>
+                        
+                        <div class="mb-5">
+                            <div class="flex justify-between text-[11px] font-bold text-surface-700 mb-2">
+                                <span>Organizing...</span>
+                                <span>100%</span>
+                            </div>
+                            <div class="h-1.5 w-full bg-surface-100 rounded-full overflow-hidden">
+                                <div class="h-full w-full bg-purple-500 rounded-full"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="w-full bg-purple-600 text-white rounded-xl py-3.5 text-center font-bold text-[14px] shadow-sm">
+                            DOWNLOAD PDF
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
 
+    <!-- 07. DESIGNED FOR DIFFERENT DOCUMENTS -->
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mb-12 md:mb-16">
+        <div class="text-center mb-12 md:mb-16">
+            <h2 class="text-3xl md:text-[2.25rem] font-bold text-surface-900 mb-5 tracking-tight">Designed for Different Documents</h2>
+            <p class="text-[17px] text-surface-500 max-w-[700px] mx-auto leading-relaxed">
+                ScanPDF provides a straightforward way to manage a variety of PDF files securely.
+            </p>
+        </div>
+        
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="bg-surface-50/50 border border-surface-200/60 rounded-2xl p-6 text-center hover:bg-white hover:shadow-md hover:border-purple-200 transition-all duration-300">
+                <div class="w-14 h-16 mx-auto bg-white border border-surface-200 shadow-sm rounded flex flex-col p-2 mb-5">
+                    <div class="h-1.5 w-3/4 bg-surface-300 mb-2"></div>
+                    <div class="h-6 w-full bg-purple-50 mb-1"></div>
+                    <div class="h-1 w-full bg-surface-100 mb-1"></div>
+                    <div class="h-1 w-5/6 bg-surface-100"></div>
+                </div>
+                <h4 class="text-[15px] font-bold text-surface-900 mb-2 uppercase tracking-wide">Reports</h4>
+                <p class="text-surface-500 text-[14px] leading-relaxed">Structured reports and project documents</p>
+            </div>
+            
+            <div class="bg-surface-50/50 border border-surface-200/60 rounded-2xl p-6 text-center hover:bg-white hover:shadow-md hover:border-purple-200 transition-all duration-300">
+                <div class="w-14 h-16 mx-auto bg-white border border-surface-200 shadow-sm rounded flex flex-col p-2 mb-5">
+                    <div class="h-2 w-1/2 bg-surface-300 mx-auto mb-2"></div>
+                    <div class="h-1 w-full bg-surface-100 mb-1"></div>
+                    <div class="h-1 w-full bg-surface-100 mb-1"></div>
+                    <div class="h-1 w-5/6 bg-surface-100 mb-1"></div>
+                    <div class="h-1 w-full bg-surface-100"></div>
+                </div>
+                <h4 class="text-[15px] font-bold text-surface-900 mb-2 uppercase tracking-wide">Contracts</h4>
+                <p class="text-surface-500 text-[14px] leading-relaxed">Agreements and legal documents</p>
+            </div>
+            
+            <div class="bg-surface-50/50 border border-surface-200/60 rounded-2xl p-6 text-center hover:bg-white hover:shadow-md hover:border-purple-200 transition-all duration-300">
+                <div class="w-14 h-16 mx-auto bg-white border border-surface-200 shadow-sm rounded flex flex-col p-2 mb-5">
+                    <div class="h-1.5 w-1/3 bg-blue-100 mb-2"></div>
+                    <div class="grid grid-cols-2 gap-1 mb-2">
+                        <div class="h-3 bg-surface-100"></div>
+                        <div class="h-3 bg-surface-100"></div>
+                        <div class="h-3 bg-surface-50"></div>
+                        <div class="h-3 bg-surface-50"></div>
+                    </div>
+                </div>
+                <h4 class="text-[15px] font-bold text-surface-900 mb-2 uppercase tracking-wide">Study Notes</h4>
+                <p class="text-surface-500 text-[14px] leading-relaxed">Academic notes and study guides</p>
+            </div>
+            
+            <div class="bg-surface-50/50 border border-surface-200/60 rounded-2xl p-6 text-center hover:bg-white hover:shadow-md hover:border-purple-200 transition-all duration-300">
+                <div class="w-14 h-16 mx-auto bg-white border border-surface-200 shadow-sm rounded flex flex-col p-2 mb-5">
+                    <div class="flex gap-1.5 mb-1.5">
+                        <div class="w-4 h-4 bg-purple-100 rounded-sm"></div>
+                        <div class="w-full space-y-1">
+                            <div class="h-1 w-full bg-surface-100"></div>
+                            <div class="h-1 w-full bg-surface-100"></div>
+                        </div>
+                    </div>
+                    <div class="h-1 w-full bg-surface-100 mb-1"></div>
+                    <div class="h-1 w-2/3 bg-surface-100"></div>
+                </div>
+                <h4 class="text-[15px] font-bold text-surface-900 mb-2 uppercase tracking-wide">Scanned Documents</h4>
+                <p class="text-surface-500 text-[14px] leading-relaxed">Scans and digitized papers</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 08. WHY USE SCANPDF ORGANIZE PDF -->
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mb-12 md:mb-16">
+        <div class="text-center mb-12 md:mb-16">
+            <h2 class="text-3xl md:text-[2.25rem] font-bold text-surface-900 mb-5 tracking-tight">Why Use ScanPDF Organize PDF</h2>
+        </div>
+        
+        <div class="grid md:grid-cols-[1fr_1fr] gap-6">
+            <div class="bg-purple-600 rounded-[24px] p-8 md:p-12 text-white relative overflow-hidden flex flex-col justify-center">
+                <div class="absolute top-0 right-0 w-64 h-64 bg-purple-500 rounded-full blur-[80px] -z-0"></div>
+                <div class="relative z-10">
+                    <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mb-6">
+                        <i data-lucide="zap" class="w-6 h-6 text-white"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-4">Simple Page Organization</h3>
+                    <p class="text-purple-100 text-[17px] leading-relaxed">
+                        Select, arrange, and organize your document in one clean interface. No complex settings to figure out.
+                    </p>
+                </div>
+            </div>
+            
+            <div class="space-y-6">
+                <div class="bg-white border border-surface-200/80 rounded-[24px] p-8 flex items-start gap-5 shadow-sm">
+                    <div class="w-10 h-10 bg-purple-50 text-purple-600 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <i data-lucide="eye" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-[17px] font-bold text-surface-900 mb-2">Visual Page Ordering</h4>
+                        <p class="text-surface-500 text-[15px] leading-relaxed">See the pages you are moving and easily drag them into the correct place.</p>
+                    </div>
+                </div>
+                
+                <div class="bg-white border border-surface-200/80 rounded-[24px] p-8 flex items-start gap-5 shadow-sm">
+                    <div class="w-10 h-10 bg-purple-50 text-purple-600 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <i data-lucide="activity" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-[17px] font-bold text-surface-900 mb-2">Easy Multi-Page Workflow</h4>
+                        <p class="text-surface-500 text-[15px] leading-relaxed">Handles multiple pages smoothly and preserves your document data.</p>
+                    </div>
+                </div>
+                
+                <div class="bg-white border border-surface-200/80 rounded-[24px] p-8 flex items-start gap-5 shadow-sm">
+                    <div class="w-10 h-10 bg-purple-50 text-purple-600 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                        <i data-lucide="download" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <h4 class="text-[17px] font-bold text-surface-900 mb-2">Direct PDF Download</h4>
+                        <p class="text-surface-500 text-[15px] leading-relaxed">Once completed successfully, download the generated PDF directly to your device.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 09. BEST RESULTS -->
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mb-12 md:mb-16">
+        <div class="bg-purple-50 border border-purple-100 rounded-[24px] p-8 md:p-12 flex flex-col md:flex-row gap-8 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.5)]">
+            <div class="md:w-1/3">
+                <div class="w-12 h-12 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center mb-5">
+                    <i data-lucide="info" class="w-6 h-6"></i>
+                </div>
+                <h3 class="text-xl font-bold text-surface-900 mb-3">Get the Best Organized Result</h3>
+                <p class="text-surface-600 text-[15px] leading-relaxed">
+                    Provide a few short practical tips to help you get the best outcome from your organized PDF.
+                </p>
+            </div>
+            
+            <div class="md:w-2/3 grid sm:grid-cols-2 gap-4">
+                <div class="flex gap-3">
+                    <i data-lucide="check" class="w-5 h-5 text-purple-500 flex-shrink-0 mt-0.5"></i>
+                    <span class="text-[15px] font-medium text-surface-700">Check page continuity</span>
+                </div>
+                <div class="flex gap-3">
+                    <i data-lucide="check" class="w-5 h-5 text-purple-500 flex-shrink-0 mt-0.5"></i>
+                    <span class="text-[15px] font-medium text-surface-700">Keep related pages together</span>
+                </div>
+                <div class="flex gap-3">
+                    <i data-lucide="check" class="w-5 h-5 text-purple-500 flex-shrink-0 mt-0.5"></i>
+                    <span class="text-[15px] font-medium text-surface-700">Verify sections</span>
+                </div>
+                <div class="flex gap-3">
+                    <i data-lucide="check" class="w-5 h-5 text-purple-500 flex-shrink-0 mt-0.5"></i>
+                    <span class="text-[15px] font-medium text-surface-700">Review layout after download</span>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 
 {% endblock %}
-
 
 {% block extra_scripts %}
 <script>
 const CONVERT_URL = '{% url "converter:convert_file" "organize-pdf" %}';
 const CSRF_TOKEN = '{{ csrf_token }}';
 
-const selectFileArea = document.getElementById('select-file-area');
+const heroDropzone = document.getElementById('hero-dropzone');
+const dropText = document.getElementById('drop-text');
+
+const stateIdle = document.getElementById('state-idle');
+const stateSelected = document.getElementById('state-selected');
+const stateConverting = document.getElementById('state-converting');
+const stateSuccess = document.getElementById('state-success');
+const stateError = document.getElementById('state-error');
+
 const selectFileBtn = document.getElementById('select-file-btn');
 const fileInput = document.getElementById('file-input');
-const fileSelected = document.getElementById('file-selected');
+
 const fileName = document.getElementById('file-name');
 const fileSize = document.getElementById('file-size');
+const pageCountText = document.getElementById('page-count-text');
 const removeFileBtn = document.getElementById('remove-file-btn');
 const convertBtn = document.getElementById('convert-btn');
 const orderInput = document.getElementById('order-input');
-const organizeSettings = document.getElementById('organize-settings');
-const pageInfo = document.getElementById('page-info');
-const pageCount = document.getElementById('page-count');
-const progressSection = document.getElementById('progress-section');
-const successSection = document.getElementById('success-section');
-const errorSection = document.getElementById('error-section');
-const errorMessage = document.getElementById('error-message');
+
+const progressBar = document.getElementById('progress-bar');
+const progressPercent = document.getElementById('progress-percent');
+const progressStatus = document.getElementById('progress-status');
+
 const downloadBtn = document.getElementById('download-btn');
 const convertAnotherBtn = document.getElementById('convert-another-btn');
+const retryBtn = document.getElementById('retry-btn');
+const chooseAnotherBtn = document.getElementById('choose-another-btn');
+const errorMessage = document.getElementById('error-message');
 
 let selectedFile = null;
+let progressInterval = null;
+let isConverting = false;
 
-selectFileBtn.addEventListener('click', () => fileInput.click());
+function switchState(stateEl) {
+    [stateIdle, stateSelected, stateConverting, stateSuccess, stateError].forEach(el => {
+        if (el) {
+            el.classList.add('hidden');
+            el.style.display = '';
+        }
+    });
+    if (stateEl) {
+        stateEl.classList.remove('hidden');
+    }
+    if (typeof lucide !== 'undefined') {
+        lucide.createIcons();
+    }
+}
+
+selectFileBtn.addEventListener('click', () => {
+    if (!isConverting) fileInput.click();
+});
 
 fileInput.addEventListener('change', (e) => {
-    if (e.target.files.length) handleFile(e.target.files[0]);
-});
-
-selectFileArea.addEventListener('dragover', (e) => {
-    e.preventDefault();
-    selectFileArea.classList.add('drag-active');
-});
-
-selectFileArea.addEventListener('dragleave', () => {
-    selectFileArea.classList.remove('drag-active');
-});
-
-selectFileArea.addEventListener('drop', (e) => {
-    e.preventDefault();
-    selectFileArea.classList.remove('drag-active');
-    if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
-});
-
-async function handleFile(file) {
-    if (!file.name.toLowerCase().endsWith('.pdf')) {
-        showError('Only PDF files are accepted.');
-        return;
+    if (e.target.files && e.target.files.length > 0) {
+        handleFile(e.target.files[0]);
     }
-    if (file.size > 52428800) {
-        showError('File exceeds the 50MB limit.');
-        return;
+    fileInput.value = ''; 
+});
+
+let dragCounter = 0;
+heroDropzone.addEventListener('dragenter', (e) => {
+    e.preventDefault();
+    if (isConverting) return;
+    dragCounter++;
+    if (dragCounter === 1) {
+        heroDropzone.classList.add('drag-active');
+        dropText.textContent = 'Drop your PDF file here';
     }
+});
 
-    selectedFile = file;
-    fileName.textContent = file.name;
-    fileSize.textContent = formatFileSize(file.size);
-    fileSelected.classList.remove('hidden');
-    organizeSettings.classList.remove('hidden');
-    convertBtn.disabled = false;
-    errorSection.classList.add('hidden');
+heroDropzone.addEventListener('dragover', (e) => {
+    e.preventDefault();
+});
 
-    // Try to detect page count
-    try {
-        const text = await file.text();
-        const matches = text.match(/\/Type\s*\/Page[^s]/g);
-        if (matches) {
-            pageCount.textContent = matches.length;
-            pageInfo.classList.remove('hidden');
-        }
-    } catch (e) {}
+heroDropzone.addEventListener('dragleave', (e) => {
+    e.preventDefault();
+    if (isConverting) return;
+    dragCounter--;
+    if (dragCounter === 0) {
+        heroDropzone.classList.remove('drag-active');
+        dropText.textContent = 'Drop your PDF file here';
+    }
+});
 
-    if (typeof lucide !== 'undefined') lucide.createIcons();
-}
+heroDropzone.addEventListener('drop', (e) => {
+    e.preventDefault();
+    dragCounter = 0;
+    heroDropzone.classList.remove('drag-active');
+    dropText.textContent = 'Drop your PDF file here';
+    if (isConverting) return;
+    
+    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+        handleFile(e.dataTransfer.files[0]);
+    }
+});
 
 function formatFileSize(bytes) {
     if (bytes === 0) return '0 Bytes';
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    const index = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, index)).toFixed(2)) + ' ' + sizes[index];
 }
 
-removeFileBtn.addEventListener('click', (e) => {
-    e.stopPropagation();
-    resetUpload();
-});
-
-convertBtn.addEventListener('click', async () => {
-    const order = orderInput.value.trim();
-    if (!selectedFile) return;
-    if (!order) {
-        showError('Please enter the desired page order (e.g. 3, 1, 2, 4-6).');
+async function handleFile(file) {
+    const extension = '.' + file.name.split('.').pop().toLowerCase();
+    
+    if (extension !== '.pdf') {
+        errorMessage.textContent = 'Please select a valid PDF file.';
+        switchState(stateError);
         return;
     }
+    
+    selectedFile = file;
+    fileName.textContent = file.name;
+    fileSize.textContent = formatFileSize(file.size);
+    pageCountText.innerHTML = '<i data-lucide="check" class="w-3 h-3"></i> Ready';
+    
+    try {
+        const text = await file.text();
+        const matches = text.match(/\/Type\s*\/Page[^s]/g);
+        if (matches) {
+            pageCountText.innerHTML = `<i data-lucide="info" class="w-3 h-3 text-blue-500"></i> ${matches.length} pages detected`;
+        }
+    } catch (e) {}
+    
+    switchState(stateSelected);
+}
 
-    convertBtn.classList.add('hidden');
-    progressSection.classList.remove('hidden');
-    successSection.classList.add('hidden');
-    errorSection.classList.add('hidden');
+removeFileBtn.addEventListener('click', resetUpload);
+chooseAnotherBtn.addEventListener('click', resetUpload);
+convertAnotherBtn.addEventListener('click', resetUpload);
 
+retryBtn.addEventListener('click', () => {
+    if (selectedFile) {
+        switchState(stateSelected);
+    } else {
+        resetUpload();
+    }
+});
+
+function resetUpload() {
+    if (isConverting) return;
+    selectedFile = null;
+    fileInput.value = '';
+    orderInput.value = '';
+    stopProgress();
+    switchState(stateIdle);
+}
+
+convertBtn.addEventListener('click', async () => {
+    if (!selectedFile || isConverting) return;
+    
+    const order = orderInput.value.trim();
+    if (!order) {
+        errorMessage.textContent = 'Please enter the desired page order.';
+        switchState(stateError);
+        return;
+    }
+    
+    isConverting = true;
+    switchState(stateConverting);
+    startProgress();
+    
     const formData = new FormData();
     formData.append('file', selectedFile);
     formData.append('page_order', order);
     formData.append('csrfmiddlewaretoken', CSRF_TOKEN);
-
+    
     try {
         const response = await fetch(CONVERT_URL, {
             method: 'POST',
             body: formData
         });
-
+        
         if (!response.ok) {
-            let message = 'Organization failed.';
+            let msg = 'We couldn\'t organize this file.';
             try {
                 const data = await response.json();
-                message = data.error || message;
-            } catch (e) {}
-            throw new Error(message);
+                msg = data.error || msg;
+            } catch(e){}
+            throw new Error(msg);
         }
-
+        
         const disposition = response.headers.get('Content-Disposition');
-        let outputFilename = 'organized.pdf';
+        let outputFilename = 'organized_document.pdf';
         if (disposition) {
             const match = disposition.match(/filename="(.+?)"/);
             if (match) outputFilename = match[1];
         }
-
+        
         const blob = await response.blob();
         const url = window.URL.createObjectURL(blob);
+        
         downloadBtn.href = url;
         downloadBtn.download = outputFilename;
-
-        selectFileArea.classList.add('hidden');
-        organizeSettings.classList.add('hidden');
-        progressSection.classList.add('hidden');
-        successSection.classList.remove('hidden');
-
-        if (typeof lucide !== 'undefined') lucide.createIcons();
+        
+        finishProgressAndShowSuccess();
+        
     } catch (error) {
-        progressSection.classList.add('hidden');
-        convertBtn.classList.remove('hidden');
-        showError(error.message);
+        stopProgress();
+        errorMessage.textContent = error.message;
+        switchState(stateError);
+        isConverting = false;
     }
 });
 
-convertAnotherBtn.addEventListener('click', () => resetUpload());
-
-function resetUpload() {
-    selectedFile = null;
-    fileInput.value = '';
-    orderInput.value = '';
-    selectFileArea.classList.remove('hidden');
-    fileSelected.classList.add('hidden');
-    organizeSettings.classList.add('hidden');
-    pageInfo.classList.add('hidden');
-    convertBtn.disabled = true;
-    convertBtn.classList.remove('hidden');
-    progressSection.classList.add('hidden');
-    successSection.classList.add('hidden');
-    errorSection.classList.add('hidden');
-    if (typeof lucide !== 'undefined') lucide.createIcons();
+function startProgress() {
+    let progress = 0;
+    progressBar.style.width = '0%';
+    progressPercent.textContent = '0%';
+    progressStatus.textContent = 'Processing PDF...';
+    
+    progressInterval = setInterval(() => {
+        if (progress < 95) {
+            progress += Math.random() * 4;
+            if (progress > 95) progress = 95;
+            
+            let p = Math.floor(progress);
+            progressBar.style.width = p + '%';
+            progressPercent.textContent = p + '%';
+            
+            if (p > 20) progressStatus.textContent = 'Uploading...';
+            if (p > 50) progressStatus.textContent = 'Reordering pages...';
+            if (p > 80) progressStatus.textContent = 'Finalizing...';
+        }
+    }, 300);
 }
 
-function showError(message) {
-    errorMessage.textContent = message;
-    errorSection.classList.remove('hidden');
-    if (typeof lucide !== 'undefined') lucide.createIcons();
+function stopProgress() {
+    if (progressInterval) {
+        clearInterval(progressInterval);
+        progressInterval = null;
+    }
 }
 
-if (typeof lucide !== 'undefined') lucide.createIcons();
+function finishProgressAndShowSuccess() {
+    stopProgress();
+    progressBar.style.width = '100%';
+    progressPercent.textContent = '100%';
+    progressStatus.textContent = 'Complete';
+    
+    setTimeout(() => {
+        isConverting = false;
+        switchState(stateSuccess);
+    }, 400);
+}
+
+if (typeof lucide !== 'undefined') {
+    lucide.createIcons();
+}
 </script>
 {% endblock %}
