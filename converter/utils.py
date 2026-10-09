@@ -2009,6 +2009,7 @@ def organize_pdf(input_path, original_name, page_order):
     """Reorder pages of a PDF based on user-specified order.
 
     page_order: comma-separated string like '3,1,2,5,4'
+    Strictly requires every original page exactly once.
     """
     try:
         import pymupdf as fitz
@@ -2022,22 +2023,47 @@ def organize_pdf(input_path, original_name, page_order):
     pdf = fitz.open(input_path)
     total_pages = len(pdf)
 
+    if total_pages == 0:
+        pdf.close()
+        raise Exception("INVALID_PDF: The provided PDF has no pages.")
+
     # Parse the desired page order
     new_order = []
     for part in page_order.split(','):
         part = part.strip()
-        if '-' in part:
-            start, end = part.split('-', 1)
-            for p in range(int(start.strip()), int(end.strip()) + 1):
+        if not part:
+            continue
+        try:
+            if '-' in part:
+                start, end = part.split('-', 1)
+                start_p = int(start.strip())
+                end_p = int(end.strip())
+                step = 1 if start_p <= end_p else -1
+                for p in range(start_p, end_p + step, step):
+                    if 1 <= p <= total_pages:
+                        new_order.append(p - 1)
+                    else:
+                        pdf.close()
+                        raise Exception(f"INVALID_RANGE: Page {p} is out of range. The PDF has {total_pages} pages.")
+            else:
+                p = int(part)
                 if 1 <= p <= total_pages:
                     new_order.append(p - 1)
-        else:
-            p = int(part.strip())
-            if 1 <= p <= total_pages:
-                new_order.append(p - 1)
+                else:
+                    pdf.close()
+                    raise Exception(f"INVALID_RANGE: Page {p} is out of range. The PDF has {total_pages} pages.")
+        except ValueError:
+            pdf.close()
+            raise Exception(f"INVALID_RANGE: Invalid page number '{part}'. Please enter integers only.")
 
     if not new_order:
-        raise Exception("No valid page order specified.")
+        pdf.close()
+        raise Exception("INVALID_RANGE: No valid page order specified.")
+
+    # Validation: must contain every original page exactly once
+    if len(new_order) != total_pages or set(new_order) != set(range(total_pages)):
+        pdf.close()
+        raise Exception(f"INVALID_RANGE: You must include every page from 1 to {total_pages} exactly once. Do not duplicate or omit pages.")
 
     new_pdf = fitz.open()
     for page_idx in new_order:
@@ -2067,22 +2093,42 @@ def repair_pdf(input_path, original_name):
 
     output_path = get_output_path(original_name, 'pdf', suffix='_repaired')
 
+    pdf = None
     try:
-        # Open with repair flag
+        # Open with repair flag (PyMuPDF does this automatically for slightly damaged files)
         pdf = fitz.open(input_path)
     except Exception:
-        # If normal open fails, try reading as bytes and opening
-        with open(input_path, 'rb') as f:
-            raw_data = f.read()
-        pdf = fitz.open(stream=raw_data, filetype="pdf")
+        pass
 
-    # Re-save with aggressive garbage collection and cleaning
-    pdf.save(
-        output_path,
-        garbage=4,        # maximum garbage collection
-        deflate=True,     # compress streams
-        clean=True,       # clean and sanitize content
-    )
+    if pdf is None:
+        try:
+            # If normal open fails, try reading as bytes and opening
+            with open(input_path, 'rb') as f:
+                raw_data = f.read()
+            pdf = fitz.open(stream=raw_data, filetype="pdf")
+        except Exception as e:
+            raise Exception("SEVERELY_CORRUPT: This file is too damaged to be repaired or is not a valid PDF.")
+
+    if pdf.is_encrypted:
+        pdf.close()
+        raise Exception("ENCRYPTED_PDF: This PDF is password-protected. Please unlock it before repairing.")
+
+    if len(pdf) == 0:
+        pdf.close()
+        raise Exception("SEVERELY_CORRUPT: The repaired PDF contains no pages and cannot be recovered.")
+
+    try:
+        # Re-save with aggressive garbage collection and cleaning
+        pdf.save(
+            output_path,
+            garbage=4,        # maximum garbage collection
+            deflate=True,     # compress streams
+            clean=True,       # clean and sanitize content
+        )
+    except Exception as e:
+        pdf.close()
+        raise Exception("SEVERELY_CORRUPT: Failed to reconstruct the PDF file.")
+        
     pdf.close()
     return output_path
 
