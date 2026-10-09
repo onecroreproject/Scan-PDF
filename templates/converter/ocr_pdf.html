@@ -867,38 +867,21 @@ convertBtn.addEventListener('click', async () => {
 });
 
 function startProgress() {
-    let progress = 0;
-    progressBar.style.width = '0%';
-    progressPercent.textContent = '0%';
-    progressStatus.textContent = 'Analyzing image data...';
-    
-    progressInterval = setInterval(() => {
-        if (progress < 95) {
-            progress += Math.random() * 2;
-            if (progress > 95) progress = 95;
-            
-            let p = Math.floor(progress);
-            progressBar.style.width = p + '%';
-            progressPercent.textContent = p + '%';
-            
-            if (p > 20) progressStatus.textContent = 'Recognizing text...';
-            if (p > 50) progressStatus.textContent = 'Applying searchable text layers...';
-            if (p > 80) progressStatus.textContent = 'Finalizing PDF...';
-        }
-    }, 500);
+    progressBar.style.width = '100%';
+    progressBar.style.transition = 'width 60s ease-out'; // slow visual fill
+    progressPercent.textContent = '';
+    progressStatus.textContent = 'Performing OCR... This may take a moment.';
 }
 
 function stopProgress() {
-    if (progressInterval) {
-        clearInterval(progressInterval);
-        progressInterval = null;
-    }
+    // No interval to clear
 }
 
 function finishProgressAndShowSuccess() {
     stopProgress();
+    progressBar.style.transition = 'none';
     progressBar.style.width = '100%';
-    progressPercent.textContent = '100%';
+    progressPercent.textContent = '';
     progressStatus.textContent = 'Complete';
     
     setTimeout(() => {

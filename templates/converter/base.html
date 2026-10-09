@@ -1313,7 +1313,7 @@
     {{ all_tools_metadata|json_script:"tools-data" }}
 
     <!-- Core JS -->
-    <script src="{% static 'js/main.js' %}?v=1.2.0"></script>
+    <script src="{% static 'js/main.js' %}?v=1.2.2"></script>
     <script>
             // Reveal only after full refresh pipeline completes.
             (function revealPageWhenReady() {
@@ -1440,51 +1440,7 @@
             });
         }
 
-        // Services Submenu Toggle (Mobile)
-        const mobileServicesBtn = document.getElementById('mobile-services-submenu-btn');
-        const mobileServicesContent = document.getElementById('mobile-services-submenu-content');
-        const mobileServicesIcon = document.getElementById('mobile-services-submenu-icon');
-        if (mobileServicesBtn && mobileServicesContent && mobileServicesIcon) {
-            mobileServicesBtn.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const isExpanded = mobileServicesBtn.getAttribute('aria-expanded') === 'true';
-                mobileServicesBtn.setAttribute('aria-expanded', !isExpanded);
-                mobileServicesContent.classList.toggle('hidden');
-                mobileServicesIcon.style.transform = isExpanded ? '' : 'rotate(90deg)';
-            });
-        }
 
-        // Mobile accordion drawers (One-open-at-a-time)
-        const accordions = document.querySelectorAll('.accordion-btn');
-        accordions.forEach((button) => {
-            const content = button.nextElementSibling;
-            if (!content) return;
-
-            button.addEventListener('click', (e) => {
-                e.stopPropagation();
-                const isExpanded = button.getAttribute('aria-expanded') === 'true';
-
-                // Close all other accordions first
-                accordions.forEach(otherBtn => {
-                    if (otherBtn !== button && otherBtn.getAttribute('aria-expanded') === 'true') {
-                        otherBtn.setAttribute('aria-expanded', 'false');
-                        const otherContent = otherBtn.nextElementSibling;
-                        if (otherContent) otherContent.classList.add('hidden');
-                        const otherChevron = otherBtn.querySelector('[data-lucide="chevron-down"], [data-lucide="chevron-right"]');
-                        if (otherChevron) otherChevron.style.transform = '';
-                    }
-                });
-
-                // Toggle the clicked one
-                button.setAttribute('aria-expanded', String(!isExpanded));
-                content.classList.toggle('hidden', isExpanded);
-
-                const chevron = button.querySelector('[data-lucide="chevron-down"], [data-lucide="chevron-right"]');
-                if (chevron) {
-                    chevron.style.transform = isExpanded ? '' : 'rotate(180deg)';
-                }
-            });
-        });
 
         // Close on click outside
         document.addEventListener('click', (e) => {

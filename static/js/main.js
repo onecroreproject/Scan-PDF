@@ -51,16 +51,59 @@
 
             // Reset accordions when closing drawer
             if (!isOpen) {
-                const accordions = document.querySelectorAll('.accordion-btn');
+                const accordions = document.querySelectorAll('.accordion-btn, #mobile-services-submenu-btn');
                 accordions.forEach(btn => {
                     btn.setAttribute('aria-expanded', 'false');
                     const content = btn.nextElementSibling;
                     if (content) content.classList.add('hidden');
-                    const chevron = btn.querySelector('[data-lucide="chevron-down"], [data-lucide="chevron-right"]');
+                    const chevron = btn.querySelector('.lucide-chevron-down, .lucide-chevron-right, [data-lucide="chevron-down"], [data-lucide="chevron-right"]');
                     if (chevron) chevron.style.transform = '';
                 });
             }
         };
+
+        // Attach Accordion Logic for Mobile Drawer
+        const accordions = document.querySelectorAll('.accordion-btn, #mobile-services-submenu-btn');
+        accordions.forEach(btn => {
+            btn.addEventListener('click', () => {
+                const isExpanded = btn.getAttribute('aria-expanded') === 'true';
+                
+                // Close all other accordions first
+                accordions.forEach(otherBtn => {
+                    if (otherBtn !== btn) {
+                        otherBtn.setAttribute('aria-expanded', 'false');
+                        const otherContent = otherBtn.nextElementSibling;
+                        if (otherContent) {
+                            otherContent.classList.add('hidden');
+                            otherContent.classList.remove('flex'); // For Services which uses flex-col
+                        }
+                        const otherChevron = otherBtn.querySelector('.lucide-chevron-down, .lucide-chevron-right, [data-lucide="chevron-down"], [data-lucide="chevron-right"]');
+                        if (otherChevron) otherChevron.style.transform = '';
+                    }
+                });
+
+                // Toggle current accordion
+                btn.setAttribute('aria-expanded', !isExpanded ? 'true' : 'false');
+                const content = btn.nextElementSibling;
+                const chevron = btn.querySelector('.lucide-chevron-down, .lucide-chevron-right, [data-lucide="chevron-down"], [data-lucide="chevron-right"]');
+                
+                if (!isExpanded) {
+                    if (content) {
+                        content.classList.remove('hidden');
+                        if (content.id === 'mobile-services-submenu-content') {
+                            content.classList.add('flex');
+                        }
+                    }
+                    if (chevron) chevron.style.transform = 'rotate(180deg)';
+                } else {
+                    if (content) {
+                        content.classList.add('hidden');
+                        content.classList.remove('flex');
+                    }
+                    if (chevron) chevron.style.transform = '';
+                }
+            });
+        });
 
         if (mobileMenuBtn && mobileDrawer && mobileDrawerOverlay) {
             mobileMenuBtn.addEventListener('click', () => {
