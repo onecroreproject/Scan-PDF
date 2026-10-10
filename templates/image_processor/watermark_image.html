@@ -2,75 +2,41 @@
 {% load static %}
 
 {% block tool_head %}
-
-{% if tool_slug == 'cut-image' %}
-<link
-    rel="stylesheet"
-    href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
-{% endif %}
-
-{% if tool_slug == 'image-to-video' or tool.multi_file %}
-<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
-{% endif %}
-
 <style>
-
 /* =========================================================
    PAGE HEADING
    ========================================================= */
-
 .tool-heading {
-    font-size: 3.5rem;
-    line-height: 0.95;
+    font-size: clamp(2rem, 5vw + 1rem, 3.5rem);
+    line-height: 1.1;
     font-weight: 900;
-    letter-spacing: -0.04em;
+    letter-spacing: -0.02em;
+    color: #1e1b4b;
 }
 
 .gradient-text {
-    background: linear-gradient(
-        135deg,
-        #7c3aed,
-        #a855f7,
-        #ec4899
-    );
-
+    background: linear-gradient(135deg, #7c3aed, #a855f7, #ec4899);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
 }
 
-
 /* =========================================================
    PURPLE BUTTON
    ========================================================= */
-
 .purple-btn {
-    background: linear-gradient(
-        135deg,
-        #6d28d9 0%,
-        #7c3aed 45%,
-        #a855f7 100%
-    );
-
+    background: linear-gradient(135deg, #6d28d9 0%, #7c3aed 45%, #a855f7 100%);
     color: white;
-
-    box-shadow:
-        0 8px 25px rgba(124, 58, 237, 0.25);
-
+    box-shadow: 0 8px 25px rgba(124, 58, 237, 0.25);
     transition: all 0.25s ease;
 }
-
 .purple-btn:hover {
     transform: translateY(-2px);
-
-    box-shadow:
-        0 12px 30px rgba(124, 58, 237, 0.38);
+    box-shadow: 0 12px 30px rgba(124, 58, 237, 0.38);
 }
-
 .purple-btn:active {
     transform: translateY(0);
 }
-
 .purple-btn:disabled {
     opacity: 0.4;
     cursor: not-allowed;
@@ -78,2738 +44,1329 @@
     box-shadow: none;
 }
 
-
 /* =========================================================
    UPLOAD AREA
    ========================================================= */
-
 .select-file-area {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-
-    padding: 2rem;
-
-    border: 2px dashed transparent;
-    border-radius: 20px;
-
+    padding: 3rem 2rem;
+    background: #faf5ff;
+    border: 2px dashed #e9d5ff;
+    border-radius: 24px;
     transition: all 0.25s ease;
+    cursor: pointer;
 }
-
+.select-file-area:hover {
+    border-color: #c084fc;
+    background: #f3e8ff;
+}
 .select-file-area.drag-active {
     border-color: #7c3aed;
-    background: #faf5ff;
+    background: #f3e8ff;
 }
-
 
 /* =========================================================
-   SELECTED FILE CARD
+   EDITOR WORKSPACE
    ========================================================= */
-
-.selected-file-card {
-    width: 100%;
-    max-width: 620px;
-
-    margin-top: 1.25rem;
-
-    padding: 1rem;
-
-    border-radius: 1rem;
-
-    background: #ddd6fe;
-
-    border: 1px solid #ddd6fe;
+.editor-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2rem;
+}
+@media (min-width: 1024px) {
+    .editor-layout {
+        grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
+        align-items: flex-start;
+    }
 }
 
-.remove-file-btn {
-    width: 38px;
-    height: 38px;
-
-    border-radius: 10px;
-
-    border: 1px solid #ddd6fe;
-
-    background: #f5f3ff;
-
-    color: #7c3aed;
-
+.preview-container {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 1rem;
+    position: relative;
+    overflow: auto;
     display: flex;
     align-items: center;
     justify-content: center;
-
-    cursor: pointer;
-
-    transition: all 0.2s ease;
+    min-height: 400px;
+    height: 600px;
+    max-height: 70vh;
 }
-
-.remove-file-btn:hover {
-    background: #7c3aed;
-    color: white;
-}
-
-
-/* =========================================================
-   MULTI FILE GALLERY
-   ========================================================= */
-
-#image-gallery {
-    display: grid;
-    grid-template-columns:
-        repeat(auto-fill, minmax(120px, 1fr));
-
-    gap: 1rem;
-
-    margin-top: 1rem;
-}
-
-.gallery-item {
+.preview-inner {
     position: relative;
-
-    aspect-ratio: 1;
-
-    border-radius: 0.75rem;
-
-    overflow: hidden;
-
-    border: 2px solid #e2e8f0;
-
+    transform-origin: center center;
+    transition: transform 0.2s ease-out;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+.preview-inner img.base-image {
+    display: block;
+    max-width: none;
+}
+.watermark-overlay {
+    position: absolute;
+    pointer-events: none;
+    transform-origin: center;
+}
+.watermark-overlay.draggable {
+    pointer-events: auto;
     cursor: grab;
+}
+.watermark-overlay.draggable:active {
+    cursor: grabbing;
+}
 
-    background: #f8fafc;
+.settings-panel {
+    background: white;
+    border: 1px solid #e9d5ff;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    max-height: 70vh;
+    overflow-y: auto;
+}
 
+/* Custom Controls */
+.control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+.control-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.custom-input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    color: #1e293b;
+    outline: none;
+    transition: border-color 0.2s;
+}
+.custom-input:focus {
+    border-color: #8b5cf6;
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+}
+
+.position-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.25rem;
+    width: 120px;
+    height: 120px;
+    margin: 0 auto;
+}
+.position-cell {
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    border-radius: 0.25rem;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.position-cell:hover {
+    background: #e2e8f0;
+}
+.position-cell.active {
+    background: #8b5cf6;
+    border-color: #7c3aed;
+}
+.position-cell.active::after {
+    content: '';
+    width: 8px;
+    height: 8px;
+    background: white;
+    border-radius: 50%;
+}
+
+.tabs {
+    display: flex;
+    background: #f1f5f9;
+    padding: 0.25rem;
+    border-radius: 0.5rem;
+}
+.tab {
+    flex: 1;
+    text-align: center;
+    padding: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #64748b;
+    cursor: pointer;
+    border-radius: 0.375rem;
     transition: all 0.2s;
 }
-
-.gallery-item:hover {
-    border-color: #8b5cf6;
-    transform: scale(1.02);
+.tab.active {
+    background: white;
+    color: #8b5cf6;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
-.gallery-item img {
+/* Range slider styling */
+input[type=range] {
+    -webkit-appearance: none;
     width: 100%;
-    height: 100%;
-    object-fit: cover;
+    background: transparent;
 }
-
-.gallery-item .remove-item {
-    position: absolute;
-
-    top: 0.35rem;
-    right: 0.35rem;
-
-    background: rgba(239, 68, 68, 0.9);
-
-    color: white;
-
-    border-radius: 9999px;
-
-    padding: 0.3rem;
-
-    cursor: pointer;
-
-    opacity: 0;
-
-    transition: opacity 0.2s;
-}
-
-.gallery-item:hover .remove-item {
-    opacity: 1;
-}
-
-.sortable-ghost {
-    opacity: 0.4;
-    border-color: #8b5cf6;
-}
-
-
-/* =========================================================
-   PROGRESS
-   ========================================================= */
-
-.progress-card {
-    background: #fafafa;
-
-    border: 1px solid #f1f5f9;
-
-    border-radius: 1rem;
-
-    padding: 1rem 1.5rem;
-}
-
-.progress-spinner {
-    width: 32px;
-    height: 32px;
-
+input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    height: 16px;
+    width: 16px;
     border-radius: 50%;
-
-    border: 3px solid #e2e8f0;
-
-    border-top-color: #7c3aed;
-
-    animation: spin 0.8s linear infinite;
+    background: #8b5cf6;
+    cursor: pointer;
+    margin-top: -6px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.3);
 }
-
-.progress-fill {
-    height: 100%;
-    width: 0%;
-
-    background: linear-gradient(
-        90deg,
-        #6d28d9,
-        #7c3aed,
-        #a855f7,
-        #ec4899
-    );
-
-    border-radius: 999px;
-
-    transition: width 0.4s ease;
+input[type=range]::-webkit-slider-runnable-track {
+    width: 100%;
+    height: 4px;
+    cursor: pointer;
+    background: #e2e8f0;
+    border-radius: 2px;
 }
-
-@keyframes spin {
-    to {
-        transform: rotate(360deg);
-    }
-}
-
-
-/* =========================================================
-   SUCCESS
-   ========================================================= */
-
-.success-card {
-    text-align: center;
-
-    padding: 1.5rem;
-
-    border-radius: 1rem;
-
-    background: #faf5ff;
-
-    border: 1px solid #e9d5ff;
-}
-
-.success-icon {
-    width: 64px;
-    height: 64px;
-
-    border-radius: 1rem;
-
-    background: #ede9fe;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    margin: 0 auto 1rem;
-}
-
-.success-icon i {
-    color: #7c3aed;
-}
-
-
-/* =========================================================
-   ERROR
-   ========================================================= */
-
-.error-card {
-    padding: 1.25rem;
-
-    border-radius: 1rem;
-
-    background: #fef2f2;
-
-    border: 1px solid #fee2e2;
-}
-
-
-/* =========================================================
-   CROP
-   ========================================================= */
-
-#cropper-container {
-    max-height: 600px;
-}
-
-.cropper-container {
-    width: 100% !important;
-}
-
-.cropper-view-box,
-.cropper-face {
-    border-radius: 0;
-}
-
-.cropper-modal {
-    background-color: rgba(0, 0, 0, 0.7);
-}
-
-.cropper-bg {
-    background-image: none !important;
-}
-
-
-/* =========================================================
-   MOBILE
-   ========================================================= */
-
-@media (max-width: 768px) {
-
-    .tool-heading {
-        font-size: 3rem;
-    }
-
-}
-
-@media (max-width: 480px) {
-
-    .tool-heading {
-        font-size: 2.6rem;
-    }
-
-}
-
 </style>
-
 {% endblock %}
-
 
 {% block tool_content %}
 
-<!-- =========================================================
-     SEO PAGE HEADER
-     THESE VALUES COME DIRECTLY FROM BACKEND
-     ========================================================= -->
-
-<section class="text-center mb-8 sm:mb-10">
-
-    <h1 class="tool-heading text-surface-900 mb-3">
-
-        <span class="block">
-            {{ s1 }}
-        </span>
-
-        <span class="block gradient-text">
-            {{ highlight }}
-        </span>
-
+<!-- Main Hero (Visible only in upload state) -->
+<section id="main-hero" class="text-center mb-10 pt-8 px-4">
+    <h1 class="tool-heading mb-4">
+        <span class="block text-surface-900">Watermark Images</span>
+        <span class="block gradient-text">Online Easily</span>
     </h1>
-
-
-    <!-- SEO INTRO -->
-
-    {% if seo_intro %}
-
-    <p class="max-w-3xl mx-auto text-sm sm:text-base lg:text-lg
-              text-surface-500 leading-relaxed">
-
-        {{ seo_intro }}
-
+    <p class="max-w-3xl mx-auto text-sm sm:text-base lg:text-lg text-surface-500 leading-relaxed font-medium">
+        Add text or logo watermarks to your images with precise control over position, size, opacity and appearance.
     </p>
-
-    {% endif %}
-
-
-    <!-- SEO KEYWORDS -->
-
-    {% if seo_keywords %}
-
-    <p class="max-w-3xl mx-auto mt-2 text-xs sm:text-sm
-              text-surface-400 leading-relaxed">
-
-        {{ seo_keywords }}
-
-    </p>
-
-    {% endif %}
-
 </section>
 
+<!-- Compact Hero (Visible in editor/result states) -->
+<section id="compact-hero" class="text-center mb-6 pt-4 px-4 hidden">
+    <h2 class="text-2xl font-black text-surface-900">
+        Watermark Images <span class="gradient-text">Studio</span>
+    </h2>
+</section>
+
+<div id="app-container" class="w-full max-w-[800px] mx-auto px-4 mb-16 transition-all duration-300">
+    <div id="main-card" class="bg-white rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.08)] border border-purple-100 p-4 sm:p-8">
+        
+        <!-- STATE: UPLOAD -->
+        <div id="state-upload">
+            <div id="select-file-area" class="select-file-area">
+                <div class="w-20 h-20 bg-purple-100 rounded-full flex items-center justify-center mb-6 text-purple-600 shadow-sm">
+                    <i data-lucide="upload-cloud" class="w-10 h-10"></i>
+                </div>
+                <h3 class="text-2xl font-black text-surface-900 mb-2">Drag & Drop Your Image Here</h3>
+                <p class="text-surface-500 font-medium mb-8">or click to select a file</p>
+                
+                <button type="button" id="select-file-btn" class="purple-btn px-10 py-4 rounded-2xl font-black text-base uppercase tracking-widest flex items-center justify-center gap-3">
+                    SELECT IMAGE
+                </button>
+                
+                <p class="text-xs text-surface-400 mt-6 font-semibold">
+                    JPG, JPEG, PNG, WebP
+                </p>
+                <input type="file" id="file-input" class="hidden" accept=".jpg,.jpeg,.png,.webp">
+            </div>
+        </div>
+
+        <!-- STATE: EDITOR -->
+        <div id="state-editor" class="hidden">
+            
+            <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 gap-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center">
+                        <i data-lucide="image" class="w-5 h-5"></i>
+                    </div>
+                    <div>
+                        <div id="meta-filename" class="font-bold text-surface-900 text-sm"></div>
+                        <div class="text-xs text-surface-500 font-medium">
+                            <span id="meta-dimensions"></span> &nbsp;•&nbsp; <span id="meta-size"></span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex gap-2">
+                    <button id="btn-undo" class="w-10 h-10 rounded-lg bg-surface-100 text-surface-600 flex items-center justify-center hover:bg-surface-200 transition-colors disabled:opacity-50" title="Undo">
+                        <i data-lucide="undo" class="w-4 h-4"></i>
+                    </button>
+                    <button id="btn-redo" class="w-10 h-10 rounded-lg bg-surface-100 text-surface-600 flex items-center justify-center hover:bg-surface-200 transition-colors disabled:opacity-50" title="Redo">
+                        <i data-lucide="redo" class="w-4 h-4"></i>
+                    </button>
+                    <button id="btn-reset" class="px-4 h-10 rounded-lg bg-red-50 text-red-600 font-bold text-xs uppercase hover:bg-red-100 transition-colors">
+                        Reset
+                    </button>
+                </div>
+            </div>
+
+            <div class="editor-layout">
+                <!-- Preview Area -->
+                <div class="flex flex-col gap-3">
+                    <div id="preview-container" class="preview-container">
+                        <div id="preview-inner" class="preview-inner">
+                            <img id="base-image" class="base-image" src="" alt="Base Image">
+                            <!-- Single Watermark Overlay -->
+                            <div id="watermark-overlay" class="watermark-overlay draggable"></div>
+                            <!-- Repeat Watermark Pattern Overlay -->
+                            <div id="watermark-repeat-overlay" class="absolute inset-0 hidden pointer-events-none overflow-hidden"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- Zoom Controls -->
+                    <div class="flex items-center justify-center gap-2 bg-surface-50 p-2 rounded-lg border border-surface-200">
+                        <button id="btn-zoom-out" class="w-8 h-8 flex items-center justify-center text-surface-600 hover:bg-surface-200 rounded"><i data-lucide="minus" class="w-4 h-4"></i></button>
+                        <select id="zoom-select" class="bg-transparent text-sm font-bold text-surface-700 outline-none cursor-pointer text-center w-20">
+                            <option value="fit">Fit</option>
+                            <option value="0.5">50%</option>
+                            <option value="0.75">75%</option>
+                            <option value="1">100%</option>
+                            <option value="1.25">125%</option>
+                            <option value="1.5">150%</option>
+                            <option value="2">200%</option>
+                        </select>
+                        <button id="btn-zoom-in" class="w-8 h-8 flex items-center justify-center text-surface-600 hover:bg-surface-200 rounded"><i data-lucide="plus" class="w-4 h-4"></i></button>
+                    </div>
+                </div>
+
+                <!-- Settings Area -->
+                <div class="settings-panel custom-scrollbar">
+                    
+                    <div class="tabs mb-2">
+                        <div class="tab active" data-tab="text">TEXT</div>
+                        <div class="tab" data-tab="logo">LOGO</div>
+                    </div>
+
+                    <!-- Text Settings -->
+                    <div id="panel-text" class="control-group">
+                        <label class="control-label">Watermark Text</label>
+                        <input type="text" id="input-text" class="custom-input" value="ScanPDF" maxlength="50">
+                        
+                        <div class="grid grid-cols-2 gap-4 mt-4">
+                            <div class="control-group">
+                                <label class="control-label">Color</label>
+                                <div class="flex items-center gap-2">
+                                    <input type="color" id="input-color" value="#ffffff" class="w-8 h-8 p-0 border-0 rounded cursor-pointer">
+                                    <span id="color-val" class="text-xs font-mono text-surface-500">#ffffff</span>
+                                </div>
+                            </div>
+                            <div class="control-group">
+                                <label class="control-label flex justify-between">
+                                    <span>Outline</span>
+                                    <input type="checkbox" id="input-stroke" class="cursor-pointer">
+                                </label>
+                                <div id="stroke-settings" class="hidden flex items-center gap-2">
+                                    <input type="color" id="input-stroke-color" value="#000000" class="w-6 h-6 p-0 border-0 rounded cursor-pointer">
+                                    <input type="range" id="input-stroke-width" min="1" max="10" value="2" class="flex-1">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Logo Settings -->
+                    <div id="panel-logo" class="control-group hidden">
+                        <label class="control-label">Upload Logo</label>
+                        <div class="flex items-center gap-2">
+                            <button id="btn-upload-logo" class="bg-surface-100 hover:bg-surface-200 text-surface-700 font-bold text-xs px-4 py-2 rounded-lg border border-surface-300">
+                                Choose File
+                            </button>
+                            <span id="logo-filename" class="text-xs text-surface-500 truncate">No file chosen</span>
+                            <input type="file" id="logo-input" class="hidden" accept=".png,.webp">
+                        </div>
+                    </div>
+
+                    <hr class="border-surface-200">
+
+                    <!-- Appearance -->
+                    <div class="control-group">
+                        <label class="control-label flex justify-between"><span>Size</span><span id="val-size" class="text-purple-600">10%</span></label>
+                        <input type="range" id="input-size" min="2" max="100" value="10">
+                    </div>
+
+                    <div class="control-group">
+                        <label class="control-label flex justify-between"><span>Opacity</span><span id="val-opacity" class="text-purple-600">100%</span></label>
+                        <input type="range" id="input-opacity" min="5" max="100" value="100">
+                    </div>
+
+                    <div class="control-group">
+                        <label class="control-label flex justify-between"><span>Rotation</span><span id="val-rotation" class="text-purple-600">0°</span></label>
+                        <div class="flex items-center gap-2 mb-1">
+                            <button class="preset-rot text-xs bg-surface-100 px-2 py-1 rounded hover:bg-surface-200" data-val="0">0°</button>
+                            <button class="preset-rot text-xs bg-surface-100 px-2 py-1 rounded hover:bg-surface-200" data-val="-45">-45°</button>
+                            <button class="preset-rot text-xs bg-surface-100 px-2 py-1 rounded hover:bg-surface-200" data-val="45">45°</button>
+                        </div>
+                        <input type="range" id="input-rotation" min="-180" max="180" value="0">
+                    </div>
+
+                    <hr class="border-surface-200">
+
+                    <!-- Mode -->
+                    <div class="tabs mb-2">
+                        <div class="tab active tab-mode" data-val="single">SINGLE</div>
+                        <div class="tab tab-mode" data-val="repeat">REPEAT</div>
+                    </div>
+
+                    <!-- Single Mode Settings -->
+                    <div id="mode-single" class="control-group">
+                        <label class="control-label text-center mb-2">Position</label>
+                        <div class="position-grid mb-4">
+                            <div class="position-cell" data-pos="top_left"></div>
+                            <div class="position-cell" data-pos="top_center"></div>
+                            <div class="position-cell" data-pos="top_right"></div>
+                            <div class="position-cell" data-pos="center_left"></div>
+                            <div class="position-cell" data-pos="center"></div>
+                            <div class="position-cell" data-pos="center_right"></div>
+                            <div class="position-cell" data-pos="bottom_left"></div>
+                            <div class="position-cell" data-pos="bottom_center"></div>
+                            <div class="position-cell active" data-pos="bottom_right"></div>
+                        </div>
+                        <div class="text-center text-xs text-surface-500 mb-2">or drag directly on the image</div>
+                        
+                        <div class="control-group">
+                            <label class="control-label flex justify-between"><span>Margin</span><span id="val-margin" class="text-purple-600">2%</span></label>
+                            <input type="range" id="input-margin" min="0" max="20" value="2">
+                        </div>
+                    </div>
+
+                    <!-- Repeat Mode Settings -->
+                    <div id="mode-repeat" class="control-group hidden">
+                        <div class="control-group">
+                            <label class="control-label flex justify-between"><span>Horizontal Spacing</span><span id="val-rx" class="text-purple-600">50%</span></label>
+                            <input type="range" id="input-rx" min="10" max="200" value="50">
+                        </div>
+                        <div class="control-group">
+                            <label class="control-label flex justify-between"><span>Vertical Spacing</span><span id="val-ry" class="text-purple-600">50%</span></label>
+                            <input type="range" id="input-ry" min="10" max="200" value="50">
+                        </div>
+                    </div>
+                    
+                    <hr class="border-surface-200">
+                    
+                    <div class="control-group">
+                        <label class="control-label">Output Format</label>
+                        <select id="input-format" class="custom-input p-2 text-sm">
+                            <option value="original">Original Format</option>
+                            <option value="jpg">JPG</option>
+                            <option value="png">PNG</option>
+                            <option value="webp">WebP</option>
+                        </select>
+                    </div>
+
+                    <button id="btn-apply" class="purple-btn w-full py-4 rounded-xl font-black uppercase tracking-widest mt-4">
+                        APPLY WATERMARK
+                    </button>
+                    
+                </div>
+            </div>
+        </div>
+
+        <!-- STATE: PROCESSING -->
+        <div id="state-processing" class="hidden py-16 text-center">
+            <div class="progress-spinner mx-auto mb-4"></div>
+            <h3 class="text-surface-900 font-black text-xl mb-2">Applying watermark...</h3>
+            <p class="text-surface-500">Please wait while we process your image.</p>
+        </div>
+        
+        <!-- STATE: ERROR -->
+        <div id="state-error" class="hidden py-8">
+            <div class="bg-red-50 border border-red-200 rounded-xl p-6 text-center max-w-lg mx-auto">
+                <i data-lucide="alert-triangle" class="w-8 h-8 text-red-500 mx-auto mb-3"></i>
+                <h4 class="font-bold text-red-700 mb-2">Processing Failed</h4>
+                <p id="error-message" class="text-sm text-red-600 mb-4"></p>
+                <button id="btn-error-back" class="bg-white border border-red-200 text-red-600 font-bold px-6 py-2 rounded-lg hover:bg-red-50">Back to Editor</button>
+            </div>
+        </div>
+
+        <!-- STATE: SUCCESS -->
+        <div id="state-success" class="hidden">
+            <div class="text-center mb-8">
+                <div class="w-12 h-12 bg-green-100 text-green-600 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <i data-lucide="check" class="w-6 h-6"></i>
+                </div>
+                <h2 class="text-2xl font-black text-surface-900 mb-2">Watermark Applied Successfully</h2>
+                <div class="text-sm text-surface-500 font-medium">
+                    <span id="result-dimensions"></span> &nbsp;•&nbsp; <span id="result-format"></span>
+                </div>
+            </div>
+            
+            <div class="bg-surface-50 border border-surface-200 rounded-2xl p-4 mb-8 flex justify-center max-h-[60vh] overflow-hidden">
+                <img id="result-image" class="max-w-full max-h-full object-contain shadow-md rounded-lg" src="">
+            </div>
+            
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <a id="btn-download" href="#" class="px-10 py-4 rounded-2xl text-white font-black text-base tracking-widest flex items-center justify-center gap-3 w-full sm:w-auto" style="background: linear-gradient(135deg, #16a34a, #22c55e); box-shadow: 0 8px 20px rgba(22, 163, 74, 0.3);">
+                    <i data-lucide="download" class="w-5 h-5"></i> DOWNLOAD
+                </a>
+                <button id="btn-edit-again" class="px-8 py-4 rounded-2xl bg-purple-50 text-purple-700 font-bold hover:bg-purple-100 transition-colors w-full sm:w-auto flex justify-center items-center gap-2">
+                    <i data-lucide="edit-2" class="w-4 h-4"></i> Edit Watermark
+                </button>
+                <button id="btn-start-over" class="px-8 py-4 rounded-2xl bg-surface-100 text-surface-700 font-bold hover:bg-surface-200 transition-colors w-full sm:w-auto">
+                    Process Another
+                </button>
+            </div>
+        </div>
+
+    </div>
+</div>
 
 <!-- =========================================================
-     MAIN TOOL CARD
+     PREMIUM LOWER CONTENT SECTIONS (Word-to-PDF Style)
      ========================================================= -->
+<div class="mt-8 border-t border-surface-100 pt-16 pb-20 relative overflow-hidden">
+    <div class="absolute top-20 left-0 w-[500px] h-[500px] bg-purple-100/40 rounded-full blur-[120px] -z-10"></div>
+    <div class="absolute bottom-0 right-0 w-[600px] h-[600px] bg-purple-50/60 rounded-full blur-[100px] -z-10"></div>
 
-<div class="rounded-2xl bg-[#faf5ff] p-4 sm:p-6">
-
-
-    <!-- =====================================================
-         SELECT FILE AREA
-         ===================================================== -->
-
-    <div
-        id="select-file-area"
-        class="select-file-area">
-
-
-        <button
-            type="button"
-            id="select-file-btn"
-            class="purple-btn px-8 py-3 rounded-2xl
-                   text-white font-black
-                   text-sm sm:text-base
-                   uppercase tracking-widest
-                   flex items-center justify-center gap-3">
-
-            <i
-                data-lucide="upload"
-                class="w-5 h-5">
-            </i>
-
-            Select File
-
-        </button>
-
-
-        <p class="text-xs text-surface-400 mt-3">
-
-            Max 50MB
-            &nbsp;&nbsp;•&nbsp;&nbsp;
-            Accepted:
-
-            <span class="text-surface-500 font-medium">
-                {{ tool.accept }}
-            </span>
-
-        </p>
-
-
-        <!-- =================================================
-             SELECTED FILE
-             ================================================= -->
-
-        <div
-            id="file-selected"
-            class="hidden selected-file-card">
-
-
-            <!-- SINGLE FILE -->
-
-            <div
-                id="single-file-view"
-                class="flex items-center gap-4">
-
-                <div
-                    class="w-12 h-12 rounded-xl
-                           bg-purple-100
-                           flex items-center justify-center
-                           flex-shrink-0">
-
-                    <i
-                        data-lucide="file-check-2"
-                        class="w-6 h-6 text-purple-600">
-                    </i>
-
+    <!-- SECTION A -->
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mb-16 md:mb-24">
+        <div class="grid md:grid-cols-[1fr_1fr] items-center gap-10 md:gap-16">
+            <div class="order-2 md:order-1">
+                <div class="flex items-center gap-2 text-purple-600 font-bold tracking-widest text-xs uppercase mb-4">
+                    IMAGE WATERMARKING
                 </div>
-
-
-                <div class="text-left min-w-0 flex-1">
-
-                    <p
-                        id="file-name"
-                        class="text-surface-800 font-bold text-sm truncate">
-                    </p>
-
-                    <p
-                        id="file-size"
-                        class="text-xs text-surface-400 mt-1">
-                    </p>
-
-                </div>
-
-
-                <button
-                    type="button"
-                    id="remove-file-btn"
-                    class="remove-file-btn"
-                    title="Remove file">
-
-                    <i
-                        data-lucide="x"
-                        class="w-5 h-5">
-                    </i>
-
-                </button>
-
-            </div>
-
-
-            <!-- =================================================
-                 MULTI FILE
-                 ================================================= -->
-
-            <div
-                id="multi-file-view"
-                class="hidden text-left">
-
-                <div
-                    class="flex items-center justify-between mb-4">
-
-                    <h3
-                        class="text-sm font-bold text-surface-900
-                               uppercase tracking-wider">
-
-                        Arrange Images
-
-                    </h3>
-
-
-                    <button
-                        type="button"
-                        id="add-more-btn"
-                        class="text-xs font-bold
-                               text-violet-600
-                               hover:text-violet-700
-                               flex items-center gap-1">
-
-                        <i
-                            data-lucide="plus-circle"
-                            class="w-4 h-4">
-                        </i>
-
-                        Add More
-
-                    </button>
-
-                </div>
-
-
-                <div id="image-gallery"></div>
-
-
-                <p
-                    class="text-[10px] text-surface-400
-                           mt-4 italic">
-
-                    Drag images to rearrange the sequence
-
+                <h3 class="text-3xl font-black text-surface-900 mb-5 leading-tight">Protect and Brand Your Images</h3>
+                <p class="text-surface-500 text-lg leading-relaxed mb-8">
+                    Add a visible text or logo watermark while keeping the original image content and dimensions intact. Customize the watermark to suit photos, graphics, product images, and branded content.
                 </p>
-
+                <ul class="space-y-4">
+                    <li class="flex items-center gap-3.5 text-surface-700 font-semibold"><i data-lucide="check" class="text-green-600 w-5 h-5"></i> Add text or logo watermarks</li>
+                    <li class="flex items-center gap-3.5 text-surface-700 font-semibold"><i data-lucide="check" class="text-green-600 w-5 h-5"></i> Keep original image proportions</li>
+                    <li class="flex items-center gap-3.5 text-surface-700 font-semibold"><i data-lucide="check" class="text-green-600 w-5 h-5"></i> Customize placement and appearance</li>
+                    <li class="flex items-center gap-3.5 text-surface-700 font-semibold"><i data-lucide="check" class="text-green-600 w-5 h-5"></i> Preview before processing</li>
+                </ul>
             </div>
-
+            <div class="order-1 md:order-2 bg-purple-50 rounded-3xl p-8 flex items-center justify-center min-h-[300px] border border-purple-100">
+                <div class="w-48 h-48 bg-white shadow-xl rounded-xl border border-surface-200 relative overflow-hidden flex items-center justify-center">
+                    <div class="absolute inset-0 bg-blue-100/50"></div>
+                    <div class="absolute -rotate-45 text-purple-600/50 font-black text-3xl tracking-widest text-center" style="-webkit-text-stroke: 1px #7c3aed;">WATERMARK</div>
+                </div>
+            </div>
         </div>
-
-
-        <!-- FILE INPUT -->
-
-        <input
-            type="file"
-            id="file-input"
-            class="hidden"
-            accept="{{ tool.accept }}"
-            {% if tool.multi_file %}multiple{% endif %}>
-
     </div>
 
-
-    <!-- =====================================================
-         DYNAMIC TOOL PARAMETERS
-         ===================================================== -->
-
-    <div
-        id="parameters-section"
-        class="mt-4 border-t border-purple-100
-               pt-6 space-y-6">
-
-
-        <!-- BLUR -->
-
-        {% if tool_slug == 'blur-image' %}
-
-        <div class="space-y-3">
-
-            <div class="flex justify-between items-center">
-
-                <label class="text-[11px] font-black text-surface-400
-                              uppercase tracking-widest">
-
-                    Blur Intensity
-
-                </label>
-
-                <span
-                    id="radius-val"
-                    class="text-sm font-bold text-violet-600">
-
-                    5px
-
-                </span>
-
-            </div>
-
-            <input
-                type="range"
-                id="radius"
-                min="1"
-                max="50"
-                value="5"
-                class="w-full h-2 bg-surface-100
-                       rounded-lg appearance-none
-                       cursor-pointer accent-violet-500"
-                oninput="document.getElementById('radius-val').textContent = this.value + 'px'">
-
-        </div>
-
-        {% endif %}
-
-
-        <!-- BRIGHTNESS -->
-
-        {% if tool_slug == 'brighten-image' %}
-
-        <div class="space-y-3">
-
-            <div class="flex justify-between items-center">
-
-                <label class="text-[11px] font-black text-surface-400
-                              uppercase tracking-widest">
-
-                    Brightness Level
-
-                </label>
-
-                <span
-                    id="factor-val"
-                    class="text-sm font-bold text-violet-600">
-
-                    1.5x
-
-                </span>
-
-            </div>
-
-            <input
-                type="range"
-                id="factor"
-                min="0.1"
-                max="3.0"
-                step="0.1"
-                value="1.5"
-                class="w-full h-2 bg-surface-100
-                       rounded-lg appearance-none
-                       cursor-pointer accent-violet-500"
-                oninput="document.getElementById('factor-val').textContent = this.value + 'x'">
-
-        </div>
-
-        {% endif %}
-
-
-        <!-- GIF SPEED -->
-
-        {% if tool_slug == 'change-gif-speed' %}
-
-        <div class="space-y-3">
-
-            <div class="space-y-2">
-
-                <label class="text-[11px] font-black text-surface-400
-                              uppercase tracking-widest">
-
-                    Speed Multiplier
-
-                </label>
-
-                <span
-                    id="speed-val"
-                    class="text-sm font-bold text-violet-600">
-
-                    1.0x
-
-                </span>
-
-            </div>
-
-            <input
-                type="range"
-                id="speed"
-                min="0.5"
-                max="3.0"
-                step="0.1"
-                value="1.0"
-                class="w-full h-2 bg-surface-100
-                       rounded-lg appearance-none
-                       cursor-pointer accent-violet-500"
-                oninput="document.getElementById('speed-val').textContent = this.value + 'x'">
-
-        </div>
-
-        {% endif %}
-
-
-        <!-- BACKGROUND -->
-
-        {% if tool_slug == 'change-background' %}
-
-        <div class="space-y-3">
-
-            <label class="text-[11px] font-black text-surface-400
-                          uppercase tracking-widest">
-
-                Background Color
-
-            </label>
-
-            <div class="flex items-center gap-4">
-
-                <input
-                    type="color"
-                    id="color"
-                    value="#ffffff"
-                    class="w-12 h-12 rounded-xl
-                           border border-surface-200
-                           cursor-pointer">
-
-                <span class="text-sm font-semibold text-surface-600">
-
-                    Choose custom background color
-
-                </span>
-
-            </div>
-
-        </div>
-
-        {% endif %}
-
-
-        <!-- WATERMARK -->
-
-        {% if tool_slug == 'watermark-image' %}
-
-        <div class="space-y-3">
-
-            <label class="text-[11px] font-black text-surface-400
-                          uppercase tracking-widest">
-
-                Watermark Text
-
-            </label>
-
-            <input
-                type="text"
-                id="watermark-text"
-                value="ScanPDF"
-                class="w-full px-4 py-3 rounded-xl
-                       border border-surface-200
-                       focus:border-violet-500
-                       focus:ring-4
-                       focus:ring-violet-500/10
-                       outline-none
-                       transition-all
-                       font-semibold">
-
-        </div>
-
-        {% endif %}
-
-
-        <!-- RESIZE -->
-
-        {% if tool_slug == 'resize-image' %}
-
-        <div class="grid grid-cols-2 gap-4">
-
-            <div class="space-y-2">
-
-                <label class="text-[11px] font-black text-surface-400
-                              uppercase tracking-widest">
-
-                    Width (px)
-
-                </label>
-
-                <input
-                    type="number"
-                    id="width"
-                    placeholder="Auto"
-                    class="w-full px-4 py-3 rounded-xl
-                           border border-surface-200
-                           focus:border-violet-500
-                           outline-none
-                           font-semibold">
-
-            </div>
-
-
-            <div class="space-y-2">
-
-                <label class="text-[11px] font-black text-surface-400
-                              uppercase tracking-widest">
-
-                    Height (px)
-
-                </label>
-
-                <input
-                    type="number"
-                    id="height"
-                    placeholder="Auto"
-                    class="w-full px-4 py-3 rounded-xl
-                           border border-surface-200
-                           focus:border-violet-500
-                           outline-none
-                           font-semibold">
-
-            </div>
-
-        </div>
-
-        {% endif %}
-
-
-        <!-- ROTATE -->
-
-        {% if tool_slug == 'rotate-image' %}
-
-        <div class="space-y-3">
-
-            <div class="flex justify-between items-center">
-
-                <label class="text-[11px] font-black text-surface-400
-                              uppercase tracking-widest">
-
-                    Rotation Angle
-
-                </label>
-
-                <span
-                    id="angle-val"
-                    class="text-sm font-bold text-violet-600">
-
-                    90°
-
-                </span>
-
-            </div>
-
-            <input
-                type="range"
-                id="angle"
-                min="0"
-                max="359"
-                step="90"
-                value="90"
-                class="w-full h-2 bg-surface-100
-                       rounded-lg appearance-none
-                       cursor-pointer accent-violet-500"
-                oninput="document.getElementById('angle-val').textContent = this.value + '°'">
-
-        </div>
-
-        {% endif %}
-
-
-        <!-- EXTRACT FRAME -->
-
-        {% if tool_slug == 'extract-frame' %}
-
-        <div class="space-y-3">
-
-            <label class="text-[11px] font-black text-surface-400
-                          uppercase tracking-widest">
-
-                Frame Timestamp (seconds)
-
-            </label>
-
-            <input
-                type="number"
-                id="timestamp"
-                value="1.0"
-                step="0.1"
-                class="w-full px-4 py-3 rounded-xl
-                       border border-surface-200
-                       outline-none font-semibold">
-
-        </div>
-
-        {% endif %}
-
-
-        <!-- IMAGE TO VIDEO -->
-
-        {% if tool_slug == 'image-to-video' %}
-
-        <div class="space-y-4">
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-
-                <div class="space-y-2">
-
-                    <label class="text-[11px] font-black text-surface-400
-                                  uppercase tracking-widest">
-
-                        Image Duration (sec)
-
-                    </label>
-
-                    <input
-                        type="number"
-                        id="img-duration"
-                        value="3"
-                        min="0.5"
-                        step="0.5"
-                        class="w-full px-4 py-3 rounded-xl
-                               border border-surface-200
-                               outline-none font-semibold
-                               focus:border-violet-500">
-
+    <!-- SECTION B -->
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mb-16 md:mb-24">
+        <div class="grid md:grid-cols-[1fr_1fr] items-center gap-10 md:gap-16">
+            <div class="order-1 bg-surface-50 rounded-3xl p-8 flex items-center justify-center min-h-[300px] border border-surface-200">
+                <div class="w-full max-w-[240px] aspect-video bg-white shadow-md border border-surface-200 relative rounded-lg">
+                    <div class="absolute inset-2 border-2 border-dashed border-purple-300 rounded"></div>
+                    <div class="absolute bottom-4 right-4 bg-purple-600 text-white text-[10px] font-bold px-2 py-1 rounded shadow-lg">WATERMARK</div>
                 </div>
-
-
-                <div class="space-y-2">
-
-                    <label class="text-[11px] font-black text-surface-400
-                                  uppercase tracking-widest">
-
-                        Frame Rate (FPS)
-
-                    </label>
-
-                    <input
-                        type="number"
-                        id="fps"
-                        value="24"
-                        min="1"
-                        max="60"
-                        class="w-full px-4 py-3 rounded-xl
-                               border border-surface-200
-                               outline-none font-semibold
-                               focus:border-violet-500">
-
-                </div>
-
             </div>
-
-
-            <div class="space-y-3">
-
-                <label class="text-[11px] font-black text-surface-400
-                              uppercase tracking-widest">
-
-                    Background Audio (Optional)
-
-                </label>
-
-                <div id="audio-upload-container">
-
-                    <input
-                        type="file"
-                        id="audio-input"
-                        accept=".mp3,.wav,.ogg,.m4a"
-                        class="hidden">
-
-
-                    <div
-                        id="audio-drop-zone"
-                        class="p-4 rounded-xl
-                               border-2 border-dashed
-                               border-purple-100
-                               bg-purple-50/30
-                               hover:bg-purple-50
-                               hover:border-purple-200
-                               cursor-pointer
-                               transition-all
-                               flex items-center gap-3">
-
-                        <div
-                            class="w-10 h-10 rounded-lg
-                                   bg-white
-                                   border border-purple-100
-                                   flex items-center justify-center">
-
-                            <i
-                                data-lucide="music"
-                                class="w-5 h-5 text-violet-500">
-                            </i>
-
-                        </div>
-
-
-                        <div class="text-left flex-1 min-w-0">
-
-                            <p
-                                id="audio-file-name"
-                                class="text-sm font-bold
-                                       text-surface-700 truncate">
-
-                                Choose background music
-
-                            </p>
-
-                            <p
-                                id="audio-file-size"
-                                class="text-[10px] text-surface-400">
-
-                                MP3, WAV, M4A up to 20MB
-
-                            </p>
-
-                        </div>
-
-
-                        <button
-                            id="remove-audio-btn"
-                            type="button"
-                            class="hidden p-2 rounded-lg
-                                   hover:bg-red-50
-                                   text-red-500">
-
-                            <i
-                                data-lucide="trash-2"
-                                class="w-4 h-4">
-                            </i>
-
-                        </button>
-
+            <div class="order-2">
+                <div class="flex items-center gap-2 text-purple-600 font-bold tracking-widest text-xs uppercase mb-4">
+                    PRECISE PLACEMENT
+                </div>
+                <h3 class="text-3xl font-black text-surface-900 mb-5 leading-tight">Put Your Watermark Exactly Where You Want</h3>
+                <p class="text-surface-500 text-lg leading-relaxed mb-8">
+                    Choose from 9 preset snapping positions, or drag the watermark anywhere on the image. Complete control over rotation and scaling makes it fit perfectly.
+                </p>
+                <ul class="space-y-4">
+                    <li class="flex items-center gap-3.5 text-surface-700 font-semibold"><i data-lucide="check" class="text-green-600 w-5 h-5"></i> Drag to position</li>
+                    <li class="flex items-center gap-3.5 text-surface-700 font-semibold"><i data-lucide="check" class="text-green-600 w-5 h-5"></i> Preset placement options</li>
+                    <li class="flex items-center gap-3.5 text-surface-700 font-semibold"><i data-lucide="check" class="text-green-600 w-5 h-5"></i> Adjustable size</li>
+                    <li class="flex items-center gap-3.5 text-surface-700 font-semibold"><i data-lucide="check" class="text-green-600 w-5 h-5"></i> Rotation control</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+    
+    <!-- SECTION C -->
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mb-16 md:mb-24">
+        <div class="grid md:grid-cols-[1fr_1fr] items-center gap-10 md:gap-16">
+            <div class="order-2 md:order-1">
+                <div class="flex items-center gap-2 text-purple-600 font-bold tracking-widest text-xs uppercase mb-4">
+                    CUSTOM APPEARANCE
+                </div>
+                <h3 class="text-3xl font-black text-surface-900 mb-5 leading-tight">Control How Your Watermark Looks</h3>
+                <p class="text-surface-500 text-lg leading-relaxed mb-8">
+                    Fine-tune the transparency and color to ensure the watermark is visible without overwhelming the photograph underneath.
+                </p>
+                <ul class="space-y-4">
+                    <li class="flex items-center gap-3.5 text-surface-700 font-semibold"><i data-lucide="check" class="text-green-600 w-5 h-5"></i> Adjust opacity</li>
+                    <li class="flex items-center gap-3.5 text-surface-700 font-semibold"><i data-lucide="check" class="text-green-600 w-5 h-5"></i> Change watermark size</li>
+                    <li class="flex items-center gap-3.5 text-surface-700 font-semibold"><i data-lucide="check" class="text-green-600 w-5 h-5"></i> Rotate watermark</li>
+                    <li class="flex items-center gap-3.5 text-surface-700 font-semibold"><i data-lucide="check" class="text-green-600 w-5 h-5"></i> Customize spacing in repeat mode</li>
+                </ul>
+            </div>
+            <div class="order-1 md:order-2 bg-purple-50 rounded-3xl p-8 flex items-center justify-center min-h-[300px] border border-purple-100">
+                <div class="flex flex-col gap-4 w-full max-w-[240px]">
+                    <div class="h-10 bg-white rounded-lg shadow-sm border border-surface-200 flex items-center px-4 font-bold text-surface-900 opacity-25">Opacity 25%</div>
+                    <div class="h-10 bg-white rounded-lg shadow-sm border border-surface-200 flex items-center px-4 font-bold text-surface-900 opacity-50">Opacity 50%</div>
+                    <div class="h-10 bg-white rounded-lg shadow-sm border border-surface-200 flex items-center px-4 font-bold text-surface-900 opacity-100">Opacity 100%</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- SECTION D -->
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mb-16 md:mb-24">
+        <div class="grid md:grid-cols-[1fr_1fr] items-center gap-10 md:gap-16">
+            <div class="order-1 bg-surface-50 rounded-3xl p-8 flex items-center justify-center min-h-[300px] border border-surface-200">
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="aspect-square bg-white shadow-md border border-surface-200 rounded-lg relative">
+                        <div class="absolute inset-0 flex items-center justify-center font-black text-[8px] text-purple-600">ScanPDF</div>
                     </div>
-
-                </div>
-
-            </div>
-
-        </div>
-
-        {% endif %}
-
-
-        <!-- IMAGE CONVERTER -->
-
-        {% if tool_slug == 'image-converter' %}
-
-        <div class="space-y-3">
-
-            <label class="text-[11px] font-black text-surface-400
-                          uppercase tracking-widest">
-
-                Convert To
-
-            </label>
-
-            <select
-                id="target_format"
-                class="w-full px-4 py-3 rounded-xl
-                       border border-surface-200
-                       focus:border-violet-500
-                       outline-none font-bold
-                       text-surface-700 bg-white">
-
-                <option value="jpg">JPG (JPEG Image)</option>
-                <option value="png">PNG (Portable Network Graphics)</option>
-                <option value="webp">WEBP (Web-optimized)</option>
-                <option value="gif">GIF (Graphics Interchange Format)</option>
-                <option value="bmp">BMP (Standard Windows Bitmap)</option>
-                <option value="tiff">TIFF (Tagged Image File Format)</option>
-                <option value="pdf">PDF (Direct Document Export)</option>
-
-            </select>
-
-        </div>
-
-        {% endif %}
-
-
-        <!-- CUT IMAGE -->
-
-        {% if tool_slug == 'cut-image' %}
-
-        <div
-            id="cropper-wrapper"
-            class="hidden space-y-4">
-
-            <div class="flex items-center justify-between px-1">
-
-                <label class="text-[11px] font-black text-surface-400
-                              uppercase tracking-widest">
-
-                    Adjust Selection
-
-                </label>
-
-
-                <div class="flex gap-1.5">
-
-                    <button
-                        type="button"
-                        id="crop-rotate-l"
-                        class="p-2 rounded-lg
-                               bg-surface-50
-                               hover:bg-violet-50
-                               text-surface-500
-                               hover:text-violet-600
-                               transition-all
-                               border border-surface-100">
-
-                        <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
-
-                    </button>
-
-
-                    <button
-                        type="button"
-                        id="crop-rotate-r"
-                        class="p-2 rounded-lg
-                               bg-surface-50
-                               hover:bg-violet-50
-                               text-surface-500
-                               hover:text-violet-600
-                               transition-all
-                               border border-surface-100">
-
-                        <i data-lucide="rotate-cw" class="w-4 h-4"></i>
-
-                    </button>
-
-
-                    <button
-                        type="button"
-                        id="crop-reset"
-                        class="p-2 rounded-lg
-                               bg-surface-50
-                               hover:bg-violet-50
-                               text-surface-500
-                               hover:text-violet-600
-                               transition-all
-                               border border-surface-100">
-
-                        <i data-lucide="refresh-cw" class="w-4 h-4"></i>
-
-                    </button>
-
-                </div>
-
-            </div>
-
-
-            <div
-                id="cropper-container"
-                class="rounded-2xl border border-surface-100
-                       bg-surface-50 overflow-hidden relative"
-                style="min-height:300px;">
-
-                <div class="flex items-center justify-center h-full">
-
-                    <img
-                        id="cropper-image"
-                        src=""
-                        alt="Source preview"
-                        class="max-w-full hidden">
-
-                    <div
-                        id="cropper-loader"
-                        class="flex flex-col
-                               items-center gap-3 py-20">
-
-                        <div
-                            class="w-8 h-8
-                                   border-4
-                                   border-violet-100
-                                   border-t-violet-500
-                                   rounded-full
-                                   animate-spin">
+                    <div class="aspect-square bg-white shadow-md border border-surface-200 rounded-lg relative overflow-hidden">
+                        <div class="absolute inset-0 flex flex-wrap content-between justify-between p-1">
+                            <span class="font-black text-[6px] text-purple-600/50 -rotate-45">ScanPDF</span>
+                            <span class="font-black text-[6px] text-purple-600/50 -rotate-45">ScanPDF</span>
+                            <span class="font-black text-[6px] text-purple-600/50 -rotate-45">ScanPDF</span>
+                            <span class="font-black text-[6px] text-purple-600/50 -rotate-45">ScanPDF</span>
                         </div>
-
-                        <p
-                            class="text-[10px] font-bold
-                                   text-surface-400
-                                   uppercase tracking-tighter">
-
-                            Initializing Editor...
-
-                        </p>
-
                     </div>
-
                 </div>
-
             </div>
-
-
-            <p
-                class="text-[10px] text-center
-                       text-surface-400
-                       font-medium italic">
-
-                Drag selection handles to crop your image
-
-            </p>
-
+            <div class="order-2">
+                <div class="flex items-center gap-2 text-purple-600 font-bold tracking-widest text-xs uppercase mb-4">
+                    FLEXIBLE WATERMARKING
+                </div>
+                <h3 class="text-3xl font-black text-surface-900 mb-5 leading-tight">Use One Watermark or Cover the Entire Image</h3>
+                <p class="text-surface-500 text-lg leading-relaxed mb-4">
+                    <strong>SINGLE MODE</strong><br>
+                    Use one watermark in a chosen position. Great for subtle attributions.
+                </p>
+                <p class="text-surface-500 text-lg leading-relaxed mb-8">
+                    <strong>REPEAT MODE</strong><br>
+                    Repeat the watermark across the image with customizable horizontal and vertical spacing. Perfect for full proof protection.
+                </p>
+            </div>
         </div>
-
-        {% endif %}
-
     </div>
 
-
-    <!-- =====================================================
-         PROCESS BUTTON
-         ===================================================== -->
-
-    <button
-        id="convert-btn"
-        disabled
-        class="purple-btn w-full mt-6 py-4
-               rounded-2xl
-               text-white font-black
-               text-sm sm:text-base
-               uppercase tracking-widest
-               disabled:opacity-40
-               disabled:cursor-not-allowed
-               flex items-center justify-center gap-3">
-
-        <i data-lucide="sparkles" class="w-5 h-5"></i>
-
-        Process Now
-
-    </button>
-
-
-    <!-- =====================================================
-         PROGRESS
-         ===================================================== -->
-
-    <div id="progress-section" class="hidden mt-4">
-
-        <div class="progress-card flex items-center gap-4">
-
-            <div class="relative flex-shrink-0">
-                <div class="progress-spinner"></div>
-            </div>
-
-            <div class="min-w-0">
-
-                <p class="text-surface-800 font-bold text-base">
-                    Processing your file…
-                </p>
-
-                <p class="text-xs text-surface-400 mt-1">
-                    This may take a moment
-                </p>
-
-            </div>
-
+    <!-- SECTION E -->
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mb-24">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl font-black text-surface-900 mb-4">Watermark Controls</h2>
+            <p class="text-lg text-surface-500 max-w-2xl mx-auto font-medium">Fine-tune the watermark before applying it to your image.</p>
         </div>
-
-
-        <div
-            class="w-full h-2 rounded-full
-                   bg-surface-100
-                   overflow-hidden mt-4">
-
-            <div
-                id="progress-bar"
-                class="progress-fill">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <div class="bg-white border border-surface-200 rounded-2xl p-8 shadow-sm">
+                <h4 class="font-bold text-surface-900 mb-2">POSITION</h4>
+                <p class="text-sm text-surface-600">Place the watermark exactly where you want it.</p>
             </div>
-
+            <div class="bg-white border border-surface-200 rounded-2xl p-8 shadow-sm">
+                <h4 class="font-bold text-surface-900 mb-2">SIZE</h4>
+                <p class="text-sm text-surface-600">Scale the watermark for subtle or prominent branding.</p>
+            </div>
+            <div class="bg-white border border-surface-200 rounded-2xl p-8 shadow-sm">
+                <h4 class="font-bold text-surface-900 mb-2">OPACITY</h4>
+                <p class="text-sm text-surface-600">Control how strongly the watermark appears.</p>
+            </div>
+            <div class="bg-white border border-surface-200 rounded-2xl p-8 shadow-sm">
+                <h4 class="font-bold text-surface-900 mb-2">ROTATION</h4>
+                <p class="text-sm text-surface-600">Use straight or angled watermark placement.</p>
+            </div>
+            <div class="bg-white border border-surface-200 rounded-2xl p-8 shadow-sm">
+                <h4 class="font-bold text-surface-900 mb-2">REPEAT</h4>
+                <p class="text-sm text-surface-600">Tile the watermark across the image.</p>
+            </div>
+            <div class="bg-white border border-surface-200 rounded-2xl p-8 shadow-sm">
+                <h4 class="font-bold text-surface-900 mb-2">SPACING</h4>
+                <p class="text-sm text-surface-600">Control horizontal and vertical distance in repeat mode.</p>
+            </div>
         </div>
-
-
-        <p
-            id="progress-percent"
-            class="text-center text-xs
-                   font-bold text-violet-600 mt-2">
-
-            0%
-
-        </p>
-
     </div>
-
-
-    <!-- =====================================================
-         SUCCESS
-         ===================================================== -->
-
-    <div id="success-section" class="hidden mt-4">
-
-        <div class="success-card">
-
-            <div class="success-icon">
-
-                <i
-                    data-lucide="check-circle-2"
-                    class="w-8 h-8">
-                </i>
-
-            </div>
-
-
-            <h3 class="text-lg font-black text-surface-900 mb-1">
-
-                Processing Complete!
-
-            </h3>
-
-
-            <p class="text-surface-500 text-sm mb-6">
-
-                Your modified file is ready.
-
-            </p>
-
-
-            <div
-                class="flex flex-col sm:flex-row
-                       gap-3 justify-center">
-
-                <a
-                    id="download-btn"
-                    href="#"
-                    class="inline-flex items-center
-                           justify-center gap-2.5
-                           px-8 py-4 rounded-2xl
-                           text-white font-black text-sm"
-                    style="
-                        background:linear-gradient(
-                            135deg,
-                            #16a34a,
-                            #22c55e
-                        );
-                    ">
-
-                    <i data-lucide="download" class="w-5 h-5"></i>
-
-                    Download File
-
-                </a>
-
-
-                <button
-                    type="button"
-                    id="convert-another-btn"
-                    class="purple-btn
-                           inline-flex items-center
-                           justify-center gap-2.5
-                           px-8 py-4 rounded-2xl
-                           text-white font-black text-sm">
-
-                    <i data-lucide="refresh-cw" class="w-4 h-4"></i>
-
-                    Process Another
-
-                </button>
-
-            </div>
-
+    
+    <!-- SECTION F -->
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mb-24">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl font-black text-surface-900 mb-4">How to Watermark an Image</h2>
         </div>
-
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-6 relative">
+            <div class="bg-white border border-surface-200 rounded-2xl p-8 shadow-sm relative z-10">
+                <div class="w-12 h-12 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center font-black text-xl mb-6">01</div>
+                <h4 class="font-bold text-surface-900 mb-3 text-lg">Select Your Image</h4>
+                <p class="text-surface-600">Upload or drag and drop a supported image.</p>
+            </div>
+            <div class="bg-white border border-surface-200 rounded-2xl p-8 shadow-sm relative z-10">
+                <div class="w-12 h-12 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center font-black text-xl mb-6">02</div>
+                <h4 class="font-bold text-surface-900 mb-3 text-lg">Add Your Watermark</h4>
+                <p class="text-surface-600">Enter watermark text or choose a logo file.</p>
+            </div>
+            <div class="bg-white border border-surface-200 rounded-2xl p-8 shadow-sm relative z-10">
+                <div class="w-12 h-12 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center font-black text-xl mb-6">03</div>
+                <h4 class="font-bold text-surface-900 mb-3 text-lg">Customize the Design</h4>
+                <p class="text-surface-600">Adjust position, size, opacity, rotation and repeat settings.</p>
+            </div>
+            <div class="bg-white border border-surface-200 rounded-2xl p-8 shadow-sm relative z-10">
+                <div class="w-12 h-12 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center font-black text-xl mb-6">04</div>
+                <h4 class="font-bold text-surface-900 mb-3 text-lg">Apply and Download</h4>
+                <p class="text-surface-600">Preview the result, apply the watermark, and download the processed image.</p>
+            </div>
+        </div>
     </div>
-
-
-    <!-- =====================================================
-         ERROR
-         ===================================================== -->
-
-    <div id="error-section" class="hidden mt-4">
-
-        <div
-            class="error-card
-                   flex items-start gap-4">
-
-            <div
-                class="w-9 h-9 rounded-xl
-                       bg-red-100
-                       flex items-center justify-center
-                       flex-shrink-0">
-
-                <i
-                    data-lucide="alert-triangle"
-                    class="w-5 h-5 text-red-500">
-                </i>
-
-            </div>
-
-
-            <div class="min-w-0 pt-1">
-
-                <h4
-                    class="font-black text-red-700
-                           text-sm uppercase
-                           tracking-wider mb-1">
-
-                    Process Failed
-
-                </h4>
-
-                <p
-                    id="error-message"
-                    class="text-xs text-red-500
-                           leading-relaxed
-                           font-semibold">
-                </p>
-
-            </div>
-
+    
+    <!-- SECTION G -->
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mb-24">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl font-black text-surface-900 mb-4">Designed for Different Images</h2>
         </div>
-
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+            <div class="bg-surface-50 border border-surface-200 rounded-2xl p-6">
+                <h4 class="font-bold text-surface-900 mb-2">PHOTOGRAPHY</h4>
+                <p class="text-sm text-surface-600">Add ownership or attribution marks to photos.</p>
+            </div>
+            <div class="bg-surface-50 border border-surface-200 rounded-2xl p-6">
+                <h4 class="font-bold text-surface-900 mb-2">PRODUCT IMAGES</h4>
+                <p class="text-sm text-surface-600">Apply branding to product previews.</p>
+            </div>
+            <div class="bg-surface-50 border border-surface-200 rounded-2xl p-6">
+                <h4 class="font-bold text-surface-900 mb-2">SOCIAL GRAPHICS</h4>
+                <p class="text-sm text-surface-600">Add a brand mark before publishing.</p>
+            </div>
+            <div class="bg-surface-50 border border-surface-200 rounded-2xl p-6">
+                <h4 class="font-bold text-surface-900 mb-2">PROOF IMAGES</h4>
+                <p class="text-sm text-surface-600">Use visible or repeated watermarks for preview copies.</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- SECTION H -->
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mb-16">
+        <div class="text-center mb-12">
+            <h2 class="text-3xl font-black text-surface-900 mb-4">Why Use ScanPDF Watermark Images</h2>
+        </div>
+        <div class="grid md:grid-cols-3 gap-6">
+            <div class="md:col-span-2 bg-gradient-to-br from-purple-600 to-purple-800 rounded-3xl p-10 text-white shadow-xl relative overflow-hidden">
+                <h3 class="text-2xl font-bold mb-4">LIVE PREVIEW</h3>
+                <p class="text-purple-100 text-lg leading-relaxed max-w-lg relative z-10">
+                    See exact watermark placement and scaling before processing. What you see in the editor is mapped precisely to your downloaded high-resolution image.
+                </p>
+            </div>
+            <div class="bg-white border border-surface-200 rounded-3xl p-8 shadow-sm">
+                <h4 class="font-bold text-surface-900 mb-3">FLEXIBLE CONTROL</h4>
+                <p class="text-surface-600">Adjust placement, size, opacity, rotation and repeat behavior exactly as you need.</p>
+            </div>
+            <div class="bg-white border border-surface-200 rounded-3xl p-8 shadow-sm">
+                <h4 class="font-bold text-surface-900 mb-3">ORIGINAL SIZE</h4>
+                <p class="text-surface-600">Process the image without intentionally resizing the original dimensions.</p>
+            </div>
+            <div class="md:col-span-2 bg-white border border-surface-200 rounded-3xl p-8 shadow-sm flex flex-col justify-center">
+                <h4 class="font-bold text-surface-900 mb-3 text-xl">TEMPORARY PROCESSING</h4>
+                <p class="text-surface-600 text-lg">Uploaded files are handled entirely in memory or temporary isolated directories and are never permanently retained.</p>
+            </div>
+        </div>
+    </div>
+    
+    <!-- SECTION I -->
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="bg-purple-50 rounded-3xl p-10 md:p-14 text-center border border-purple-100">
+            <h2 class="text-3xl font-black text-surface-900 mb-8">Get the Watermark You Expect</h2>
+            <div class="flex flex-wrap justify-center gap-x-8 gap-y-4">
+                <div class="flex items-center gap-2 text-surface-700 font-semibold"><i data-lucide="check-circle" class="text-purple-600 w-5 h-5"></i> Preview before applying</div>
+                <div class="flex items-center gap-2 text-surface-700 font-semibold"><i data-lucide="check-circle" class="text-purple-600 w-5 h-5"></i> Position watermark visually</div>
+                <div class="flex items-center gap-2 text-surface-700 font-semibold"><i data-lucide="check-circle" class="text-purple-600 w-5 h-5"></i> Keep source dimensions</div>
+                <div class="flex items-center gap-2 text-surface-700 font-semibold"><i data-lucide="check-circle" class="text-purple-600 w-5 h-5"></i> Customize repeat spacing</div>
+                <div class="flex items-center gap-2 text-surface-700 font-semibold"><i data-lucide="check-circle" class="text-purple-600 w-5 h-5"></i> Download the processed result</div>
+            </div>
+        </div>
     </div>
 
 </div>
 
 {% endblock %}
 
-
 {% block tool_scripts %}
-
-{% if tool_slug == 'cut-image' %}
-
-<script
-    src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js">
-</script>
-
-{% endif %}
-
-
 <script>
+const CSRF_TOKEN = '{{ csrf_token }}';
+const PROCESS_URL = '{% url "image_processor:process_tool" tool_slug %}';
 
-/* =========================================================
-   DJANGO VALUES
-   ========================================================= */
+// DOM Elements
+const mainHero = document.getElementById('main-hero');
+const compactHero = document.getElementById('compact-hero');
+const appContainer = document.getElementById('app-container');
 
-const TOOL_SLUG = '{{ tool_slug }}';
+const stateUpload = document.getElementById('state-upload');
+const stateEditor = document.getElementById('state-editor');
+const stateProcessing = document.getElementById('state-processing');
+const stateError = document.getElementById('state-error');
+const stateSuccess = document.getElementById('state-success');
 
-const PROCESS_URL =
-    '{% url "image_processor:process_tool" tool_slug %}';
+const fileInput = document.getElementById('file-input');
+const logoInput = document.getElementById('logo-input');
 
-const CSRF_TOKEN =
-    '{{ csrf_token }}';
+// Previews
+const previewInner = document.getElementById('preview-inner');
+const baseImage = document.getElementById('base-image');
+const wmOverlay = document.getElementById('watermark-overlay');
+const wmRepeat = document.getElementById('watermark-repeat-overlay');
 
+// Global State
+let config = {
+    type: 'text', // text, logo
+    text: 'ScanPDF',
+    color: '#ffffff',
+    stroke: false,
+    strokeColor: '#000000',
+    strokeWidth: 2,
+    size: 10,
+    opacity: 100,
+    rotation: 0,
+    mode: 'single',
+    position: 'bottom_right',
+    x: 0.5,
+    y: 0.5,
+    margin: 2,
+    rx: 50,
+    ry: 50,
+    format: 'original'
+};
 
-/* =========================================================
-   ELEMENTS
-   ========================================================= */
+let history = [];
+let historyIndex = -1;
 
-const selectFileArea =
-    document.getElementById('select-file-area');
+let sourceFile = null;
+let logoFile = null;
+let imgWidth = 0;
+let imgHeight = 0;
+let currentZoom = 'fit';
 
-const selectFileBtn =
-    document.getElementById('select-file-btn');
-
-const fileInput =
-    document.getElementById('file-input');
-
-const fileSelected =
-    document.getElementById('file-selected');
-
-const singleFileView =
-    document.getElementById('single-file-view');
-
-const multiFileView =
-    document.getElementById('multi-file-view');
-
-const imageGallery =
-    document.getElementById('image-gallery');
-
-const fileName =
-    document.getElementById('file-name');
-
-const fileSize =
-    document.getElementById('file-size');
-
-const removeFileBtn =
-    document.getElementById('remove-file-btn');
-
-const convertBtn =
-    document.getElementById('convert-btn');
-
-const progressSection =
-    document.getElementById('progress-section');
-
-const progressBar =
-    document.getElementById('progress-bar');
-
-const progressPercent =
-    document.getElementById('progress-percent');
-
-const successSection =
-    document.getElementById('success-section');
-
-const errorSection =
-    document.getElementById('error-section');
-
-const errorMessage =
-    document.getElementById('error-message');
-
-const downloadBtn =
-    document.getElementById('download-btn');
-
-const convertAnotherBtn =
-    document.getElementById('convert-another-btn');
-
-const addMoreBtn =
-    document.getElementById('add-more-btn');
-
-
-/* =========================================================
-   AUDIO
-   ========================================================= */
-
-const audioInput =
-    document.getElementById('audio-input');
-
-const audioDropZone =
-    document.getElementById('audio-drop-zone');
-
-const audioFileName =
-    document.getElementById('audio-file-name');
-
-const audioFileSize =
-    document.getElementById('audio-file-size');
-
-const removeAudioBtn =
-    document.getElementById('remove-audio-btn');
-
-
-/* =========================================================
-   CROPPER
-   ========================================================= */
-
-let cropper = null;
-
-const cropperWrapper =
-    document.getElementById('cropper-wrapper');
-
-const cropperImage =
-    document.getElementById('cropper-image');
-
-const cropperLoader =
-    document.getElementById('cropper-loader');
-
-
-/* =========================================================
-   VARIABLES
-   ========================================================= */
-
-let selectedFiles = [];
-
-let sortable = null;
-
-let progressInterval = null;
-
-
-/* =========================================================
-   SELECT FILE
-   ========================================================= */
-
-selectFileBtn.addEventListener(
-    'click',
-    function(event) {
-
-        event.stopPropagation();
-
-        fileInput.click();
-
+// Save history
+function saveState() {
+    // Truncate future
+    if (historyIndex < history.length - 1) {
+        history = history.slice(0, historyIndex + 1);
     }
-);
-
-
-/* =========================================================
-   UPLOAD AREA CLICK
-   ========================================================= */
-
-selectFileArea.addEventListener(
-    'click',
-    function(event) {
-
-        if (event.target.closest('#remove-file-btn')) {
-            return;
-        }
-
-        if (event.target.closest('#add-more-btn')) {
-            return;
-        }
-
-        if (event.target.closest('#select-file-btn')) {
-            return;
-        }
-
-        fileInput.click();
-
-    }
-);
-
-
-/* =========================================================
-   ADD MORE
-   ========================================================= */
-
-if (addMoreBtn) {
-
-    addMoreBtn.addEventListener(
-        'click',
-        function(event) {
-
-            event.stopPropagation();
-
-            fileInput.click();
-
-        }
-    );
-
+    history.push(JSON.parse(JSON.stringify(config)));
+    historyIndex++;
+    updateUndoRedo();
 }
 
-
-/* =========================================================
-   FILE CHANGE
-   ========================================================= */
-
-fileInput.addEventListener(
-    'change',
-    function(event) {
-
-        if (
-            event.target.files &&
-            event.target.files.length
-        ) {
-
-            handleFiles(event.target.files);
-
-        }
-
-    }
-);
-
-
-/* =========================================================
-   DRAG
-   ========================================================= */
-
-selectFileArea.addEventListener(
-    'dragover',
-    function(event) {
-
-        event.preventDefault();
-
-        selectFileArea.classList.add(
-            'drag-active'
-        );
-
-    }
-);
-
-
-selectFileArea.addEventListener(
-    'dragleave',
-    function(event) {
-
-        event.preventDefault();
-
-        selectFileArea.classList.remove(
-            'drag-active'
-        );
-
-    }
-);
-
-
-selectFileArea.addEventListener(
-    'drop',
-    function(event) {
-
-        event.preventDefault();
-
-        selectFileArea.classList.remove(
-            'drag-active'
-        );
-
-        if (
-            event.dataTransfer.files &&
-            event.dataTransfer.files.length
-        ) {
-
-            handleFiles(
-                event.dataTransfer.files
-            );
-
-        }
-
-    }
-);
-
-
-/* =========================================================
-   HANDLE FILES
-   ========================================================= */
-
-function handleFiles(files) {
-
-    const newFiles = Array.from(files);
-
-    for (const file of newFiles) {
-
-        if (file.size > 52428800) {
-
-            showError(
-                'File exceeds the 50MB limit.'
-            );
-
-            return;
-
-        }
-
-    }
-
-
-    if (
-        TOOL_SLUG === 'image-to-video' ||
-        '{{ tool.multi_file }}' === 'True'
-    ) {
-
-        selectedFiles = [
-            ...selectedFiles,
-            ...newFiles
-        ];
-
-        renderGallery();
-
-    } else {
-
-        selectedFiles = [
-            newFiles[0]
-        ];
-
-        renderSingleFile(
-            selectedFiles[0]
-        );
-
-    }
-
-
-    fileSelected.classList.remove(
-        'hidden'
-    );
-
-
-    convertBtn.disabled = false;
-
-    errorSection.classList.add(
-        'hidden'
-    );
-
-
-    if (
-        typeof lucide !== 'undefined'
-    ) {
-
-        lucide.createIcons();
-
-    }
-
+function updateUndoRedo() {
+    document.getElementById('btn-undo').disabled = historyIndex <= 0;
+    document.getElementById('btn-redo').disabled = historyIndex >= history.length - 1;
 }
 
-
-/* =========================================================
-   SINGLE FILE
-   ========================================================= */
-
-function renderSingleFile(file) {
-
-    if (singleFileView) {
-
-        singleFileView.classList.remove(
-            'hidden'
-        );
-
+document.getElementById('btn-undo').onclick = () => {
+    if (historyIndex > 0) {
+        historyIndex--;
+        config = JSON.parse(JSON.stringify(history[historyIndex]));
+        syncUIToConfig();
+        updatePreview();
+        updateUndoRedo();
     }
+};
 
-    if (multiFileView) {
-
-        multiFileView.classList.add(
-            'hidden'
-        );
-
+document.getElementById('btn-redo').onclick = () => {
+    if (historyIndex < history.length - 1) {
+        historyIndex++;
+        config = JSON.parse(JSON.stringify(history[historyIndex]));
+        syncUIToConfig();
+        updatePreview();
+        updateUndoRedo();
     }
-
-
-    fileName.textContent =
-        file.name;
-
-    fileSize.textContent =
-        formatFileSize(file.size);
-
-
-    if (
-        TOOL_SLUG === 'cut-image' &&
-        file.type.startsWith('image/')
-    ) {
-
-        initCropper(file);
-
-    }
-
-}
-
-
-/* =========================================================
-   MULTI FILE
-   ========================================================= */
-
-function renderGallery() {
-
-    singleFileView.classList.add(
-        'hidden'
-    );
-
-    multiFileView.classList.remove(
-        'hidden'
-    );
-
-    imageGallery.innerHTML = '';
-
-
-    selectedFiles.forEach(
-        function(file, index) {
-
-            const reader =
-                new FileReader();
-
-            const item =
-                document.createElement('div');
-
-            item.className =
-                'gallery-item';
-
-            item.dataset.index =
-                index;
-
-
-            item.innerHTML = `
-
-                <img src="" alt="preview">
-
-                <div
-                    class="remove-item"
-                    onclick="removeGalleryItem(${index})">
-
-                    <i
-                        data-lucide="x"
-                        class="w-3 h-3">
-                    </i>
-
-                </div>
-
-            `;
-
-
-            imageGallery.appendChild(
-                item
-            );
-
-
-            reader.onload =
-                function(event) {
-
-                    item.querySelector('img').src =
-                        event.target.result;
-
-                };
-
-
-            reader.readAsDataURL(file);
-
-        }
-    );
-
-
-    if (!sortable) {
-
-        sortable =
-            new Sortable(
-                imageGallery,
-                {
-
-                    animation: 150,
-
-                    ghostClass:
-                        'sortable-ghost',
-
-                    onEnd: function() {
-
-                        const newOrder =
-                            Array.from(
-                                imageGallery.children
-                            ).map(
-                                function(el) {
-
-                                    return parseInt(
-                                        el.dataset.index
-                                    );
-
-                                }
-                            );
-
-
-                        selectedFiles =
-                            newOrder.map(
-                                function(index) {
-
-                                    return selectedFiles[
-                                        index
-                                    ];
-
-                                }
-                            );
-
-
-                        renderGallery();
-
-                    }
-
-                }
-            );
-
-    }
-
-
-    if (
-        typeof lucide !== 'undefined'
-    ) {
-
-        lucide.createIcons();
-
-    }
-
-}
-
-
-window.removeGalleryItem =
-    function(index) {
-
-        selectedFiles.splice(
-            index,
-            1
-        );
-
-
-        if (
-            selectedFiles.length === 0
-        ) {
-
-            resetUpload();
-
-        } else {
-
-            renderGallery();
-
-        }
-
+};
+
+document.getElementById('btn-reset').onclick = () => {
+    config = {
+        type: 'text', text: 'ScanPDF', color: '#ffffff', stroke: false, strokeColor: '#000000', strokeWidth: 2,
+        size: 10, opacity: 100, rotation: 0, mode: 'single', position: 'bottom_right', x: 0.5, y: 0.5,
+        margin: 2, rx: 50, ry: 50, format: 'original'
     };
+    saveState();
+    syncUIToConfig();
+    updatePreview();
+};
 
-
-/* =========================================================
-   CROPPER
-   ========================================================= */
-
-function initCropper(file) {
-
-    if (cropper) {
-
-        cropper.destroy();
-
-        cropper = null;
-
-    }
-
-
-    const reader =
-        new FileReader();
-
-
-    reader.onload =
-        function(event) {
-
-            cropperImage.src =
-                event.target.result;
-
-            cropperImage.classList.remove(
-                'hidden'
-            );
-
-            cropperWrapper.classList.remove(
-                'hidden'
-            );
-
-            cropperLoader.classList.add(
-                'hidden'
-            );
-
-
-            cropper =
-                new Cropper(
-                    cropperImage,
-                    {
-
-                        viewMode: 2,
-
-                        dragMode: 'move',
-
-                        autoCropArea: 0.8,
-
-                        restore: false,
-
-                        guides: true,
-
-                        center: true,
-
-                        highlight: false,
-
-                        cropBoxMovable: true,
-
-                        cropBoxResizable: true,
-
-                        toggleDragModeOnDblclick:
-                            false
-
-                    }
-                );
-
+// Handle file
+fileInput.onchange = (e) => {
+    if (e.target.files.length) {
+        const file = e.target.files[0];
+        sourceFile = file;
+        
+        document.getElementById('meta-filename').textContent = file.name;
+        document.getElementById('meta-size').textContent = (file.size / 1024 / 1024).toFixed(2) + ' MB';
+        
+        const url = URL.createObjectURL(file);
+        baseImage.onload = () => {
+            imgWidth = baseImage.naturalWidth;
+            imgHeight = baseImage.naturalHeight;
+            document.getElementById('meta-dimensions').textContent = `${imgWidth} × ${imgHeight}`;
+            applyZoom();
+            updatePreview();
         };
-
-
-    reader.readAsDataURL(file);
-
-
-    document
-        .getElementById('crop-rotate-l')
-        ?.addEventListener(
-            'click',
-            function() {
-
-                if (cropper) {
-                    cropper.rotate(-90);
-                }
-
-            }
-        );
-
-
-    document
-        .getElementById('crop-rotate-r')
-        ?.addEventListener(
-            'click',
-            function() {
-
-                if (cropper) {
-                    cropper.rotate(90);
-                }
-
-            }
-        );
-
-
-    document
-        .getElementById('crop-reset')
-        ?.addEventListener(
-            'click',
-            function() {
-
-                if (cropper) {
-                    cropper.reset();
-                }
-
-            }
-        );
-
-}
-
-
-/* =========================================================
-   AUDIO
-   ========================================================= */
-
-if (audioDropZone) {
-
-    audioDropZone.addEventListener(
-        'click',
-        function() {
-
-            audioInput.click();
-
-        }
-    );
-
-
-    audioInput.addEventListener(
-        'change',
-        function(event) {
-
-            if (event.target.files.length) {
-
-                handleAudioFile(
-                    event.target.files[0]
-                );
-
-            }
-
-        }
-    );
-
-}
-
-
-function handleAudioFile(file) {
-
-    if (
-        !file.type.startsWith('audio/')
-    ) {
-
-        alert(
-            'Please select a valid audio file.'
-        );
-
-        return;
-
+        baseImage.src = url;
+        
+        mainHero.classList.add('hidden');
+        compactHero.classList.remove('hidden');
+        
+        stateUpload.classList.add('hidden');
+        stateEditor.classList.remove('hidden');
+        
+        appContainer.classList.remove('max-w-[800px]');
+        appContainer.classList.add('max-w-[1200px]');
+        
+        if (history.length === 0) saveState();
+        
+        compactHero.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
+};
 
-
-    audioFileName.textContent =
-        file.name;
-
-    audioFileSize.textContent =
-        formatFileSize(file.size);
-
-    removeAudioBtn.classList.remove(
-        'hidden'
-    );
-
+// UI Sync
+function syncUIToConfig() {
+    // Tabs
+    document.querySelectorAll('.tabs:not(.tab-mode) .tab').forEach(t => t.classList.toggle('active', t.dataset.tab === config.type));
+    document.getElementById('panel-text').classList.toggle('hidden', config.type !== 'text');
+    document.getElementById('panel-logo').classList.toggle('hidden', config.type !== 'logo');
+    
+    document.getElementById('input-text').value = config.text;
+    document.getElementById('input-color').value = config.color;
+    document.getElementById('color-val').textContent = config.color;
+    document.getElementById('input-stroke').checked = config.stroke;
+    document.getElementById('stroke-settings').classList.toggle('hidden', !config.stroke);
+    
+    document.getElementById('input-size').value = config.size;
+    document.getElementById('val-size').textContent = config.size + '%';
+    
+    document.getElementById('input-opacity').value = config.opacity;
+    document.getElementById('val-opacity').textContent = config.opacity + '%';
+    
+    document.getElementById('input-rotation').value = config.rotation;
+    document.getElementById('val-rotation').textContent = config.rotation + '°';
+    
+    // Mode
+    document.querySelectorAll('.tab-mode').forEach(t => t.classList.toggle('active', t.dataset.val === config.mode));
+    document.getElementById('mode-single').classList.toggle('hidden', config.mode !== 'single');
+    document.getElementById('mode-repeat').classList.toggle('hidden', config.mode !== 'repeat');
+    
+    // Pos
+    document.querySelectorAll('.position-cell').forEach(c => c.classList.toggle('active', config.position === c.dataset.pos));
+    
+    document.getElementById('input-margin').value = config.margin;
+    document.getElementById('val-margin').textContent = config.margin + '%';
+    
+    document.getElementById('input-rx').value = config.rx;
+    document.getElementById('val-rx').textContent = config.rx + '%';
+    document.getElementById('input-ry').value = config.ry;
+    document.getElementById('val-ry').textContent = config.ry + '%';
+    
+    document.getElementById('input-format').value = config.format;
 }
 
+// Bind Inputs
+function bindInput(id, key, formatter = val => val, isNumeric=true) {
+    const el = document.getElementById(id);
+    if(!el) return;
+    el.addEventListener('input', (e) => {
+        let val = isNumeric ? parseFloat(e.target.value) : e.target.value;
+        if(e.target.type === 'checkbox') val = e.target.checked;
+        config[key] = val;
+        
+        const disp = document.getElementById('val-' + key);
+        if(disp) disp.textContent = formatter(val);
+        
+        if (id==='input-stroke') document.getElementById('stroke-settings').classList.toggle('hidden', !val);
+        if (id==='input-color') document.getElementById('color-val').textContent = val;
+        
+        updatePreview();
+    });
+    el.addEventListener('change', saveState);
+}
 
-if (removeAudioBtn) {
+document.querySelectorAll('.tabs:not(.tab-mode) .tab').forEach(t => {
+    t.onclick = () => {
+        config.type = t.dataset.tab;
+        syncUIToConfig();
+        updatePreview();
+        saveState();
+    };
+});
 
-    removeAudioBtn.addEventListener(
-        'click',
-        function(event) {
+document.querySelectorAll('.tab-mode').forEach(t => {
+    t.onclick = () => {
+        config.mode = t.dataset.val;
+        syncUIToConfig();
+        updatePreview();
+        saveState();
+    };
+});
 
-            event.stopPropagation();
+document.querySelectorAll('.preset-rot').forEach(b => {
+    b.onclick = () => {
+        config.rotation = parseFloat(b.dataset.val);
+        syncUIToConfig();
+        updatePreview();
+        saveState();
+    };
+});
 
-            audioInput.value = '';
+document.querySelectorAll('.position-cell').forEach(c => {
+    c.onclick = () => {
+        config.position = c.dataset.pos;
+        syncUIToConfig();
+        updatePreview();
+        saveState();
+    };
+});
 
-            audioFileName.textContent =
-                'Choose background music';
+bindInput('input-text', 'text', v=>v, false);
+bindInput('input-color', 'color', v=>v, false);
+bindInput('input-stroke', 'stroke', v=>v, false);
+bindInput('input-stroke-color', 'strokeColor', v=>v, false);
+bindInput('input-stroke-width', 'strokeWidth', v=>v, true);
+bindInput('input-size', 'size', v=>v+'%');
+bindInput('input-opacity', 'opacity', v=>v+'%');
+bindInput('input-rotation', 'rotation', v=>v+'°');
+bindInput('input-margin', 'margin', v=>v+'%');
+bindInput('input-rx', 'rx', v=>v+'%');
+bindInput('input-ry', 'ry', v=>v+'%');
+bindInput('input-format', 'format', v=>v, false);
 
-            audioFileSize.textContent =
-                'MP3, WAV, M4A up to 20MB';
+// Logo Upload
+document.getElementById('btn-upload-logo').onclick = () => logoInput.click();
+logoInput.onchange = (e) => {
+    if(e.target.files.length) {
+        logoFile = e.target.files[0];
+        document.getElementById('logo-filename').textContent = logoFile.name;
+        
+        const reader = new FileReader();
+        reader.onload = (ev) => {
+            config.logoUrl = ev.target.result;
+            const img = new Image();
+            img.onload = () => {
+                config.logoAspect = img.naturalWidth / img.naturalHeight;
+                config.type = 'logo';
+                syncUIToConfig();
+                updatePreview();
+                saveState();
+            };
+            img.src = config.logoUrl;
+        };
+        reader.readAsDataURL(logoFile);
+    }
+};
 
-            removeAudioBtn.classList.add(
-                'hidden'
-            );
 
+// CSS Live Preview Generator
+function updatePreview() {
+    if(!imgWidth || !imgHeight) return;
+    
+    wmOverlay.innerHTML = '';
+    wmRepeat.innerHTML = '';
+    
+    let content = '';
+    if (config.type === 'text') {
+        const strokeCSS = config.stroke ? `-webkit-text-stroke: ${config.strokeWidth}px ${config.strokeColor};` : '';
+        content = `<div style="color: ${config.color}; font-family: sans-serif; font-weight: bold; white-space: nowrap; ${strokeCSS}">${config.text}</div>`;
+    } else if (config.type === 'logo' && config.logoUrl) {
+        content = `<img src="${config.logoUrl}" style="max-width: 100%; display: block;">`;
+    } else {
+        content = `<div style="color: white; font-family: sans-serif; font-weight: bold;">WATERMARK</div>`;
+    }
+    
+    // Size logic mapping exactly to backend
+    const scale = window.currentScale || 1;
+    const pxSize = Math.max(10, imgHeight * (config.size / 100)) * scale;
+    
+    if (config.mode === 'single') {
+        wmOverlay.style.display = 'flex';
+        wmRepeat.style.display = 'none';
+        
+        wmOverlay.innerHTML = content;
+        wmOverlay.style.opacity = config.opacity / 100;
+        
+        if (config.type === 'text') {
+            wmOverlay.style.fontSize = `${pxSize}px`;
+            wmOverlay.style.width = 'auto';
+            wmOverlay.style.lineHeight = '1';
+        } else {
+            wmOverlay.style.width = `${imgWidth * (config.size / 100) * scale}px`;
+            wmOverlay.style.fontSize = 'initial';
         }
-    );
-
+        
+        // Position
+        if (config.position === 'custom') {
+            wmOverlay.style.left = `${config.x * 100}%`;
+            wmOverlay.style.top = `${config.y * 100}%`;
+            wmOverlay.style.transform = `translate(-50%, -50%) rotate(${-config.rotation}deg)`;
+        } else {
+            let top = 50, left = 50;
+            const m = config.margin;
+            if(config.position.includes('top')) top = m;
+            if(config.position.includes('bottom')) top = 100 - m;
+            if(config.position.includes('left')) left = m;
+            if(config.position.includes('right')) left = 100 - m;
+            
+            wmOverlay.style.left = `${left}%`;
+            wmOverlay.style.top = `${top}%`;
+            
+            let tx = '-50%', ty = '-50%';
+            if(left === m) tx = '0%';
+            if(left === 100 - m) tx = '-100%';
+            if(top === m) ty = '0%';
+            if(top === 100 - m) ty = '-100%';
+            
+            wmOverlay.style.transform = `translate(${tx}, ${ty}) rotate(${-config.rotation}deg)`;
+        }
+        
+    } else {
+        wmOverlay.style.display = 'none';
+        wmRepeat.style.display = 'block';
+        
+        wmRepeat.style.opacity = config.opacity / 100;
+        
+        // Backend mapping: distance = w * (rx/100)
+        let tileW = imgWidth * (config.rx / 100) * scale;
+        let tileH = imgHeight * (config.ry / 100) * scale;
+        
+        // Create repeating elements instead of SVG data URI to avoid length limits
+        wmRepeat.innerHTML = '';
+        wmRepeat.style.position = 'relative';
+        wmRepeat.style.overflow = 'hidden';
+        wmRepeat.style.backgroundImage = 'none';
+        
+        let containerW = imgWidth * scale;
+        let containerH = imgHeight * scale;
+        
+        let startX = tileW / 2;
+        let startY = tileH / 2;
+        
+        let templateContent = '';
+        if (config.type === 'text') {
+            const strokeCSS = config.stroke ? `-webkit-text-stroke: ${config.strokeWidth}px ${config.strokeColor};` : '';
+            templateContent = `<div style="color: ${config.color}; font-family: sans-serif; font-weight: bold; white-space: nowrap; font-size: ${pxSize}px; line-height: 1; ${strokeCSS}">${config.text}</div>`;
+        } else if (config.type === 'logo' && config.logoUrl) {
+            const lw = imgWidth * (config.size / 100) * scale;
+            const lh = lw / (config.logoAspect || 1);
+            templateContent = `<img src="${config.logoUrl}" style="width: ${lw}px; height: ${lh}px; display: block;" />`;
+        }
+        
+        if (templateContent) {
+            const fragment = document.createDocumentFragment();
+            for (let y = startY; y < containerH + tileH; y += Math.max(10, tileH)) {
+                for (let x = startX; x < containerW + tileW; x += Math.max(10, tileW)) {
+                    let el = document.createElement('div');
+                    el.style.position = 'absolute';
+                    el.style.left = `${x}px`;
+                    el.style.top = `${y}px`;
+                    el.style.transform = `translate(-50%, -50%) rotate(${-config.rotation}deg)`;
+                    el.innerHTML = templateContent;
+                    fragment.appendChild(el);
+                }
+            }
+            wmRepeat.appendChild(fragment);
+        }
+    }
 }
 
+// Drag functionality
+let isDragging = false;
+wmOverlay.addEventListener('mousedown', startDrag);
+wmOverlay.addEventListener('touchstart', startDrag, {passive: false});
 
-/* =========================================================
-   FILE SIZE
-   ========================================================= */
-
-function formatFileSize(bytes) {
-
-    if (bytes === 0) {
-        return '0 Bytes';
-    }
-
-
-    const k = 1024;
-
-    const sizes = [
-        'Bytes',
-        'KB',
-        'MB',
-        'GB'
-    ];
-
-
-    const i =
-        Math.floor(
-            Math.log(bytes) /
-            Math.log(k)
-        );
-
-
-    return (
-        parseFloat(
-            (
-                bytes /
-                Math.pow(k, i)
-            ).toFixed(2)
-        )
-        +
-        ' '
-        +
-        sizes[i]
-    );
-
+function startDrag(e) {
+    if (config.mode !== 'single') return;
+    isDragging = true;
+    e.preventDefault();
 }
 
+window.addEventListener('mousemove', drag);
+window.addEventListener('touchmove', drag, {passive: false});
 
-/* =========================================================
-   REMOVE FILE
-   ========================================================= */
-
-removeFileBtn.addEventListener(
-    'click',
-    function(event) {
-
-        event.stopPropagation();
-
-        resetUpload();
-
+function drag(e) {
+    if (!isDragging) return;
+    e.preventDefault();
+    
+    if (config.position !== 'custom') {
+        config.position = 'custom';
+        syncUIToConfig();
     }
-);
+    
+    const rect = baseImage.getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+    
+    let x = (clientX - rect.left) / rect.width;
+    let y = (clientY - rect.top) / rect.height;
+    
+    x = Math.max(0, Math.min(1, x));
+    y = Math.max(0, Math.min(1, y));
+    
+    config.x = x;
+    config.y = y;
+    
+    updatePreview();
+}
 
+window.addEventListener('mouseup', endDrag);
+window.addEventListener('touchend', endDrag);
 
-/* =========================================================
-   RESET
-   ========================================================= */
+function endDrag() {
+    if(isDragging) {
+        isDragging = false;
+        saveState();
+    }
+}
 
-function resetUpload() {
+// Zoom
+const zoomSelect = document.getElementById('zoom-select');
+zoomSelect.onchange = () => { currentZoom = zoomSelect.value; applyZoom(); };
+document.getElementById('btn-zoom-in').onclick = () => {
+    const opts = [...zoomSelect.options];
+    const idx = opts.findIndex(o => o.value === currentZoom);
+    if(idx < opts.length - 1) { currentZoom = opts[idx+1].value; zoomSelect.value = currentZoom; applyZoom(); }
+};
+document.getElementById('btn-zoom-out').onclick = () => {
+    const opts = [...zoomSelect.options];
+    const idx = opts.findIndex(o => o.value === currentZoom);
+    if(idx > 1) { currentZoom = opts[idx-1].value; zoomSelect.value = currentZoom; applyZoom(); }
+};
 
-    selectedFiles = [];
+function applyZoom() {
+    const container = document.getElementById('preview-container');
+    let scale = 1;
+    if(currentZoom === 'fit') {
+        const padding = 40;
+        const scaleX = (container.clientWidth - padding) / imgWidth;
+        const scaleY = (container.clientHeight - padding) / imgHeight;
+        scale = Math.min(scaleX, scaleY, 1);
+    } else {
+        scale = parseFloat(currentZoom);
+    }
+    
+    window.currentScale = scale;
+    
+    previewInner.style.width = `${imgWidth * scale}px`;
+    previewInner.style.height = `${imgHeight * scale}px`;
+    baseImage.style.width = '100%';
+    baseImage.style.height = '100%';
+    baseImage.style.objectFit = 'fill';
+    
+    // transform: scale() is removed to prevent layout clipping bugs
+    previewInner.style.transform = 'none';
+    
+    updatePreview();
+}
 
+// Upload Trigger
+document.getElementById('select-file-btn').onclick = () => fileInput.click();
+
+const dropzone = document.getElementById('select-file-area');
+dropzone.ondragover = e => { e.preventDefault(); dropzone.classList.add('drag-active'); };
+dropzone.ondragleave = e => { dropzone.classList.remove('drag-active'); };
+dropzone.ondrop = e => {
+    e.preventDefault(); dropzone.classList.remove('drag-active');
+    if(e.dataTransfer.files.length) { fileInput.files = e.dataTransfer.files; fileInput.dispatchEvent(new Event('change')); }
+};
+
+// Process
+document.getElementById('btn-apply').onclick = async () => {
+    if(!sourceFile) return;
+    
+    stateEditor.classList.add('hidden');
+    stateProcessing.classList.remove('hidden');
+    stateError.classList.add('hidden');
+    
+    const formData = new FormData();
+    formData.append('file', sourceFile);
+    if (config.type === 'logo' && logoFile) {
+        formData.append('logo', logoFile);
+    }
+    
+    // Add all config keys
+    for(const key in config) {
+        if(key !== 'logoUrl') formData.append(key, config[key]);
+    }
+    
+    formData.append('watermark_type', config.type);
+    formData.append('stroke_enabled', config.stroke);
+    formData.append('stroke_width', config.strokeWidth);
+    formData.append('stroke_color', config.strokeColor);
+    formData.append('repeat_x_spacing', config.rx);
+    formData.append('repeat_y_spacing', config.ry);
+    formData.append('output_format', config.format);
+    
+    formData.append('csrfmiddlewaretoken', CSRF_TOKEN);
+    
+    try {
+        const response = await fetch(PROCESS_URL, { method: 'POST', body: formData });
+        
+        if (!response.ok) {
+            let msg = 'Failed to generate watermark.';
+            try {
+                if (response.headers.get('content-type').includes('application/json')) {
+                    const data = await response.json();
+                    msg = data.error || msg;
+                }
+            } catch(e) {}
+            throw new Error(msg);
+        }
+        
+        const blob = await response.blob();
+        if(blob.size === 0) throw new Error('Result image is empty.');
+        
+        const url = URL.createObjectURL(blob);
+        
+        document.getElementById('result-image').src = url;
+        document.getElementById('btn-download').href = url;
+        
+        const ext = blob.type.split('/')[1] || 'jpg';
+        const outName = sourceFile.name.substring(0, sourceFile.name.lastIndexOf('.')) || sourceFile.name;
+        document.getElementById('btn-download').download = outName + '-watermarked.' + ext;
+        
+        // Try to read dimensions
+        const img = new Image();
+        img.onload = () => {
+            document.getElementById('result-dimensions').textContent = `${img.naturalWidth} × ${img.naturalHeight}`;
+        };
+        img.src = url;
+        document.getElementById('result-format').textContent = ext.toUpperCase();
+        
+        stateProcessing.classList.add('hidden');
+        stateSuccess.classList.remove('hidden');
+        
+    } catch(err) {
+        document.getElementById('error-message').textContent = err.message;
+        stateProcessing.classList.add('hidden');
+        stateError.classList.remove('hidden');
+    }
+};
+
+document.getElementById('btn-error-back').onclick = () => {
+    stateError.classList.add('hidden');
+    stateEditor.classList.remove('hidden');
+};
+
+document.getElementById('btn-edit-again').onclick = () => {
+    stateSuccess.classList.add('hidden');
+    stateEditor.classList.remove('hidden');
+};
+
+document.getElementById('btn-start-over').onclick = () => {
+    sourceFile = null;
     fileInput.value = '';
-
-
-    fileSelected.classList.add(
-        'hidden'
-    );
-
-
-    convertBtn.disabled = true;
-
-    convertBtn.classList.remove(
-        'hidden'
-    );
-
-
-    progressSection.classList.add(
-        'hidden'
-    );
-
-    successSection.classList.add(
-        'hidden'
-    );
-
-    errorSection.classList.add(
-        'hidden'
-    );
-
-
-    if (cropper) {
-
-        cropper.destroy();
-
-        cropper = null;
-
-    }
-
-
-    if (cropperWrapper) {
-
-        cropperWrapper.classList.add(
-            'hidden'
-        );
-
-    }
-
-
-    if (cropperImage) {
-
-        cropperImage.src = '';
-
-        cropperImage.classList.add(
-            'hidden'
-        );
-
-    }
-
-
-    if (cropperLoader) {
-
-        cropperLoader.classList.remove(
-            'hidden'
-        );
-
-    }
-
-
-    if (sortable) {
-
-        sortable.destroy();
-
-        sortable = null;
-
-    }
-
-
-    if (imageGallery) {
-
-        imageGallery.innerHTML = '';
-
-    }
-
-
-    if (progressBar) {
-
-        progressBar.style.width =
-            '0%';
-
-    }
-
-
-    if (progressPercent) {
-
-        progressPercent.textContent =
-            '0%';
-
-    }
-
-
-    if (progressInterval) {
-
-        clearInterval(
-            progressInterval
-        );
-
-        progressInterval = null;
-
-    }
-
-
-    if (
-        typeof lucide !== 'undefined'
-    ) {
-
-        lucide.createIcons();
-
-    }
-
-}
-
-
-/* =========================================================
-   PROCESS ANOTHER
-   ========================================================= */
-
-convertAnotherBtn.addEventListener(
-    'click',
-    function() {
-
-        resetUpload();
-
-    }
-);
-
-
-/* =========================================================
-   PROGRESS
-   ========================================================= */
-
-function startProgress() {
-
-    let progress = 0;
-
-    progressBar.style.width =
-        '0%';
-
-    progressPercent.textContent =
-        '0%';
-
-
-    progressInterval =
-        setInterval(
-            function() {
-
-                if (progress < 90) {
-
-                    progress +=
-                        Math.random() * 5;
-
-                    if (progress > 90) {
-                        progress = 90;
-                    }
-
-                    progress =
-                        Math.floor(progress);
-
-                    progressBar.style.width =
-                        progress + '%';
-
-                    progressPercent.textContent =
-                        progress + '%';
-
-                }
-
-            },
-            500
-        );
-
-}
-
-
-function stopProgress() {
-
-    if (progressInterval) {
-
-        clearInterval(
-            progressInterval
-        );
-
-        progressInterval = null;
-
-    }
-
-
-    progressBar.style.width =
-        '100%';
-
-    progressPercent.textContent =
-        '100%';
-
-}
-
-
-/* =========================================================
-   PROCESS
-   ========================================================= */
-
-convertBtn.addEventListener(
-    'click',
-    async function() {
-
-        if (
-            selectedFiles.length === 0
-        ) {
-
-            return;
-
-        }
-
-
-        convertBtn.classList.add(
-            'hidden'
-        );
-
-
-        progressSection.classList.remove(
-            'hidden'
-        );
-
-
-        successSection.classList.add(
-            'hidden'
-        );
-
-        errorSection.classList.add(
-            'hidden'
-        );
-
-
-        startProgress();
-
-
-        const formData =
-            new FormData();
-
-
-        selectedFiles.forEach(
-            function(file) {
-
-                formData.append(
-                    'files',
-                    file
-                );
-
-            }
-        );
-
-
-        if (
-            selectedFiles.length === 1
-        ) {
-
-            formData.append(
-                'file',
-                selectedFiles[0]
-            );
-
-        }
-
-
-        formData.append(
-            'csrfmiddlewaretoken',
-            CSRF_TOKEN
-        );
-
-
-        /* TOOL PARAMETERS */
-
-        const fields = [
-            'radius',
-            'factor',
-            'speed',
-            'color',
-            'watermark-text',
-            'width',
-            'height',
-            'angle',
-            'timestamp',
-            'fps',
-            'img-duration',
-            'target_format'
-        ];
-
-
-        fields.forEach(
-            function(id) {
-
-                const element =
-                    document.getElementById(id);
-
-                if (element) {
-
-                    let key = id;
-
-                    if (id === 'watermark-text') {
-                        key = 'text';
-                    }
-
-                    if (id === 'img-duration') {
-                        key = 'img_duration';
-                    }
-
-                    if (id === 'target_format') {
-                        key = 'target_format';
-                    }
-
-                    formData.append(
-                        key,
-                        element.value
-                    );
-
-                }
-
-            }
-        );
-
-
-        if (
-            audioInput &&
-            audioInput.files[0]
-        ) {
-
-            formData.append(
-                'audio',
-                audioInput.files[0]
-            );
-
-        }
-
-
-        /* CROP */
-
-        if (
-            TOOL_SLUG === 'cut-image' &&
-            cropper
-        ) {
-
-            const data =
-                cropper.getData(true);
-
-
-            formData.append(
-                'left',
-                data.x
-            );
-
-            formData.append(
-                'top',
-                data.y
-            );
-
-            formData.append(
-                'right',
-                data.x + data.width
-            );
-
-            formData.append(
-                'bottom',
-                data.y + data.height
-            );
-
-        }
-
-
-        try {
-
-            const response =
-                await fetch(
-                    PROCESS_URL,
-                    {
-                        method: 'POST',
-                        body: formData
-                    }
-                );
-
-
-            if (!response.ok) {
-
-                let message =
-                    'Processing failed.';
-
-
-                try {
-
-                    const data =
-                        await response.json();
-
-                    message =
-                        data.error ||
-                        message;
-
-                } catch (e) {}
-
-
-                throw new Error(
-                    message
-                );
-
-            }
-
-
-            stopProgress();
-
-
-            const disposition =
-                response.headers.get(
-                    'Content-Disposition'
-                );
-
-
-            let outputFilename =
-                'processed_file';
-
-
-            if (disposition) {
-
-                const match =
-                    disposition.match(
-                        /filename="(.+?)"/
-                    );
-
-
-                if (match) {
-
-                    outputFilename =
-                        match[1];
-
-                }
-
-            }
-
-
-            const blob =
-                await response.blob();
-
-
-            const url =
-                window.URL.createObjectURL(
-                    blob
-                );
-
-
-            downloadBtn.href =
-                url;
-
-            downloadBtn.download =
-                outputFilename;
-
-
-            progressSection.classList.add(
-                'hidden'
-            );
-
-
-            successSection.classList.remove(
-                'hidden'
-            );
-
-
-            if (
-                typeof lucide !== 'undefined'
-            ) {
-
-                lucide.createIcons();
-
-            }
-
-        }
-
-
-        catch (error) {
-
-            stopProgress();
-
-            progressSection.classList.add(
-                'hidden'
-            );
-
-            convertBtn.classList.remove(
-                'hidden'
-            );
-
-            showError(
-                error.message
-            );
-
-        }
-
-    }
-);
-
-
-/* =========================================================
-   ERROR
-   ========================================================= */
-
-function showError(message) {
-
-    errorMessage.textContent =
-        message;
-
-    errorSection.classList.remove(
-        'hidden'
-    );
-
-
-    if (
-        typeof lucide !== 'undefined'
-    ) {
-
-        lucide.createIcons();
-
-    }
-
-}
-
-
-/* =========================================================
-   INITIAL ICONS
-   ========================================================= */
-
-if (
-    typeof lucide !== 'undefined'
-) {
-
-    lucide.createIcons();
-
-}
-
+    logoFile = null;
+    logoInput.value = '';
+    
+    stateSuccess.classList.add('hidden');
+    stateUpload.classList.remove('hidden');
+    
+    compactHero.classList.add('hidden');
+    mainHero.classList.remove('hidden');
+    
+    appContainer.classList.remove('max-w-[1200px]');
+    appContainer.classList.add('max-w-[800px]');
+    
+    history = [];
+    historyIndex = -1;
+    
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+};
+
+// Icons
+if (typeof lucide !== 'undefined') lucide.createIcons();
 </script>
-
 {% endblock %}

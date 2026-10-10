@@ -2,75 +2,41 @@
 {% load static %}
 
 {% block tool_head %}
-
-{% if tool_slug == 'cut-image' %}
-<link
-    rel="stylesheet"
-    href="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.css">
-{% endif %}
-
-{% if tool_slug == 'image-to-video' or tool.multi_file %}
-<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
-{% endif %}
-
 <style>
-
 /* =========================================================
    PAGE HEADING
    ========================================================= */
-
 .tool-heading {
-    font-size: 3.5rem;
-    line-height: 0.95;
+    font-size: clamp(2rem, 5vw + 1rem, 3.5rem);
+    line-height: 1.1;
     font-weight: 900;
-    letter-spacing: -0.04em;
+    letter-spacing: -0.02em;
+    color: #1e1b4b;
 }
 
 .gradient-text {
-    background: linear-gradient(
-        135deg,
-        #7c3aed,
-        #a855f7,
-        #ec4899
-    );
-
+    background: linear-gradient(135deg, #7c3aed, #a855f7, #ec4899);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
 }
 
-
 /* =========================================================
    PURPLE BUTTON
    ========================================================= */
-
 .purple-btn {
-    background: linear-gradient(
-        135deg,
-        #6d28d9 0%,
-        #7c3aed 45%,
-        #a855f7 100%
-    );
-
+    background: linear-gradient(135deg, #6d28d9 0%, #7c3aed 45%, #a855f7 100%);
     color: white;
-
-    box-shadow:
-        0 8px 25px rgba(124, 58, 237, 0.25);
-
+    box-shadow: 0 8px 25px rgba(124, 58, 237, 0.25);
     transition: all 0.25s ease;
 }
-
 .purple-btn:hover {
     transform: translateY(-2px);
-
-    box-shadow:
-        0 12px 30px rgba(124, 58, 237, 0.38);
+    box-shadow: 0 12px 30px rgba(124, 58, 237, 0.38);
 }
-
 .purple-btn:active {
     transform: translateY(0);
 }
-
 .purple-btn:disabled {
     opacity: 0.4;
     cursor: not-allowed;
@@ -78,2738 +44,1093 @@
     box-shadow: none;
 }
 
-
 /* =========================================================
    UPLOAD AREA
    ========================================================= */
-
 .select-file-area {
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-
-    padding: 2rem;
-
-    border: 2px dashed transparent;
-    border-radius: 20px;
-
+    padding: 3rem 2rem;
+    background: #faf5ff;
+    border: 2px dashed #e9d5ff;
+    border-radius: 24px;
     transition: all 0.25s ease;
+    cursor: pointer;
 }
-
+.select-file-area:hover {
+    border-color: #c084fc;
+    background: #f3e8ff;
+}
 .select-file-area.drag-active {
     border-color: #7c3aed;
-    background: #faf5ff;
+    background: #f3e8ff;
 }
-
 
 /* =========================================================
-   SELECTED FILE CARD
+   EDITOR WORKSPACE
    ========================================================= */
-
-.selected-file-card {
-    width: 100%;
-    max-width: 620px;
-
-    margin-top: 1.25rem;
-
-    padding: 1rem;
-
-    border-radius: 1rem;
-
-    background: #ddd6fe;
-
-    border: 1px solid #ddd6fe;
+.editor-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 2rem;
+}
+@media (min-width: 1024px) {
+    .editor-layout {
+        grid-template-columns: minmax(0, 1fr) minmax(300px, 360px);
+        align-items: flex-start;
+    }
 }
 
-.remove-file-btn {
-    width: 38px;
-    height: 38px;
-
-    border-radius: 10px;
-
-    border: 1px solid #ddd6fe;
-
-    background: #f5f3ff;
-
-    color: #7c3aed;
-
+.preview-container {
+    background: #f8fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 1rem;
+    position: relative;
+    overflow: auto;
     display: flex;
     align-items: center;
     justify-content: center;
-
-    cursor: pointer;
-
-    transition: all 0.2s ease;
+    min-height: 400px;
+    height: 600px;
+    max-height: 70vh;
+    background-image: none;
+    background-size: cover;
+    background-position: center;
 }
 
-.remove-file-btn:hover {
-    background: #7c3aed;
-    color: white;
-}
-
-
-/* =========================================================
-   MULTI FILE GALLERY
-   ========================================================= */
-
-#image-gallery {
-    display: grid;
-    grid-template-columns:
-        repeat(auto-fill, minmax(120px, 1fr));
-
-    gap: 1rem;
-
-    margin-top: 1rem;
-}
-
-.gallery-item {
+.preview-inner {
     position: relative;
+    transform-origin: center center;
+    transition: transform 0.2s ease-out;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+}
+.preview-inner img.foreground-image {
+    display: block;
+    max-width: none;
+}
 
-    aspect-ratio: 1;
+.checkerboard-bg {
+    background-image: 
+        linear-gradient(45deg, #e5e7eb 25%, transparent 25%), 
+        linear-gradient(-45deg, #e5e7eb 25%, transparent 25%), 
+        linear-gradient(45deg, transparent 75%, #e5e7eb 75%), 
+        linear-gradient(-45deg, transparent 75%, #e5e7eb 75%);
+    background-size: 20px 20px;
+    background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
+}
 
-    border-radius: 0.75rem;
+.settings-panel {
+    background: white;
+    border: 1px solid #e9d5ff;
+    border-radius: 1rem;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    max-height: 70vh;
+    overflow-y: auto;
+}
 
-    overflow: hidden;
+/* Custom Controls */
+.control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+.control-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #475569;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+.custom-input {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 0.5rem;
+    font-size: 0.875rem;
+    color: #1e293b;
+    outline: none;
+    transition: border-color 0.2s;
+}
+.custom-input:focus {
+    border-color: #8b5cf6;
+    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
+}
 
-    border: 2px solid #e2e8f0;
-
-    cursor: grab;
-
-    background: #f8fafc;
-
+.tabs {
+    display: flex;
+    background: #f1f5f9;
+    padding: 0.25rem;
+    border-radius: 0.5rem;
+}
+.tab {
+    flex: 1;
+    text-align: center;
+    padding: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #64748b;
+    border-radius: 0.375rem;
+    cursor: pointer;
     transition: all 0.2s;
 }
-
-.gallery-item:hover {
-    border-color: #8b5cf6;
-    transform: scale(1.02);
+.tab.active {
+    background: white;
+    color: #8b5cf6;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
-.gallery-item img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+.color-presets {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 0.5rem;
 }
-
-.gallery-item .remove-item {
-    position: absolute;
-
-    top: 0.35rem;
-    right: 0.35rem;
-
-    background: rgba(239, 68, 68, 0.9);
-
-    color: white;
-
-    border-radius: 9999px;
-
-    padding: 0.3rem;
-
-    cursor: pointer;
-
-    opacity: 0;
-
-    transition: opacity 0.2s;
-}
-
-.gallery-item:hover .remove-item {
-    opacity: 1;
-}
-
-.sortable-ghost {
-    opacity: 0.4;
-    border-color: #8b5cf6;
-}
-
-
-/* =========================================================
-   PROGRESS
-   ========================================================= */
-
-.progress-card {
-    background: #fafafa;
-
-    border: 1px solid #f1f5f9;
-
-    border-radius: 1rem;
-
-    padding: 1rem 1.5rem;
-}
-
-.progress-spinner {
-    width: 32px;
-    height: 32px;
-
+.color-preset {
+    aspect-ratio: 1;
     border-radius: 50%;
-
-    border: 3px solid #e2e8f0;
-
-    border-top-color: #7c3aed;
-
-    animation: spin 0.8s linear infinite;
+    border: 2px solid #e2e8f0;
+    cursor: pointer;
+    transition: transform 0.1s;
+}
+.color-preset:hover {
+    transform: scale(1.1);
+}
+.color-preset.active {
+    border-color: #7c3aed;
+    box-shadow: 0 0 0 2px white, 0 0 0 4px #7c3aed;
 }
 
-.progress-fill {
-    height: 100%;
-    width: 0%;
-
-    background: linear-gradient(
-        90deg,
-        #6d28d9,
-        #7c3aed,
-        #a855f7,
-        #ec4899
-    );
-
-    border-radius: 999px;
-
-    transition: width 0.4s ease;
+/* Spinner */
+.spinner {
+    border: 3px solid rgba(139, 92, 246, 0.2);
+    border-left-color: #7c3aed;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    animation: spin 1s linear infinite;
 }
+@keyframes spin { 100% { transform: rotate(360deg); } }
 
-@keyframes spin {
-    to {
-        transform: rotate(360deg);
-    }
-}
-
-
-/* =========================================================
-   SUCCESS
-   ========================================================= */
-
+/* Success Card */
 .success-card {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 1.5rem;
+    padding: 2.5rem;
     text-align: center;
-
-    padding: 1.5rem;
-
-    border-radius: 1rem;
-
-    background: #faf5ff;
-
-    border: 1px solid #e9d5ff;
+    box-shadow: 0 10px 40px rgba(0,0,0,0.05);
 }
-
-.success-icon {
-    width: 64px;
-    height: 64px;
-
-    border-radius: 1rem;
-
-    background: #ede9fe;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    margin: 0 auto 1rem;
+.success-card img {
+    max-width: 100%;
+    max-height: 400px;
+    border-radius: 0.5rem;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
+    margin: 2rem auto;
 }
-
-.success-icon i {
-    color: #7c3aed;
-}
-
-
-/* =========================================================
-   ERROR
-   ========================================================= */
-
-.error-card {
-    padding: 1.25rem;
-
-    border-radius: 1rem;
-
-    background: #fef2f2;
-
-    border: 1px solid #fee2e2;
-}
-
-
-/* =========================================================
-   CROP
-   ========================================================= */
-
-#cropper-container {
-    max-height: 600px;
-}
-
-.cropper-container {
-    width: 100% !important;
-}
-
-.cropper-view-box,
-.cropper-face {
-    border-radius: 0;
-}
-
-.cropper-modal {
-    background-color: rgba(0, 0, 0, 0.7);
-}
-
-.cropper-bg {
-    background-image: none !important;
-}
-
-
-/* =========================================================
-   MOBILE
-   ========================================================= */
-
-@media (max-width: 768px) {
-
-    .tool-heading {
-        font-size: 3rem;
-    }
-
-}
-
-@media (max-width: 480px) {
-
-    .tool-heading {
-        font-size: 2.6rem;
-    }
-
-}
-
 </style>
-
-{% endblock %}
-
-
-{% block tool_content %}
-
-<!-- =========================================================
-     SEO PAGE HEADER
-     THESE VALUES COME DIRECTLY FROM BACKEND
-     ========================================================= -->
-
-<section class="text-center mb-8 sm:mb-10">
-
-    <h1 class="tool-heading text-surface-900 mb-3">
-
-        <span class="block">
-            {{ s1 }}
-        </span>
-
-        <span class="block gradient-text">
-            {{ highlight }}
-        </span>
-
-    </h1>
-
-
-    <!-- SEO INTRO -->
-
-    {% if seo_intro %}
-
-    <p class="max-w-3xl mx-auto text-sm sm:text-base lg:text-lg
-              text-surface-500 leading-relaxed">
-
-        {{ seo_intro }}
-
-    </p>
-
-    {% endif %}
-
-
-    <!-- SEO KEYWORDS -->
-
-    {% if seo_keywords %}
-
-    <p class="max-w-3xl mx-auto mt-2 text-xs sm:text-sm
-              text-surface-400 leading-relaxed">
-
-        {{ seo_keywords }}
-
-    </p>
-
-    {% endif %}
-
-</section>
-
-
-<!-- =========================================================
-     MAIN TOOL CARD
-     ========================================================= -->
-
-<div class="rounded-2xl bg-[#faf5ff] p-4 sm:p-6">
-
-
-    <!-- =====================================================
-         SELECT FILE AREA
-         ===================================================== -->
-
-    <div
-        id="select-file-area"
-        class="select-file-area">
-
-
-        <button
-            type="button"
-            id="select-file-btn"
-            class="purple-btn px-8 py-3 rounded-2xl
-                   text-white font-black
-                   text-sm sm:text-base
-                   uppercase tracking-widest
-                   flex items-center justify-center gap-3">
-
-            <i
-                data-lucide="upload"
-                class="w-5 h-5">
-            </i>
-
-            Select File
-
-        </button>
-
-
-        <p class="text-xs text-surface-400 mt-3">
-
-            Max 50MB
-            &nbsp;&nbsp;•&nbsp;&nbsp;
-            Accepted:
-
-            <span class="text-surface-500 font-medium">
-                {{ tool.accept }}
-            </span>
-
-        </p>
-
-
-        <!-- =================================================
-             SELECTED FILE
-             ================================================= -->
-
-        <div
-            id="file-selected"
-            class="hidden selected-file-card">
-
-
-            <!-- SINGLE FILE -->
-
-            <div
-                id="single-file-view"
-                class="flex items-center gap-4">
-
-                <div
-                    class="w-12 h-12 rounded-xl
-                           bg-purple-100
-                           flex items-center justify-center
-                           flex-shrink-0">
-
-                    <i
-                        data-lucide="file-check-2"
-                        class="w-6 h-6 text-purple-600">
-                    </i>
-
-                </div>
-
-
-                <div class="text-left min-w-0 flex-1">
-
-                    <p
-                        id="file-name"
-                        class="text-surface-800 font-bold text-sm truncate">
-                    </p>
-
-                    <p
-                        id="file-size"
-                        class="text-xs text-surface-400 mt-1">
-                    </p>
-
-                </div>
-
-
-                <button
-                    type="button"
-                    id="remove-file-btn"
-                    class="remove-file-btn"
-                    title="Remove file">
-
-                    <i
-                        data-lucide="x"
-                        class="w-5 h-5">
-                    </i>
-
-                </button>
-
-            </div>
-
-
-            <!-- =================================================
-                 MULTI FILE
-                 ================================================= -->
-
-            <div
-                id="multi-file-view"
-                class="hidden text-left">
-
-                <div
-                    class="flex items-center justify-between mb-4">
-
-                    <h3
-                        class="text-sm font-bold text-surface-900
-                               uppercase tracking-wider">
-
-                        Arrange Images
-
-                    </h3>
-
-
-                    <button
-                        type="button"
-                        id="add-more-btn"
-                        class="text-xs font-bold
-                               text-violet-600
-                               hover:text-violet-700
-                               flex items-center gap-1">
-
-                        <i
-                            data-lucide="plus-circle"
-                            class="w-4 h-4">
-                        </i>
-
-                        Add More
-
-                    </button>
-
-                </div>
-
-
-                <div id="image-gallery"></div>
-
-
-                <p
-                    class="text-[10px] text-surface-400
-                           mt-4 italic">
-
-                    Drag images to rearrange the sequence
-
-                </p>
-
-            </div>
-
-        </div>
-
-
-        <!-- FILE INPUT -->
-
-        <input
-            type="file"
-            id="file-input"
-            class="hidden"
-            accept="{{ tool.accept }}"
-            {% if tool.multi_file %}multiple{% endif %}>
-
-    </div>
-
-
-    <!-- =====================================================
-         DYNAMIC TOOL PARAMETERS
-         ===================================================== -->
-
-    <div
-        id="parameters-section"
-        class="mt-4 border-t border-purple-100
-               pt-6 space-y-6">
-
-
-        <!-- BLUR -->
-
-        {% if tool_slug == 'blur-image' %}
-
-        <div class="space-y-3">
-
-            <div class="flex justify-between items-center">
-
-                <label class="text-[11px] font-black text-surface-400
-                              uppercase tracking-widest">
-
-                    Blur Intensity
-
-                </label>
-
-                <span
-                    id="radius-val"
-                    class="text-sm font-bold text-violet-600">
-
-                    5px
-
-                </span>
-
-            </div>
-
-            <input
-                type="range"
-                id="radius"
-                min="1"
-                max="50"
-                value="5"
-                class="w-full h-2 bg-surface-100
-                       rounded-lg appearance-none
-                       cursor-pointer accent-violet-500"
-                oninput="document.getElementById('radius-val').textContent = this.value + 'px'">
-
-        </div>
-
-        {% endif %}
-
-
-        <!-- BRIGHTNESS -->
-
-        {% if tool_slug == 'brighten-image' %}
-
-        <div class="space-y-3">
-
-            <div class="flex justify-between items-center">
-
-                <label class="text-[11px] font-black text-surface-400
-                              uppercase tracking-widest">
-
-                    Brightness Level
-
-                </label>
-
-                <span
-                    id="factor-val"
-                    class="text-sm font-bold text-violet-600">
-
-                    1.5x
-
-                </span>
-
-            </div>
-
-            <input
-                type="range"
-                id="factor"
-                min="0.1"
-                max="3.0"
-                step="0.1"
-                value="1.5"
-                class="w-full h-2 bg-surface-100
-                       rounded-lg appearance-none
-                       cursor-pointer accent-violet-500"
-                oninput="document.getElementById('factor-val').textContent = this.value + 'x'">
-
-        </div>
-
-        {% endif %}
-
-
-        <!-- GIF SPEED -->
-
-        {% if tool_slug == 'change-gif-speed' %}
-
-        <div class="space-y-3">
-
-            <div class="space-y-2">
-
-                <label class="text-[11px] font-black text-surface-400
-                              uppercase tracking-widest">
-
-                    Speed Multiplier
-
-                </label>
-
-                <span
-                    id="speed-val"
-                    class="text-sm font-bold text-violet-600">
-
-                    1.0x
-
-                </span>
-
-            </div>
-
-            <input
-                type="range"
-                id="speed"
-                min="0.5"
-                max="3.0"
-                step="0.1"
-                value="1.0"
-                class="w-full h-2 bg-surface-100
-                       rounded-lg appearance-none
-                       cursor-pointer accent-violet-500"
-                oninput="document.getElementById('speed-val').textContent = this.value + 'x'">
-
-        </div>
-
-        {% endif %}
-
-
-        <!-- BACKGROUND -->
-
-        {% if tool_slug == 'change-background' %}
-
-        <div class="space-y-3">
-
-            <label class="text-[11px] font-black text-surface-400
-                          uppercase tracking-widest">
-
-                Background Color
-
-            </label>
-
-            <div class="flex items-center gap-4">
-
-                <input
-                    type="color"
-                    id="color"
-                    value="#ffffff"
-                    class="w-12 h-12 rounded-xl
-                           border border-surface-200
-                           cursor-pointer">
-
-                <span class="text-sm font-semibold text-surface-600">
-
-                    Choose custom background color
-
-                </span>
-
-            </div>
-
-        </div>
-
-        {% endif %}
-
-
-        <!-- WATERMARK -->
-
-        {% if tool_slug == 'watermark-image' %}
-
-        <div class="space-y-3">
-
-            <label class="text-[11px] font-black text-surface-400
-                          uppercase tracking-widest">
-
-                Watermark Text
-
-            </label>
-
-            <input
-                type="text"
-                id="watermark-text"
-                value="ScanPDF"
-                class="w-full px-4 py-3 rounded-xl
-                       border border-surface-200
-                       focus:border-violet-500
-                       focus:ring-4
-                       focus:ring-violet-500/10
-                       outline-none
-                       transition-all
-                       font-semibold">
-
-        </div>
-
-        {% endif %}
-
-
-        <!-- RESIZE -->
-
-        {% if tool_slug == 'resize-image' %}
-
-        <div class="grid grid-cols-2 gap-4">
-
-            <div class="space-y-2">
-
-                <label class="text-[11px] font-black text-surface-400
-                              uppercase tracking-widest">
-
-                    Width (px)
-
-                </label>
-
-                <input
-                    type="number"
-                    id="width"
-                    placeholder="Auto"
-                    class="w-full px-4 py-3 rounded-xl
-                           border border-surface-200
-                           focus:border-violet-500
-                           outline-none
-                           font-semibold">
-
-            </div>
-
-
-            <div class="space-y-2">
-
-                <label class="text-[11px] font-black text-surface-400
-                              uppercase tracking-widest">
-
-                    Height (px)
-
-                </label>
-
-                <input
-                    type="number"
-                    id="height"
-                    placeholder="Auto"
-                    class="w-full px-4 py-3 rounded-xl
-                           border border-surface-200
-                           focus:border-violet-500
-                           outline-none
-                           font-semibold">
-
-            </div>
-
-        </div>
-
-        {% endif %}
-
-
-        <!-- ROTATE -->
-
-        {% if tool_slug == 'rotate-image' %}
-
-        <div class="space-y-3">
-
-            <div class="flex justify-between items-center">
-
-                <label class="text-[11px] font-black text-surface-400
-                              uppercase tracking-widest">
-
-                    Rotation Angle
-
-                </label>
-
-                <span
-                    id="angle-val"
-                    class="text-sm font-bold text-violet-600">
-
-                    90°
-
-                </span>
-
-            </div>
-
-            <input
-                type="range"
-                id="angle"
-                min="0"
-                max="359"
-                step="90"
-                value="90"
-                class="w-full h-2 bg-surface-100
-                       rounded-lg appearance-none
-                       cursor-pointer accent-violet-500"
-                oninput="document.getElementById('angle-val').textContent = this.value + '°'">
-
-        </div>
-
-        {% endif %}
-
-
-        <!-- EXTRACT FRAME -->
-
-        {% if tool_slug == 'extract-frame' %}
-
-        <div class="space-y-3">
-
-            <label class="text-[11px] font-black text-surface-400
-                          uppercase tracking-widest">
-
-                Frame Timestamp (seconds)
-
-            </label>
-
-            <input
-                type="number"
-                id="timestamp"
-                value="1.0"
-                step="0.1"
-                class="w-full px-4 py-3 rounded-xl
-                       border border-surface-200
-                       outline-none font-semibold">
-
-        </div>
-
-        {% endif %}
-
-
-        <!-- IMAGE TO VIDEO -->
-
-        {% if tool_slug == 'image-to-video' %}
-
-        <div class="space-y-4">
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-
-                <div class="space-y-2">
-
-                    <label class="text-[11px] font-black text-surface-400
-                                  uppercase tracking-widest">
-
-                        Image Duration (sec)
-
-                    </label>
-
-                    <input
-                        type="number"
-                        id="img-duration"
-                        value="3"
-                        min="0.5"
-                        step="0.5"
-                        class="w-full px-4 py-3 rounded-xl
-                               border border-surface-200
-                               outline-none font-semibold
-                               focus:border-violet-500">
-
-                </div>
-
-
-                <div class="space-y-2">
-
-                    <label class="text-[11px] font-black text-surface-400
-                                  uppercase tracking-widest">
-
-                        Frame Rate (FPS)
-
-                    </label>
-
-                    <input
-                        type="number"
-                        id="fps"
-                        value="24"
-                        min="1"
-                        max="60"
-                        class="w-full px-4 py-3 rounded-xl
-                               border border-surface-200
-                               outline-none font-semibold
-                               focus:border-violet-500">
-
-                </div>
-
-            </div>
-
-
-            <div class="space-y-3">
-
-                <label class="text-[11px] font-black text-surface-400
-                              uppercase tracking-widest">
-
-                    Background Audio (Optional)
-
-                </label>
-
-                <div id="audio-upload-container">
-
-                    <input
-                        type="file"
-                        id="audio-input"
-                        accept=".mp3,.wav,.ogg,.m4a"
-                        class="hidden">
-
-
-                    <div
-                        id="audio-drop-zone"
-                        class="p-4 rounded-xl
-                               border-2 border-dashed
-                               border-purple-100
-                               bg-purple-50/30
-                               hover:bg-purple-50
-                               hover:border-purple-200
-                               cursor-pointer
-                               transition-all
-                               flex items-center gap-3">
-
-                        <div
-                            class="w-10 h-10 rounded-lg
-                                   bg-white
-                                   border border-purple-100
-                                   flex items-center justify-center">
-
-                            <i
-                                data-lucide="music"
-                                class="w-5 h-5 text-violet-500">
-                            </i>
-
-                        </div>
-
-
-                        <div class="text-left flex-1 min-w-0">
-
-                            <p
-                                id="audio-file-name"
-                                class="text-sm font-bold
-                                       text-surface-700 truncate">
-
-                                Choose background music
-
-                            </p>
-
-                            <p
-                                id="audio-file-size"
-                                class="text-[10px] text-surface-400">
-
-                                MP3, WAV, M4A up to 20MB
-
-                            </p>
-
-                        </div>
-
-
-                        <button
-                            id="remove-audio-btn"
-                            type="button"
-                            class="hidden p-2 rounded-lg
-                                   hover:bg-red-50
-                                   text-red-500">
-
-                            <i
-                                data-lucide="trash-2"
-                                class="w-4 h-4">
-                            </i>
-
-                        </button>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-        </div>
-
-        {% endif %}
-
-
-        <!-- IMAGE CONVERTER -->
-
-        {% if tool_slug == 'image-converter' %}
-
-        <div class="space-y-3">
-
-            <label class="text-[11px] font-black text-surface-400
-                          uppercase tracking-widest">
-
-                Convert To
-
-            </label>
-
-            <select
-                id="target_format"
-                class="w-full px-4 py-3 rounded-xl
-                       border border-surface-200
-                       focus:border-violet-500
-                       outline-none font-bold
-                       text-surface-700 bg-white">
-
-                <option value="jpg">JPG (JPEG Image)</option>
-                <option value="png">PNG (Portable Network Graphics)</option>
-                <option value="webp">WEBP (Web-optimized)</option>
-                <option value="gif">GIF (Graphics Interchange Format)</option>
-                <option value="bmp">BMP (Standard Windows Bitmap)</option>
-                <option value="tiff">TIFF (Tagged Image File Format)</option>
-                <option value="pdf">PDF (Direct Document Export)</option>
-
-            </select>
-
-        </div>
-
-        {% endif %}
-
-
-        <!-- CUT IMAGE -->
-
-        {% if tool_slug == 'cut-image' %}
-
-        <div
-            id="cropper-wrapper"
-            class="hidden space-y-4">
-
-            <div class="flex items-center justify-between px-1">
-
-                <label class="text-[11px] font-black text-surface-400
-                              uppercase tracking-widest">
-
-                    Adjust Selection
-
-                </label>
-
-
-                <div class="flex gap-1.5">
-
-                    <button
-                        type="button"
-                        id="crop-rotate-l"
-                        class="p-2 rounded-lg
-                               bg-surface-50
-                               hover:bg-violet-50
-                               text-surface-500
-                               hover:text-violet-600
-                               transition-all
-                               border border-surface-100">
-
-                        <i data-lucide="rotate-ccw" class="w-4 h-4"></i>
-
-                    </button>
-
-
-                    <button
-                        type="button"
-                        id="crop-rotate-r"
-                        class="p-2 rounded-lg
-                               bg-surface-50
-                               hover:bg-violet-50
-                               text-surface-500
-                               hover:text-violet-600
-                               transition-all
-                               border border-surface-100">
-
-                        <i data-lucide="rotate-cw" class="w-4 h-4"></i>
-
-                    </button>
-
-
-                    <button
-                        type="button"
-                        id="crop-reset"
-                        class="p-2 rounded-lg
-                               bg-surface-50
-                               hover:bg-violet-50
-                               text-surface-500
-                               hover:text-violet-600
-                               transition-all
-                               border border-surface-100">
-
-                        <i data-lucide="refresh-cw" class="w-4 h-4"></i>
-
-                    </button>
-
-                </div>
-
-            </div>
-
-
-            <div
-                id="cropper-container"
-                class="rounded-2xl border border-surface-100
-                       bg-surface-50 overflow-hidden relative"
-                style="min-height:300px;">
-
-                <div class="flex items-center justify-center h-full">
-
-                    <img
-                        id="cropper-image"
-                        src=""
-                        alt="Source preview"
-                        class="max-w-full hidden">
-
-                    <div
-                        id="cropper-loader"
-                        class="flex flex-col
-                               items-center gap-3 py-20">
-
-                        <div
-                            class="w-8 h-8
-                                   border-4
-                                   border-violet-100
-                                   border-t-violet-500
-                                   rounded-full
-                                   animate-spin">
-                        </div>
-
-                        <p
-                            class="text-[10px] font-bold
-                                   text-surface-400
-                                   uppercase tracking-tighter">
-
-                            Initializing Editor...
-
-                        </p>
-
-                    </div>
-
-                </div>
-
-            </div>
-
-
-            <p
-                class="text-[10px] text-center
-                       text-surface-400
-                       font-medium italic">
-
-                Drag selection handles to crop your image
-
-            </p>
-
-        </div>
-
-        {% endif %}
-
-    </div>
-
-
-    <!-- =====================================================
-         PROCESS BUTTON
-         ===================================================== -->
-
-    <button
-        id="convert-btn"
-        disabled
-        class="purple-btn w-full mt-6 py-4
-               rounded-2xl
-               text-white font-black
-               text-sm sm:text-base
-               uppercase tracking-widest
-               disabled:opacity-40
-               disabled:cursor-not-allowed
-               flex items-center justify-center gap-3">
-
-        <i data-lucide="sparkles" class="w-5 h-5"></i>
-
-        Process Now
-
-    </button>
-
-
-    <!-- =====================================================
-         PROGRESS
-         ===================================================== -->
-
-    <div id="progress-section" class="hidden mt-4">
-
-        <div class="progress-card flex items-center gap-4">
-
-            <div class="relative flex-shrink-0">
-                <div class="progress-spinner"></div>
-            </div>
-
-            <div class="min-w-0">
-
-                <p class="text-surface-800 font-bold text-base">
-                    Processing your file…
-                </p>
-
-                <p class="text-xs text-surface-400 mt-1">
-                    This may take a moment
-                </p>
-
-            </div>
-
-        </div>
-
-
-        <div
-            class="w-full h-2 rounded-full
-                   bg-surface-100
-                   overflow-hidden mt-4">
-
-            <div
-                id="progress-bar"
-                class="progress-fill">
-            </div>
-
-        </div>
-
-
-        <p
-            id="progress-percent"
-            class="text-center text-xs
-                   font-bold text-violet-600 mt-2">
-
-            0%
-
-        </p>
-
-    </div>
-
-
-    <!-- =====================================================
-         SUCCESS
-         ===================================================== -->
-
-    <div id="success-section" class="hidden mt-4">
-
-        <div class="success-card">
-
-            <div class="success-icon">
-
-                <i
-                    data-lucide="check-circle-2"
-                    class="w-8 h-8">
-                </i>
-
-            </div>
-
-
-            <h3 class="text-lg font-black text-surface-900 mb-1">
-
-                Processing Complete!
-
-            </h3>
-
-
-            <p class="text-surface-500 text-sm mb-6">
-
-                Your modified file is ready.
-
-            </p>
-
-
-            <div
-                class="flex flex-col sm:flex-row
-                       gap-3 justify-center">
-
-                <a
-                    id="download-btn"
-                    href="#"
-                    class="inline-flex items-center
-                           justify-center gap-2.5
-                           px-8 py-4 rounded-2xl
-                           text-white font-black text-sm"
-                    style="
-                        background:linear-gradient(
-                            135deg,
-                            #16a34a,
-                            #22c55e
-                        );
-                    ">
-
-                    <i data-lucide="download" class="w-5 h-5"></i>
-
-                    Download File
-
-                </a>
-
-
-                <button
-                    type="button"
-                    id="convert-another-btn"
-                    class="purple-btn
-                           inline-flex items-center
-                           justify-center gap-2.5
-                           px-8 py-4 rounded-2xl
-                           text-white font-black text-sm">
-
-                    <i data-lucide="refresh-cw" class="w-4 h-4"></i>
-
-                    Process Another
-
-                </button>
-
-            </div>
-
-        </div>
-
-    </div>
-
-
-    <!-- =====================================================
-         ERROR
-         ===================================================== -->
-
-    <div id="error-section" class="hidden mt-4">
-
-        <div
-            class="error-card
-                   flex items-start gap-4">
-
-            <div
-                class="w-9 h-9 rounded-xl
-                       bg-red-100
-                       flex items-center justify-center
-                       flex-shrink-0">
-
-                <i
-                    data-lucide="alert-triangle"
-                    class="w-5 h-5 text-red-500">
-                </i>
-
-            </div>
-
-
-            <div class="min-w-0 pt-1">
-
-                <h4
-                    class="font-black text-red-700
-                           text-sm uppercase
-                           tracking-wider mb-1">
-
-                    Process Failed
-
-                </h4>
-
-                <p
-                    id="error-message"
-                    class="text-xs text-red-500
-                           leading-relaxed
-                           font-semibold">
-                </p>
-
-            </div>
-
-        </div>
-
-    </div>
-
-</div>
-
-{% endblock %}
-
-
-{% block tool_scripts %}
-
-{% if tool_slug == 'cut-image' %}
-
-<script
-    src="https://cdnjs.cloudflare.com/ajax/libs/cropperjs/1.5.13/cropper.min.js">
+<script>
+    const REMOVE_BG_URL = "{% url 'image_processor:process_tool' 'remove-background' %}";
+    const PROCESS_URL = "{% url 'image_processor:process_tool' 'change-background' %}";
+    const CSRF_TOKEN = "{{ csrf_token }}";
 </script>
+{% endblock %}
 
-{% endif %}
+{% block content %}
+<main class="w-full bg-white relative">
+    
+    <!-- STATE 1: UPLOAD & MARKETING -->
+    <div id="state-upload" class="relative">
+        <div class="relative pt-24 pb-32 overflow-hidden">
+            <!-- Background Decorations -->
+            <div class="absolute top-0 left-1/2 -translate-x-1/2 w-[1200px] h-[600px] opacity-30 pointer-events-none">
+                <div class="absolute inset-0 bg-gradient-to-b from-purple-100 to-transparent rounded-full blur-3xl"></div>
+                <div class="absolute top-20 left-20 w-72 h-72 bg-pink-100 rounded-full blur-3xl mix-blend-multiply opacity-70"></div>
+                <div class="absolute top-20 right-20 w-72 h-72 bg-purple-100 rounded-full blur-3xl mix-blend-multiply opacity-70"></div>
+            </div>
+            
+            <div class="max-w-7xl mx-auto px-4 relative z-10">
+                <div class="text-center max-w-3xl mx-auto mb-16">
+                    <h1 class="tool-heading mb-6">Change Image <br/><span class="gradient-text">Background Online</span></h1>
+                    <p class="text-xl text-surface-600 leading-relaxed font-medium">Replace an image background with a color, transparent background, or another image while keeping the foreground subject visible.</p>
+                </div>
+                
+                <div class="max-w-2xl mx-auto">
+                    <div class="bg-white p-2 rounded-3xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-surface-100 relative overflow-hidden group">
+                        <input type="file" id="file-input" class="hidden" accept=".jpg,.jpeg,.png,.webp">
+                        <div id="drop-zone" class="select-file-area">
+                            <div class="w-20 h-20 bg-purple-100 text-purple-600 rounded-2xl flex items-center justify-center mb-6 group-hover:scale-110 transition-transform duration-300 shadow-sm">
+                                <i data-lucide="image-plus" class="w-10 h-10"></i>
+                            </div>
+                            <button id="btn-select-file" class="purple-btn px-10 py-4 rounded-xl font-bold text-lg tracking-wide mb-4">
+                                SELECT FILE
+                            </button>
+                            <p class="text-surface-500 font-medium">Drop your image file here</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
 
+        <!-- MARKETING CONTENT ALIGNED TO WORD-TO-PDF ARCHITECTURE -->
+        <div class="mt-12 sm:mt-16 border-t border-surface-100 pt-16 sm:pt-24 pb-20 relative">
+            <!-- Decorative background elements -->
+            <div class="absolute top-40 left-0 w-[500px] h-[500px] bg-purple-100/40 rounded-full blur-[120px] -z-10 pointer-events-none"></div>
+            <div class="absolute top-[800px] right-0 w-[600px] h-[600px] bg-purple-50/60 rounded-full blur-[100px] -z-10 pointer-events-none"></div>
+            
+            <!-- 01. SEAMLESS BACKGROUND EDITING -->
+            <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mb-12 md:mb-16">
+                <div class="grid md:grid-cols-[1fr_1fr] items-center gap-10 md:gap-16">
+                    <div class="order-2 md:order-1 pr-0 md:pr-4">
+                        <div class="flex items-center gap-2 text-purple-600 font-bold tracking-widest text-[12px] uppercase mb-4">
+                            <i data-lucide="layers" class="w-3.5 h-3.5"></i> Seamless Background Editing
+                        </div>
+                        <h3 class="text-2xl md:text-[2rem] font-bold text-surface-900 mb-5 leading-tight tracking-tight">Change Image Backgrounds Easily</h3>
+                        <p class="text-surface-500 text-[17px] leading-relaxed mb-8">
+                            Replace unwanted image backgrounds while keeping the foreground subject visible. Choose a solid color, transparent background, or your own replacement image.
+                        </p>
+                        <ul class="space-y-4">
+                            <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                                <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                                Solid background colors
+                            </li>
+                            <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                                <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                                Transparent backgrounds
+                            </li>
+                            <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                                <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                                Custom background images
+                            </li>
+                            <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                                <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                                Full-resolution output
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <div class="order-1 md:order-2">
+                        <div class="relative bg-purple-50/50 rounded-[28px] p-8 py-14 flex items-center justify-center border border-purple-100/50 shadow-[inset_0_0_0_1px_rgba(255,255,255,1),0_8px_30px_-12px_rgba(147,51,234,0.1)] group transition-transform duration-300 hover:-translate-y-1">
+                            <div class="absolute inset-0 bg-[radial-gradient(circle_at_center,rgba(147,51,234,0.04)_0%,transparent_70%)] rounded-[28px]"></div>
+                            
+                            <div class="flex items-center gap-6 relative z-10 w-full justify-center">
+                                <!-- Input Image -->
+                                <div class="w-[120px] h-[160px] bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-surface-300 flex flex-col items-center justify-center relative z-10 overflow-hidden">
+                                    <div class="absolute inset-0 bg-blue-100"></div>
+                                    <i data-lucide="user" class="w-16 h-16 text-surface-600 relative z-10"></i>
+                                </div>
+                                
+                                <!-- Arrow -->
+                                <div class="flex flex-col items-center justify-center w-10 h-10 bg-white rounded-full shadow-lg text-purple-700 z-20 border border-purple-200 font-bold">
+                                    <i data-lucide="arrow-right" class="w-6 h-6"></i>
+                                </div>
+                                
+                                <!-- Output Image -->
+                                <div class="w-[120px] h-[160px] bg-white rounded-xl shadow-[0_8px_30px_rgb(0,0,0,0.12)] border border-purple-300 flex flex-col items-center justify-center relative z-10 overflow-hidden">
+                                    <div class="absolute inset-0 bg-transparent" style="background-image: linear-gradient(45deg, #e5e7eb 25%, transparent 25%), linear-gradient(-45deg, #e5e7eb 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #e5e7eb 75%), linear-gradient(-45deg, transparent 75%, #e5e7eb 75%); background-size: 10px 10px; background-position: 0 0, 0 5px, 5px -5px, -5px 0px;"></div>
+                                    <i data-lucide="user" class="w-16 h-16 text-surface-600 relative z-10"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 02. KEEP YOUR SUBJECT -->
+            <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mb-12 md:mb-16">
+                <div class="grid md:grid-cols-[1fr_1fr] items-center gap-10 md:gap-16">
+                    <div class="order-1 md:order-1">
+                        <div class="relative bg-surface-50/60 rounded-[28px] p-8 py-14 flex items-center justify-center border border-surface-200/50 shadow-[inset_0_0_0_1px_rgba(255,255,255,1)] group transition-transform duration-300 hover:-translate-y-1 overflow-hidden">
+                            
+                            <div class="relative z-10 flex items-center justify-center w-full h-full">
+                                <div class="w-[240px] h-[300px] bg-white rounded-xl shadow-[0_12px_40px_rgb(0,0,0,0.12)] border border-surface-300 p-6 flex flex-col items-center justify-center gap-4 relative z-10">
+                                    <div class="relative">
+                                        <i data-lucide="user" class="w-24 h-24 text-surface-400"></i>
+                                        <div class="absolute inset-0 border-2 border-dashed border-purple-500 rounded-lg scale-110"></div>
+                                        <div class="absolute -right-2 -top-2 w-6 h-6 bg-purple-500 rounded-full flex items-center justify-center text-white"><i data-lucide="scissors" class="w-3 h-3"></i></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="order-2 md:order-2 pl-0 md:pl-4">
+                        <div class="flex items-center gap-2 text-purple-600 font-bold tracking-widest text-[12px] uppercase mb-4">
+                            <i data-lucide="scissors" class="w-3.5 h-3.5"></i> Keep Your Subject
+                        </div>
+                        <h3 class="text-2xl md:text-[2rem] font-bold text-surface-900 mb-5 leading-tight tracking-tight">Keep the Foreground in Focus</h3>
+                        <p class="text-surface-500 text-[17px] leading-relaxed mb-8">
+                            ScanPDF separates the foreground from the original background so you can replace the surrounding scene without intentionally resizing or distorting the subject.
+                        </p>
+                        <ul class="space-y-4">
+                            <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                                <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                                Preserve subject proportions
+                            </li>
+                            <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                                <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                                Maintain image orientation
+                            </li>
+                            <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                                <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                                Keep original dimensions
+                            </li>
+                            <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                                <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                                Preview before export
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 03. FLEXIBLE BACKGROUNDS -->
+            <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mb-12 md:mb-16">
+                <div class="grid md:grid-cols-[1fr_1fr] items-center gap-10 md:gap-16">
+                    <div class="order-2 md:order-1 pr-0 md:pr-4">
+                        <div class="flex items-center gap-2 text-purple-600 font-bold tracking-widest text-[12px] uppercase mb-4">
+                            <i data-lucide="palette" class="w-3.5 h-3.5"></i> Flexible Backgrounds
+                        </div>
+                        <h3 class="text-2xl md:text-[2rem] font-bold text-surface-900 mb-5 leading-tight tracking-tight">Choose the Background You Need</h3>
+                        <p class="text-surface-500 text-[17px] leading-relaxed mb-8">
+                            Switch between a clean solid color, transparent output, or a custom background image depending on how you want to use the final image.
+                        </p>
+                        <ul class="space-y-4">
+                            <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                                <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                                Custom colors
+                            </li>
+                            <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                                <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                                Transparent PNG
+                            </li>
+                            <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                                <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                                Replacement images
+                            </li>
+                            <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                                <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                                Preview before download
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <div class="order-1 md:order-2">
+                        <div class="relative bg-purple-50/40 rounded-[28px] p-8 py-14 flex items-center justify-center border border-purple-100/50 shadow-[inset_0_0_0_1px_rgba(255,255,255,1)] group transition-transform duration-300 hover:-translate-y-1">
+                            <div class="flex gap-4 relative z-10 items-end justify-center w-full">
+                                <!-- Color bg -->
+                                <div class="w-[80px] h-[100px] bg-red-400 rounded-lg shadow-[0_8px_24px_rgb(0,0,0,0.12)] border border-surface-300 flex flex-col items-center justify-center relative z-10 opacity-80 transform -rotate-6">
+                                </div>
+                                <!-- Image bg -->
+                                <div class="w-[100px] h-[120px] bg-green-200 rounded-lg shadow-[0_8px_24px_rgb(0,0,0,0.12)] border border-surface-300 flex flex-col items-center justify-center relative z-20">
+                                    <i data-lucide="image" class="w-8 h-8 text-green-600"></i>
+                                </div>
+                                <!-- Transparent bg -->
+                                <div class="w-[80px] h-[100px] bg-white rounded-lg shadow-[0_8px_24px_rgb(0,0,0,0.12)] border border-surface-300 flex flex-col items-center justify-center relative z-10 opacity-80 transform rotate-6" style="background-image: linear-gradient(45deg, #e5e7eb 25%, transparent 25%), linear-gradient(-45deg, #e5e7eb 25%, transparent 25%), linear-gradient(45deg, transparent 75%, #e5e7eb 75%), linear-gradient(-45deg, transparent 75%, #e5e7eb 75%); background-size: 10px 10px; background-position: 0 0, 0 5px, 5px -5px, -5px 0px;">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 04. WHAT SCANPDF PRESERVES -->
+            <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mb-12 md:mb-16">
+                <div class="text-center mb-12 md:mb-16">
+                    <h2 class="text-3xl md:text-[2.25rem] font-bold text-surface-900 mb-5 tracking-tight">What ScanPDF Preserves</h2>
+                </div>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <!-- Foreground -->
+                    <div class="bg-white border border-surface-200/80 rounded-2xl p-6 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300">
+                        <div class="w-12 h-12 rounded-xl bg-purple-50 border border-purple-100/60 flex items-center justify-center mb-5 text-[22px] font-serif font-bold text-purple-600">
+                            <i data-lucide="user" class="w-5 h-5"></i>
+                        </div>
+                        <h4 class="text-[17px] font-bold text-surface-900 mb-4">Foreground</h4>
+                        <ul class="space-y-3">
+                            <li class="text-surface-600 text-[14px] flex items-center gap-2.5"><i data-lucide="check" class="w-3.5 h-3.5 text-purple-500"></i> Subject proportions</li>
+                            <li class="text-surface-600 text-[14px] flex items-center gap-2.5"><i data-lucide="check" class="w-3.5 h-3.5 text-purple-500"></i> Visible details</li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Resolution -->
+                    <div class="bg-white border border-surface-200/80 rounded-2xl p-6 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300">
+                        <div class="w-12 h-12 rounded-xl bg-blue-50 border border-blue-100/60 flex items-center justify-center mb-5 text-[22px] font-bold text-blue-600">
+                            <i data-lucide="maximize" class="w-5 h-5"></i>
+                        </div>
+                        <h4 class="text-[17px] font-bold text-surface-900 mb-4">Resolution</h4>
+                        <ul class="space-y-3">
+                            <li class="text-surface-600 text-[14px] flex items-center gap-2.5"><i data-lucide="check" class="w-3.5 h-3.5 text-blue-500"></i> Original dimensions</li>
+                            <li class="text-surface-600 text-[14px] flex items-center gap-2.5"><i data-lucide="check" class="w-3.5 h-3.5 text-blue-500"></i> Full-size export</li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Orientation -->
+                    <div class="bg-white border border-surface-200/80 rounded-2xl p-6 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300">
+                        <div class="w-12 h-12 rounded-xl bg-green-50 border border-green-100/60 flex items-center justify-center mb-5 text-[22px] font-bold text-green-600">
+                            <i data-lucide="refresh-cw" class="w-5 h-5"></i>
+                        </div>
+                        <h4 class="text-[17px] font-bold text-surface-900 mb-4">Orientation</h4>
+                        <ul class="space-y-3">
+                            <li class="text-surface-600 text-[14px] flex items-center gap-2.5"><i data-lucide="check" class="w-3.5 h-3.5 text-green-500"></i> Portrait</li>
+                            <li class="text-surface-600 text-[14px] flex items-center gap-2.5"><i data-lucide="check" class="w-3.5 h-3.5 text-green-500"></i> Landscape</li>
+                            <li class="text-surface-600 text-[14px] flex items-center gap-2.5"><i data-lucide="check" class="w-3.5 h-3.5 text-green-500"></i> EXIF orientation</li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Output -->
+                    <div class="bg-white border border-surface-200/80 rounded-2xl p-6 shadow-sm hover:shadow-md hover:-translate-y-1 transition-all duration-300">
+                        <div class="w-12 h-12 rounded-xl bg-orange-50 border border-orange-100/60 flex items-center justify-center mb-5 text-[22px] font-bold text-orange-500">
+                            <i data-lucide="file-image" class="w-5 h-5"></i>
+                        </div>
+                        <h4 class="text-[17px] font-bold text-surface-900 mb-4">Output</h4>
+                        <ul class="space-y-3">
+                            <li class="text-surface-600 text-[14px] flex items-center gap-2.5"><i data-lucide="check" class="w-3.5 h-3.5 text-orange-500"></i> PNG</li>
+                            <li class="text-surface-600 text-[14px] flex items-center gap-2.5"><i data-lucide="check" class="w-3.5 h-3.5 text-orange-500"></i> JPG</li>
+                            <li class="text-surface-600 text-[14px] flex items-center gap-2.5"><i data-lucide="check" class="w-3.5 h-3.5 text-orange-500"></i> WEBP where supported</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 05. HOW TO CHANGE AN IMAGE BACKGROUND -->
+            <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mb-12 md:mb-16">
+                <div class="bg-gradient-to-br from-purple-50/70 to-white rounded-[32px] border border-purple-100/60 p-8 md:p-14 shadow-sm relative overflow-hidden">
+                    <div class="text-center md:text-left mb-12 relative z-10">
+                        <h2 class="text-3xl md:text-[2.25rem] font-bold text-surface-900 mb-4 tracking-tight">How to Change an Image Background</h2>
+                    </div>
+                    
+                    <div class="grid lg:grid-cols-[50%_50%] gap-12 lg:gap-16 items-center relative z-10">
+                        <!-- Vertical Timeline -->
+                        <div class="relative w-full">
+                            <div class="space-y-8 relative">
+                                <!-- 01 -->
+                                <div class="flex gap-5">
+                                    <div class="flex-shrink-0 w-8 h-8 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-sm">01</div>
+                                    <div>
+                                        <h4 class="text-[17px] font-bold text-surface-900 mb-1.5">Select Your Image</h4>
+                                        <p class="text-surface-500 text-[15px] leading-relaxed">Upload or drag and drop a supported image.</p>
+                                    </div>
+                                </div>
+                                <!-- 02 -->
+                                <div class="flex gap-5">
+                                    <div class="flex-shrink-0 w-8 h-8 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-sm">02</div>
+                                    <div>
+                                        <h4 class="text-[17px] font-bold text-surface-900 mb-1.5">Prepare the Foreground</h4>
+                                        <p class="text-surface-500 text-[15px] leading-relaxed">ScanPDF isolates the foreground from the existing background.</p>
+                                    </div>
+                                </div>
+                                <!-- 03 -->
+                                <div class="flex gap-5">
+                                    <div class="flex-shrink-0 w-8 h-8 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-sm">03</div>
+                                    <div>
+                                        <h4 class="text-[17px] font-bold text-surface-900 mb-1.5">Choose Your Background</h4>
+                                        <p class="text-surface-500 text-[15px] leading-relaxed">Select a color, transparent background, or another image.</p>
+                                    </div>
+                                </div>
+                                <!-- 04 -->
+                                <div class="flex gap-5">
+                                    <div class="flex-shrink-0 w-8 h-8 rounded-full bg-purple-100 text-purple-700 flex items-center justify-center font-bold text-sm">04</div>
+                                    <div>
+                                        <h4 class="text-[17px] font-bold text-surface-900 mb-1.5">Apply & Download</h4>
+                                        <p class="text-surface-500 text-[15px] leading-relaxed">Preview the result, apply the background and download the final image.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Mini UI Visual -->
+                        <div class="flex justify-center lg:justify-end w-full">
+                            <div class="bg-white p-7 rounded-[24px] shadow-[0_12px_40px_rgb(0,0,0,0.06)] border border-surface-200/60 w-full max-w-[400px]">
+                                <div class="font-bold text-surface-900 text-[15px] text-center mb-6">Change Background Editor</div>
+                                
+                                <div class="bg-white border border-surface-200/80 rounded-lg p-3.5 flex items-center justify-between mb-5 shadow-sm">
+                                    <div class="flex items-center gap-3">
+                                        <div class="w-9 h-9 rounded-md bg-purple-50 flex items-center justify-center">
+                                            <i data-lucide="image" class="w-4 h-4 text-purple-600"></i>
+                                        </div>
+                                        <div>
+                                            <div class="text-[13px] font-bold text-surface-900">image.jpg</div>
+                                            <div class="text-[11px] text-surface-500 mt-0.5">Isolated</div>
+                                        </div>
+                                    </div>
+                                    <i data-lucide="check-circle-2" class="w-4 h-4 text-green-500"></i>
+                                </div>
+                                
+                                <div class="mb-5">
+                                    <div class="grid grid-cols-3 gap-2">
+                                        <div class="h-8 bg-purple-100 rounded text-xs font-bold flex items-center justify-center text-purple-700">Color</div>
+                                        <div class="h-8 bg-surface-100 rounded"></div>
+                                        <div class="h-8 bg-surface-100 rounded"></div>
+                                    </div>
+                                </div>
+                                
+                                <div class="w-full bg-purple-600 text-white rounded-xl py-3.5 text-center font-bold text-[14px] shadow-sm">
+                                    APPLY BACKGROUND
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 06. DESIGNED FOR DIFFERENT IMAGES -->
+            <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mb-12 md:mb-16">
+                <div class="text-center mb-12 md:mb-16">
+                    <h2 class="text-3xl md:text-[2.25rem] font-bold text-surface-900 mb-5 tracking-tight">Designed for Different Images</h2>
+                </div>
+                
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <!-- Portraits -->
+                    <div class="bg-surface-50/50 border border-surface-200/60 rounded-2xl p-6 text-center hover:bg-white hover:shadow-md hover:border-purple-200 transition-all duration-300">
+                        <div class="w-14 h-16 mx-auto bg-white border border-surface-200 shadow-sm rounded flex flex-col items-center justify-center p-2 mb-5">
+                            <i data-lucide="user" class="w-6 h-6 text-surface-400"></i>
+                        </div>
+                        <h4 class="text-[15px] font-bold text-surface-900 mb-2 uppercase tracking-wide">Portraits</h4>
+                        <p class="text-surface-500 text-[14px] leading-relaxed">Replace distracting portrait backgrounds.</p>
+                    </div>
+                    
+                    <!-- Product Photos -->
+                    <div class="bg-surface-50/50 border border-surface-200/60 rounded-2xl p-6 text-center hover:bg-white hover:shadow-md hover:border-purple-200 transition-all duration-300">
+                        <div class="w-14 h-16 mx-auto bg-white border border-surface-200 shadow-sm rounded flex flex-col items-center justify-center p-2 mb-5">
+                            <i data-lucide="shopping-bag" class="w-6 h-6 text-surface-400"></i>
+                        </div>
+                        <h4 class="text-[15px] font-bold text-surface-900 mb-2 uppercase tracking-wide">Product Photos</h4>
+                        <p class="text-surface-500 text-[14px] leading-relaxed">Create cleaner product presentation images.</p>
+                    </div>
+                    
+                    <!-- Profile Images -->
+                    <div class="bg-surface-50/50 border border-surface-200/60 rounded-2xl p-6 text-center hover:bg-white hover:shadow-md hover:border-purple-200 transition-all duration-300">
+                        <div class="w-14 h-16 mx-auto bg-white border border-surface-200 shadow-sm rounded flex flex-col items-center justify-center p-2 mb-5">
+                            <i data-lucide="smile" class="w-6 h-6 text-surface-400"></i>
+                        </div>
+                        <h4 class="text-[15px] font-bold text-surface-900 mb-2 uppercase tracking-wide">Profile Images</h4>
+                        <p class="text-surface-500 text-[14px] leading-relaxed">Use solid or transparent profile backgrounds.</p>
+                    </div>
+                    
+                    <!-- Creative Graphics -->
+                    <div class="bg-surface-50/50 border border-surface-200/60 rounded-2xl p-6 text-center hover:bg-white hover:shadow-md hover:border-purple-200 transition-all duration-300">
+                        <div class="w-14 h-16 mx-auto bg-white border border-surface-200 shadow-sm rounded flex flex-col items-center justify-center p-2 mb-5">
+                            <i data-lucide="brush" class="w-6 h-6 text-surface-400"></i>
+                        </div>
+                        <h4 class="text-[15px] font-bold text-surface-900 mb-2 uppercase tracking-wide">Creative Graphics</h4>
+                        <p class="text-surface-500 text-[14px] leading-relaxed">Combine subjects with custom background designs.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 07. WHY USE SCANPDF CHANGE BACKGROUND -->
+            <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mb-12 md:mb-16">
+                <div class="text-center mb-12 md:mb-16">
+                    <h2 class="text-3xl md:text-[2.25rem] font-bold text-surface-900 mb-5 tracking-tight">Why Use ScanPDF Change Background</h2>
+                </div>
+                
+                <div class="grid md:grid-cols-[1fr_1fr] gap-6">
+                    <div class="bg-purple-600 rounded-[24px] p-8 md:p-12 text-white relative overflow-hidden flex flex-col justify-center">
+                        <div class="absolute top-0 right-0 w-64 h-64 bg-purple-500 rounded-full blur-[80px] -z-0"></div>
+                        <div class="relative z-10">
+                            <div class="w-12 h-12 bg-white/20 rounded-xl flex items-center justify-center mb-6">
+                                <i data-lucide="palette" class="w-6 h-6 text-white"></i>
+                            </div>
+                            <h3 class="text-2xl font-bold mb-4">Visual Background Editing</h3>
+                            <p class="text-purple-100 text-[17px] leading-relaxed">
+                                Upload an image, choose a new background, preview the result and export the finished image through one simple workflow.
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div class="space-y-6">
+                        <div class="bg-white border border-surface-200/80 rounded-[24px] p-8 flex items-start gap-5 shadow-sm">
+                            <div class="w-10 h-10 bg-purple-50 text-purple-600 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                                <i data-lucide="scissors" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-[17px] font-bold text-surface-900 mb-2">Foreground-Aware Processing</h4>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white border border-surface-200/80 rounded-[24px] p-8 flex items-start gap-5 shadow-sm">
+                            <div class="w-10 h-10 bg-purple-50 text-purple-600 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                                <i data-lucide="image" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-[17px] font-bold text-surface-900 mb-2">Custom Background Options</h4>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white border border-surface-200/80 rounded-[24px] p-8 flex items-start gap-5 shadow-sm">
+                            <div class="w-10 h-10 bg-purple-50 text-purple-600 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                                <i data-lucide="download" class="w-5 h-5"></i>
+                            </div>
+                            <div>
+                                <h4 class="text-[17px] font-bold text-surface-900 mb-2">Direct Image Download</h4>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- STATE 2: PROCESSING / EXTRACTING FOREGROUND -->
+    <div id="state-processing" class="hidden min-h-[60vh] flex flex-col items-center justify-center p-8">
+        <div class="w-20 h-20 bg-purple-50 rounded-full flex items-center justify-center mb-6 relative">
+            <div class="absolute inset-0 border-4 border-purple-200 rounded-full"></div>
+            <div class="absolute inset-0 border-4 border-purple-600 rounded-full border-t-transparent animate-spin"></div>
+            <i data-lucide="scissors" class="w-8 h-8 text-purple-600"></i>
+        </div>
+        <h2 id="process-title" class="text-3xl font-extrabold text-surface-900 mb-4 tracking-tight">Removing original background...</h2>
+        <p class="text-surface-500 font-medium text-lg max-w-md text-center">Using advanced AI to isolate the foreground. This may take a few seconds.</p>
+    </div>
+    
+    <div id="state-error" class="hidden min-h-[60vh] flex flex-col items-center justify-center p-8">
+        <div class="w-20 h-20 bg-red-50 text-red-500 rounded-full flex items-center justify-center mb-6">
+            <i data-lucide="alert-circle" class="w-10 h-10"></i>
+        </div>
+        <h2 class="text-3xl font-extrabold text-surface-900 mb-4 tracking-tight">Processing Failed</h2>
+        <p id="error-message" class="text-surface-500 font-medium text-lg max-w-md text-center mb-8">An error occurred.</p>
+        <button id="btn-try-again" class="px-8 py-3 bg-surface-100 hover:bg-surface-200 text-surface-700 font-bold rounded-xl transition-colors">
+            Try Again
+        </button>
+    </div>
+
+    <!-- STATE 3: EDITOR -->
+    <div id="state-editor" class="hidden bg-surface-50 min-h-screen py-10">
+        <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8">
+            
+            <div class="bg-white border border-surface-200 rounded-2xl p-4 mb-6 flex flex-wrap items-center justify-between gap-4 shadow-sm">
+                <div class="flex items-center gap-4">
+                    <div class="w-12 h-12 bg-purple-100 text-purple-600 rounded-xl flex items-center justify-center">
+                        <i data-lucide="image" class="w-6 h-6"></i>
+                    </div>
+                    <div>
+                        <h3 id="info-filename" class="font-bold text-surface-900 text-lg">image.jpg</h3>
+                        <p id="info-meta" class="text-sm font-medium text-surface-500">2400 × 3600 • 2.4 MB</p>
+                    </div>
+                </div>
+                <button id="btn-cancel" class="px-6 py-2.5 text-surface-600 font-bold hover:bg-surface-100 rounded-xl transition-colors">
+                    Start Over
+                </button>
+            </div>
+            
+            <div class="editor-layout">
+                <!-- PREVIEW AREA -->
+                <div class="flex flex-col gap-4">
+                    <div class="preview-container checkerboard-bg" id="preview-container">
+                        <div class="preview-inner" id="preview-inner">
+                            <img id="base-image" class="foreground-image" alt="Foreground">
+                        </div>
+                    </div>
+                    <div class="flex justify-center items-center gap-4 bg-white border border-surface-200 rounded-xl p-3 shadow-sm mx-auto w-max">
+                        <button id="btn-zoom-out" class="w-10 h-10 flex items-center justify-center text-surface-600 hover:bg-surface-100 rounded-lg"><i data-lucide="minus"></i></button>
+                        <span id="zoom-level" class="font-bold text-surface-700 min-w-[3rem] text-center">100%</span>
+                        <button id="btn-zoom-in" class="w-10 h-10 flex items-center justify-center text-surface-600 hover:bg-surface-100 rounded-lg"><i data-lucide="plus"></i></button>
+                        <div class="w-px h-6 bg-surface-200 mx-2"></div>
+                        <button id="btn-zoom-fit" class="px-4 py-2 text-sm font-bold text-surface-600 hover:bg-surface-100 rounded-lg">Fit</button>
+                    </div>
+                </div>
+
+                <!-- CONTROLS AREA -->
+                <div class="settings-panel">
+                    <h3 class="font-extrabold text-xl text-surface-900 border-b border-surface-100 pb-4">Background Controls</h3>
+                    
+                    <div class="tabs">
+                        <div class="tab active" data-bg="color">Color</div>
+                        <div class="tab" data-bg="image">Image</div>
+                        <div class="tab" data-bg="transparent">Transparent</div>
+                    </div>
+
+                    <!-- Color Panel -->
+                    <div id="panel-color" class="flex flex-col gap-6">
+                        <div class="control-group">
+                            <label class="control-label">Quick Presets</label>
+                            <div class="color-presets">
+                                <div class="color-preset active" data-hex="#ffffff" style="background: #ffffff"></div>
+                                <div class="color-preset" data-hex="#000000" style="background: #000000"></div>
+                                <div class="color-preset" data-hex="#e2e8f0" style="background: #e2e8f0"></div>
+                                <div class="color-preset" data-hex="#475569" style="background: #475569"></div>
+                                <div class="color-preset" data-hex="#ef4444" style="background: #ef4444"></div>
+                                <div class="color-preset" data-hex="#3b82f6" style="background: #3b82f6"></div>
+                                <div class="color-preset" data-hex="#22c55e" style="background: #22c55e"></div>
+                                <div class="color-preset" data-hex="#a855f7" style="background: #a855f7"></div>
+                                <div class="color-preset" data-hex="#eab308" style="background: #eab308"></div>
+                                <div class="color-preset" data-hex="#f43f5e" style="background: #f43f5e"></div>
+                            </div>
+                        </div>
+                        <div class="control-group">
+                            <label class="control-label">Custom Color (HEX)</label>
+                            <div class="flex gap-3">
+                                <input type="color" id="input-color-picker" class="w-12 h-12 p-1 rounded-lg border border-surface-300 cursor-pointer" value="#ffffff">
+                                <input type="text" id="input-color-hex" class="custom-input uppercase font-mono" value="#FFFFFF" placeholder="#FFFFFF">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Image Panel -->
+                    <div id="panel-image" class="hidden flex-col gap-6">
+                        <div class="control-group">
+                            <label class="control-label">Upload Background</label>
+                            <input type="file" id="input-bg-image" class="hidden" accept=".jpg,.jpeg,.png,.webp">
+                            <button id="btn-upload-bg" class="w-full py-4 border-2 border-dashed border-purple-300 bg-purple-50 hover:bg-purple-100 text-purple-700 font-bold rounded-xl transition-colors flex items-center justify-center gap-2">
+                                <i data-lucide="upload-cloud" class="w-5 h-5"></i> Choose Image
+                            </button>
+                            <p id="bg-image-name" class="text-xs text-center text-surface-500 font-medium mt-1 truncate"></p>
+                        </div>
+                        <div class="control-group">
+                            <label class="control-label">Fit Mode</label>
+                            <select id="input-fit-mode" class="custom-input">
+                                <option value="cover">Cover / Fill (Preserve Aspect)</option>
+                                <option value="fit">Fit inside</option>
+                                <option value="stretch">Stretch (Distort)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Transparent Panel -->
+                    <div id="panel-transparent" class="hidden flex-col gap-6">
+                        <div class="p-6 bg-surface-50 border border-surface-200 rounded-xl text-center">
+                            <i data-lucide="layout-grid" class="w-8 h-8 text-surface-400 mx-auto mb-3"></i>
+                            <h4 class="font-bold text-surface-900 mb-2">Transparent Background</h4>
+                            <p class="text-sm text-surface-500">Output will be automatically set to PNG to preserve transparency.</p>
+                        </div>
+                    </div>
+
+                    <div class="w-full h-px bg-surface-100 my-2"></div>
+
+                    <div class="control-group">
+                        <label class="control-label">Output Format</label>
+                        <select id="input-output-format" class="custom-input">
+                            <option value="original">Original Format</option>
+                            <option value="png">PNG (Supports Transparency)</option>
+                            <option value="jpg">JPG (No Transparency)</option>
+                            <option value="webp">WEBP</option>
+                        </select>
+                        <p id="format-warning" class="text-xs text-red-500 font-medium mt-1 hidden">Transparent backgrounds require PNG or WEBP output.</p>
+                    </div>
+
+                    <button id="btn-apply" class="purple-btn w-full py-4 rounded-xl font-bold text-lg tracking-wide mt-auto flex items-center justify-center gap-2">
+                        <i data-lucide="check" class="w-5 h-5"></i> APPLY BACKGROUND
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- STATE 4: SUCCESS -->
+    <div id="state-success" class="hidden bg-surface-50 min-h-screen py-16">
+        <div class="max-w-3xl mx-auto px-4">
+            <div class="success-card">
+                <div class="w-20 h-20 bg-green-100 text-green-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                    <i data-lucide="check-circle-2" class="w-10 h-10"></i>
+                </div>
+                <h2 class="text-3xl font-extrabold text-surface-900 mb-3">Background Changed Successfully</h2>
+                <p id="success-meta" class="text-surface-500 font-medium text-lg mb-8">2400 × 3600 • PNG</p>
+                
+                <img id="result-image" alt="Final Result">
+                
+                <div class="flex flex-col sm:flex-row items-center justify-center gap-4 mt-10">
+                    <a id="btn-download" href="#" download="bg_changed.png" class="purple-btn px-8 py-4 rounded-xl font-bold text-lg w-full sm:w-auto text-center flex items-center justify-center gap-2">
+                        <i data-lucide="download" class="w-5 h-5"></i> DOWNLOAD
+                    </a>
+                    <button id="btn-edit-again" class="px-8 py-4 bg-white border border-surface-200 hover:bg-surface-50 text-surface-700 font-bold rounded-xl w-full sm:w-auto transition-colors">
+                        EDIT AGAIN
+                    </button>
+                </div>
+                <div class="mt-8 pt-8 border-t border-surface-100">
+                    <button id="btn-process-another" class="text-purple-600 font-bold hover:text-purple-700 underline underline-offset-4">
+                        Process another image
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
 
 <script>
-
-/* =========================================================
-   DJANGO VALUES
-   ========================================================= */
-
-const TOOL_SLUG = '{{ tool_slug }}';
-
-const PROCESS_URL =
-    '{% url "image_processor:process_tool" tool_slug %}';
-
-const CSRF_TOKEN =
-    '{{ csrf_token }}';
-
-
-/* =========================================================
-   ELEMENTS
-   ========================================================= */
-
-const selectFileArea =
-    document.getElementById('select-file-area');
-
-const selectFileBtn =
-    document.getElementById('select-file-btn');
-
-const fileInput =
-    document.getElementById('file-input');
-
-const fileSelected =
-    document.getElementById('file-selected');
-
-const singleFileView =
-    document.getElementById('single-file-view');
-
-const multiFileView =
-    document.getElementById('multi-file-view');
-
-const imageGallery =
-    document.getElementById('image-gallery');
-
-const fileName =
-    document.getElementById('file-name');
-
-const fileSize =
-    document.getElementById('file-size');
-
-const removeFileBtn =
-    document.getElementById('remove-file-btn');
-
-const convertBtn =
-    document.getElementById('convert-btn');
-
-const progressSection =
-    document.getElementById('progress-section');
-
-const progressBar =
-    document.getElementById('progress-bar');
-
-const progressPercent =
-    document.getElementById('progress-percent');
-
-const successSection =
-    document.getElementById('success-section');
-
-const errorSection =
-    document.getElementById('error-section');
-
-const errorMessage =
-    document.getElementById('error-message');
-
-const downloadBtn =
-    document.getElementById('download-btn');
-
-const convertAnotherBtn =
-    document.getElementById('convert-another-btn');
-
-const addMoreBtn =
-    document.getElementById('add-more-btn');
-
-
-/* =========================================================
-   AUDIO
-   ========================================================= */
-
-const audioInput =
-    document.getElementById('audio-input');
-
-const audioDropZone =
-    document.getElementById('audio-drop-zone');
-
-const audioFileName =
-    document.getElementById('audio-file-name');
-
-const audioFileSize =
-    document.getElementById('audio-file-size');
-
-const removeAudioBtn =
-    document.getElementById('remove-audio-btn');
-
-
-/* =========================================================
-   CROPPER
-   ========================================================= */
-
-let cropper = null;
-
-const cropperWrapper =
-    document.getElementById('cropper-wrapper');
-
-const cropperImage =
-    document.getElementById('cropper-image');
-
-const cropperLoader =
-    document.getElementById('cropper-loader');
-
-
-/* =========================================================
-   VARIABLES
-   ========================================================= */
-
-let selectedFiles = [];
-
-let sortable = null;
-
-let progressInterval = null;
-
-
-/* =========================================================
-   SELECT FILE
-   ========================================================= */
-
-selectFileBtn.addEventListener(
-    'click',
-    function(event) {
-
-        event.stopPropagation();
-
-        fileInput.click();
-
-    }
-);
-
-
-/* =========================================================
-   UPLOAD AREA CLICK
-   ========================================================= */
-
-selectFileArea.addEventListener(
-    'click',
-    function(event) {
-
-        if (event.target.closest('#remove-file-btn')) {
-            return;
-        }
-
-        if (event.target.closest('#add-more-btn')) {
-            return;
-        }
-
-        if (event.target.closest('#select-file-btn')) {
-            return;
-        }
-
-        fileInput.click();
-
-    }
-);
-
-
-/* =========================================================
-   ADD MORE
-   ========================================================= */
-
-if (addMoreBtn) {
-
-    addMoreBtn.addEventListener(
-        'click',
-        function(event) {
-
-            event.stopPropagation();
-
-            fileInput.click();
-
-        }
-    );
-
-}
-
-
-/* =========================================================
-   FILE CHANGE
-   ========================================================= */
-
-fileInput.addEventListener(
-    'change',
-    function(event) {
-
-        if (
-            event.target.files &&
-            event.target.files.length
-        ) {
-
-            handleFiles(event.target.files);
-
-        }
-
-    }
-);
-
-
-/* =========================================================
-   DRAG
-   ========================================================= */
-
-selectFileArea.addEventListener(
-    'dragover',
-    function(event) {
-
-        event.preventDefault();
-
-        selectFileArea.classList.add(
-            'drag-active'
-        );
-
-    }
-);
-
-
-selectFileArea.addEventListener(
-    'dragleave',
-    function(event) {
-
-        event.preventDefault();
-
-        selectFileArea.classList.remove(
-            'drag-active'
-        );
-
-    }
-);
-
-
-selectFileArea.addEventListener(
-    'drop',
-    function(event) {
-
-        event.preventDefault();
-
-        selectFileArea.classList.remove(
-            'drag-active'
-        );
-
-        if (
-            event.dataTransfer.files &&
-            event.dataTransfer.files.length
-        ) {
-
-            handleFiles(
-                event.dataTransfer.files
-            );
-
-        }
-
-    }
-);
-
-
-/* =========================================================
-   HANDLE FILES
-   ========================================================= */
-
-function handleFiles(files) {
-
-    const newFiles = Array.from(files);
-
-    for (const file of newFiles) {
-
-        if (file.size > 52428800) {
-
-            showError(
-                'File exceeds the 50MB limit.'
-            );
-
-            return;
-
-        }
-
-    }
-
-
-    if (
-        TOOL_SLUG === 'image-to-video' ||
-        '{{ tool.multi_file }}' === 'True'
-    ) {
-
-        selectedFiles = [
-            ...selectedFiles,
-            ...newFiles
-        ];
-
-        renderGallery();
-
-    } else {
-
-        selectedFiles = [
-            newFiles[0]
-        ];
-
-        renderSingleFile(
-            selectedFiles[0]
-        );
-
-    }
-
-
-    fileSelected.classList.remove(
-        'hidden'
-    );
-
-
-    convertBtn.disabled = false;
-
-    errorSection.classList.add(
-        'hidden'
-    );
-
-
-    if (
-        typeof lucide !== 'undefined'
-    ) {
-
-        lucide.createIcons();
-
-    }
-
-}
-
-
-/* =========================================================
-   SINGLE FILE
-   ========================================================= */
-
-function renderSingleFile(file) {
-
-    if (singleFileView) {
-
-        singleFileView.classList.remove(
-            'hidden'
-        );
-
-    }
-
-    if (multiFileView) {
-
-        multiFileView.classList.add(
-            'hidden'
-        );
-
-    }
-
-
-    fileName.textContent =
-        file.name;
-
-    fileSize.textContent =
-        formatFileSize(file.size);
-
-
-    if (
-        TOOL_SLUG === 'cut-image' &&
-        file.type.startsWith('image/')
-    ) {
-
-        initCropper(file);
-
-    }
-
-}
-
-
-/* =========================================================
-   MULTI FILE
-   ========================================================= */
-
-function renderGallery() {
-
-    singleFileView.classList.add(
-        'hidden'
-    );
-
-    multiFileView.classList.remove(
-        'hidden'
-    );
-
-    imageGallery.innerHTML = '';
-
-
-    selectedFiles.forEach(
-        function(file, index) {
-
-            const reader =
-                new FileReader();
-
-            const item =
-                document.createElement('div');
-
-            item.className =
-                'gallery-item';
-
-            item.dataset.index =
-                index;
-
-
-            item.innerHTML = `
-
-                <img src="" alt="preview">
-
-                <div
-                    class="remove-item"
-                    onclick="removeGalleryItem(${index})">
-
-                    <i
-                        data-lucide="x"
-                        class="w-3 h-3">
-                    </i>
-
-                </div>
-
-            `;
-
-
-            imageGallery.appendChild(
-                item
-            );
-
-
-            reader.onload =
-                function(event) {
-
-                    item.querySelector('img').src =
-                        event.target.result;
-
-                };
-
-
-            reader.readAsDataURL(file);
-
-        }
-    );
-
-
-    if (!sortable) {
-
-        sortable =
-            new Sortable(
-                imageGallery,
-                {
-
-                    animation: 150,
-
-                    ghostClass:
-                        'sortable-ghost',
-
-                    onEnd: function() {
-
-                        const newOrder =
-                            Array.from(
-                                imageGallery.children
-                            ).map(
-                                function(el) {
-
-                                    return parseInt(
-                                        el.dataset.index
-                                    );
-
-                                }
-                            );
-
-
-                        selectedFiles =
-                            newOrder.map(
-                                function(index) {
-
-                                    return selectedFiles[
-                                        index
-                                    ];
-
-                                }
-                            );
-
-
-                        renderGallery();
-
-                    }
-
-                }
-            );
-
-    }
-
-
-    if (
-        typeof lucide !== 'undefined'
-    ) {
-
-        lucide.createIcons();
-
-    }
-
-}
-
-
-window.removeGalleryItem =
-    function(index) {
-
-        selectedFiles.splice(
-            index,
-            1
-        );
-
-
-        if (
-            selectedFiles.length === 0
-        ) {
-
-            resetUpload();
-
-        } else {
-
-            renderGallery();
-
-        }
-
+let originalFile = null;
+let originalMeta = { w:0, h:0, ext:'jpg' };
+let foregroundBlob = null; // Contains transparent PNG from backend
+let bgImageFile = null;
+let bgImageUrl = null;
+
+let config = {
+    bg_type: 'color', // color, image, transparent
+    bg_color: '#ffffff',
+    fit_mode: 'cover',
+    output_format: 'original'
+};
+
+const stateUpload = document.getElementById('state-upload');
+const stateProcessing = document.getElementById('state-processing');
+const stateEditor = document.getElementById('state-editor');
+const stateError = document.getElementById('state-error');
+const stateSuccess = document.getElementById('state-success');
+const processTitle = document.getElementById('process-title');
+
+// UI Bindings
+const fileInput = document.getElementById('file-input');
+const dropZone = document.getElementById('drop-zone');
+const btnSelect = document.getElementById('btn-select-file');
+
+btnSelect.onclick = () => fileInput.click();
+dropZone.onclick = (e) => { if(e.target === dropZone) fileInput.click(); };
+
+dropZone.ondragover = (e) => { e.preventDefault(); dropZone.classList.add('drag-active'); };
+dropZone.ondragleave = (e) => { e.preventDefault(); dropZone.classList.remove('drag-active'); };
+dropZone.ondrop = (e) => {
+    e.preventDefault();
+    dropZone.classList.remove('drag-active');
+    if (e.dataTransfer.files.length) handleOriginalUpload(e.dataTransfer.files[0]);
+};
+fileInput.onchange = (e) => {
+    if (e.target.files.length) handleOriginalUpload(e.target.files[0]);
+};
+
+async function handleOriginalUpload(file) {
+    originalFile = file;
+    originalMeta.ext = file.name.split('.').pop().toLowerCase();
+    
+    // Read meta
+    const img = new Image();
+    img.onload = () => {
+        originalMeta.w = img.naturalWidth;
+        originalMeta.h = img.naturalHeight;
+        document.getElementById('info-filename').textContent = file.name;
+        document.getElementById('info-meta').textContent = `${img.naturalWidth} × ${img.naturalHeight} • ${(file.size/1024/1024).toFixed(2)} MB`;
+        
+        startExtraction();
     };
-
-
-/* =========================================================
-   CROPPER
-   ========================================================= */
-
-function initCropper(file) {
-
-    if (cropper) {
-
-        cropper.destroy();
-
-        cropper = null;
-
-    }
-
-
-    const reader =
-        new FileReader();
-
-
-    reader.onload =
-        function(event) {
-
-            cropperImage.src =
-                event.target.result;
-
-            cropperImage.classList.remove(
-                'hidden'
-            );
-
-            cropperWrapper.classList.remove(
-                'hidden'
-            );
-
-            cropperLoader.classList.add(
-                'hidden'
-            );
-
-
-            cropper =
-                new Cropper(
-                    cropperImage,
-                    {
-
-                        viewMode: 2,
-
-                        dragMode: 'move',
-
-                        autoCropArea: 0.8,
-
-                        restore: false,
-
-                        guides: true,
-
-                        center: true,
-
-                        highlight: false,
-
-                        cropBoxMovable: true,
-
-                        cropBoxResizable: true,
-
-                        toggleDragModeOnDblclick:
-                            false
-
-                    }
-                );
-
-        };
-
-
-    reader.readAsDataURL(file);
-
-
-    document
-        .getElementById('crop-rotate-l')
-        ?.addEventListener(
-            'click',
-            function() {
-
-                if (cropper) {
-                    cropper.rotate(-90);
-                }
-
-            }
-        );
-
-
-    document
-        .getElementById('crop-rotate-r')
-        ?.addEventListener(
-            'click',
-            function() {
-
-                if (cropper) {
-                    cropper.rotate(90);
-                }
-
-            }
-        );
-
-
-    document
-        .getElementById('crop-reset')
-        ?.addEventListener(
-            'click',
-            function() {
-
-                if (cropper) {
-                    cropper.reset();
-                }
-
-            }
-        );
-
+    img.src = URL.createObjectURL(file);
 }
 
-
-/* =========================================================
-   AUDIO
-   ========================================================= */
-
-if (audioDropZone) {
-
-    audioDropZone.addEventListener(
-        'click',
-        function() {
-
-            audioInput.click();
-
+async function startExtraction() {
+    stateUpload.classList.add('hidden');
+    stateEditor.classList.add('hidden');
+    stateError.classList.add('hidden');
+    stateSuccess.classList.add('hidden');
+    
+    stateProcessing.classList.remove('hidden');
+    processTitle.textContent = "Removing original background...";
+    
+    const formData = new FormData();
+    formData.append('file', originalFile);
+    formData.append('csrfmiddlewaretoken', CSRF_TOKEN);
+    
+    try {
+        const response = await fetch(REMOVE_BG_URL, { method: 'POST', body: formData });
+        if(!response.ok) {
+            let msg = 'Background removal failed.';
+            try { const data = await response.json(); msg = data.error || msg; } catch(e){}
+            throw new Error(msg);
         }
-    );
+        foregroundBlob = await response.blob();
+        
+        initEditor();
+    } catch (e) {
+        stateProcessing.classList.add('hidden');
+        stateError.classList.remove('hidden');
+        document.getElementById('error-message').textContent = e.message;
+    }
+}
 
+const previewInner = document.getElementById('preview-inner');
+const previewContainer = document.getElementById('preview-container');
+const baseImage = document.getElementById('base-image');
+let currentScale = 1;
+let fitScale = 1;
 
-    audioInput.addEventListener(
-        'change',
-        function(event) {
+function initEditor() {
+    stateProcessing.classList.add('hidden');
+    stateEditor.classList.remove('hidden');
+    
+    baseImage.src = URL.createObjectURL(foregroundBlob);
+    
+    baseImage.onload = () => {
+        calcFit();
+        zoomTo(fitScale);
+        syncPreview();
+    };
+}
 
-            if (event.target.files.length) {
+function calcFit() {
+    const pad = 40;
+    const cw = previewContainer.clientWidth - pad;
+    const ch = previewContainer.clientHeight - pad;
+    const iw = originalMeta.w;
+    const ih = originalMeta.h;
+    fitScale = Math.min(cw / iw, ch / ih);
+    if (fitScale > 1) fitScale = 1;
+}
+function zoomTo(scale) {
+    currentScale = Math.max(0.1, Math.min(scale, 5));
+    previewInner.style.transform = `scale(${currentScale})`;
+    document.getElementById('zoom-level').textContent = Math.round(currentScale * 100) + '%';
+}
+document.getElementById('btn-zoom-in').onclick = () => zoomTo(currentScale * 1.2);
+document.getElementById('btn-zoom-out').onclick = () => zoomTo(currentScale / 1.2);
+document.getElementById('btn-zoom-fit').onclick = () => zoomTo(fitScale);
+window.addEventListener('resize', () => { if(!stateEditor.classList.contains('hidden')) calcFit(); });
 
-                handleAudioFile(
-                    event.target.files[0]
-                );
+// Editor Controls
+document.querySelectorAll('.tab').forEach(t => {
+    t.onclick = () => {
+        config.bg_type = t.dataset.bg;
+        syncControls();
+        syncPreview();
+    };
+});
 
-            }
+function syncControls() {
+    document.querySelectorAll('.tab').forEach(t => t.classList.toggle('active', t.dataset.bg === config.bg_type));
+    document.getElementById('panel-color').classList.toggle('hidden', config.bg_type !== 'color');
+    document.getElementById('panel-image').classList.toggle('hidden', config.bg_type !== 'image');
+    document.getElementById('panel-transparent').classList.toggle('hidden', config.bg_type !== 'transparent');
+    
+    checkFormatWarning();
+}
 
+function checkFormatWarning() {
+    const warn = document.getElementById('format-warning');
+    let f = config.output_format;
+    if (f === 'original') f = originalMeta.ext;
+    
+    if (config.bg_type === 'transparent' && ['jpg','jpeg','bmp'].includes(f)) {
+        warn.classList.remove('hidden');
+    } else {
+        warn.classList.add('hidden');
+    }
+}
+
+// Color
+document.querySelectorAll('.color-preset').forEach(p => {
+    p.onclick = () => {
+        config.bg_color = p.dataset.hex;
+        document.getElementById('input-color-picker').value = config.bg_color;
+        document.getElementById('input-color-hex').value = config.bg_color.toUpperCase();
+        syncPreview();
+        
+        document.querySelectorAll('.color-preset').forEach(el => el.classList.remove('active'));
+        p.classList.add('active');
+    };
+});
+document.getElementById('input-color-picker').oninput = (e) => {
+    config.bg_color = e.target.value;
+    document.getElementById('input-color-hex').value = config.bg_color.toUpperCase();
+    document.querySelectorAll('.color-preset').forEach(el => el.classList.toggle('active', el.dataset.hex === config.bg_color));
+    syncPreview();
+};
+document.getElementById('input-color-hex').oninput = (e) => {
+    let val = e.target.value;
+    if(/^#[0-9A-F]{6}$/i.test(val)) {
+        config.bg_color = val.toLowerCase();
+        document.getElementById('input-color-picker').value = config.bg_color;
+        syncPreview();
+    }
+};
+
+// Image
+document.getElementById('btn-upload-bg').onclick = () => document.getElementById('input-bg-image').click();
+document.getElementById('input-bg-image').onchange = (e) => {
+    if(e.target.files.length) {
+        bgImageFile = e.target.files[0];
+        document.getElementById('bg-image-name').textContent = bgImageFile.name;
+        if (bgImageUrl) URL.revokeObjectURL(bgImageUrl);
+        bgImageUrl = URL.createObjectURL(bgImageFile);
+        syncPreview();
+    }
+};
+document.getElementById('input-fit-mode').onchange = (e) => {
+    config.fit_mode = e.target.value;
+    syncPreview();
+};
+document.getElementById('input-output-format').onchange = (e) => {
+    config.output_format = e.target.value;
+    checkFormatWarning();
+};
+
+function syncPreview() {
+    if (config.bg_type === 'transparent') {
+        previewInner.style.backgroundColor = 'transparent';
+        previewInner.style.backgroundImage = 'none';
+        previewContainer.classList.add('checkerboard-bg');
+    } else if (config.bg_type === 'color') {
+        previewContainer.classList.remove('checkerboard-bg');
+        previewInner.style.backgroundColor = config.bg_color;
+        previewInner.style.backgroundImage = 'none';
+    } else if (config.bg_type === 'image' && bgImageUrl) {
+        previewContainer.classList.remove('checkerboard-bg');
+        previewInner.style.backgroundColor = 'transparent';
+        previewInner.style.backgroundImage = `url(${bgImageUrl})`;
+        
+        if (config.fit_mode === 'cover') {
+            previewInner.style.backgroundSize = 'cover';
+        } else if (config.fit_mode === 'fit') {
+            previewInner.style.backgroundSize = 'contain';
+            previewInner.style.backgroundRepeat = 'no-repeat';
+            previewInner.style.backgroundPosition = 'center';
+        } else {
+            previewInner.style.backgroundSize = '100% 100%';
         }
-    );
-
-}
-
-
-function handleAudioFile(file) {
-
-    if (
-        !file.type.startsWith('audio/')
-    ) {
-
-        alert(
-            'Please select a valid audio file.'
-        );
-
-        return;
-
     }
-
-
-    audioFileName.textContent =
-        file.name;
-
-    audioFileSize.textContent =
-        formatFileSize(file.size);
-
-    removeAudioBtn.classList.remove(
-        'hidden'
-    );
-
 }
 
-
-if (removeAudioBtn) {
-
-    removeAudioBtn.addEventListener(
-        'click',
-        function(event) {
-
-            event.stopPropagation();
-
-            audioInput.value = '';
-
-            audioFileName.textContent =
-                'Choose background music';
-
-            audioFileSize.textContent =
-                'MP3, WAV, M4A up to 20MB';
-
-            removeAudioBtn.classList.add(
-                'hidden'
-            );
-
+// Apply
+document.getElementById('btn-apply').onclick = async () => {
+    stateEditor.classList.add('hidden');
+    stateProcessing.classList.remove('hidden');
+    processTitle.textContent = "Compositing Final Image...";
+    
+    const formData = new FormData();
+    // Send the transparent FOREGROUND instead of original!
+    formData.append('file', new File([foregroundBlob], 'foreground.png', {type: 'image/png'}));
+    formData.append('bg_type', config.bg_type);
+    formData.append('bg_color', config.bg_color);
+    formData.append('fit_mode', config.fit_mode);
+    formData.append('output_format', config.output_format);
+    if(config.bg_type === 'image' && bgImageFile) formData.append('bg_image', bgImageFile);
+    formData.append('csrfmiddlewaretoken', CSRF_TOKEN);
+    
+    try {
+        const response = await fetch(PROCESS_URL, { method: 'POST', body: formData });
+        if(!response.ok) {
+            let msg = 'Failed to generate background.';
+            try { const data = await response.json(); msg = data.error || msg; } catch(e){}
+            throw new Error(msg);
         }
-    );
-
-}
-
-
-/* =========================================================
-   FILE SIZE
-   ========================================================= */
-
-function formatFileSize(bytes) {
-
-    if (bytes === 0) {
-        return '0 Bytes';
+        const blob = await response.blob();
+        
+        stateProcessing.classList.add('hidden');
+        stateSuccess.classList.remove('hidden');
+        
+        const url = URL.createObjectURL(blob);
+        document.getElementById('result-image').src = url;
+        
+        let ext = config.output_format === 'original' ? originalMeta.ext : config.output_format;
+        if (config.bg_type === 'transparent' && ['jpg','jpeg','bmp'].includes(ext)) ext = 'png';
+        
+        document.getElementById('btn-download').href = url;
+        document.getElementById('btn-download').download = `bg_changed.${ext}`;
+        document.getElementById('success-meta').textContent = `${originalMeta.w} × ${originalMeta.h} • ${ext.toUpperCase()}`;
+        
+    } catch(e) {
+        stateProcessing.classList.add('hidden');
+        stateError.classList.remove('hidden');
+        document.getElementById('error-message').textContent = e.message;
     }
-
-
-    const k = 1024;
-
-    const sizes = [
-        'Bytes',
-        'KB',
-        'MB',
-        'GB'
-    ];
-
-
-    const i =
-        Math.floor(
-            Math.log(bytes) /
-            Math.log(k)
-        );
-
-
-    return (
-        parseFloat(
-            (
-                bytes /
-                Math.pow(k, i)
-            ).toFixed(2)
-        )
-        +
-        ' '
-        +
-        sizes[i]
-    );
-
-}
-
-
-/* =========================================================
-   REMOVE FILE
-   ========================================================= */
-
-removeFileBtn.addEventListener(
-    'click',
-    function(event) {
-
-        event.stopPropagation();
-
-        resetUpload();
-
-    }
-);
-
-
-/* =========================================================
-   RESET
-   ========================================================= */
-
-function resetUpload() {
-
-    selectedFiles = [];
-
-    fileInput.value = '';
-
-
-    fileSelected.classList.add(
-        'hidden'
-    );
-
-
-    convertBtn.disabled = true;
-
-    convertBtn.classList.remove(
-        'hidden'
-    );
-
-
-    progressSection.classList.add(
-        'hidden'
-    );
-
-    successSection.classList.add(
-        'hidden'
-    );
-
-    errorSection.classList.add(
-        'hidden'
-    );
-
-
-    if (cropper) {
-
-        cropper.destroy();
-
-        cropper = null;
-
-    }
-
-
-    if (cropperWrapper) {
-
-        cropperWrapper.classList.add(
-            'hidden'
-        );
-
-    }
-
-
-    if (cropperImage) {
-
-        cropperImage.src = '';
-
-        cropperImage.classList.add(
-            'hidden'
-        );
-
-    }
-
-
-    if (cropperLoader) {
-
-        cropperLoader.classList.remove(
-            'hidden'
-        );
-
-    }
-
-
-    if (sortable) {
-
-        sortable.destroy();
-
-        sortable = null;
-
-    }
-
-
-    if (imageGallery) {
-
-        imageGallery.innerHTML = '';
-
-    }
-
-
-    if (progressBar) {
-
-        progressBar.style.width =
-            '0%';
-
-    }
-
-
-    if (progressPercent) {
-
-        progressPercent.textContent =
-            '0%';
-
-    }
-
-
-    if (progressInterval) {
-
-        clearInterval(
-            progressInterval
-        );
-
-        progressInterval = null;
-
-    }
-
-
-    if (
-        typeof lucide !== 'undefined'
-    ) {
-
-        lucide.createIcons();
-
-    }
-
-}
-
-
-/* =========================================================
-   PROCESS ANOTHER
-   ========================================================= */
-
-convertAnotherBtn.addEventListener(
-    'click',
-    function() {
-
-        resetUpload();
-
-    }
-);
-
-
-/* =========================================================
-   PROGRESS
-   ========================================================= */
-
-function startProgress() {
-
-    let progress = 0;
-
-    progressBar.style.width =
-        '0%';
-
-    progressPercent.textContent =
-        '0%';
-
-
-    progressInterval =
-        setInterval(
-            function() {
-
-                if (progress < 90) {
-
-                    progress +=
-                        Math.random() * 5;
-
-                    if (progress > 90) {
-                        progress = 90;
-                    }
-
-                    progress =
-                        Math.floor(progress);
-
-                    progressBar.style.width =
-                        progress + '%';
-
-                    progressPercent.textContent =
-                        progress + '%';
-
-                }
-
-            },
-            500
-        );
-
-}
-
-
-function stopProgress() {
-
-    if (progressInterval) {
-
-        clearInterval(
-            progressInterval
-        );
-
-        progressInterval = null;
-
-    }
-
-
-    progressBar.style.width =
-        '100%';
-
-    progressPercent.textContent =
-        '100%';
-
-}
-
-
-/* =========================================================
-   PROCESS
-   ========================================================= */
-
-convertBtn.addEventListener(
-    'click',
-    async function() {
-
-        if (
-            selectedFiles.length === 0
-        ) {
-
-            return;
-
-        }
-
-
-        convertBtn.classList.add(
-            'hidden'
-        );
-
-
-        progressSection.classList.remove(
-            'hidden'
-        );
-
-
-        successSection.classList.add(
-            'hidden'
-        );
-
-        errorSection.classList.add(
-            'hidden'
-        );
-
-
-        startProgress();
-
-
-        const formData =
-            new FormData();
-
-
-        selectedFiles.forEach(
-            function(file) {
-
-                formData.append(
-                    'files',
-                    file
-                );
-
-            }
-        );
-
-
-        if (
-            selectedFiles.length === 1
-        ) {
-
-            formData.append(
-                'file',
-                selectedFiles[0]
-            );
-
-        }
-
-
-        formData.append(
-            'csrfmiddlewaretoken',
-            CSRF_TOKEN
-        );
-
-
-        /* TOOL PARAMETERS */
-
-        const fields = [
-            'radius',
-            'factor',
-            'speed',
-            'color',
-            'watermark-text',
-            'width',
-            'height',
-            'angle',
-            'timestamp',
-            'fps',
-            'img-duration',
-            'target_format'
-        ];
-
-
-        fields.forEach(
-            function(id) {
-
-                const element =
-                    document.getElementById(id);
-
-                if (element) {
-
-                    let key = id;
-
-                    if (id === 'watermark-text') {
-                        key = 'text';
-                    }
-
-                    if (id === 'img-duration') {
-                        key = 'img_duration';
-                    }
-
-                    if (id === 'target_format') {
-                        key = 'target_format';
-                    }
-
-                    formData.append(
-                        key,
-                        element.value
-                    );
-
-                }
-
-            }
-        );
-
-
-        if (
-            audioInput &&
-            audioInput.files[0]
-        ) {
-
-            formData.append(
-                'audio',
-                audioInput.files[0]
-            );
-
-        }
-
-
-        /* CROP */
-
-        if (
-            TOOL_SLUG === 'cut-image' &&
-            cropper
-        ) {
-
-            const data =
-                cropper.getData(true);
-
-
-            formData.append(
-                'left',
-                data.x
-            );
-
-            formData.append(
-                'top',
-                data.y
-            );
-
-            formData.append(
-                'right',
-                data.x + data.width
-            );
-
-            formData.append(
-                'bottom',
-                data.y + data.height
-            );
-
-        }
-
-
-        try {
-
-            const response =
-                await fetch(
-                    PROCESS_URL,
-                    {
-                        method: 'POST',
-                        body: formData
-                    }
-                );
-
-
-            if (!response.ok) {
-
-                let message =
-                    'Processing failed.';
-
-
-                try {
-
-                    const data =
-                        await response.json();
-
-                    message =
-                        data.error ||
-                        message;
-
-                } catch (e) {}
-
-
-                throw new Error(
-                    message
-                );
-
-            }
-
-
-            stopProgress();
-
-
-            const disposition =
-                response.headers.get(
-                    'Content-Disposition'
-                );
-
-
-            let outputFilename =
-                'processed_file';
-
-
-            if (disposition) {
-
-                const match =
-                    disposition.match(
-                        /filename="(.+?)"/
-                    );
-
-
-                if (match) {
-
-                    outputFilename =
-                        match[1];
-
-                }
-
-            }
-
-
-            const blob =
-                await response.blob();
-
-
-            const url =
-                window.URL.createObjectURL(
-                    blob
-                );
-
-
-            downloadBtn.href =
-                url;
-
-            downloadBtn.download =
-                outputFilename;
-
-
-            progressSection.classList.add(
-                'hidden'
-            );
-
-
-            successSection.classList.remove(
-                'hidden'
-            );
-
-
-            if (
-                typeof lucide !== 'undefined'
-            ) {
-
-                lucide.createIcons();
-
-            }
-
-        }
-
-
-        catch (error) {
-
-            stopProgress();
-
-            progressSection.classList.add(
-                'hidden'
-            );
-
-            convertBtn.classList.remove(
-                'hidden'
-            );
-
-            showError(
-                error.message
-            );
-
-        }
-
-    }
-);
-
-
-/* =========================================================
-   ERROR
-   ========================================================= */
-
-function showError(message) {
-
-    errorMessage.textContent =
-        message;
-
-    errorSection.classList.remove(
-        'hidden'
-    );
-
-
-    if (
-        typeof lucide !== 'undefined'
-    ) {
-
-        lucide.createIcons();
-
-    }
-
-}
-
-
-/* =========================================================
-   INITIAL ICONS
-   ========================================================= */
-
-if (
-    typeof lucide !== 'undefined'
-) {
-
-    lucide.createIcons();
-
-}
-
+};
+
+document.getElementById('btn-cancel').onclick = () => location.reload();
+document.getElementById('btn-process-another').onclick = () => location.reload();
+document.getElementById('btn-try-again').onclick = () => {
+    stateError.classList.add('hidden');
+    stateEditor.classList.remove('hidden');
+};
+document.getElementById('btn-edit-again').onclick = () => {
+    stateSuccess.classList.add('hidden');
+    stateEditor.classList.remove('hidden');
+};
 </script>
-
 {% endblock %}

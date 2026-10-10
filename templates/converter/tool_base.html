@@ -30,7 +30,7 @@
 
 </section>
 
-{% if tool_slug != 'qrcode-generator' and tool_slug != 'word-to-pdf' and tool_slug != 'pptx-to-pdf' and tool_slug != 'excel-to-pdf' and tool_slug != 'pdf-to-image' and tool_slug != 'pdf-to-word' and tool_slug != 'pdf-to-pptx' and tool_slug != 'pdf-to-powerpoint' and tool_slug != 'png-to-jpg' and tool_slug != 'jpg-to-png' and tool_slug != 'image-to-pdf' and tool_slug != 'html-to-image' and tool_slug != 'pdf-to-pdfa' and tool_slug != 'merge-pdf' and tool_slug != 'split-pdf' and tool_slug != 'extract-pages' and tool_slug != 'remove-pages' %}
+{% if tool_slug not in "qrcode-generator,word-to-pdf,pptx-to-pdf,excel-to-pdf,pdf-to-image,pdf-to-word,pdf-to-pptx,pdf-to-powerpoint,png-to-jpg,jpg-to-png,image-to-pdf,html-to-image,pdf-to-pdfa,merge-pdf,split-pdf,extract-pages,remove-pages,image-converter,jpg-converter,png-converter,bmp-converter,gif-converter,pdf-converter,tiff-converter,webp-converter,dng-converter" %}
 {% include 'includes/tool_seo_content.html' %}
 {% endif %}
 
