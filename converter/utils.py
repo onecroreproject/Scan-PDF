@@ -470,6 +470,8 @@ def convert_pptx_to_pdf(input_path, original_name):
     try:
         import subprocess
         import shutil
+        import tempfile
+        import urllib.request
         outdir = os.path.dirname(output_path)
         soffice_cmd = os.environ.get('LIBREOFFICE_PATH')
         
@@ -489,22 +491,47 @@ def convert_pptx_to_pdf(input_path, original_name):
                         break
                         
         if not soffice_cmd:
-            raise Exception("CONVERSION_ENGINE_UNAVAILABLE: Neither PowerPoint nor LibreOffice could be found on the server.")
+            raise Exception("CONVERSION_ENGINE_UNAVAILABLE: PowerPoint conversion service is not available on this server. Neither PowerPoint nor LibreOffice could be found.")
         
-        # Execute LibreOffice headless conversion
-        process = subprocess.run([
-            soffice_cmd,
-            '--headless',
-            '--nologo',
-            '--nofirststartwizard',
-            '--convert-to', 'pdf',
-            '--outdir', outdir,
-            input_path
-        ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=120)
+        # Execute LibreOffice headless conversion with isolated profile
+        with tempfile.TemporaryDirectory() as temp_profile_dir:
+            # Format path as file:// URL for UserInstallation
+            profile_url = temp_profile_dir.replace('\\', '/')
+            if not profile_url.startswith('/'):
+                profile_url = '/' + profile_url
+            env_arg = f'-env:UserInstallation=file://{profile_url}'
+            
+            process = subprocess.run([
+                soffice_cmd,
+                env_arg,
+                '--headless',
+                '--nologo',
+                '--nofirststartwizard',
+                '--convert-to', 'pdf',
+                '--outdir', outdir,
+                input_path
+            ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=120)
         
         lo_output = os.path.join(outdir, os.path.splitext(os.path.basename(input_path))[0] + ".pdf")
         
         if os.path.exists(lo_output) and os.path.getsize(lo_output) > 0:
+            # Validate output PDF using PyMuPDF (fitz)
+            try:
+                try:
+                    import pymupdf as fitz
+                except ImportError:
+                    import fitz
+                if not hasattr(fitz, 'open') and hasattr(fitz, 'Document'):
+                    fitz.open = fitz.Document
+                
+                pdf_doc = fitz.open(lo_output)
+                if pdf_doc.page_count <= 0:
+                    pdf_doc.close()
+                    raise Exception("Output PDF has 0 pages")
+                pdf_doc.close()
+            except Exception as validate_e:
+                raise Exception(f"Output PDF validation failed: {str(validate_e)}")
+                
             if lo_output != output_path:
                 shutil.move(lo_output, output_path)
             logger.info(f"PowerPoint→PDF via LibreOffice succeeded for '{original_name}'")

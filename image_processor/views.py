@@ -233,8 +233,8 @@ IMAGE_TOOLS = {
         'title': 'Image Converter',
         'description': 'Convert images between multiple formats like JPG, PNG, WEBP, etc.',
         'icon': 'refresh-cw',
-        'accept': '.jpg,.jpeg,.png,.bmp,.webp',
-        'allowed_extensions': ['.jpg', '.jpeg', '.png', '.bmp', '.webp'],
+        'accept': '.jpg,.jpeg,.png,.bmp,.webp,.tiff,.tif,.gif,.ico',
+        'allowed_extensions': ['.jpg', '.jpeg', '.png', '.bmp', '.webp', '.tiff', '.tif', '.gif', '.ico'],
         'category': 'image-conv',
         'color': '#475569',
         'gradient': 'from-slate-500 to-slate-700',
@@ -249,8 +249,8 @@ IMAGE_TOOLS = {
         'title': 'JPG Converter',
         'description': 'Convert any image format to JPG.',
         'icon': 'file-image',
-        'accept': '.png,.bmp,.webp,.tiff',
-        'allowed_extensions': ['.png', '.bmp', '.webp', '.tiff'],
+        'accept': '.jpg,.jpeg,.png,.bmp,.webp,.tiff,.tif,.gif,.ico',
+        'allowed_extensions': ['.jpg', '.jpeg', '.png', '.bmp', '.webp', '.tiff', '.tif', '.gif', '.ico'],
         'category': 'image-conv',
         'color': '#2b6cb0',
         'gradient': 'from-blue-500 to-blue-700',
@@ -266,8 +266,8 @@ IMAGE_TOOLS = {
         'title': 'PNG Converter',
         'description': 'Convert any image format to PNG.',
         'icon': 'file-image',
-        'accept': '.jpg,.jpeg,.bmp,.webp,.tiff',
-        'allowed_extensions': ['.jpg', '.jpeg', '.bmp', '.webp', '.tiff'],
+        'accept': '.jpg,.jpeg,.png,.bmp,.webp,.tiff,.tif,.gif,.ico',
+        'allowed_extensions': ['.jpg', '.jpeg', '.png', '.bmp', '.webp', '.tiff', '.tif', '.gif', '.ico'],
         'category': 'image-conv',
         'color': '#276749',
         'gradient': 'from-green-500 to-emerald-700',
@@ -281,12 +281,12 @@ IMAGE_TOOLS = {
 
     'jpg-converter': { 'title': 'JPG Converter', 'description': 'Convert any image format to JPG.', 'icon': 'file-image', 'accept': '.png,.bmp,.webp,.tiff', 'allowed_extensions': ['.png', '.bmp', '.webp', '.tiff'], 'category': 'image-conv', 'color': '#2b6cb0', 'gradient': 'from-blue-500 to-blue-700', 'target': 'jpg' },
     'png-converter': { 'title': 'PNG Converter', 'description': 'Convert any image format to PNG.', 'icon': 'file-image', 'accept': '.jpg,.jpeg,.bmp,.webp,.tiff', 'allowed_extensions': ['.jpg', '.jpeg', '.bmp', '.webp', '.tiff'], 'category': 'image-conv', 'color': '#276749', 'gradient': 'from-green-500 to-emerald-700', 'target': 'png' },
-    'bmp-converter': { 'title': 'BMP Converter', 'description': 'Convert any image format to Windows Bitmap.', 'icon': 'file-image', 'accept': '.*', 'allowed_extensions': ['.jpg', '.jpeg', '.png', '.webp'], 'category': 'image-conv', 'color': '#c05621', 'gradient': 'from-orange-500 to-red-500', 'target': 'bmp' },
-    'gif-converter': { 'title': 'GIF Converter', 'description': 'Convert static images to GIF format.', 'icon': 'file-image', 'accept': '.*', 'allowed_extensions': ['.jpg', '.jpeg', '.png'], 'category': 'image-conv', 'color': '#6b46c1', 'gradient': 'from-purple-500 to-indigo-700', 'target': 'gif' },
-    'pdf-converter': { 'title': 'PDF Converter', 'description': 'Convert your images directly into a PDF document.', 'icon': 'file-text', 'accept': '.*', 'allowed_extensions': ['.jpg', '.jpeg', '.png'], 'category': 'image-conv', 'color': '#dc2626', 'gradient': 'from-red-500 to-red-700', 'target': 'pdf' },
-    'tiff-converter': { 'title': 'TIFF Converter', 'description': 'High-quality TIFF conversion for professional printing.', 'icon': 'file-image', 'accept': '.*', 'allowed_extensions': ['.jpg', '.jpeg', '.png'], 'category': 'image-conv', 'color': '#0d9488', 'gradient': 'from-teal-500 to-teal-700', 'target': 'tiff' },
-    'webp-converter': { 'title': 'WEBP Converter', 'description': 'Optimize your images for the web with WEBP format.', 'icon': 'file-image', 'accept': '.*', 'allowed_extensions': ['.jpg', '.jpeg', '.png'], 'category': 'image-conv', 'color': '#0ea5e9', 'gradient': 'from-sky-500 to-sky-700', 'target': 'webp' },
-    'dng-converter': { 'title': 'DNG Converter', 'description': 'DNG Digital Negative conversion placeholder.', 'icon': 'file-image', 'accept': '.*', 'allowed_extensions': ['.jpg', '.jpeg', '.png'], 'category': 'image-conv', 'color': '#111827', 'gradient': 'from-gray-700 to-black', 'target': 'tiff' },
+    'bmp-converter': { 'title': 'BMP Converter', 'description': 'Convert any image format to Windows Bitmap.', 'icon': 'file-image', 'accept': '.jpg,.jpeg,.png,.bmp,.webp,.tiff,.tif,.gif,.ico', 'allowed_extensions': ['.jpg', '.jpeg', '.png', '.bmp', '.webp', '.tiff', '.tif', '.gif', '.ico'], 'category': 'image-conv', 'color': '#c05621', 'gradient': 'from-orange-500 to-red-500', 'target': 'bmp' },
+    'gif-converter': { 'title': 'GIF Converter', 'description': 'Convert static images to GIF format.', 'icon': 'file-image', 'accept': '.jpg,.jpeg,.png,.bmp,.webp,.tiff,.tif,.gif,.ico', 'allowed_extensions': ['.jpg', '.jpeg', '.png', '.bmp', '.webp', '.tiff', '.tif', '.gif', '.ico'], 'category': 'image-conv', 'color': '#6b46c1', 'gradient': 'from-purple-500 to-indigo-700', 'target': 'gif' },
+    'pdf-converter': { 'title': 'PDF Converter', 'description': 'Convert your images directly into a PDF document.', 'icon': 'file-text', 'accept': '.jpg,.jpeg,.png,.bmp,.webp,.tiff,.tif,.gif,.ico', 'allowed_extensions': ['.jpg', '.jpeg', '.png', '.bmp', '.webp', '.tiff', '.tif', '.gif', '.ico'], 'category': 'image-conv', 'color': '#dc2626', 'gradient': 'from-red-500 to-red-700', 'target': 'pdf' },
+    'tiff-converter': { 'title': 'TIFF Converter', 'description': 'High-quality TIFF conversion for professional printing.', 'icon': 'file-image', 'accept': '.jpg,.jpeg,.png,.bmp,.webp,.tiff,.tif,.gif,.ico', 'allowed_extensions': ['.jpg', '.jpeg', '.png', '.bmp', '.webp', '.tiff', '.tif', '.gif', '.ico'], 'category': 'image-conv', 'color': '#0d9488', 'gradient': 'from-teal-500 to-teal-700', 'target': 'tiff' },
+    'webp-converter': { 'title': 'WEBP Converter', 'description': 'Optimize your images for the web with WEBP format.', 'icon': 'file-image', 'accept': '.jpg,.jpeg,.png,.bmp,.webp,.tiff,.tif,.gif,.ico', 'allowed_extensions': ['.jpg', '.jpeg', '.png', '.bmp', '.webp', '.tiff', '.tif', '.gif', '.ico'], 'category': 'image-conv', 'color': '#0ea5e9', 'gradient': 'from-sky-500 to-sky-700', 'target': 'webp' },
+    'dng-converter': { 'title': 'DNG Converter', 'description': 'DNG Digital Negative conversion placeholder.', 'icon': 'file-image', 'accept': '.jpg,.jpeg,.png,.bmp,.webp,.tiff,.tif,.gif,.ico', 'allowed_extensions': ['.jpg', '.jpeg', '.png', '.bmp', '.webp', '.tiff', '.tif', '.gif', '.ico'], 'category': 'image-conv', 'color': '#111827', 'gradient': 'from-gray-700 to-black', 'target': 'dng' },
 }
 
 def tool_page(request, tool_slug):
@@ -357,7 +357,6 @@ def tool_page(request, tool_slug):
         context
     )
 
-@csrf_exempt
 @require_POST
 def process_tool(request, tool_slug):
     if tool_slug not in IMAGE_TOOLS:
@@ -386,9 +385,13 @@ def process_tool(request, tool_slug):
             factor = request.POST.get('factor', 1.5)
             output_path = brighten_image(input_paths[0], original_name, factor=float(factor))
         elif tool_slug == 'change-background':
-            hex_color = request.POST.get('color', '#ffffff').lstrip('#')
-            bg_color = tuple(int(hex_color[i:i+2], 16) for i in (0, 2, 4))
-            output_path = change_image_background(input_paths[0], original_name, bg_color=bg_color)
+            config = request.POST.dict()
+            bg_file = request.FILES.get('bg_image')
+            bg_path = None
+            if bg_file:
+                bg_path = save_uploaded_file(bg_file)
+                input_paths.append(bg_path)
+            output_path = change_image_background(input_paths[0], original_name, config=config, bg_image_path=bg_path)
         elif tool_slug == 'remove-background':
             output_path = remove_image_background(input_paths[0], original_name)
         elif tool_slug == 'compress-image':
@@ -402,8 +405,13 @@ def process_tool(request, tool_slug):
             angle = request.POST.get('angle', 90)
             output_path = rotate_image(input_paths[0], original_name, angle=angle)
         elif tool_slug == 'watermark-image':
-            text = request.POST.get('text', 'ScanPDF')
-            output_path = watermark_image(input_paths[0], original_name, text=text)
+            config = request.POST.dict()
+            logo_file = request.FILES.get('logo')
+            logo_path = None
+            if logo_file:
+                logo_path = save_uploaded_file(logo_file)
+                input_paths.append(logo_path)
+            output_path = watermark_image(input_paths[0], original_name, config=config, logo_path=logo_path)
         elif tool_slug == 'cut-image':
             l, t, r, b = request.POST.get('left'), request.POST.get('top'), request.POST.get('right'), request.POST.get('bottom')
             output_path = crop_image(input_paths[0], original_name, l, t, r, b)
