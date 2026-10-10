@@ -56,4 +56,4 @@ opencv-python==5.0.0.93
 av==18.0.0
 
 geopy>=2.4.1
-yt-dlp>=2026.08.19
+yt-dlp>=2026.08.19onnxruntime
