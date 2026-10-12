@@ -94,6 +94,187 @@ def get_output_path(original_name, new_extension, suffix=''):
     return os.path.join(output_dir, output_name)
 
 
+def get_libreoffice_command():
+    """
+    Locate the LibreOffice / soffice executable across platforms and common install paths.
+    Checks:
+    1. LIBREOFFICE_PATH environment variable (if explicitly set)
+    2. PATH (libreoffice, soffice)
+    3. Standard Linux / Unix installation paths
+    4. Standard Windows installation paths
+    Returns the executable path or None if not found.
+    """
+    import shutil
+    import os
+
+    custom_env = os.environ.get('LIBREOFFICE_PATH')
+    if custom_env and os.path.exists(custom_env):
+        return custom_env
+
+    # 1. Check current system PATH
+    found_in_path = shutil.which("libreoffice") or shutil.which("soffice")
+    if found_in_path:
+        return found_in_path
+
+    # 2. Check standard Linux / Unix paths
+    linux_paths = [
+        "/usr/bin/libreoffice",
+        "/usr/bin/soffice",
+        "/usr/local/bin/libreoffice",
+        "/usr/local/bin/soffice",
+        "/usr/lib/libreoffice/program/soffice",
+        "/opt/libreoffice/program/soffice",
+        "/snap/bin/libreoffice",
+    ]
+    for lp in linux_paths:
+        if os.path.exists(lp):
+            return lp
+
+    # 3. Check standard Windows paths
+    if os.name == 'nt' or os.environ.get('OS', '').lower().startswith('win'):
+        windows_paths = [
+            r"C:\Program Files\LibreOffice\program\soffice.exe",
+            r"C:\Program Files\LibreOffice\program\soffice.bin",
+            r"C:\Program Files (x86)\LibreOffice\program\soffice.exe",
+            r"C:\Program Files (x86)\LibreOffice\program\soffice.bin",
+        ]
+        # Also check local app data or ProgramW6432
+        program_files = os.environ.get('ProgramFiles')
+        if program_files:
+            windows_paths.append(os.path.join(program_files, 'LibreOffice', 'program', 'soffice.exe'))
+        program_files_x86 = os.environ.get('ProgramFiles(x86)')
+        if program_files_x86:
+            windows_paths.append(os.path.join(program_files_x86, 'LibreOffice', 'program', 'soffice.exe'))
+
+        for wp in windows_paths:
+            if wp and os.path.exists(wp):
+                return wp
+
+    return None
+
+
+def get_browser_executable():
+    """
+    Locate Google Chrome, Chromium, or Edge across platforms and environment variables.
+    Checks:
+    1. Explicit environment variables:
+       CHROME_BIN, CHROME_PATH, CHROMIUM_BIN, GOOGLE_CHROME_BIN, HTML2IMAGE_CHROME_BIN
+    2. System PATH via shutil.which:
+       google-chrome, google-chrome-stable, chromium, chromium-browser, chrome, msedge
+    3. Standard Linux installation locations:
+       /usr/bin/google-chrome, /usr/bin/google-chrome-stable, /usr/bin/chromium,
+       /usr/bin/chromium-browser, /snap/bin/chromium
+    4. Standard Windows installation locations:
+       Chrome, Edge, Chromium in Program Files and LocalAppData
+    5. macOS locations:
+       Google Chrome.app, Chromium.app
+    Returns verified executable path or None.
+    """
+    import os
+    import shutil
+    import platform
+
+    def _is_valid_executable(path):
+        if not path:
+            return False
+        path = os.path.expanduser(os.path.expandvars(str(path)))
+        if os.path.isfile(path):
+            if os.name == 'nt' or os.access(path, os.X_OK):
+                return path
+        return None
+
+    # 1. Environment variables
+    env_vars = [
+        'CHROME_BIN',
+        'CHROME_PATH',
+        'CHROMIUM_BIN',
+        'GOOGLE_CHROME_BIN',
+        'HTML2IMAGE_CHROME_BIN',
+        'HTML2IMAGE_CHROME_EXE',
+    ]
+    for ev in env_vars:
+        val = os.environ.get(ev)
+        if val:
+            valid = _is_valid_executable(val)
+            if valid:
+                return valid
+
+    # 2. System PATH
+    candidates = [
+        'google-chrome',
+        'google-chrome-stable',
+        'chromium',
+        'chromium-browser',
+        'chrome',
+        'chrome.exe',
+        'msedge',
+        'msedge.exe',
+        'edge',
+    ]
+    for cand in candidates:
+        found = shutil.which(cand)
+        if found:
+            valid = _is_valid_executable(found)
+            if valid:
+                return valid
+
+    # 3. Standard Linux paths
+    if platform.system() == 'Linux' or os.name == 'posix':
+        linux_paths = [
+            '/usr/bin/google-chrome',
+            '/usr/bin/google-chrome-stable',
+            '/usr/bin/chromium',
+            '/usr/bin/chromium-browser',
+            '/snap/bin/chromium',
+            '/usr/local/bin/google-chrome',
+            '/usr/local/bin/chromium',
+            '/usr/lib/chromium/chromium',
+            '/usr/lib/chromium-browser/chromium-browser',
+        ]
+        for lp in linux_paths:
+            valid = _is_valid_executable(lp)
+            if valid:
+                return valid
+
+    # 4. Standard Windows paths
+    if os.name == 'nt' or platform.system() == 'Windows':
+        win_candidates = []
+        for pf_env in ['ProgramFiles', 'ProgramFiles(x86)', 'LocalAppData', 'ProgramW6432']:
+            base = os.environ.get(pf_env)
+            if base:
+                win_candidates.extend([
+                    os.path.join(base, 'Google', 'Chrome', 'Application', 'chrome.exe'),
+                    os.path.join(base, 'Chromium', 'Application', 'chrome.exe'),
+                    os.path.join(base, 'Microsoft', 'Edge', 'Application', 'msedge.exe'),
+                ])
+        # Common default paths
+        win_candidates.extend([
+            r'C:\Program Files\Google\Chrome\Application\chrome.exe',
+            r'C:\Program Files (x86)\Google\Chrome\Application\chrome.exe',
+            r'C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe',
+            r'C:\Program Files\Microsoft\Edge\Application\msedge.exe',
+        ])
+        for wp in win_candidates:
+            valid = _is_valid_executable(wp)
+            if valid:
+                return valid
+
+    # 5. macOS standard paths
+    if platform.system() == 'Darwin':
+        mac_paths = [
+            '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+            '/Applications/Chromium.app/Contents/MacOS/Chromium',
+            '/Applications/Microsoft Edge.app/Contents/MacOS/Microsoft Edge',
+        ]
+        for mp in mac_paths:
+            valid = _is_valid_executable(mp)
+            if valid:
+                return valid
+
+    return None
+
+
+
 # ═══════════════════════════════════════════════════════════════
 # 1. WORD (.docx) → PDF
 # ═══════════════════════════════════════════════════════════════
@@ -194,39 +375,36 @@ def convert_word_to_pdf(input_path, original_name):
     # ── Attempt 3: LibreOffice fallback (headless) ──
     try:
         import subprocess
+        import shutil
+        import tempfile
         outdir = os.path.dirname(output_path)
+        soffice_cmd = get_libreoffice_command()
         
-        # Check env variable first
-        soffice_cmd = os.environ.get('LIBREOFFICE_PATH')
-        
-        if not soffice_cmd:
-            soffice_cmd = "soffice"
-            if os.name == 'nt':
-                if os.path.exists(r"C:\Program Files\LibreOffice\program\soffice.exe"):
-                    soffice_cmd = r"C:\Program Files\LibreOffice\program\soffice.exe"
-                elif os.path.exists(r"C:\Program Files (x86)\LibreOffice\program\soffice.exe"):
-                    soffice_cmd = r"C:\Program Files (x86)\LibreOffice\program\soffice.exe"
-        
-        process = subprocess.run([
-            soffice_cmd,
-            '--headless',
-            '--nologo',
-            '--nofirststartwizard',
-            '--convert-to', 'pdf',
-            '--outdir', outdir,
-            input_path
-        ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=120)
-        
-        # LibreOffice outputs with same basename and .pdf extension
-        lo_output = os.path.join(outdir, os.path.splitext(os.path.basename(input_path))[0] + ".pdf")
-        if os.path.exists(lo_output) and os.path.getsize(lo_output) > 0:
-            if lo_output != output_path:
-                import shutil
-                shutil.move(lo_output, output_path)
-            logger.info(f"Word→PDF via LibreOffice succeeded for '{original_name}'")
-            return output_path
-        else:
-            logger.warning(f"LibreOffice returned empty or missing PDF. Stderr: {process.stderr.decode('utf-8', errors='ignore')}")
+        if soffice_cmd:
+            with tempfile.TemporaryDirectory() as temp_profile_dir:
+                profile_url = Path(temp_profile_dir).resolve().as_uri()
+                env_arg = f'-env:UserInstallation={profile_url}'
+                
+                process = subprocess.run([
+                    soffice_cmd,
+                    env_arg,
+                    '--headless',
+                    '--nologo',
+                    '--nofirststartwizard',
+                    '--convert-to', 'pdf',
+                    '--outdir', outdir,
+                    input_path
+                ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=120)
+            
+            # LibreOffice outputs with same basename and .pdf extension
+            lo_output = os.path.join(outdir, os.path.splitext(os.path.basename(input_path))[0] + ".pdf")
+            if os.path.exists(lo_output) and os.path.getsize(lo_output) > 0:
+                if lo_output != output_path:
+                    shutil.move(lo_output, output_path)
+                logger.info(f"Word→PDF via LibreOffice succeeded for '{original_name}'")
+                return output_path
+            else:
+                logger.warning(f"LibreOffice returned empty or missing PDF. Stderr: {process.stderr.decode('utf-8', errors='ignore')}")
     except Exception as e:
         logger.warning(f"LibreOffice fallback failed for '{original_name}': {e}")
 
@@ -384,176 +562,212 @@ def merge_word_files(input_paths, original_name):
 # 2. POWERPOINT (.pptx) → PDF
 # ═══════════════════════════════════════════════════════════════
 def convert_pptx_to_pdf(input_path, original_name):
-    """Convert a PowerPoint presentation (.pptx) to PDF with high-quality rendering using COM or LibreOffice."""
+    """Convert a PowerPoint presentation (.pptx / .ppt) to PDF with high-quality rendering using COM or LibreOffice."""
     import logging
     import os
     import zipfile
+    import shutil
+    import subprocess
+    import tempfile
+    from pathlib import Path
+
     logger = logging.getLogger(__name__)
-    
+
     if not input_path or not os.path.exists(input_path):
         raise Exception("The uploaded PowerPoint file could not be saved correctly.")
 
     file_size = os.path.getsize(input_path)
     if file_size == 0:
-        raise Exception("The uploaded PowerPoint file is empty.")
+        raise Exception("INVALID_DOCUMENT: The uploaded PowerPoint file is empty.")
 
-    # Validation
+    # Format / magic byte validation
     with open(input_path, 'rb') as f:
         header = f.read(8)
-    
+
     is_zip = zipfile.is_zipfile(input_path)
     is_ole = header[:8] == b'\xd0\xcf\x11\xe0\xa1\xb1\x1a\xe1'
-    
-    if is_ole:
-        raise Exception(
-            "INVALID_DOCUMENT: The uploaded file appears to be an older .ppt format (PowerPoint 97-2003). "
-            "Please save it as .pptx (PowerPoint 2007+) first, then upload again."
-        )
-    
-    if not is_zip:
-        raise Exception("INVALID_DOCUMENT: The selected file is not a valid PPTX presentation.")
 
-    try:
-        with zipfile.ZipFile(input_path, 'r') as zf:
-            file_list = zf.namelist()
-            if '[Content_Types].xml' not in file_list or 'ppt/presentation.xml' not in file_list:
-                raise ValueError("Missing core PPTX XML components.")
-    except Exception as e:
-        logger.warning(f"PPTX validation failed for '{original_name}': {e}")
-        raise Exception("INVALID_DOCUMENT: The selected PPTX file is corrupted.")
-        
+    # If it is neither an OOXML ZIP container nor an OLE legacy presentation, reject
+    if not is_zip and not is_ole:
+        raise Exception("INVALID_DOCUMENT: The selected file is not a valid PowerPoint presentation.")
+
+    if is_zip:
+        try:
+            with zipfile.ZipFile(input_path, 'r') as zf:
+                file_list = zf.namelist()
+                if '[Content_Types].xml' not in file_list or 'ppt/presentation.xml' not in file_list:
+                    raise ValueError("Missing core PPTX XML components.")
+                # Verify reading core presentation component
+                with zf.open('ppt/presentation.xml') as pres_xml:
+                    pres_xml.read(512)
+        except Exception as e:
+            logger.warning(f"PPTX validation failed for '{original_name}': {e}")
+            raise Exception("INVALID_DOCUMENT: The selected PPTX presentation is corrupted or damaged.")
+
     output_path = get_output_path(original_name, 'pdf')
 
-    # 1. Native Microsoft PowerPoint COM export
-    try:
-        import comtypes.client
-        import pythoncom
-        pythoncom.CoInitialize()
-        powerpoint_app = None
+    # 1. Native Microsoft PowerPoint COM export (Windows local/dev environment only)
+    if os.name == 'nt':
         try:
-            powerpoint_app = comtypes.client.CreateObject("PowerPoint.Application")
-            
-            # ppAlertsNone = 1
+            import comtypes.client
+            import pythoncom
+            pythoncom.CoInitialize()
+            powerpoint_app = None
             try:
-                powerpoint_app.DisplayAlerts = 1
-            except Exception:
-                pass
-                
-            # 32 = ppSaveAsPDF
-            # Open(FileName, ReadOnly, Untitled, WithWindow)
-            # Use positional arguments with integers for MsoTriState (ReadOnly=1, Untitled=0, WithWindow=0)
-            presentation = powerpoint_app.Presentations.Open(os.path.abspath(input_path), 1, 0, 0)
-            
-            try:
-                presentation.SaveAs(os.path.abspath(output_path), 32)
-            finally:
-                presentation.Close()
-            
-            powerpoint_app.Quit()
-            
-            if os.path.exists(output_path) and os.path.getsize(output_path) > 0:
-                logger.info(f"PowerPoint→PDF via COM succeeded for '{original_name}'")
-                return output_path
-        except Exception as inner_e:
-            if powerpoint_app:
+                powerpoint_app = comtypes.client.CreateObject("PowerPoint.Application")
                 try:
-                    powerpoint_app.Quit()
-                except:
+                    powerpoint_app.DisplayAlerts = 1
+                except Exception:
                     pass
-            raise inner_e
-    except ImportError:
-        logger.info("comtypes is not installed. Skipping PowerPoint COM conversion.")
-    except Exception as e:
-        logger.warning(f"COM conversion failed for '{original_name}': {e}")
 
-    # 2. LibreOffice Fallback
-    try:
-        import subprocess
-        import shutil
-        import tempfile
-        import urllib.request
-        outdir = os.path.dirname(output_path)
-        soffice_cmd = os.environ.get('LIBREOFFICE_PATH')
-        
-        if not soffice_cmd:
-            # Check PATH first for Linux/Production
-            soffice_cmd = shutil.which("libreoffice") or shutil.which("soffice")
-            
-            if not soffice_cmd and os.name == 'nt':
-                # Check common Windows paths
-                common_paths = [
-                    r"C:\Program Files\LibreOffice\program\soffice.exe",
-                    r"C:\Program Files (x86)\LibreOffice\program\soffice.exe"
-                ]
-                for path in common_paths:
-                    if os.path.exists(path):
-                        soffice_cmd = path
-                        break
-                        
-        if not soffice_cmd:
-            raise Exception("CONVERSION_ENGINE_UNAVAILABLE: PowerPoint conversion service is not available on this server. Neither PowerPoint nor LibreOffice could be found.")
-        
-        # Execute LibreOffice headless conversion with isolated profile
-        with tempfile.TemporaryDirectory() as temp_profile_dir:
-            # Format path as file:// URL for UserInstallation
-            profile_url = temp_profile_dir.replace('\\', '/')
-            if not profile_url.startswith('/'):
-                profile_url = '/' + profile_url
-            env_arg = f'-env:UserInstallation=file://{profile_url}'
-            
-            process = subprocess.run([
-                soffice_cmd,
-                env_arg,
-                '--headless',
-                '--nologo',
-                '--nofirststartwizard',
-                '--convert-to', 'pdf',
-                '--outdir', outdir,
-                input_path
-            ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, timeout=120)
-        
-        lo_output = os.path.join(outdir, os.path.splitext(os.path.basename(input_path))[0] + ".pdf")
-        
-        if os.path.exists(lo_output) and os.path.getsize(lo_output) > 0:
-            # Validate output PDF using PyMuPDF (fitz)
-            try:
+                # Open(FileName, ReadOnly=1, Untitled=0, WithWindow=0)
+                presentation = powerpoint_app.Presentations.Open(os.path.abspath(input_path), 1, 0, 0)
                 try:
-                    import pymupdf as fitz
-                except ImportError:
-                    import fitz
-                if not hasattr(fitz, 'open') and hasattr(fitz, 'Document'):
-                    fitz.open = fitz.Document
-                
-                pdf_doc = fitz.open(lo_output)
-                if pdf_doc.page_count <= 0:
-                    pdf_doc.close()
-                    raise Exception("Output PDF has 0 pages")
-                pdf_doc.close()
-            except Exception as validate_e:
-                raise Exception(f"Output PDF validation failed: {str(validate_e)}")
-                
-            if lo_output != output_path:
-                shutil.move(lo_output, output_path)
-            logger.info(f"PowerPoint→PDF via LibreOffice succeeded for '{original_name}'")
-            return output_path
-        else:
-            stderr_output = process.stderr.decode('utf-8', errors='ignore')
-            raise Exception(f"CONVERSION_FAILED: LibreOffice failed to generate PDF. Details: {stderr_output}")
-            
-    except Exception as e:
-        logger.warning(f"LibreOffice fallback failed for '{original_name}': {e}")
-        # Re-raise explicit CONVERSION errors so the user sees them
-        if "CONVERSION_" in str(e) or "INVALID_" in str(e):
-            raise
-        raise Exception(f"CONVERSION_FAILED: {str(e)}")
-        
-    if os.path.exists(output_path):
+                    # 32 = ppSaveAsPDF
+                    presentation.SaveAs(os.path.abspath(output_path), 32)
+                finally:
+                    presentation.Close()
+
+                powerpoint_app.Quit()
+
+                if os.path.exists(output_path) and os.path.getsize(output_path) > 0:
+                    # Verify PDF signature
+                    with open(output_path, 'rb') as pf:
+                        sig = pf.read(5)
+                    if sig.startswith(b'%PDF'):
+                        logger.info(f"PowerPoint→PDF via COM succeeded for '{original_name}'")
+                        return output_path
+            except Exception as inner_e:
+                if powerpoint_app:
+                    try:
+                        powerpoint_app.Quit()
+                    except Exception:
+                        pass
+                logger.warning(f"COM conversion attempt failed for '{original_name}': {inner_e}")
+        except ImportError:
+            logger.info("comtypes is not installed. Skipping PowerPoint COM conversion.")
+        except Exception as e:
+            logger.warning(f"COM initialization failed for '{original_name}': {e}")
+
+    # 2. LibreOffice Headless Engine (Production Linux VPS / Windows fallback)
+    soffice_cmd = get_libreoffice_command()
+    if not soffice_cmd:
+        logger.error(
+            f"PowerPoint conversion engine unavailable for '{original_name}'. "
+            "Neither Microsoft PowerPoint nor LibreOffice (soffice) was detected in PATH or standard system directories."
+        )
+        raise Exception(
+            "CONVERSION_ENGINE_UNAVAILABLE: PowerPoint conversion service is not available on this server. "
+            "Neither PowerPoint nor LibreOffice could be found."
+        )
+
+    # Use fully isolated workspace for concurrency safety:
+    # Dedicated input/output dir and dedicated user profile to prevent profile lock collisions
+    with tempfile.TemporaryDirectory() as isolated_workspace:
+        conv_in_dir = os.path.join(isolated_workspace, 'in')
+        conv_out_dir = os.path.join(isolated_workspace, 'out')
+        conv_profile_dir = os.path.join(isolated_workspace, 'profile')
+        os.makedirs(conv_in_dir, exist_ok=True)
+        os.makedirs(conv_out_dir, exist_ok=True)
+        os.makedirs(conv_profile_dir, exist_ok=True)
+
+        # Stage input presentation safely in isolated directory
+        # Preserve original extension (.pptx or .ppt)
+        src_ext = os.path.splitext(input_path)[1].lower() or ('.ppt' if is_ole else '.pptx')
+        isolated_input = os.path.join(conv_in_dir, f"document{src_ext}")
+        shutil.copy2(input_path, isolated_input)
+
+        profile_url = Path(conv_profile_dir).resolve().as_uri()
+        env_arg = f'-env:UserInstallation={profile_url}'
+
+        cmd = [
+            soffice_cmd,
+            env_arg,
+            '--headless',
+            '--nologo',
+            '--nofirststartwizard',
+            '--convert-to', 'pdf',
+            '--outdir', conv_out_dir,
+            isolated_input
+        ]
+
+        logger.info(f"Executing LibreOffice conversion for '{original_name}' using command: {' '.join(cmd[:4])} ...")
+
         try:
-            os.remove(output_path)
-        except OSError:
-            pass
-            
-    raise Exception("CONVERSION_FAILED: PowerPoint to PDF conversion is temporarily unavailable. Please try again later.")
+            process = subprocess.run(
+                cmd,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                timeout=120
+            )
+        except subprocess.TimeoutExpired:
+            logger.error(f"LibreOffice conversion timed out after 120s for '{original_name}'")
+            raise Exception("CONVERSION_FAILED: PowerPoint conversion timed out. The presentation may be too large or complex.")
+        except Exception as proc_e:
+            logger.error(f"Failed to execute LibreOffice process for '{original_name}': {proc_e}")
+            raise Exception(f"CONVERSION_FAILED: Failed to start conversion engine: {proc_e}")
+
+        # Locate generated PDF in isolated outdir
+        # LibreOffice names the output file with the input basename + .pdf
+        expected_pdf = os.path.join(conv_out_dir, "document.pdf")
+        candidate_pdf = None
+
+        if os.path.exists(expected_pdf) and os.path.getsize(expected_pdf) > 0:
+            candidate_pdf = expected_pdf
+        else:
+            # Fallback scan in case of alternate naming
+            for fname in os.listdir(conv_out_dir):
+                if fname.lower().endswith('.pdf'):
+                    fpath = os.path.join(conv_out_dir, fname)
+                    if os.path.getsize(fpath) > 0:
+                        candidate_pdf = fpath
+                        break
+
+        if not candidate_pdf:
+            stdout_txt = process.stdout.decode('utf-8', errors='ignore').strip()
+            stderr_txt = process.stderr.decode('utf-8', errors='ignore').strip()
+            exit_code = process.returncode
+            logger.error(
+                f"LibreOffice conversion failed for '{original_name}' (exit {exit_code}). "
+                f"stdout: '{stdout_txt}', stderr: '{stderr_txt}'"
+            )
+            raise Exception(
+                "CONVERSION_FAILED: The server was unable to convert this presentation into a PDF. "
+                "Please verify the presentation is not password protected and can be opened without errors."
+            )
+
+        # Output Validation
+        # 1. Byte check: Verify file is not empty and begins with %PDF-
+        with open(candidate_pdf, 'rb') as pf:
+            first_bytes = pf.read(5)
+        if not first_bytes.startswith(b'%PDF'):
+            logger.error(f"Generated PDF for '{original_name}' lacks %PDF signature: {first_bytes}")
+            raise Exception("CONVERSION_FAILED: Conversion produced an invalid PDF file.")
+
+        # 2. PyMuPDF integrity check and page count verification if fitz is available
+        try:
+            try:
+                import pymupdf as fitz
+            except ImportError:
+                import fitz
+            if not hasattr(fitz, 'open') and hasattr(fitz, 'Document'):
+                fitz.open = fitz.Document
+
+            doc = fitz.open(candidate_pdf)
+            page_count = len(doc)
+            doc.close()
+            if page_count < 1:
+                raise Exception("Generated PDF contains 0 pages.")
+        except Exception as val_e:
+            logger.warning(f"PyMuPDF validation note for '{original_name}': {val_e}")
+            # If fitz raised an explicit corrupted error, fail
+            if "0 pages" in str(val_e) or "cannot open" in str(val_e).lower():
+                raise Exception(f"CONVERSION_FAILED: Output PDF validation failed ({val_e}).")
+
+        # Move verified PDF to final destination
+        shutil.move(candidate_pdf, output_path)
+        logger.info(f"PowerPoint→PDF via LibreOffice succeeded for '{original_name}' -> '{output_path}'")
+        return output_path
 
 
 # ═══════════════════════════════════════════════════════════════
@@ -1073,11 +1287,16 @@ def convert_html_to_pdf(input_path, original_name, url=None):
         _, output_dir = ensure_media_dirs()
         temp_img_name = f"render_tmp_{uuid.uuid4().hex[:8]}.png"
         
-        hti = Html2Image(
-            browser='chrome',
-            output_path=output_dir,
-            custom_flags=['--no-sandbox', '--disable-gpu', '--hide-scrollbars']
-        )
+        browser_bin = get_browser_executable()
+        hti_kwargs = {
+            'browser': 'chrome',
+            'output_path': output_dir,
+            'custom_flags': ['--no-sandbox', '--disable-gpu', '--hide-scrollbars', '--disable-dev-shm-usage'],
+        }
+        if browser_bin:
+            hti_kwargs['browser_executable'] = browser_bin
+
+        hti = Html2Image(**hti_kwargs)
         
         # Determine whether to render the raw string or the URL directly
         if url:
@@ -3284,7 +3503,11 @@ def html_to_image(input_data, is_file=True, output_format='png', width=1280, hei
         except (ValueError, TypeError):
             width, height = 1280, 2000
 
-        # Prepare temporary directory for isolation
+        browser_bin = get_browser_executable()
+        if not browser_bin:
+            raise Exception("Chrome or Chromium headless browser is not installed or available on this system.")
+
+        # Prepare isolated temporary directory for request
         temp_dir = tempfile.mkdtemp(prefix='html2img_')
         
         # Output filename
@@ -3293,6 +3516,7 @@ def html_to_image(input_data, is_file=True, output_format='png', width=1280, hei
 
         hti = Html2Image(
             browser='chrome',
+            browser_executable=browser_bin,
             output_path=temp_dir,
             custom_flags=[
                 '--no-sandbox',
@@ -3300,7 +3524,8 @@ def html_to_image(input_data, is_file=True, output_format='png', width=1280, hei
                 '--hide-scrollbars',
                 '--disable-extensions',
                 '--disable-dev-shm-usage',
-                '--proxy-server=http://127.0.0.1:9999', # Block all external network (SSRF protection)
+                '--proxy-server=http://127.0.0.1:9999', # Block external network / SSRF
+                '--virtual-time-budget=2000',
             ],
         )
 
@@ -3310,23 +3535,27 @@ def html_to_image(input_data, is_file=True, output_format='png', width=1280, hei
                 input_path = input_data
                 with open(input_path, 'r', encoding='utf-8', errors='replace') as f:
                     html_content = f.read()
-                hti.screenshot(
-                    html_str=html_content,
-                    save_as=temp_out_name,
-                    size=(width, height),
-                )
             else:
                 # Code Mode
                 html_content = input_data
-                hti.screenshot(
-                    html_str=html_content,
-                    save_as=temp_out_name,
-                    size=(width, height),
-                )
+
+            # Security: Prevent file:// access inside HTML
+            import re
+            html_content = re.sub(r'(?i)file://', 'blocked-scheme://', html_content)
+
+            hti.screenshot(
+                html_str=html_content,
+                save_as=temp_out_name,
+                size=(width, height),
+            )
 
             temp_output = os.path.join(temp_dir, temp_out_name)
-            if not os.path.exists(temp_output):
-                raise Exception("Capture failed - image was not generated or timeout occurred.")
+            if not os.path.exists(temp_output) or os.path.getsize(temp_output) == 0:
+                raise Exception("Capture failed - image was not generated or rendering timed out.")
+
+            # Validate generated image via Pillow
+            with Image.open(temp_output) as img_check:
+                img_check.verify()
 
             # Final output generation
             from django.conf import settings
@@ -3337,14 +3566,29 @@ def html_to_image(input_data, is_file=True, output_format='png', width=1280, hei
             if output_format in ['jpg', 'jpeg']:
                 # Convert PNG to JPG and flatten background
                 with Image.open(temp_output) as img:
-                    if img.mode in ('RGBA', 'LA'):
+                    if img.mode in ('RGBA', 'LA', 'P'):
+                        if img.mode == 'P':
+                            img = img.convert('RGBA')
                         background = Image.new('RGB', img.size, (255, 255, 255))
-                        background.paste(img, mask=img.split()[3])
+                        if img.mode in ('RGBA', 'LA'):
+                            background.paste(img, mask=img.split()[-1])
+                        else:
+                            background.paste(img)
                         background.save(final_output_path, 'JPEG', quality=95)
                     else:
                         img.convert('RGB').save(final_output_path, 'JPEG', quality=95)
             else:
+                # Validate PNG binary signature: \x89PNG\r\n\x1a\n
                 shutil.copy2(temp_output, final_output_path)
+
+            # Final sanity check on created file
+            if not os.path.exists(final_output_path) or os.path.getsize(final_output_path) == 0:
+                raise Exception("Generated output image is empty or invalid.")
+
+            with Image.open(final_output_path) as final_img:
+                final_w, final_h = final_img.size
+                if final_w <= 0 or final_h <= 0:
+                    raise Exception("Generated output image has invalid dimensions.")
 
             return final_output_path
         finally:
@@ -3352,7 +3596,10 @@ def html_to_image(input_data, is_file=True, output_format='png', width=1280, hei
             shutil.rmtree(temp_dir, ignore_errors=True)
 
     except Exception as e:
-        raise Exception(f"HTML to Image conversion failed: {str(e)}")
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f"HTML to Image error: {e}", exc_info=True)
+        raise Exception(f"{str(e)}")
 
 
 # ═══════════════════════════════════════════════════════════════

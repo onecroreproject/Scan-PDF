@@ -132,8 +132,8 @@ TOOLS = {
         'title': 'PowerPoint to PDF',
         'description': 'Convert PowerPoint presentations to PDF files quickly and easily.',
         'icon': 'presentation',
-        'accept': '.pptx',
-        'allowed_extensions': ['.pptx'],
+        'accept': '.pptx,.ppt',
+        'allowed_extensions': ['.pptx', '.ppt'],
         'converter': convert_pptx_to_pdf,
         'color': '#c05621',
         'gradient': 'from-orange-500 to-red-500',
@@ -1358,6 +1358,17 @@ def convert_file(request, tool_slug):
         if input_mode == 'file' and not uploaded_file:
             return JsonResponse({'error': 'Please upload an HTML file.'}, status=400)
 
+        # Validate viewport bounds
+        try:
+            viewport_width = int(viewport_width)
+            viewport_height = int(viewport_height)
+            if viewport_width <= 0 or viewport_height <= 0:
+                return JsonResponse({'error': 'Viewport dimensions must be positive integers.'}, status=400)
+            if viewport_width > 5000 or viewport_height > 5000:
+                return JsonResponse({'error': 'Viewport dimensions cannot exceed 5000x5000 pixels.'}, status=400)
+        except (ValueError, TypeError):
+            return JsonResponse({'error': 'Invalid viewport width or height. Must be numeric.'}, status=400)
+
         try:
             if input_mode == 'file':
                 input_path = save_uploaded_file(uploaded_file)
@@ -1382,9 +1393,23 @@ def convert_file(request, tool_slug):
                 )
 
             content_type = 'image/jpeg' if output_format in ['jpg', 'jpeg'] else 'image/png'
-            return create_cleanup_response(output_path, content_type=content_type)
+            ext = 'jpg' if output_format in ['jpg', 'jpeg'] else 'png'
+            return create_cleanup_response(output_path, content_type=content_type, filename=f"html-render.{ext}")
         except Exception as e:
-            return JsonResponse({'error': f'HTML to Image failed: {str(e)}'}, status=500)
+            err_str = str(e)
+            import logging
+            logger = logging.getLogger(__name__)
+            logger.error(f"HTML to Image conversion failed: {err_str}", exc_info=True)
+            if "Chrome or Chromium headless browser is not installed" in err_str or "Could not find a Chrome executable" in err_str:
+                return JsonResponse({
+                    'error': 'HTML to Image conversion service is temporarily unavailable on the server. Please try again later.'
+                }, status=503)
+            return JsonResponse({'error': f'HTML to Image failed: {err_str}'}, status=500)
+
+    # ── Audio Tools: audio-editor, merge-audio, extract-audio-from-video ──
+    if tool_slug in ('audio-editor', 'merge-audio', 'extract-audio-from-video'):
+        from audio_processor.views import process_audio_api
+        return process_audio_api(request)
 
     # ── Image to PDF: multiple files ──
     if tool_slug == 'image-to-pdf':

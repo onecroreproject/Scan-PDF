@@ -14,6 +14,10 @@ sudo apt update && sudo apt upgrade -y
 sudo apt install -y python3-pip python3-venv python3-dev nginx redis-server ffmpeg supervisor git
 # For python-magic
 sudo apt install -y libmagic1
+# For Word/PowerPoint/Document-to-PDF conversion (LibreOffice headless engine) & standard fonts
+sudo apt install -y libreoffice libreoffice-impress fonts-dejavu-core fonts-liberation
+# For HTML-to-Image / HTML-to-PDF (Headless Chromium browser engine)
+sudo apt install -y chromium-browser chromium
 ```
 
 ## Step 2: Project Setup
@@ -113,6 +117,8 @@ sudo journalctl -u scanpdf-celery -f
 **Large uploads failing:** Ensure `client_max_body_size 5G;` is in nginx.conf and restart nginx.
 
 **FFmpeg not found:** Install with `sudo apt install ffmpeg` and verify `ffmpeg` is in PATH.
+
+**LibreOffice / PowerPoint conversion not found:** Install with `sudo apt install -y libreoffice libreoffice-impress fonts-liberation fonts-dejavu-core` and verify with `which soffice` or `which libreoffice`. If using systemd gunicorn, ensure PATH includes `/usr/bin`.
 
 **Celery not processing:** Verify Redis is running: `redis-cli ping` should return `PONG`.
 

@@ -90,26 +90,25 @@ def change_image_background(input_path, original_name, config=None, bg_image_pat
     from PIL import Image, ImageOps
     if config is None: config = {}
     
-    img = Image.open(input_path).convert("RGBA")
+    with Image.open(input_path) as raw_img:
+        img = ImageOps.exif_transpose(raw_img).convert("RGBA")
     
     bg_type = config.get('bg_type', 'color')
     output_format = config.get('output_format', 'png').lower()
     
     # Process transparency options
     if bg_type == 'transparent':
-        output_format = 'png'
         final_img = img
     elif bg_type == 'image' and bg_image_path:
-        bg = Image.open(bg_image_path).convert("RGBA")
-        bg = ImageOps.exif_transpose(bg)
+        with Image.open(bg_image_path) as raw_bg:
+            bg = ImageOps.exif_transpose(raw_bg).convert("RGBA")
         
         fit_mode = config.get('fit_mode', 'cover')
         
         if fit_mode == 'fit':
-            # Fit the background inside the foreground dimensions, padding with transparent? Or padding with color?
-            # Typically, 'fit' means the bg image is resized to fit within the canvas, and centered.
+            # Fit the background inside the foreground dimensions, padding with transparent canvas
             bg = ImageOps.contain(bg, img.size, Image.Resampling.LANCZOS)
-            canvas = Image.new("RGBA", img.size, (0,0,0,0))
+            canvas = Image.new("RGBA", img.size, (0, 0, 0, 0))
             paste_x = (img.width - bg.width) // 2
             paste_y = (img.height - bg.height) // 2
             canvas.paste(bg, (paste_x, paste_y))
@@ -130,15 +129,14 @@ def change_image_background(input_path, original_name, config=None, bg_image_pat
         bg.paste(img, (0, 0), img)
         final_img = bg
         
-    # Edge refinement (feather) - optional if supported
-    feather = int(config.get('feather', 0))
-    if feather > 0 and bg_type != 'transparent':
-        # Applying a simple feather by blurring the alpha channel before composite
-        # Since we already pasted, we should apply feathering to the foreground *before* paste.
-        pass # Not critical for now unless strictly required, Pillow doesn't have an easy feather
-        
     if output_format in ['jpg', 'jpeg']:
-        final_img = final_img.convert("RGB")
+        # JPEG doesn't support alpha transparency; composite onto solid white if transparent
+        if final_img.mode in ('RGBA', 'LA'):
+            white_bg = Image.new("RGB", final_img.size, (255, 255, 255))
+            white_bg.paste(final_img, mask=final_img.split()[-1])
+            final_img = white_bg
+        else:
+            final_img = final_img.convert("RGB")
         ext = 'jpg'
         save_format = 'JPEG'
     elif output_format == 'webp':

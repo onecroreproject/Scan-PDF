@@ -98,7 +98,7 @@
                 SELECT FILE
             </button>
             <p id="drop-text" class="text-surface-500 text-[15px] mt-3 font-medium">Drop your supported PowerPoint file here</p>
-            <input type="file" id="file-input" class="hidden" accept=".pptx">
+            <input type="file" id="file-input" class="hidden" accept=".pptx,.ppt">
         </div>
 
         <!-- =====================================================
@@ -857,8 +857,8 @@ function formatFileSize(bytes) {
 function handleFile(file) {
     const extension = '.' + file.name.split('.').pop().toLowerCase();
     
-    if (extension !== '.pptx') {
-        errorMessage.textContent = 'Please select a valid PPTX file.';
+    if (extension !== '.pptx' && extension !== '.ppt') {
+        errorMessage.textContent = 'Please select a valid PowerPoint (.pptx or .ppt) file.';
         switchState(stateError);
         return;
     }

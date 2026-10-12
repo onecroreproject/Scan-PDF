@@ -1,14 +1,28 @@
 import os
 import mimetypes
+import logging
 from pathlib import Path
 from django.shortcuts import render
 from django.http import JsonResponse, FileResponse, Http404
 from django.views.decorators.csrf import csrf_exempt
 from django.views.decorators.http import require_POST
-from .utils import process_audio, merge_audios, extract_audio_from_video
+
+from .utils import (
+    process_audio,
+    merge_audios,
+    extract_audio_from_video,
+    probe_media,
+    SUPPORTED_AUDIO_EXTENSIONS,
+    SUPPORTED_VIDEO_EXTENSIONS,
+    SUPPORTED_OUTPUT_FORMATS,
+)
 from converter.utils import save_uploaded_file, format_download_name
 
+logger = logging.getLogger(__name__)
+
+
 class FileCleanupResponse(FileResponse):
+    """FileResponse that removes the temp file from disk once stream is closed."""
     def __init__(self, file_path, *args, **kwargs):
         self._temp_file_path = file_path
         file_handle = open(file_path, 'rb')
@@ -22,11 +36,12 @@ class FileCleanupResponse(FileResponse):
             except OSError:
                 pass
 
+
 def create_cleanup_response(file_path, content_type=None, filename=None):
     if not content_type:
         content_type, _ = mimetypes.guess_type(file_path)
         content_type = content_type or 'application/octet-stream'
-    
+
     raw_name = filename or os.path.basename(file_path)
     final_filename = format_download_name(raw_name)
 
@@ -34,50 +49,98 @@ def create_cleanup_response(file_path, content_type=None, filename=None):
     response['Content-Disposition'] = f'attachment; filename="{final_filename}"'
     return response
 
+
 AUDIO_TOOLS = {
     'audio-editor': {
         'title': 'Audio Editor',
-        'description': 'Professional audio editor to trim, cut, change volume, speed, pitch and apply equalizer effects.',
+        'description': 'Edit audio directly in your browser workflow with precise trimming, volume controls, and clean downloadable output.',
         'icon': 'music',
-        'accept': '.mp3,.wav,.ogg',
-        'allowed_extensions': ['.mp3', '.wav', '.ogg'],
+        'accept': '.mp3,.wav,.ogg,.m4a,.flac',
+        'allowed_extensions': ['.mp3', '.wav', '.ogg', '.m4a', '.flac'],
         'category': 'audio-tools',
-        'color': '#10b981',
-        'gradient': 'from-emerald-500 to-teal-600',
+        'color': '#7c3aed',
+        'gradient': 'from-purple-700 to-purple-500',
+    },
+    'merge-audio': {
+        'title': 'Merge Audio',
+        'description': 'Combine multiple audio files into one continuous track while keeping the order you choose.',
+        'icon': 'combine',
+        'accept': '.mp3,.wav,.ogg,.m4a,.flac',
+        'allowed_extensions': ['.mp3', '.wav', '.ogg', '.m4a', '.flac'],
+        'category': 'audio-tools',
+        'multi_file': True,
+        'color': '#7c3aed',
+        'gradient': 'from-purple-700 to-purple-500',
+    },
+    'extract-audio-from-video': {
+        'title': 'Extract Audio From Video',
+        'description': 'Extract the audio track from your video and download it in your preferred supported audio format.',
+        'icon': 'video',
+        'accept': '.mp4,.mov,.avi,.mkv,.webm',
+        'allowed_extensions': ['.mp4', '.mov', '.avi', '.mkv', '.webm'],
+        'category': 'audio-tools',
+        'color': '#7c3aed',
+        'gradient': 'from-purple-700 to-purple-500',
     }
 }
 
+
 def editor_page(request):
     """Render the main audio editor interface."""
-    tool = AUDIO_TOOLS['audio-editor']
+    from converter.seo_content import SEO_DATA
+    tool = dict(AUDIO_TOOLS['audio-editor'])
+    seo_extra = SEO_DATA.get('audio-editor', {})
+    tool.update(seo_extra)
     context = {
         'tool': tool,
         'tool_slug': 'audio-editor',
-        'page_title': 'Audio Editor — ScanPDF',
+        'seo_title': tool.get('seo_title', 'Audio Editor Online – Free MP3 WAV Audio Editing Tool | ScanPDF'),
+        'seo_description': tool.get('seo_description', tool['description']),
+        'seo_keywords': tool.get('seo_keywords', ''),
+        'seo_h1': tool.get('seo_h1', 'Online Audio Editor'),
+        'seo_intro': tool.get('seo_intro', tool['description']),
+        's1': 'Online',
+        'highlight': 'Audio Editor',
     }
     return render(request, 'audio_processor/editor.html', context)
 
+
 def merge_page(request):
     """Render dedicated merge-audio page."""
+    from converter.seo_content import SEO_DATA
+    tool = dict(AUDIO_TOOLS['merge-audio'])
+    seo_extra = SEO_DATA.get('merge-audio', {})
+    tool.update(seo_extra)
     context = {
-        'tool_slug': 'audio-merge',
-        'tool': {
-            'title': 'Merge Audio',
-            'description': 'Combine multiple audio files into one output with clear file review and remove options.',
-        },
-        'page_title': 'Merge Audio — ScanPDF',
+        'tool': tool,
+        'tool_slug': 'merge-audio',
+        'seo_title': tool.get('seo_title', 'Merge Audio Files Online – Free Audio Merger | ScanPDF'),
+        'seo_description': tool.get('seo_description', tool['description']),
+        'seo_keywords': tool.get('seo_keywords', ''),
+        'seo_h1': tool.get('seo_h1', 'Merge Audio Files Online'),
+        'seo_intro': tool.get('seo_intro', tool['description']),
+        's1': 'Merge',
+        'highlight': 'Audio Files Online',
     }
     return render(request, 'audio_processor/merge_audio.html', context)
 
+
 def extract_page(request):
     """Render dedicated video-to-audio extraction page."""
+    from converter.seo_content import SEO_DATA
+    tool = dict(AUDIO_TOOLS['extract-audio-from-video'])
+    seo_extra = SEO_DATA.get('extract-audio-from-video', {})
+    tool.update(seo_extra)
     context = {
-        'tool_slug': 'extract-audio',
-        'tool': {
-            'title': 'Extract Audio From Video',
-            'description': 'Upload a video and extract either full audio or a custom start-to-end range.',
-        },
-        'page_title': 'Extract Audio — ScanPDF',
+        'tool': tool,
+        'tool_slug': 'extract-audio-from-video',
+        'seo_title': tool.get('seo_title', 'Extract Audio from Video Online – Free Video to Audio Tool | ScanPDF'),
+        'seo_description': tool.get('seo_description', tool['description']),
+        'seo_keywords': tool.get('seo_keywords', ''),
+        'seo_h1': tool.get('seo_h1', 'Extract Audio from Video'),
+        'seo_intro': tool.get('seo_intro', tool['description']),
+        's1': 'Extract Audio from',
+        'highlight': 'Video Online',
     }
     return render(request, 'audio_processor/extract_audio.html', context)
 
@@ -85,38 +148,62 @@ def extract_page(request):
 @csrf_exempt
 @require_POST
 def process_audio_api(request):
-    """API endpoint to process audio files in editor, merge, or extract modes."""
-    mode = request.POST.get('mode', 'edit')
-    allowed_output_formats = {'mp3', 'wav', 'ogg'}
-    output_format = request.POST.get('format', 'mp3').lower()
-    if output_format not in allowed_output_formats:
-        return JsonResponse({'error': 'Unsupported output format.'}, status=400)
+    """Universal API endpoint supporting audio-editor, merge-audio, and extract-audio-from-video."""
+    mode = request.POST.get('mode', 'edit').strip().lower()
+    output_format = request.POST.get('format', 'mp3').lower().strip()
+    if output_format not in SUPPORTED_OUTPUT_FORMATS:
+        output_format = 'mp3'
 
+    # ── 1. MERGE MODE ──────────────────────────────────────────────
     if mode == 'merge':
         files = request.FILES.getlist('files')
+        if not files:
+            files = [request.FILES.get('file')] if 'file' in request.FILES else []
+
         if len(files) < 2:
             return JsonResponse({'error': 'Please upload at least 2 audio files to merge.'}, status=400)
-        input_paths = [save_uploaded_file(f) for f in files]
-        try:
-            output_path = merge_audios(input_paths, files[0].name, target_format=output_format)
-            return create_cleanup_response(output_path, filename=files[0].name)
-        except Exception as e:
-            return JsonResponse({'error': str(e)}, status=500)
-        finally:
-            for path in input_paths:
-                if os.path.exists(path):
-                    try:
-                        os.remove(path)
-                    except OSError:
-                        pass
 
+        # Validate file extensions
+        for f in files:
+            ext = os.path.splitext(f.name)[1].lower()
+            if ext not in SUPPORTED_AUDIO_EXTENSIONS:
+                allowed_str = ", ".join(sorted(SUPPORTED_AUDIO_EXTENSIONS))
+                return JsonResponse({'error': f'Invalid file "{f.name}". Supported audio formats: {allowed_str}'}, status=400)
+
+        input_paths = []
+        try:
+            for f in files:
+                input_paths.append(save_uploaded_file(f))
+
+            output_path = merge_audios(input_paths, files[0].name, target_format=output_format)
+            ext = output_format
+            return create_cleanup_response(output_path, filename=f"merged-audio.{ext}")
+        except ValueError as e:
+            return JsonResponse({'error': str(e)}, status=400)
+        except Exception as e:
+            logger.error(f"Merge audio error: {e}", exc_info=True)
+            return JsonResponse({'error': f"Merge audio failed: {str(e)}"}, status=500)
+        finally:
+            for p in input_paths:
+                if os.path.exists(p):
+                    try: os.remove(p)
+                    except OSError: pass
+
+    # ── 2. EXTRACT MODE ────────────────────────────────────────────
     if mode == 'extract':
-        video_file = request.FILES.get('video_file')
+        video_file = request.FILES.get('video_file') or request.FILES.get('file')
         if not video_file:
             return JsonResponse({'error': 'Please upload a video file.'}, status=400)
-        extract_mode = request.POST.get('extract_mode', 'full')
+
+        ext = os.path.splitext(video_file.name)[1].lower()
+        if ext not in SUPPORTED_VIDEO_EXTENSIONS:
+            allowed_str = ", ".join(sorted(SUPPORTED_VIDEO_EXTENSIONS))
+            return JsonResponse({'error': f'Invalid video format "{ext}". Supported video formats: {allowed_str}'}, status=400)
+
+        extract_mode = request.POST.get('extract_mode', 'full').strip().lower()
         start = request.POST.get('start', 0)
         end = request.POST.get('end', '')
+
         input_path = save_uploaded_file(video_file)
         try:
             output_path = extract_audio_from_video(
@@ -127,71 +214,50 @@ def process_audio_api(request):
                 start=start,
                 end=end,
             )
-            return create_cleanup_response(output_path, filename=video_file.name)
+            base = os.path.splitext(video_file.name)[0]
+            return create_cleanup_response(output_path, filename=f"{base}_audio.{output_format}")
         except ValueError as e:
             return JsonResponse({'error': str(e)}, status=400)
         except Exception as e:
-            return JsonResponse({'error': str(e)}, status=500)
+            logger.error(f"Extract audio error: {e}", exc_info=True)
+            return JsonResponse({'error': f"Audio extraction failed: {str(e)}"}, status=500)
         finally:
             if os.path.exists(input_path):
-                try:
-                    os.remove(input_path)
-                except OSError:
-                    pass
+                try: os.remove(input_path)
+                except OSError: pass
 
-
-    uploaded_file = request.FILES.get('file')
+    # ── 3. EDIT MODE ───────────────────────────────────────────────
+    uploaded_file = request.FILES.get('file') or request.FILES.get('audio_file')
     if not uploaded_file:
-        return JsonResponse({'error': 'No file uploaded'}, status=400)
+        return JsonResponse({'error': 'Please upload an audio file to edit.'}, status=400)
+
+    ext = os.path.splitext(uploaded_file.name)[1].lower()
+    if ext not in SUPPORTED_AUDIO_EXTENSIONS:
+        allowed_str = ", ".join(sorted(SUPPORTED_AUDIO_EXTENSIONS))
+        return JsonResponse({'error': f'Invalid audio format "{ext}". Supported audio formats: {allowed_str}'}, status=400)
+
     input_path = save_uploaded_file(uploaded_file)
 
-    preset = request.POST.get('preset', 'none').strip().lower()
-    preset_aliases = {'full-bass': 'bass-boost', 'full-treble': 'treble-boost'}
-    preset = preset_aliases.get(preset, preset)
-    allowed_presets = {'none', 'classic', 'dance', 'club', 'bass-boost', 'treble-boost', 'pop', 'rock'}
-    if preset not in allowed_presets:
-        return JsonResponse({'error': 'Unsupported equalizer preset.'}, status=400)
-
-    # Ringtone quick preset
-    is_ringtone = request.POST.get('ringtone_mode', 'false') == 'true'
-    start = request.POST.get('start', 0)
-    end = request.POST.get('end', 0)
-    if is_ringtone:
-        try:
-            start_f = max(0.0, float(start or 0))
-        except (TypeError, ValueError):
-            start_f = 0.0
-        end_f = start_f + 40.0
-        start = str(start_f)
-        end = str(end_f)
-
-    reverse_raw = (request.POST.get('reverse', 'false') or '').strip().lower()
-    reverse_value = 'true' if reverse_raw in {'true', '1', 'yes', 'on'} else 'false'
-
     tool_params = {
-        'start': start,
-        'end': end,
+        'start': request.POST.get('start', 0),
+        'end': request.POST.get('end', ''),
+        'volume': request.POST.get('volume', 100),
         'fade_in': request.POST.get('fade_in', 0),
         'fade_out': request.POST.get('fade_out', 0),
-        'volume': request.POST.get('volume', 100),
-        'speed': request.POST.get('speed', 1.0),
-        'pitch': request.POST.get('pitch', 0),
-        'preset': preset,
         'format': output_format,
-        'reverse': reverse_value,
         'bitrate': request.POST.get('bitrate', '192k'),
     }
 
     try:
         output_path = process_audio(input_path, uploaded_file.name, tool_params)
-        return create_cleanup_response(output_path, filename=uploaded_file.name)
+        base = os.path.splitext(uploaded_file.name)[0]
+        return create_cleanup_response(output_path, filename=f"{base}_edited.{output_format}")
     except ValueError as e:
         return JsonResponse({'error': str(e)}, status=400)
     except Exception as e:
-        return JsonResponse({'error': str(e)}, status=500)
+        logger.error(f"Audio editor error: {e}", exc_info=True)
+        return JsonResponse({'error': f"Audio editing failed: {str(e)}"}, status=500)
     finally:
         if os.path.exists(input_path):
-            try:
-                os.remove(input_path)
-            except OSError:
-                pass
+            try: os.remove(input_path)
+            except OSError: pass

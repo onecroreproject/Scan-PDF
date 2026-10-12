@@ -2,155 +2,458 @@
 {% load static %}
 
 {% block tool_content %}
-<div class="max-w-4xl mx-auto space-y-5">
-    <div class="rounded-2xl bg-white border border-surface-100 p-6 shadow-card">
-        <h2 class="text-xl font-black text-surface-900 mb-2">Merge Audio Files</h2>
-        <p class="text-sm text-surface-500 mb-5">Select 2 or more files, arrange/review them, remove if needed, and merge.</p>
 
-        <label for="merge-files" class="block rounded-xl border-2 border-dashed border-surface-200 hover:border-brand-400 hover:bg-brand-50/20 transition-all p-6 cursor-pointer text-center">
-            <input id="merge-files" type="file" class="hidden" multiple accept=".mp3,.wav,.ogg">
-            <p class="text-sm font-bold text-surface-700">Choose audio files</p>
-            <p class="text-xs text-surface-400 mt-1">MP3, WAV, OGG</p>
-        </label>
+<style>
+/* =========================================================
+   SCANPDF AUDIO TOOLS DESIGN SYSTEM (MATCHES WORD-TO-PDF)
+   ========================================================= */
 
-        <div id="files-wrap" class="mt-5 hidden">
-            <div class="flex items-center justify-between mb-2">
-                <h3 class="text-sm font-bold text-surface-800">Selected files</h3>
-                <button id="clear-files" class="text-xs font-bold text-red-600 hover:text-red-700">Remove all</button>
-            </div>
-            <ul id="files-list" class="space-y-2 max-h-72 overflow-y-auto"></ul>
+.tool-heading {
+    font-size: clamp(2rem, 5vw + 1rem, 3.5rem);
+    line-height: 1.1;
+    font-weight: 900;
+    letter-spacing: -0.02em;
+    color: #1e1b4b;
+}
+
+.purple-btn {
+    background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+    color: white;
+    box-shadow: 0 4px 14px rgba(124, 58, 237, 0.3);
+    transition: all 0.2s ease;
+}
+.purple-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(124, 58, 237, 0.4);
+}
+.purple-btn:active {
+    transform: translateY(0);
+}
+.purple-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.hero-dropzone {
+    width: 100%;
+    transition: all 0.2s ease;
+    border: 2px dashed transparent;
+}
+.hero-dropzone.drag-active {
+    background: #faf5ff;
+    border-color: #a855f7;
+}
+
+.editor-card {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 24px;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.04);
+}
+
+.track-item {
+    background: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 16px;
+    transition: all 0.2s ease;
+}
+.track-item:hover {
+    border-color: #d8b4fe;
+    box-shadow: 0 4px 12px rgba(124, 58, 237, 0.05);
+}
+</style>
+
+<!-- =========================================================
+     PAGE HEADER & MERGE AUDIO
+     ========================================================= -->
+<section id="hero-dropzone" class="hero-dropzone text-center pt-10 pb-10 px-4 w-full">
+
+    <!-- Clean Title -->
+    <h1 class="tool-heading mb-4 text-center">
+        <span class="text-surface-900">Merge </span>
+        <span class="text-transparent bg-clip-text bg-gradient-to-r from-purple-700 to-purple-500">Audio Files Online</span>
+    </h1>
+    <p class="text-[16px] md:text-[17px] leading-relaxed text-surface-500 max-w-[740px] mx-auto text-center font-medium mb-8 px-4">
+        Combine multiple audio files into one continuous track while keeping the order you choose.
+    </p>
+
+    <!-- Central Converter Interaction Area -->
+    <div class="flex flex-col items-center w-full max-w-[1120px] mx-auto">
+        
+        <!-- =====================================================
+             STATE: IDLE (SELECT FILES)
+             ===================================================== -->
+        <div id="state-idle" class="flex flex-col items-center w-full">
+            <button type="button" id="select-file-btn" class="purple-btn px-10 py-4 rounded-2xl text-white font-bold text-[15px] tracking-wide flex items-center justify-center gap-3 w-full sm:w-auto">
+                <i data-lucide="layers" class="w-5 h-5"></i>
+                SELECT AUDIO FILES
+            </button>
+            <p id="drop-text" class="text-surface-500 text-[15px] mt-3 font-medium">Drop multiple audio files here (MP3, WAV, OGG, M4A, FLAC)</p>
+            <input type="file" id="file-input" class="hidden" multiple accept=".mp3,.wav,.ogg,.m4a,.flac,audio/*">
         </div>
 
-        <div class="mt-5 flex items-center gap-3">
-            <select id="output-format" class="rounded-lg border border-surface-200 px-3 py-2 text-sm font-semibold">
-                <option value="mp3">MP3</option>
-                <option value="wav">WAV</option>
-                <option value="ogg">OGG</option>
-            </select>
-            <button id="merge-btn" class="px-5 py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-black hover:bg-emerald-700 disabled:opacity-40 disabled:cursor-not-allowed">
-                Merge & Download
+        <!-- =====================================================
+             STATE: EDITOR (TRACK LIST & REORDER)
+             ===================================================== -->
+        <div id="state-editor" class="hidden flex-col w-full text-left">
+            <div class="editor-card p-6 sm:p-8 w-full">
+                <!-- Header with Track Count and Start Over -->
+                <div class="flex flex-wrap items-center justify-between gap-4 pb-6 border-b border-surface-100">
+                    <div>
+                        <h3 class="text-surface-900 font-bold text-lg">Tracks to Merge (<span id="track-count">0</span>)</h3>
+                        <p class="text-surface-400 text-xs sm:text-sm font-medium">Rearrange tracks using the arrows to set your custom playback sequence.</p>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <button type="button" id="btn-add-more" class="bg-surface-100 hover:bg-surface-200 text-surface-800 text-xs sm:text-sm font-bold px-4 py-2.5 rounded-xl transition-colors flex items-center gap-1.5">
+                            <i data-lucide="plus" class="w-4 h-4"></i> Add More Audio
+                        </button>
+                        <button type="button" id="btn-start-over" class="text-surface-500 hover:text-purple-700 text-xs sm:text-sm font-bold transition-colors flex items-center gap-1.5 px-3 py-2 rounded-xl hover:bg-purple-50">
+                            <i data-lucide="rotate-ccw" class="w-4 h-4"></i> Start Over
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Track List -->
+                <div class="py-6">
+                    <div id="tracks-container" class="space-y-3">
+                        <!-- Populated dynamically via JS -->
+                    </div>
+                </div>
+
+                <!-- Bottom Controls Bar -->
+                <div class="pt-6 border-t border-surface-100 flex flex-col sm:flex-row items-center justify-between gap-5">
+                    <div class="flex items-center gap-3 w-full sm:w-auto">
+                        <label for="select-format" class="text-xs font-bold text-surface-500 uppercase tracking-wide">Output Format:</label>
+                        <select id="select-format" class="bg-white border border-surface-200 rounded-xl px-4 py-2.5 text-sm font-bold text-surface-900 focus:outline-purple-600">
+                            <option value="mp3">MP3</option>
+                            <option value="wav">WAV</option>
+                            <option value="ogg">OGG</option>
+                            <option value="m4a">M4A</option>
+                            <option value="flac">FLAC</option>
+                        </select>
+                    </div>
+
+                    <button type="button" id="btn-merge-audio" class="purple-btn px-10 py-4 rounded-2xl text-white font-bold text-[15px] tracking-wide flex items-center justify-center gap-3 w-full sm:w-auto">
+                        <i data-lucide="sparkles" class="w-5 h-5"></i>
+                        MERGE AUDIO
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- =====================================================
+             STATE: PROCESSING
+             ===================================================== -->
+        <div id="state-processing" class="hidden flex-col items-center w-full max-w-[500px] mx-auto py-8">
+            <div class="w-14 h-14 border-4 border-purple-100 border-t-purple-600 rounded-full animate-spin mb-4"></div>
+            <h3 class="text-xl font-bold text-surface-900 mb-2">Merging Audio Tracks...</h3>
+            <p class="text-surface-500 text-sm mb-6 text-center">Combining your audio tracks with seamless normalization.</p>
+            <div class="w-full h-2 rounded-full bg-surface-100 overflow-hidden">
+                <div class="h-full bg-gradient-to-r from-purple-700 to-purple-500 animate-pulse w-full"></div>
+            </div>
+        </div>
+
+        <!-- =====================================================
+             STATE: SUCCESS
+             ===================================================== -->
+        <div id="state-success" class="hidden flex-col items-center w-full max-w-[500px] mx-auto py-6">
+            <div class="w-14 h-14 bg-green-50 text-green-600 rounded-full flex items-center justify-center mb-4 mx-auto">
+                <i data-lucide="check" class="w-7 h-7"></i>
+            </div>
+            <h3 class="text-2xl font-black text-surface-900 mb-1">Audio Merged Successfully</h3>
+            <p class="text-surface-500 text-[15px] mb-6">Your tracks have been combined in your exact order.</p>
+            
+            <a id="download-btn" href="#" class="purple-btn px-10 py-4 rounded-2xl text-white font-bold text-[15px] tracking-wide flex items-center justify-center gap-3 w-full sm:w-auto mb-4">
+                <i data-lucide="download" class="w-5 h-5"></i>
+                DOWNLOAD MERGED AUDIO (<span id="download-format-label">MP3</span>)
+            </a>
+
+            <!-- In-page audio player for instant verification -->
+            <audio id="success-audio-player" controls class="w-full mt-2 mb-6"></audio>
+            
+            <button type="button" id="btn-merge-another" class="text-purple-600 font-semibold text-[14px] hover:text-purple-800 transition-colors">
+                Merge more audio files
             </button>
         </div>
 
-        <div id="processing" class="hidden mt-4 rounded-xl border border-surface-100 bg-surface-50 p-3 text-sm font-semibold text-surface-700">
-            Processing merge... please wait.
+        <!-- =====================================================
+             STATE: ERROR (INLINE SCANPDF ERROR CARD)
+             ===================================================== -->
+        <div id="state-error" class="hidden flex-col items-center w-full max-w-[500px] mx-auto p-6 bg-red-50/70 border border-red-100 rounded-2xl">
+            <div class="w-12 h-12 bg-red-100 text-red-600 rounded-full flex items-center justify-center mb-3">
+                <i data-lucide="alert-triangle" class="w-6 h-6"></i>
+            </div>
+            <h3 class="text-lg font-bold text-surface-900 mb-1">Audio Merge Failed</h3>
+            <p id="error-message" class="text-surface-600 text-sm text-center mb-5 font-medium leading-relaxed">
+                An error occurred while merging the audio files.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-3 w-full justify-center">
+                <button type="button" id="btn-retry-error" class="purple-btn px-8 py-3 rounded-xl text-white font-bold text-sm">
+                    TRY AGAIN
+                </button>
+                <button type="button" id="btn-choose-another" class="bg-white hover:bg-surface-100 text-surface-700 font-bold text-sm px-6 py-3 rounded-xl border border-surface-200 transition-colors">
+                    Choose Other Files
+                </button>
+            </div>
         </div>
 
-        <div id="merged-result" class="hidden mt-4 rounded-xl border border-emerald-100 bg-emerald-50/40 p-4">
-            <h4 class="text-sm font-bold text-surface-800 mb-2">Merged audio preview</h4>
-            <audio id="merged-audio-player" controls class="w-full"></audio>
-            <div class="mt-3">
-                <a id="merged-download-link" href="#" class="inline-flex items-center rounded-lg bg-emerald-600 px-4 py-2 text-xs font-black text-white hover:bg-emerald-700">
-                    Download merged file
-                </a>
+    </div>
+</section>
+
+<!-- =========================================================
+     PREMIUM LOWER MARKETING SECTIONS (WORD-TO-PDF ARCHITECTURE)
+     ========================================================= -->
+<div class="mt-12 sm:mt-16 border-t border-surface-100 pt-16 sm:pt-24 pb-20 relative">
+    <div class="max-w-[1120px] mx-auto px-4 sm:px-6 lg:px-8 mb-16">
+        <div class="grid md:grid-cols-[1fr_1fr] items-center gap-10 md:gap-16">
+            <div>
+                <div class="flex items-center gap-2 text-purple-600 font-bold tracking-widest text-[12px] uppercase mb-4">
+                    <i data-lucide="combine" class="w-3.5 h-3.5"></i> Seamless Joining
+                </div>
+                <h3 class="text-2xl md:text-[2rem] font-bold text-surface-900 mb-5 leading-tight tracking-tight">Combine Multiple Tracks Easily</h3>
+                <p class="text-surface-500 text-[17px] leading-relaxed mb-8">
+                    Stitch songs, speech clips, voice memos, and podcasts together into one continuous audio track. Mix formats like MP3 and WAV effortlessly.
+                </p>
+                <ul class="space-y-4">
+                    <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                        <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                        Custom sequencing with reordering controls
+                    </li>
+                    <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                        <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                        Support for mixed sample rates and channels
+                    </li>
+                    <li class="flex items-center gap-3.5 text-surface-700 font-medium text-[15px]">
+                        <div class="w-5 h-5 rounded-full bg-green-100 flex items-center justify-center flex-shrink-0"><i data-lucide="check" class="w-3.5 h-3.5 text-green-600"></i></div>
+                        Direct in-browser audio preview
+                    </li>
+                </ul>
+            </div>
+            <div class="bg-purple-50/50 rounded-3xl p-8 border border-purple-100 flex flex-col justify-center items-center text-center">
+                <div class="w-16 h-16 rounded-2xl bg-white shadow-md text-purple-600 flex items-center justify-center mb-4">
+                    <i data-lucide="music" class="w-8 h-8"></i>
+                </div>
+                <h4 class="font-bold text-surface-900 text-lg mb-2">High-Fidelity Encoding</h4>
+                <p class="text-surface-500 text-sm max-w-sm">ScanPDF uses professional audio re-encoding filters to ensure smooth transitions between disparate tracks without clicks or silence.</p>
             </div>
         </div>
     </div>
 </div>
+
 {% endblock %}
 
 {% block tool_scripts %}
 <script>
-(() => {
-    const fileInput = document.getElementById('merge-files');
-    const filesWrap = document.getElementById('files-wrap');
-    const filesList = document.getElementById('files-list');
-    const clearBtn = document.getElementById('clear-files');
-    const mergeBtn = document.getElementById('merge-btn');
-    const outputFormat = document.getElementById('output-format');
-    const processing = document.getElementById('processing');
-    const mergedResult = document.getElementById('merged-result');
-    const mergedAudioPlayer = document.getElementById('merged-audio-player');
-    const mergedDownloadLink = document.getElementById('merged-download-link');
+document.addEventListener('DOMContentLoaded', () => {
+    const heroDropzone = document.getElementById('hero-dropzone');
+    const stateIdle = document.getElementById('state-idle');
+    const stateEditor = document.getElementById('state-editor');
+    const stateProcessing = document.getElementById('state-processing');
+    const stateSuccess = document.getElementById('state-success');
+    const stateError = document.getElementById('state-error');
 
-    let selectedFiles = [];
-    let mergedResultUrl = null;
-    let previewUrls = [];
+    const selectFileBtn = document.getElementById('select-file-btn');
+    const fileInput = document.getElementById('file-input');
+    const btnAddMore = document.getElementById('btn-add-more');
+    const btnStartOver = document.getElementById('btn-start-over');
+    const btnMergeAnother = document.getElementById('btn-merge-another');
+    const btnRetryError = document.getElementById('btn-retry-error');
+    const btnChooseAnother = document.getElementById('btn-choose-another');
+    const btnMergeAudio = document.getElementById('btn-merge-audio');
+    const errorMessage = document.getElementById('error-message');
 
-    function refreshList() {
-        previewUrls.forEach(url => URL.revokeObjectURL(url));
-        previewUrls = [];
-        filesList.innerHTML = '';
-        filesWrap.classList.toggle('hidden', selectedFiles.length === 0);
-        mergeBtn.disabled = selectedFiles.length < 2;
+    const tracksContainer = document.getElementById('tracks-container');
+    const trackCount = document.getElementById('track-count');
+    const selectFormat = document.getElementById('select-format');
 
-        selectedFiles.forEach((file, idx) => {
-            const li = document.createElement('li');
-            const fileUrl = URL.createObjectURL(file);
-            previewUrls.push(fileUrl);
-            li.className = 'rounded-lg border border-surface-100 bg-white px-3 py-2';
-            li.innerHTML = `
-                <div class="flex items-center justify-between gap-3">
-                    <div class="min-w-0">
-                        <p class="text-sm font-bold text-surface-800 truncate">${idx + 1}. ${file.name}</p>
-                        <p class="text-xs text-surface-400">${(file.size / (1024 * 1024)).toFixed(2)} MB</p>
-                    </div>
-                    <button data-idx="${idx}" class="remove-one text-xs font-black text-red-600 hover:text-red-700">Remove</button>
-                </div>
-                <audio controls class="w-full mt-2" src="${fileUrl}"></audio>
-            `;
-            filesList.appendChild(li);
-        });
+    const downloadBtn = document.getElementById('download-btn');
+    const downloadFormatLabel = document.getElementById('download-format-label');
+    const successAudioPlayer = document.getElementById('success-audio-player');
 
-        filesList.querySelectorAll('.remove-one').forEach(btn => {
-            btn.addEventListener('click', () => {
-                const idx = Number(btn.dataset.idx);
-                selectedFiles.splice(idx, 1);
-                refreshList();
-            });
-        });
+    let audioFiles = [];
+    let downloadObjectUrl = null;
+
+    function showState(state) {
+        [stateIdle, stateEditor, stateProcessing, stateSuccess, stateError].forEach(el => el.classList.add('hidden'));
+        if (state === 'idle') stateIdle.classList.remove('hidden');
+        if (state === 'editor') stateEditor.classList.remove('hidden');
+        if (state === 'processing') stateProcessing.classList.remove('hidden');
+        if (state === 'success') stateSuccess.classList.remove('hidden');
+        if (state === 'error') stateError.classList.remove('hidden');
+        if (window.lucide) lucide.createIcons();
     }
 
-    fileInput.addEventListener('change', () => {
-        const incoming = Array.from(fileInput.files || []);
-        if (incoming.length) {
-            selectedFiles = incoming;
-            refreshList();
+    function showError(msg) {
+        errorMessage.textContent = msg || 'An unexpected error occurred.';
+        showState('error');
+    }
+
+    selectFileBtn.addEventListener('click', () => fileInput.click());
+    btnAddMore.addEventListener('click', () => fileInput.click());
+
+    fileInput.addEventListener('change', (e) => {
+        if (e.target.files && e.target.files.length) {
+            handleNewFiles(Array.from(e.target.files));
         }
-        fileInput.value = '';
     });
 
-    clearBtn.addEventListener('click', () => {
-        selectedFiles = [];
-        mergedResult.classList.add('hidden');
-        refreshList();
+    heroDropzone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        heroDropzone.classList.add('drag-active');
+    });
+    heroDropzone.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        heroDropzone.classList.remove('drag-active');
+    });
+    heroDropzone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        heroDropzone.classList.remove('drag-active');
+        if (e.dataTransfer.files && e.dataTransfer.files.length) {
+            handleNewFiles(Array.from(e.dataTransfer.files));
+        }
     });
 
-    mergeBtn.addEventListener('click', async () => {
-        if (selectedFiles.length < 2) return;
-        processing.classList.remove('hidden');
-        mergeBtn.disabled = true;
+    function handleNewFiles(newFiles) {
+        const valid = newFiles.filter(f => f.size > 0);
+        if (!valid.length) {
+            showError('Please select valid, non-empty audio files.');
+            return;
+        }
 
-        const fd = new FormData();
-        fd.append('mode', 'merge');
-        fd.append('format', outputFormat.value);
-        selectedFiles.forEach(file => fd.append('files', file));
+        audioFiles = audioFiles.concat(valid);
+        renderTrackList();
+        showState('editor');
+    }
+
+    function renderTrackList() {
+        trackCount.textContent = audioFiles.length;
+        tracksContainer.innerHTML = '';
+
+        if (!audioFiles.length) {
+            showState('idle');
+            return;
+        }
+
+        audioFiles.forEach((file, index) => {
+            const item = document.createElement('div');
+            item.className = 'track-item p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3';
+            item.innerHTML = `
+                <div class="flex items-center gap-3 min-w-0 flex-1">
+                    <span class="w-7 h-7 rounded-full bg-purple-50 text-purple-700 font-bold text-xs flex items-center justify-center flex-shrink-0">
+                        ${index + 1}
+                    </span>
+                    <div class="min-w-0">
+                        <p class="text-surface-900 font-bold text-sm truncate">${file.name}</p>
+                        <p class="text-surface-400 text-xs">${(file.size / (1024 * 1024)).toFixed(2)} MB</p>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2 self-end sm:self-center">
+                    <button type="button" class="btn-move-up p-2 rounded-lg text-surface-500 hover:text-purple-700 hover:bg-surface-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed" title="Move Up" ${index === 0 ? 'disabled' : ''}>
+                        <i data-lucide="chevron-up" class="w-4 h-4"></i>
+                    </button>
+                    <button type="button" class="btn-move-down p-2 rounded-lg text-surface-500 hover:text-purple-700 hover:bg-surface-100 transition-colors disabled:opacity-30 disabled:cursor-not-allowed" title="Move Down" ${index === audioFiles.length - 1 ? 'disabled' : ''}>
+                        <i data-lucide="chevron-down" class="w-4 h-4"></i>
+                    </button>
+                    <button type="button" class="btn-remove p-2 rounded-lg text-surface-400 hover:text-red-600 hover:bg-red-50 transition-colors" title="Remove Track">
+                        <i data-lucide="trash-2" class="w-4 h-4"></i>
+                    </button>
+                </div>
+            `;
+
+            // Button actions
+            item.querySelector('.btn-move-up').addEventListener('click', () => {
+                if (index > 0) {
+                    const temp = audioFiles[index];
+                    audioFiles[index] = audioFiles[index - 1];
+                    audioFiles[index - 1] = temp;
+                    renderTrackList();
+                }
+            });
+
+            item.querySelector('.btn-move-down').addEventListener('click', () => {
+                if (index < audioFiles.length - 1) {
+                    const temp = audioFiles[index];
+                    audioFiles[index] = audioFiles[index + 1];
+                    audioFiles[index + 1] = temp;
+                    renderTrackList();
+                }
+            });
+
+            item.querySelector('.btn-remove').addEventListener('click', () => {
+                audioFiles.splice(index, 1);
+                renderTrackList();
+            });
+
+            tracksContainer.appendChild(item);
+        });
+
+        if (window.lucide) lucide.createIcons();
+    }
+
+    btnMergeAudio.addEventListener('click', async () => {
+        if (audioFiles.length < 2) {
+            showError('Please add at least 2 audio tracks to merge.');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('csrfmiddlewaretoken', '{{ csrf_token }}');
+        formData.append('mode', 'merge');
+        formData.append('format', selectFormat.value);
+
+        audioFiles.forEach(file => {
+            formData.append('files', file);
+        });
+
+        showState('processing');
 
         try {
-            const response = await fetch('/audio/api/process/', { method: 'POST', body: fd });
+            const response = await fetch('/api/convert/merge-audio/', {
+                method: 'POST',
+                body: formData,
+            });
+
             if (!response.ok) {
-                const err = await response.json();
-                throw new Error(err.error || 'Failed to merge files');
+                let msg = 'Failed to merge audio files.';
+                try {
+                    const data = await response.json();
+                    if (data.error) msg = data.error;
+                } catch(e) {}
+                throw new Error(msg);
             }
+
             const blob = await response.blob();
-            const url = window.URL.createObjectURL(blob);
-            const filename = response.headers.get('Content-Disposition')?.split('filename=')[1]?.replace(/"/g, '') || 'merged_audio.mp3';
-            if (mergedResultUrl) URL.revokeObjectURL(mergedResultUrl);
-            mergedResultUrl = url;
-            mergedAudioPlayer.src = url;
-            mergedDownloadLink.href = url;
-            mergedDownloadLink.download = filename;
-            mergedResult.classList.remove('hidden');
-        } catch (error) {
-            alert('Error: ' + error.message);
-        } finally {
-            processing.classList.add('hidden');
-            mergeBtn.disabled = selectedFiles.length < 2;
+            if (blob.size === 0) throw new Error('Received an empty merged audio file.');
+
+            if (downloadObjectUrl) URL.revokeObjectURL(downloadObjectUrl);
+            downloadObjectUrl = URL.createObjectURL(blob);
+
+            const format = selectFormat.value.toUpperCase();
+            downloadFormatLabel.textContent = format;
+            downloadBtn.href = downloadObjectUrl;
+            downloadBtn.download = `merged-audio.${selectFormat.value}`;
+            successAudioPlayer.src = downloadObjectUrl;
+
+            showState('success');
+        } catch (err) {
+            showError(err.message);
         }
     });
 
-    refreshList();
-})();
+    function resetAll() {
+        if (downloadObjectUrl) URL.revokeObjectURL(downloadObjectUrl);
+        fileInput.value = '';
+        audioFiles = [];
+        showState('idle');
+    }
+
+    btnStartOver.addEventListener('click', resetAll);
+    btnMergeAnother.addEventListener('click', resetAll);
+    btnChooseAnother.addEventListener('click', resetAll);
+    btnRetryError.addEventListener('click', () => showState('editor'));
+});
 </script>
 {% endblock %}
-
